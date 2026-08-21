@@ -1,0 +1,53 @@
+name: Software catalog safety gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'software-license-catalog-v1.0.json'
+      - 'software-license-catalog-v1.0.json.p7s'
+      - 'Tool-SoftwareInventory.ps1'
+      - 'software-license-online-update.ps1'
+      - 'SIGN-SOFTWARE-CATALOG.ps1'
+      - 'VERIFY-SAFETY-REGRESSIONS.ps1'
+      - 'VERIFY-REPORT-SCHEMA.ps1'
+      - 'VERIFY-DASHBOARD.ps1'
+      - 'kiem-tra-cau-hinh-ban-quyen.ps1'
+      - 'Giao-Dien.ps1'
+      - '.github/workflows/software-catalog-safety.yml'
+  push:
+    paths:
+      - 'software-license-catalog-v1.0.json'
+      - 'software-license-catalog-v1.0.json.p7s'
+      - 'Tool-SoftwareInventory.ps1'
+      - 'software-license-online-update.ps1'
+      - 'SIGN-SOFTWARE-CATALOG.ps1'
+      - 'VERIFY-SAFETY-REGRESSIONS.ps1'
+      - 'VERIFY-REPORT-SCHEMA.ps1'
+      - 'VERIFY-DASHBOARD.ps1'
+      - 'kiem-tra-cau-hinh-ban-quyen.ps1'
+      - 'Giao-Dien.ps1'
+      - '.github/workflows/software-catalog-safety.yml'
+  schedule:
+    - cron: '41 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify signed software catalog and fail-closed remediation
+        shell: powershell
+        run: |
+          .\VERIFY-SAFETY-REGRESSIONS.ps1 -SourceDirectory .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify hardware report privacy and schema
+        shell: powershell
+        run: |
+          .\VERIFY-REPORT-SCHEMA.ps1 -SourceDirectory .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\VERIFY-DASHBOARD.ps1 -SourceDirectory .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

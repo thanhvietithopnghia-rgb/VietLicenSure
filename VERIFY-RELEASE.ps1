@@ -112,7 +112,9 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull 47
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull 91
-Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull 102 -AllowRelativePaths
+# The source package includes both catalog review workflows, including the
+# signed software-catalog safety gate.
+Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull 103 -AllowRelativePaths
 Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull 25
 
 $manifestPath = Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v4.8-OneFile.manifest'
@@ -399,7 +401,10 @@ if ($backupText -notmatch 'RuntimeHelperSha256' -or $cleanupText -notmatch 'Runt
 if ($backupText -notmatch 'SafetyPolicySha256' -or $cleanupText -notmatch 'SafetyPolicySha256' -or $restoreText -notmatch 'SafetyPolicySha256') {
     $failures.Add('Bộ backup/restore chưa xác thực Tool-SafetyPolicy.ps1 đi kèm.')
 }
-if ($reportText -notmatch '\[switch\]\$RedactSensitive' -or $reportText -notmatch 'strongCrackPattern') { $failures.Add('Báo cáo thiếu chế độ che dữ liệu hoặc mẫu phát hiện đặc hiệu.') }
+if ($reportText -notmatch '\[switch\]\$RedactSensitive' -or $reportText -notmatch '\[switch\]\$FullInternal' -or
+    $reportText -notmatch '\$RedactSensitive\s*=\s*-not\s+\[bool\]\$FullInternal' -or $reportText -notmatch 'strongCrackPattern') {
+    $failures.Add('Báo cáo thiếu chế độ che dữ liệu fail-closed hoặc mẫu phát hiện đặc hiệu.')
+}
 if ($backupText -match 'Items\s*=\s*@\(\$items\)' -or $backupText -match 'Values\s*=\s*@\(\$values\)' -or
     $cleanupText -match 'Items\s*=\s*@\(\$restoreItems\)' -or $cleanupText -match 'Values\s*=\s*@\(\$values\)') {
     $failures.Add('Còn mẫu @() trực tiếp trên List[object], có thể gây lỗi Argument types do not match trong Windows PowerShell 5.1.')

@@ -2959,7 +2959,7 @@ function Start-Report([string]$mode, [string]$displayName) {
     try {
         Start-ProgressDisplay $displayName (Get-ToolText -Key "report.starting" -Culture $script:dashboardCulture) $false
         Write-ProgressLog (Get-ToolText -Key $(if ($redactSensitive) { "report.redactedProgress" } else { "report.internalProgress" }) -Culture $script:dashboardCulture)
-        $privacyArgument = if ($redactSensitive) { " -RedactSensitive" } else { "" }
+        $privacyArgument = if ($redactSensitive) { " -RedactSensitive" } else { " -FullInternal" }
         $output = New-ToolReportRunDirectory -Category "BaoCao-$mode"
         $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -Pdf$privacyArgument"
         $moduleId = Get-ToolReportModuleId -Mode $mode

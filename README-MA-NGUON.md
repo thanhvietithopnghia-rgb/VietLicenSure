@@ -10,6 +10,7 @@ Release `4.8.0.1`, build `2026.08.18`, tập trung vào tốc độ, khả năng
 - Nút thắt gộp inventory được đổi sang descriptor tính một lần; Authenticode nhanh chạy theo lô tối đa bốn worker. Đối chứng cùng dữ liệu đạt 0 khác biệt, bước gộp 664→480 record giảm 118,33 giây xuống 11,05 giây và lượt Software đầy đủ trên máy kiểm thử giảm khoảng 189 giây xuống 83 giây.
 - `software-license-catalog-v1.0.json` nâng CatalogVersion lên `1.4.0.1` với 77 quy tắc sản phẩm duy nhất và chữ ký CMS tách rời `software-license-catalog-v1.0.json.p7s`.
 - `kiem-tra-cau-hinh-ban-quyen.ps1` tách ứng dụng chính và phụ lục hệ thống, chia bảng đánh giá 11 cột thành hai bảng 6 cột, thêm liên kết nội bộ và xuất toàn bộ tệp trực tiếp vào một thư mục báo cáo chung với timestamp mili-giây.
+- Báo cáo chạy trực tiếp từ dòng lệnh mặc định ở chế độ đã che; chỉ `-FullInternal` mới giữ serial/UUID/asset tag đầy đủ. `-RedactSensitive` được giữ để tương thích và không thể dùng cùng `-FullInternal`.
 - `Tool-ReportExport.ps1` mở đầy đủ `<details>` khi in, lặp header, cân line-height/padding, tránh cắt hàng và tạo liên kết tương đối HTML → PDF.
 - `Tool-Enterprise.ps1` nhận `IP:cổng`, chẩn đoán Endpoint/TCP/Service/Protocol/Version, quét Neighbor/ARP + ICMP + TCP, dò đúng protocol/tool version và giữ outbox DPAPI để gửi lại.
 - `enterprise-license-manager.ps1` tự dò khi ô địa chỉ trống, phân biệt LAN với Internet, cấu hình URLACL/Firewall qua UAC và không lặp exception kỹ thuật trên status/popup.

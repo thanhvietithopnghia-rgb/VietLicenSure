@@ -423,6 +423,7 @@
   "report.missingModule": "Không tìm thấy mô-đun tạo báo cáo.",
   "report.errorTitle": "Lỗi báo cáo",
   "report.privacy.title": "Chọn mức riêng tư của báo cáo",
+  "report.privacy.conflictingFlags": "Không thể dùng đồng thời -RedactSensitive và -FullInternal.",
   "report.privacy.prompt": "Báo cáo có thể chứa tên máy/người dùng, serial, IP, MAC và đường dẫn cá nhân.\r\n\r\nYES: tạo bản đã che dữ liệu nhạy cảm (khuyến nghị khi cần chia sẻ).\r\nNO: tạo bản đầy đủ để kiểm kê nội bộ.\r\nCANCEL: không tạo báo cáo.",
   "report.privacy.promptExplicit": "Báo cáo có thể chứa tên máy/người dùng, serial, Product ID, domain/workgroup, máy chủ KMS, địa chỉ IP/MAC và đường dẫn cá nhân.\r\n\r\nChọn “Bản đã che thông tin” khi gửi cho người khác; chọn “Bản đầy đủ nội bộ” chỉ khi báo cáo được giữ trong nhóm quản trị.",
   "report.privacy.redactedButton": "Bản đã che thông tin",

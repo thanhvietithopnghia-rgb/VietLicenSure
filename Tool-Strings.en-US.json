@@ -423,6 +423,7 @@
   "report.missingModule": "The report module was not found.",
   "report.errorTitle": "Report error",
   "report.privacy.title": "Choose report privacy level",
+  "report.privacy.conflictingFlags": "-RedactSensitive and -FullInternal cannot be used together.",
   "report.privacy.prompt": "The report may contain device/user names, serial numbers, IP/MAC addresses, and personal paths.\r\n\r\nYES: create a redacted copy (recommended for sharing).\r\nNO: create a complete copy for internal inventory.\r\nCANCEL: do not create a report.",
   "report.privacy.promptExplicit": "The report may contain device/user names, serial numbers, Product ID, domain/workgroup, KMS host, IP/MAC addresses, and personal paths.\r\n\r\nChoose “Redacted report” when sharing it; choose “Complete internal report” only when the report stays inside the administration team.",
   "report.privacy.redactedButton": "Redacted report",

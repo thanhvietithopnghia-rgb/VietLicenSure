@@ -198,6 +198,7 @@ try {
         Software='FormatFactory 5.13.0.0'
         Version='5.13.0.0'
         ServerAddress='192.168.2.5'
+        Serial='GENERIC-SERIAL-FIXTURE-001'
         SerialNumber='SERIAL-FIXTURE-001'
         SystemSerialNumber='SYSTEM-SERIAL-FIXTURE-001'
         BaseboardSerialNumber='BOARD-SERIAL-FIXTURE-001'
@@ -217,6 +218,7 @@ try {
     if ([string]$redactionFixture.Software -ne 'FormatFactory 5.13.0.0' -or
         [string]$redactionFixture.Version -ne '5.13.0.0' -or
         [string]$redactionFixture.ServerAddress -ne '[ĐÃ CHE]' -or
+        [string]$redactionFixture.Serial -ne '[ĐÃ CHE]' -or
         [string]$redactionFixture.SerialNumber -ne '[ĐÃ CHE]' -or
         [string]$redactionFixture.SystemSerialNumber -ne '[ĐÃ CHE]' -or
         [string]$redactionFixture.BaseboardSerialNumber -ne '[ĐÃ CHE]' -or
@@ -250,9 +252,16 @@ try {
         Add-Failure 'Bảng phần cứng chưa che cột serial đã địa phương hóa.'
     }
     $script:RedactSensitive = $false
-    $fullHardwareFixture = ConvertTo-ReportRedactedObject ([pscustomobject]@{ SystemSerialNumber='SYSTEM-SERIAL-FULL'; ProcessorId='PROCESSOR-FULL' })
-    if ([string]$fullHardwareFixture.SystemSerialNumber -ne 'SYSTEM-SERIAL-FULL' -or [string]$fullHardwareFixture.ProcessorId -ne 'PROCESSOR-FULL') {
-        Add-Failure 'Báo cáo nội bộ đầy đủ đang làm mất serial hoặc Processor ID.'
+    $fullHardwareFixtureValues = [ordered]@{
+        Serial='GENERIC-SERIAL-FULL'; SerialNumber='BIOS-SERIAL-FULL'; SystemSerialNumber='SYSTEM-SERIAL-FULL'
+        BaseboardSerialNumber='BOARD-SERIAL-FULL'; ChassisSerialNumber='CHASSIS-SERIAL-FULL'
+        ProcessorId='PROCESSOR-ID-FULL'; ProcessorSerialNumber='PROCESSOR-SERIAL-FULL'; SMBIOSAssetTag='ASSET-TAG-FULL'
+    }
+    $fullHardwareFixture = ConvertTo-ReportRedactedObject ([pscustomobject]$fullHardwareFixtureValues)
+    foreach ($propertyName in $fullHardwareFixtureValues.Keys) {
+        if ([string]$fullHardwareFixture.PSObject.Properties[$propertyName].Value -ne [string]$fullHardwareFixtureValues[$propertyName]) {
+            Add-Failure "Báo cáo nội bộ đầy đủ đang làm mất $propertyName."
+        }
     }
     $script:RedactSensitive = $true
 
@@ -449,6 +458,13 @@ foreach ($integrationPattern in @(
     '(?s)SerialNumber=.+?ManufactureWeek=.+?ManufactureYear='
 )) {
     if ($inventoryText -notmatch $integrationPattern) { Add-Failure "Helper/schema phần cứng chưa được nối vào luồng báo cáo thật: $integrationPattern" }
+}
+foreach ($privacyPattern in @(
+    '\[switch\]\$FullInternal',
+    'if\s*\(\s*\$RedactSensitive\s+-and\s+\$FullInternal\s*\)',
+    '\$RedactSensitive\s*=\s*-not\s+\[bool\]\$FullInternal'
+)) {
+    if ($inventoryText -notmatch $privacyPattern) { Add-Failure "Báo cáo phần cứng chưa fail-closed cho CLI: $privacyPattern" }
 }
 foreach ($requiredToken in @('tsforge','ohook','deepReport.kmsLifecycle.detected','forensicsReport.kmsLifecycle.renewal')) {
     if (-not $deepScanText.Contains($requiredToken) -and -not $forensicsText.Contains($requiredToken)) { Add-Failure "Quét sâu/forensics thiếu dấu hiệu: $requiredToken" }

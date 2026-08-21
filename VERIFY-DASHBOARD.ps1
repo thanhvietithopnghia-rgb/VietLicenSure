@@ -705,6 +705,7 @@ Assert-SourcePattern $text 'IconSize\s+32\s+-RightGap\s+12' 'Khoảng cách icon
 Assert-SourcePattern $text '[$]fontTile\s*=.*FontStyle\]::Regular' 'Tile vẫn dùng toàn bộ chữ đậm.'
 Assert-SourcePattern $text '(?s)function\s+New-ToolReportRunDirectory.+?return\s+[$]reportRoot' 'Dashboard chưa gom mọi lần xuất vào một thư mục báo cáo dùng chung.'
 Assert-SourcePattern $text 'ApprovedKmsServerFile\s+`"[$]approvedKmsFile`"' 'Báo cáo chưa nhận danh sách KMS được phê duyệt để kết luận chặt chẽ.'
+Assert-SourcePattern $text '[$]privacyArgument\s*=\s*if\s*\(\s*[$]redactSensitive\s*\)\s*\{\s*" -RedactSensitive"\s*\}\s*else\s*\{\s*" -FullInternal"\s*\}' 'Dashboard chưa yêu cầu lựa chọn rõ ràng trước khi tạo báo cáo nội bộ đầy đủ.'
 Assert-SourcePattern $text '[$]applyButton\.Text\s*=\s*Get-DashboardText\s+"dashboard\.settings\.apply"' 'Cài đặt thiếu nút Áp dụng có nhãn localization.'
 Assert-SourcePattern $text '[$]dialog\.AcceptButton\s*=\s*[$]applyButton' 'Nút Áp dụng chưa là hành động chính trong Cài đặt.'
 Assert-SourcePattern $text 'function\s+Invoke-AssuranceCenterAction' 'Thiếu bộ định tuyến bảy tác vụ Báo cáo.'

@@ -7,11 +7,16 @@
     [string]$ApprovedKmsServerFile = "",
     [switch]$Pdf,
     [switch]$RedactSensitive,
+    [switch]$FullInternal,
     [switch]$NoOpen
 )
 
 $ToolVersion = "4.8"
 $ToolReleaseVersion = "4.8.0.1"
+
+# A report can contain hardware serials, UUIDs, asset tags, and other
+# identifying data.  Fail closed for direct CLI use: callers must explicitly
+# request an internal report before those values are retained in the output.
 
 $runtimeHelper = Join-Path $PSScriptRoot "Tool-Runtime.ps1"
 $compatibilityHelper = Join-Path $PSScriptRoot "Tool-Compatibility.ps1"
@@ -36,6 +41,11 @@ function Get-ReportText {
     )
     return Get-ToolText -Key $Key -Culture $Culture -FormatArguments $Arguments
 }
+if ($RedactSensitive -and $FullInternal) {
+    Write-Host (Get-ReportText "report.privacy.conflictingFlags")
+    exit 64
+}
+$RedactSensitive = -not [bool]$FullInternal
 if ($PSVersionTable.PSVersion.Major -lt 3) { Write-Host (Get-ReportText "report.bootstrap.powerShellRequired"); exit 10 }
 try {
     foreach ($requiredPath in @($runtimeHelper, $compatibilityHelper, $capabilityHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $offlinePolicyHelper, $scanOptimizationHelper, $softwareInventoryHelper)) {
