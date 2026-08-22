@@ -160,7 +160,7 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
 $versionChecks = @(
     @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"4\.9\.0"' },
     @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"4\.9\.0\.0"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.08\.21"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.08\.22"' },
     @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"4\.9"' },
     @{ File='windows-license-forensics.ps1'; Pattern='\$toolVersion\s*=\s*"4\.9"' },
     @{ File='Tool-Kiem-Tra-v4.9-OneFile.cs'; Pattern='AssemblyVersion\("4\.9\.0\.0"\)' },
