@@ -16,8 +16,8 @@ Set-StrictMode -Version 2.0
 
 $productVersion = '4.9'
 $releaseVersion = '4.9.0.0'
-$releaseBuildDate = '2026.08.21'
-$releaseLabel = "$releaseVersion-production-20260821"
+$releaseBuildDate = '2026.08.22'
+$releaseLabel = "$releaseVersion-production-20260822"
 # Keep a hard payload-size budget for in-place updates.  The added safety UI,
 # localized evidence explanations, and post-verification data are intentional;
 # 911,024 bytes keeps a narrow cap while leaving one KiB of signing/timestamp headroom.
@@ -956,7 +956,7 @@ $applicationUpdateManifest = [ordered]@{
     Channel = if ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
     LatestVersion = $releaseVersion
     MinimumUpdaterVersion = '4.6.1.0'
-    PublishedAtUtc = '2026-08-21T00:00:00Z'
+    PublishedAtUtc = '2026-08-22T00:00:00Z'
     Title = [ordered]@{
         'vi-VN' = 'v4.9 - Xác thực nguồn gốc, catalog mở rộng, làm sạch có hậu kiểm'
         'en-US' = 'v4.9 - Provenance, expanded catalog, and verified cleanup'
@@ -1092,7 +1092,7 @@ $infoLines = @(
     'Tro ly bo tri truc tiep va co them luot ve bu sau su kien Gui/Enter; cau tra loi hien ngay sau khi xu ly, khong cho cau hoi tiep theo; nhan Offline co le an toan, khung nhap co vien focus va bong bong hoi-dap co mau/vien rieng.',
     'HTML, PDF va cac bao cao dung chung giu du nam o ket qua tren cung mot hang khi du rong; Muc xac minh/Huong xu ly tach thanh o con va chan trang PDF chia hai hang.',
     'Tro ly dong bo day du vi-VN/en-US cho nut, trang thai dong bo va dien giai bao cao hien tai theo ma ket qua.',
-    'Tro ly schema 1.1 / knowledge 1.4.0 co tri thuc cuc bo ky CMS SHA-256, ghim chung thu, chong ha phien ban va khong tai cau hoi/bao cao len mang.',
+    'Tro ly schema 1.1 / knowledge 1.4.1 co tri thuc cuc bo ky CMS SHA-256, ghim chung thu, chong ha phien ban va khong tai cau hoi/bao cao len mang.',
     'Catalogue phan mem 1.5.0.0 co it nhat 92 quy tac khai bao ky CMS; du lieu online khong duoc mang lenh/script tuy y va Low chi de tham khao.',
     'Bao cao Windows/Office thuong van ra kenh KMS khi license o Notification, hien chu ky KMS toi da 180 ngay va ra MAS/PMAS, Activation Program 1.17, lenh erturk-dev.netlify.app/run, TSforge, OHook, KMS toolkit/Microsoft Toolkit con hien huu.',
     'Quet phan mem thuong ra them artifact trong thu muc cai dat thuong mai co gioi han, khong chi du lieu Download; ngay cai duoc chuan hoa yyyy-MM-dd.',

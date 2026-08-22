@@ -631,16 +631,16 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.ControlFlowGuard.Status -ne 'NotClaimed') { throw 'Trạng thái CFG không minh bạch.' }
         if (-not [bool]$releaseManifest.DeterministicManagedBuild) { throw 'Release manifest chưa xác nhận deterministic managed build.' }
         if ([string]$releaseManifest.CapabilitySchemaVersion -ne '1.1' -or [string]$releaseManifest.LogSchemaVersion -ne '1.0-jsonl') { throw 'Thiếu metadata capability/log schema v4.3.' }
-        if ([string]$releaseManifest.ReleaseVersion -ne '4.9.0.0' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.21') {
-            throw 'Release manifest chưa đồng bộ phiên bản 4.9.0.0 / Build 2026.08.21.'
+        if ([string]$releaseManifest.ReleaseVersion -ne '4.9.0.0' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.22') {
+            throw 'Release manifest chưa đồng bộ phiên bản 4.9.0.0 / Build 2026.08.22.'
         }
-        if ([string]$releaseManifest.ReleaseLabel -ne '4.9.0.0-production-20260821' -or
+        if ([string]$releaseManifest.ReleaseLabel -ne '4.9.0.0-production-20260822' -or
             [string]$releaseManifest.ReleaseStatus -ne 'Production') {
             throw 'Release chưa được nâng lên Production sau khi hoàn tất ma trận E2E.'
         }
         $expectedProvenanceState = if ($AllowDevelopmentManifest) { 'Unverified' } else { 'Official' }
         if ([string]$releaseManifest.OfficialBuildProvenance.State -ne $expectedProvenanceState -or
-            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '4.9.0.0-production-20260821' -or
+            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '4.9.0.0-production-20260822' -or
             [string]$releaseManifest.OfficialBuildProvenance.ManifestFile -ne 'OFFICIAL-PROVENANCE-v1.json' -or
             [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
             [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9' -or
@@ -863,7 +863,7 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
         $expectedUpdateChannel = if ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
         if ([string]$applicationUpdateManifest.SchemaVersion -ne '1.0' -or [string]$applicationUpdateManifest.Channel -ne $expectedUpdateChannel -or
             [string]$applicationUpdateManifest.LatestVersion -ne '4.9.0.0' -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
-            [string]$applicationUpdateManifest.PublishedAtUtc -ne '2026-08-21T00:00:00Z') {
+            [string]$applicationUpdateManifest.PublishedAtUtc -ne '2026-08-22T00:00:00Z') {
             throw 'Sai schema/channel/version cập nhật.'
         }
         if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v4.9.0.0' -or

@@ -37,7 +37,7 @@ try {
 
     $base = Read-ToolOfficialProvenanceManifest -ManifestPath $manifestPath -AllowSourceCommitPlaceholder -RequireCanonical
     Assert-ProvenanceTest ($base.Document.ReleaseVersion -ceq '4.9.0.0') 'ReleaseVersion is not v4.9.0.0.'
-    Assert-ProvenanceTest ($base.Document.BuildId -ceq '4.9.0.0-production-20260821') 'BuildId is invalid.'
+    Assert-ProvenanceTest ($base.Document.BuildId -ceq '4.9.0.0-production-20260822') 'BuildId is invalid.'
 
     $strictUnsigned = Test-ToolOfficialProvenance -ManifestPath $manifestPath -SignaturePath $signaturePath
     if (Test-Path -LiteralPath $signaturePath -PathType Leaf) {

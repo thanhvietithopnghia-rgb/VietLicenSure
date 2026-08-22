@@ -78,6 +78,7 @@ $gui = Read-And-Parse 'Giao-Dien.ps1'
 $elevatedBridge = Read-And-Parse 'Tool-ElevatedBridge.ps1'
 $softwareInventory = Read-And-Parse 'Tool-SoftwareInventory.ps1'
 $softwareCatalogUpdater = Read-And-Parse 'software-license-online-update.ps1'
+$runtime = Read-And-Parse 'Tool-Runtime.ps1'
 
 if ($backup -and $backup.Text -notmatch 'Backup-RegistryValues\s+\$windowsPolicyPath.+Windows_SPP_Policy') { Fail 'Backup thường chưa lưu riêng policy NoGenTicket bằng RegistryValues.' }
 if ($cleanup -and ($cleanup.Text -notmatch 'ManagedNoGenTicketPolicy' -or
@@ -1208,7 +1209,7 @@ if ($gui) {
             $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
             $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
-            $env:TOOL_OFFICIAL_BUILD_ID = '4.9.0.0-production-20260821'
+            $env:TOOL_OFFICIAL_BUILD_ID = '4.9.0.0-production-20260822'
             $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
@@ -1383,7 +1384,7 @@ if ($gui) {
 }
 
 if ($softwareInventory) {
-    foreach ($requiredToken in @('Get-ToolSoftwareInventory','Get-ToolSoftwareAssessments','Get-ToolSoftwareKnownActivationState','Get-ToolSoftwareDeepScanEvidence','Get-ToolSoftwareDeepSystemSnapshot','Get-ToolSoftwareLastDeepScanMetadata','Merge-ToolSoftwareInventoryRecords','Test-ToolSoftwareLikelySystemComponent','CleanupFinding','RemediationEvidenceCount','IsSystemComponent','KnownBadFileHash','DeepSignatureHashMismatch','Get-ToolSoftwareRecoveryGate','CorrelationLevel','Assert-ToolSoftwareCatalogNetworkAllowed','Update-ToolSoftwareLicenseCatalog','Explicit user consent is required','raw.githubusercontent.com','Catalog URL is outside the fixed HTTPS allowlist',"`$request.Method = 'GET'",'AllowAutoRedirect = $false','ContentLength -gt $MaximumBytes','UploadedInventory=$false','SentLicenseKeys=$false')) {
+    foreach ($requiredToken in @('Get-ToolSoftwareInventory','Get-ToolSoftwareAssessments','Get-ToolSoftwareKnownActivationState','Get-ToolSoftwareDeepScanEvidence','Get-ToolSoftwareDeepSystemSnapshot','Get-ToolSoftwareLastDeepScanMetadata','Merge-ToolSoftwareInventoryRecords','Test-ToolSoftwareLikelySystemComponent','Get-ToolPackageManagerSoftwareInventory','IncludePackageManagers','Get-ToolSoftwareFamilyDescriptor','ProductFamily','CleanupFinding','RemediationEvidenceCount','IsSystemComponent','KnownBadFileHash','DeepSignatureHashMismatch','Get-ToolSoftwareRecoveryGate','CorrelationLevel','Assert-ToolSoftwareCatalogNetworkAllowed','Update-ToolSoftwareLicenseCatalog','Explicit user consent is required','raw.githubusercontent.com','Catalog URL is outside the fixed HTTPS allowlist',"`$request.Method = 'GET'",'AllowAutoRedirect = $false','ContentLength -gt $MaximumBytes','UploadedInventory=$false','SentLicenseKeys=$false')) {
         if ($softwareInventory.Text -notmatch [regex]::Escape($requiredToken)) { Fail "Mô-đun kiểm kê/danh mục online thiếu ràng buộc an toàn: $requiredToken" }
     }
     if ($softwareInventory.Text -match '(?i)\b(method\s*=\s*["''](?:POST|PUT|PATCH)|uploadfile|invoke-restmethod\b.+-(?:method\s+)?(?:post|put|patch))') {
@@ -1951,8 +1952,9 @@ if ($softwareInventory) {
         }
         $registryParallelA = New-ToolSoftwareInventoryRecord -Name 'Parallel Registry App' -Version '1.0' -Publisher 'Example Corp' -InstallLocation 'C:\Program Files\ParallelApp' -RegistryPath 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ParallelA' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery
         $registryParallelB = New-ToolSoftwareInventoryRecord -Name 'Parallel Registry App' -Version '1.0' -Publisher 'Example Corp' -InstallLocation 'C:\Program Files\ParallelApp' -RegistryPath 'HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ParallelB' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery
-        if (@(Merge-ToolSoftwareInventoryRecords -Records @($registryParallelA,$registryParallelB)).Count -ne 2) {
-            Fail 'Hai uninstall Registry path riêng biệt bị gộp dù có thể là cài đặt song song.'
+        $registryDuplicateFixture = @(Merge-ToolSoftwareInventoryRecords -Records @($registryParallelA,$registryParallelB))
+        if ($registryDuplicateFixture.Count -ne 1 -or [int]$registryDuplicateFixture[0].MergedRecordCount -ne 2) {
+            Fail 'Hai khóa gỡ cài đặt trùng danh tính/vị trí chưa được gom thành một sản phẩm.'
         }
         $patchRecordA = New-ToolSoftwareInventoryRecord -Name 'Patch Parallel App' -Version '1.2.3.4' -Publisher 'Example Corp' -InstallLocation 'C:\Program Files\PatchParallel' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery
         $patchRecordB = New-ToolSoftwareInventoryRecord -Name 'Patch Parallel App' -Version '1.2.3.9' -Publisher 'Example Corp' -InstallLocation 'C:\Program Files\PatchParallel' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery
@@ -1969,6 +1971,10 @@ if ($softwareInventory) {
         if (-not (Test-ToolSoftwareLikelySystemComponent -Name 'Microsoft.WidgetsPlatformRuntime' -Publisher 'CN=Microsoft Corporation, O=Microsoft Corporation' -SourceKind 'Appx' -InstallLocation '')) {
             Fail 'Bộ lọc chưa đưa ứng dụng mặc định/AppX Microsoft vào phụ lục.'
         }
+        $familyFixture = Get-ToolSoftwareFamilyDescriptor -Name 'ABBYY FineReader Language Pack'
+        if ([string]$familyFixture.Family -ne 'ABBYY FineReader' -or -not [bool]$familyFixture.IsCompanion -or [string]$familyFixture.Role -ne 'CompanionComponent') {
+            Fail 'Thành phần phụ chưa được gắn với họ sản phẩm chính.'
+        }
         $integrityCatalog = [pscustomobject]@{ CatalogSource='Fixture'; CatalogVersion='1.3.0.0'; Products=@([pscustomobject]@{
             Id='integrity-fixture'; Vendor='Example'; NamePatterns=@('^Integrity Fixture$'); PublisherPatterns=@('^Example Corp$')
             LicenseModel='Paid'; OfficialUrl='https://example.invalid/'; LicenseDomains=@(); UnauthorizedNamePatterns=@()
@@ -1980,6 +1986,29 @@ if ($softwareInventory) {
         }
     } catch {
         Fail "Không chạy được fixture catalogue/gộp trùng/phần mềm hệ thống: $($_.Exception.Message)"
+    }
+}
+
+if ($runtime) {
+    try {
+        . (Join-Path $root 'Tool-Localization.ps1')
+        . (Join-Path $root 'Tool-Runtime.ps1')
+        $fallbackQuery = {
+            param($Method,$Namespace,$ClassName)
+            if ($Method -eq 'CIM') { throw 'fixture CIM unavailable' }
+            [pscustomobject]@{ Name='Windows Fixture'; LicenseStatus=1 }
+        }
+        $fallbackRead = Invoke-ToolLicenseDataRead -QueryScript $fallbackQuery
+        if (-not [bool]$fallbackRead.Succeeded -or [string]$fallbackRead.Status -ne 'Readable' -or [string]$fallbackRead.Source -ne 'WMI' -or @($fallbackRead.Items).Count -ne 1) {
+            Fail 'Đầu đọc cấp phép không chuyển sang WMI khi CIM lỗi.'
+        }
+        $failedQuery = { param($Method,$Namespace,$ClassName) throw ('fixture ' + $Method + ' unavailable') }
+        $failedRead = Invoke-ToolLicenseDataRead -QueryScript $failedQuery
+        if ([bool]$failedRead.Succeeded -or [string]$failedRead.Status -eq 'Readable' -or [string]$failedRead.Status -eq 'Unactivated' -or @($failedRead.Attempts).Count -ne 2) {
+            Fail 'Nguồn cấp phép không đọc được vẫn chưa được phân biệt rõ với trạng thái chưa kích hoạt.'
+        }
+    } catch {
+        Fail "Không chạy được fixture đọc dữ liệu cấp phép: $($_.Exception.Message)"
     }
 }
 

@@ -3,7 +3,7 @@
 $toolVersion = "4.9.0"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "4.9.0.0"
-$releaseBuildDate = "2026.08.21"
+$releaseBuildDate = "2026.08.22"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v$releaseVersion"
 
@@ -3019,7 +3019,11 @@ function Start-Report([string]$mode, [string]$displayName) {
         $output = New-ToolReportRunDirectory -Category "BaoCao-$mode"
         $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -Pdf$privacyArgument"
         $moduleId = Get-ToolReportModuleId -Mode $mode
-        [void](Start-ToolModuleProcess -ModuleId $moduleId -Arguments $arguments -Action $displayName -Hidden)
+        # Windows licensing, all-user AppX and other-user registry hives can
+        # require an elevated token. The click is the user's action and UAC is
+        # still the final consent boundary; cancellation remains non-destructive.
+        $needsCompleteMachineRead = [bool]($mode -in @('All','Windows','Office','Software'))
+        [void](Start-ToolModuleProcess -ModuleId $moduleId -Arguments $arguments -Action $displayName -Hidden -Elevate:$needsCompleteMachineRead)
         $status.Text = Get-ToolText -Key "report.running" -Culture $script:dashboardCulture -FormatArguments @($displayName)
         $status.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
         Set-ButtonsEnabled $false
@@ -4162,8 +4166,9 @@ function Test-GuiSystemComponent {
     # The final assessment owns this classification.  Do not infer it from a
     # product being free, paid, a runtime, its publisher, or its name: that
     # would put user applications such as PC-NVR in the wrong view.
-    return [bool]($Application -and $Application.PSObject.Properties['IsSystemComponent'] -and
-        [bool]$Application.IsSystemComponent)
+    return [bool]($Application -and (
+        ($Application.PSObject.Properties['IsSystemComponent'] -and [bool]$Application.IsSystemComponent) -or
+        ($Application.PSObject.Properties['IsCompanionComponent'] -and [bool]$Application.IsCompanionComponent)))
 }
 
 function Test-GuiThirdPartyDirectRemediationEvidence {
@@ -4492,6 +4497,13 @@ function Show-ThirdPartyAssessmentResults {
         $lines.Add((Get-DashboardText 'software.results.column.model') + ': ' + [string]$metadata.LicenseText)
         $lines.Add((Get-DashboardText 'software.results.column.status') + ': ' + [string]$application.TechnicalStatus)
         $lines.Add((Get-DashboardText 'software.results.column.confidence') + ': ' + [string]$metadata.ConfidenceText)
+        if ($application.PSObject.Properties['ProductFamily'] -and
+            -not [string]::IsNullOrWhiteSpace([string]$application.ProductFamily)) {
+            $lines.Add((Get-DashboardText 'software.results.detail.productFamily') + ': ' + [string]$application.ProductFamily)
+        }
+        if ($application.PSObject.Properties['MergedRecordCount'] -and [int]$application.MergedRecordCount -gt 1) {
+            $lines.Add((Get-DashboardText 'software.results.detail.mergedRecords' @([int]$application.MergedRecordCount)))
+        }
         if ([bool]$metadata.IsSystemComponent) {
             $lines.Add('')
             $lines.Add((Get-DashboardText 'software.results.detail.systemReadOnly'))

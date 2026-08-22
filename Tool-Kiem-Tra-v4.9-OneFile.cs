@@ -46,7 +46,7 @@ namespace ThanhViet.ToolKiemTra
         private const int MaximumSinglePayloadBytes = 8 * 1024 * 1024;
         private const string PayloadBundleFailureCode = "PAYLOAD_BUNDLE_INVALID";
         private const string OfficialSignerThumbprint = "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA";
-        private const string OfficialBuildId = "4.9.0.0-production-20260821";
+        private const string OfficialBuildId = "4.9.0.0-production-20260822";
         private const string OfficialVerificationUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest";
 #if TOOL_SIGNED_STABLE_BUILD
         // Only a build that is required to pass Authenticode verification may

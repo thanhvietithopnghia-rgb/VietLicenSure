@@ -47,6 +47,7 @@ function Reset-ToolSoftwareInventoryCaches {
     $script:ToolSoftwareDeepDirectoryCache = @{}
     $script:ToolSoftwareDeepSystemSnapshotCache = $null
     $script:ToolSoftwareLastDeepScanMetadata = $null
+    $script:ToolSoftwareLastInventoryMetadata = $null
     $script:ToolSoftwareCatalogTrustCache = @{}
 }
 
@@ -1059,7 +1060,7 @@ function New-ToolSoftwareMergeDescriptor {
         LocationKey = Get-ToolSoftwareNormalizedLocation -Record $Record
         RegistryPathKey = $(if ($Record.PSObject.Properties['RegistryPath'] -and $Record.RegistryPath) { ([string]$Record.RegistryPath).Trim().ToLowerInvariant() } else { '' })
         SourceKind = $sourceKind
-        SourceRank = $(switch ($sourceKind) { 'Registry' {0}; 'Appx' {1}; 'Shortcut' {2}; default {3} })
+        SourceRank = $(switch ($sourceKind) { 'Registry' {0}; 'Appx' {1}; 'PackageManager' {2}; 'Shortcut' {3}; default {4} })
     }
 }
 
@@ -1127,13 +1128,18 @@ function Merge-ToolSoftwareInventoryRecords {
             $headSource = [string]$headDescriptor.SourceKind
             $recordRegistryPath = [string]$descriptor.RegistryPathKey
             $headRegistryPath = [string]$headDescriptor.RegistryPathKey
+            # Multiple uninstall keys frequently describe the same product
+            # (per-user + per-machine, 32/64-bit views, repair registration).
+            # Keep truly parallel installations separate, but allow exact
+            # product identities to merge even when their registry keys differ.
             $parallelRegistryInstances = [bool]($recordSource -eq 'Registry' -and $headSource -eq 'Registry' -and
-                (($recordRegistryPath -and $headRegistryPath -and $recordRegistryPath -ne $headRegistryPath) -or
-                 ($locationKey -and $headLocation -and $locationKey -ne $headLocation)))
+                (($locationKey -and $headLocation -and $locationKey -ne $headLocation) -or
+                 (($recordRegistryPath -and $headRegistryPath -and $recordRegistryPath -ne $headRegistryPath) -and
+                  -not $versionCompatible)))
             if ($parallelRegistryInstances) { continue }
             $complementarySources = [bool](
-                ($recordSource -eq 'Registry' -and $headSource -in @('Shortcut','PortableDiscovery','Appx')) -or
-                ($headSource -eq 'Registry' -and $recordSource -in @('Shortcut','PortableDiscovery','Appx'))
+                ($recordSource -eq 'Registry' -and $headSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager')) -or
+                ($headSource -eq 'Registry' -and $recordSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager'))
             )
             $nameCompatible = [bool]($nameKey -eq $headName)
             $exactProductIdentity = [bool]($nameKey -eq $headName -and $publisherKey -and $headPublisher -and
@@ -1183,7 +1189,7 @@ function Merge-ToolSoftwareInventoryRecords {
         # Keep the exact legacy tie-breaking behavior for records discovered from
         # the same source rank, so optimization cannot change the displayed name,
         # scope or representative path of an existing merged product.
-        $preferred = @($clusterRecords | Sort-Object @{Expression={ switch ([string]$_.SourceKind) { 'Registry' {0}; 'Appx' {1}; 'Shortcut' {2}; default {3} } }})[0]
+        $preferred = @($clusterRecords | Sort-Object @{Expression={ switch ([string]$_.SourceKind) { 'Registry' {0}; 'Appx' {1}; 'PackageManager' {2}; 'Shortcut' {3}; default {4} } }})[0]
         foreach ($propertyName in @('Version','Publisher','InstallDate','InstallLocation','DisplayIcon','UninstallString','RegistryPath','Scope','Architecture','RepresentativePath','SignaturePublisher','FileVersion')) {
             if (-not [string]::IsNullOrWhiteSpace([string]$preferred.$propertyName)) { continue }
             $value = @($clusterRecords | ForEach-Object { $_.$propertyName } | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -First 1)
@@ -1215,6 +1221,24 @@ function Merge-ToolSoftwareInventoryRecords {
     return @($merged.ToArray() | Sort-Object Name,Version,Publisher)
 }
 
+function Get-ToolSoftwareFamilyDescriptor {
+    param([AllowNull()][string]$Name)
+
+    $text = ([string]$Name).Trim()
+    if ([string]::IsNullOrWhiteSpace($text)) {
+        return [pscustomobject][ordered]@{ Family=''; Role='Primary'; IsCompanion=$false }
+    }
+    $componentPattern = '(?i)\s*(?:[-–—:]\s*)?(?:update(?:r| service)?|maintenance service|language pack|help(?: files?)?|documentation|plugin|plug-in|extension|add-in|component|support files?|licensing service|activation service|runtime|redistributable|codec|driver)(?:\s+\d[\w.-]*)?\s*$'
+    $family = [regex]::Replace($text, $componentPattern, '').Trim(' ','-','–','—',':')
+    $isCompanion = [bool]($family -and $family -ne $text)
+    if (-not $family) { $family = $text; $isCompanion = $false }
+    return [pscustomobject][ordered]@{
+        Family=$family
+        Role=$(if ($isCompanion) {'CompanionComponent'} else {'Primary'})
+        IsCompanion=[bool]$isCompanion
+    }
+}
+
 function New-ToolSoftwareInventoryRecord {
     param(
         [string]$Name, [string]$Version, [string]$Publisher, [string]$InstallDate,
@@ -1235,8 +1259,16 @@ function New-ToolSoftwareInventoryRecord {
     if ([string]::IsNullOrWhiteSpace($Version) -and $signature.FileVersion) { $Version = [string]$signature.FileVersion }
     if ([string]::IsNullOrWhiteSpace($InstallLocation) -and $RepresentativePath) { $InstallLocation = Split-Path -Parent $RepresentativePath }
     $identity = (@($Name,$Version,$Publisher,$InstallLocation,$RepresentativePath,$SourceKind) -join '|').ToLowerInvariant()
+    $family = Get-ToolSoftwareFamilyDescriptor -Name $Name
     $classifiedAsSystem = Test-ToolSoftwareLikelySystemComponent -Name $Name -Publisher $Publisher -SourceKind $SourceKind `
         -InstallLocation $InstallLocation -DeclaredSystemComponent:$IsSystemComponent -ReleaseType $ReleaseType -NonRemovable:$NonRemovable
+    # Companion packages remain visible under their product family but are
+    # read-only. A language pack/updater/plugin is not a separate entitlement
+    # target and must never receive an independent cleanup proposal.
+    if ($family.IsCompanion) {
+        $classifiedAsSystem = $true
+        if ([string]::IsNullOrWhiteSpace($SystemComponentReason)) { $SystemComponentReason = 'ProductFamily:CompanionComponent' }
+    }
     if ($classifiedAsSystem -and [string]::IsNullOrWhiteSpace($SystemComponentReason)) { $SystemComponentReason = 'HeuristicOrPlatformMetadata' }
     return [pscustomobject][ordered]@{
         Id=Get-ToolSoftwareStableId -Value $identity; Name=$Name.Trim(); Version=$Version; Publisher=$Publisher
@@ -1245,6 +1277,7 @@ function New-ToolSoftwareInventoryRecord {
         RepresentativePath=$RepresentativePath; SignatureStatus=[string]$signature.Status; SignaturePublisher=[string]$signature.Publisher
         FileVersion=[string]$signature.FileVersion; IsMicrosoft=[bool]($Publisher -match '(?i)\bMicrosoft\b' -or $Name -match '(?i)^\s*(Microsoft|Windows)\b')
         IsSystemComponent=[bool]$classifiedAsSystem; SystemComponentReason=$SystemComponentReason
+        ProductFamily=[string]$family.Family; ComponentRole=[string]$family.Role; IsCompanionComponent=[bool]$family.IsCompanion
     }
 }
 
@@ -1291,6 +1324,14 @@ function Get-ToolAppxSoftwareInventory {
     foreach ($package in $packages) {
         if ([bool]$package.IsFramework -or [bool]$package.IsResourcePackage) { continue }
         $name = if ($package.Name) { [string]$package.Name } else { [string]$package.PackageFamilyName }
+        # Package.Name is an internal identifier. Prefer the manifest display
+        # name when it is already resolved; keep ms-resource tokens out of the
+        # user-facing inventory because they are less useful than the package id.
+        try {
+            $manifest = Get-AppxPackageManifest -Package $package -ErrorAction Stop
+            $displayName = [string]$manifest.Package.Properties.DisplayName
+            if ($displayName -and $displayName -notmatch '^(?i)ms-resource:') { $name = $displayName }
+        } catch {}
         $record = New-ToolSoftwareInventoryRecord -Name $name -Version ([string]$package.Version) -Publisher ([string]$package.Publisher) `
             -InstallDate '' -InstallLocation ([string]$package.InstallLocation) -DisplayIcon '' -UninstallString '' -RegistryPath '' `
             -Scope 'Appx' -Architecture ([string]$package.Architecture) -SourceKind 'Appx' -SourceDetail ([string]$package.PackageFullName) `
@@ -1301,12 +1342,34 @@ function Get-ToolAppxSoftwareInventory {
     return $records.ToArray()
 }
 
+function Get-ToolUserProfileDirectories {
+    $profiles = New-Object System.Collections.Generic.List[string]
+    foreach ($candidate in @([Environment]::GetFolderPath('UserProfile'))) {
+        if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Container)) { $profiles.Add([string]$candidate) }
+    }
+    try {
+        foreach ($profileKey in @(Get-ChildItem -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList' -ErrorAction Stop)) {
+            $profilePath = [Environment]::ExpandEnvironmentVariables([string](Get-ItemProperty -LiteralPath $profileKey.PSPath -Name ProfileImagePath -ErrorAction Stop).ProfileImagePath)
+            if ($profilePath -and (Test-Path -LiteralPath $profilePath -PathType Container)) { $profiles.Add($profilePath) }
+        }
+    } catch {}
+    return @($profiles.ToArray() | Select-Object -Unique)
+}
+
 function Get-ToolShortcutSoftwareInventory {
     $records = New-Object System.Collections.Generic.List[object]
-    $roots = @(
+    $rootList = New-Object System.Collections.Generic.List[string]
+    foreach ($root in @(
         [Environment]::GetFolderPath('CommonStartMenu'), [Environment]::GetFolderPath('StartMenu'),
         [Environment]::GetFolderPath('CommonDesktopDirectory'), [Environment]::GetFolderPath('DesktopDirectory')
-    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
+    )) { if ($root -and (Test-Path -LiteralPath $root -PathType Container)) { $rootList.Add([string]$root) } }
+    foreach ($profile in @(Get-ToolUserProfileDirectories)) {
+        foreach ($relative in @('AppData\Roaming\Microsoft\Windows\Start Menu','Desktop')) {
+            $root = Join-Path $profile $relative
+            if (Test-Path -LiteralPath $root -PathType Container) { $rootList.Add($root) }
+        }
+    }
+    $roots = @($rootList.ToArray() | Select-Object -Unique)
     $shell = $null
     try { $shell = New-Object -ComObject WScript.Shell } catch { return $records.ToArray() }
     try {
@@ -1331,6 +1394,95 @@ function Get-ToolShortcutSoftwareInventory {
             }
         }
     } finally { if ($shell) { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) } }
+    return $records.ToArray()
+}
+
+function Get-ToolPackageManagerSoftwareInventory {
+    $records = New-Object System.Collections.Generic.List[object]
+
+    # Scoop keeps one directory per application and an optional current link.
+    $scoopRoots = New-Object System.Collections.Generic.List[string]
+    foreach ($profile in @(Get-ToolUserProfileDirectories)) {
+        $candidate = Join-Path $profile 'scoop\apps'
+        if (Test-Path -LiteralPath $candidate -PathType Container) { $scoopRoots.Add($candidate) }
+    }
+    if ($env:ProgramData) {
+        $candidate = Join-Path $env:ProgramData 'scoop\apps'
+        if (Test-Path -LiteralPath $candidate -PathType Container) { $scoopRoots.Add($candidate) }
+    }
+    foreach ($root in @($scoopRoots.ToArray() | Select-Object -Unique)) {
+        foreach ($app in @(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue | Select-Object -First 500)) {
+            if ($app.Name -eq 'scoop') { continue }
+            $current = Join-Path $app.FullName 'current'
+            $location = if (Test-Path -LiteralPath $current -PathType Container) { $current } else { [string]$app.FullName }
+            $exe = @(Get-ToolBoundedExecutableFiles -Roots @($location) -MaximumDepth 2 -MaximumResults 1 | Select-Object -First 1)
+            $representative = if ($exe.Count -gt 0) { [string]$exe[0] } else { '' }
+            $version = ''
+            if ($representative) { try { $version = [string](Get-Item -LiteralPath $representative -Force).VersionInfo.FileVersion } catch {} }
+            $record = New-ToolSoftwareInventoryRecord -Name ([string]$app.Name) -Version $version -Publisher '' -InstallDate '' `
+                -InstallLocation $location -DisplayIcon $representative -UninstallString '' -RegistryPath '' -Scope 'PackageManager' `
+                -Architecture '' -SourceKind 'PackageManager' -SourceDetail ('Scoop:' + [string]$app.FullName) `
+                -RepresentativePath $representative -SkipSignature -SkipExecutableDiscovery
+            if ($record) { $records.Add($record) }
+        }
+    }
+
+    # Chocolatey package folders reveal command-line tools that may have no
+    # Add/Remove Programs registration of their own.
+    if ($env:ProgramData) {
+        $chocoRoot = Join-Path $env:ProgramData 'chocolatey\lib'
+        if (Test-Path -LiteralPath $chocoRoot -PathType Container) {
+            foreach ($package in @(Get-ChildItem -LiteralPath $chocoRoot -Directory -Force -ErrorAction SilentlyContinue | Select-Object -First 700)) {
+                $record = New-ToolSoftwareInventoryRecord -Name ([string]$package.Name) -Version '' -Publisher '' -InstallDate '' `
+                    -InstallLocation ([string]$package.FullName) -DisplayIcon '' -UninstallString '' -RegistryPath '' -Scope 'PackageManager' `
+                    -Architecture '' -SourceKind 'PackageManager' -SourceDetail ('Chocolatey:' + [string]$package.FullName) -SkipSignature -SkipExecutableDiscovery
+                if ($record) { $records.Add($record) }
+            }
+        }
+    }
+
+    # Steam libraries are local metadata, so this remains offline and avoids
+    # depending on the Steam client being running.
+    $steamRoots = New-Object System.Collections.Generic.List[string]
+    foreach ($registryPath in @('HKCU:\Software\Valve\Steam','HKLM:\SOFTWARE\WOW6432Node\Valve\Steam','HKLM:\SOFTWARE\Valve\Steam')) {
+        try {
+            $steam = Get-ItemProperty -LiteralPath $registryPath -ErrorAction Stop
+            foreach ($propertyName in @('SteamPath','InstallPath')) {
+                $value = [string]$steam.$propertyName
+                if ($value -and (Test-Path -LiteralPath $value -PathType Container)) { $steamRoots.Add($value) }
+            }
+        } catch {}
+    }
+    $libraries = New-Object System.Collections.Generic.List[string]
+    foreach ($steamRoot in @($steamRoots.ToArray() | Select-Object -Unique)) {
+        $libraries.Add($steamRoot)
+        $libraryFile = Join-Path $steamRoot 'steamapps\libraryfolders.vdf'
+        if (Test-Path -LiteralPath $libraryFile -PathType Leaf) {
+            try {
+                $raw = [IO.File]::ReadAllText($libraryFile)
+                foreach ($match in [regex]::Matches($raw, '(?im)"path"\s+"([^"]+)"')) {
+                    $path = $match.Groups[1].Value -replace '\\\\','\'
+                    if (Test-Path -LiteralPath $path -PathType Container) { $libraries.Add($path) }
+                }
+            } catch {}
+        }
+    }
+    foreach ($library in @($libraries.ToArray() | Select-Object -Unique)) {
+        $steamApps = Join-Path $library 'steamapps'
+        foreach ($manifest in @(Get-ChildItem -LiteralPath $steamApps -Filter 'appmanifest_*.acf' -File -ErrorAction SilentlyContinue | Select-Object -First 1200)) {
+            try {
+                $raw = [IO.File]::ReadAllText($manifest.FullName)
+                $nameMatch = [regex]::Match($raw, '(?im)^\s*"name"\s+"([^"]+)"')
+                if (-not $nameMatch.Success) { continue }
+                $dirMatch = [regex]::Match($raw, '(?im)^\s*"installdir"\s+"([^"]+)"')
+                $location = if ($dirMatch.Success) { Join-Path (Join-Path $steamApps 'common') $dirMatch.Groups[1].Value } else { '' }
+                $record = New-ToolSoftwareInventoryRecord -Name $nameMatch.Groups[1].Value -Version '' -Publisher 'Steam' -InstallDate '' `
+                    -InstallLocation $location -DisplayIcon '' -UninstallString '' -RegistryPath '' -Scope 'PackageManager' `
+                    -Architecture '' -SourceKind 'PackageManager' -SourceDetail ('Steam:' + [string]$manifest.FullName) -SkipSignature -SkipExecutableDiscovery
+                if ($record) { $records.Add($record) }
+            } catch {}
+        }
+    }
     return $records.ToArray()
 }
 
@@ -1368,11 +1520,17 @@ function Get-ToolBoundedExecutableFiles {
 }
 
 function Get-ToolPortableSoftwareInventory {
-    param([int]$MaximumResults = 350, [string[]]$ExcludedRoots = @())
+    param([int]$MaximumResults = 350, [string[]]$ExcludedRoots = @(), [int]$MaximumDepth = 3)
     $records = New-Object System.Collections.Generic.List[object]
     $roots = New-Object System.Collections.Generic.List[string]
     foreach ($root in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Programs' }))) {
         if ($root -and (Test-Path -LiteralPath $root -PathType Container)) { $roots.Add([string]$root) }
+    }
+    foreach ($profile in @(Get-ToolUserProfileDirectories)) {
+        foreach ($relative in @('AppData\Local\Programs','scoop\apps','Apps','Programs','Tools','PortableApps','Desktop\PortableApps','Documents\PortableApps','Downloads\PortableApps')) {
+            $candidate = Join-Path $profile $relative
+            if (Test-Path -LiteralPath $candidate -PathType Container) { $roots.Add($candidate) }
+        }
     }
     try {
         foreach ($drive in @(Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' -ErrorAction SilentlyContinue)) {
@@ -1382,7 +1540,7 @@ function Get-ToolPortableSoftwareInventory {
             }
         }
     } catch {}
-    $candidatePaths = @(Get-ToolBoundedExecutableFiles -Roots $roots.ToArray() -MaximumDepth 2 -MaximumResults ($MaximumResults * 4) | Where-Object {
+    $candidatePaths = @(Get-ToolBoundedExecutableFiles -Roots $roots.ToArray() -MaximumDepth $MaximumDepth -MaximumResults ($MaximumResults * 4) | Where-Object {
         $candidatePath = [string]$_
         $excluded = $false
         foreach ($excludedRoot in @($ExcludedRoots)) {
@@ -1429,11 +1587,17 @@ function Get-ToolPortableSoftwareInventory {
 }
 
 function Get-ToolInstalledSoftwareInventory {
-    param([switch]$IncludeAppx, [switch]$IncludeShortcuts, [switch]$IncludePortable, [int]$PortableMaximumResults = 220)
+    param(
+        [switch]$IncludeAppx, [switch]$IncludeShortcuts, [switch]$IncludePortable,
+        [switch]$IncludePackageManagers, [int]$PortableMaximumResults = 350,
+        [ValidateRange(1,5)][int]$PortableMaximumDepth = 3
+    )
     $all = New-Object System.Collections.Generic.List[object]
-    foreach ($item in @(Get-ToolRegistrySoftwareInventory)) { $all.Add($item) }
-    if ($IncludeAppx) { foreach ($item in @(Get-ToolAppxSoftwareInventory)) { $all.Add($item) } }
-    if ($IncludeShortcuts) { foreach ($item in @(Get-ToolShortcutSoftwareInventory)) { $all.Add($item) } }
+    $sourceCounts = [ordered]@{ Registry=0; Appx=0; Shortcut=0; PackageManager=0; PortableDiscovery=0 }
+    foreach ($item in @(Get-ToolRegistrySoftwareInventory)) { $all.Add($item); $sourceCounts.Registry++ }
+    if ($IncludeAppx) { foreach ($item in @(Get-ToolAppxSoftwareInventory)) { $all.Add($item); $sourceCounts.Appx++ } }
+    if ($IncludeShortcuts) { foreach ($item in @(Get-ToolShortcutSoftwareInventory)) { $all.Add($item); $sourceCounts.Shortcut++ } }
+    if ($IncludePackageManagers) { foreach ($item in @(Get-ToolPackageManagerSoftwareInventory)) { $all.Add($item); $sourceCounts.PackageManager++ } }
     if ($IncludePortable) {
         $broadRoots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Programs' })) |
             Where-Object { $_ } | ForEach-Object { try { [IO.Path]::GetFullPath([string]$_).TrimEnd('\') } catch {} }
@@ -1444,7 +1608,7 @@ function Get-ToolInstalledSoftwareInventory {
         } | Where-Object {
             $_ -and $_.Length -ge 8 -and $broadRoots -notcontains $_
         } | Sort-Object Length -Descending -Unique)
-        foreach ($item in @(Get-ToolPortableSoftwareInventory -MaximumResults $PortableMaximumResults -ExcludedRoots $knownRoots)) {
+        foreach ($item in @(Get-ToolPortableSoftwareInventory -MaximumResults $PortableMaximumResults -MaximumDepth $PortableMaximumDepth -ExcludedRoots $knownRoots)) {
             $candidatePath = ''
             try { if ($item.RepresentativePath) { $candidatePath = [IO.Path]::GetFullPath([string]$item.RepresentativePath) } } catch {}
             $coveredByRegisteredApplication = $false
@@ -1457,10 +1621,24 @@ function Get-ToolInstalledSoftwareInventory {
                     }
                 }
             }
-            if (-not $coveredByRegisteredApplication) { $all.Add($item) }
+            if (-not $coveredByRegisteredApplication) { $all.Add($item); $sourceCounts.PortableDiscovery++ }
         }
     }
-    return @(Merge-ToolSoftwareInventoryRecords -Records $all.ToArray())
+    $merged = @(Merge-ToolSoftwareInventoryRecords -Records $all.ToArray())
+    $script:ToolSoftwareLastInventoryMetadata = [pscustomobject][ordered]@{
+        SchemaVersion='1.0'; CollectedAtUtc=[DateTime]::UtcNow.ToString('o')
+        RawRecordCount=[int]$all.Count; MergedRecordCount=[int]$merged.Count
+        DuplicateRecordCount=[int]($all.Count - $merged.Count); SourceCounts=[pscustomobject]$sourceCounts
+        CompleteMachineRead=[bool]($(if (Get-Command Test-ToolAdministrator -ErrorAction SilentlyContinue) { Test-ToolAdministrator } else { $false }))
+    }
+    return $merged
+}
+
+function Get-ToolSoftwareInventoryCollectionMetadata {
+    if ($null -eq $script:ToolSoftwareLastInventoryMetadata) {
+        return [pscustomobject][ordered]@{ SchemaVersion='1.0'; CollectedAtUtc=''; RawRecordCount=0; MergedRecordCount=0; DuplicateRecordCount=0; SourceCounts=$null; CompleteMachineRead=$false }
+    }
+    return $script:ToolSoftwareLastInventoryMetadata
 }
 
 function Find-ToolSoftwareCatalogMatch {
@@ -3042,12 +3220,18 @@ function Get-ToolSoftwareAssessments {
 
 function Get-ToolSoftwareInventoryMetadata {
     param($Applications, [AllowNull()][object]$Catalog)
+    $collection = Get-ToolSoftwareInventoryCollectionMetadata
     return [pscustomobject][ordered]@{
         SchemaVersion=$script:ToolSoftwareInventorySchemaVersion
         ApplicationCount=[int]@($Applications).Count
         RegistryCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'Registry' -or $_.SourceKind -eq 'Registry' }).Count
         AppxCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'Appx' -or $_.SourceKind -eq 'Appx' }).Count
-        PortableOrShortcutCount=[int]@($Applications | Where-Object { $_.SourceKind -in @('Shortcut','PortableDiscovery') }).Count
+        PackageManagerCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'PackageManager' -or $_.SourceKind -eq 'PackageManager' }).Count
+        PortableOrShortcutCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'Shortcut' -or $_.DiscoverySources -contains 'PortableDiscovery' -or $_.SourceKind -in @('Shortcut','PortableDiscovery') }).Count
+        RawRecordCount=[int]$collection.RawRecordCount
+        DuplicateRecordCount=[int]$collection.DuplicateRecordCount
+        SourceCounts=$collection.SourceCounts
+        CompleteMachineRead=[bool]$collection.CompleteMachineRead
         CatalogSource=$(if ($Catalog) {Get-ToolSoftwareOptionalPropertyString -InputObject $Catalog -Name 'CatalogSource' -Default 'Unavailable'} else {'Unavailable'})
         CatalogVersion=$(Get-ToolSoftwareOptionalPropertyString -InputObject $Catalog -Name 'CatalogVersion')
         CatalogRuleCount=$(if ($Catalog) {[int]@(Get-ToolSoftwareOptionalPropertyValues -InputObject $Catalog -Name 'Products').Count} else {0})

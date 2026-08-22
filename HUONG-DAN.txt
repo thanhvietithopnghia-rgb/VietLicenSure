@@ -2,7 +2,7 @@
 
 Phát triển bởi Thanh Việt
 
-Phiên bản: **v4.9.0.0** · Build **2026.08.21**
+Phiên bản: **v4.9.0.0** · Build **2026.08.22**
 Tệp chính thức: `Tool-Kiem-Tra-v4.9.exe`
 Trang tải luôn trỏ tới bản mới nhất: `https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest`
 

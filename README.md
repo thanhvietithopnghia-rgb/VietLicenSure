@@ -1,6 +1,6 @@
 # Tool Kiểm Tra v4.9 — xác minh nguồn gốc, cập nhật nhận diện, khắc phục có hậu kiểm
 
-**Phiên bản hiện tại:** v4.9.0.0 · Build 2026.08.21
+**Phiên bản hiện tại:** v4.9.0.0 · Build 2026.08.22
 **Tác giả và phát triển:** Thanh Việt
 **Trang tải luôn trỏ tới bản mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 
@@ -27,6 +27,8 @@ Get-AuthenticodeSignature .\Tool-Kiem-Tra-v4.9.exe |
 - **Nguồn gốc và chống giả mạo:** launcher kiểm tra chữ ký, chứng thư ghim, metadata, Build ID và manifest nguồn gốc. Bản bị sửa hoặc không xác minh được được cảnh báo rõ và fail-closed đối với cập nhật cùng thao tác thay đổi hệ thống.
 - **Catalog online an toàn:** catalog khai báo có chữ ký CMS, giới hạn trường/quy tắc được phép, chống hạ phiên bản và giữ cache dự phòng. Chỉ tải sau khi người dùng bật Online; inventory, đường dẫn, key và báo cáo không được tải lên.
 - **Nhận diện mở rộng nhưng thận trọng:** đối chiếu Product ID, publisher, chữ ký, đường dẫn, service, task, Registry và trạng thái cấp phép. `Chưa xác minh` không tự biến thành kết luận crack và không đủ điều kiện tự động làm sạch.
+- **Kiểm kê toàn máy rõ nguồn:** bổ sung AppX/MSIX, shortcut mọi hồ sơ người dùng, Scoop, Chocolatey, Steam và vùng portable giới hạn; gom bản ghi trùng, nhóm thành phần phụ theo sản phẩm chính và công bố phạm vi đọc có/không có quyền quản trị.
+- **Đọc cấp phép có chẩn đoán:** lượt quét Windows/Office/Phần mềm/Toàn bộ yêu cầu UAC, kiểm tra dịch vụ cần thiết, thử CIM rồi WMI và phân biệt `không đọc được dữ liệu` với `chưa kích hoạt`.
 - **Khắc phục có hậu kiểm:** từng mục có định danh và trạng thái riêng. Tool chỉ báo `VerifiedClean` khi hậu kiểm chứng minh dấu vết đã hết và trạng thái cấp phép phù hợp; lỗi có thể thử lại, còn policy hoặc bản cài cần sửa chữa được báo riêng thay vì báo thành công giả.
 - **Quyền riêng tư mặc định:** báo cáo dòng lệnh và bản chia sẻ mặc định che serial, UUID, Processor ID và Asset Tag. Chỉ lựa chọn nội bộ đầy đủ mới giữ định danh.
 - **Giữ nguyên nguyên tắc an toàn:** xem trước, chọn từng mục, xác nhận, backup và hậu kiểm; không tự gỡ phần mềm chỉ vì tên hoặc một dấu vết yếu.

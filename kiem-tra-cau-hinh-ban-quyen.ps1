@@ -854,6 +854,14 @@ function Add-Table {
 
 function Safe-Cim {
     param([string]$ClassName, [string]$Namespace = "root/cimv2", [switch]$ThrowOnError)
+    if ($ClassName -eq 'SoftwareLicensingProduct' -and (Get-Command Invoke-ToolLicenseDataRead -ErrorAction SilentlyContinue)) {
+        if ($null -eq $script:reportLicenseDataRead) {
+            $script:reportLicenseDataRead = Invoke-ToolLicenseDataRead -Namespace $Namespace -ClassName $ClassName -RepairServices
+        }
+        if ($script:reportLicenseDataRead.Succeeded) { return @($script:reportLicenseDataRead.Items) }
+        if ($ThrowOnError) { throw ([string]$script:reportLicenseDataRead.ErrorDetail) }
+        return @()
+    }
     # Windows 7 thuong chi co PowerShell 2/3, chua co Get-CimInstance.
     try {
         if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
@@ -1355,6 +1363,13 @@ $windowsLicenses = Safe-Cim SoftwareLicensingProduct | Where-Object {
     $_.PartialProductKey -and $_.Name -match "Windows" -and
     (-not $_.ApplicationID -or [string]$_.ApplicationID -eq '55c92734-d682-4d71-983e-d6ec3f16059f')
 } | Sort-Object LicenseStatus -Descending
+$licenseDataStatus = if ($script:reportLicenseDataRead) { [string]$script:reportLicenseDataRead.Status } else { 'NotRequested' }
+$licenseDataSource = if ($script:reportLicenseDataRead -and $script:reportLicenseDataRead.Source) { [string]$script:reportLicenseDataRead.Source } else { 'None' }
+$licenseDataRepair = if ($script:reportLicenseDataRead) { @($script:reportLicenseDataRead.Repairs) -join '; ' } else { '' }
+$licenseRows += [pscustomobject]@{
+    "Muc"="Nguon du lieu cap phep"
+    "Gia tri"=("Status={0}; Source={1}; Administrator={2}; Repair={3}" -f $licenseDataStatus,$licenseDataSource,[bool]$script:reportLicenseDataRead.IsAdministrator,$licenseDataRepair)
+}
 foreach ($license in $windowsLicenses) {
     $method = "Khong xac dinh"
     if ($license.Description -match "KMSCLIENT|VOLUME_KMS") {
@@ -1774,7 +1789,8 @@ if ($wantSoftware) {
     # Kiểm kê toàn máy: Registry chỉ là một nguồn. Bổ sung AppX/MSIX, shortcut
     # Start Menu/Desktop và ứng dụng portable trong các vùng chương trình phổ
     # biến. Desktop chỉ là nguồn phát hiện phụ, không phải phạm vi quét.
-    $completeSoftwareInventory = @(Get-ToolInstalledSoftwareInventory -IncludeAppx -IncludeShortcuts -IncludePortable -PortableMaximumResults 220)
+    $completeSoftwareInventory = @(Get-ToolInstalledSoftwareInventory -IncludeAppx -IncludeShortcuts -IncludePortable -IncludePackageManagers -PortableMaximumResults 350 -PortableMaximumDepth 3)
+    $softwareInventoryMetadata = Get-ToolSoftwareInventoryCollectionMetadata
     $softwareCatalog = Get-ToolSoftwareLicenseCatalog -PreferCache
     $softwareAssessments = @(Get-ToolSoftwareAssessments -Applications $completeSoftwareInventory -Catalog $softwareCatalog)
     $discoverySourceColumn = Get-ReportText "report.software.column.discoverySource"
@@ -1857,6 +1873,9 @@ if ($wantSoftware) {
             DeepScanSignatureChecks = [int]$assessment.DeepScanSignatureChecks
             DeepScanHashChecks = [int]$assessment.DeepScanHashChecks
             MergedRecordCount = [int]$assessment.MergedRecordCount
+            ProductFamily = [string]$assessment.ProductFamily
+            ComponentRole = [string]$assessment.ComponentRole
+            IsCompanionComponent = [bool]$assessment.IsCompanionComponent
         }
     } | Sort-Object AssessmentSortPriority, "Ten phan mem", "Phien ban", "Phạm vi")
 
@@ -2028,6 +2047,9 @@ if ($wantSoftware) {
 
     $softwareOverview = @(
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.text.035"); "Gia tri"=@($apps).Count },
+        [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.rawRecords"); "Gia tri"=[int]$softwareInventoryMetadata.RawRecordCount },
+        [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.duplicatesMerged"); "Gia tri"=[int]$softwareInventoryMetadata.DuplicateRecordCount },
+        [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.machineScope"); "Gia tri"=(Get-ReportText $(if ([bool]$softwareInventoryMetadata.CompleteMachineRead) {'report.software.overview.machineScopeComplete'} else {'report.software.overview.machineScopeLimited'})) },
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.primary"); "Gia tri"=@($primaryApps).Count },
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.system"); "Gia tri"=@($systemApps).Count },
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.text.036"); "Gia tri"=@($thirdPartyApps).Count },
@@ -2854,6 +2876,10 @@ $summary = New-ToolReportEnvelope -ReportKind "InventoryAndLicense" -ToolVersion
     WindowsConclusionCode = [string]$windowsVerdict.Code
     WindowsConclusion = [string]$windowsVerdict.Conclusion
     WindowsVerificationLevel = [string]$windowsVerdict.VerificationLevel
+    LicenseDataReadStatus = [string]$licenseDataStatus
+    LicenseDataReadSource = [string]$licenseDataSource
+    LicenseDataReadAdministrator = [bool]$(if ($script:reportLicenseDataRead) { $script:reportLicenseDataRead.IsAdministrator } else { $false })
+    LicenseDataReadRepairs = @($(if ($script:reportLicenseDataRead) { @($script:reportLicenseDataRead.Repairs) } else { @() }))
     OfficeStatus = [string]$officeSummaryStatus
     OfficeDetected = [bool]$officeDetected
     OfficeConclusionCode = [string]$officeVerdict.Code

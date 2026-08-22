@@ -274,6 +274,19 @@ function Safe-Cim {
     if (-not $NoCache -and $script:CimCache.ContainsKey($cacheKey)) {
         return @($script:CimCache[$cacheKey])
     }
+    if ($ClassName -eq 'SoftwareLicensingProduct' -and (Get-Command Invoke-ToolLicenseDataRead -ErrorAction SilentlyContinue)) {
+        $readResult = Invoke-ToolLicenseDataRead -Namespace $Namespace -ClassName $ClassName -RepairServices:$RepairScanSources
+        $script:WindowsLicenseDataRead = $readResult
+        if ($readResult.Succeeded) {
+            $result = @($readResult.Items)
+            if (-not $NoCache) { $script:CimCache[$cacheKey] = @($result) }
+            return $result
+        }
+        if (-not [string]::IsNullOrWhiteSpace($CriticalLabel)) {
+            Add-ScanWarning ("{0}: Status={1}; {2}" -f $CriticalLabel,[string]$readResult.Status,[string]$readResult.ErrorDetail)
+        }
+        return @()
+    }
     $firstError = ""
     try {
         if (Get-Command Get-CimInstance -ErrorAction SilentlyContinue) {
@@ -1374,7 +1387,7 @@ function ConvertTo-ToolRegistryPath {
 
 function Get-InstalledSoftwareInventory {
     try {
-        return @(Get-ToolInstalledSoftwareInventory -IncludeAppx -IncludeShortcuts -IncludePortable -PortableMaximumResults 220)
+        return @(Get-ToolInstalledSoftwareInventory -IncludeAppx -IncludeShortcuts -IncludePortable -IncludePackageManagers -PortableMaximumResults 350 -PortableMaximumDepth 3)
     } catch {
         Add-ScanWarning (Get-CleanupText "cleanupReport.thirdParty.inventorySourceFailed" @('AllSoftwareSources', $_.Exception.Message))
         return @()

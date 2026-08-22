@@ -2,7 +2,7 @@
 
 Developed by Thanh Viet
 
-Version: **v4.9.0.0** · Build **2026.08.21**
+Version: **v4.9.0.0** · Build **2026.08.22**
 Official file: `Tool-Kiem-Tra-v4.9.exe`
 Stable latest-release page: <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 

@@ -1,6 +1,6 @@
 # Hướng dẫn tham gia và tiếp cận mã nguồn có kiểm soát từ v4.9
 
-Áp dụng cho Tool Kiểm Tra v4.9.0.0, build 2026.08.21 và các phiên bản mới hơn.
+Áp dụng cho Tool Kiểm Tra v4.9.0.0, build 2026.08.22 và các phiên bản mới hơn.
 
 ## Mô hình phát triển
 
