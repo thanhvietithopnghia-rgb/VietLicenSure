@@ -701,7 +701,7 @@ function New-ToolReportPdfGuideHtml {
     return "<section class='pdf-guide pdf-guide-unavailable'><h2>$title</h2><p>$message</p></section>"
 }
 
-function Get-ToolPdfBrowser {
+function Get-ToolPdfBrowsers {
     $candidates = @(
         "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
         "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
@@ -710,11 +710,20 @@ function Get-ToolPdfBrowser {
         "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
         "$env:ProgramW6432\Google\Chrome\Application\chrome.exe"
     )
+    $browsers = New-Object System.Collections.Generic.List[string]
+    $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($candidate in $candidates) {
         if (-not [string]::IsNullOrWhiteSpace([string]$candidate) -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
-            return $candidate
+            $candidateFull = [IO.Path]::GetFullPath($candidate)
+            if ($seen.Add($candidateFull)) { [void]$browsers.Add($candidateFull) }
         }
     }
+    return @($browsers.ToArray())
+}
+
+function Get-ToolPdfBrowser {
+    $browsers = @(Get-ToolPdfBrowsers)
+    if ($browsers.Count -gt 0) { return [string]$browsers[0] }
     return ""
 }
 
@@ -860,6 +869,71 @@ function Remove-ToolPdfProfileDirectory {
     return $false
 }
 
+function Test-ToolReportRequiresBrowserPdf {
+    param([Parameter(Mandatory = $true)][string]$HtmlPath)
+
+    try {
+        if (-not (Test-Path -LiteralPath $HtmlPath -PathType Leaf)) { return $false }
+        $html = [IO.File]::ReadAllText([IO.Path]::GetFullPath($HtmlPath), [Text.Encoding]::UTF8)
+        return [bool]($html -match '(?is)<html\b[^>]*\bdata-pdf-theme\s*=\s*["''][^"'']+["'']')
+    } catch {
+        return $false
+    }
+}
+
+function Test-ToolPdfFileComplete {
+    param([Parameter(Mandatory = $true)][string]$PdfPath)
+
+    try {
+        if (-not (Test-Path -LiteralPath $PdfPath -PathType Leaf)) { return $false }
+        $stream = [IO.File]::Open(
+            [IO.Path]::GetFullPath($PdfPath),
+            [IO.FileMode]::Open,
+            [IO.FileAccess]::Read,
+            ([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+        try {
+            if ($stream.Length -le 1024) { return $false }
+            $headerBytes = New-Object byte[] 5
+            if ($stream.Read($headerBytes, 0, $headerBytes.Length) -ne $headerBytes.Length -or
+                [Text.Encoding]::ASCII.GetString($headerBytes) -ne '%PDF-') {
+                return $false
+            }
+            $tailLength = [int][Math]::Min(4096, $stream.Length)
+            [void]$stream.Seek(-$tailLength, [IO.SeekOrigin]::End)
+            $tailBytes = New-Object byte[] $tailLength
+            $tailRead = $stream.Read($tailBytes, 0, $tailBytes.Length)
+            return [Text.Encoding]::ASCII.GetString($tailBytes, 0, $tailRead).Contains('%%EOF')
+        } finally {
+            $stream.Dispose()
+        }
+    } catch {
+        return $false
+    }
+}
+
+function Wait-ToolPdfFileComplete {
+    param(
+        [Parameter(Mandatory = $true)][string]$PdfPath,
+        [int]$TimeoutSeconds = 45
+    )
+
+    $deadline = [DateTime]::UtcNow.AddSeconds([Math]::Max(1, $TimeoutSeconds))
+    $lastLength = -1L
+    $stableChecks = 0
+    do {
+        if (Test-ToolPdfFileComplete -PdfPath $PdfPath) {
+            $length = (Get-Item -LiteralPath $PdfPath -Force).Length
+            if ($length -eq $lastLength) { $stableChecks++ } else { $stableChecks = 1; $lastLength = $length }
+            if ($stableChecks -ge 2) { return $true }
+        } else {
+            $lastLength = -1L
+            $stableChecks = 0
+        }
+        Start-Sleep -Milliseconds 200
+    } while ([DateTime]::UtcNow -lt $deadline)
+    return $false
+}
+
 function Convert-ToolHtmlToPdf {
     param(
         [Parameter(Mandatory = $true)][string]$HtmlPath,
@@ -876,52 +950,85 @@ function Convert-ToolHtmlToPdf {
             Error = Get-ToolReportExportText "foundation.reportExport.htmlOfflineUnsafe"
         }
     }
-    $browser = Get-ToolPdfBrowser
-    if (-not [string]::IsNullOrWhiteSpace($browser)) {
-        $profileRoot = ""
-        $profilePath = ""
-        try {
-            $profileState = New-ToolPdfProfileDirectory
-            $profileRoot = [string]$profileState.RootPath
-            $profilePath = [string]$profileState.ProfilePath
-            $htmlUri = ([Uri](Resolve-Path -LiteralPath $HtmlPath).Path).AbsoluteUri
-            $arguments = @(
-                "--headless",
-                "--disable-gpu",
-                "--disable-extensions",
-                "--disable-background-networking",
-                "--disable-component-update",
-                "--disable-domain-reliability",
-                "--disable-sync",
-                "--metrics-recording-only",
-                "--host-resolver-rules=`"MAP * 0.0.0.0`"",
-                "--no-first-run",
-                "--no-default-browser-check",
-                "--run-all-compositor-stages-before-draw",
-                "--no-pdf-header-footer",
-                "--print-to-pdf-no-header",
-                "--user-data-dir=`"$profilePath`"",
-                "--print-to-pdf=`"$PdfPath`"",
-                "`"$htmlUri`""
-            )
-            $process = Start-Process -FilePath $browser -ArgumentList $arguments -PassThru -WindowStyle Hidden
-            if (-not $process.WaitForExit([Math]::Max(5, $TimeoutSeconds) * 1000)) {
-                try { $process.Kill() } catch {}
-                throw (Get-ToolReportExportText "foundation.reportExport.browserTimeout" -Arguments @($TimeoutSeconds))
-            }
-            if ($process.ExitCode -eq 0 -and (Test-Path -LiteralPath $PdfPath -PathType Leaf) -and (Get-Item -LiteralPath $PdfPath).Length -gt 1024) {
-                return [pscustomobject][ordered]@{ Success=$true; Engine=[IO.Path]::GetFileNameWithoutExtension($browser); Path=$PdfPath; Error="" }
-            }
-            throw (Get-ToolReportExportText "foundation.reportExport.browserPdfInvalid" -Arguments @($process.ExitCode))
-        } catch {
-            [void]$errors.Add((Get-ToolReportExportText "foundation.reportExport.browserError" -Arguments @($_.Exception.Message)))
-        } finally {
-            if (-not [string]::IsNullOrWhiteSpace($profilePath) -and -not [string]::IsNullOrWhiteSpace($profileRoot)) {
-                [void](Remove-ToolPdfProfileDirectory -ProfilePath $profilePath -ProfileRoot $profileRoot)
+    $browsers = @(Get-ToolPdfBrowsers)
+    if ($browsers.Count -gt 0) {
+        foreach ($browser in $browsers) {
+            $profileRoot = ""
+            $profilePath = ""
+            try {
+                $profileState = New-ToolPdfProfileDirectory
+                $profileRoot = [string]$profileState.RootPath
+                $profilePath = [string]$profileState.ProfilePath
+
+                # Chromium can de-elevate itself on Windows.  If the report is
+                # being written for another interactive profile, that child
+                # process may no longer be allowed to read the original HTML or
+                # write the requested PDF.  Stage both files inside the secured
+                # per-run browser profile, then copy the validated PDF back from
+                # the parent process.  This also keeps every browser attempt
+                # isolated and lets Chrome take over when Edge is unavailable.
+                $stagedHtmlPath = Join-Path $profilePath "report-input.html"
+                $stagedPdfPath = Join-Path $profilePath "report-output.pdf"
+                [IO.File]::Copy([IO.Path]::GetFullPath($HtmlPath), $stagedHtmlPath, $false)
+                if (-not (Test-ToolHtmlOfflineSafe -HtmlPath $stagedHtmlPath)) {
+                    throw (Get-ToolReportExportText "foundation.reportExport.htmlOfflineUnsafe")
+                }
+                $htmlUri = ([Uri]$stagedHtmlPath).AbsoluteUri
+                $arguments = @(
+                    "--headless",
+                    "--disable-gpu",
+                    "--disable-extensions",
+                    "--disable-background-networking",
+                    "--disable-component-update",
+                    "--disable-domain-reliability",
+                    "--disable-sync",
+                    "--metrics-recording-only",
+                    "--host-resolver-rules=`"MAP * 0.0.0.0`"",
+                    "--no-first-run",
+                    "--no-default-browser-check",
+                    "--run-all-compositor-stages-before-draw",
+                    "--no-pdf-header-footer",
+                    "--print-to-pdf-no-header",
+                    "--user-data-dir=`"$profilePath`"",
+                    "--print-to-pdf=`"$stagedPdfPath`"",
+                    "`"$htmlUri`""
+                )
+                $browserStartedAt = [DateTime]::UtcNow
+                $process = Start-Process -FilePath $browser -ArgumentList $arguments -PassThru -WindowStyle Hidden
+                if (-not $process.WaitForExit([Math]::Max(5, $TimeoutSeconds) * 1000)) {
+                    try { $process.Kill() } catch {}
+                    throw (Get-ToolReportExportText "foundation.reportExport.browserTimeout" -Arguments @($TimeoutSeconds))
+                }
+                $elapsedSeconds = [Math]::Max(0, ([DateTime]::UtcNow - $browserStartedAt).TotalSeconds)
+                $remainingSeconds = [Math]::Max(1, [Math]::Ceiling([Math]::Max(5, $TimeoutSeconds) - $elapsedSeconds))
+                if ($process.ExitCode -eq 0 -and (Wait-ToolPdfFileComplete -PdfPath $stagedPdfPath -TimeoutSeconds $remainingSeconds)) {
+                    [IO.File]::Copy($stagedPdfPath, [IO.Path]::GetFullPath($PdfPath), $true)
+                    if (Test-ToolPdfFileComplete -PdfPath $PdfPath) {
+                        return [pscustomobject][ordered]@{ Success=$true; Engine=[IO.Path]::GetFileNameWithoutExtension($browser); Path=$PdfPath; Error="" }
+                    }
+                }
+                throw (Get-ToolReportExportText "foundation.reportExport.browserPdfInvalid" -Arguments @($process.ExitCode))
+            } catch {
+                $engineName = [IO.Path]::GetFileNameWithoutExtension([string]$browser)
+                $engineError = "$engineName`: $($_.Exception.Message)"
+                [void]$errors.Add((Get-ToolReportExportText "foundation.reportExport.browserError" -Arguments @($engineError)))
+            } finally {
+                if (-not [string]::IsNullOrWhiteSpace($profilePath) -and -not [string]::IsNullOrWhiteSpace($profileRoot)) {
+                    [void](Remove-ToolPdfProfileDirectory -ProfilePath $profilePath -ProfileRoot $profileRoot)
+                }
             }
         }
     } else {
         [void]$errors.Add((Get-ToolReportExportText "foundation.reportExport.browserMissing"))
+    }
+
+    # The v4.8-compatible presentation depends on Chromium print CSS (grid,
+    # @media print and controlled page breaks).  Word automation silently drops
+    # those rules and can create a technically valid but visibly broken PDF.
+    # Fail closed for themed reports so the package retains HTML/JSON/XML and a
+    # clear PDF error instead of publishing a misleading fallback document.
+    if (Test-ToolReportRequiresBrowserPdf -HtmlPath $HtmlPath) {
+        return [pscustomobject][ordered]@{ Success=$false; Engine=""; Path=""; Error=($errors.ToArray() -join " | ") }
     }
 
     $word = $null

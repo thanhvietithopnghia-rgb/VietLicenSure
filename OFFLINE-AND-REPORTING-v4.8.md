@@ -85,9 +85,9 @@ Tool thử lần lượt:
 
 1. Microsoft Edge headless;
 2. Google Chrome headless;
-3. Microsoft Word automation.
+3. Microsoft Word automation, chỉ cho presentation cơ bản không mang theme PDF.
 
-Edge/Chrome nhận cờ tắt background networking, sync, domain reliability và metrics; DNS resolver được map về `0.0.0.0`. Profile tạm nằm dưới `%LOCALAPPDATA%\Temp\ThanhViet-Tool-Kiem-Tra\pdf`, chỉ user hiện tại/SYSTEM truy cập và được dọn bằng retry có giới hạn.
+Edge/Chrome nhận cờ tắt background networking, sync, domain reliability và metrics; DNS resolver được map về `0.0.0.0`. Profile tạm nằm dưới `%LOCALAPPDATA%\Temp\ThanhViet-Tool-Kiem-Tra\pdf`, chỉ user hiện tại/SYSTEM truy cập và được dọn bằng retry có giới hạn. HTML nguồn và PDF trung gian cũng được staging trong profile này, nên Chromium sau khi tự hạ quyền vẫn đọc/ghi được; tiến trình Tool chỉ chép PDF đã tạo hợp lệ về đích cuối. Tool thử từng trình duyệt tìm thấy theo thứ tự Edge rồi Chrome. Nếu cả hai lỗi, presentation `v4.8-classic-a4` fail closed và không chuyển sang Word, vì Word không giữ được CSS/grid/ngắt trang của giao diện này.
 
 Nếu không có engine, tool báo rõ lỗi PDF nhưng vẫn giữ HTML/JSON/XML và SHA-256 manifest.
 

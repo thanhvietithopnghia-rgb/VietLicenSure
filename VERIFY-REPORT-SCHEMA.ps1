@@ -127,6 +127,55 @@ try {
         $genericDetailedHtml -notmatch 'font-size:8\.15pt!important') {
         Add-Failure 'Renderer HTML chi tiết dùng chung chưa gắn giao diện PDF v4.8.'
     }
+    $themeGateFixture = Join-Path ([IO.Path]::GetTempPath()) ('tool-report-theme-gate-' + [Guid]::NewGuid().ToString('N') + '.html')
+    try {
+        [IO.File]::WriteAllText($themeGateFixture, $genericDetailedHtml, (New-Object Text.UTF8Encoding($false)))
+        if (-not (Test-ToolReportRequiresBrowserPdf -HtmlPath $themeGateFixture)) {
+            Add-Failure 'Chốt chặn PDF không nhận diện presentation mang theme v4.8.'
+        }
+    } finally {
+        Remove-Item -LiteralPath $themeGateFixture -Force -ErrorAction SilentlyContinue
+    }
+    foreach ($requiredBrowserFailoverToken in @(
+        'function Get-ToolPdfBrowsers',
+        'foreach ($browser in $browsers)',
+        'report-input.html',
+        'report-output.pdf',
+        '[IO.File]::Copy($stagedPdfPath',
+        'Wait-ToolPdfFileComplete -PdfPath $stagedPdfPath',
+        'Test-ToolReportRequiresBrowserPdf -HtmlPath $HtmlPath'
+    )) {
+        if (-not $reportExportText.Contains($requiredBrowserFailoverToken)) {
+            Add-Failure "Bộ xuất PDF thiếu staging/failover trình duyệt: $requiredBrowserFailoverToken"
+        }
+    }
+    $browserPaths = @(Get-ToolPdfBrowsers)
+    if (@($browserPaths | Select-Object -Unique).Count -ne $browserPaths.Count) {
+        Add-Failure 'Danh sách engine PDF trình duyệt còn đường dẫn trùng.'
+    }
+    if ($browserPaths.Count -gt 0) {
+        $pdfFixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('tool-report-browser-fixture-' + [Guid]::NewGuid().ToString('N'))
+        [void](New-Item -ItemType Directory -Path $pdfFixtureRoot -Force)
+        try {
+            $pdfFixtureHtml = Join-Path $pdfFixtureRoot 'fixture.html'
+            $pdfFixturePath = Join-Path $pdfFixtureRoot 'fixture.pdf'
+            [IO.File]::WriteAllText($pdfFixtureHtml, $genericDetailedHtml, (New-Object Text.UTF8Encoding($false)))
+            $browserPdfResult = Convert-ToolHtmlToPdf -HtmlPath $pdfFixtureHtml -PdfPath $pdfFixturePath -TimeoutSeconds 45
+            $expectedEngines = @($browserPaths | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension([string]$_) })
+            if (-not $browserPdfResult.Success -or
+                [string]$browserPdfResult.Engine -notin $expectedEngines -or
+                -not (Test-Path -LiteralPath $pdfFixturePath -PathType Leaf) -or
+                (Get-Item -LiteralPath $pdfFixturePath).Length -le 1024) {
+                Add-Failure 'Fixture PDF không được tạo bằng Edge/Chrome qua staging an toàn.'
+            }
+        } catch {
+            Add-Failure "Không kiểm tra được staging/failover PDF trình duyệt: $($_.Exception.Message)"
+        } finally {
+            if (Test-Path -LiteralPath $pdfFixtureRoot) {
+                Remove-Item -LiteralPath $pdfFixtureRoot -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
     if ($inventoryText -notmatch 'data-report-view="detailed"\s+data-pdf-theme="\$pdfThemeName"' -or
         $inventoryText -match 'data-report-view="summary"[^>]*data-pdf-theme') {
         Add-Failure 'Báo cáo chính chưa giới hạn giao diện v4.8 cho riêng presentation PDF chi tiết.'
