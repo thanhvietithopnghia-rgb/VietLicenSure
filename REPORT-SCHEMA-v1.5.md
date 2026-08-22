@@ -59,7 +59,7 @@ HTML là bản tổng quan không có bảng dài: chỉ giữ cấu hình chín
 
 Ở màn hình rộng, HTML cân năm thẻ kết quả nhanh trên một hàng; màn hình hẹp tự giảm số cột. Mỗi kết luận có hai ô con riêng cho Mức xác minh và Hướng xử lý. Chân presentation chi tiết dùng hai hàng cố định (tên công cụ, sau đó thông tin tác giả/hỗ trợ) để PDF không ép hoặc cắt chữ.
 
-Schema 1.4 dùng ngắt trang A4 an toàn cho PDF và metadata `HtmlPresentation=Summary`, `PdfPresentation=Detailed`. Các nhóm thẻ kết quả mang lớp đếm cột `cards-count-N`; vì vậy năm thẻ Windows, Office, dấu hiệu, rà soát và Online/Offline giữ trên cùng một hàng khi in PDF, còn màn hình hẹp vẫn tự co. Từ v4.8, mọi package ghi trực tiếp vào thư mục chung `Desktop\BaoCao-Tool-Kiem-Tra`, không tạo thư mục con theo lượt; các tệp cùng lượt dùng chung tên gốc có timestamp mili-giây. Khi hoàn tất, Tool mở HTML tổng quan và người dùng chọn nút trong HTML để mở đúng PDF đầy đủ.
+Schema 1.4 dùng ngắt trang A4 an toàn cho PDF và metadata `HtmlPresentation=Summary`, `PdfPresentation=Detailed`. Presentation PDF chi tiết mang chủ đề `v4.8-classic-a4`, khóa giao diện A4 sáng, khung xanh, năm thẻ trạng thái và mật độ bảng của v4.8 trong khi vẫn giữ toàn bộ dữ liệu v4.9. Các nhóm thẻ kết quả mang lớp đếm cột `cards-count-N`; vì vậy năm thẻ Windows, Office, dấu hiệu, rà soát và Online/Offline giữ trên cùng một hàng khi in PDF, còn màn hình hẹp vẫn tự co. Từ v4.8, mọi package ghi trực tiếp vào thư mục chung `Desktop\BaoCao-Tool-Kiem-Tra`, không tạo thư mục con theo lượt; các tệp cùng lượt dùng chung tên gốc có timestamp mili-giây. Khi hoàn tất, Tool mở HTML tổng quan và người dùng chọn nút trong HTML để mở đúng PDF đầy đủ.
 
 ## Integrity package
 

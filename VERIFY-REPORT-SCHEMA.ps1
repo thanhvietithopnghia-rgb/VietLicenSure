@@ -92,6 +92,45 @@ $reportExportText = Read-SourceText 'Tool-ReportExport.ps1'
 
 try {
     . (Join-Path $sourceDirectoryFull 'Tool-ReportExport.ps1')
+    $exportMetadata = Get-ToolReportExportMetadata
+    if ([string]$exportMetadata.PdfTheme -ne 'v4.8-classic-a4') {
+        Add-Failure 'Metadata PDF chưa khóa giao diện tương thích v4.8.'
+    }
+    $professionalCss = Get-ToolProfessionalReportCss
+    foreach ($requiredCssToken in @(
+        '@page{size:A4 portrait;margin:12mm}',
+        ':root{color-scheme:light',
+        '.hero{background:#fff!important;border:2px solid #123b74;border-radius:0',
+        '.cards.cards-count-5{grid-template-columns:repeat(5,minmax(0,1fr))}',
+        '.card,section,.toc{background:#fff!important;border-color:#b9c3cf;border-radius:0;box-shadow:none}',
+        'thead{display:table-header-group}',
+        'section{break-inside:auto!important'
+    )) {
+        if ($professionalCss -notlike "*$requiredCssToken*") {
+            Add-Failure "CSS PDF thiếu đặc trưng giao diện v4.8: $requiredCssToken"
+        }
+    }
+    $compatibilityCss = Get-ToolV48PdfCompatibilityCss
+    foreach ($requiredCompatibilityToken in @(
+        'font-size:8.15pt!important',
+        'line-height:1.34!important;padding:5px 6px!important',
+        'background:#e8edf3!important;color:#183b66!important',
+        'background:#fafcff!important',
+        '.system-software-appendix{background:#fff!important;border-color:#b9c3cf!important}'
+    )) {
+        if ($compatibilityCss -notlike "*$requiredCompatibilityToken*") {
+            Add-Failure "CSS tương thích chưa khôi phục đúng mật độ/màu v4.8: $requiredCompatibilityToken"
+        }
+    }
+    $genericDetailedHtml = New-ToolProfessionalHtmlDocument -Title 'PDF v4.8 compatibility fixture'
+    if ($genericDetailedHtml -notmatch 'data-report-view="detailed"\s+data-pdf-theme="v4\.8-classic-a4"' -or
+        $genericDetailedHtml -notmatch 'font-size:8\.15pt!important') {
+        Add-Failure 'Renderer HTML chi tiết dùng chung chưa gắn giao diện PDF v4.8.'
+    }
+    if ($inventoryText -notmatch 'data-report-view="detailed"\s+data-pdf-theme="\$pdfThemeName"' -or
+        $inventoryText -match 'data-report-view="summary"[^>]*data-pdf-theme') {
+        Add-Failure 'Báo cáo chính chưa giới hạn giao diện v4.8 cho riêng presentation PDF chi tiết.'
+    }
     $tableProfileFixtures = @(
         @{ Name='VI assessment context split'; Columns=@('Ten phan mem','Phien ban','Hang','Mô hình bản quyền'); Expected='table-profile-assessment-context' },
         @{ Name='VI assessment decision split'; Columns=@('Ten phan mem','Trạng thái kỹ thuật','Độ tin cậy','Điều kiện khắc phục'); Expected='table-profile-assessment-decision' },

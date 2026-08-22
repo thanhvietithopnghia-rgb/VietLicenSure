@@ -470,8 +470,11 @@ if ($reportExportText -notmatch 'ToolReportExportSchemaVersion\s*=\s*"1\.4"' -or
     $reportExportText -notmatch 'ConvertTo-ToolHtmlCompactPublisher' -or
     $reportExportText -notmatch 'PdfHtmlContent' -or
     $reportExportText -notmatch 'TOOL_REPORT_PDF_GUIDE' -or
+    $reportExportText -notmatch 'v4\.8-classic-a4' -or
+    $reportExportText -notmatch 'Get-ToolV48PdfCompatibilityCss' -or
     $reportText -notmatch 'data-report-view="summary"' -or
-    $reportText -notmatch 'data-report-view="detailed"') {
+    $reportText -notmatch 'data-report-view="detailed"' -or
+    $reportText -notmatch 'data-pdf-theme="\$pdfThemeName"') {
     $failures.Add('HTML/PDF v4.3 thiếu offline safety gate, CSP hoặc bố cục in A4 hiện đại.')
 }
 if ($reportExportText -match 'TOOL_SECURE_RUNTIME_DIR' -or
@@ -788,6 +791,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.ReportExportSchemaVersion -ne '1.4' -or
             [string]$releaseManifest.ReportHtmlPresentation -ne 'Summary' -or
             [string]$releaseManifest.ReportPdfPresentation -ne 'Detailed' -or
+            [string]$releaseManifest.ReportPdfTheme -ne 'v4.8-classic-a4' -or
             [string]$releaseManifest.ReportContentSplit -notmatch '^HTML summary' -or
             [string]$releaseManifest.DefaultReportOpenFormat -ne 'HTML' -or
             [string]$releaseManifest.ReportOutputRoot -ne '%USERPROFILE%\Desktop\BaoCao-Tool-Kiem-Tra' -or

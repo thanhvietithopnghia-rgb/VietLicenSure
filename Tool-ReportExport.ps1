@@ -1,5 +1,6 @@
 ﻿$script:ToolReportExportToolVersion = "4.9"
 $script:ToolReportExportSchemaVersion = "1.4"
+$script:ToolReportPdfTheme = "v4.8-classic-a4"
 
 $toolReportExportLocalizationPath = Join-Path $PSScriptRoot "Tool-Localization.ps1"
 if ((-not (Get-Command Get-ToolTextCurrent -ErrorAction SilentlyContinue) -or
@@ -18,6 +19,14 @@ function Get-ToolReportExportText {
     return Get-ToolText -Key $Key -Culture $Culture -FormatArguments $Arguments
 }
 
+function Get-ToolReportPdfThemeName {
+    $themeVariable = Get-Variable -Name ToolReportPdfTheme -Scope Script -ErrorAction SilentlyContinue
+    if ($themeVariable -and -not [string]::IsNullOrWhiteSpace([string]$themeVariable.Value)) {
+        return [string]$themeVariable.Value
+    }
+    return "v4.8-classic-a4"
+}
+
 function Get-ToolReportExportMetadata {
     return [pscustomobject][ordered]@{
         SchemaVersion = $script:ToolReportExportSchemaVersion
@@ -33,6 +42,7 @@ function Get-ToolReportExportMetadata {
         HtmlCultures = @("vi-VN", "en-US")
         HtmlPresentation = "Summary"
         PdfPresentation = "Detailed"
+        PdfTheme = Get-ToolReportPdfThemeName
         PrintProfile = "A4 / safe page breaks / local assets only / network disabled"
     }
 }
@@ -132,6 +142,38 @@ tbody tr:nth-child(even) td{background:var(--row-alt)}tbody tr:hover td{backgrou
 @media print{.cell-clip{display:block;overflow:visible;text-overflow:clip;white-space:normal}.cell-compact{display:none!important}.cell-full{display:block!important;overflow-wrap:anywhere;white-space:normal}.cell-details summary{display:none!important}.cell-details .detail-content{display:block!important;margin:0;white-space:pre-wrap}}
 @media print{@page{size:A4 portrait;margin:12mm}:root{color-scheme:light;--ink:#172033;--muted:#667085;--line:#b9c3cf;--paper:#fff;--canvas:#fff;--brand:#123b74;--brand2:#2563a7;--ok:#147a4b;--warn:#7a4700;--bad:#9e2018;--info:#175cd3;--row-alt:#f3f6f9;--appendix:#155e58;--appendix-soft:#edf8f6;--appendix-line:#87bdb6}html,body{height:auto!important;overflow:visible!important}body{background:#fff!important;color:#111}.page{max-width:none;padding:0}.hero{background:#fff!important;border:2px solid #123b74;border-radius:0;color:#123b74;box-shadow:none;break-inside:avoid-page;padding:14px 16px}.hero:after{display:none}.report-mode{border-color:#7591b3;color:#123b74;right:12px;top:10px}.report-mode:before{background:#147a4b}.meta-grid{border-top-color:#b8c8db}.cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.cards.cards-count-1{grid-template-columns:repeat(1,minmax(0,1fr))}.cards.cards-count-2{grid-template-columns:repeat(2,minmax(0,1fr))}.cards.cards-count-3{grid-template-columns:repeat(3,minmax(0,1fr))}.cards.cards-count-4{grid-template-columns:repeat(4,minmax(0,1fr))}.cards.cards-count-5{grid-template-columns:repeat(5,minmax(0,1fr))}.cards.cards-count-6{grid-template-columns:repeat(6,minmax(0,1fr))}.card,section,.toc{background:#fff!important;border-color:#b9c3cf;border-radius:0;box-shadow:none}.card{break-inside:avoid-page;min-height:62px;padding:9px 8px}.card-label{font-size:7.7pt;letter-spacing:.035em}.card-value{font-size:9pt;line-height:1.26}.toc{display:none}section{break-inside:auto!important;margin-bottom:5mm;padding:4mm!important;page-break-inside:auto!important;orphans:3;widows:3}section h2{border-bottom:1.2px solid #9fb3ca;font-size:13.2pt;line-height:1.3;margin-bottom:3.5mm;padding-bottom:2mm}section h3{font-size:10.2pt;margin:4mm 0 2mm}section h2,section h3{break-after:avoid-page;page-break-after:avoid}.table-wrap{max-width:none;overflow:visible!important}table,table.table-wide,table.table-profile-software,table.table-profile-system-software,table.table-profile-assessment-context,table.table-profile-assessment-decision,table.table-profile-assessment-overview,table.table-profile-assessment-evidence{font-size:8.55pt;min-width:0!important;width:100%!important;page-break-inside:auto;table-layout:fixed}table.table-cols-6,table.table-cols-7{font-size:7.95pt}thead{display:table-header-group}tfoot{display:table-footer-group}tr{break-inside:avoid-page;page-break-inside:avoid}th,td{min-width:0!important;line-height:1.46;orphans:3;padding:6px 7px;overflow-wrap:break-word;white-space:normal!important;widows:3;word-break:normal}th.cell-path,td.cell-path,th.cell-evidence,td.cell-evidence{overflow-wrap:anywhere;word-break:break-word}table col.col-name{width:23%}table col.col-version{width:12%}table col.col-date{width:12%}table col.col-publisher{width:23%}table col.col-path,table col.col-evidence{width:28%}tbody tr:nth-child(even) td{background:var(--row-alt)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}a{color:#111}.cell-reference,.system-app-link a,.back-link a{color:#123b74!important;text-decoration:underline}.system-software-appendix{background:linear-gradient(180deg,var(--appendix-soft),#fff 42mm)!important;border-color:var(--appendix-line)!important;break-before:page!important;page-break-before:always!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.system-software-appendix h2{border-bottom-color:var(--appendix-line);color:var(--appendix)}.system-software-appendix .note{background:#f4fbfa!important;border-color:#b8dcd7;color:#244c48;-webkit-print-color-adjust:exact;print-color-adjust:exact}.system-software-appendix th{background:#dcefeb!important;color:#154e49!important}.system-software-appendix tbody tr:nth-child(even) td{background:#f0f8f7!important}th{background:#e3ebf4!important;color:#183b66!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.text-report{font-size:9.5pt;line-height:1.48;overflow:visible}.footer{position:running(report-footer)}}
 @media print{table col.col-name,table col.col-version,table col.col-date,table col.col-publisher,table col.col-path,table col.col-evidence{width:auto!important}table.table-profile-software col.col-name{width:31%!important}table.table-profile-software col.col-version{width:16%!important}table.table-profile-software col.col-date{width:16%!important}table.table-profile-software col.col-publisher{width:37%!important}table.table-profile-system-software col:nth-child(1){width:34%!important}table.table-profile-system-software col:nth-child(2){width:15%!important}table.table-profile-system-software col:nth-child(3){width:31%!important}table.table-profile-system-software col:nth-child(4){width:20%!important}table.table-profile-assessment-context col:nth-child(1){width:31%!important}table.table-profile-assessment-context col:nth-child(2){width:14%!important}table.table-profile-assessment-context col:nth-child(3){width:31%!important}table.table-profile-assessment-context col:nth-child(4){width:24%!important}table.table-profile-assessment-decision col:nth-child(1){width:28%!important}table.table-profile-assessment-decision col:nth-child(2){width:23%!important}table.table-profile-assessment-decision col:nth-child(3){width:14%!important}table.table-profile-assessment-decision col:nth-child(4){width:35%!important}table.table-profile-assessment-overview col:nth-child(1){width:21%!important}table.table-profile-assessment-overview col:nth-child(2){width:10%!important}table.table-profile-assessment-overview col:nth-child(3){width:18%!important}table.table-profile-assessment-overview col:nth-child(4){width:17%!important}table.table-profile-assessment-overview col:nth-child(5){width:12%!important}table.table-profile-assessment-overview col:nth-child(6){width:22%!important}table.table-profile-assessment-evidence col:nth-child(1){width:19%!important}table.table-profile-assessment-evidence col:nth-child(2){width:14%!important}table.table-profile-assessment-evidence col:nth-child(3){width:12%!important}table.table-profile-assessment-evidence col:nth-child(4){width:25%!important}table.table-profile-assessment-evidence col:nth-child(5){width:13%!important}table.table-profile-assessment-evidence col:nth-child(6){width:17%!important}table.table-profile-assessment-evidence tr{break-inside:auto;page-break-inside:auto}table.table-cols-6{font-size:7.95pt}.table-split-part{background:#fff;border-color:#cbd5e1;break-inside:auto;padding:3mm;page-break-inside:auto}.table-split-label{font-size:7.5pt;margin-bottom:1.5mm}}
+'@
+}
+
+function Get-ToolV48PdfCompatibilityCss {
+    return @'
+@media print{
+html[data-pdf-theme="v4.8-classic-a4"] body{color:#000!important}
+html[data-pdf-theme="v4.8-classic-a4"] section{margin:0 0 13px!important;padding:16px 17px!important}
+html[data-pdf-theme="v4.8-classic-a4"] section h2{border-bottom:1px solid #e8edf3!important;font-size:18px!important;line-height:normal!important;margin:0 0 10px!important;padding:0 0 7px!important}
+html[data-pdf-theme="v4.8-classic-a4"] table,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-wide,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-profile-software,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-profile-system-software,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-profile-assessment-context,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-profile-assessment-decision,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-profile-assessment-overview,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-profile-assessment-evidence{font-size:8.15pt!important}
+html[data-pdf-theme="v4.8-classic-a4"] table.table-cols-6,
+html[data-pdf-theme="v4.8-classic-a4"] table.table-cols-7{font-size:7.35pt!important}
+html[data-pdf-theme="v4.8-classic-a4"] table.table-cols-6{font-size:7.65pt!important}
+html[data-pdf-theme="v4.8-classic-a4"] th,
+html[data-pdf-theme="v4.8-classic-a4"] td{line-height:1.34!important;padding:5px 6px!important}
+html[data-pdf-theme="v4.8-classic-a4"] th{background:#e8edf3!important;color:#183b66!important}
+html[data-pdf-theme="v4.8-classic-a4"] tbody tr:nth-child(even) td{background:#fafcff!important}
+html[data-pdf-theme="v4.8-classic-a4"] .text-report{line-height:1.42!important}
+html[data-pdf-theme="v4.8-classic-a4"] .system-software-appendix{background:#fff!important;border-color:#b9c3cf!important}
+html[data-pdf-theme="v4.8-classic-a4"] .system-software-appendix h2{border-bottom-color:#e8edf3!important;color:#123b74!important}
+html[data-pdf-theme="v4.8-classic-a4"] .system-software-appendix .note{background:#f5f8fc!important;border-color:#dde5ef!important;color:#475467!important}
+html[data-pdf-theme="v4.8-classic-a4"] .system-software-appendix .table-wrap{background:#fff!important;border-color:#b9c3cf!important}
+html[data-pdf-theme="v4.8-classic-a4"] .system-software-appendix th{background:#e8edf3!important;color:#183b66!important}
+html[data-pdf-theme="v4.8-classic-a4"] .system-software-appendix tbody tr:nth-child(even) td{background:#fafcff!important}
+}
 '@
 }
 
@@ -341,15 +383,18 @@ function New-ToolProfessionalHtmlDocument {
     $cardCount = [Math]::Max(1, [Math]::Min(6, @($Cards).Count))
     $cardsBlock = if (@($Cards).Count -gt 0) { "<div class='cards cards-count-$cardCount'>$($cardsHtml.ToString())</div>" } else { "" }
     $css = Get-ToolProfessionalReportCss
+    $pdfCompatibilityCss = Get-ToolV48PdfCompatibilityCss
+    $pdfThemeName = Get-ToolReportPdfThemeName
     return @"
 <!doctype html>
-<html lang="$htmlLanguage">
+<html lang="$htmlLanguage" data-report-view="detailed" data-pdf-theme="$pdfThemeName">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
 <title>$(ConvertTo-ToolHtmlText $Title)</title>
-<style>$css</style>
+<style>$css
+$pdfCompatibilityCss</style>
 </head>
 <body>
 <main class="page">
@@ -929,12 +974,15 @@ function Export-ToolReportPackage {
         }
     }
     $pdfResult = [pscustomobject][ordered]@{ Success=$false; Engine=""; Path=""; Error=(Get-ToolReportExportText "foundation.reportExport.pdfNotRequested") }
+    $pdfSourceContent = if ([string]::IsNullOrWhiteSpace($PdfHtmlContent)) {
+        $HtmlContent.Replace("{{TOOL_REPORT_PDF_GUIDE}}", "")
+    } else {
+        $PdfHtmlContent
+    }
+    $pdfTheme = ""
+    $pdfThemeMatch = [regex]::Match($pdfSourceContent, 'data-pdf-theme\s*=\s*["''](?<theme>[^"'']+)["'']')
+    if ($pdfThemeMatch.Success) { $pdfTheme = [string]$pdfThemeMatch.Groups['theme'].Value }
     if ($IncludePdf) {
-        $pdfSourceContent = if ([string]::IsNullOrWhiteSpace($PdfHtmlContent)) {
-            $HtmlContent.Replace("{{TOOL_REPORT_PDF_GUIDE}}", "")
-        } else {
-            $PdfHtmlContent
-        }
         [IO.File]::WriteAllText($htmlPath, $pdfSourceContent, (New-Object Text.UTF8Encoding($false)))
         if (Test-ToolHtmlOfflineSafe -HtmlPath $htmlPath) {
             $pdfResult = Convert-ToolHtmlToPdf -HtmlPath $htmlPath -PdfPath $pdfPath
@@ -1003,6 +1051,7 @@ function Export-ToolReportPackage {
         PdfError = $displayPdfError
         HtmlPresentation = if ($htmlIsSummary) { "Summary" } else { "Complete" }
         PdfPresentation = if (-not $pdfResult.Success) { "" } elseif ($hasDedicatedPdfPresentation) { "Detailed" } else { "SameAsHtml" }
+        PdfTheme = $pdfTheme
     }
     if ($Report.PSObject.Properties["Export"]) { $Report.Export = $exportData }
     else { $Report | Add-Member -NotePropertyName Export -NotePropertyValue $exportData }

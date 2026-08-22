@@ -151,7 +151,8 @@ $envelope = New-ToolReportEnvelope -ReportKind "CertificateAudit" -ToolVersion "
         $json = [IO.File]::ReadAllText($package.JsonPath, [Text.Encoding]::UTF8) | ConvertFrom-Json
 $validation = Test-ToolReportEnvelope -Report $json -ExpectedReportKind "CertificateAudit" -ExpectedToolVersion "4.8"
         if (-not $validation.Valid) { throw ($validation.Errors -join "; ") }
-        if ([string]$json.Export.SchemaVersion -ne '1.4' -or [string]$json.Export.HtmlPresentation -ne 'Summary') {
+        if ([string]$json.Export.SchemaVersion -ne '1.4' -or [string]$json.Export.HtmlPresentation -ne 'Summary' -or
+            [string]$json.Export.PdfTheme -ne 'v4.8-classic-a4') {
             throw "Metadata tách HTML tổng quan/PDF chi tiết không đúng."
         }
     } catch { Add-Failure "JSON integration không đạt schema: $($_.Exception.Message)" }

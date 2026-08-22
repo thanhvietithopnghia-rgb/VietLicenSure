@@ -2545,6 +2545,8 @@ if ($assessmentRows.Count -gt 0) {
 }
 
 $professionalCss = Get-ToolProfessionalReportCss
+$pdfCompatibilityCss = Get-ToolV48PdfCompatibilityCss
+$pdfThemeName = Get-ToolReportPdfThemeName
 $tocLinks = @($tocItems | ForEach-Object { "<li><a href='#$(Html $_.Id)'>$(Html $_.Title)</a></li>" }) -join ""
 $tocLabel = Get-ToolText -Key "report.toc" -Culture $Culture
 $tocBlock = if ($tocItems.Count -gt 1) { "<nav class='toc'><strong>$(Html $tocLabel)</strong><ol>$tocLinks</ol></nav>" } else { "" }
@@ -2633,13 +2635,14 @@ $summaryReportTitle = Get-ReportText "report.summary.title" @($reportTitle)
 $detailReportTitle = Get-ReportText "report.detail.title" @($reportTitle)
 $detailedHtml = @"
 <!doctype html>
-<html lang="$htmlLanguage" data-report-view="detailed">
+<html lang="$htmlLanguage" data-report-view="detailed" data-pdf-theme="$pdfThemeName">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
 <title>$(Html $detailReportTitle) - $(Html $reportComputer)</title>
-<style>$professionalCss</style>
+<style>$professionalCss
+$pdfCompatibilityCss</style>
 </head>
 <body>
 <main class="page">

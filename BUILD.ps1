@@ -891,6 +891,7 @@ $releaseManifest = [ordered]@{
     ReportExportSchemaVersion = [string]$reportExportMetadata.SchemaVersion
     ReportHtmlPresentation = [string]$reportExportMetadata.HtmlPresentation
     ReportPdfPresentation = [string]$reportExportMetadata.PdfPresentation
+    ReportPdfTheme = [string]$reportExportMetadata.PdfTheme
     ReportContentSplit = 'HTML summary for quick review; PDF contains the complete technical report'
     ReportSummaryWideCardCount = 5
     ReportConclusionPanels = @('VerificationLevel','RecommendedAction')
