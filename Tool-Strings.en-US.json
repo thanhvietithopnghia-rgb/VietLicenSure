@@ -87,7 +87,7 @@
   "about.support.title": "SUPPORT",
   "about.support.body": "Zalo: 0978 005 017\r\nEmail: thanhvietit.hopnghia@gmail.com",
   "about.release.title": "DOWNLOAD & VERIFY THE OFFICIAL RELEASE",
-  "about.release.body": "Official builds, documentation, verification metadata, and release notes are published at:\r\n{0}\r\nv4.9 source is managed through controlled access. Verify the version, SHA-256, and Authenticode status before use.",
+  "about.release.body": "Official builds, documentation, verification metadata, and release notes are published at:\r\n{0}\r\nStarting with v4.9, source code is no longer published free of charge, is not open source, and is managed through controlled access. Verify the version, SHA-256, and Authenticode status before use.",
   "about.terms.title": "COPYRIGHT & TERMS",
   "about.terms.body": "© 2026 Thanh Viet. The Tool is provided free of charge and developed for the community. Starting with v4.9, source code is no longer published free of charge, is not released under an open-source licence, and is managed by the author through controlled access. Anyone wishing to review, study, research, security-test, or contribute must first obtain the author's written approval. Viewing does not itself grant rights to copy, extract, modify, reverse-engineer, distribute, repackage, commercialize, use as training data, rebrand, or remove attribution. All rights not expressly granted in writing remain with the author.",
   "about.safety.title": "SAFETY & PRIVACY",

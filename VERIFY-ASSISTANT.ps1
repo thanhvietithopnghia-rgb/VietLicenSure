@@ -190,9 +190,9 @@ if ($errors.Count -eq 0) {
         @{ Question='có tốn tiền ko'; Expected='cung cấp miễn phí' }
         @{ Question='ma nguon cong khaio dau'; Expected='truy cập có kiểm soát' }
         @{ Question='ma ngun cong khai o dau'; Expected='truy cập có kiểm soát' }
-        @{ Question='repo công khai có được sửa không'; Expected='không tự cấp quyền sao chép, sửa đổi, phân phối' }
-        @{ Question='code công khai có phải open source k'; Expected='không phải mã nguồn mở' }
-        @{ Question='muốn học hỏi mã nguồn'; Expected='xin ý kiến và nhận chấp thuận bằng văn bản' }
+        @{ Question='repo công khai có được sửa không'; Expected='không tự cấp quyền sao chép, trích xuất, sửa đổi' }
+        @{ Question='code công khai có phải open source k'; Expected='không được phát hành theo giấy phép mã nguồn mở' }
+        @{ Question='muốn học hỏi mã nguồn'; Expected='nhận chấp thuận trước bằng văn bản' }
         @{ Question='tool có phát triển cộng đồng không'; Expected='phát triển cùng cộng đồng' }
         @{ Question='chưa xác định nghĩa là gì'; Expected='CHƯA XÁC ĐỊNH/Unknown' }
         @{ Question='chua xac minh la sao'; Expected='bằng chứng hiện tại chưa đủ xác nhận' }

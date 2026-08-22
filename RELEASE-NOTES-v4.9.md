@@ -28,7 +28,7 @@ Build: **2026.08.22**
 ## Phát hành
 
 - Tool chính thức tiếp tục miễn phí cho cộng đồng.
-- Từ v4.9, dự án phát triển cùng cộng đồng với mã nguồn có kiểm soát. Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả; quyền xem không tự cấp quyền sao chép, phân phối, sửa đổi, đóng gói lại, thương mại hóa, dùng làm dữ liệu huấn luyện hoặc đổi thương hiệu.
+- Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được quản lý theo cơ chế có kiểm soát. Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải nhận chấp thuận trước bằng văn bản của tác giả; quyền xem không tự cấp quyền sao chép, trích xuất, sửa đổi, dịch ngược, phân phối, đóng gói lại, thương mại hóa, dùng làm dữ liệu huấn luyện hoặc đổi thương hiệu.
 - Các phiên bản cũ đã công khai tiếp tục theo điều khoản đi kèm tại thời điểm phát hành.
 
 ## An toàn
