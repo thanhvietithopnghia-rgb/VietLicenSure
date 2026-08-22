@@ -967,6 +967,8 @@ $applicationUpdateManifest = [ordered]@{
             'Catalog online 1.5.0.0 mở rộng lên 92 nhóm sản phẩm, chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist và chống hạ phiên bản bằng watermark bền vững.',
             'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
             'Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.',
+            'Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.',
+            'Kiểm kê bổ sung AppX/MSIX, shortcut mọi hồ sơ, Scoop, Chocolatey, Steam và vùng portable giới hạn; bản ghi trùng được gom và thành phần phụ được nhóm theo sản phẩm chính.',
             'Từ v4.9, Tool miễn phí phát triển cùng cộng đồng với mã nguồn có kiểm soát; người muốn tham khảo, học tập, nghiên cứu hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả.',
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
@@ -975,6 +977,8 @@ $applicationUpdateManifest = [ordered]@{
             'Online catalog 1.5.0.0 expands coverage to 92 product families and accepts only signed declarative data with allowlisted fields/profiles and a persistent anti-rollback watermark.',
             'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
             'Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.',
+            'Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.',
+            'Inventory adds AppX/MSIX, shortcuts across user profiles, Scoop, Chocolatey, Steam, and bounded portable roots; duplicates are merged and companion components are grouped under the primary product.',
             'From v4.9 onward, the free Tool is community-developed with controlled source; anyone wishing to review, study, research, or contribute to the source must first obtain the author''s written approval.',
             'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
