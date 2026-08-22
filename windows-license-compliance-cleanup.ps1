@@ -70,7 +70,7 @@ try {
 } catch { Write-Host $_.Exception.Message; exit 12 }
 
 $ErrorActionPreference = "Continue"
-$releaseVersion = "4.8.0.1"
+$releaseVersion = "4.9.0.0"
 if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra" }
 if ([string]::IsNullOrWhiteSpace($ApprovedKmsServerFile)) { $ApprovedKmsServerFile = Join-Path $PSScriptRoot "approved-kms-servers.txt" }
 $script:StrictActivatorPattern = "(?i)(\bkmspico\b|\bkmsauto(?:s|[\s._-]*(?:net|lite|portable|plus|\+\+))?\b|\bauto[\s._-]*kms\b|\bautokms\b|\bkms[\s._-]*38\b|\bkms[\s._-]*vl(?:[\s._-]*all)?\b|\bkms-r\b|\baact(?:[\s._-]*(?:network|portable))?\b|\bsppextcomobj(?:patcher|hook)\b|\bspp[\s._-]*(?:hook|patcher)\b|\bmicrosoft[\s_-]+toolkit\b|\bhwidgen\b|\bmassgrave\b|\bmas[\s._-]*(?:aio|all[\s._-]*in[\s._-]*one|activat(?:ion|or)|hwid|kms|ohook|tsforge)\b|\bpmas(?:[\s._-]*(?:aio|all[\s._-]*in[\s._-]*one|activat(?:ion|or)|hwid|kms|ohook|tsforge))?\b|\bmicrosoft[\s._-]*activation[\s._-]*scripts?\b|\bactivation[\s._-]*program[\s._-]*(?:v(?:ersion)?[\s._-]*)?1(?:\.|\s+|[_-])17\b|\btsforge\b|\bohook\b)"
@@ -905,9 +905,160 @@ function Get-OfficeKmsTargetIdentity {
         [string]::IsNullOrWhiteSpace($last5)) {
         return ''
     }
-    # A selected Office key is never identified by SKU alone: OSPP path, SKU,
-    # and the installed-key suffix must all still agree at remediation time.
-    return "$pathKey|$skuId|$last5"
+    # Provider + SKU + Last5 is the stable product-key identity.  The concrete
+    # OSPP path remains part of the identity as the installation instance, so
+    # two Office installations can never authorize one another by accident.
+    return "Provider=OfficeOSPP|SKU=$skuId|Last5=$last5|OSPP=$pathKey"
+}
+
+function Get-OfficeKmsHostOverrideIdentity {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $pathKey = Get-OfficeKmsPathKey -Path $Path
+    if ([string]::IsNullOrWhiteSpace($pathKey)) { return '' }
+    # Host cleanup is deliberately path-scoped and must not depend on Last5.
+    return "Provider=OfficeOSPP|HostOverride|OSPP=$pathKey"
+}
+
+function New-RemediationStateRecord {
+    param(
+        [Parameter(Mandatory = $true)][string]$CandidateId,
+        [string]$Kind = '',
+        [string]$Provider = '',
+        [string]$SkuId = '',
+        [string]$Last5 = '',
+        [string]$OsppPathInstance = '',
+        [ValidateSet('Pending','Running','VerifiedClean','ApprovedInternalKMS','RetryableFailure','BlockedByPolicy','NeedsOfficeRepair')]
+        [string]$InitialState = 'Pending',
+        [bool]$RetryAllowed = $true,
+        [string]$BlockCode = '',
+        [string]$BlockDetail = ''
+    )
+
+    $terminal = $InitialState -in @('VerifiedClean','ApprovedInternalKMS','BlockedByPolicy','NeedsOfficeRepair')
+    return [pscustomobject][ordered]@{
+        SchemaVersion = '1.0'
+        CandidateId = $CandidateId
+        Kind = $Kind
+        Provider = $Provider
+        SkuId = $SkuId
+        Last5 = $Last5
+        OsppPathInstance = $OsppPathInstance
+        State = $InitialState
+        AttemptCount = 0
+        RetryAllowed = [bool]($RetryAllowed -and -not $terminal)
+        LastAttemptAtUtc = ''
+        LastTransitionAtUtc = [DateTime]::UtcNow.ToString('o')
+        LastErrorCode = ''
+        LastErrorDetail = ''
+        BlockCode = $BlockCode
+        BlockDetail = $BlockDetail
+        ArtifactCleanupCompleted = $false
+        DirectCrackEvidenceRemaining = $true
+        ApplicationPresent = $false
+        OfficialLicenseState = 'Unverified'
+        PostCheckAtUtc = ''
+        OutcomeMessageKey = ''
+    }
+}
+
+function Set-RemediationStateRecord {
+    param(
+        [Parameter(Mandatory = $true)]$Record,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Pending','Running','VerifiedClean','ApprovedInternalKMS','RetryableFailure','BlockedByPolicy','NeedsOfficeRepair')]
+        [string]$State,
+        [string]$ErrorCode = '',
+        [string]$ErrorDetail = '',
+        [string]$BlockCode = '',
+        [string]$BlockDetail = '',
+        [string]$OutcomeMessageKey = '',
+        [switch]$IncrementAttempt
+    )
+
+    $current = [string]$Record.State
+    $allowed = @{
+        Pending=@('Pending','Running','ApprovedInternalKMS','BlockedByPolicy','NeedsOfficeRepair','RetryableFailure')
+        Running=@('Running','VerifiedClean','ApprovedInternalKMS','RetryableFailure','BlockedByPolicy','NeedsOfficeRepair')
+        RetryableFailure=@('RetryableFailure','Running','VerifiedClean','ApprovedInternalKMS','BlockedByPolicy','NeedsOfficeRepair')
+        VerifiedClean=@('VerifiedClean')
+        ApprovedInternalKMS=@('ApprovedInternalKMS')
+        BlockedByPolicy=@('BlockedByPolicy')
+        NeedsOfficeRepair=@('NeedsOfficeRepair','VerifiedClean')
+    }
+    if (-not $allowed.ContainsKey($current) -or $allowed[$current] -notcontains $State) {
+        throw "Invalid remediation state transition: $current -> $State"
+    }
+    if ($IncrementAttempt -or ($State -eq 'Running' -and $current -ne 'Running')) {
+        $Record.AttemptCount = [int]$Record.AttemptCount + 1
+        $Record.LastAttemptAtUtc = [DateTime]::UtcNow.ToString('o')
+    }
+    $Record.State = $State
+    $Record.RetryAllowed = [bool]($State -in @('Pending','RetryableFailure'))
+    $Record.LastTransitionAtUtc = [DateTime]::UtcNow.ToString('o')
+    $Record.LastErrorCode = $ErrorCode
+    $Record.LastErrorDetail = $ErrorDetail
+    $Record.BlockCode = $BlockCode
+    $Record.BlockDetail = $BlockDetail
+    $Record.OutcomeMessageKey = $OutcomeMessageKey
+    return $Record
+}
+
+function Resolve-RemediationPostCheckState {
+    param(
+        [Parameter(Mandatory = $true)]$Record,
+        [Parameter(Mandatory = $true)][bool]$DirectCrackEvidenceRemaining,
+        [Parameter(Mandatory = $true)][bool]$ApplicationPresent,
+        [Parameter(Mandatory = $true)][string]$OfficialLicenseState,
+        [bool]$ArtifactCleanupCompleted = $false,
+        [bool]$ApprovedInternalKms = $false,
+        [string]$PolicyBlockCode = '',
+        [string]$PolicyBlockDetail = '',
+        [bool]$VolumeRepairRequired = $false
+    )
+
+    $Record.DirectCrackEvidenceRemaining = $DirectCrackEvidenceRemaining
+    $Record.ApplicationPresent = $ApplicationPresent
+    $Record.OfficialLicenseState = $OfficialLicenseState
+    $Record.ArtifactCleanupCompleted = $ArtifactCleanupCompleted
+    $Record.PostCheckAtUtc = [DateTime]::UtcNow.ToString('o')
+
+    if ($ApprovedInternalKms) {
+        return Set-RemediationStateRecord -Record $Record -State ApprovedInternalKMS `
+            -OutcomeMessageKey 'cleanupReport.remediation.approvedInternalKms'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($PolicyBlockCode)) {
+        return Set-RemediationStateRecord -Record $Record -State BlockedByPolicy `
+            -BlockCode $PolicyBlockCode -BlockDetail $PolicyBlockDetail `
+            -OutcomeMessageKey 'cleanupReport.remediation.blockedByPolicy'
+    }
+    if ($VolumeRepairRequired) {
+        return Set-RemediationStateRecord -Record $Record -State NeedsOfficeRepair `
+            -BlockCode 'VolumeOrMondoRequiresOfficialRepair' `
+            -BlockDetail $PolicyBlockDetail -OutcomeMessageKey 'cleanupReport.remediation.needsOfficeRepair'
+    }
+    if (-not $DirectCrackEvidenceRemaining -and $ApplicationPresent -and
+        $OfficialLicenseState -in @('Unactivated','Trial')) {
+        return Set-RemediationStateRecord -Record $Record -State VerifiedClean `
+            -OutcomeMessageKey 'cleanupReport.remediation.verifiedClean'
+    }
+
+    $errorCode = if ($ArtifactCleanupCompleted -and -not $DirectCrackEvidenceRemaining) {
+        'ArtifactsRemovedLicenseUnverified'
+    } elseif (-not $ApplicationPresent) {
+        'ApplicationNotPresentAfterCleanup'
+    } elseif ($DirectCrackEvidenceRemaining) {
+        'DirectEvidenceStillPresent'
+    } else {
+        'OfficialStateNotUnactivatedOrTrial'
+    }
+    $messageKey = if ($errorCode -eq 'ArtifactsRemovedLicenseUnverified') {
+        'cleanupReport.remediation.artifactsRemovedLicenseUnverified'
+    } else {
+        'cleanupReport.remediation.retryableFailure'
+    }
+    return Set-RemediationStateRecord -Record $Record -State RetryableFailure `
+        -ErrorCode $errorCode -ErrorDetail $OfficialLicenseState -OutcomeMessageKey $messageKey
 }
 
 function Status-Text {
@@ -2081,8 +2232,8 @@ function Get-CleanupRecordComponentScope {
     $kind = [string]$Record.Kind
     $text = (([string]$Record.Name) + " " + ([string]$Record.Location) + " " + ([string]$Record.Detail)).Trim()
     if ($type -eq "Application" -or $kind -match '^ThirdParty') { return "ThirdParty" }
-    if ($kind -eq "OfficeKmsLicense" -or $text -match '(?i)OfficeSoftwareProtectionPlatform|\bospp(?:svc|\.vbs)?\b|\bOffice\s+KMS\b') { return "Office" }
-    if ($kind -eq "WindowsKmsLicense" -or $kind -eq "SppNoGenTicketPolicy" -or
+    if ($kind -in @('OfficeKmsLicense','OfficeKmsHostOverride') -or $text -match '(?i)OfficeSoftwareProtectionPlatform|\bospp(?:svc|\.vbs)?\b|\bOffice\s+KMS\b') { return "Office" }
+    if ($kind -eq "WindowsKmsLicense" -or $kind -eq "ManagedNoGenTicketPolicy" -or
         $text -match '(?i)Windows NT\\CurrentVersion\\SoftwareProtectionPlatform|\bsppsvc\b|\bSppExtComObj\b|\bNoGenTicket\b') { return "Windows" }
     return "Shared"
 }
@@ -2128,7 +2279,16 @@ function New-CleanupItem {
         [string]$RecoveryBlockReason = '',
         [string]$IdentitySeed = '',
         [string]$ExpectedSha256 = '',
-        [int64]$ExpectedLength = -1
+        [int64]$ExpectedLength = -1,
+        [string]$Provider = '',
+        [string]$SkuId = '',
+        [string]$Last5 = '',
+        [string]$OsppPathInstance = '',
+        [ValidateSet('Pending','Running','VerifiedClean','ApprovedInternalKMS','RetryableFailure','BlockedByPolicy','NeedsOfficeRepair')]
+        [string]$InitialRemediationState = 'Pending',
+        [bool]$RemediationRetryAllowed = $true,
+        [string]$RemediationBlockCode = '',
+        [string]$RemediationBlockDetail = ''
     )
     $idMaterial = if ([string]::IsNullOrWhiteSpace($IdentitySeed)) {
         $Type + "|" + $Kind + "|" + $Name + "|" + $Location
@@ -2136,6 +2296,10 @@ function New-CleanupItem {
         $Type + "|" + $Kind + "|" + $IdentitySeed
     }
     $id = $idMaterial.ToLowerInvariant()
+    $remediationState = New-RemediationStateRecord -CandidateId $id -Kind $Kind -Provider $Provider `
+        -SkuId $SkuId -Last5 $Last5 -OsppPathInstance $OsppPathInstance `
+        -InitialState $InitialRemediationState -RetryAllowed $RemediationRetryAllowed `
+        -BlockCode $RemediationBlockCode -BlockDetail $RemediationBlockDetail
     return [pscustomobject]@{
         Id = $id
         Type = $Type
@@ -2163,6 +2327,11 @@ function New-CleanupItem {
         RecoveryBlockReason = $RecoveryBlockReason
         ExpectedSha256 = $ExpectedSha256
         ExpectedLength = $ExpectedLength
+        Provider = $Provider
+        SkuId = $SkuId
+        Last5 = $Last5
+        OsppPathInstance = $OsppPathInstance
+        RemediationState = $remediationState
     }
 }
 
@@ -2228,9 +2397,11 @@ function Get-DeepCleanupCandidates {
         }
     }
 
+    # Windows has a machine-wide /ckms operation.  Office host overrides are
+    # handled separately through the exact OSPP instance so they remain
+    # retryable even when OSPP does not report a Last5 key suffix.
     foreach ($path in @(
-        "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform",
-        "HKLM:\SOFTWARE\Microsoft\OfficeSoftwareProtectionPlatform"
+        "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform"
     )) {
         try {
             $item = Get-ItemProperty -LiteralPath $path -ErrorAction Stop
@@ -2239,7 +2410,7 @@ function Get-DeepCleanupCandidates {
                 $items.Add((New-CleanupItem -Type "Registry" -Kind "KmsOverride" `
                     -Name (Get-CleanupText "cleanupReport.candidate.unapprovedKms") -Location $path `
                     -Detail (Get-CleanupText "cleanupReport.candidate.unapprovedKmsDetail" @($server)) `
-                    -ComponentScope $(if ($path -match 'OfficeSoftwareProtectionPlatform') { 'Office' } else { 'Windows' })))
+                    -ComponentScope 'Windows' -Provider 'WindowsSPP'))
             }
         } catch {}
     }
@@ -2248,9 +2419,17 @@ function Get-DeepCleanupCandidates {
     try {
         $policy = Get-ItemProperty -LiteralPath $policyPath -ErrorAction Stop
         if ([int]$policy.NoGenTicket -eq 1) {
-            $items.Add((New-CleanupItem -Type "Registry" -Kind "SppNoGenTicketPolicy" `
+            # Anything under HKLM\SOFTWARE\Policies is managed state.  It may
+            # come from local/domain GPO or an MDM CSP and must never be deleted
+            # by this tool; report the source and let the administrator change
+            # the owning policy.
+            $items.Add((New-CleanupItem -Type "Guidance" -Kind "ManagedNoGenTicketPolicy" `
                 -Name "Policy SPP NoGenTicket=1" -Location $policyPath `
-                -Detail (Get-CleanupText "cleanupReport.candidate.noGenTicketDetail") -ComponentScope 'Windows'))
+                -Detail (Get-CleanupText "cleanupReport.candidate.noGenTicketDetail") -ComponentScope 'Windows' `
+                -GuidanceOnly $true -GuidanceReason (Get-CleanupText 'cleanupReport.remediation.blockedByPolicy') `
+                -Provider 'WindowsSPP' -InitialRemediationState 'BlockedByPolicy' -RemediationRetryAllowed $false `
+                -RemediationBlockCode 'ManagedNoGenTicketPolicy' `
+                -RemediationBlockDetail 'HKLM\SOFTWARE\Policies; GroupPolicyOrMDM'))
         }
     } catch {}
 
@@ -2309,6 +2488,25 @@ function Get-AllCleanupCandidates {
     }
 
     $unapprovedOfficeEntries = @($OfficeEntries | Where-Object { -not (Test-ApprovedKms ([string]$_.Server)) })
+
+    # A shared host override is one retryable candidate per concrete OSPP
+    # instance.  It intentionally does not require SKU/Last5, because /remhst
+    # is path-wide and OSPP can legitimately omit Last5 after a key was removed.
+    foreach ($hostGroup in @($unapprovedOfficeEntries | Where-Object {
+        -not [string]::IsNullOrWhiteSpace([string]$_.Server) -and
+        -not [string]::IsNullOrWhiteSpace((Get-OfficeKmsPathKey -Path ([string]$_.Path)))
+    } | Group-Object { Get-OfficeKmsPathKey -Path ([string]$_.Path) })) {
+        $hostEntry = @($hostGroup.Group | Select-Object -First 1)[0]
+        $hostIdentity = Get-OfficeKmsHostOverrideIdentity -Path ([string]$hostEntry.Path)
+        $servers = @($hostGroup.Group | ForEach-Object { [string]$_.Server } | Where-Object { $_ } | Select-Object -Unique)
+        $items.Add((New-CleanupItem -Type 'License' -Kind 'OfficeKmsHostOverride' `
+            -Name (Get-CleanupText 'cleanupReport.candidate.officeKmsHostOverride') `
+            -Location ([string]$hostEntry.Path) -TargetId $hostIdentity `
+            -Detail (Get-CleanupText 'cleanupReport.candidate.officeKmsHostOverrideDetail' @($servers -join ', ')) `
+            -ComponentScope 'Office' -IdentitySeed $hostIdentity -Provider 'OfficeOSPP' `
+            -OsppPathInstance ([string]$hostEntry.Path)))
+    }
+
     foreach ($entry in $unapprovedOfficeEntries) {
         $last5Label = if ([string]::IsNullOrWhiteSpace([string]$entry.Last5)) { Get-CleanupText "cleanupReport.value.noKey" } else { [string]$entry.Last5 }
         $serverLabel = if ([string]::IsNullOrWhiteSpace([string]$entry.Server)) { Get-CleanupText "cleanupReport.value.dnsNoOverride" } else { [string]$entry.Server }
@@ -2318,12 +2516,17 @@ function Get-AllCleanupCandidates {
         # row so post-check can name the exact residue instead of reporting an
         # unexplained remaining count.
         if ([string]::IsNullOrWhiteSpace($targetId)) {
+            # Missing Last5 blocks key removal, but never blocks the independent
+            # host-override candidate created above.
             $items.Add((New-CleanupItem -Type 'Guidance' -Kind 'OfficeKmsManualReview' `
                 -Name ('Office KMS ' + $last5Label + ' - ' + [string]$entry.LicenseName) `
                 -Location ([string]$entry.Path) `
                 -Detail (Get-CleanupText 'cleanupReport.candidate.officeKmsManualReview' @([string]$entry.SkuId, [string]$entry.LicenseStatus, $serverLabel)) `
                 -ComponentScope 'Office' -GuidanceOnly $true -GuidanceReason (Get-CleanupText 'cleanupReport.candidate.officeKmsManualReviewReason') `
-                -IdentitySeed ('office-kms-guidance|' + [string]$entry.Path + '|' + [string]$entry.SkuId + '|' + [string]$entry.Last5)))
+                -IdentitySeed ('office-kms-guidance|' + [string]$entry.Path + '|' + [string]$entry.SkuId + '|' + [string]$entry.Last5) `
+                -Provider 'OfficeOSPP' -SkuId ([string]$entry.SkuId) -Last5 ([string]$entry.Last5) `
+                -OsppPathInstance ([string]$entry.Path) -InitialRemediationState 'NeedsOfficeRepair' `
+                -RemediationRetryAllowed $false -RemediationBlockCode 'MissingStableKeyIdentity'))
             continue
         }
         $items.Add((New-CleanupItem -Type "License" -Kind "OfficeKmsLicense" `
@@ -2331,7 +2534,8 @@ function Get-AllCleanupCandidates {
             -Location ([string]$entry.Path) `
             -TargetId $targetId `
             -Detail (Get-CleanupText "cleanupReport.candidate.officeKmsDetail" @([string]$entry.SkuId, [string]$entry.LicenseStatus, $serverLabel)) `
-            -ComponentScope 'Office' -IdentitySeed $targetId))
+            -ComponentScope 'Office' -IdentitySeed $targetId -Provider 'OfficeOSPP' `
+            -SkuId ([string]$entry.SkuId) -Last5 ([string]$entry.Last5) -OsppPathInstance ([string]$entry.Path)))
     }
 
     foreach ($thirdPartyCandidate in @($ThirdPartyCandidates)) { $items.Add($thirdPartyCandidate) }
@@ -3385,7 +3589,7 @@ function Invoke-ScanSourceRepair {
         catch { $serviceStateAfter.Add([pscustomobject]@{ Name=[string]$servicePolicy.Name; DisplayName=[string]$servicePolicy.DisplayName; Status=(Get-CleanupText "common.unknown"); StartMode=(Get-CleanupText "common.unknown"); Error=$_.Exception.Message }) }
     }
 
-    return (New-ToolReportEnvelope -ReportKind "ScanSourceRepair" -ToolVersion "4.8" -Data ([ordered]@{
+    return (New-ToolReportEnvelope -ReportKind "ScanSourceRepair" -ToolVersion "4.9" -Data ([ordered]@{
         RepairAttempted = $true
         RecheckPassed = $recheckPassed
         StartupTypeChanged = $false
@@ -3589,6 +3793,90 @@ function Get-OfficeLicenseProbeForPath {
     }
 }
 
+function Get-OfficeLicenseProbeForPathBounded {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [ValidateRange(1,3)][int]$MaximumAttempts = 3,
+        [ValidateRange(0,1000)][int]$DelayMilliseconds = 200
+    )
+
+    $lastProbe = $null
+    for ($attempt = 1; $attempt -le $MaximumAttempts; $attempt++) {
+        $lastProbe = Get-OfficeLicenseProbeForPath -Path $Path
+        if ([string]$lastProbe.Coverage -eq 'Complete') {
+            $lastProbe | Add-Member -NotePropertyName AttemptCount -NotePropertyValue $attempt -Force
+            return $lastProbe
+        }
+        if ($attempt -lt $MaximumAttempts -and $DelayMilliseconds -gt 0) {
+            Start-Sleep -Milliseconds $DelayMilliseconds
+        }
+    }
+    if ($null -eq $lastProbe) { $lastProbe = [pscustomobject]@{ Coverage='Failed'; Entries=@(); Path=$Path } }
+    $lastProbe | Add-Member -NotePropertyName AttemptCount -NotePropertyValue $MaximumAttempts -Force
+    return $lastProbe
+}
+
+function Invoke-OfficeLicenseServiceRefresh {
+    param([ValidateRange(1,2)][int]$MaximumAttempts = 1)
+
+    for ($attempt = 1; $attempt -le $MaximumAttempts; $attempt++) {
+        try {
+            $service = Get-Service -Name 'osppsvc' -ErrorAction Stop
+            if ($service.Status -eq 'Running') {
+                Restart-Service -Name 'osppsvc' -Force -ErrorAction Stop
+            } else {
+                Start-Service -Name 'osppsvc' -ErrorAction Stop
+            }
+            return [pscustomobject]@{ Success=$true; AttemptCount=$attempt; Error='' }
+        } catch {
+            if ($attempt -eq $MaximumAttempts) {
+                return [pscustomobject]@{ Success=$false; AttemptCount=$attempt; Error=[string]$_.Exception.Message }
+            }
+        }
+    }
+}
+
+function Test-OfficeKmsHostOverrideTarget {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $hostIdentity = Get-OfficeKmsHostOverrideIdentity -Path $Path
+    if ([string]::IsNullOrWhiteSpace($hostIdentity)) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason='MissingOsppPath'; HostIdentity=''; Entries=@() }
+    }
+    $probe = Get-OfficeLicenseProbeForPathBounded -Path $Path
+    if ([string]$probe.Coverage -ne 'Complete') {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason=('Probe' + [string]$probe.Coverage); HostIdentity=$hostIdentity; Entries=@($probe.Entries) }
+    }
+    $approvedHostEntries = @($probe.Entries | Where-Object {
+        [string]$_.Channel -eq 'KMS' -and -not [string]::IsNullOrWhiteSpace([string]$_.Server) -and
+        (Test-ApprovedKms -Server ([string]$_.Server))
+    })
+    if ($approvedHostEntries.Count -gt 0) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason='ApprovedInternalKmsSharesOsppPath'; HostIdentity=$hostIdentity; Entries=@($probe.Entries) }
+    }
+    $unapprovedHostEntries = @($probe.Entries | Where-Object {
+        [string]$_.Channel -eq 'KMS' -and -not [string]::IsNullOrWhiteSpace([string]$_.Server) -and
+        -not (Test-ApprovedKms -Server ([string]$_.Server))
+    })
+    if ($unapprovedHostEntries.Count -eq 0) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$true; Reason='HostOverrideAlreadyAbsent'; HostIdentity=$hostIdentity; Entries=@($probe.Entries) }
+    }
+    return [pscustomobject]@{ Allowed=$true; AlreadyClean=$false; Reason=''; HostIdentity=$hostIdentity; Entries=@($probe.Entries) }
+}
+
+function Test-OfficeVolumeOrMondoRepairRequired {
+    param(
+        $LicenseEntries = @(),
+        [string]$OfficialLicenseState = 'Unverified',
+        [bool]$DirectCrackEvidenceRemaining = $false
+    )
+
+    $volumeOrMondo = [bool](@($LicenseEntries | Where-Object {
+        (([string]$_.LicenseName) + ' ' + ([string]$_.Description) + ' ' + ([string]$_.Channel)) -match '(?i)\b(?:VOLUME|Mondo)\b|VOLUME_KMSCLIENT'
+    }).Count -gt 0)
+    return [bool]($volumeOrMondo -and ($DirectCrackEvidenceRemaining -or $OfficialLicenseState -notin @('Unactivated','Trial')))
+}
+
 function Test-OfficeKmsRemediationTarget {
     param(
         [Parameter(Mandatory = $true)]$Entry,
@@ -3716,13 +4004,36 @@ function Invoke-Remediation {
         [switch]$CleanupKmsConfiguration,
         $WindowsProductsToRemove = @(),
         [switch]$SkipRestorePoint,
-        $OfficeEntries = @()
+        $OfficeEntries = @(),
+        [string[]]$OfficeHostOverridePaths = @()
     )
     $actions = New-Object System.Collections.Generic.List[string]
+    $remediationStates = New-Object System.Collections.Generic.List[object]
     [int]$systemChangeCount = 0
     if (-not (Is-Admin)) {
         $actions.Add((Get-CleanupText "cleanupReport.action.adminRequired"))
-        return [pscustomobject]@{ Actions=@($actions); SystemChangeCount=0; SystemChangeApplied=$false }
+        foreach ($entry in @($OfficeEntries)) {
+            $identity = Get-OfficeKmsTargetIdentity -Entry $entry
+            if ([string]::IsNullOrWhiteSpace($identity)) { continue }
+            $state = New-RemediationStateRecord -CandidateId (('License|OfficeKmsLicense|' + $identity).ToLowerInvariant()) `
+                -Kind 'OfficeKmsLicense' -Provider 'OfficeOSPP' -SkuId ([string]$entry.SkuId) `
+                -Last5 ([string]$entry.Last5) -OsppPathInstance ([string]$entry.Path)
+            [void](Set-RemediationStateRecord -Record $state -State Running)
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure -ErrorCode 'AdministratorRequired' `
+                -ErrorDetail (Get-CleanupText 'cleanupReport.action.adminRequired'))
+            [void]$remediationStates.Add($state)
+        }
+        foreach ($path in @($OfficeHostOverridePaths | Select-Object -Unique)) {
+            $identity = Get-OfficeKmsHostOverrideIdentity -Path $path
+            if ([string]::IsNullOrWhiteSpace($identity)) { continue }
+            $state = New-RemediationStateRecord -CandidateId (('License|OfficeKmsHostOverride|' + $identity).ToLowerInvariant()) `
+                -Kind 'OfficeKmsHostOverride' -Provider 'OfficeOSPP' -OsppPathInstance $path
+            [void](Set-RemediationStateRecord -Record $state -State Running)
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure -ErrorCode 'AdministratorRequired' `
+                -ErrorDetail (Get-CleanupText 'cleanupReport.action.adminRequired'))
+            [void]$remediationStates.Add($state)
+        }
+        return [pscustomobject]@{ Actions=@($actions); SystemChangeCount=0; SystemChangeApplied=$false; RemediationStates=@($remediationStates.ToArray()) }
     }
 
     if (-not $NoRestorePoint -and -not $SkipRestorePoint) {
@@ -3811,123 +4122,155 @@ function Invoke-Remediation {
         $actions.Add((Get-CleanupText "cleanupReport.action.keepWindowsKey"))
     }
 
-    # Đưa Office KMS về trạng thái chưa kích hoạt chỉ khi OSPP /dstatusall
-    # vừa được đọc đầy đủ.  Tuyệt đối không suy diễn từ fallback /dstatus,
-    # không gỡ theo Last5 trùng, và không đổi KMS override nếu còn SKU KMS
-    # khác chưa được người dùng chọn trên cùng OSPP.VBS.
-    $requestedOfficeEntries = New-Object System.Collections.Generic.List[object]
-    $selectedOfficeTargetSet = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
-    $requestedOfficePathEntries = @{}
-    $officePathDisplay = @{}
-    $blockedOfficePathSet = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
-    foreach ($candidateEntry in @($OfficeEntries)) {
-        $targetIdentity = Get-OfficeKmsTargetIdentity -Entry $candidateEntry
-        $pathKey = Get-OfficeKmsPathKey -Path ([string]$candidateEntry.Path)
-        if ([string]::IsNullOrWhiteSpace($targetIdentity) -or [string]::IsNullOrWhiteSpace($pathKey)) {
-            if (-not [string]::IsNullOrWhiteSpace($pathKey)) { [void]$blockedOfficePathSet.Add($pathKey) }
-            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(
-                ("SKU={0}; Last5={1}; MissingPathSkuOrLast5" -f [string]$candidateEntry.SkuId, [string]$candidateEntry.Last5)
-            )))
-            continue
-        }
-        if (-not $selectedOfficeTargetSet.Add($targetIdentity)) { continue }
-        [void]$requestedOfficeEntries.Add($candidateEntry)
-        $officePathDisplay[$pathKey] = [string]$candidateEntry.Path
-        if (-not $requestedOfficePathEntries.ContainsKey($pathKey)) {
-            $requestedOfficePathEntries[$pathKey] = New-Object System.Collections.Generic.List[object]
-        }
-        [void]$requestedOfficePathEntries[$pathKey].Add($candidateEntry)
-    }
-    $selectedOfficeTargetIds = @($selectedOfficeTargetSet | ForEach-Object { [string]$_ })
-    $allowedOfficeTargetSet = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
-    $officeEntries = New-Object System.Collections.Generic.List[object]
-    foreach ($entry in @($requestedOfficeEntries)) {
-        $targetIdentity = Get-OfficeKmsTargetIdentity -Entry $entry
-        $pathKey = Get-OfficeKmsPathKey -Path ([string]$entry.Path)
-        $targetValidation = Test-OfficeKmsRemediationTarget -Entry $entry -SelectedTargetIds $selectedOfficeTargetIds
-        if (-not [bool]$targetValidation.Allowed -or
-            -not [string]::Equals([string]$targetValidation.TargetIdentity, $targetIdentity, [StringComparison]::OrdinalIgnoreCase)) {
-            [void]$blockedOfficePathSet.Add($pathKey)
-            $reason = if ([string]::IsNullOrWhiteSpace([string]$targetValidation.Reason)) { 'TargetIdentityChanged' } else { [string]$targetValidation.Reason }
-            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(
-                ("SKU={0}; Last5={1}; {2}" -f [string]$entry.SkuId, [string]$entry.Last5, $reason)
-            )))
-            continue
-        }
-        [void]$allowedOfficeTargetSet.Add($targetIdentity)
-        [void]$officeEntries.Add($entry)
-    }
-    $officeEntries = @($officeEntries.ToArray() | Group-Object { Get-OfficeKmsTargetIdentity -Entry $_ } | ForEach-Object { $_.Group[0] })
-    $allowedOfficeTargetIds = @($allowedOfficeTargetSet | ForEach-Object { [string]$_ })
-    $officePathValidation = @{}
-    foreach ($pathKey in @($requestedOfficePathEntries.Keys)) {
-        $path = [string]$officePathDisplay[$pathKey]
-        if ($blockedOfficePathSet.Contains($pathKey)) {
-            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(("KMS host override at {0}; SelectedKmsTargetFailedValidation" -f $path))))
-            continue
-        }
-        # /remhst changes the shared OSPP path.  It is allowed only after every
-        # current KMS record on that path is selected, uniquely identified, and
-        # individually revalidated into the allowed composite-identity set.
-        $pathValidation = Test-OfficeKmsRemediationPath -Path $path `
-            -SelectedTargetIds $selectedOfficeTargetIds -AllowedTargetIds $allowedOfficeTargetIds
-        if (-not [bool]$pathValidation.Allowed -or -not [bool]$pathValidation.RemhstSafe) {
-            [void]$blockedOfficePathSet.Add($pathKey)
-            $reason = if ([string]::IsNullOrWhiteSpace([string]$pathValidation.Reason)) { 'UnvalidatedKmsOnSameOsppPath' } else { [string]$pathValidation.Reason }
-            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(("KMS host override at {0}; {1}" -f $path, $reason))))
-            continue
-        }
-        $officePathValidation[$pathKey] = $pathValidation
-        $remhst = Invoke-OfficeOsppCommand -Path $path -Arguments @('/remhst') -SuccessPattern '(?i)Successfully applied setting|thành công'
-        if ([bool]$remhst.Success) {
-            $actions.Add((Get-CleanupText "cleanupReport.action.officeRemhstPass" @($path, $remhst.Summary)))
-            $systemChangeCount++
-        } else {
-            $actions.Add((Get-CleanupText "cleanupReport.action.officeRemhstFail" @($path, $remhst.ExitCode, $remhst.Summary)))
-        }
-    }
+    # Key removal is exact and always precedes path-wide host cleanup.  Key
+    # identity is Provider=OfficeOSPP + SKU + Last5 + OSPP instance; /remhst is
+    # a separate retryable path candidate and therefore works without Last5.
+    $requestedOfficeEntries = @($OfficeEntries | Group-Object { Get-OfficeKmsTargetIdentity -Entry $_ } | ForEach-Object { $_.Group[0] })
+    $selectedOfficeTargetIds = @($requestedOfficeEntries | ForEach-Object { Get-OfficeKmsTargetIdentity -Entry $_ } | Where-Object { $_ })
+    $stateByTarget = @{}
+    $successfulKeyPaths = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     $officeRemoved = 0
-    foreach ($entry in @($officeEntries | Group-Object { Get-OfficeKmsTargetIdentity -Entry $_ } | ForEach-Object { $_.Group[0] })) {
-        $pathKey = Get-OfficeKmsPathKey -Path ([string]$entry.Path)
-        if ($blockedOfficePathSet.Contains($pathKey) -or -not $officePathValidation.ContainsKey($pathKey)) {
-            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(
-                ("SKU={0}; Last5={1}; KmsPathNotSafeForKeyRemoval" -f [string]$entry.SkuId, [string]$entry.Last5)
-            )))
+
+    foreach ($entry in $requestedOfficeEntries) {
+        $targetIdentity = Get-OfficeKmsTargetIdentity -Entry $entry
+        $candidateId = ('License|OfficeKmsLicense|' + $targetIdentity).ToLowerInvariant()
+        $state = New-RemediationStateRecord -CandidateId $candidateId -Kind 'OfficeKmsLicense' `
+            -Provider 'OfficeOSPP' -SkuId ([string]$entry.SkuId) -Last5 ([string]$entry.Last5) `
+            -OsppPathInstance ([string]$entry.Path)
+        [void](Set-RemediationStateRecord -Record $state -State Running)
+        [void]$remediationStates.Add($state)
+        $stateByTarget[$targetIdentity] = $state
+
+        if ([string]::IsNullOrWhiteSpace($targetIdentity)) {
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                -ErrorCode 'MissingPathSkuOrLast5' -ErrorDetail ([string]$entry.Path))
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @('MissingPathSkuOrLast5')))
             continue
         }
-        # The exact path/SKU/key suffix must still resolve immediately before
-        # the key command; a stale candidate never falls back to SKU-only.
-        $finalTargetValidation = Test-OfficeKmsRemediationTarget -Entry $entry -SelectedTargetIds $selectedOfficeTargetIds
-        if (-not [bool]$finalTargetValidation.Allowed -or
-            -not [string]::Equals([string]$finalTargetValidation.TargetIdentity, (Get-OfficeKmsTargetIdentity -Entry $entry), [StringComparison]::OrdinalIgnoreCase)) {
-            $reason = if ([string]::IsNullOrWhiteSpace([string]$finalTargetValidation.Reason)) { 'TargetIdentityChangedBeforeUnpkey' } else { [string]$finalTargetValidation.Reason }
+        $validation = Test-OfficeKmsRemediationTarget -Entry $entry -SelectedTargetIds $selectedOfficeTargetIds
+        if (-not [bool]$validation.Allowed -or
+            -not [string]::Equals([string]$validation.TargetIdentity, $targetIdentity, [StringComparison]::OrdinalIgnoreCase)) {
+            $reason = if ([string]::IsNullOrWhiteSpace([string]$validation.Reason)) { 'TargetIdentityChangedBeforeUnpkey' } else { [string]$validation.Reason }
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure -ErrorCode $reason `
+                -ErrorDetail ("SKU={0}; Last5={1}" -f [string]$entry.SkuId, [string]$entry.Last5))
             $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(
-                ("SKU={0}; Last5={1}; {2}" -f [string]$entry.SkuId, [string]$entry.Last5, $reason)
-            )))
+                ("SKU={0}; Last5={1}; {2}" -f [string]$entry.SkuId, [string]$entry.Last5, $reason))))
             continue
         }
-        if (-not [string]::IsNullOrWhiteSpace($entry.Last5)) {
-            $unpkey = Invoke-OfficeOsppCommand -Path ([string]$entry.Path) -Arguments @("/unpkey:$($entry.Last5)") -SuccessPattern '(?i)product key uninstall successful|gỡ.+khóa.+thành công'
-            if ([bool]$unpkey.Success) {
-                $officeRemoved++
-                $systemChangeCount++
-                $actions.Add((Get-CleanupText "cleanupReport.action.officeUnpkeyPass" @($entry.Last5, $entry.SkuId, $entry.LicenseName, $unpkey.Summary)))
-            } else {
-                $actions.Add((Get-CleanupText "cleanupReport.action.officeUnpkeyFail" @($entry.Last5, $entry.SkuId, $entry.LicenseName, $unpkey.ExitCode, $unpkey.Summary)))
-            }
+
+        $unpkey = Invoke-OfficeOsppCommand -Path ([string]$entry.Path) `
+            -Arguments @("/unpkey:$($entry.Last5)") `
+            -SuccessPattern '(?i)product key uninstall successful|gỡ.+khóa.+thành công'
+        if ([bool]$unpkey.Success) {
+            $officeRemoved++
+            $systemChangeCount++
+            $state.ArtifactCleanupCompleted = $true
+            [void]$successfulKeyPaths.Add((Get-OfficeKmsPathKey -Path ([string]$entry.Path)))
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeUnpkeyPass' @($entry.Last5, $entry.SkuId, $entry.LicenseName, $unpkey.Summary)))
         } else {
-            $actions.Add((Get-CleanupText "cleanupReport.action.officeNoLast5" @($entry.SkuId)))
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                -ErrorCode ('OSPPUnpkeyExit' + [string]$unpkey.ExitCode) -ErrorDetail ([string]$unpkey.Summary))
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeUnpkeyFail' @($entry.Last5, $entry.SkuId, $entry.LicenseName, $unpkey.ExitCode, $unpkey.Summary)))
         }
     }
-    if ($requestedOfficeEntries.Count -eq 0) {
-        $actions.Add((Get-CleanupText "cleanupReport.action.noOfficeKms"))
+
+    # Refresh at most once per affected OSPP path, then re-probe at most three
+    # times.  A command exit code alone never becomes success.
+    foreach ($pathGroup in @($requestedOfficeEntries | Where-Object {
+        $successfulKeyPaths.Contains((Get-OfficeKmsPathKey -Path ([string]$_.Path)))
+    } | Group-Object { Get-OfficeKmsPathKey -Path ([string]$_.Path) })) {
+        $pathEntry = @($pathGroup.Group | Select-Object -First 1)[0]
+        $path = [string]$pathEntry.Path
+        $refresh = Invoke-OfficeLicenseServiceRefresh -MaximumAttempts 1
+        if (-not [bool]$refresh.Success) {
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeRefreshFailed' @($path, $refresh.Error)))
+        }
+        $probe = Get-OfficeLicenseProbeForPathBounded -Path $path -MaximumAttempts 3
+        foreach ($entry in @($pathGroup.Group)) {
+            $identity = Get-OfficeKmsTargetIdentity -Entry $entry
+            $state = $stateByTarget[$identity]
+            if ($null -eq $state -or [string]$state.State -ne 'Running') { continue }
+            if ([string]$probe.Coverage -ne 'Complete') {
+                [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                    -ErrorCode ('PostKeyProbe' + [string]$probe.Coverage) -ErrorDetail ([string]$path))
+                continue
+            }
+            $stillPresent = [bool](@($probe.Entries | Where-Object {
+                [string]::Equals((Get-OfficeKmsTargetIdentity -Entry $_), $identity, [StringComparison]::OrdinalIgnoreCase)
+            }).Count -gt 0)
+            if ($stillPresent) {
+                [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                    -ErrorCode 'OfficeKmsKeyStillPresent' -ErrorDetail $identity)
+            }
+        }
+    }
+
+    # Shared host cleanup runs only after all exact key attempts above.  It is
+    # independent of Last5 and remains retryable when the post-probe still sees
+    # an unapproved server.
+    foreach ($path in @($OfficeHostOverridePaths | Where-Object { $_ } | Select-Object -Unique)) {
+        $hostIdentity = Get-OfficeKmsHostOverrideIdentity -Path $path
+        if ([string]::IsNullOrWhiteSpace($hostIdentity)) { continue }
+        $state = New-RemediationStateRecord `
+            -CandidateId (('License|OfficeKmsHostOverride|' + $hostIdentity).ToLowerInvariant()) `
+            -Kind 'OfficeKmsHostOverride' -Provider 'OfficeOSPP' -OsppPathInstance $path
+        [void](Set-RemediationStateRecord -Record $state -State Running)
+        [void]$remediationStates.Add($state)
+        $hostValidation = Test-OfficeKmsHostOverrideTarget -Path $path
+        if ([bool]$hostValidation.AlreadyClean) {
+            $state.ArtifactCleanupCompleted = $true
+            continue
+        }
+        if (-not [bool]$hostValidation.Allowed) {
+            if ([string]$hostValidation.Reason -eq 'ApprovedInternalKmsSharesOsppPath') {
+                [void](Set-RemediationStateRecord -Record $state -State ApprovedInternalKMS `
+                    -OutcomeMessageKey 'cleanupReport.remediation.approvedInternalKms')
+            } else {
+                [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                    -ErrorCode ([string]$hostValidation.Reason) -ErrorDetail $path)
+            }
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeTargetBlocked' @(
+                ("KMS host override at {0}; {1}" -f $path, [string]$hostValidation.Reason))))
+            continue
+        }
+
+        $remhst = Invoke-OfficeOsppCommand -Path $path -Arguments @('/remhst') `
+            -SuccessPattern '(?i)Successfully applied setting|thành công'
+        if (-not [bool]$remhst.Success) {
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                -ErrorCode ('OSPPRemhstExit' + [string]$remhst.ExitCode) -ErrorDetail ([string]$remhst.Summary))
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeRemhstFail' @($path, $remhst.ExitCode, $remhst.Summary)))
+            continue
+        }
+        $systemChangeCount++
+        $actions.Add((Get-CleanupText 'cleanupReport.action.officeRemhstPass' @($path, $remhst.Summary)))
+        $refresh = Invoke-OfficeLicenseServiceRefresh -MaximumAttempts 1
+        if (-not [bool]$refresh.Success) {
+            $actions.Add((Get-CleanupText 'cleanupReport.action.officeRefreshFailed' @($path, $refresh.Error)))
+        }
+        $postHostProbe = Get-OfficeLicenseProbeForPathBounded -Path $path -MaximumAttempts 3
+        $hostStillPresent = [bool]([string]$postHostProbe.Coverage -ne 'Complete' -or @($postHostProbe.Entries | Where-Object {
+            [string]$_.Channel -eq 'KMS' -and -not [string]::IsNullOrWhiteSpace([string]$_.Server) -and
+            -not (Test-ApprovedKms -Server ([string]$_.Server))
+        }).Count -gt 0)
+        if ($hostStillPresent) {
+            [void](Set-RemediationStateRecord -Record $state -State RetryableFailure `
+                -ErrorCode 'OfficeKmsHostStillPresent' -ErrorDetail $path)
+        } else {
+            $state.ArtifactCleanupCompleted = $true
+        }
+    }
+
+    if ($requestedOfficeEntries.Count -eq 0 -and @($OfficeHostOverridePaths).Count -eq 0) {
+        $actions.Add((Get-CleanupText 'cleanupReport.action.noOfficeKms'))
     } else {
-        $actions.Add((Get-CleanupText "cleanupReport.action.officeRemovalSummary" @($officeRemoved, @($requestedOfficeEntries | Where-Object { $_.Last5 }).Count)))
+        $actions.Add((Get-CleanupText 'cleanupReport.action.officeRemovalSummary' @($officeRemoved, $requestedOfficeEntries.Count)))
     }
     return [pscustomobject]@{
         Actions = @($actions)
         SystemChangeCount = $systemChangeCount
         SystemChangeApplied = [bool]($systemChangeCount -gt 0)
+        RemediationStates = @($remediationStates.ToArray())
     }
 }
 
@@ -4042,7 +4385,7 @@ function Invoke-DeepCleanupV35 {
     function Save-RestoreManifest {
         $manifest = [ordered]@{
             SchemaVersion = "2.0"
-        ToolVersion = "4.8"
+        ToolVersion = "4.9"
             BackupMode = "DeepCleanup"
             RemediationScope = $ScanScope
             ComputerName = $env:COMPUTERNAME
@@ -4090,14 +4433,10 @@ function Invoke-DeepCleanupV35 {
         try {
             $psPath = [string]$Candidate.Location
             if (-not (Test-Path -LiteralPath $psPath)) { return $false }
-            if ([string]$Candidate.Kind -in @("KmsOverride", "SppNoGenTicketPolicy")) {
+            if ([string]$Candidate.Kind -eq "KmsOverride") {
                 $key = Get-Item -LiteralPath $psPath -ErrorAction Stop
                 $values = New-Object System.Collections.Generic.List[object]
-                $valueNames = if ([string]$Candidate.Kind -eq "SppNoGenTicketPolicy") {
-                    @("NoGenTicket")
-                } else {
-                    @(Get-ToolAllowedRegistryValueNames -Path $psPath)
-                }
+                $valueNames = @(Get-ToolAllowedRegistryValueNames -Path $psPath)
                 foreach ($name in $valueNames) {
                     try {
                         $kind = [string]$key.GetValueKind($name)
@@ -4255,10 +4594,6 @@ function Invoke-DeepCleanupV35 {
                     $actions.Add("Windows /ckms: $(Run-SlmgrActionText -SlmgrArguments @('/ckms'))")
                 }
                 $actions.Add((Get-CleanupText "cleanupReport.action.selectedKmsRemoved" @($candidate.Location)))
-                $systemChangeCount++
-            } elseif ($candidate.Kind -eq "SppNoGenTicketPolicy") {
-                Remove-ItemProperty -LiteralPath $candidate.Location -Name "NoGenTicket" -Force -ErrorAction Stop
-                $actions.Add((Get-CleanupText "cleanupReport.action.selectedPolicyRemoved" @($candidate.Location)))
                 $systemChangeCount++
             } elseif ($candidate.Kind -eq "IfeoHook") {
                 Remove-Item -LiteralPath $candidate.Location -Recurse -Force -ErrorAction Stop
@@ -4771,6 +5106,7 @@ function Get-DryRunRemediationPlan {
             'License' {
                 if ($kind -eq 'WindowsKmsLicense') { $actionCode='RemoveWindowsKmsLicense'; $action=Get-CleanupText 'cleanupReport.dryRun.action.removeWindowsKms' }
                 elseif ($kind -eq 'OfficeKmsLicense') { $actionCode='RemoveOfficeKmsLicense'; $action=Get-CleanupText 'cleanupReport.dryRun.action.removeOfficeKms' }
+                elseif ($kind -eq 'OfficeKmsHostOverride') { $actionCode='RemoveOfficeKmsHostOverride'; $action=Get-CleanupText 'cleanupReport.dryRun.action.removeOfficeKmsHost' }
                 $changesSystem=$true
             }
         }
@@ -4824,7 +5160,7 @@ $initialPostVerificationSuggestedIds = @($initialPostVerificationItems | Where-O
 } | ForEach-Object { [string]$_.CandidateId } | Select-Object -Unique)
 $initialPostVerificationOutcome = Get-CleanupPostVerificationOutcome -PostVerificationItems $initialPostVerificationItems `
     -ScopeReady:$scopeReadyForOriginalState -OfficiallyLicensed:([bool]$officialLicensePostCheck.OfficiallyLicensed)
-$decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.8" -Data ([ordered]@{
+$decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.9" -Data ([ordered]@{
     ScanScope = $ScanScope
     CrackDetected = $crackDetected
     ProtectedLicense = [bool]$protectedLicense.Protected
@@ -4893,6 +5229,7 @@ $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVers
     SystemChangeApplied = $false
     SystemChangeCount = 0
     ThirdPartyExecutionResults = @()
+    RemediationStates = @($cleanupItems | ForEach-Object { $_.RemediationState })
     DryRunRequested = [bool]$DryRun
     SimulationOnly = [bool]$DryRun
     NoSystemChangesApplied = $true
@@ -4936,6 +5273,8 @@ if ($script:SelectionAccepted -and $unknownSelectedCleanupIds.Count -gt 0) {
 $backupDirectory = ""
 $plannedActions = @()
 $thirdPartyExecutionResults = @()
+$remediationStates = @()
+$selectedCandidates = @()
 $selectedThirdPartySnapshots = @()
 $selectedThirdPartyResolvedCount = 0
 $selectedThirdPartyRemainingCount = 0
@@ -4963,6 +5302,9 @@ if ($Remediate) {
         }
     } elseif ($crackDetected) {
         $selectedCandidates = @($cleanupItems | Where-Object { $selectedCleanupIds -contains ([string]$_.Id).ToLowerInvariant() })
+        $remediationStates = @($selectedCandidates | Where-Object { $_.PSObject.Properties['RemediationState'] } | ForEach-Object {
+            $_.RemediationState.PSObject.Copy()
+        })
         $selectedThirdPartySnapshots = @($selectedCandidates | Where-Object {
             [string]$_.Type -eq 'Application' -and [string]$_.Kind -eq 'ThirdPartyLicenseReset'
         } | ForEach-Object {
@@ -4978,6 +5320,7 @@ if ($Remediate) {
             $selectedWindowsActivationIds -contains [string]$_.ID
         })
         $selectedOfficeTargetIds = @($selectedCandidates | Where-Object { $_.Kind -eq "OfficeKmsLicense" } | ForEach-Object { [string]$_.TargetId } | Where-Object { $_ } | Select-Object -Unique)
+        $selectedOfficeHostPaths = @($selectedCandidates | Where-Object { $_.Kind -eq 'OfficeKmsHostOverride' } | ForEach-Object { [string]$_.Location } | Where-Object { $_ } | Select-Object -Unique)
         $officeEntriesToClean = @($unapprovedOfficeKmsEntries | Where-Object {
             $entryTargetId = Get-OfficeKmsTargetIdentity -Entry $_
             $selectedOfficeTargetIds -contains $entryTargetId
@@ -5012,10 +5355,17 @@ if ($Remediate) {
                 -CleanupKmsConfiguration:$false `
                 -WindowsProductsToRemove $(if ($removeWindowsLicense) { $windowsProductsToRemove } else { @() }) `
                 -SkipRestorePoint `
-                -OfficeEntries $officeEntriesToClean
+                -OfficeEntries $officeEntriesToClean `
+                -OfficeHostOverridePaths $selectedOfficeHostPaths
             $basicActions = @($basicResult.Actions)
             foreach ($basicAction in $basicActions) { $actions.Add([string]$basicAction) }
             $systemChangeCount += [int]$basicResult.SystemChangeCount
+            if ($basicResult.PSObject.Properties['RemediationStates']) {
+                $stateLookup = @{}
+                foreach ($state in @($remediationStates)) { $stateLookup[[string]$state.CandidateId] = $state }
+                foreach ($state in @($basicResult.RemediationStates)) { $stateLookup[[string]$state.CandidateId] = $state }
+                $remediationStates = @($stateLookup.Values)
+            }
         } else {
             $actions.Add((Get-CleanupText "cleanupReport.action.productKeyBlocked"))
         }
@@ -5064,6 +5414,69 @@ if ($Remediate) {
     $postActiveProduct = $products | Where-Object { [int]$_.LicenseStatus -eq 1 } | Select-Object -First 1
     $postActiveChannel = if ($postActiveProduct) { Get-LicenseChannel $postActiveProduct } else { Get-CleanupText "common.unknown" }
     $postCrackDetected = [bool]([int]$verification.ActiveActivatorFindingCount -gt 0 -or [int]$verification.UnapprovedWindowsKmsCount -gt 0 -or [int]$verification.UnapprovedOfficeKmsCount -gt 0 -or [int]$verification.ThirdPartyRemediationFindingCount -gt 0 -or @($thirdPartyCandidates).Count -gt 0)
+
+    # Resolve every selected item from a fresh scan.  A successful command or
+    # removed artifact is not success by itself: VerifiedClean additionally
+    # requires that the application still exists and its official local state
+    # is Unactivated/Trial with no direct crack evidence remaining.
+    if (-not $DryRun) {
+        foreach ($state in @($remediationStates)) {
+            if ([string]$state.State -in @('BlockedByPolicy','ApprovedInternalKMS','NeedsOfficeRepair')) { continue }
+            if ([string]$state.State -eq 'Pending') { [void](Set-RemediationStateRecord -Record $state -State Running) }
+            $originalCandidate = @($selectedCandidates | Where-Object {
+                [string]::Equals([string]$_.Id, [string]$state.CandidateId, [StringComparison]::OrdinalIgnoreCase)
+            } | Select-Object -First 1)
+            $component = if ($originalCandidate.Count -gt 0) { Get-CleanupRecordComponentScope -Record $originalCandidate[0] }
+                elseif ([string]$state.Provider -eq 'OfficeOSPP') { 'Office' }
+                elseif ([string]$state.Provider -eq 'WindowsSPP') { 'Windows' }
+                else { 'Shared' }
+            $remainingDirectCandidates = @($cleanupItems | Where-Object {
+                [string]$_.Type -ne 'Guidance' -and
+                (Get-CleanupRecordComponentScope -Record $_) -eq $component
+            })
+            $directRemaining = [bool]($remainingDirectCandidates.Count -gt 0)
+            $applicationPresent = $false
+            $officialState = 'Unverified'
+            if ($component -eq 'Office') {
+                $applicationPresent = [bool](Test-OfficeProductInstalled -LicenseEntries $officeLicenseEntries)
+                $officialState = [string]$officialLicensePostCheck.Office.StateCode
+            } elseif ($component -eq 'Windows') {
+                $applicationPresent = [bool](@($products).Count -gt 0)
+                $officialState = [string]$officialLicensePostCheck.Windows.StateCode
+            } elseif ($component -eq 'ThirdParty' -and $originalCandidate.Count -gt 0) {
+                $applicationIds = @($originalCandidate[0].ApplicationIds | ForEach-Object { [string]$_ } | Where-Object { $_ })
+                $matchedApps = @($thirdPartyApplications | Where-Object { $applicationIds -contains [string]$_.Id })
+                $matchedOutcomes = @($officialLicensePostCheck.ThirdParty | Where-Object { $applicationIds -contains [string]$_.ApplicationId })
+                $applicationPresent = [bool]($matchedApps.Count -gt 0)
+                if ($matchedOutcomes.Count -gt 0 -and @($matchedOutcomes | Where-Object { [string]$_.StateCode -notin @('Unactivated','Trial') }).Count -eq 0) {
+                    $officialState = 'Unactivated'
+                } elseif ($matchedOutcomes.Count -gt 0) {
+                    $officialState = [string]$matchedOutcomes[0].StateCode
+                }
+            }
+            $artifactCleanupCompleted = [bool]$state.ArtifactCleanupCompleted
+            if (-not $artifactCleanupCompleted -and $originalCandidate.Count -gt 0) {
+                $executionMatch = @($thirdPartyExecutionResults | Where-Object {
+                    [string]::Equals([string]$_.ParentCandidateId, [string]$state.CandidateId, [StringComparison]::OrdinalIgnoreCase) -and [bool]$_.Changed
+                })
+                $artifactCleanupCompleted = [bool]($executionMatch.Count -gt 0 -or
+                    (-not $directRemaining -and $systemChangeCount -gt 0))
+            }
+            $volumeRepairRequired = [bool]($component -eq 'Office' -and
+                (Test-OfficeVolumeOrMondoRepairRequired -LicenseEntries $officeLicenseEntries `
+                    -OfficialLicenseState $officialState -DirectCrackEvidenceRemaining:$directRemaining))
+            [void](Resolve-RemediationPostCheckState -Record $state `
+                -DirectCrackEvidenceRemaining:$directRemaining -ApplicationPresent:$applicationPresent `
+                -OfficialLicenseState $officialState -ArtifactCleanupCompleted:$artifactCleanupCompleted `
+                -VolumeRepairRequired:$volumeRepairRequired)
+            if (-not [string]::IsNullOrWhiteSpace([string]$state.OutcomeMessageKey)) {
+                $actions.Add((Get-CleanupText ([string]$state.OutcomeMessageKey) @([string]$state.CandidateId, [string]$state.OfficialLicenseState)))
+            }
+        }
+    }
+    $remediationPostCheckPassed = [bool](@($remediationStates | Where-Object {
+        [string]$_.State -notin @('VerifiedClean','ApprovedInternalKMS')
+    }).Count -eq 0)
     $thirdPartyChangedCount = [int]@($thirdPartyExecutionResults | Where-Object { [bool]$_.Changed }).Count
     $thirdPartyFailedCount = [int]@($thirdPartyExecutionResults | Where-Object { [string]$_.Status -eq 'Failed' }).Count
     $thirdPartyGuidanceOnlyCount = [int]@($thirdPartyExecutionResults | Where-Object { [string]$_.Status -eq 'GuidanceOnly' }).Count
@@ -5092,7 +5505,7 @@ if ($Remediate) {
             else { 'Resolved' }
         $execution | Add-Member -NotePropertyName PostCheckStatus -NotePropertyValue $postCheckStatus -Force
     }
-    $postReadyForCurrentScope = [bool]$scopeReadyForOriginalState
+    $postReadyForCurrentScope = [bool]($scopeReadyForOriginalState -and $remediationPostCheckPassed)
     $postVerificationItems = @(Get-CleanupPostVerificationItems -CleanupItems $cleanupItems -SelectedIds $selectedCleanupIds `
         -ThirdPartyExecutionResults $thirdPartyExecutionResults -Verification $verification)
     $postVerificationSuggestedIds = @($postVerificationItems | Where-Object {
@@ -5133,10 +5546,10 @@ if ($Remediate) {
     $finalDecisionText = [string]$postDecisionText
     $finalCleanupConclusion = [string]$postConclusion
     $postExecutionAccepted = [bool]($postDecisionCode -notin @('SelectionRejected','RemediationFailed'))
-    $finalReadyForOfficialActivation = [bool]($verification.ReadyForOfficialActivation -and $postExecutionAccepted)
-    $finalScopeReadyForOriginalState = [bool]($scopeReadyForOriginalState -and $postExecutionAccepted)
+    $finalReadyForOfficialActivation = [bool]($verification.ReadyForOfficialActivation -and $postExecutionAccepted -and $remediationPostCheckPassed)
+    $finalScopeReadyForOriginalState = [bool]($scopeReadyForOriginalState -and $postExecutionAccepted -and $remediationPostCheckPassed)
     if (-not $DryRun) { $actions.Add((Get-CleanupText "cleanupReport.action.postCheck" @($verification.Conclusion))) }
-    $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.8" -Data ([ordered]@{
+    $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.9" -Data ([ordered]@{
         ScanScope = $ScanScope
         CrackDetected = $postCrackDetected
         ProtectedLicense = [bool]$postProtectedLicense.Protected
@@ -5211,6 +5624,8 @@ if ($Remediate) {
         SystemChangeApplied = [bool](-not $DryRun -and $systemChangeCount -gt 0)
         SystemChangeCount = [int]$systemChangeCount
         ThirdPartyExecutionResults = @($thirdPartyExecutionResults)
+        RemediationStates = @($remediationStates)
+        RemediationPostCheckPassed = [bool]$remediationPostCheckPassed
         DryRunRequested = [bool]$DryRun
         SimulationOnly = [bool]$DryRun
         NoSystemChangesApplied = [bool]($DryRun -or $systemChangeCount -eq 0)
@@ -5249,7 +5664,7 @@ Write-Report -Path $reportPath -Products $products -Findings $findings -Decision
 # thay đổi luồng xử lý v3.0. Không ghi product key đầy đủ vào JSON.
 $jsonReportPath = [IO.Path]::ChangeExtension($reportPath, ".json")
 $hashReportPath = [IO.Path]::ChangeExtension($reportPath, ".sha256")
-$cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.8" -Data ([ordered]@{
+$cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.9" -Data ([ordered]@{
     ScanScope = $ScanScope
     ComputerName = $reportComputer
     CreatedAt = (Get-Date).ToString("o")
@@ -5262,6 +5677,8 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     SystemChangeApplied = [bool](-not $DryRun -and $systemChangeCount -gt 0)
     SystemChangeCount = [int]$systemChangeCount
     ThirdPartyExecutionResults = @($thirdPartyExecutionResults)
+    RemediationStates = @($remediationStates)
+    RemediationPostCheckPassed = [bool](@($remediationStates | Where-Object { [string]$_.State -notin @('VerifiedClean','ApprovedInternalKMS') }).Count -eq 0)
     ThirdPartyChangedCount = [int]@($thirdPartyExecutionResults | Where-Object { [bool]$_.Changed }).Count
     ThirdPartyFailedCount = [int]@($thirdPartyExecutionResults | Where-Object { [string]$_.Status -eq 'Failed' }).Count
     ThirdPartyGuidanceOnlyCount = [int]@($thirdPartyExecutionResults | Where-Object { [string]$_.Status -eq 'GuidanceOnly' }).Count
@@ -5343,7 +5760,7 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     ScopeNote = Protect-CleanupReportText ([string]$verification.ScopeNote)
     Actions = @($actions | ForEach-Object { Protect-CleanupReportText $_ })
 })
-$cleanupSummaryValidation = Test-ToolReportEnvelope -Report $cleanupSummary -ExpectedReportKind "CleanupCompliance" -ExpectedToolVersion "4.8"
+$cleanupSummaryValidation = Test-ToolReportEnvelope -Report $cleanupSummary -ExpectedReportKind "CleanupCompliance" -ExpectedToolVersion "4.9"
 if (-not $cleanupSummaryValidation.Valid) { throw (Get-CleanupText "cleanupReport.output.schemaInvalid" @($cleanupSummaryValidation.Errors -join '; ')) }
 $cleanupJson = $cleanupSummary | ConvertTo-Json -Depth 8
 Protect-CleanupReportText $cleanupJson | Set-Content -LiteralPath $jsonReportPath -Encoding UTF8

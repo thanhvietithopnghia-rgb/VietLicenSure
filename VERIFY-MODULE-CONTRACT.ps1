@@ -14,7 +14,7 @@ try {
     if ($actualArchitecture -ne $ExpectedArchitecture) { throw "Verifier đang chạy $actualArchitecture, cần $ExpectedArchitecture." }
 
     $metadata = Get-ToolModuleContractMetadata
-if ([string]$metadata.ContractSchemaVersion -ne "1.0" -or [string]$metadata.ResultSchemaVersion -ne "1.0" -or [string]$metadata.ToolVersion -ne "4.8") { throw "Metadata hợp đồng mô-đun không hợp lệ." }
+if ([string]$metadata.ContractSchemaVersion -ne "1.0" -or [string]$metadata.ResultSchemaVersion -ne "1.0" -or [string]$metadata.ToolVersion -ne "4.9") { throw "Metadata hợp đồng mô-đun không hợp lệ." }
     if ([int]$metadata.ModuleCount -ne 28 -or [int]$metadata.EntryPointCount -ne 24) { throw "Catalog không đúng 28 mô-đun/24 entry point." }
     foreach ($category in @("Windows", "Office", "OEM", "Registry", "Service", "Task", "Backup", "Restore", "Forensics", "Report", "Security", "Assurance", "Enterprise", "Foundation")) {
         if ($metadata.Categories -notcontains $category) { throw "Catalog thiếu category: $category" }
@@ -40,7 +40,7 @@ if ([string]$metadata.ContractSchemaVersion -ne "1.0" -or [string]$metadata.Resu
         throw 'Nhóm cleanup chưa tách duy nhất luồng Scan chỉ đọc khỏi các luồng thay đổi.'
     }
     foreach ($descriptor in $catalog) {
-if ([string]$descriptor.ContractSchemaVersion -ne "1.0" -or [string]$descriptor.ResultSchemaVersion -ne "1.0" -or [string]$descriptor.ToolVersion -ne "4.8") { throw "Descriptor sai schema: $($descriptor.ModuleId)" }
+if ([string]$descriptor.ContractSchemaVersion -ne "1.0" -or [string]$descriptor.ResultSchemaVersion -ne "1.0" -or [string]$descriptor.ToolVersion -ne "4.9") { throw "Descriptor sai schema: $($descriptor.ModuleId)" }
         if ([string]$descriptor.NetworkScope -notin @("LocalOnly","Lan","Internet")) { throw "Descriptor thiếu NetworkScope: $($descriptor.ModuleId)" }
         if ([bool]$descriptor.OfflineCapable -ne ([string]$descriptor.NetworkScope -eq "LocalOnly")) { throw "OfflineCapable không khớp NetworkScope: $($descriptor.ModuleId)" }
         if ([string]::IsNullOrWhiteSpace([string]$descriptor.ModuleId) -or [string]::IsNullOrWhiteSpace([string]$descriptor.Category) -or [string]::IsNullOrWhiteSpace([string]$descriptor.DisplayName)) { throw "Descriptor thiếu trường bắt buộc." }

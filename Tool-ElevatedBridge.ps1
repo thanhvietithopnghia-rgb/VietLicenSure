@@ -76,6 +76,7 @@ try {
         'TOOL_LAUNCHER_PID','TOOL_LAUNCH_MODE','TOOL_LEGACY_DATA_ROOT','TOOL_LOCALIZATION_SCHEMA',
         'TOOL_LOG_PATH','TOOL_MODULE_CONTRACT_SCHEMA','TOOL_MODULE_ID','TOOL_MODULE_INVOCATION_ID',
         'TOOL_OFFLINE_MODE','TOOL_OFFLINE_POLICY_SCHEMA','TOOL_OFFLINE_SETTINGS_PATH','TOOL_PLUGIN_DIR',
+        'TOOL_OFFICIAL_BUILD_STATE','TOOL_OFFICIAL_BUILD_FAILURE','TOOL_OFFICIAL_BUILD_ID','TOOL_OFFICIAL_VERIFICATION_URL',
         'TOOL_POWERSHELL_PATH','TOOL_REPORT_SCHEMA','TOOL_SAFETY_POLICY_SCHEMA','TOOL_SECURE_LAUNCH',
         'TOOL_SELF_UPDATE_ALLOWED',
         'TOOL_SECURE_RUNTIME_DIR','TOOL_SECURE_RUNTIME_FAILED','TOOL_TIMELINE_KEY_PATH','TOOL_TIMELINE_PATH',
@@ -116,6 +117,14 @@ try {
         'restore.apply' = 'windows-license-restore.ps1'
     }
     if (-not $moduleScripts.ContainsKey($moduleId)) { throw 'ElevatedBridgeModuleIdInvalid' }
+    $systemChangeModules = @('cleanup.repair','application.update.apply','oem.apply','license.manager','restore.apply')
+    if ($systemChangeModules -contains $moduleId -and (
+        [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -ne 'Official' -or
+        [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne '4.9.0.0-production-20260821' -or
+        [string]$environmentValues['TOOL_OFFICIAL_VERIFICATION_URL'] -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
+    )) {
+        throw 'ElevatedBridgeOfficialBuildRequired'
+    }
 
     $bridgeRoot = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\')
     $runtimeRoot = [IO.Path]::GetFullPath((Join-Path $bridgeRoot 'runtime')).TrimEnd('\')

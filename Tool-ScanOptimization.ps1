@@ -1,5 +1,5 @@
 ﻿$script:ToolScanOptimizationVersion = "1.0"
-$script:ToolScanOptimizationToolVersion = "4.8"
+$script:ToolScanOptimizationToolVersion = "4.9"
 
 function Get-ToolOptimizedOfficeOsppPaths {
     [CmdletBinding()]

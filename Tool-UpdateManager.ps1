@@ -17,14 +17,18 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $script:ToolUpdateSchemaVersion = '1.0'
-$script:ToolUpdateToolVersion = '4.8.0.1'
+$script:ToolUpdateToolVersion = '4.9.0.0'
 $script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
+$script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
 $script:ToolUpdateManifestHost = 'raw.githubusercontent.com'
 $script:ToolUpdateDownloadHosts = @('github.com','release-assets.githubusercontent.com','objects.githubusercontent.com')
 $script:ToolUpdateRepositoryPath = '/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/'
 $script:ToolUpdateMaximumManifestBytes = 131072
+$script:ToolUpdateMaximumSignatureBytes = 65536
 $script:ToolUpdateMaximumExecutableBytes = 104857600
 $script:ToolUpdateMinimumExecutableBytes = 65536
+$script:ToolUpdateSignerThumbprints = @('ABE70696679B1D8987A2D5B1F6C1C6909D364CEA')
+$script:ToolUpdateSignerCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 $script:ToolUpdateRestartAttempted = $false
 
 # Every executable entry point fails closed before loading helpers or making a
@@ -63,6 +67,40 @@ function Get-ToolUpdateSha256 {
         finally { $sha.Dispose() }
     } finally {
         $stream.Dispose()
+    }
+}
+
+function Get-ToolUpdateSha256Bytes {
+    param([Parameter(Mandatory = $true)][byte[]]$Bytes)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-', '').ToUpperInvariant() }
+    finally { $sha.Dispose() }
+}
+
+function Test-ToolUpdateManifestSignature {
+    param(
+        [Parameter(Mandatory = $true)][byte[]]$ContentBytes,
+        [Parameter(Mandatory = $true)][byte[]]$SignatureBytes
+    )
+    try {
+        if ($ContentBytes.Length -le 16 -or $ContentBytes.Length -gt $script:ToolUpdateMaximumManifestBytes) { return $false }
+        if ($SignatureBytes.Length -le 64 -or $SignatureBytes.Length -gt $script:ToolUpdateMaximumSignatureBytes) { return $false }
+        Add-Type -AssemblyName System.Security -ErrorAction Stop
+        $contentInfo = New-Object Security.Cryptography.Pkcs.ContentInfo -ArgumentList (,$ContentBytes)
+        $signedCms = New-Object Security.Cryptography.Pkcs.SignedCms -ArgumentList @($contentInfo, $true)
+        $signedCms.Decode($SignatureBytes)
+        if ($signedCms.SignerInfos.Count -ne 1) { return $false }
+        $signer = $signedCms.SignerInfos[0]
+        if ($null -eq $signer.Certificate -or
+            $signer.DigestAlgorithm.Value -ne '2.16.840.1.101.3.4.2.1' -or
+            $signer.Certificate.PublicKey.Oid.Value -ne '1.2.840.113549.1.1.1' -or
+            (Get-ToolUpdateSha256Bytes -Bytes $signer.Certificate.RawData) -ne $script:ToolUpdateSignerCertificateSha256) {
+            return $false
+        }
+        $signedCms.CheckSignature($true)
+        return $true
+    } catch {
+        return $false
     }
 }
 
@@ -145,6 +183,20 @@ function Assert-ToolUpdateManifestUri {
         -not [string]::IsNullOrWhiteSpace($Uri.Query) -or
         -not [string]::IsNullOrWhiteSpace($Uri.Fragment)) {
         throw 'Update manifest URL is outside the fixed HTTPS allowlist.'
+    }
+    return $Uri
+}
+
+function Assert-ToolUpdateManifestSignatureUri {
+    param([Parameter(Mandatory = $true)][uri]$Uri)
+    $expectedPath = $script:ToolUpdateRepositoryPath + 'main/update-manifest-v1.json.p7s'
+    if ($Uri.Scheme -ne 'https' -or
+        $Uri.DnsSafeHost.ToLowerInvariant() -ne $script:ToolUpdateManifestHost -or
+        $Uri.AbsolutePath -ne $expectedPath -or
+        -not [string]::IsNullOrWhiteSpace($Uri.UserInfo) -or
+        -not [string]::IsNullOrWhiteSpace($Uri.Query) -or
+        -not [string]::IsNullOrWhiteSpace($Uri.Fragment)) {
+        throw 'Update manifest signature URL is outside the fixed HTTPS allowlist.'
     }
     return $Uri
 }
@@ -255,6 +307,9 @@ function ConvertFrom-ToolUpdateManifest {
         if ($thumbprint -notmatch '^[0-9A-F]{40,64}$') {
             throw 'Update manifest contains an invalid signer thumbprint.'
         }
+        if ($script:ToolUpdateSignerThumbprints -notcontains $thumbprint) {
+            throw 'Update manifest declares a signer that is not pinned by this Tool build.'
+        }
         if (-not $signerThumbprints.Contains($thumbprint)) { [void]$signerThumbprints.Add($thumbprint) }
     }
     if ($authenticodeRequired -and $signerThumbprints.Count -eq 0) {
@@ -306,30 +361,41 @@ function Invoke-ToolUpdateManifestDownload {
         [int]$TimeoutMilliseconds = 15000
     )
     [void](Assert-ToolUpdateManifestUri $Uri)
+    $bytes = Invoke-ToolUpdateFixedBytesDownload -Uri $Uri -MaximumBytes $script:ToolUpdateMaximumManifestBytes
+    return (New-Object Text.UTF8Encoding($false, $true)).GetString($bytes)
+}
+
+function Invoke-ToolUpdateFixedBytesDownload {
+    param(
+        [Parameter(Mandatory = $true)][uri]$Uri,
+        [Parameter(Mandatory = $true)][int]$MaximumBytes,
+        [int]$TimeoutMilliseconds = 15000
+    )
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $request = [Net.HttpWebRequest]::Create($Uri)
     $request.Method = 'GET'
     $request.Timeout = $TimeoutMilliseconds
     $request.ReadWriteTimeout = $TimeoutMilliseconds
     $request.AllowAutoRedirect = $false
-    $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/4.8.0 update-check'
+    $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/4.9.0 update-check'
     $response = $null
     $stream = $null
     $memory = $null
     try {
         $response = [Net.HttpWebResponse]$request.GetResponse()
         if ([int]$response.StatusCode -ne 200) { throw ('HTTP ' + [int]$response.StatusCode) }
-        if ($response.ContentLength -gt $script:ToolUpdateMaximumManifestBytes) { throw 'Update manifest exceeds the size limit.' }
+        if ($response.ContentLength -gt $MaximumBytes) { throw 'Update metadata exceeds the size limit.' }
         $stream = $response.GetResponseStream()
         $memory = New-Object IO.MemoryStream
         $buffer = New-Object byte[] 8192
         $total = 0
         while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
             $total += $read
-            if ($total -gt $script:ToolUpdateMaximumManifestBytes) { throw 'Update manifest exceeds the size limit.' }
+            if ($total -gt $MaximumBytes) { throw 'Update metadata exceeds the size limit.' }
             $memory.Write($buffer, 0, $read)
         }
-        return (New-Object Text.UTF8Encoding($false, $true)).GetString($memory.ToArray())
+        if ($total -le 0) { throw 'Update metadata is empty.' }
+        return ,$memory.ToArray()
     } finally {
         if ($memory) { $memory.Dispose() }
         if ($stream) { $stream.Dispose() }
@@ -349,7 +415,13 @@ function Invoke-ToolUpdateCheck {
         throw 'Update checks require explicit Online mode.'
     }
     $uri = Assert-ToolUpdateManifestUri ([uri]$SourceUrl)
-    $raw = Invoke-ToolUpdateManifestDownload -Uri $uri
+    $signatureUri = Assert-ToolUpdateManifestSignatureUri ([uri]$script:ToolUpdateDefaultManifestSignatureUrl)
+    [byte[]]$manifestBytes = Invoke-ToolUpdateFixedBytesDownload -Uri $uri -MaximumBytes $script:ToolUpdateMaximumManifestBytes
+    [byte[]]$signatureBytes = Invoke-ToolUpdateFixedBytesDownload -Uri $signatureUri -MaximumBytes $script:ToolUpdateMaximumSignatureBytes
+    if (-not (Test-ToolUpdateManifestSignature -ContentBytes $manifestBytes -SignatureBytes $signatureBytes)) {
+        throw 'Update manifest signature is missing, invalid, or not signed by the pinned publisher.'
+    }
+    $raw = (New-Object Text.UTF8Encoding($false, $true)).GetString($manifestBytes)
     $manifest = $raw | ConvertFrom-Json
     return ConvertFrom-ToolUpdateManifest -Manifest $manifest -InstalledVersion $InstalledVersion -InstalledSha256 $InstalledSha256 -SelectedCulture $SelectedCulture -SourceUrl $uri.AbsoluteUri
 }

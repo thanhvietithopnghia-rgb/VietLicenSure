@@ -6,7 +6,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$productVersion = '4.8'
+$productVersion = '4.9'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = Join-Path $SourceDirectory 'dist' }
 $failures = New-Object System.Collections.Generic.List[string]
@@ -19,6 +19,26 @@ function Get-Sha256Hex([string]$Path) {
         try { return ([BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '').ToUpperInvariant() }
         finally { $sha.Dispose() }
     } finally { $stream.Dispose() }
+}
+
+function Test-PinnedDetachedCmsSignature([string]$ContentPath, [string]$SignaturePath, [string]$ExpectedCertificateSha256) {
+    try {
+        if (-not (Test-Path -LiteralPath $ContentPath -PathType Leaf) -or
+            -not (Test-Path -LiteralPath $SignaturePath -PathType Leaf)) { return $false }
+        Add-Type -AssemblyName System.Security -ErrorAction Stop
+        $contentBytes = [IO.File]::ReadAllBytes($ContentPath)
+        $signatureBytes = [IO.File]::ReadAllBytes($SignaturePath)
+        $contentInfo = New-Object Security.Cryptography.Pkcs.ContentInfo -ArgumentList (,$contentBytes)
+        $signedCms = New-Object Security.Cryptography.Pkcs.SignedCms -ArgumentList @($contentInfo, $true)
+        $signedCms.Decode($signatureBytes)
+        if ($signedCms.SignerInfos.Count -ne 1 -or $null -eq $signedCms.SignerInfos[0].Certificate) { return $false }
+        $signedCms.CheckSignature($true)
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try {
+            $certificateSha256 = ([BitConverter]::ToString($sha.ComputeHash($signedCms.SignerInfos[0].Certificate.RawData))).Replace('-', '').ToUpperInvariant()
+        } finally { $sha.Dispose() }
+        return [bool]($certificateSha256 -ceq $ExpectedCertificateSha256)
+    } catch { return $false }
 }
 
 function Test-HashManifest([string]$ManifestPath, [string]$RootPath, [int]$ExpectedCount, [switch]$AllowRelativePaths) {
@@ -85,6 +105,9 @@ $performanceVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-PERFORMANCE.ps
 $dataLifecycleVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-DATA-LIFECYCLE.ps1'
 $applicationUpdateVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-APPLICATION-UPDATE.ps1'
 $assistantVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-ASSISTANT.ps1'
+$catalogV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-CATALOG-V4.9.ps1'
+$remediationV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-REMEDIATION-V4.9.ps1'
+$provenanceVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-PROVENANCE.ps1'
 if (-not (Test-Path -LiteralPath $peHelperPath -PathType Leaf)) { $failures.Add('Thiếu PE-HARDENING.ps1.') }
 else { . $peHelperPath }
 if (-not (Test-Path -LiteralPath $embeddedVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-EMBEDDED-PAYLOAD.ps1.') }
@@ -102,6 +125,9 @@ if (-not (Test-Path -LiteralPath $performanceVerifierPath -PathType Leaf)) { $fa
 if (-not (Test-Path -LiteralPath $dataLifecycleVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-DATA-LIFECYCLE.ps1.') }
 if (-not (Test-Path -LiteralPath $applicationUpdateVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-APPLICATION-UPDATE.ps1.') }
 if (-not (Test-Path -LiteralPath $assistantVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-ASSISTANT.ps1.') }
+if (-not (Test-Path -LiteralPath $catalogV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-CATALOG-V4.9.ps1.') }
+if (-not (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-REMEDIATION-V4.9.ps1.') }
+if (-not (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-PROVENANCE.ps1.') }
 
 foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.ps1' -File) {
     $tokens = $null
@@ -110,32 +136,36 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
     foreach ($parseError in @($parseErrors)) { $failures.Add("Lỗi cú pháp $($script.Name): $($parseError.Message)") }
 }
 
-Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull 47
-Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull 91
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 51 } else { 52 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 100 } else { 101 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 112 } else { 114 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 28 } else { 30 }
+Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
+Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
 # signed software-catalog safety gate.
-Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull 103 -AllowRelativePaths
-Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull 25
+Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourcePackageHashCount -AllowRelativePaths
+Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull $expectedReleaseHashCount
 
-$manifestPath = Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v4.8-OneFile.manifest'
+$manifestPath = Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v4.9-OneFile.manifest'
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
-    $failures.Add('Thiếu application manifest v4.8.')
+    $failures.Add('Thiếu application manifest v4.9.')
 } else {
     $manifestText = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8
     if ($manifestText -notmatch 'requestedExecutionLevel\s+level="asInvoker"') { $failures.Add('Application manifest chưa dùng asInvoker cho dashboard least-privilege.') }
     if ($manifestText -match 'requestedExecutionLevel\s+level="requireAdministrator"') { $failures.Add('Application manifest vẫn buộc quyền quản trị ngay khi mở.') }
-    if ($manifestText -notmatch 'version="4\.8\.0\.1"') { $failures.Add('Application manifest sai phiên bản 4.8.0.1.') }
+    if ($manifestText -notmatch 'version="4\.9\.0\.0"') { $failures.Add('Application manifest sai phiên bản 4.9.0.0.') }
 }
 
 $versionChecks = @(
-    @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"4\.8\.0"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"4\.8\.0\.1"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.08\.18"' },
-    @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"4\.8"' },
-    @{ File='windows-license-forensics.ps1'; Pattern='\$toolVersion\s*=\s*"4\.8"' },
-    @{ File='Tool-Kiem-Tra-v4.8-OneFile.cs'; Pattern='AssemblyVersion\("4\.8\.0\.1"\)' },
-    @{ File='Tool-Kiem-Tra-v4.8-OneFile.cs'; Pattern='AssemblyFileVersion\("4\.8\.0\.1"\)' },
-    @{ File='Tool-Kiem-Tra-v4.8-OneFile.cs'; Pattern='AssemblyInformationalVersion\("4\.8\.0\.1"\)' }
+    @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"4\.9\.0"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"4\.9\.0\.0"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.08\.21"' },
+    @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"4\.9"' },
+    @{ File='windows-license-forensics.ps1'; Pattern='\$toolVersion\s*=\s*"4\.9"' },
+    @{ File='Tool-Kiem-Tra-v4.9-OneFile.cs'; Pattern='AssemblyVersion\("4\.9\.0\.0"\)' },
+    @{ File='Tool-Kiem-Tra-v4.9-OneFile.cs'; Pattern='AssemblyFileVersion\("4\.9\.0\.0"\)' },
+    @{ File='Tool-Kiem-Tra-v4.9-OneFile.cs'; Pattern='AssemblyInformationalVersion\("4\.9\.0\.0"\)' }
 )
 foreach ($check in $versionChecks) {
     $path = Join-Path $sourceDirectoryFull $check.File
@@ -150,7 +180,7 @@ $cleanupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows
 $backupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-backup.ps1') -Raw -Encoding UTF8
 $restoreText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-restore.ps1') -Raw -Encoding UTF8
 $reportText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
-$launcherText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v4.8-OneFile.cs') -Raw -Encoding UTF8
+$launcherText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v4.9-OneFile.cs') -Raw -Encoding UTF8
 $buildText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'BUILD.ps1') -Raw -Encoding UTF8
 $runtimeText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Runtime.ps1') -Raw -Encoding UTF8
 $capabilityText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Capabilities.ps1') -Raw -Encoding UTF8
@@ -184,7 +214,7 @@ if ($guiText -notmatch 'function\s+Show-ProductIntroduction' -or
     $guiText -notmatch '\$sidebarPanel' -or
     $guiText -notmatch '\$activityPanel' -or
     $guiText -notmatch 'function\s+Show-DashboardPreferences') {
-    $failures.Add('Dashboard v4.8.0.1 thiếu overview/nút giới thiệu, shell hiện đại, bo góc hoặc chế độ gọn.')
+    $failures.Add('Dashboard v4.9.0.0 thiếu overview/nút giới thiệu, shell hiện đại, bo góc hoặc chế độ gọn.')
 }
 if ($guiText -notmatch 'introAssistantButton' -or $guiText -notmatch 'Show-ToolAssistantWindow' -or
     $guiText -notmatch 'TitleLabel' -or $guiText -notmatch 'DescriptionLabel' -or
@@ -295,7 +325,7 @@ if ($runtimeText -notmatch 'Is64BitOperatingSystem\s*-and\s*-not\s*\[Environment
     $runtimeText -notmatch 'Get-ToolNativeSystemPath' -or $runtimeText -notmatch 'Sysnative') {
     $failures.Add('Tool-Runtime.ps1 thiếu chặn WOW64 hoặc đường dẫn System32 native.')
 }
-if ($capabilityText -notmatch 'ToolVersion\s*=\s*"4\.8"' -or
+if ($capabilityText -notmatch 'ToolVersion\s*=\s*"4\.9"' -or
     $capabilityText -notmatch 'SchemaVersion\s*=\s*"1\.1"' -or
     $capabilityText -notmatch 'Get-ToolWindowsReleaseProfile' -or
     $capabilityText -notmatch 'Get-ToolOfficeCompatibilityProfile' -or
@@ -384,7 +414,7 @@ foreach ($name in $operationalScripts) {
 }
 
 if ($cleanupText -notmatch '\[bool\]\$DefaultSelected\s*=\s*\$false') { $failures.Add('Danh sách cleanup chưa mặc định bỏ chọn.') }
-if ($cleanupText -notmatch 'ToolVersion\s*=\s*"4\.8"' -or $cleanupText -notmatch 'LicenseNotice') { $failures.Add('Cleanup manifest v4.8 chưa đầy đủ.') }
+if ($cleanupText -notmatch 'ToolVersion\s*=\s*"4\.9"' -or $cleanupText -notmatch 'LicenseNotice') { $failures.Add('Cleanup manifest v4.9 chưa đầy đủ.') }
 if ($dataLifecycleText -notmatch 'ToolDataSchemaVersion\s*=\s*"2\.0"' -or
     $dataLifecycleText -notmatch 'ProducerVersion' -or
     $dataLifecycleText -notmatch 'Assert-ToolDataMigrationCopy' -or
@@ -509,6 +539,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
+    'LICENSE-NOTICE.txt','SOURCE-POLICY-v4.9.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json',
     'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','Tool-Kiem-Tra-icon.svg','Tool-Kiem-Tra.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
@@ -522,8 +553,9 @@ $payloadFiles = @(
     'windows-license-forensics.ps1','windows-oem-license-assistant.ps1','windows-office-license-manager.ps1',
     'windows-license-assurance.ps1','builtin-windows-office-trust.plugin.json'
 )
+if (-not $AllowDevelopmentManifest) { $payloadFiles += 'OFFICIAL-PROVENANCE-v1.json.p7s' }
 $payloadListArgument = $payloadFiles -join '|'
-$targetFileName = 'Tool-Kiem-Tra-v4.8.exe'
+$targetFileName = 'Tool-Kiem-Tra-v4.9.exe'
 $exePath = Join-Path $distributionDirectoryFull $targetFileName
 $profile = $null
 if (-not (Test-Path -LiteralPath $exePath -PathType Leaf)) {
@@ -589,7 +621,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
 } else {
     try {
         $releaseManifest = Get-Content -LiteralPath $releaseManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ([string]$releaseManifest.SchemaVersion -ne '2.0' -or [string]$releaseManifest.ToolVersion -ne '4.8') { throw 'Sai schema/tool version.' }
+        if ([string]$releaseManifest.SchemaVersion -ne '2.0' -or [string]$releaseManifest.ToolVersion -ne '4.9') { throw 'Sai schema/tool version.' }
         if (@($releaseManifest.Artifacts).Count -ne 1) { throw 'Release manifest phải có đúng một artefact AnyCPU.' }
         if ([string]$releaseManifest.PrimaryFileName -ne $targetFileName) { throw 'Sai PrimaryFileName.' }
         $entry = @($releaseManifest.Artifacts)[0]
@@ -599,21 +631,44 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.ControlFlowGuard.Status -ne 'NotClaimed') { throw 'Trạng thái CFG không minh bạch.' }
         if (-not [bool]$releaseManifest.DeterministicManagedBuild) { throw 'Release manifest chưa xác nhận deterministic managed build.' }
         if ([string]$releaseManifest.CapabilitySchemaVersion -ne '1.1' -or [string]$releaseManifest.LogSchemaVersion -ne '1.0-jsonl') { throw 'Thiếu metadata capability/log schema v4.3.' }
-        if ([string]$releaseManifest.ReleaseVersion -ne '4.8.0.1' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.18') {
-            throw 'Release manifest chưa đồng bộ phiên bản 4.8.0.1 / Build 2026.08.18.'
+        if ([string]$releaseManifest.ReleaseVersion -ne '4.9.0.0' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.21') {
+            throw 'Release manifest chưa đồng bộ phiên bản 4.9.0.0 / Build 2026.08.21.'
         }
-        if ([string]$releaseManifest.ReleaseLabel -ne '4.8.0.1-production-20260818' -or
+        if ([string]$releaseManifest.ReleaseLabel -ne '4.9.0.0-production-20260821' -or
             [string]$releaseManifest.ReleaseStatus -ne 'Production') {
             throw 'Release chưa được nâng lên Production sau khi hoàn tất ma trận E2E.'
         }
-        if ([int]$releaseManifest.PayloadCount -ne 49 -or [int]$releaseManifest.IntegrityFileCount -ne 47) { throw 'Sai số lượng payload/integrity.' }
+        $expectedProvenanceState = if ($AllowDevelopmentManifest) { 'Unverified' } else { 'Official' }
+        if ([string]$releaseManifest.OfficialBuildProvenance.State -ne $expectedProvenanceState -or
+            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '4.9.0.0-production-20260821' -or
+            [string]$releaseManifest.OfficialBuildProvenance.ManifestFile -ne 'OFFICIAL-PROVENANCE-v1.json' -or
+            [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
+            [string]$releaseManifest.OfficialBuildProvenance.SourceDistribution -ne 'PrivateControlled' -or
+            [string]$releaseManifest.OfficialBuildProvenance.RuntimeSystemChangePolicy -notmatch 'Official launcher and pinned provenance') {
+            throw 'Metadata provenance v4.9 không đúng trạng thái hoặc chính sách fail-closed.'
+        }
+        $sourceProvenanceSignaturePath = Join-Path $sourceDirectoryFull 'OFFICIAL-PROVENANCE-v1.json.p7s'
+        $releaseProvenanceSignaturePath = Join-Path $distributionDirectoryFull 'OFFICIAL-PROVENANCE-v1.json.p7s'
+        if ($AllowDevelopmentManifest) {
+            if (Test-Path -LiteralPath $releaseProvenanceSignaturePath -PathType Leaf) { throw 'Build development chứa chữ ký provenance production ngoài dự kiến.' }
+        } elseif (-not (Test-PinnedDetachedCmsSignature `
+            -ContentPath (Join-Path $sourceDirectoryFull 'OFFICIAL-PROVENANCE-v1.json') `
+            -SignaturePath $sourceProvenanceSignaturePath `
+            -ExpectedCertificateSha256 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9') -or
+            -not (Test-Path -LiteralPath $releaseProvenanceSignaturePath -PathType Leaf) -or
+            (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
+            throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
+        }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 53 } else { 54 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 51 } else { 52 }
+        if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
             [string]$payloadCompression.ResourceName -ne 'payload.bundle.deflate.v1' -or
             [int]$payloadCompression.FormatVersion -ne 1 -or
             [int]$payloadCompression.ResourceCount -ne 1 -or
-            [int]$payloadCompression.PayloadCount -ne 49 -or
-            [int64]$payloadCompression.HeaderBytes -ne 416 -or
+            [int]$payloadCompression.PayloadCount -ne $expectedPayloadCount -or
+            [int64]$payloadCompression.HeaderBytes -ne (24 + (8 * $expectedPayloadCount)) -or
             [int64]$payloadCompression.BundleBytes -ne ([int64]$payloadCompression.SourceBytes + [int64]$payloadCompression.HeaderBytes) -or
             [int64]$payloadCompression.SourceBytes -le [int64]$payloadCompression.EmbeddedBytes -or
             [int64]$payloadCompression.SavedBytes -ne ([int64]$payloadCompression.SourceBytes - [int64]$payloadCompression.EmbeddedBytes) -or
@@ -651,12 +706,12 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.DeepSoftwareScanCatalogTrust -notmatch 'pinned-signer') {
             throw 'Thiếu metadata quét sâu phần mềm phổ quát v4.6.'
         }
-        if ([string]$releaseManifest.SoftwareLicenseCatalogVersion -ne '1.4.0.2' -or
-            [string]$releaseManifest.SoftwareLicenseCatalogGeneratedAtUtc -ne '2026-08-20T02:50:00Z' -or
-            [int]$releaseManifest.SoftwareLicenseCatalogProductRules -lt 78 -or
+        if ([string]$releaseManifest.SoftwareLicenseCatalogVersion -ne '1.5.0.0' -or
+            [string]$releaseManifest.SoftwareLicenseCatalogGeneratedAtUtc -ne '2026-08-21T00:00:00Z' -or
+            [int]$releaseManifest.SoftwareLicenseCatalogProductRules -lt 92 -or
             [string]$releaseManifest.SoftwareLicenseCatalogSignatureFile -ne 'software-license-catalog-v1.0.json.p7s' -or
             -not [bool]$releaseManifest.SoftwareLicenseCatalogSignatureRequired -or
-            [string]$releaseManifest.SoftwareLicenseCatalogSignerCertificateSha256 -ne '90857DC1698CDDEAF7C405F5991992E6615D28299A78C7D1445A1B504F8044C3' -or
+            [string]$releaseManifest.SoftwareLicenseCatalogSignerCertificateSha256 -ne 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9' -or
             [int]$releaseManifest.EngineeringSoftwareCatalogRules -lt 16 -or
             @($releaseManifest.EngineeringSoftwareCategories).Count -lt 8) {
             throw 'Thiếu metadata mở rộng catalog phần mềm kỹ thuật v4.6.'
@@ -687,6 +742,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.AutomaticUpdateCheckTrigger -ne 'UserEnabledOnline' -or
             [bool]$releaseManifest.BackgroundUpdateService -or [bool]$releaseManifest.SilentUpdate -or
             [string]$releaseManifest.ApplicationUpdateSchemaVersion -ne '1.0' -or
+            [string]$releaseManifest.ApplicationUpdateManifestSignatureUrl -ne 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s' -or
+            [string]$releaseManifest.ApplicationUpdateVerification -notmatch 'Pinned detached-CMS manifest' -or
             -not [bool]$releaseManifest.OfflineResetOnEveryLaunch -or
             @($releaseManifest.ApplicationUpdateChoices).Count -ne 3) { throw 'Thiếu metadata Offline mặc định/cập nhật theo quyền Online.' }
         if ([string]$releaseManifest.EnterpriseNetworkDefault -ne 'Blocked' -or
@@ -782,6 +839,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
 
 $sourceApplicationUpdateManifestPath = Join-Path $sourceDirectoryFull 'update-manifest-v1.json'
 $applicationUpdateManifestPath = Join-Path $distributionDirectoryFull 'update-manifest-v1.json'
+$sourceApplicationUpdateSignaturePath = $sourceApplicationUpdateManifestPath + '.p7s'
+$applicationUpdateSignaturePath = $applicationUpdateManifestPath + '.p7s'
 if (-not (Test-Path -LiteralPath $sourceApplicationUpdateManifestPath -PathType Leaf)) {
     $failures.Add('Thiếu update-manifest-v1.json trong gói mã nguồn.')
 } elseif (-not $AllowDevelopmentManifest -and (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf) -and
@@ -802,12 +861,12 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
         $applicationUpdateManifest = Get-Content -LiteralPath $applicationUpdateManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $expectedUpdateChannel = if ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
         if ([string]$applicationUpdateManifest.SchemaVersion -ne '1.0' -or [string]$applicationUpdateManifest.Channel -ne $expectedUpdateChannel -or
-            [string]$applicationUpdateManifest.LatestVersion -ne '4.8.0.1' -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
-            [string]$applicationUpdateManifest.PublishedAtUtc -ne '2026-08-18T00:00:00Z') {
+            [string]$applicationUpdateManifest.LatestVersion -ne '4.9.0.0' -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
+            [string]$applicationUpdateManifest.PublishedAtUtc -ne '2026-08-21T00:00:00Z') {
             throw 'Sai schema/channel/version cập nhật.'
         }
-        if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v4.8.0.1' -or
-            [string]$applicationUpdateManifest.DownloadUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v4.8.0.1/Tool-Kiem-Tra-v4.8.exe') {
+        if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v4.9.0.0' -or
+            [string]$applicationUpdateManifest.DownloadUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v4.9.0.0/Tool-Kiem-Tra-v4.9.exe') {
             throw 'URL phát hành/cập nhật không đúng allowlist ổn định.'
         }
         if ([string]$applicationUpdateManifest.DownloadSha256 -ne (Get-Sha256Hex $exePath) -or
@@ -835,6 +894,18 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
             if ($releaseSignature.Status -ne 'Valid' -or $manifestSignerThumbprints -notcontains $releaseSignerThumbprint) {
                 throw 'EXE phát hành không có chữ ký hợp lệ của signer đã ghim trong manifest.'
             }
+            if ($manifestSignerThumbprints.Count -ne 1 -or $manifestSignerThumbprints[0] -ne 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA') {
+                throw 'Manifest stable không ghim đúng signer v4.9.'
+            }
+            if (-not (Test-PinnedDetachedCmsSignature -ContentPath $sourceApplicationUpdateManifestPath `
+                -SignaturePath $sourceApplicationUpdateSignaturePath `
+                -ExpectedCertificateSha256 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9') -or
+                -not (Test-Path -LiteralPath $applicationUpdateSignaturePath -PathType Leaf) -or
+                (Get-Sha256Hex $sourceApplicationUpdateSignaturePath) -ne (Get-Sha256Hex $applicationUpdateSignaturePath)) {
+                throw 'Chữ ký detached CMS của manifest cập nhật thiếu, sai signer hoặc không đồng bộ.'
+            }
+        } elseif (Test-Path -LiteralPath $applicationUpdateSignaturePath -PathType Leaf) {
+            throw 'Manifest development không được mang chữ ký stable.'
         }
     } catch { $failures.Add("update-manifest-v1.json không hợp lệ: $($_.Exception.Message)") }
 }
@@ -901,7 +972,23 @@ if (Test-Path -LiteralPath $applicationUpdateVerifierPath -PathType Leaf) {
 }
 if (Test-Path -LiteralPath $assistantVerifierPath -PathType Leaf) {
     & $assistantVerifierPath -SourceDirectory $sourceDirectoryFull
-    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra Trợ lý Tool cục bộ v4.8 thất bại.') }
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra Trợ lý Tool cục bộ v4.9 thất bại.') }
+}
+if (Test-Path -LiteralPath $catalogV49VerifierPath -PathType Leaf) {
+    & $catalogV49VerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra catalog fail-closed v4.9 thất bại.') }
+}
+if (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf) {
+    & $remediationV49VerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra remediation hậu kiểm v4.9 thất bại.') }
+}
+if (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf) {
+    if ($AllowDevelopmentManifest) {
+        & $provenanceVerifierPath -SourceDirectory $sourceDirectoryFull -AllowUnsignedDevelopmentTest
+    } else {
+        & $provenanceVerifierPath -SourceDirectory $sourceDirectoryFull
+    }
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra provenance v4.9 thất bại.') }
 }
 foreach ($warning in $warnings) { Write-Warning $warning }
 if ($failures.Count -gt 0) {

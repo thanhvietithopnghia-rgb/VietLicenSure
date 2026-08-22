@@ -1,11 +1,11 @@
 ﻿$script:ToolAssistantSchemaVersion = "1.1"
-$script:ToolAssistantToolVersion = "4.8.0.1"
-$script:ToolAssistantMinimumKnowledgeVersion = [Version]"1.3.3"
+$script:ToolAssistantToolVersion = "4.9.0.0"
+$script:ToolAssistantMinimumKnowledgeVersion = [Version]"1.4.0"
 $script:ToolAssistantKnowledgeFileName = "tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeSignatureFileName = "tool-assistant-knowledge-v1.1.json.p7s"
 $script:ToolAssistantKnowledgeSignatureUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/tool-assistant-knowledge-v1.1.json.p7s"
-$script:ToolAssistantSignerCertificateSha256 = "90857DC1698CDDEAF7C405F5991992E6615D28299A78C7D1445A1B504F8044C3"
+$script:ToolAssistantSignerCertificateSha256 = "A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9"
 $script:ToolAssistantMaxKnowledgeBytes = 2097152
 $script:ToolAssistantMaxSignatureBytes = 65536
 $script:ToolAssistantMaxReportBytes = 10485760

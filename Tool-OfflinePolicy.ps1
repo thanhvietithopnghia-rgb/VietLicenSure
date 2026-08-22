@@ -1,5 +1,5 @@
 ﻿$script:ToolOfflinePolicySchemaVersion = "1.0"
-$script:ToolOfflinePolicyToolVersion = "4.8"
+$script:ToolOfflinePolicyToolVersion = "4.9"
 
 $toolOfflineLocalizationPath = Join-Path $PSScriptRoot "Tool-Localization.ps1"
 if ((-not (Get-Command Get-ToolTextCurrent -ErrorAction SilentlyContinue) -or

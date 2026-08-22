@@ -1,6 +1,6 @@
 ﻿$script:ToolPluginSchemaVersion = "1.0"
 $script:ToolPluginEngineVersion = "1.0"
-$script:ToolPluginToolVersion = "4.8"
+$script:ToolPluginToolVersion = "4.9"
 
 $toolPluginLocalizationPath = Join-Path $PSScriptRoot "Tool-Localization.ps1"
 if ((-not (Get-Command Get-ToolTextCurrent -ErrorAction SilentlyContinue) -or

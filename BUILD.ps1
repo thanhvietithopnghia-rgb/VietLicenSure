@@ -14,10 +14,10 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
-$productVersion = '4.8'
-$releaseVersion = '4.8.0.1'
-$releaseBuildDate = '2026.08.18'
-$releaseLabel = "$releaseVersion-production-20260818"
+$productVersion = '4.9'
+$releaseVersion = '4.9.0.0'
+$releaseBuildDate = '2026.08.21'
+$releaseLabel = "$releaseVersion-production-20260821"
 # Keep a hard payload-size budget for in-place updates.  The added safety UI,
 # localized evidence explanations, and post-verification data are intentional;
 # 911,024 bytes keeps a narrow cap while leaving one KiB of signing/timestamp headroom.
@@ -49,6 +49,11 @@ $payloadFiles = @(
     'USER-GUIDE-en-US.md',
     'LICH-SU-PHIEN-BAN.txt',
     'VERSION-HISTORY-en-US.md',
+    'LICENSE-NOTICE.txt',
+    'SOURCE-POLICY-v4.9.md',
+    'Tool-Provenance.ps1',
+    'OFFICIAL-PROVENANCE-v1.json',
+    'OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1',
     'kiem-tra-cau-hinh-ban-quyen.ps1',
     'Tool-Kiem-Tra-icon.svg',
@@ -100,6 +105,11 @@ $integrityFiles = @(
     'USER-GUIDE-en-US.md',
     'LICH-SU-PHIEN-BAN.txt',
     'VERSION-HISTORY-en-US.md',
+    'LICENSE-NOTICE.txt',
+    'SOURCE-POLICY-v4.9.md',
+    'Tool-Provenance.ps1',
+    'OFFICIAL-PROVENANCE-v1.json',
+    'OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1',
     'kiem-tra-cau-hinh-ban-quyen.ps1',
     'Tool-Kiem-Tra-icon.svg',
@@ -145,6 +155,15 @@ $integrityFiles = @(
     'builtin-windows-office-trust.plugin.json'
 )
 
+$provenanceSignatureName = 'OFFICIAL-PROVENANCE-v1.json.p7s'
+$provenanceSignaturePath = Join-Path $sourceDirectory $provenanceSignatureName
+if ($AllowUnsignedDevelopmentBuild -and -not (Test-Path -LiteralPath $provenanceSignaturePath -PathType Leaf)) {
+    $payloadFiles = @($payloadFiles | Where-Object { $_ -ne $provenanceSignatureName })
+    $integrityFiles = @($integrityFiles | Where-Object { $_ -ne $provenanceSignatureName })
+} elseif (-not (Test-Path -LiteralPath $provenanceSignaturePath -PathType Leaf)) {
+    throw 'Build production bắt buộc chữ ký OFFICIAL-PROVENANCE-v1.json.p7s.'
+}
+
 $sourceFiles = @(
     $payloadFiles
     '.gitattributes'
@@ -152,6 +171,8 @@ $sourceFiles = @(
     'BUILD.ps1'
     'DANH-GIA-VA-NANG-CAP-v4.8.md'
     'LICENSE-NOTICE.txt'
+    'SOURCE-POLICY-v4.9.md'
+    'RELEASE-NOTES-v4.9.md'
     'README.md'
     'README-MA-NGUON.md'
     'MODULE-CONTRACT-v1.0.md'
@@ -182,9 +203,14 @@ $sourceFiles = @(
     'VERIFY-DATA-LIFECYCLE.ps1'
     'VERIFY-APPLICATION-UPDATE.ps1'
     'VERIFY-ASSISTANT.ps1'
+    'VERIFY-CATALOG-V4.9.ps1'
+    'VERIFY-REMEDIATION-V4.9.ps1'
+    'VERIFY-PROVENANCE.ps1'
     'SIGN-ASSISTANT-KNOWLEDGE.ps1'
     'tool-assistant-knowledge-v1.1.json.p7s'
     'SIGN-SOFTWARE-CATALOG.ps1'
+    'SIGN-PROVENANCE.ps1'
+    'SIGN-UPDATE-MANIFEST.ps1'
     'SIGN-RELEASE.ps1'
     'VERIFY-AUTHENTICODE.ps1'
     $peHardeningName
@@ -345,6 +371,8 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'BUILD.ps1',
     'DANH-GIA-VA-NANG-CAP-v4.8.md',
     'LICENSE-NOTICE.txt',
+    'SOURCE-POLICY-v4.9.md',
+    'RELEASE-NOTES-v4.9.md',
     'README.md',
     'README-MA-NGUON.md',
     'MODULE-CONTRACT-v1.0.md',
@@ -374,9 +402,14 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-DATA-LIFECYCLE.ps1',
     'VERIFY-APPLICATION-UPDATE.ps1',
     'VERIFY-ASSISTANT.ps1',
+    'VERIFY-CATALOG-V4.9.ps1',
+    'VERIFY-REMEDIATION-V4.9.ps1',
+    'VERIFY-PROVENANCE.ps1',
     'SIGN-ASSISTANT-KNOWLEDGE.ps1',
     'tool-assistant-knowledge-v1.1.json.p7s',
     'SIGN-SOFTWARE-CATALOG.ps1',
+    'SIGN-PROVENANCE.ps1',
+    'SIGN-UPDATE-MANIFEST.ps1',
     'SIGN-RELEASE.ps1',
     'VERIFY-AUTHENTICODE.ps1',
     $peHardeningName,
@@ -395,6 +428,7 @@ foreach ($name in ($requiredFiles | Select-Object -Unique)) {
 . (Join-Path $sourceDirectory 'Tool-Compatibility.ps1')
 . (Join-Path $sourceDirectory 'Tool-Localization.ps1')
 . (Join-Path $sourceDirectory 'Tool-OfflinePolicy.ps1')
+. (Join-Path $sourceDirectory 'Tool-Provenance.ps1')
 . (Join-Path $sourceDirectory 'Tool-Assistant.ps1')
 . (Join-Path $sourceDirectory 'Tool-SoftwareInventory.ps1')
 $moduleContractMetadata = Get-ToolModuleContractMetadata
@@ -404,6 +438,16 @@ $safetyPolicyMetadata = Get-ToolSafetyPolicyMetadata
 $compatibilityMetadata = Get-ToolCompatibilityMetadata
 $localizationMetadata = Get-ToolLocalizationMetadata
 $offlinePolicyMetadata = Get-ToolOfflinePolicyMetadata
+$provenanceMetadata = Get-ToolOfficialBuildState `
+    -ManifestPath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json') `
+    -SignaturePath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s')
+if (-not [bool]$provenanceMetadata.IsOfficial) {
+    if (-not $AllowUnsignedDevelopmentBuild) { throw "Provenance v4.9 chưa đạt Official: $($provenanceMetadata.Code)" }
+    $provenanceMetadata = Test-ToolOfficialProvenance `
+        -ManifestPath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json') `
+        -SignaturePath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s') `
+        -AllowUnsignedDevelopmentTest
+}
 $assistantMetadata = Get-ToolAssistantMetadata
 $softwareCatalogMetadata = Import-ToolSoftwareCatalogFile `
     -Path (Join-Path $sourceDirectory 'software-license-catalog-v1.0.json') `
@@ -415,10 +459,10 @@ if (-not $softwareCatalogMetadata -or -not [bool]$softwareCatalogMetadata.Catalo
 $engineeringCatalogRules = @($softwareCatalogMetadata.Products | Where-Object {
     $_.PSObject.Properties['Category'] -and -not [string]::IsNullOrWhiteSpace([string]$_.Category)
 })
-if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.4.0.2' -or
-    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-20T02:50:00Z' -or
-    @($softwareCatalogMetadata.Products).Count -lt 78 -or $engineeringCatalogRules.Count -lt 16) {
-    throw 'Catalog phần mềm v4.8 chưa đạt phiên bản 1.4.0.2 / ngày tạo 2026-08-20T02:50:00Z / 78 quy tắc / 16 quy tắc kỹ thuật.'
+if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.5.0.0' -or
+    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-21T00:00:00Z' -or
+    @($softwareCatalogMetadata.Products).Count -lt 92 -or $engineeringCatalogRules.Count -lt 16) {
+    throw 'Catalog phần mềm v4.9 chưa đạt phiên bản 1.5.0.0 / ngày tạo 2026-08-21T00:00:00Z / 92 quy tắc / 16 quy tắc kỹ thuật.'
 }
 
 Write-Host '[1/8] Tạo TOOL-SHA256SUMS.txt...'
@@ -507,7 +551,7 @@ try {
         MaximumCompressedBytes = [int64]$bundleStats.MaximumCompressedBytes
         MaximumDecodedBytes = [int64]$bundleStats.MaximumDecodedBytes
     }
-    Write-Host "[4/8] Nhúng 49 payload vào một solid Deflate bundle; giảm $($payloadCompressionStats.SavingsPercent)%..."
+    Write-Host "[4/8] Nhúng $($payloadFiles.Count) payload vào một solid Deflate bundle; giảm $($payloadCompressionStats.SavingsPercent)%..."
 
     foreach ($target in $targets) {
     $outputPath = Join-Path $OutputDirectory $target.OutputName
@@ -517,7 +561,7 @@ try {
         '/target:winexe',
         "/platform:$($target.Platform)",
         '/deterministic+',
-        "/pathmap:$sourceDirectory=C:\_src\Tool-Kiem-Tra-v4.8",
+        "/pathmap:$sourceDirectory=C:\_src\Tool-Kiem-Tra-v4.9",
         '/langversion:5',
         '/debug-',
         '/optimize+',
@@ -589,7 +633,7 @@ try {
     }
     $artifactLength = [int64](Get-Item -LiteralPath $outputPath).Length
     if ($artifactLength -gt $maximumInPlaceExecutableBytes) {
-        throw "EXE vượt dung lượng bản v4.8 đang phát hành: $artifactLength / $maximumInPlaceExecutableBytes byte."
+        throw "EXE vượt ngân sách dung lượng bản v4.9: $artifactLength / $maximumInPlaceExecutableBytes byte."
     }
     [void]$artifactResults.Add([pscustomobject]@{
         FileName = $target.OutputName
@@ -610,13 +654,18 @@ try {
 }
 
 Write-Host '[5/8] Tạo metadata phát hành...'
-foreach ($sidecar in @(
+$releaseSidecars = @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v4.9.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s'
-)) {
+)
+if ($AllowUnsignedDevelopmentBuild -and -not (Test-Path -LiteralPath $provenanceSignaturePath -PathType Leaf)) {
+    $releaseSidecars = @($releaseSidecars | Where-Object { $_ -ne $provenanceSignatureName })
+}
+foreach ($sidecar in $releaseSidecars) {
     Copy-Item -LiteralPath (Join-Path $sourceDirectory $sidecar) -Destination (Join-Path $OutputDirectory $sidecar) -Force
 }
 
@@ -704,9 +753,20 @@ $releaseManifest = [ordered]@{
     SilentUpdate = [bool]$offlinePolicyMetadata.SilentUpdate
     ApplicationUpdateSchemaVersion = '1.0'
     ApplicationUpdateManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
+    ApplicationUpdateManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
     ApplicationUpdateChoices = @('UpdateNow','Later','DismissForSession')
     ApplicationUpdateDeferral = 'After next completed task or 2 hours; next launch rechecks only when Online is allowed'
-    ApplicationUpdateVerification = 'Fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback'
+    ApplicationUpdateVerification = 'Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback'
+    OfficialBuildProvenance = [ordered]@{
+        State = [string]$provenanceMetadata.State
+        BuildId = $releaseLabel
+        ManifestFile = 'OFFICIAL-PROVENANCE-v1.json'
+        SignatureFile = 'OFFICIAL-PROVENANCE-v1.json.p7s'
+        VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build'
+        SourcePolicyId = 'ThanhViet.ToolKiemTra.ControlledSource.v4.9'
+        SourceDistribution = 'PrivateControlled'
+        RuntimeSystemChangePolicy = 'Official launcher and pinned provenance must both verify before system-change actions'
+    }
     LocalizationSchemaVersion = [string]$localizationMetadata.SchemaVersion
     DefaultCulture = [string]$localizationMetadata.DefaultCulture
     SupportedCultures = @($localizationMetadata.SupportedCultures)
@@ -886,27 +946,27 @@ $applicationUpdateManifest = [ordered]@{
     Channel = if ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
     LatestVersion = $releaseVersion
     MinimumUpdaterVersion = '4.6.1.0'
-    PublishedAtUtc = '2026-08-18T00:00:00Z'
+    PublishedAtUtc = '2026-08-21T00:00:00Z'
     Title = [ordered]@{
-        'vi-VN' = 'v4.8.0 - Nhanh hơn, dễ dùng hơn, an toàn hơn'
-        'en-US' = 'v4.8.0 - Faster, clearer, and safer'
+        'vi-VN' = 'v4.9 - Xác thực nguồn gốc, catalog mở rộng, làm sạch có hậu kiểm'
+        'en-US' = 'v4.9 - Provenance, expanded catalog, and verified cleanup'
     }
     Changes = [ordered]@{
         'vi-VN' = @(
-            'Đánh giá phần mềm tách mô hình giấy phép khỏi bằng chứng crack/can thiệp; phần mềm miễn phí và mức tin cậy Low không còn bị yêu cầu hóa đơn hay đưa vào diện tự động xóa.',
-            'Bổ sung nhận diện bảo thủ MAS/PMAS, Activation Program 1.17 và đúng lệnh erturk-dev; giữ ứng dụng, chỉ cô lập đúng artifact/tác vụ đáng ngờ khi đủ bằng chứng.',
-            'WinRAR không coi rarreg.key đơn lẻ là vi phạm; MathType và WinRAR mở đúng nguồn chính thức, còn Windows, Office và phần mềm bên thứ ba có hướng xử lý riêng.',
-            'Phụ lục phần mềm dùng bảng màu teal dễ phân biệt; PDF chi tiết giãn chữ, tự tách bảng rộng và sửa lỗi báo cáo Toàn bộ/Phần mềm không xuất PDF khi có liên kết chính thức.',
-            'Trợ lý Tool trả lời rõ kết luận, bằng chứng, điều kiện khắc phục và bước tiếp theo bằng tiếng Việt/Anh.',
-            'Mặc định Offline, không telemetry; v4.8.0.1 bổ sung cập nhật ứng dụng an toàn theo phiên bản và hash.'
+            'Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.',
+            'Catalog online 1.5.0.0 mở rộng lên 92 nhóm sản phẩm, chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist và chống hạ phiên bản bằng watermark bền vững.',
+            'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
+            'Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.',
+            'Từ v4.9, mã nguồn phiên bản mới thuộc kho riêng có kiểm soát; Tool chính thức vẫn miễn phí cho cộng đồng và nhu cầu nghiên cứu thiện chí có thể xin phép tác giả bằng văn bản.',
+            'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
-            'Software assessment separates the license model from crack/tampering evidence; freeware and Low-confidence items no longer require invoices or become automatic deletion candidates.',
-            'Conservative detection now covers MAS/PMAS, Activation Program 1.17, and the exact erturk-dev command; applications stay installed while only proven artifacts or tasks are isolated.',
-            'A lone rarreg.key is not treated as WinRAR abuse; MathType and WinRAR open official sources, with separate guidance for Windows, Office, and third-party software.',
-            'The software appendix uses a clearer teal palette; detailed PDFs add spacing, split wide tables, and fix Full/Software PDF export when official references are present.',
-            'Tool Assistant answers now separate the conclusion, evidence, remediation conditions, and next action in Vietnamese and English.',
-            'Offline remains the default with no telemetry; v4.8.0.1 adds safe application updates by version and hash.'
+            'Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.',
+            'Online catalog 1.5.0.0 expands coverage to 92 product families and accepts only signed declarative data with allowlisted fields/profiles and a persistent anti-rollback watermark.',
+            'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
+            'Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.',
+            'From v4.9 onward, new source is kept in a private controlled repository; the official Tool remains free for the community and good-faith research access may be requested in writing.',
+            'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
     }
     ReleasePageUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v$releaseVersion"
@@ -919,22 +979,37 @@ $applicationUpdateManifest = [ordered]@{
 $applicationUpdateManifestJson = $applicationUpdateManifest | ConvertTo-Json -Depth 8
 $sourceUpdateManifestPath = Join-Path $sourceDirectory 'update-manifest-v1.json'
 $outputUpdateManifestPath = Join-Path $OutputDirectory 'update-manifest-v1.json'
+$sourceUpdateSignaturePath = $sourceUpdateManifestPath + '.p7s'
+$outputUpdateSignaturePath = $outputUpdateManifestPath + '.p7s'
 if ($AllowUnsignedDevelopmentBuild) {
     # Một build phát triển không được làm hỏng manifest stable đang dùng để cập nhật
     # từ nguồn. Manifest development chỉ tồn tại trong thư mục artefact cục bộ.
     [IO.File]::WriteAllText($outputUpdateManifestPath, $applicationUpdateManifestJson, (New-Object Text.UTF8Encoding($false)))
 } else {
     [IO.File]::WriteAllText($sourceUpdateManifestPath, $applicationUpdateManifestJson, (New-Object Text.UTF8Encoding($false)))
+    $updateSigningScript = Join-Path $sourceDirectory 'SIGN-UPDATE-MANIFEST.ps1'
+    if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
+        & $updateSigningScript -ManifestPath $sourceUpdateManifestPath -CertificateThumbprint $SigningCertificateThumbprint `
+            -StoreLocation $SigningCertificateStore -Force
+    } else {
+        & $updateSigningScript -ManifestPath $sourceUpdateManifestPath -PfxPath $SigningPfxPath `
+            -PfxPassword $SigningPfxPassword -Force
+    }
+    if (-not (Test-Path -LiteralPath $sourceUpdateSignaturePath -PathType Leaf)) { throw 'Thiếu chữ ký tách rời của manifest cập nhật.' }
     if (-not $sourceUpdateManifestPath.Equals($outputUpdateManifestPath, [StringComparison]::OrdinalIgnoreCase)) {
         Copy-Item -LiteralPath $sourceUpdateManifestPath -Destination $outputUpdateManifestPath -Force
+        Copy-Item -LiteralPath $sourceUpdateSignaturePath -Destination $outputUpdateSignaturePath -Force
     }
     if ((Get-Sha256Hex $sourceUpdateManifestPath) -ne (Get-Sha256Hex $outputUpdateManifestPath)) {
         throw 'Manifest cập nhật trong mã nguồn và thư mục phát hành không giống hệt từng byte.'
     }
+    if ((Get-Sha256Hex $sourceUpdateSignaturePath) -ne (Get-Sha256Hex $outputUpdateSignaturePath)) {
+        throw 'Chữ ký manifest cập nhật trong mã nguồn và thư mục phát hành không giống hệt từng byte.'
+    }
 }
 Write-SourcePackageHashManifest
 
-$infoName = 'THONG-TIN-PHAT-HANH-v4.8.txt'
+$infoName = 'THONG-TIN-PHAT-HANH-v4.9.txt'
 $authenticodeInfo = if (-not [string]::IsNullOrWhiteSpace([string]$primaryArtifact.AuthenticodeThumbprint)) {
     "Authenticode signer: $($primaryArtifact.AuthenticodeSigner); thumbprint $($primaryArtifact.AuthenticodeThumbprint); status $($primaryArtifact.AuthenticodeStatus)."
 } else {
@@ -962,7 +1037,7 @@ $infoLines = @(
     'PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.',
     'Dashboard mo bang quyen nguoi dung hien tai; UAC chi duoc yeu cau theo nhu cau khi thay doi he thong, cap nhat ung dung hoac quan tri doanh nghiep.',
     'Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.',
-    "Payload nhung duoc toi uu $($payloadCompressionStats.Scheme): 49 tep trong mot resource Deflate co header fail-closed; giam $($payloadCompressionStats.SavingsPercent)% va van doi chieu SHA-256 tung tep sau giai nen.",
+    "Payload nhung duoc toi uu $($payloadCompressionStats.Scheme): $($payloadFiles.Count) tep trong mot resource Deflate co header fail-closed; giam $($payloadCompressionStats.SavingsPercent)% va van doi chieu SHA-256 tung tep sau giai nen.",
     'Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.',
     'Dashboard schema 2.0: WinForms hien dai, bang mau trung tinh, the trang thai Windows/Office, tile co mo ta, responsive DPI va mac dinh giao dien sang.',
     'Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.',
@@ -1007,8 +1082,8 @@ $infoLines = @(
     'Tro ly bo tri truc tiep va co them luot ve bu sau su kien Gui/Enter; cau tra loi hien ngay sau khi xu ly, khong cho cau hoi tiep theo; nhan Offline co le an toan, khung nhap co vien focus va bong bong hoi-dap co mau/vien rieng.',
     'HTML, PDF va cac bao cao dung chung giu du nam o ket qua tren cung mot hang khi du rong; Muc xac minh/Huong xu ly tach thanh o con va chan trang PDF chia hai hang.',
     'Tro ly dong bo day du vi-VN/en-US cho nut, trang thai dong bo va dien giai bao cao hien tai theo ma ket qua.',
-    'Tro ly schema 1.1 / knowledge 1.3.1 co 63 nhom va 481 tu khoa/cach hoi; cache roi co chu ky CMS SHA-256, ghim chung thu, chong ha phien ban va giu EXE trong ngan sach 911024 byte.',
-    'Catalogue phan mem 1.4.0.2 co 78 quy tac va chu ky CMS; nhan dien Format Factory, Dahua SmartPSS PC-NVR va tach Adobe Acrobat Reader khoi Acrobat thuong mai; Low chi de tham khao va khong tao hanh dong xoa.',
+    'Tro ly schema 1.1 / knowledge 1.4.0 co tri thuc cuc bo ky CMS SHA-256, ghim chung thu, chong ha phien ban va khong tai cau hoi/bao cao len mang.',
+    'Catalogue phan mem 1.5.0.0 co it nhat 92 quy tac khai bao ky CMS; du lieu online khong duoc mang lenh/script tuy y va Low chi de tham khao.',
     'Bao cao Windows/Office thuong van ra kenh KMS khi license o Notification, hien chu ky KMS toi da 180 ngay va ra MAS/PMAS, Activation Program 1.17, lenh erturk-dev.netlify.app/run, TSforge, OHook, KMS toolkit/Microsoft Toolkit con hien huu.',
     'Quet phan mem thuong ra them artifact trong thu muc cai dat thuong mai co gioi han, khong chi du lieu Download; ngay cai duoc chuan hoa yyyy-MM-dd.',
     'Ten man hinh co fallback EDID/DesktopMonitor/PNP; hop chon rieng tu co nut Ban da che, Ban day du noi bo va Huy; timeline tach trang thai hien tai khoi su kien lich su.',
@@ -1040,11 +1115,18 @@ $infoLines = @(
 
 $releaseHashFiles = @($targets.OutputName) + @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v4.9.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s', 'RELEASE-MANIFEST.json', 'update-manifest-v1.json', $infoName
 )
+if (Test-Path -LiteralPath (Join-Path $OutputDirectory $provenanceSignatureName) -PathType Leaf) {
+    $releaseHashFiles += $provenanceSignatureName
+}
+if (Test-Path -LiteralPath $outputUpdateSignaturePath -PathType Leaf) {
+    $releaseHashFiles += 'update-manifest-v1.json.p7s'
+}
 $releaseHashLines = @("# SHA-256 goi phat hanh Tool-Kiem-Tra v$productVersion.")
 foreach ($name in $releaseHashFiles) {
     $releaseHashLines += "$(Get-Sha256Hex (Join-Path $OutputDirectory $name))  $name"

@@ -57,6 +57,13 @@ if ($guiAst) {
             $manifestIntegritySet = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
             foreach ($name in $dashboardIntegrityFiles) { [void]$dashboardIntegritySet.Add([string]$name) }
             foreach ($name in $manifestIntegrityFiles) { [void]$manifestIntegritySet.Add([string]$name) }
+            if ($manifestIntegritySet.Contains('OFFICIAL-PROVENANCE-v1.json.p7s')) {
+                if ($text -notmatch '(?s)Test-Path\s+-LiteralPath\s+\$provenanceSignature\s+-PathType\s+Leaf.+?\$requiredIntegrityFiles\s*\+=\s*"OFFICIAL-PROVENANCE-v1\.json\.p7s"') {
+                    Add-Failure 'Dashboard không yêu cầu chữ ký provenance khi tệp production hiện hữu.'
+                } else {
+                    [void]$dashboardIntegritySet.Add('OFFICIAL-PROVENANCE-v1.json.p7s')
+                }
+            }
             foreach ($name in $manifestIntegrityFiles) {
                 if (-not $dashboardIntegritySet.Contains([string]$name)) {
                     Add-Failure "Manifest có tệp nhưng dashboard sẽ khóa là ngoài danh sách: $name"
@@ -74,8 +81,8 @@ if ($guiAst) {
 }
 
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
-Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"4\.8\.0\.1"' 'Dashboard chưa dùng release 4.8.0.1.'
-Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.08\.18"' 'Dashboard chưa dùng ngày build 2026.08.18.'
+Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"4\.9\.0\.0"' 'Dashboard chưa dùng release 4.9.0.0.'
+Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.08\.21"' 'Dashboard chưa dùng ngày build 2026.08.21.'
 Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases"' 'Nút Giới thiệu chưa dùng trang Releases cố định, nơi luôn hiển thị bản mới nhất ở đầu.'
 if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/(?:latest|tag/)') {
     Add-Failure 'Nút Giới thiệu đang trỏ tới alias/tag riêng thay vì trang Releases cố định.'
@@ -607,13 +614,13 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     if ($guideViText -match '(?im)^\s*(Bản|Phiên bản)\s+v?\d' -or $guideEnText -match '(?im)^\s*(Version|Release)\s+v?\d') {
         Add-Failure 'HDSD còn trộn nhật ký cập nhật phiên bản thay vì chỉ hướng dẫn chức năng.'
     }
-    if ($historyText -notmatch 'FileVersion:\s*\*\*4\.8\.0\.1\*\*' -or
-        $historyText -notmatch 'v4\.8\.0' -or
+    if ($historyText -notmatch 'FileVersion:\s*\*\*4\.9\.0\.0\*\*' -or
+        $historyText -notmatch 'v4\.9\.0\.0' -or
         $historyText -notmatch 'Nền tảng/công nghệ:' -or
         $historyText -notmatch 'Trọng tâm:') {
         Add-Failure 'Tài liệu phiên bản chưa mô tả bản mới, mô hình triển khai và công nghệ/ngôn ngữ.'
     }
-    foreach ($mainVersion in @('1.0','1.1','1.2','1.3','2.4','2.5','2.6','2.7','2.8','2.9','3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','4.0','4.1','4.2','4.3','4.4','4.6','4.8')) {
+    foreach ($mainVersion in @('1.0','1.1','1.2','1.3','2.4','2.5','2.6','2.7','2.8','2.9','3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','4.0','4.1','4.2','4.3','4.4','4.6','4.8','4.9')) {
         if ($historyText -notmatch "(?m)^##\s+v$([regex]::Escape($mainVersion))\b") {
             Add-Failure "Tài liệu lịch sử thiếu phiên bản chính v$mainVersion."
         }

@@ -1,6 +1,6 @@
 ﻿$script:ToolModuleContractSchemaVersion = "1.0"
 $script:ToolModuleResultSchemaVersion = "1.0"
-$script:ToolModuleContractToolVersion = "4.8"
+$script:ToolModuleContractToolVersion = "4.9"
 $script:ToolModuleCatalogCache = $null
 
 $toolModuleContractLocalizationPath = Join-Path $PSScriptRoot "Tool-Localization.ps1"

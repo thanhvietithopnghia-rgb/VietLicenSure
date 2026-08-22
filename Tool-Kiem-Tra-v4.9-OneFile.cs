@@ -6,9 +6,11 @@ using System.IO.Compression;
 using System.Globalization;
 using Microsoft.Win32;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 using System.Text;
@@ -20,9 +22,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Thanh Việt")]
 [assembly: AssemblyProduct("Công cụ kiểm tra cấu hình máy và bản quyền phần mềm")]
 [assembly: AssemblyCopyright("Copyright © Thanh Việt 2026")]
-[assembly: AssemblyVersion("4.8.0.1")]
-[assembly: AssemblyFileVersion("4.8.0.1")]
-[assembly: AssemblyInformationalVersion("4.8.0.1")]
+[assembly: AssemblyVersion("4.9.0.0")]
+[assembly: AssemblyFileVersion("4.9.0.0")]
+[assembly: AssemblyInformationalVersion("4.9.0.0")]
 
 namespace ThanhViet.ToolKiemTra
 {
@@ -43,15 +45,20 @@ namespace ThanhViet.ToolKiemTra
         private const int MaximumPayloadDataBytes = 16 * 1024 * 1024;
         private const int MaximumSinglePayloadBytes = 8 * 1024 * 1024;
         private const string PayloadBundleFailureCode = "PAYLOAD_BUNDLE_INVALID";
+        private const string OfficialSignerThumbprint = "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA";
+        private const string OfficialBuildId = "4.9.0.0-production-20260821";
+        private const string OfficialVerificationUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest";
 #if TOOL_SIGNED_STABLE_BUILD
         // Only a build that is required to pass Authenticode verification may
         // hand control to the self-updater.  Development artefacts must stay
         // runnable in place and must never replace themselves from the public
         // stable manifest merely because their hash is different.
-        private const string SelfUpdateAllowed = "1";
+        private const string SignedStableBuildMarker = "1";
 #else
-        private const string SelfUpdateAllowed = "0";
+        private const string SignedStableBuildMarker = "0";
 #endif
+        private static string OfficialBuildState = "Unverified";
+        private static string OfficialBuildFailureCode = "NotChecked";
         private static readonly byte[] PayloadBundleMagic = Encoding.ASCII.GetBytes("TVPBNDL1");
         private static readonly object PayloadBundleLock = new object();
         private static byte[] CachedPayloadBundle;
@@ -65,6 +72,13 @@ namespace ThanhViet.ToolKiemTra
             "USER-GUIDE-en-US.md",
             "LICH-SU-PHIEN-BAN.txt",
             "VERSION-HISTORY-en-US.md",
+            "LICENSE-NOTICE.txt",
+            "SOURCE-POLICY-v4.9.md",
+            "Tool-Provenance.ps1",
+            "OFFICIAL-PROVENANCE-v1.json",
+#if TOOL_SIGNED_STABLE_BUILD
+            "OFFICIAL-PROVENANCE-v1.json.p7s",
+#endif
             "Giao-Dien.ps1",
             "kiem-tra-cau-hinh-ban-quyen.ps1",
             "Tool-Kiem-Tra-icon.svg",
@@ -117,6 +131,13 @@ namespace ThanhViet.ToolKiemTra
             "USER-GUIDE-en-US.md",
             "LICH-SU-PHIEN-BAN.txt",
             "VERSION-HISTORY-en-US.md",
+            "LICENSE-NOTICE.txt",
+            "SOURCE-POLICY-v4.9.md",
+            "Tool-Provenance.ps1",
+            "OFFICIAL-PROVENANCE-v1.json",
+#if TOOL_SIGNED_STABLE_BUILD
+            "OFFICIAL-PROVENANCE-v1.json.p7s",
+#endif
             "Giao-Dien.ps1",
             "kiem-tra-cau-hinh-ban-quyen.ps1",
             "Tool-Kiem-Tra-icon.svg",
@@ -199,6 +220,14 @@ namespace ThanhViet.ToolKiemTra
             }
             if (!IsArchitectureSupported())
                 return 12;
+            OfficialBuildState = EvaluateOfficialBuildState(out OfficialBuildFailureCode);
+            if (SignedStableBuildMarker == "1" && OfficialBuildState != "Official" && IsInteractiveMode(mode))
+                ShowMessage(mode, L("launcher.officialBuildInvalid", OfficialBuildFailureCode, OfficialVerificationUrl), MessageBoxIcon.Warning);
+            if (RequiresAdministrator(mode) && OfficialBuildState != "Official")
+            {
+                ShowMessage(mode, L("launcher.officialBuildChangeBlocked", OfficialVerificationUrl), MessageBoxIcon.Error);
+                return 15;
+            }
             if (RequiresAdministrator(mode) && !IsAdministrator())
                 return RelaunchElevated(mode);
             if (mode == LaunchMode.RepairUserDataAcl)
@@ -289,6 +318,139 @@ namespace ThanhViet.ToolKiemTra
         private static bool RequiresAdministrator(LaunchMode mode)
         {
             return mode != LaunchMode.Gui;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct WinTrustFileInfo
+        {
+            internal uint StructSize;
+            internal IntPtr FilePath;
+            internal IntPtr FileHandle;
+            internal IntPtr KnownSubject;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct WinTrustData
+        {
+            internal uint StructSize;
+            internal IntPtr PolicyCallbackData;
+            internal IntPtr SipClientData;
+            internal uint UiChoice;
+            internal uint RevocationChecks;
+            internal uint UnionChoice;
+            internal IntPtr FileInfo;
+            internal uint StateAction;
+            internal IntPtr StateData;
+            internal IntPtr UrlReference;
+            internal uint ProviderFlags;
+            internal uint UiContext;
+        }
+
+        [DllImport("wintrust.dll", ExactSpelling = true, SetLastError = false, CharSet = CharSet.Unicode)]
+        private static extern uint WinVerifyTrust(IntPtr windowHandle, ref Guid actionId, ref WinTrustData trustData);
+
+        private static uint GetAuthenticodeTrustStatus(string filePath)
+        {
+            IntPtr filePathPointer = IntPtr.Zero;
+            IntPtr fileInfoPointer = IntPtr.Zero;
+            WinTrustData trustData = new WinTrustData();
+            Guid action = new Guid("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
+            try
+            {
+                filePathPointer = Marshal.StringToCoTaskMemUni(filePath);
+                WinTrustFileInfo fileInfo = new WinTrustFileInfo();
+                fileInfo.StructSize = (uint)Marshal.SizeOf(typeof(WinTrustFileInfo));
+                fileInfo.FilePath = filePathPointer;
+                fileInfo.FileHandle = IntPtr.Zero;
+                fileInfo.KnownSubject = IntPtr.Zero;
+                fileInfoPointer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(WinTrustFileInfo)));
+                Marshal.StructureToPtr(fileInfo, fileInfoPointer, false);
+
+                trustData.StructSize = (uint)Marshal.SizeOf(typeof(WinTrustData));
+                trustData.PolicyCallbackData = IntPtr.Zero;
+                trustData.SipClientData = IntPtr.Zero;
+                trustData.UiChoice = 2; // WTD_UI_NONE
+                trustData.RevocationChecks = 0; // WTD_REVOKE_NONE
+                trustData.UnionChoice = 1; // WTD_CHOICE_FILE
+                trustData.FileInfo = fileInfoPointer;
+                trustData.StateAction = 1; // WTD_STATEACTION_VERIFY
+                trustData.StateData = IntPtr.Zero;
+                trustData.UrlReference = IntPtr.Zero;
+                trustData.ProviderFlags = 0x00001000; // WTD_CACHE_ONLY_URL_RETRIEVAL
+                trustData.UiContext = 0;
+                return WinVerifyTrust(IntPtr.Zero, ref action, ref trustData);
+            }
+            finally
+            {
+                if (trustData.StateData != IntPtr.Zero)
+                {
+                    trustData.StateAction = 2; // WTD_STATEACTION_CLOSE
+                    WinVerifyTrust(IntPtr.Zero, ref action, ref trustData);
+                }
+                if (fileInfoPointer != IntPtr.Zero)
+                {
+                    Marshal.DestroyStructure(fileInfoPointer, typeof(WinTrustFileInfo));
+                    Marshal.FreeCoTaskMem(fileInfoPointer);
+                }
+                if (filePathPointer != IntPtr.Zero)
+                    Marshal.FreeCoTaskMem(filePathPointer);
+            }
+        }
+
+        private static string EvaluateOfficialBuildState(out string failureCode)
+        {
+            failureCode = "DevelopmentBuild";
+            if (SignedStableBuildMarker != "1")
+                return "Unverified";
+            try
+            {
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                string filePath = assembly.Location;
+                if (String.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath) ||
+                    assembly.GetName().Version != new Version(4, 9, 0, 0))
+                {
+                    failureCode = "IdentityMismatch";
+                    return "Modified";
+                }
+
+                AssemblyCompanyAttribute company = (AssemblyCompanyAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyCompanyAttribute));
+                AssemblyProductAttribute product = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
+                if (company == null || product == null ||
+                    !String.Equals(company.Company, "Thanh Việt", StringComparison.Ordinal) ||
+                    !String.Equals(product.Product, "Công cụ kiểm tra cấu hình máy và bản quyền phần mềm", StringComparison.Ordinal))
+                {
+                    failureCode = "ProductMetadataMismatch";
+                    return "Modified";
+                }
+
+                string signerThumbprint;
+                using (X509Certificate embedded = X509Certificate.CreateFromSignedFile(filePath))
+                using (X509Certificate2 signer = new X509Certificate2(embedded))
+                    signerThumbprint = (signer.Thumbprint ?? String.Empty).Replace(" ", String.Empty).ToUpperInvariant();
+                if (!String.Equals(signerThumbprint, OfficialSignerThumbprint, StringComparison.OrdinalIgnoreCase))
+                {
+                    failureCode = "SignerMismatch";
+                    return "Modified";
+                }
+
+                uint trustStatus = GetAuthenticodeTrustStatus(filePath);
+                // A pinned self-signed publisher can be cryptographically valid
+                // while Windows reports only an untrusted root/subject on a new
+                // machine. Bad digest, missing signature, or explicit distrust
+                // are never accepted.
+                if (trustStatus != 0 && trustStatus != 0x800B0109 && trustStatus != 0x800B010A && trustStatus != 0x800B0004)
+                {
+                    failureCode = "Authenticode-0x" + trustStatus.ToString("X8", CultureInfo.InvariantCulture);
+                    return "Modified";
+                }
+                failureCode = String.Empty;
+                return "Official";
+            }
+            catch (Exception ex)
+            {
+                failureCode = ex.GetType().Name;
+                return "Modified";
+            }
         }
 
         private static bool IsAdministrator()
@@ -923,7 +1085,11 @@ namespace ThanhViet.ToolKiemTra
                 startInfo.EnvironmentVariables["TOOL_DATA_SCHEMA_VERSION"] = "2.0";
                 startInfo.EnvironmentVariables["TOOL_SECURE_RUNTIME_DIR"] = Path.Combine(tempDirectory, "runtime");
                 startInfo.EnvironmentVariables["TOOL_SECURE_LAUNCH"] = "1";
-                startInfo.EnvironmentVariables["TOOL_SELF_UPDATE_ALLOWED"] = SelfUpdateAllowed;
+                startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_STATE"] = OfficialBuildState;
+                startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_FAILURE"] = OfficialBuildFailureCode;
+                startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_ID"] = OfficialBuildId;
+                startInfo.EnvironmentVariables["TOOL_OFFICIAL_VERIFICATION_URL"] = OfficialVerificationUrl;
+                startInfo.EnvironmentVariables["TOOL_SELF_UPDATE_ALLOWED"] = OfficialBuildState == "Official" ? SignedStableBuildMarker : "0";
                 startInfo.EnvironmentVariables["TOOL_BUILD_ARCHITECTURE"] = "AnyCPU";
                 startInfo.EnvironmentVariables["TOOL_EXPECTED_PROCESS_ARCHITECTURE"] = RuntimeArchitecture;
                 startInfo.EnvironmentVariables["TOOL_POWERSHELL_PATH"] = powershellPath;
@@ -936,7 +1102,7 @@ namespace ThanhViet.ToolKiemTra
                 startInfo.EnvironmentVariables["TOOL_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
                 startInfo.EnvironmentVariables["TOOL_LAUNCH_MODE"] = mode.ToString();
                 startInfo.EnvironmentVariables["TOOL_AGENT_FORCE"] = mode == LaunchMode.EnterpriseAgentForce ? "1" : "0";
-                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "4.8.0.1";
+                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "4.9.0.0";
                 startInfo.EnvironmentVariables["TOOL_UI_CULTURE"] = GetUiCulture();
                 startInfo.EnvironmentVariables["TOOL_CORRELATION_ID"] = correlationId;
                 startInfo.EnvironmentVariables["TOOL_CAPABILITY_SCHEMA"] = "1.1";

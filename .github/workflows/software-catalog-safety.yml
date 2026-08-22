@@ -9,11 +9,17 @@ on:
       - 'Tool-SoftwareInventory.ps1'
       - 'software-license-online-update.ps1'
       - 'SIGN-SOFTWARE-CATALOG.ps1'
+      - 'VERIFY-CATALOG-V4.9.ps1'
       - 'VERIFY-SAFETY-REGRESSIONS.ps1'
       - 'VERIFY-REPORT-SCHEMA.ps1'
       - 'VERIFY-DASHBOARD.ps1'
       - 'kiem-tra-cau-hinh-ban-quyen.ps1'
       - 'Giao-Dien.ps1'
+      - 'windows-license-compliance-cleanup.ps1'
+      - 'windows-license-restore.ps1'
+      - 'Tool-SafetyPolicy.ps1'
+      - 'Tool-Strings.vi-VN.json'
+      - 'Tool-Strings.en-US.json'
       - '.github/workflows/software-catalog-safety.yml'
   push:
     paths:
@@ -22,11 +28,17 @@ on:
       - 'Tool-SoftwareInventory.ps1'
       - 'software-license-online-update.ps1'
       - 'SIGN-SOFTWARE-CATALOG.ps1'
+      - 'VERIFY-CATALOG-V4.9.ps1'
       - 'VERIFY-SAFETY-REGRESSIONS.ps1'
       - 'VERIFY-REPORT-SCHEMA.ps1'
       - 'VERIFY-DASHBOARD.ps1'
       - 'kiem-tra-cau-hinh-ban-quyen.ps1'
       - 'Giao-Dien.ps1'
+      - 'windows-license-compliance-cleanup.ps1'
+      - 'windows-license-restore.ps1'
+      - 'Tool-SafetyPolicy.ps1'
+      - 'Tool-Strings.vi-VN.json'
+      - 'Tool-Strings.en-US.json'
       - '.github/workflows/software-catalog-safety.yml'
   schedule:
     - cron: '41 3 * * 1'
@@ -39,6 +51,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify v4.9 catalog schema and rollback watermark
+        shell: powershell
+        run: |
+          .\VERIFY-CATALOG-V4.9.ps1 -SourceDirectory .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify signed software catalog and fail-closed remediation
         shell: powershell
         run: |

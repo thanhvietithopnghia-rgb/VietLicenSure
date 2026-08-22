@@ -1,9 +1,9 @@
 ﻿param()
 
-$toolVersion = "4.8.0"
+$toolVersion = "4.9.0"
 $dashboardSchemaVersion = "2.0"
-$releaseVersion = "4.8.0.1"
-$releaseBuildDate = "2026.08.18"
+$releaseVersion = "4.9.0.0"
+$releaseBuildDate = "2026.08.21"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v$releaseVersion"
 
@@ -26,6 +26,9 @@ $enterpriseHelper = Join-Path $PSScriptRoot "Tool-Enterprise.ps1"
 $uiThemeHelper = Join-Path $PSScriptRoot "Tool-UiTheme.ps1"
 $localizationHelper = Join-Path $PSScriptRoot "Tool-Localization.ps1"
 $offlinePolicyHelper = Join-Path $PSScriptRoot "Tool-OfflinePolicy.ps1"
+$provenanceHelper = Join-Path $PSScriptRoot "Tool-Provenance.ps1"
+$provenanceManifest = Join-Path $PSScriptRoot "OFFICIAL-PROVENANCE-v1.json"
+$provenanceSignature = Join-Path $PSScriptRoot "OFFICIAL-PROVENANCE-v1.json.p7s"
 $assistantHelper = Join-Path $PSScriptRoot "Tool-Assistant.ps1"
 $softwareInventoryHelper = Join-Path $PSScriptRoot "Tool-SoftwareInventory.ps1"
 $softwareCatalogUpdateScript = Join-Path $PSScriptRoot "software-license-online-update.ps1"
@@ -49,7 +52,7 @@ function Get-DashboardText {
     return "[$Key]"
 }
 
-$missingFoundationFiles = @($runtimeHelper, $dataLifecycleHelper, $compatibilityHelper, $capabilityHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $safetyPolicyHelper, $enterpriseHelper, $uiThemeHelper, $localizationHelper, $offlinePolicyHelper, $assistantHelper, $softwareInventoryHelper, $softwareCatalogUpdateScript, $applicationUpdateScript) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+$missingFoundationFiles = @($runtimeHelper, $dataLifecycleHelper, $compatibilityHelper, $capabilityHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $safetyPolicyHelper, $enterpriseHelper, $uiThemeHelper, $localizationHelper, $offlinePolicyHelper, $provenanceHelper, $provenanceManifest, $assistantHelper, $softwareInventoryHelper, $softwareCatalogUpdateScript, $applicationUpdateScript) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
 if ($missingFoundationFiles.Count -gt 0) {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
@@ -74,8 +77,23 @@ try {
     . $uiThemeHelper
     if (-not (Get-Command Get-ToolText -ErrorAction SilentlyContinue)) { . $localizationHelper }
     . $offlinePolicyHelper
+    . $provenanceHelper
     . $assistantHelper
     . $softwareInventoryHelper
+    $provenanceState = Get-ToolOfficialBuildState -ManifestPath $provenanceManifest -SignaturePath $provenanceSignature
+    $launcherOfficialState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
+    if ($launcherOfficialState -eq 'Official' -and [string]$provenanceState.State -eq 'Official') {
+        $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
+        $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
+    } elseif ($launcherOfficialState -eq 'Modified' -or [string]$provenanceState.State -eq 'Modified') {
+        $env:TOOL_OFFICIAL_BUILD_STATE = 'Modified'
+        $env:TOOL_OFFICIAL_BUILD_FAILURE = 'Provenance:' + [string]$provenanceState.Code
+        $env:TOOL_SELF_UPDATE_ALLOWED = '0'
+    } else {
+        $env:TOOL_OFFICIAL_BUILD_STATE = 'Unverified'
+        $env:TOOL_OFFICIAL_BUILD_FAILURE = 'Provenance:' + [string]$provenanceState.Code
+        $env:TOOL_SELF_UPDATE_ALLOWED = '0'
+    }
     $architectureState = Assert-ToolNativeArchitecture
     $toolPowerShellPath = Get-ToolNativePowerShellPath
     $nativeCscriptPath = Get-ToolNativeSystemPath "cscript.exe"
@@ -427,7 +445,8 @@ $historyFile = Join-Path $baseDir "LICH-SU-PHIEN-BAN.txt"
 $englishHistoryFile = Join-Path $baseDir "VERSION-HISTORY-en-US.md"
 $integrityManifest = Join-Path $baseDir "TOOL-SHA256SUMS.txt"
 $requiredIntegrityFiles = @(
-    "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md",
+    "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md", "LICENSE-NOTICE.txt",
+    "SOURCE-POLICY-v4.9.md", "Tool-Provenance.ps1", "OFFICIAL-PROVENANCE-v1.json",
     "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "Tool-Kiem-Tra-icon.svg",
     "Tool-Kiem-Tra.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
     "Tool-ReportSchema.ps1", "Tool-ReportExport.ps1", "Tool-PluginEngine.ps1", "Tool-LicenseTimeline.ps1", "Tool-SafetyPolicy.ps1",
@@ -437,6 +456,9 @@ $requiredIntegrityFiles = @(
     "windows-oem-license-assistant.ps1", "windows-office-license-manager.ps1",
     "windows-license-assurance.ps1", "builtin-windows-office-trust.plugin.json"
 )
+if (Test-Path -LiteralPath $provenanceSignature -PathType Leaf) {
+    $requiredIntegrityFiles += "OFFICIAL-PROVENANCE-v1.json.p7s"
+}
 $runtimeDir = if (-not [string]::IsNullOrWhiteSpace($env:TOOL_SECURE_RUNTIME_DIR)) { $env:TOOL_SECURE_RUNTIME_DIR } else { Join-Path $baseDir "runtime" }
 if (-not (Test-Path -LiteralPath $runtimeDir -PathType Container)) { New-Item -ItemType Directory -Path $runtimeDir -Force | Out-Null }
 $env:TOOL_SECURE_RUNTIME_FAILED = "0"
@@ -714,6 +736,16 @@ $introSummary.Location = New-Object System.Drawing.Point(15, 30)
 $introSummary.Size = New-Object System.Drawing.Size(650, 20)
 $introPanel.Controls.Add($introSummary)
 
+$script:officialBuildState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
+if ($script:officialBuildState -ne 'Official') {
+    $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
+    $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
+    $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
+    $description.Text = Get-DashboardText 'officialBuild.banner.title'
+    $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
+    $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
+}
+
 $introAssistantButton = New-Object System.Windows.Forms.Button
 $introAssistantButton.Text = Get-ToolText -Key "app.assistant" -Culture $script:dashboardCulture
 $introAssistantButton.Font = $fontBold
@@ -762,7 +794,7 @@ $form.Controls.Add($dashboardPanel)
 $cardDefinitions = @(
     @{ Key="Compatibility"; IconKind="Windows"; Tone="Windows"; Caption=(Get-ToolText -Key "dashboard.windows" -Culture $script:dashboardCulture); Value=[string]$capabilityState.WindowsReleaseName },
     @{ Key="Architecture"; IconKind="Office"; Tone="Office"; Caption=(Get-ToolText -Key "dashboard.office" -Culture $script:dashboardCulture); Value=[string]$capabilityState.OfficeSummary },
-    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($env:TOOL_SECURE_LAUNCH -eq "1") { Get-ToolText -Key "dashboard.secure" -Culture $script:dashboardCulture } else { Get-ToolText -Key "dashboard.source" -Culture $script:dashboardCulture }) },
+    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
     @{ Key="Integrity"; IconKind="Check"; Tone="Integrity"; Caption=(Get-ToolText -Key "dashboard.integrity" -Culture $script:dashboardCulture); Value=(Get-ToolText -Key "dashboard.checking" -Culture $script:dashboardCulture) }
 )
 for ($cardIndex = 0; $cardIndex -lt $cardDefinitions.Count; $cardIndex++) {
@@ -2038,8 +2070,13 @@ function Set-DashboardLanguage {
     $title.Text = Get-ToolText -Key "app.title" -Culture $Culture
     $developer.Text = Get-ToolText -Key "app.developer" -Culture $Culture
     $sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer" @($toolDisplayVersion)
-    $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
-    $introSummary.Text = Get-ToolText -Key "dashboard.overview.subtitle" -Culture $Culture
+    if ($script:officialBuildState -eq 'Official') {
+        $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
+        $introSummary.Text = Get-ToolText -Key "dashboard.overview.subtitle" -Culture $Culture
+    } else {
+        $description.Text = Get-DashboardText 'officialBuild.banner.title'
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
+    }
     $introAssistantButton.Text = Get-ToolText -Key "app.assistant" -Culture $Culture
     $toolTip.SetToolTip($introAssistantButton, (Get-ToolText -Key "assistant.tooltip" -Culture $Culture))
     $introDetailButton.Text = Get-ToolText -Key "app.about" -Culture $Culture
@@ -2059,10 +2096,12 @@ function Set-DashboardLanguage {
     $dashboardCards["Architecture"].Caption.Text = Get-ToolText -Key "dashboard.office" -Culture $Culture
     $dashboardCards["SecureLaunch"].Caption.Text = Get-ToolText -Key "dashboard.runMode" -Culture $Culture
     $dashboardCards["Integrity"].Caption.Text = Get-ToolText -Key "dashboard.integrity" -Culture $Culture
-    $dashboardCards["SecureLaunch"].Value.Text = if ($env:TOOL_SECURE_LAUNCH -eq "1") {
-        Get-ToolText -Key "dashboard.secure" -Culture $Culture
+    $dashboardCards["SecureLaunch"].Value.Text = if ($script:officialBuildState -eq 'Official') {
+        Get-DashboardText 'officialBuild.state.official'
+    } elseif ($script:officialBuildState -eq 'Modified') {
+        Get-DashboardText 'officialBuild.state.modified'
     } else {
-        Get-ToolText -Key "dashboard.source" -Culture $Culture
+        Get-DashboardText 'officialBuild.state.unverified'
     }
     if ($script:lastIntegrityResult) {
         $dashboardCards["Integrity"].Value.Text = if ($script:lastIntegrityResult.Valid) {
@@ -2147,10 +2186,17 @@ function Set-DashboardTheme {
     $title.ForeColor = $primary
     $developer.ForeColor = $primary
     $version.ForeColor = $muted
-    $introPanel.BackColor = $introSurface
-    $introAccent.BackColor = $primary
-    $description.ForeColor = $primary
-    $introSummary.ForeColor = $text
+    if ($script:officialBuildState -eq 'Official') {
+        $introPanel.BackColor = $introSurface
+        $introAccent.BackColor = $primary
+        $description.ForeColor = $primary
+        $introSummary.ForeColor = $text
+    } else {
+        $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(67, 28, 33) } else { [System.Drawing.Color]::FromArgb(255, 235, 238) }
+        $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(248, 113, 113) } else { [System.Drawing.Color]::FromArgb(185, 28, 28) }
+        $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 202, 202) } else { [System.Drawing.Color]::FromArgb(153, 27, 27) }
+        $introSummary.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 226, 226) } else { [System.Drawing.Color]::FromArgb(127, 29, 29) }
+    }
     $introAssistantButton.BackColor = $primary
     $introAssistantButton.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(18, 26, 38) } else { [System.Drawing.Color]::White }
     $introDetailButton.BackColor = $primary
@@ -2267,7 +2313,13 @@ function Update-DashboardStatus {
         $compatibilityCard.Value.Tag = $null
     }
     $dashboardCards["Architecture"].Value.Text = [string]$capabilityState.OfficeSummary
-    $dashboardCards["SecureLaunch"].Value.Text = if ($env:TOOL_SECURE_LAUNCH -eq "1") { Get-ToolText -Key "dashboard.secure" -Culture $script:dashboardCulture } else { Get-ToolText -Key "dashboard.source" -Culture $script:dashboardCulture }
+    $dashboardCards["SecureLaunch"].Value.Text = if ($script:officialBuildState -eq 'Official') {
+        Get-DashboardText 'officialBuild.state.official'
+    } elseif ($script:officialBuildState -eq 'Modified') {
+        Get-DashboardText 'officialBuild.state.modified'
+    } else {
+        Get-DashboardText 'officialBuild.state.unverified'
+    }
     $dashboardCards["Integrity"].Value.Text = if ($IntegrityResult.Valid) {
         Get-ToolText -Key "dashboard.integrity.ok" -Culture $script:dashboardCulture -FormatArguments @($safetyPolicyState.RegistryValuePolicyCount)
     } else {
@@ -2275,7 +2327,7 @@ function Update-DashboardStatus {
     }
     $dashboardCards["Integrity"].Value.ForeColor = if ($IntegrityResult.Valid) { $successColor } else { $warningColor }
     $dashboardCards["Integrity"].Value.Tag = "StatusColor"
-    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($env:TOOL_SECURE_LAUNCH -eq "1") { $successColor } else { $warningColor }
+    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -eq 'Official') { $successColor } else { $warningColor }
     $dashboardCards["SecureLaunch"].Value.Tag = "StatusColor"
     Update-DashboardOfflineUi
 }
@@ -2741,6 +2793,9 @@ function Stop-ActiveTask {
 function Get-ReadyToolModule([string]$moduleId, [bool]$elevatedLaunch) {
     $availability = Test-ToolModuleAvailability -ModuleId $moduleId -CapabilityProfile $capabilityState -SourceDirectory $baseDir
     if (-not $availability.Available) { throw (Get-DashboardText "module.unavailable" @($moduleId, $availability.Message)) }
+    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -ne 'Official') {
+        throw (Get-DashboardText 'officialBuild.systemChangeBlocked' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL))
+    }
     if ($availability.Descriptor.RequiresElevation -and -not $elevatedLaunch) { throw (Get-DashboardText "module.elevationRequired" @($moduleId)) }
     return $availability.Descriptor
 }
@@ -2756,6 +2811,7 @@ function Get-ToolElevatedEnvironmentSnapshot {
         'TOOL_LOG_PATH','TOOL_MODULE_CONTRACT_SCHEMA','TOOL_MODULE_ID','TOOL_MODULE_INVOCATION_ID',
         'TOOL_OFFLINE_MODE','TOOL_OFFLINE_POLICY_SCHEMA','TOOL_OFFLINE_SETTINGS_PATH','TOOL_PLUGIN_DIR',
         'TOOL_POWERSHELL_PATH','TOOL_REPORT_SCHEMA','TOOL_SAFETY_POLICY_SCHEMA','TOOL_SECURE_LAUNCH',
+        'TOOL_OFFICIAL_BUILD_STATE','TOOL_OFFICIAL_BUILD_FAILURE','TOOL_OFFICIAL_BUILD_ID','TOOL_OFFICIAL_VERIFICATION_URL',
         'TOOL_SELF_UPDATE_ALLOWED',
         'TOOL_SECURE_RUNTIME_DIR','TOOL_SECURE_RUNTIME_FAILED','TOOL_TIMELINE_KEY_PATH','TOOL_TIMELINE_PATH',
         'TOOL_TOOL_VERSION','TOOL_UI_CULTURE','TOOL_UI_CULTURE_SETTINGS_PATH','TOOL_UI_THEME',

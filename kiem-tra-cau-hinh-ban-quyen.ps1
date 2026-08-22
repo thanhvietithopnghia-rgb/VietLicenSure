@@ -11,8 +11,8 @@
     [switch]$NoOpen
 )
 
-$ToolVersion = "4.8"
-$ToolReleaseVersion = "4.8.0.1"
+$ToolVersion = "4.9"
+$ToolReleaseVersion = "4.9.0.0"
 
 # A report can contain hardware serials, UUIDs, asset tags, and other
 # identifying data.  Fail closed for direct CLI use: callers must explicitly

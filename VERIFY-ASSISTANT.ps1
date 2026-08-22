@@ -34,12 +34,12 @@ if ($errors.Count -eq 0) {
     if (Test-ToolAssistantKnowledgeSignature -ContentBytes $tamperedBytes -SignatureBytes $signatureBytes) {
         Add-AssistantVerificationError 'Detached signature accepted tampered knowledge bytes.'
     }
-    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.3\.5"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
+    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.4\.0"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
     if (Test-ToolAssistantKnowledge -Knowledge $legacyKnowledge) { Add-AssistantVerificationError 'An obsolete cached knowledge file was not rejected.' }
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
-    $compatibleFutureKnowledge.KnowledgeVersion = '1.3.6'
-    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-08-18T14:01:00Z'
-    $compatibleFutureKnowledge.ReleasedWithToolVersion = '4.8.0.1'
+    $compatibleFutureKnowledge.KnowledgeVersion = '1.4.1'
+    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-08-21T14:01:00Z'
+    $compatibleFutureKnowledge.ReleasedWithToolVersion = '4.9.0.0'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
         Add-AssistantVerificationError 'A newer signed-compatible knowledge version cannot evolve independently of the EXE.'
     }
@@ -181,17 +181,17 @@ if ($errors.Count -eq 0) {
         @{ Question='mỗi lần quét có tạo thư mục riêng k'; Expected='không tạo thư mục con' }
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
-        @{ Question='phiên bản hiện tại của tool'; Expected='v4.8.0.1' }
-        @{ Question='ngày build hiện tại của tool'; Expected='18/08/2026' }
+        @{ Question='phiên bản hiện tại của tool'; Expected='v4.9.0.0' }
+        @{ Question='ngày build hiện tại của tool'; Expected='21/08/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='tool mien phi hay tra phi'; Expected='cung cấp miễn phí' }
         @{ Question='có tốn tiền ko'; Expected='cung cấp miễn phí' }
-        @{ Question='ma nguon cong khaio dau'; Expected='https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen' }
-        @{ Question='ma ngun cong khai o dau'; Expected='https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen' }
+        @{ Question='ma nguon cong khaio dau'; Expected='kho riêng có kiểm soát' }
+        @{ Question='ma ngun cong khai o dau'; Expected='kho riêng có kiểm soát' }
         @{ Question='repo công khai có được sửa không'; Expected='không tự cấp quyền sao chép, sửa đổi, phân phối' }
-        @{ Question='code công khai có phải open source k'; Expected='chưa phải phần mềm mã nguồn mở' }
+        @{ Question='code công khai có phải open source k'; Expected='mã nguồn phiên bản mới thuộc kho riêng' }
         @{ Question='chưa xác định nghĩa là gì'; Expected='CHƯA XÁC ĐỊNH/Unknown' }
         @{ Question='chua xac minh la sao'; Expected='bằng chứng hiện tại chưa đủ xác nhận' }
         @{ Question='chua xac mnih la sao'; Expected='bằng chứng hiện tại chưa đủ xác nhận' }
@@ -238,11 +238,11 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0 on 17 July 2026' -or
-        $releaseDateVi -notmatch 'v4\.8\.0\.1.*18/08/2026' -or
-        $releaseDateEn -notmatch 'v4\.8\.0\.1.*18 August 2026' -or
+        $releaseDateVi -notmatch 'v4\.9\.0\.0.*21/08/2026' -or
+        $releaseDateEn -notmatch 'v4\.9\.0\.0.*21 August 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
-        $sourceEn -notmatch 'github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen' -or
-        $sourceEn -notmatch 'not currently open source' -or
+        $sourceEn -notmatch 'private controlled repository' -or
+        $sourceEn -notmatch "author's written approval" -or
         $statusTermsEn -notmatch 'UNDETERMINED/Unknown' -or $statusTermsEn -notmatch 'UNVERIFIED' -or
         $statusTermsEn -notmatch 'SUSPICIOUS' -or $statusTermsEn -notmatch 'CRACKCONFIRMED' -or
         $statusTermsEn -notmatch 'no remediation yet' -or $statusTermsEn -notmatch 'not a legal verdict') {
@@ -309,9 +309,9 @@ if ($errors.Count -eq 0) {
     if ($oemFollowUp -notmatch 'Chức năng 7.*OEM' -or $oemFollowUp -match 'không phải chức năng số 7') {
         Add-AssistantVerificationError 'Context follow-up cross-routed feature 7 away from OEM recovery.'
     }
-    if ($sourceFollowUp -notmatch 'github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen' -or
-        $sourceFollowUpEn -notmatch 'github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen') {
-        Add-AssistantVerificationError 'Short where/o dau follow-up did not retain the public-source topic.'
+    if ($sourceFollowUp -notmatch 'kho riêng có kiểm soát' -or
+        $sourceFollowUpEn -notmatch 'private controlled repository') {
+        Add-AssistantVerificationError 'Short where/o dau follow-up did not retain the source-access topic.'
     }
 
     $offlineNow = Get-ToolAssistantAnswer -Question 'tool đang online hay offline hiện tại' -Culture 'vi-VN' -Knowledge $knowledge -OnlineMode $false

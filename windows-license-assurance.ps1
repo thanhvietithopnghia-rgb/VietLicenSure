@@ -10,8 +10,8 @@ param(
     [switch]$NoOpen
 )
 
-$ToolVersion = "4.8"
-$ReleaseVersion = "4.8.0.1"
+$ToolVersion = "4.9"
+$ReleaseVersion = "4.9.0.0"
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Off
 

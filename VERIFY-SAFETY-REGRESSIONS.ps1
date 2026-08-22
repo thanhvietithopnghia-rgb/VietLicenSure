@@ -55,7 +55,7 @@ if (Get-Command Get-ToolSafetyPolicyMetadata -ErrorAction SilentlyContinue) {
     }
 
     $metadata = Get-ToolSafetyPolicyMetadata
-if ([string]$metadata.SchemaVersion -ne '1.0' -or [string]$metadata.ToolVersion -ne '4.8') { Fail 'Metadata safety policy sai phiên bản.' }
+if ([string]$metadata.SchemaVersion -ne '1.0' -or [string]$metadata.ToolVersion -ne '4.9') { Fail 'Metadata safety policy sai phiên bản.' }
     if ([bool]$metadata.StartupTypeChangesAllowedByQuickRepair) { Fail 'Quick repair không được phép đổi StartupType.' }
     $services = @(Get-ToolScanSourceServicePolicy)
     if ($services.Count -ne 3 -or @($services | Where-Object { $_.AllowStartupTypeChange }).Count -ne 0) { Fail 'Service policy không khóa toàn bộ thay đổi StartupType.' }
@@ -80,7 +80,11 @@ $softwareInventory = Read-And-Parse 'Tool-SoftwareInventory.ps1'
 $softwareCatalogUpdater = Read-And-Parse 'software-license-online-update.ps1'
 
 if ($backup -and $backup.Text -notmatch 'Backup-RegistryValues\s+\$windowsPolicyPath.+Windows_SPP_Policy') { Fail 'Backup thường chưa lưu riêng policy NoGenTicket bằng RegistryValues.' }
-if ($cleanup -and $cleanup.Text -notmatch '(?s)SppNoGenTicketPolicy.+?@\("NoGenTicket"\).+?Type="RegistryValues"') { Fail 'Deep cleanup chưa backup NoGenTicket theo kiểu RegistryValues.' }
+if ($cleanup -and ($cleanup.Text -notmatch 'ManagedNoGenTicketPolicy' -or
+    $cleanup.Text -notmatch 'InitialRemediationState\s+''BlockedByPolicy''' -or
+    $cleanup.Text -match '(?s)SppNoGenTicketPolicy.+?Remove-ItemProperty.+?NoGenTicket')) {
+    Fail 'Deep cleanup chưa khóa policy NoGenTicket thuộc GPO/MDM ở trạng thái BlockedByPolicy.'
+}
 if ($restore -and $restore.Text -notmatch 'Test-ToolRegistryValueRestoreAllowed') { Fail 'Restore chưa dùng allowlist theo đúng Registry path/value.' }
 
 foreach ($entry in @($backup, $cleanup, $restore)) {
@@ -217,6 +221,8 @@ LICENSE STATUS: ---UNLICENSED---
     $vNextTrustAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Test-OfficeVNextDiagTrustedPath' }, $true)
     $officePathKeyAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-OfficeKmsPathKey' }, $true)
     $officeTargetIdentityAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-OfficeKmsTargetIdentity' }, $true)
+    $officeHostIdentityAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-OfficeKmsHostOverrideIdentity' }, $true)
+    $newRemediationStateAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'New-RemediationStateRecord' }, $true)
     $officeOutcomeAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-OfficeOfficialLicenseOutcome' }, $true)
     $officePostCheckAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-OfficialLicensePostCheck' }, $true)
     $officeTargetGateAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Test-OfficeKmsRemediationTarget' }, $true)
@@ -224,7 +230,7 @@ LICENSE STATUS: ---UNLICENSED---
     $newCleanupItemAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'New-CleanupItem' }, $true)
     $allCleanupCandidatesAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-AllCleanupCandidates' }, $true)
     $remediationAst = $cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Invoke-Remediation' }, $true)
-    if (-not $officeProbeAst -or -not $officeProbeForPathAst -or -not $vNextProbeAst -or -not $vNextTrustAst -or -not $officePathKeyAst -or -not $officeTargetIdentityAst -or -not $officeOutcomeAst -or -not $officePostCheckAst -or -not $officeTargetGateAst -or -not $officePathGateAst -or -not $newCleanupItemAst -or -not $allCleanupCandidatesAst -or -not $remediationAst) {
+    if (-not $officeProbeAst -or -not $officeProbeForPathAst -or -not $vNextProbeAst -or -not $vNextTrustAst -or -not $officePathKeyAst -or -not $officeTargetIdentityAst -or -not $officeHostIdentityAst -or -not $newRemediationStateAst -or -not $officeOutcomeAst -or -not $officePostCheckAst -or -not $officeTargetGateAst -or -not $officePathGateAst -or -not $newCleanupItemAst -or -not $allCleanupCandidatesAst -or -not $remediationAst) {
         Fail 'Cleanup Office thiếu OfficeProbe, hậu kiểm hoặc hàm tái xác minh trước khi gỡ key.'
     } else {
         $officeProbeText = $officeProbeAst.Extent.Text
@@ -281,7 +287,7 @@ LICENSE STATUS: ---UNLICENSED---
         if ($allCleanupCandidatesText -notmatch '(?s)Get-OfficeKmsTargetIdentity.+?-TargetId\s+\$targetId.+?-IdentitySeed\s+\$targetId') {
             Fail 'Candidate Office không dùng composite identity cho TargetId và Selection ID.'
         }
-        if ($remediationText -notmatch '(?s)Test-OfficeKmsRemediationTarget\s+-Entry\s+\$entry.+?-not\s+\[bool\]\$targetValidation\.Allowed.+?allowedOfficeTargetSet.+?Test-OfficeKmsRemediationPath.+?-AllowedTargetIds.+?Invoke-OfficeOsppCommand.+?/remhst.+?Test-OfficeKmsRemediationTarget.+?Invoke-OfficeOsppCommand.+?/unpkey:') {
+        if ($remediationText -notmatch '(?s)Test-OfficeKmsRemediationTarget\s+-Entry\s+\$entry.+?-not\s+\[bool\]\$validation\.Allowed.+?Invoke-OfficeOsppCommand.+?/unpkey:.+?Get-OfficeKmsHostOverrideIdentity.+?Test-OfficeKmsHostOverrideTarget.+?Invoke-OfficeOsppCommand.+?/remhst') {
             Fail 'Invoke-Remediation chưa gate đúng composite identity trước /remhst và /unpkey.'
         }
 
@@ -347,7 +353,7 @@ No licenses found.
                     Server='unapproved-kms.fixture.test'; LicenseStatusCode='Licensed'; LicenseName='Office KMS fixture'
                 }
                 $targetIdentity = Get-OfficeKmsTargetIdentity -Entry $target
-                if ($targetIdentity -notmatch '^c:\\fixture\\ospp\.vbs\|sku-kms-one\|ABCDE$') {
+                if ($targetIdentity -notmatch '^Provider=OfficeOSPP\|SKU=sku-kms-one\|Last5=ABCDE\|OSPP=c:\\fixture\\ospp\.vbs$') {
                     throw 'Office target identity did not include normalized OSPP path, SKU, and Last5.'
                 }
 
@@ -451,7 +457,7 @@ No licenses found.
 
         try {
             & {
-                param([string]$PathKeyBody, [string]$TargetIdentityBody, [string]$NewCleanupItemBody, [string]$AllCandidatesBody)
+                param([string]$PathKeyBody, [string]$TargetIdentityBody, [string]$HostIdentityBody, [string]$NewStateBody, [string]$NewCleanupItemBody, [string]$AllCandidatesBody)
 
                 function Test-ApprovedKms { param([string]$Server) return $false }
                 function Get-DeepCleanupCandidates { param($Findings) return @() }
@@ -459,6 +465,8 @@ No licenses found.
                 function Get-CleanupText { param([string]$Key, [object[]]$Arguments = @()) return $Key }
                 Invoke-Expression ('function Get-OfficeKmsPathKey ' + $PathKeyBody)
                 Invoke-Expression ('function Get-OfficeKmsTargetIdentity ' + $TargetIdentityBody)
+                Invoke-Expression ('function Get-OfficeKmsHostOverrideIdentity ' + $HostIdentityBody)
+                Invoke-Expression ('function New-RemediationStateRecord ' + $NewStateBody)
                 Invoke-Expression ('function New-CleanupItem ' + $NewCleanupItemBody)
                 Invoke-Expression ('function Get-AllCleanupCandidates ' + $AllCandidatesBody)
 
@@ -490,7 +498,7 @@ No licenses found.
                     Where-Object { [string]$_.Kind -eq 'OfficeKmsLicense' }).Count -ne 0) {
                     throw 'Office KMS with incomplete identity was made selectable.'
                 }
-            } $officePathKeyAst.Body.Extent.Text $officeTargetIdentityAst.Body.Extent.Text $newCleanupItemAst.Body.Extent.Text $allCleanupCandidatesAst.Body.Extent.Text
+            } $officePathKeyAst.Body.Extent.Text $officeTargetIdentityAst.Body.Extent.Text $officeHostIdentityAst.Body.Extent.Text $newRemediationStateAst.Body.Extent.Text $newCleanupItemAst.Body.Extent.Text $allCleanupCandidatesAst.Body.Extent.Text
         } catch {
             Fail "Không chạy được regression candidate composite identity Office: $($_.Exception.Message)"
         }
@@ -556,7 +564,7 @@ No licenses found.
             if (-not $inventoryFunctionAst) { throw "Missing function: $inventoryFunctionName" }
             Invoke-Expression ('function script:' + $inventoryFunctionName + ' ' + $inventoryFunctionAst.Body.Extent.Text)
         }
-        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
+        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
             Import-CleanupFunctionForFixture $name
         }
         $broadRootFixture = [pscustomobject]@{ InstallLocation=$env:ProgramFiles; RepresentativePath='' }
@@ -926,7 +934,7 @@ No licenses found.
         }
 
         $scopeCandidates = @(
-            (New-CleanupItem -Type 'Registry' -Kind 'SppNoGenTicketPolicy' -Name 'win' -Location 'HKLM:\Fixture\Windows' -Detail 'fixture' -ComponentScope 'Windows'),
+            (New-CleanupItem -Type 'Guidance' -Kind 'ManagedNoGenTicketPolicy' -Name 'win' -Location 'HKLM:\Fixture\Windows' -Detail 'fixture' -ComponentScope 'Windows' -GuidanceOnly $true -InitialRemediationState 'BlockedByPolicy'),
             (New-CleanupItem -Type 'License' -Kind 'OfficeKmsLicense' -Name 'office' -Location 'C:\Fixture\OSPP.VBS' -Detail 'fixture' -ComponentScope 'Office'),
             (New-CleanupItem -Type 'File' -Kind 'ThirdPartyUnauthorizedArtifact' -Name 'software' -Location 'C:\Fixture\Software\patch.dll' -Detail 'fixture' -ComponentScope 'ThirdParty'),
             (New-CleanupItem -Type 'Service' -Kind 'ActivatorService' -Name 'shared' -Location 'C:\Fixture\activator.exe' -Detail 'fixture' -ComponentScope 'Shared')
@@ -1163,7 +1171,7 @@ if ($gui) {
         if ([regex]::Matches($gui.Text, 'New-ToolElevatedBootstrapArguments\s+-BridgeScriptPath\s+\$elevatedBridgeScript\s+-TargetFilePath\s+\$toolPowerShellPath').Count -lt 2) {
             Fail 'Luồng tiến trình quản trị chưa dùng cầu nối môi trường cho cả tác vụ theo dõi và tác vụ tách rời.'
         }
-        $bridgeEnvironmentNames = @('TOOL_SECURE_LAUNCH','TOOL_SECURE_RUNTIME_DIR','TOOL_MODULE_ID','TOOL_MODULE_INVOCATION_ID','TOOL_DATA_SCOPE','TOOL_DATA_OWNER_SID','TOOL_SELF_UPDATE_ALLOWED','TOOL_OFFLINE_MODE')
+        $bridgeEnvironmentNames = @('TOOL_SECURE_LAUNCH','TOOL_SECURE_RUNTIME_DIR','TOOL_MODULE_ID','TOOL_MODULE_INVOCATION_ID','TOOL_DATA_SCOPE','TOOL_DATA_OWNER_SID','TOOL_SELF_UPDATE_ALLOWED','TOOL_OFFLINE_MODE','TOOL_OFFICIAL_BUILD_STATE','TOOL_OFFICIAL_BUILD_FAILURE','TOOL_OFFICIAL_BUILD_ID','TOOL_OFFICIAL_VERIFICATION_URL')
         $previousBridgeEnvironment = [ordered]@{}
         $bridgeFixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Elevated-Bridge-Fixture-' + [guid]::NewGuid().ToString('N'))
         foreach ($name in $bridgeEnvironmentNames) {
@@ -1198,6 +1206,10 @@ if ($gui) {
             $env:TOOL_SECURE_RUNTIME_DIR = $bridgeRuntimeRoot
             $env:TOOL_DATA_SCOPE = 'User'
             $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
+            $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
+            $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
+            $env:TOOL_OFFICIAL_BUILD_ID = '4.9.0.0-production-20260821'
+            $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
             $bridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -BridgeEnvironmentProbe"
@@ -1286,7 +1298,7 @@ if ($gui) {
             $autoFixture = @(
                 [pscustomobject]@{ Id='win-kms'; Type='Registry'; Kind='KmsOverride'; Location=$windowsSpp },
                 [pscustomobject]@{ Id='office-kms'; Type='Registry'; Kind='KmsOverride'; Location=$officeSpp },
-                [pscustomobject]@{ Id='nogen'; Type='Registry'; Kind='SppNoGenTicketPolicy'; Location=$licensePolicy },
+                [pscustomobject]@{ Id='nogen'; Type='Guidance'; Kind='ManagedNoGenTicketPolicy'; Location=$licensePolicy },
                 [pscustomobject]@{ Id='wrong-path'; Type='Registry'; Kind='KmsOverride'; Location='HKLM:\SOFTWARE\Unrelated' },
                 [pscustomobject]@{ Id='license'; Type='License'; Kind='WindowsKmsLicense'; Location='KMS=example' },
                 [pscustomobject]@{ Id='file'; Type='File'; Kind='HookFile'; Location='C:\Windows\System32\SppExtComObjHook.dll' },
@@ -1298,10 +1310,10 @@ if ($gui) {
             )
             $autoSelected = @(& $autoSafeFilter -CleanupItems $autoFixture)
             $autoIds = @($autoSelected | ForEach-Object { [string]$_.Id })
-            if ($autoSelected.Count -ne 3 -or $autoIds -notcontains 'win-kms' -or $autoIds -notcontains 'office-kms' -or $autoIds -notcontains 'nogen') {
+            if ($autoSelected.Count -ne 2 -or $autoIds -notcontains 'win-kms' -or $autoIds -notcontains 'office-kms') {
                 Fail 'Bộ lọc tự động không chọn đúng Registry allowlist an toàn.'
             }
-            if ($autoIds -contains 'wrong-path' -or $autoIds -contains 'license' -or $autoIds -contains 'file' -or $autoIds -contains 'history' -or $autoIds -contains 'adobe-auto' -or $autoIds -contains 'generic-repair-auto' -or $autoIds -contains 'generic-uninstall-manual' -or $autoIds -contains 'autodesk-review') {
+            if ($autoIds -contains 'nogen' -or $autoIds -contains 'wrong-path' -or $autoIds -contains 'license' -or $autoIds -contains 'file' -or $autoIds -contains 'history' -or $autoIds -contains 'adobe-auto' -or $autoIds -contains 'generic-repair-auto' -or $autoIds -contains 'generic-uninstall-manual' -or $autoIds -contains 'autodesk-review') {
                 Fail 'Bộ lọc tự động đã chọn mục ngoài Registry allowlist hoặc ứng dụng bên thứ ba.'
             }
         } catch {
@@ -1718,9 +1730,9 @@ if ($softwareInventory) {
         $catalogSignaturePath = $catalogPath + '.p7s'
         $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
-        if ([string]$catalog.CatalogVersion -ne '1.4.0.2' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-20T02:50:00Z' -or
-            $catalogIds.Count -lt 78 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
-            Fail 'Catalogue phần mềm v4.8 chưa đạt 1.4.0.2 / ngày phát hành / 78 quy tắc duy nhất.'
+        if ([string]$catalog.CatalogVersion -ne '1.5.0.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-21T00:00:00Z' -or
+            $catalogIds.Count -lt 92 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
+            Fail 'Catalogue phần mềm v4.9 chưa đạt 1.5.0.0 / ngày phát hành / 92 quy tắc duy nhất.'
         }
         foreach ($requiredCatalogId in @('iobit-driver-booster','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
             if ($catalogIds -notcontains $requiredCatalogId) { Fail "Catalogue phần mềm thiếu quy tắc: $requiredCatalogId" }
@@ -1737,7 +1749,7 @@ if ($softwareInventory) {
         }
         $trustedBundledCatalog = Import-ToolSoftwareCatalogFile -Path $catalogPath -SignaturePath $catalogSignaturePath -Source 'Bundled' -RequireSignature
         if (-not $trustedBundledCatalog -or -not [bool]$trustedBundledCatalog.CatalogSignatureValid -or
-            [string]$trustedBundledCatalog.CatalogVersion -ne '1.4.0.2') {
+            [string]$trustedBundledCatalog.CatalogVersion -ne '1.5.0.0') {
             Fail 'Catalogue phần mềm tích hợp chưa mở được bằng chữ ký CMS và signer đã ghim.'
         }
         $forgedCatalog = (Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json)

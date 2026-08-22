@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
-$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v4.8-performance-" + [Guid]::NewGuid().ToString('N'))
+$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v4.9-performance-" + [Guid]::NewGuid().ToString('N'))
 
 function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
 
@@ -18,11 +18,11 @@ try {
     . $softwareInventoryPath
 
     $metadata = Get-ToolScanOptimizationMetadata
-if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4.8' -or
+if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4.9' -or
         -not [bool]$metadata.PreservesExistingScanRoots -or [int]$metadata.OfficeStatusThrottle -gt 3 -or
         [int]$metadata.FileScanThrottle -gt 4 -or [int]$metadata.FileScanMaximumDepth -ne 4 -or
         [int]$metadata.FileScanPerRootTimeoutSeconds -ne 12) {
-        Add-Failure 'Scan optimization metadata does not match the v4.8 contract.'
+        Add-Failure 'Scan optimization metadata does not match the v4.9 contract.'
     }
 
     $rootOne = Join-Path $tempRoot 'disk-one'

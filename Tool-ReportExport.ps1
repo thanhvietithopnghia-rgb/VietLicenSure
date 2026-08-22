@@ -1,4 +1,4 @@
-﻿$script:ToolReportExportToolVersion = "4.8"
+﻿$script:ToolReportExportToolVersion = "4.9"
 $script:ToolReportExportSchemaVersion = "1.4"
 
 $toolReportExportLocalizationPath = Join-Path $PSScriptRoot "Tool-Localization.ps1"
