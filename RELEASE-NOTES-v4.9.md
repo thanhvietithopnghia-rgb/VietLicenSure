@@ -1,5 +1,15 @@
 # Tool Kiểm Tra v4.9.0.0
 
+## Bản bảo trì nhận diện ngày 22/08/2026
+
+- Phân biệt rõ cài đặt đã xác nhận, đăng ký đơn nguồn, ứng dụng portable và bộ tệp còn sót; AutoCAD chỉ tìm thấy từ cây tệp không còn bị trình bày như một bản cài chính thức.
+- Tích hợp Winget làm nguồn đối chiếu cục bộ và adapter chỉ-đọc cho đăng ký Autodesk khi dịch vụ hãng có sẵn.
+- Gộp Registry, MSIX, Winget, shortcut và Distiller vào đúng họ Adobe Acrobat; ưu tiên đường dẫn tệp chạy chính thay vì uninstaller dùng chung.
+- Khi phát hiện hosts/firewall hoặc dịch vụ hãng bất thường, tự mở rộng kiểm tra Authenticode cho toàn bộ tệp PE trong đúng thư mục sản phẩm. Kiểm thử thực tế đã phát hiện 9 tệp Acrobat `HashMismatch` mà cơ chế giới hạn cũ bỏ sót.
+- Bằng chứng dùng đường dẫn cụ thể nhất nên không còn lan từ Acrobat sang Lightroom/Premiere; nguồn lặp lại không được đếm như bằng chứng độc lập.
+- Catalog `1.6.0.0` bổ sung tệp lõi và signer Adobe/Autodesk, vẫn là dữ liệu khai báo ký số, không chứa lệnh và không tải dữ liệu máy lên Internet.
+- Cập nhật điều khoản từ v4.9 và rút gọn lịch sử v4.8/v4.9 theo thay đổi cốt lõi; bỏ mốc v4.8.0.1 khỏi lịch sử hiển thị.
+
 Build: **2026.08.22**
 
 ## Điểm mới

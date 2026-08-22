@@ -4451,6 +4451,11 @@ function Show-ThirdPartyAssessmentResults {
     $confidenceLabels = @{
         High=(Get-DashboardText "software.confidence.high"); Medium=(Get-DashboardText "software.confidence.medium"); Low=(Get-DashboardText "software.confidence.low")
     }
+    $presenceLabels = @{}
+    foreach ($presenceState in @('InstalledConfirmed','RegisteredInstallation','VendorRegisteredProduct','PackagePresent','PortableApplication',
+        'ResidualOrPortableFiles','LaunchReferenceOnly','CompanionOrSystemComponent','UnverifiedPresence')) {
+        $presenceLabels[$presenceState] = Get-DashboardText ('software.presence.' + $presenceState)
+    }
 
     $resizeListColumns = {
         param($Target)
@@ -4497,6 +4502,9 @@ function Show-ThirdPartyAssessmentResults {
         $lines.Add((Get-DashboardText 'software.results.column.model') + ': ' + [string]$metadata.LicenseText)
         $lines.Add((Get-DashboardText 'software.results.column.status') + ': ' + [string]$application.TechnicalStatus)
         $lines.Add((Get-DashboardText 'software.results.column.confidence') + ': ' + [string]$metadata.ConfidenceText)
+        if ($metadata.PSObject.Properties['PresenceText'] -and $metadata.PresenceText) {
+            $lines.Add((Get-DashboardText 'software.results.detail.presence') + ': ' + [string]$metadata.PresenceText)
+        }
         if ($application.PSObject.Properties['ProductFamily'] -and
             -not [string]::IsNullOrWhiteSpace([string]$application.ProductFamily)) {
             $lines.Add((Get-DashboardText 'software.results.detail.productFamily') + ': ' + [string]$application.ProductFamily)
@@ -4588,18 +4596,24 @@ function Show-ThirdPartyAssessmentResults {
             if (-not $confidenceLabels.ContainsKey($confidence)) { $confidence = 'Low' }
             $licenseText = [string]$licenseLabels[$licenseModel]
             $confidenceText = [string]$confidenceLabels[$confidence]
+            $presenceState = if ($application.PSObject.Properties['PresenceState'] -and $application.PresenceState) { [string]$application.PresenceState } else { 'UnverifiedPresence' }
+            $presenceText = if ($presenceLabels.ContainsKey($presenceState)) { [string]$presenceLabels[$presenceState] } else { [string]$presenceLabels.UnverifiedPresence }
+            $statusText = [string]$application.TechnicalStatus
+            if ($presenceState -in @('ResidualOrPortableFiles','PortableApplication','LaunchReferenceOnly','RegisteredInstallation','VendorRegisteredProduct')) {
+                $statusText = $presenceText + ' | ' + $statusText
+            }
             $row = New-Object System.Windows.Forms.ListViewItem([string]$application.Name)
             [void]$row.SubItems.Add([string]$application.Version)
             [void]$row.SubItems.Add([string]$application.Publisher)
             [void]$row.SubItems.Add($licenseText)
-            [void]$row.SubItems.Add([string]$application.TechnicalStatus)
+            [void]$row.SubItems.Add($statusText)
             [void]$row.SubItems.Add($confidenceText)
             $row.Tag = [pscustomobject]@{
                 Application=$application; CandidateId=$candidateId; Actionable=$actionable; SelectionAllowed=$selectionAllowed
                 GuidanceOnly=$guidanceOnly; IsSystemComponent=$IsSystemView; EvidenceText=$evidenceText; ActionText=$actionText
-                LicenseText=$licenseText; ConfidenceText=$confidenceText
+                LicenseText=$licenseText; ConfidenceText=$confidenceText; PresenceText=$presenceText
             }
-            $row.ToolTipText = "$([string]$application.Name)`r`n$([string]$application.TechnicalStatus)`r`n$evidenceText`r`n$actionText"
+            $row.ToolTipText = "$([string]$application.Name)`r`n$statusText`r`n$evidenceText`r`n$actionText"
             if (-not $selectionAllowed) { $row.ForeColor = [System.Drawing.Color]::FromArgb(105, 112, 125) }
             [void]$list.Items.Add($row)
         }

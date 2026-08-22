@@ -107,6 +107,7 @@ $applicationUpdateVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-APPLICAT
 $assistantVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-ASSISTANT.ps1'
 $catalogV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-CATALOG-V4.9.ps1'
 $remediationV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-REMEDIATION-V4.9.ps1'
+$softwareDetectionV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-SOFTWARE-DETECTION-V4.9.ps1'
 $provenanceVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-PROVENANCE.ps1'
 if (-not (Test-Path -LiteralPath $peHelperPath -PathType Leaf)) { $failures.Add('Thiếu PE-HARDENING.ps1.') }
 else { . $peHelperPath }
@@ -127,6 +128,7 @@ if (-not (Test-Path -LiteralPath $applicationUpdateVerifierPath -PathType Leaf))
 if (-not (Test-Path -LiteralPath $assistantVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-ASSISTANT.ps1.') }
 if (-not (Test-Path -LiteralPath $catalogV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-CATALOG-V4.9.ps1.') }
 if (-not (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-REMEDIATION-V4.9.ps1.') }
+if (-not (Test-Path -LiteralPath $softwareDetectionV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-SOFTWARE-DETECTION-V4.9.ps1.') }
 if (-not (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-PROVENANCE.ps1.') }
 
 foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.ps1' -File) {
@@ -137,8 +139,8 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 51 } else { 52 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 100 } else { 101 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 112 } else { 114 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 101 } else { 102 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 113 } else { 115 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 28 } else { 30 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -707,8 +709,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.DeepSoftwareScanCatalogTrust -notmatch 'pinned-signer') {
             throw 'Thiếu metadata quét sâu phần mềm phổ quát v4.6.'
         }
-        if ([string]$releaseManifest.SoftwareLicenseCatalogVersion -ne '1.5.0.0' -or
-            [string]$releaseManifest.SoftwareLicenseCatalogGeneratedAtUtc -ne '2026-08-21T00:00:00Z' -or
+        if ([string]$releaseManifest.SoftwareLicenseCatalogVersion -ne '1.6.0.0' -or
+            [string]$releaseManifest.SoftwareLicenseCatalogGeneratedAtUtc -ne '2026-08-22T11:00:00Z' -or
             [int]$releaseManifest.SoftwareLicenseCatalogProductRules -lt 92 -or
             [string]$releaseManifest.SoftwareLicenseCatalogSignatureFile -ne 'software-license-catalog-v1.0.json.p7s' -or
             -not [bool]$releaseManifest.SoftwareLicenseCatalogSignatureRequired -or
@@ -982,6 +984,10 @@ if (Test-Path -LiteralPath $catalogV49VerifierPath -PathType Leaf) {
 if (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf) {
     & $remediationV49VerifierPath -SourceDirectory $sourceDirectoryFull
     if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra remediation hậu kiểm v4.9 thất bại.') }
+}
+if (Test-Path -LiteralPath $softwareDetectionV49VerifierPath -PathType Leaf) {
+    & $softwareDetectionV49VerifierPath
+    if ($LASTEXITCODE -ne 0) { $failures.Add('VERIFY-SOFTWARE-DETECTION-V4.9.ps1 không đạt.') }
 }
 if (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf) {
     if ($AllowDevelopmentManifest) {

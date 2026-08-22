@@ -208,6 +208,7 @@ $sourceFiles = @(
     'VERIFY-ASSISTANT.ps1'
     'VERIFY-CATALOG-V4.9.ps1'
     'VERIFY-REMEDIATION-V4.9.ps1'
+    'VERIFY-SOFTWARE-DETECTION-V4.9.ps1'
     'VERIFY-PROVENANCE.ps1'
     'SIGN-ASSISTANT-KNOWLEDGE.ps1'
     'tool-assistant-knowledge-v1.1.json.p7s'
@@ -409,6 +410,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-ASSISTANT.ps1',
     'VERIFY-CATALOG-V4.9.ps1',
     'VERIFY-REMEDIATION-V4.9.ps1',
+    'VERIFY-SOFTWARE-DETECTION-V4.9.ps1',
     'VERIFY-PROVENANCE.ps1',
     'SIGN-ASSISTANT-KNOWLEDGE.ps1',
     'tool-assistant-knowledge-v1.1.json.p7s',
@@ -465,10 +467,10 @@ if (-not $softwareCatalogMetadata -or -not [bool]$softwareCatalogMetadata.Catalo
 $engineeringCatalogRules = @($softwareCatalogMetadata.Products | Where-Object {
     $_.PSObject.Properties['Category'] -and -not [string]::IsNullOrWhiteSpace([string]$_.Category)
 })
-if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.5.0.0' -or
-    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-21T00:00:00Z' -or
+if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.0.0' -or
+    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-22T11:00:00Z' -or
     @($softwareCatalogMetadata.Products).Count -lt 92 -or $engineeringCatalogRules.Count -lt 16) {
-    throw 'Catalog phần mềm v4.9 chưa đạt phiên bản 1.5.0.0 / ngày tạo 2026-08-21T00:00:00Z / 92 quy tắc / 16 quy tắc kỹ thuật.'
+    throw 'Catalog phần mềm v4.9 chưa đạt phiên bản 1.6.0.0 / ngày bảo trì 2026-08-22T11:00:00Z / 92 quy tắc / 16 quy tắc kỹ thuật.'
 }
 
 Write-Host '[1/8] Tạo TOOL-SHA256SUMS.txt...'
@@ -964,22 +966,24 @@ $applicationUpdateManifest = [ordered]@{
     Changes = [ordered]@{
         'vi-VN' = @(
             'Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.',
-            'Catalog online 1.5.0.0 mở rộng lên 92 nhóm sản phẩm, chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist và chống hạ phiên bản bằng watermark bền vững.',
+            'Catalog online 1.6.0.0 bao phủ 92 nhóm sản phẩm, bổ sung mẫu tệp lõi Adobe/Autodesk và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.',
             'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
             'Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.',
             'Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.',
-            'Kiểm kê bổ sung AppX/MSIX, shortcut mọi hồ sơ, Scoop, Chocolatey, Steam và vùng portable giới hạn; bản ghi trùng được gom và thành phần phụ được nhóm theo sản phẩm chính.',
-            'Từ v4.9, Tool miễn phí phát triển cùng cộng đồng với mã nguồn có kiểm soát; người muốn tham khảo, học tập, nghiên cứu hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả.',
+            'Kiểm kê bổ sung AppX/MSIX, Winget, shortcut, trình quản lý gói và adapter Autodesk chỉ-đọc; phân biệt bản cài đã xác nhận với portable/tệp còn sót và gộp Adobe Acrobat theo họ sản phẩm.',
+            'Quét toàn vẹn thích ứng mở rộng Authenticode trong đúng thư mục sản phẩm khi hosts, firewall hoặc dịch vụ hãng bất thường; bằng chứng không còn lan giữa các sản phẩm Adobe.',
+            'Kể từ v4.9, Tool tiếp tục miễn phí nhưng mã nguồn không còn được công khai miễn phí, không phải mã nguồn mở và chỉ được tiếp cận khi tác giả chấp thuận trước bằng văn bản.',
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
             'Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.',
-            'Online catalog 1.5.0.0 expands coverage to 92 product families and accepts only signed declarative data with allowlisted fields/profiles and a persistent anti-rollback watermark.',
+            'Online catalog 1.6.0.0 covers 92 product families, adds Adobe/Autodesk core-file rules, and accepts only signed declarative data with allowlisted fields and profiles.',
             'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
             'Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.',
             'Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.',
-            'Inventory adds AppX/MSIX, shortcuts across user profiles, Scoop, Chocolatey, Steam, and bounded portable roots; duplicates are merged and companion components are grouped under the primary product.',
-            'From v4.9 onward, the free Tool is community-developed with controlled source; anyone wishing to review, study, research, or contribute to the source must first obtain the author''s written approval.',
+            'Inventory adds AppX/MSIX, WinGet, shortcuts, package managers, and a read-only Autodesk adapter; it distinguishes confirmed installs from portable/residual files and merges Adobe Acrobat by product family.',
+            'Adaptive integrity scanning expands Authenticode checks inside the exact product directory when vendor hosts, firewall rules, or licensing services are abnormal; Adobe evidence no longer leaks across products.',
+            'Starting with v4.9, the Tool remains free, but source is no longer published free of charge, is not open source, and requires the author''s prior written approval for access.',
             'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
     }
@@ -1097,7 +1101,7 @@ $infoLines = @(
     'HTML, PDF va cac bao cao dung chung giu du nam o ket qua tren cung mot hang khi du rong; Muc xac minh/Huong xu ly tach thanh o con va chan trang PDF chia hai hang.',
     'Tro ly dong bo day du vi-VN/en-US cho nut, trang thai dong bo va dien giai bao cao hien tai theo ma ket qua.',
     'Tro ly schema 1.1 / knowledge 1.4.1 co tri thuc cuc bo ky CMS SHA-256, ghim chung thu, chong ha phien ban va khong tai cau hoi/bao cao len mang.',
-    'Catalogue phan mem 1.5.0.0 co it nhat 92 quy tac khai bao ky CMS; du lieu online khong duoc mang lenh/script tuy y va Low chi de tham khao.',
+    'Catalogue phan mem 1.6.0.0 co it nhat 92 quy tac khai bao ky CMS; du lieu online khong duoc mang lenh/script tuy y va Low chi de tham khao.',
     'Bao cao Windows/Office thuong van ra kenh KMS khi license o Notification, hien chu ky KMS toi da 180 ngay va ra MAS/PMAS, Activation Program 1.17, lenh erturk-dev.netlify.app/run, TSforge, OHook, KMS toolkit/Microsoft Toolkit con hien huu.',
     'Quet phan mem thuong ra them artifact trong thu muc cai dat thuong mai co gioi han, khong chi du lieu Download; ngay cai duoc chuan hoa yyyy-MM-dd.',
     'Ten man hinh co fallback EDID/DesktopMonitor/PNP; hop chon rieng tu co nut Ban da che, Ban day du noi bo va Huy; timeline tach trang thai hien tai khoi su kien lich su.',
@@ -1171,6 +1175,8 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-APPLICATION-UPDATE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-ASSISTANT.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-ASSISTANT.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+    & (Join-Path $sourceDirectory 'VERIFY-SOFTWARE-DETECTION-V4.9.ps1')
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-SOFTWARE-DETECTION-V4.9.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     Write-Host '[7/8] Kiểm tra phát hành tổng thể...'
     & (Join-Path $sourceDirectory 'VERIFY-RELEASE.ps1') -SourceDirectory $sourceDirectory -DistributionDirectory $OutputDirectory `
         -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild

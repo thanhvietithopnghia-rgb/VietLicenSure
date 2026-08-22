@@ -32,8 +32,8 @@ if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) { throw "Missing 
 $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 Assert-CatalogVerification -Condition (Test-ToolSoftwareCatalogObject -Catalog $catalog) -Message 'The bundled v4.9 catalog failed strict schema validation.'
-Assert-CatalogVerification -Condition ([string]$catalog.CatalogVersion -eq '1.5.0.0') -Message 'CatalogVersion must be 1.5.0.0.'
-Assert-CatalogVerification -Condition ([string]$catalog.GeneratedAtUtc -eq '2026-08-21T00:00:00Z') -Message 'GeneratedAtUtc must use the 2026-08-21 release date.'
+Assert-CatalogVerification -Condition ([string]$catalog.CatalogVersion -eq '1.6.0.0') -Message 'CatalogVersion must be 1.6.0.0.'
+Assert-CatalogVerification -Condition ([string]$catalog.GeneratedAtUtc -eq '2026-08-22T11:00:00Z') -Message 'GeneratedAtUtc must use the 2026-08-22 maintenance date.'
 $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
 Assert-CatalogVerification -Condition ($catalogIds.Count -ge 92) -Message 'The v4.9 catalog must contain at least 92 conservative product rules.'
 Assert-CatalogVerification -Condition (@($catalogIds | Select-Object -Unique).Count -eq $catalogIds.Count) -Message 'Catalog product IDs must be unique.'

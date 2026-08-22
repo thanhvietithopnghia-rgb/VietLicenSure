@@ -82,7 +82,7 @@ if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4
                 Id=('{0}-{1}' -f $index,$source); Name=$name; Version=('1.0.{0}' -f $index); Publisher='VIETIT Fixture'
                 InstallDate=''; InstallLocation=$location; DisplayIcon=''; UninstallString=''; RegistryPath=''
                 Scope='Machine64'; Architecture='64-bit'; SourceKind=$source; RepresentativePath=(Join-Path $location 'fixture.exe')
-                SourceDetail=$source; SignaturePublisher=''; FileVersion=''; DiscoverySources=@($source)
+                SourceDetail=$source; PackageId=''; SignaturePublisher=''; FileVersion=''; DiscoverySources=@($source)
                 IsSystemComponent=$false; SystemComponentReason=''; ReleaseType=''; NonRemovable=$false
             })
         }
@@ -121,17 +121,21 @@ if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4
             Add-Failure "Universal deep scan is missing the speed contract: $requiredToken"
         }
     }
-    if ($softwareInventoryText -notmatch 'desiredSignatureLimit\s*=\s*if\s*\([^\r\n]+\)\s*\{\s*6\s*\}\s*elseif\s*\([^\r\n]+\)\s*\{\s*3\s*\}\s*else\s*\{\s*1\s*\}') {
-        Add-Failure 'Adaptive per-application signature profile is not 6/3/1.'
+    if ($softwareInventoryText -notmatch 'desiredSignatureLimit\s*=\s*if\s*\([^\r\n]+\)\s*\{\s*350\s*\}\s*elseif\s*\([^\r\n]+\)\s*\{\s*18\s*\}\s*elseif\s*\([^\r\n]+\)\s*\{\s*4\s*\}\s*else\s*\{\s*1\s*\}') {
+        Add-Failure 'Adaptive per-application signature profile is not 350/18/4/1.'
     }
 } catch {
-    Add-Failure $_.Exception.Message
+    $failureDetail = $_.Exception.Message
+    if (-not [string]::IsNullOrWhiteSpace([string]$_.ScriptStackTrace)) {
+        $failureDetail += "`n" + [string]$_.ScriptStackTrace
+    }
+    Add-Failure $failureDetail
 } finally {
     if (Test-Path -LiteralPath $tempRoot -PathType Container) {
         $resolvedTemp = [IO.Path]::GetFullPath($tempRoot)
         $systemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
         if ($resolvedTemp.StartsWith($systemTemp, [StringComparison]::OrdinalIgnoreCase) -and
-            [IO.Path]::GetFileName($resolvedTemp).StartsWith('Tool-Kiem-Tra-v4.8-performance-', [StringComparison]::OrdinalIgnoreCase)) {
+            [IO.Path]::GetFileName($resolvedTemp).StartsWith('Tool-Kiem-Tra-v4.9-performance-', [StringComparison]::OrdinalIgnoreCase)) {
             Remove-Item -LiteralPath $resolvedTemp -Recurse -Force
         }
     }

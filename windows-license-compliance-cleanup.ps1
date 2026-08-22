@@ -1439,12 +1439,21 @@ function Get-ThirdPartyEvidenceTargets {
             }
         }
         if ([string]::IsNullOrWhiteSpace($matchKind)) { continue }
-        $match = [pscustomobject][ordered]@{ Record=$record; MatchKind=$matchKind }
+        $match = [pscustomobject][ordered]@{
+            Record=$record; MatchKind=$matchKind
+            Specificity=$(if ($matchKind -eq 'ExactPath') { [Math]::Max(([string]$record.InstallRoot).Length, ([string]$record.RepresentativePath).Length) } else { 0 })
+        }
         if ($matchKind -eq 'ExactPath') { $exactTargets.Add($match) }
         elseif ($matchKind -eq 'VendorScope') { $vendorTargets.Add($match) }
         else { $tokenTargets.Add($match) }
     }
-    if ($exactTargets.Count -gt 0) { return $exactTargets.ToArray() }
+    if ($exactTargets.Count -gt 0) {
+        # When product roots overlap, use only the deepest exact match. This
+        # prevents a file under Adobe\Acrobat from also being attached to every
+        # Adobe product whose registration exposes the shared Adobe directory.
+        $maximumSpecificity = [int](($exactTargets.ToArray() | Measure-Object -Property Specificity -Maximum).Maximum)
+        return @($exactTargets.ToArray() | Where-Object { [int]$_.Specificity -eq $maximumSpecificity })
+    }
     if ($vendorTargets.Count -gt 0) { return $vendorTargets.ToArray() }
     return $tokenTargets.ToArray()
 }
@@ -1666,7 +1675,10 @@ function Get-ThirdPartyRemediationPlan {
 
 function Get-ThirdPartyNormalizedInstallRoot {
     param($Application)
-    foreach ($candidate in @([string]$Application.InstallLocation, $(if ($Application.RepresentativePath) { Split-Path -Parent ([string]$Application.RepresentativePath) }))) {
+    # Prefer the executable's product directory over an installer-supplied
+    # vendor root such as C:\Program Files\Adobe. Shared vendor roots cause
+    # evidence from Acrobat, Lightroom and Premiere to contaminate each other.
+    foreach ($candidate in @($(if ($Application.RepresentativePath) { Split-Path -Parent ([string]$Application.RepresentativePath) }), [string]$Application.InstallLocation)) {
         if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
         try {
             $full = [IO.Path]::GetFullPath($candidate).TrimEnd('\')
@@ -3720,7 +3732,7 @@ function Write-Report {
     foreach ($app in @($ThirdPartyApplications)) {
         $evidenceSummary = @($app.Evidence | ForEach-Object { [string]$_.Code } | Select-Object -Unique) -join ', '
         if ([string]::IsNullOrWhiteSpace($evidenceSummary)) { $evidenceSummary = Get-CleanupText 'common.none' }
-        $lines.Add((Get-CleanupText "cleanupReport.thirdParty.report.applicationExtended" @($app.Name, $app.Version, $app.Publisher, $app.LicenseModel, $app.TechnicalStatus, $app.Confidence, $evidenceSummary, $(if ([bool]$app.RemediationSupported) { $yes } else { $no }))))
+        $lines.Add((Get-CleanupText "cleanupReport.thirdParty.report.applicationExtended" @($app.Name, $app.Version, $app.Publisher, $app.LicenseModel, $app.TechnicalStatus, $app.Confidence, $evidenceSummary, $(if ([bool]$app.RemediationSupported) { $yes } else { $no }), [string]$app.PresenceState)))
     }
     if (@($ThirdPartyApplications).Count -eq 0) { $lines.Add("- " + (Get-CleanupText "common.none")) }
     $lines.Add("")

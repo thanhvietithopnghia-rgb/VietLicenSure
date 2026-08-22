@@ -1045,12 +1045,22 @@ function New-ToolSoftwareMergeDescriptor {
     $versionText = [string]$Record.Version
     $versionParts = @([regex]::Matches($versionText, '\d+') | ForEach-Object { $_.Value })
     $sourceKind = [string]$Record.SourceKind
-    $nameKey = ConvertTo-ToolSoftwareIdentityToken -Value ([string]$Record.Name) -Name
+    $rawNameKey = ConvertTo-ToolSoftwareIdentityToken -Value ([string]$Record.Name) -Name
+    $packageId = if ($Record.PSObject.Properties['PackageId']) { [string]$Record.PackageId } else { '' }
+    $identityText = (([string]$Record.Name) + ' ' + $packageId)
+    $controlledFamily = ''
+    $nameKey = $rawNameKey
+    if ($identityText -match '(?i)(?:\bAdobe\s+Acrobat\b|\bAcrobat\s+Distiller\b|AdobeAcrobatDCCoreApp)') {
+        $controlledFamily = 'AdobeAcrobat'
+        $nameKey = 'adobe acrobat'
+    }
     $nameSeparator = $nameKey.IndexOf(' ')
     return [pscustomobject][ordered]@{
         Record = $Record
         OriginalIndex = $OriginalIndex
         NameKey = $nameKey
+        RawNameKey = $rawNameKey
+        ControlledFamily = $controlledFamily
         NameBucket = $(if ($nameSeparator -gt 0) { $nameKey.Substring(0, $nameSeparator) } else { $nameKey })
         VersionText = $versionText
         VersionKey = ConvertTo-ToolSoftwareIdentityToken -Value $versionText
@@ -1060,7 +1070,7 @@ function New-ToolSoftwareMergeDescriptor {
         LocationKey = Get-ToolSoftwareNormalizedLocation -Record $Record
         RegistryPathKey = $(if ($Record.PSObject.Properties['RegistryPath'] -and $Record.RegistryPath) { ([string]$Record.RegistryPath).Trim().ToLowerInvariant() } else { '' })
         SourceKind = $sourceKind
-        SourceRank = $(switch ($sourceKind) { 'Registry' {0}; 'Appx' {1}; 'PackageManager' {2}; 'Shortcut' {3}; default {4} })
+        SourceRank = $(switch ($sourceKind) { 'Registry' {0}; 'Appx' {1}; 'VendorRegistration' {2}; 'PackageManager' {3}; 'Shortcut' {4}; default {5} })
     }
 }
 
@@ -1116,6 +1126,8 @@ function Merge-ToolSoftwareInventoryRecords {
             $headPublisher = [string]$headDescriptor.PublisherKey
             $headLocation = [string]$headDescriptor.LocationKey
             $versionCompatible = Test-ToolSoftwareMergeVersionCompatible -Left $descriptor -Right $headDescriptor
+            $controlledFamilyMerge = [bool]([string]$descriptor.ControlledFamily -and
+                [string]$descriptor.ControlledFamily -eq [string]$headDescriptor.ControlledFamily)
             $publisherCompatible = [bool](-not $publisherKey -or -not $headPublisher -or $publisherKey -eq $headPublisher -or
                 ($publisherKey.Length -ge 4 -and $headPublisher.Length -ge 4 -and
                     ($publisherKey.StartsWith($headPublisher + ' ', [StringComparison]::OrdinalIgnoreCase) -or
@@ -1138,8 +1150,8 @@ function Merge-ToolSoftwareInventoryRecords {
                   -not $versionCompatible)))
             if ($parallelRegistryInstances) { continue }
             $complementarySources = [bool](
-                ($recordSource -eq 'Registry' -and $headSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager')) -or
-                ($headSource -eq 'Registry' -and $recordSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager'))
+                ($recordSource -eq 'Registry' -and $headSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager','VendorRegistration')) -or
+                ($headSource -eq 'Registry' -and $recordSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager','VendorRegistration'))
             )
             $nameCompatible = [bool]($nameKey -eq $headName)
             $exactProductIdentity = [bool]($nameKey -eq $headName -and $publisherKey -and $headPublisher -and
@@ -1156,9 +1168,9 @@ function Merge-ToolSoftwareInventoryRecords {
             if (-not $nameCompatible) { continue }
             $architectureConflict = [bool]([string]$record.Architecture -match '32' -and [string]$head.Architecture -match '64' -or
                 [string]$record.Architecture -match '64' -and [string]$head.Architecture -match '32')
-            $versionCompatibleForMerge = [bool]($versionCompatible -or $exactProductIdentity)
-            if ($versionCompatibleForMerge -and $publisherCompatible -and ($locationCompatible -or $complementarySources -or $exactProductIdentity) -and
-                (-not $architectureConflict -or $locationKey -eq $headLocation -or $exactProductIdentity)) {
+            $versionCompatibleForMerge = [bool]($versionCompatible -or $exactProductIdentity -or $controlledFamilyMerge)
+            if ($versionCompatibleForMerge -and $publisherCompatible -and ($locationCompatible -or $complementarySources -or $exactProductIdentity -or $controlledFamilyMerge) -and
+                (-not $architectureConflict -or $locationKey -eq $headLocation -or $exactProductIdentity -or $controlledFamilyMerge)) {
                 $matchedCluster = $cluster
                 break
             }
@@ -1189,8 +1201,29 @@ function Merge-ToolSoftwareInventoryRecords {
         # Keep the exact legacy tie-breaking behavior for records discovered from
         # the same source rank, so optimization cannot change the displayed name,
         # scope or representative path of an existing merged product.
-        $preferred = @($clusterRecords | Sort-Object @{Expression={ switch ([string]$_.SourceKind) { 'Registry' {0}; 'Appx' {1}; 'PackageManager' {2}; 'Shortcut' {3}; default {4} } }})[0]
-        foreach ($propertyName in @('Version','Publisher','InstallDate','InstallLocation','DisplayIcon','UninstallString','RegistryPath','Scope','Architecture','RepresentativePath','SignaturePublisher','FileVersion')) {
+        $preferred = @($clusterRecords | Sort-Object @{Expression={ switch ([string]$_.SourceKind) { 'Registry' {0}; 'Appx' {1}; 'VendorRegistration' {2}; 'PackageManager' {3}; 'Shortcut' {4}; default {5} } }})[0]
+        $preferredExecutableName = if ($preferred.RepresentativePath) { [IO.Path]::GetFileName([string]$preferred.RepresentativePath) } else { '' }
+        if (-not $preferredExecutableName -or $preferredExecutableName -match '(?i)^(?:unins|uninstall|setup|update|helper|repair|crash|report|install)') {
+            $productExecutable = @($clusterRecords | Sort-Object @{Expression={ if ([string]$_.SourceKind -eq 'Shortcut') { 0 } else { 1 } }} | ForEach-Object {
+                [string]$_.RepresentativePath
+            } | Where-Object {
+                $_ -and [IO.Path]::GetFileName($_) -notmatch '(?i)^(?:unins|uninstall|setup|update|helper|repair|crash|report|install)'
+            } | Select-Object -First 1)
+            if ($productExecutable.Count -gt 0) {
+                $preferred | Add-Member -NotePropertyName RepresentativePath -NotePropertyValue $productExecutable[0] -Force
+            }
+        }
+        $controlledFamily = @($clusterDescriptors | ForEach-Object { [string]$_.ControlledFamily } | Where-Object { $_ } | Select-Object -First 1)
+        if ($controlledFamily.Count -gt 0 -and $controlledFamily[0] -eq 'AdobeAcrobat') {
+            $mainExecutable = @($clusterRecords | ForEach-Object { [string]$_.RepresentativePath } | Where-Object {
+                $_ -and [IO.Path]::GetFileName($_) -eq 'Acrobat.exe'
+            } | Select-Object -First 1)
+            if ($mainExecutable.Count -gt 0) {
+                $preferred | Add-Member -NotePropertyName RepresentativePath -NotePropertyValue $mainExecutable[0] -Force
+            }
+            $preferred | Add-Member -NotePropertyName ProductFamily -NotePropertyValue 'Adobe Acrobat' -Force
+        }
+        foreach ($propertyName in @('Version','Publisher','InstallDate','InstallLocation','DisplayIcon','UninstallString','RegistryPath','Scope','Architecture','RepresentativePath','SignaturePublisher','FileVersion','PackageId')) {
             if (-not [string]::IsNullOrWhiteSpace([string]$preferred.$propertyName)) { continue }
             $value = @($clusterRecords | ForEach-Object { $_.$propertyName } | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -First 1)
             if ($value.Count -gt 0) { $preferred | Add-Member -NotePropertyName $propertyName -NotePropertyValue $value[0] -Force }
@@ -1214,6 +1247,47 @@ function Merge-ToolSoftwareInventoryRecords {
         $preferred | Add-Member -NotePropertyName MergedRecordCount -NotePropertyValue ([int]$clusterRecords.Count) -Force
         $preferred | Add-Member -NotePropertyName IsSystemComponent -NotePropertyValue $systemComponent -Force
         $preferred | Add-Member -NotePropertyName SystemComponentReason -NotePropertyValue ($systemReasons -join '; ') -Force
+        $presenceGroups = @($sources | ForEach-Object {
+            switch ([string]$_) {
+                'Registry' { 'Registration' }
+                'Appx' { 'Registration' }
+                'VendorRegistration' { 'VendorLicensing' }
+                'PackageManager' { 'PackageMetadata' }
+                'Shortcut' { 'LaunchSurface' }
+                'PortableDiscovery' { 'FileDiscovery' }
+            }
+        } | Where-Object { $_ } | Select-Object -Unique)
+        $hasRegistration = [bool]($presenceGroups -contains 'Registration')
+        $hasVendorRegistration = [bool]($presenceGroups -contains 'VendorLicensing')
+        $hasPackageMetadata = [bool]($presenceGroups -contains 'PackageMetadata')
+        $hasLaunchSurface = [bool]($presenceGroups -contains 'LaunchSurface')
+        $hasFileDiscovery = [bool]($presenceGroups -contains 'FileDiscovery')
+        $presenceState = 'UnverifiedPresence'
+        $presenceConfidence = 'Low'
+        if ($systemComponent -or @($clusterRecords | Where-Object { $_.PSObject.Properties['IsCompanionComponent'] -and [bool]$_.IsCompanionComponent }).Count -gt 0) {
+            $presenceState = 'CompanionOrSystemComponent'; $presenceConfidence = 'High'
+        } elseif (($hasRegistration -or $hasVendorRegistration) -and $presenceGroups.Count -ge 2) {
+            $presenceState = 'InstalledConfirmed'; $presenceConfidence = 'High'
+        } elseif ($hasRegistration) {
+            $presenceState = 'RegisteredInstallation'; $presenceConfidence = 'Medium'
+        } elseif ($hasVendorRegistration) {
+            $presenceState = 'VendorRegisteredProduct'; $presenceConfidence = 'Medium'
+        } elseif ($hasPackageMetadata -and ($hasLaunchSurface -or $hasFileDiscovery)) {
+            $presenceState = 'PackagePresent'; $presenceConfidence = 'Medium'
+        } elseif ($hasLaunchSurface -and $hasFileDiscovery) {
+            $presenceState = 'PortableApplication'; $presenceConfidence = 'Medium'
+        } elseif ($hasLaunchSurface) {
+            $presenceState = 'LaunchReferenceOnly'; $presenceConfidence = 'Low'
+        } elseif ($hasFileDiscovery) {
+            # A binary tree without uninstall/package/licensing metadata may be
+            # a portable application, a copied folder, or leftovers. Never call
+            # it an installed product solely because an executable exists.
+            $presenceState = 'ResidualOrPortableFiles'; $presenceConfidence = 'Low'
+        }
+        $preferred | Add-Member -NotePropertyName PresenceState -NotePropertyValue $presenceState -Force
+        $preferred | Add-Member -NotePropertyName PresenceConfidence -NotePropertyValue $presenceConfidence -Force
+        $preferred | Add-Member -NotePropertyName IndependentPresenceSources -NotePropertyValue $presenceGroups -Force
+        $preferred | Add-Member -NotePropertyName InstalledConfirmed -NotePropertyValue ([bool]($presenceState -eq 'InstalledConfirmed')) -Force
         $stableIdentity = (@((ConvertTo-ToolSoftwareIdentityToken -Value ([string]$preferred.Name) -Name),([string]$preferred.Version),(Get-ToolSoftwareNormalizedLocation -Record $preferred)) -join '|').ToLowerInvariant()
         $preferred | Add-Member -NotePropertyName Id -NotePropertyValue (Get-ToolSoftwareStableId -Value $stableIdentity) -Force
         $merged.Add($preferred)
@@ -1244,7 +1318,7 @@ function New-ToolSoftwareInventoryRecord {
         [string]$Name, [string]$Version, [string]$Publisher, [string]$InstallDate,
         [string]$InstallLocation, [string]$DisplayIcon, [string]$UninstallString,
         [string]$RegistryPath, [string]$Scope, [string]$Architecture,
-        [string]$SourceKind, [string]$RepresentativePath, [string]$SourceDetail = '',
+        [string]$SourceKind, [string]$RepresentativePath, [string]$SourceDetail = '', [string]$PackageId = '',
         [bool]$IsSystemComponent = $false, [string]$SystemComponentReason = '', [string]$ReleaseType = '', [bool]$NonRemovable = $false,
         [switch]$SkipSignature, [switch]$SkipExecutableDiscovery
     )
@@ -1274,6 +1348,7 @@ function New-ToolSoftwareInventoryRecord {
         Id=Get-ToolSoftwareStableId -Value $identity; Name=$Name.Trim(); Version=$Version; Publisher=$Publisher
         InstallDate=(ConvertTo-ToolSoftwareInstallDateText -Value $InstallDate); InstallLocation=$InstallLocation; DisplayIcon=$DisplayIcon; UninstallString=$UninstallString
         RegistryPath=$RegistryPath; Scope=$Scope; Architecture=$Architecture; SourceKind=$SourceKind; SourceDetail=$SourceDetail
+        PackageId=$PackageId
         RepresentativePath=$RepresentativePath; SignatureStatus=[string]$signature.Status; SignaturePublisher=[string]$signature.Publisher
         FileVersion=[string]$signature.FileVersion; IsMicrosoft=[bool]($Publisher -match '(?i)\bMicrosoft\b' -or $Name -match '(?i)^\s*(Microsoft|Windows)\b')
         IsSystemComponent=[bool]$classifiedAsSystem; SystemComponentReason=$SystemComponentReason
@@ -1400,6 +1475,56 @@ function Get-ToolShortcutSoftwareInventory {
 function Get-ToolPackageManagerSoftwareInventory {
     $records = New-Object System.Collections.Generic.List[object]
 
+    # WinGet is used as a second local inventory index. It can correlate ARP,
+    # MSIX and manifest identifiers even when the original installer metadata
+    # is incomplete. It is never treated as proof of licence entitlement.
+    $wingetCommand = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if ($wingetCommand) {
+        try {
+            $processInfo = New-Object Diagnostics.ProcessStartInfo
+            $processInfo.FileName = [string]$wingetCommand.Source
+            $processInfo.Arguments = 'list --disable-interactivity --accept-source-agreements'
+            $processInfo.UseShellExecute = $false
+            $processInfo.CreateNoWindow = $true
+            $processInfo.RedirectStandardOutput = $true
+            $processInfo.RedirectStandardError = $true
+            $processInfo.StandardOutputEncoding = [Text.Encoding]::UTF8
+            $process = New-Object Diagnostics.Process
+            $process.StartInfo = $processInfo
+            if ($process.Start()) {
+                $standardOutputTask = $process.StandardOutput.ReadToEndAsync()
+                $standardErrorTask = $process.StandardError.ReadToEndAsync()
+                if (-not $process.WaitForExit(25000)) {
+                    try { $process.Kill() } catch {}
+                } else {
+                    $output = [string]$standardOutputTask.Result
+                    [void]$standardErrorTask.Result
+                    $separatorSeen = $false
+                    foreach ($line in @($output -split '\r?\n')) {
+                        if (-not $separatorSeen) {
+                            if ($line -match '^\s*-{20,}\s*$') { $separatorSeen = $true }
+                            continue
+                        }
+                        if ([string]::IsNullOrWhiteSpace($line)) { continue }
+                        $columns = @([regex]::Split($line.TrimEnd(), '\s{2,}') | Where-Object { $_ -ne '' })
+                        if ($columns.Count -lt 3) { continue }
+                        $name = [string]$columns[0]
+                        $packageId = [string]$columns[1]
+                        $version = [string]$columns[2]
+                        if ([string]::IsNullOrWhiteSpace($name) -or [string]::IsNullOrWhiteSpace($packageId) -or
+                            $packageId -notmatch '^(?i)(?:ARP\\|MSIX\\|[A-Z0-9][A-Z0-9._+\-]+$)') { continue }
+                        $record = New-ToolSoftwareInventoryRecord -Name $name -Version $version -Publisher '' -InstallDate '' `
+                            -InstallLocation '' -DisplayIcon '' -UninstallString '' -RegistryPath '' -Scope 'PackageManager' `
+                            -Architecture '' -SourceKind 'PackageManager' -SourceDetail ('Winget:' + $packageId) -PackageId $packageId `
+                            -SkipSignature -SkipExecutableDiscovery
+                        if ($record) { $records.Add($record) }
+                    }
+                }
+            }
+            $process.Dispose()
+        } catch {}
+    }
+
     # Scoop keeps one directory per application and an optional current link.
     $scoopRoots = New-Object System.Collections.Generic.List[string]
     foreach ($profile in @(Get-ToolUserProfileDirectories)) {
@@ -1482,6 +1607,48 @@ function Get-ToolPackageManagerSoftwareInventory {
                 if ($record) { $records.Add($record) }
             } catch {}
         }
+    }
+    return $records.ToArray()
+}
+
+function Get-ToolVendorRegistrationSoftwareInventory {
+    $records = New-Object System.Collections.Generic.List[object]
+    # Autodesk's own helper exposes read-only product registrations. Absence of
+    # the helper is normal and must not be interpreted as a licensing failure.
+    $helperCandidates = @(
+        'C:\Program Files (x86)\Common Files\Autodesk Shared\AdskLicensing\Current\helper\AdskLicensingInstHelper.exe',
+        'C:\Program Files\Common Files\Autodesk Shared\AdskLicensing\Current\helper\AdskLicensingInstHelper.exe'
+    )
+    $helper = @($helperCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1)
+    if ($helper.Count -gt 0) {
+        try {
+            $raw = @(& $helper[0] list 2>$null) -join "`n"
+            if ($raw) {
+                $items = @($raw | ConvertFrom-Json -ErrorAction Stop)
+                foreach ($item in $items) {
+                    $name = ''
+                    foreach ($propertyName in @('displayName','productName','product','name','def_prod_key')) {
+                        if ($item.PSObject.Properties[$propertyName] -and -not [string]::IsNullOrWhiteSpace([string]$item.$propertyName)) {
+                            $name = [string]$item.$propertyName; break
+                        }
+                    }
+                    if ([string]::IsNullOrWhiteSpace($name)) { continue }
+                    $version = ''
+                    foreach ($propertyName in @('version','release','def_prod_ver')) {
+                        if ($item.PSObject.Properties[$propertyName] -and $item.$propertyName) { $version=[string]$item.$propertyName; break }
+                    }
+                    $productId = ''
+                    foreach ($propertyName in @('productKey','product_key','feature_id','def_prod_key')) {
+                        if ($item.PSObject.Properties[$propertyName] -and $item.$propertyName) { $productId=[string]$item.$propertyName; break }
+                    }
+                    $record = New-ToolSoftwareInventoryRecord -Name $name -Version $version -Publisher 'Autodesk' -InstallDate '' `
+                        -InstallLocation '' -DisplayIcon '' -UninstallString '' -RegistryPath '' -Scope 'VendorRegistration' `
+                        -Architecture '' -SourceKind 'VendorRegistration' -SourceDetail ('AutodeskLicensing:' + $productId) -PackageId $productId `
+                        -SkipSignature -SkipExecutableDiscovery
+                    if ($record) { $records.Add($record) }
+                }
+            }
+        } catch {}
     }
     return $records.ToArray()
 }
@@ -1593,11 +1760,14 @@ function Get-ToolInstalledSoftwareInventory {
         [ValidateRange(1,5)][int]$PortableMaximumDepth = 3
     )
     $all = New-Object System.Collections.Generic.List[object]
-    $sourceCounts = [ordered]@{ Registry=0; Appx=0; Shortcut=0; PackageManager=0; PortableDiscovery=0 }
+    $sourceCounts = [ordered]@{ Registry=0; Appx=0; Shortcut=0; PackageManager=0; VendorRegistration=0; PortableDiscovery=0 }
     foreach ($item in @(Get-ToolRegistrySoftwareInventory)) { $all.Add($item); $sourceCounts.Registry++ }
     if ($IncludeAppx) { foreach ($item in @(Get-ToolAppxSoftwareInventory)) { $all.Add($item); $sourceCounts.Appx++ } }
     if ($IncludeShortcuts) { foreach ($item in @(Get-ToolShortcutSoftwareInventory)) { $all.Add($item); $sourceCounts.Shortcut++ } }
-    if ($IncludePackageManagers) { foreach ($item in @(Get-ToolPackageManagerSoftwareInventory)) { $all.Add($item); $sourceCounts.PackageManager++ } }
+    if ($IncludePackageManagers) {
+        foreach ($item in @(Get-ToolPackageManagerSoftwareInventory)) { $all.Add($item); $sourceCounts.PackageManager++ }
+        foreach ($item in @(Get-ToolVendorRegistrationSoftwareInventory)) { $all.Add($item); $sourceCounts.VendorRegistration++ }
+    }
     if ($IncludePortable) {
         $broadRoots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Programs' })) |
             Where-Object { $_ } | ForEach-Object { try { [IO.Path]::GetFullPath([string]$_).TrimEnd('\') } catch {} }
@@ -1869,6 +2039,28 @@ function Get-ToolSoftwareBlockedHostEvidence {
     return $result
 }
 
+function Get-ToolSoftwareVendorHealthEvidence {
+    param([Parameter(Mandatory = $true)]$Application, [AllowNull()][object]$CatalogProduct)
+    $evidence = New-Object System.Collections.Generic.List[object]
+    $vendor = Get-ToolSoftwareVendorScope -Application $Application -CatalogProduct $CatalogProduct
+    $serviceNames = switch ($vendor) {
+        'Adobe' { @('AGSService','AdobeARMservice') }
+        'Autodesk' { @('AdskLicensingService') }
+        default { @() }
+    }
+    foreach ($serviceName in @($serviceNames)) {
+        try {
+            $service = Get-CimInstance Win32_Service -Filter ("Name='" + $serviceName.Replace("'", "''") + "'") -ErrorAction Stop
+            if ([string]$service.StartMode -eq 'Disabled') {
+                $evidence.Add((New-ToolSoftwareTechnicalEvidence -Code 'VendorIntegrityServiceDisabled' -Strength 'Weak' `
+                    -Source 'VendorAdapter' -EvidenceGroup 'LicenseServiceState' `
+                    -Detail ($serviceName + ' | Disabled') -CorrelationLevel 'VendorShared'))
+            }
+        } catch {}
+    }
+    return $evidence.ToArray()
+}
+
 function Get-ToolSoftwareLocationEvidence {
     param([Parameter(Mandatory = $true)]$Application)
     $evidence = New-Object System.Collections.Generic.List[object]
@@ -1962,6 +2154,13 @@ function Get-ToolSoftwareDeepScanRoots {
         try {
             $full = [IO.Path]::GetFullPath([string]$candidate).TrimEnd('\')
             if ($full.Length -lt 8 -or $excluded -contains $full) { continue }
+            # Keep the most product-specific root. If the representative binary
+            # is under Adobe\Acrobat DC\Acrobat, do not also scan the shared
+            # Adobe directory and accidentally assign Lightroom/Premiere files
+            # to Acrobat (or vice versa).
+            if (@($roots.ToArray() | Where-Object {
+                ([string]$_).StartsWith(($full + '\'), [StringComparison]::OrdinalIgnoreCase)
+            }).Count -gt 0) { continue }
             $item = Get-Item -LiteralPath $full -Force -ErrorAction Stop
             if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { continue }
             if (-not $roots.Contains($full)) { $roots.Add($full) }
@@ -2527,6 +2726,7 @@ function New-ToolSoftwareDeepScanPreparation {
         return [pscustomobject][ordered]@{
             Evidence=@(); Roots=@(); FilesEnumerated=0; Complete=$false; Status='NoSafeRoot'
             SignatureCandidates=@(); HashCandidates=@(); KnownBadHashes=@(); ExpectedSignerPatterns=@()
+            FullPeIntegrityCoverage=$false
             CatalogTrustedForDecisiveEvidence=$false
         }
     }
@@ -2538,6 +2738,8 @@ function New-ToolSoftwareDeepScanPreparation {
     $expectedSignerPatterns = New-Object System.Collections.Generic.List[object]
     $knownBadHashes = New-Object System.Collections.Generic.List[string]
     $catalogTrustedForDecisiveEvidence = Test-ToolSoftwareCatalogTrustedForDecisiveEvidence -Catalog $Catalog
+    $vendorIdentity = (([string]$Application.Name) + ' ' + ([string]$Application.Publisher) + ' ' + ([string]$Application.SignaturePublisher))
+    $fullPeIntegrityCoverage = [bool]($vendorIdentity -match '(?i)\bAdobe\b|\bAcrobat\b|\bAutodesk\b|\bAutoCAD\b')
     $catalogDeepScanValues = @(Get-ToolSoftwareOptionalPropertyValues -InputObject $Catalog -Name 'DeepScan')
     if ($catalogTrustedForDecisiveEvidence -and $catalogDeepScanValues.Count -gt 0) {
         $catalogDeepScan = $catalogDeepScanValues[0]
@@ -2586,6 +2788,7 @@ function New-ToolSoftwareDeepScanPreparation {
                 elseif ($knownActivator -or $suspiciousArtifact) { $priority=4 }
                 elseif ($licenseRelevant -or [string]$file.Name -match '(?i)core') { $priority=3 }
                 elseif ([string]$file.Extension -eq '.exe' -and [int]$file.Depth -le 2) { $priority=2 }
+                elseif ($fullPeIntegrityCoverage) { $priority=1 }
                 elseif ([int]$file.Depth -le 1) { $priority=1 }
                 if ($priority -gt 0) {
                     $fileCandidates.Add([pscustomobject][ordered]@{
@@ -2617,6 +2820,7 @@ function New-ToolSoftwareDeepScanPreparation {
         Evidence=$evidence.ToArray(); Roots=$roots; FilesEnumerated=[int]$filesEnumerated; Complete=[bool]$complete; Status='Prepared'
         SignatureCandidates=$preparedSignatureCandidates; HashCandidates=$preparedHashCandidates
         KnownBadHashes=$knownBadHashes.ToArray(); ExpectedSignerPatterns=$expectedSignerPatterns.ToArray()
+        FullPeIntegrityCoverage=[bool]$fullPeIntegrityCoverage
         CatalogTrustedForDecisiveEvidence=[bool]$catalogTrustedForDecisiveEvidence
     }
 }
@@ -2627,7 +2831,7 @@ function Get-ToolSoftwareDeepScanEvidence {
         [AllowNull()][object]$CatalogProduct,
         [AllowNull()][object]$Catalog,
         [Parameter(Mandatory = $true)]$State,
-        [ValidateRange(1, 200)][int]$MaximumSignatureChecksPerApplication = 18,
+        [ValidateRange(1, 500)][int]$MaximumSignatureChecksPerApplication = 18,
         [ValidateRange(4, 500)][int]$MaximumHashChecksPerApplication = 160,
         [AllowNull()][object]$SignatureRunspacePool,
         [AllowNull()][object]$Preparation
@@ -2668,6 +2872,9 @@ function Get-ToolSoftwareDeepScanEvidence {
         }
         $scheduledSignatureCandidates.Add($candidate)
     }
+    if ([bool]$Preparation.FullPeIntegrityCoverage -and $scheduledSignatureCandidates.Count -lt $signatureCandidates.Count) {
+        $complete = $false
+    }
     $signatureResults = Get-ToolSoftwareSignatureStatesParallel `
         -Paths @($scheduledSignatureCandidates.ToArray() | ForEach-Object { [string]$_.Path }) `
         -ThrottleLimit 4 -RunspacePool $SignatureRunspacePool
@@ -2692,7 +2899,7 @@ function Get-ToolSoftwareDeepScanEvidence {
             $evidence.Add((New-ToolSoftwareTechnicalEvidence -Code 'CriticalFileSignatureNotTrusted' -Strength 'Moderate' -Source 'Authenticode' `
                 -EvidenceGroup 'FileTrust' -Detail (([string]$candidate.Path) + ' | NotTrusted')))
         }
-        if ([string]$signature.Status -eq 'Valid' -and $expectedSignerPatterns.Count -gt 0 -and
+        if ([string]$signature.Status -eq 'Valid' -and ([bool]$candidate.Critical -or [bool]$candidate.ExpectedSigned) -and $expectedSignerPatterns.Count -gt 0 -and
             -not (Test-ToolSoftwareAnyPattern -Text ([string]$signature.Publisher) -Patterns $expectedSignerPatterns.ToArray())) {
             $evidence.Add((New-ToolSoftwareTechnicalEvidence -Code 'UnexpectedCoreFileSigner' -Strength 'Strong' -Source 'Authenticode' `
                 -EvidenceGroup 'PublisherMismatch' -Detail (([string]$candidate.Path) + ' | ' + ([string]$signature.Publisher))))
@@ -2862,22 +3069,29 @@ function Get-ToolSoftwareAssessments {
             ($entryApplicationId -and $externalEvidenceByApplication.ContainsKey($entryApplicationId)) -or
             ($entryVendorScope -and $externalEvidenceByVendor.ContainsKey($entryVendorScope))
         )
+        $entryPreflightEvidence = @(
+            @(Get-ToolSoftwareBlockedHostEvidence -CatalogProduct $entryCatalogProduct)
+            @(Get-ToolSoftwareVendorHealthEvidence -Application $entryApplication -CatalogProduct $entryCatalogProduct)
+        )
+        $entryAdaptiveIntegrityScan = [bool]($DeepScan -and $entryVendorScope -in @('Adobe','Autodesk') -and
+            @($entryPreflightEvidence | Where-Object { [string]$_.Code -in @('LicenseDomainBlocked','VendorIntegrityServiceDisabled') }).Count -gt 0)
         $entryPriority = 1
-        if ($entryHasExternalEvidence -or $entryIdentityText -match $strictIdentityPattern -or
+        if ($entryHasExternalEvidence -or $entryAdaptiveIntegrityScan -or $entryIdentityText -match $strictIdentityPattern -or
             $entryLicenseModel -in @('Paid','Subscription','Trial','Freemium')) {
             $entryPriority = 0
         } elseif ($entryLicenseModel -in @('Free','OpenSource')) {
             $entryPriority = 2
         }
-        $signatureWeight = if ($entryPriority -eq 0) { 6 } elseif ($entryPriority -eq 1) { 2 } else { 1 }
+        $signatureWeight = if ($entryAdaptiveIntegrityScan) { 100 } elseif ($entryPriority -eq 0) { 6 } elseif ($entryPriority -eq 1) { 2 } else { 1 }
         # Hồ sơ nhanh vẫn kiểm tra chữ ký cho mọi ứng dụng có tệp đại diện,
         # nhưng tập trung nhiều lượt hơn vào phần mềm trả phí/dùng thử hoặc đã
         # có dấu vết. Quét tên artifact, cây tệp và dấu vết hệ thống giữ nguyên.
-        $desiredSignatureLimit = if ($entryPriority -eq 0) { 6 } elseif ($entryPriority -eq 1) { 3 } else { 1 }
+        $desiredSignatureLimit = if ($entryAdaptiveIntegrityScan) { 350 } elseif ($entryPriority -eq 0) { 18 } elseif ($entryPriority -eq 1) { 4 } else { 1 }
         $applicationEntries.Add([pscustomobject][ordered]@{
             Application=$entryApplication; CatalogProduct=$entryCatalogProduct; CatalogMatch=$entryCatalogMatch; VendorScope=$entryVendorScope
             LicenseModel=$entryLicenseModel; CatalogLicenseModel=$entryCatalogLicenseModel; IdentityText=$entryIdentityText; ScanPriority=$entryPriority; OriginalIndex=$entryIndex
             SignatureWeight=$signatureWeight; DesiredSignatureLimit=$desiredSignatureLimit
+            AdaptiveIntegrityScan=[bool]$entryAdaptiveIntegrityScan; PreflightEvidence=@($entryPreflightEvidence)
         })
     }
     $scanEntries = if ($DeepScan) {
@@ -2908,6 +3122,7 @@ function Get-ToolSoftwareAssessments {
         $licenseModel = [string]$applicationEntry.LicenseModel
         $catalogLicenseModel = [string]$applicationEntry.CatalogLicenseModel
         $evidence = New-Object System.Collections.Generic.List[object]
+        foreach ($item in @($applicationEntry.PreflightEvidence)) { $evidence.Add($item) }
         $deepResult = [pscustomobject][ordered]@{
             Evidence=@(); Roots=@(); FilesEnumerated=0; SignatureChecks=0; HashChecks=0
             Complete=$false; Status='NotRequested'; RepresentativeSignature=$null
@@ -2981,17 +3196,16 @@ function Get-ToolSoftwareAssessments {
                 }
             }
         }
-        if ($signatureStatus -eq 'HashMismatch') {
+        if (-not $DeepScan -and $signatureStatus -eq 'HashMismatch') {
             $evidence.Add((New-ToolSoftwareTechnicalEvidence -Code 'SignatureHashMismatch' -Strength 'Strong' -Source 'Authenticode' `
                 -EvidenceGroup 'FileIntegrity' -Detail ([string]$application.RepresentativePath)))
-        } elseif ($signatureStatus -eq 'NotTrusted') {
+        } elseif (-not $DeepScan -and $signatureStatus -eq 'NotTrusted') {
             $evidence.Add((New-ToolSoftwareTechnicalEvidence -Code 'SignatureNotTrusted' -Strength 'Moderate' -Source 'Authenticode' `
                 -EvidenceGroup 'FileTrust' -Detail $signatureStatus))
-        } elseif ($signatureStatus -eq 'NotSigned' -and $licenseModel -in @('Paid','Subscription','Trial')) {
+        } elseif (-not $DeepScan -and $signatureStatus -eq 'NotSigned' -and $licenseModel -in @('Paid','Subscription','Trial')) {
             $evidence.Add((New-ToolSoftwareTechnicalEvidence -Code 'PaidBinaryNotSigned' -Strength 'Moderate' -Source 'Authenticode' `
                 -EvidenceGroup 'FileIntegrity' -Detail ([string]$application.RepresentativePath)))
         }
-        foreach ($item in @(Get-ToolSoftwareBlockedHostEvidence -CatalogProduct $catalogProduct)) { $evidence.Add($item) }
         $applicationId = [string]$application.Id
         $applicationExternalEvidence = New-Object System.Collections.Generic.List[object]
         if ($applicationId -and $externalEvidenceByApplication.ContainsKey($applicationId)) {
@@ -3182,6 +3396,7 @@ function Get-ToolSoftwareAssessments {
             @('ManualArtifactQuarantineReason',[string]$manualArtifactQuarantineGate.Reason),
             @('ManualArtifactQuarantineEvidenceCount',[int]$manualArtifactQuarantineGate.EvidenceCount),
             @('DeepScanEnabled',[bool]$DeepScan), @('DeepScanStatus',[string]$deepResult.Status), @('DeepScanComplete',[bool]$deepResult.Complete),
+            @('AdaptiveIntegrityScan',[bool]$applicationEntry.AdaptiveIntegrityScan),
             @('DeepScanRoots',@($deepResult.Roots)), @('DeepScanFilesEnumerated',[int]$deepResult.FilesEnumerated),
             @('DeepScanSignatureChecks',[int]$deepResult.SignatureChecks), @('DeepScanHashChecks',[int]$deepResult.HashChecks),
             @('RemediationAdapter',$remediationAdapter), @('RemediationSupported',$manualEligible), @('ManualEligible',$manualEligible),
@@ -3227,7 +3442,10 @@ function Get-ToolSoftwareInventoryMetadata {
         RegistryCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'Registry' -or $_.SourceKind -eq 'Registry' }).Count
         AppxCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'Appx' -or $_.SourceKind -eq 'Appx' }).Count
         PackageManagerCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'PackageManager' -or $_.SourceKind -eq 'PackageManager' }).Count
+        VendorRegistrationCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'VendorRegistration' -or $_.SourceKind -eq 'VendorRegistration' }).Count
         PortableOrShortcutCount=[int]@($Applications | Where-Object { $_.DiscoverySources -contains 'Shortcut' -or $_.DiscoverySources -contains 'PortableDiscovery' -or $_.SourceKind -in @('Shortcut','PortableDiscovery') }).Count
+        InstalledConfirmedCount=[int]@($Applications | Where-Object { $_.PSObject.Properties['InstalledConfirmed'] -and [bool]$_.InstalledConfirmed }).Count
+        ResidualOrPortableCount=[int]@($Applications | Where-Object { $_.PSObject.Properties['PresenceState'] -and [string]$_.PresenceState -in @('ResidualOrPortableFiles','PortableApplication') }).Count
         RawRecordCount=[int]$collection.RawRecordCount
         DuplicateRecordCount=[int]$collection.DuplicateRecordCount
         SourceCounts=$collection.SourceCounts
