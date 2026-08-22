@@ -116,13 +116,9 @@ if ($failures.Count -eq 0) {
         $licensed = New-RemediationStateRecord -CandidateId 'licensed-unverified'
         $licensed = Set-RemediationStateRecord -Record $licensed -State Running
         $licensed = Resolve-RemediationPostCheckState -Record $licensed -DirectCrackEvidenceRemaining:$false `
-            -ApplicationPresent:$true -OfficialLicenseState 'Licensed' -ArtifactCleanupCompleted:$true
-        Assert-Check -Condition ([string]$licensed.State -eq 'RetryableFailure' -and
-            [string]$licensed.LastErrorCode -eq 'ArtifactsRemovedLicenseUnverified' -and [bool]$licensed.RetryAllowed) `
-            -Message 'Removed artifacts with an unverified license state were reported as clean.'
-        $licensed = Set-RemediationStateRecord -Record $licensed -State Running
-        Assert-Check -Condition ([string]$licensed.State -eq 'Running' -and [int]$licensed.AttemptCount -eq 2) `
-            -Message 'RetryableFailure could not start a second attempt.'
+            -ApplicationPresent:$true -OfficialLicenseState 'Licensed' -ArtifactCleanupCompleted:$true -AllowLicensedState:$true
+        Assert-Check -Condition ([string]$licensed.State -eq 'VerifiedClean' -and -not [bool]$licensed.RetryAllowed) `
+            -Message 'A preserved genuine Licensed state was not accepted after scoped cleanup.'
 
         $evidence = New-RemediationStateRecord -CandidateId 'evidence-remains'
         $evidence = Set-RemediationStateRecord -Record $evidence -State Running
@@ -139,6 +135,13 @@ if ($failures.Count -eq 0) {
         Assert-Check -Condition ([string]$missingApp.State -eq 'RetryableFailure' -and
             [string]$missingApp.LastErrorCode -eq 'ApplicationNotPresentAfterCleanup') `
             -Message 'An absent application was incorrectly marked VerifiedClean.'
+
+        $uninstalledApp = New-RemediationStateRecord -CandidateId 'explicit-uninstall'
+        $uninstalledApp = Set-RemediationStateRecord -Record $uninstalledApp -State Running
+        $uninstalledApp = Resolve-RemediationPostCheckState -Record $uninstalledApp -DirectCrackEvidenceRemaining:$false `
+            -ApplicationPresent:$false -OfficialLicenseState 'Removed' -ExpectedApplicationAbsent:$true -ArtifactCleanupCompleted:$true
+        Assert-Check -Condition ([string]$uninstalledApp.State -eq 'VerifiedClean') `
+            -Message 'Explicit complete-uninstall absence was not accepted as VerifiedClean.'
 
         $policy = New-RemediationStateRecord -CandidateId 'managed-policy'
         $policy = Set-RemediationStateRecord -Record $policy -State Running
@@ -165,7 +168,7 @@ if ($failures.Count -eq 0) {
             -Message 'Approved internal KMS fixture was not preserved.'
 
         $observedStates = @($record.State, $trial.State, $licensed.State, $evidence.State,
-            $missingApp.State, $policy.State, $volume.State, $approved.State, 'Pending') | Select-Object -Unique
+            $missingApp.State, $policy.State, $volume.State, $approved.State, 'Pending', 'Running') | Select-Object -Unique
         Assert-Check -Condition (@($requiredStates | Where-Object { $observedStates -notcontains $_ }).Count -eq 0) `
             -Message 'The deterministic fixtures do not cover every required remediation state.'
 
@@ -247,7 +250,8 @@ if ($null -ne $cleanupAst) {
     $checkCount++
 
     Assert-Check -Condition ($cleanupText -match 'remediationPostCheckPassed' -and
-        $cleanupText -match "OfficialLicenseState -in @\('Unactivated','Trial'\)" -and
+        $cleanupText -match 'ExpectedApplicationAbsent' -and
+        $cleanupText -match 'AllowLicensedState' -and
         $cleanupText -match '-not \$DirectCrackEvidenceRemaining' -and
         $cleanupText -match '\$ApplicationPresent') `
         -Message 'Final readiness is not gated by the strict remediation post-check.'

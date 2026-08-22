@@ -577,7 +577,7 @@ function Import-ToolSoftwareCatalogFile {
 }
 
 function Get-ToolSoftwareLicenseCatalog {
-    param([switch]$PreferCache)
+    param([switch]$PreferCache, [switch]$CommitWatermark)
     $bundled = Import-ToolSoftwareCatalogFile -Path (Get-ToolSoftwareCatalogBundledPath) `
         -SignaturePath (Get-ToolSoftwareCatalogBundledSignaturePath) -Source 'Bundled' -RequireSignature
     $cache = $null
@@ -600,7 +600,7 @@ function Get-ToolSoftwareLicenseCatalog {
         if (-not $bundled -or $cacheVersion -ge $bundledVersion) { $selectedCatalog = $cache }
     }
     if (-not $selectedCatalog) { $selectedCatalog = $bundled }
-    if ($selectedCatalog) {
+    if ($selectedCatalog -and $CommitWatermark) {
         try {
             [void](Set-ToolSoftwareCatalogWatermark `
                 -CatalogVersion ([version](Get-ToolSoftwareOptionalPropertyString -InputObject $selectedCatalog -Name 'CatalogVersion')) `
@@ -1234,6 +1234,25 @@ function Merge-ToolSoftwareInventoryRecords {
         } | Where-Object { $_ } | Select-Object -Unique)
         $details = @($clusterRecords | ForEach-Object { [string]$_.SourceDetail } | Where-Object { $_ } | Select-Object -Unique)
         $registryPaths = @($clusterRecords | ForEach-Object { [string]$_.RegistryPath } | Where-Object { $_ } | Select-Object -Unique)
+        $uninstallIdentities = @($clusterRecords | ForEach-Object {
+            $sourceKind = [string]$_.SourceKind
+            $registryPath = [string]$_.RegistryPath
+            $uninstallString = [string]$_.UninstallString
+            $packageFullName = if ($sourceKind -eq 'Appx') { [string]$_.SourceDetail } else { '' }
+            if (($sourceKind -eq 'Registry' -and $registryPath -and $uninstallString) -or
+                ($sourceKind -eq 'Appx' -and $packageFullName)) {
+                [pscustomobject][ordered]@{
+                    SourceKind=$sourceKind
+                    Name=[string]$_.Name
+                    Version=[string]$_.Version
+                    Publisher=[string]$_.Publisher
+                    InstallLocation=[string]$_.InstallLocation
+                    RegistryPath=$registryPath
+                    UninstallString=$uninstallString
+                    PackageFullName=$packageFullName
+                }
+            }
+        })
         $installLocations = @($clusterDescriptors | ForEach-Object { [string]$_.LocationKey } | Where-Object { $_ } | Select-Object -Unique)
         $architectures = @($clusterRecords | ForEach-Object { [string]$_.Architecture } | Where-Object { $_ } | Select-Object -Unique)
         $systemComponent = [bool](@($clusterRecords | Where-Object { $_.PSObject.Properties['IsSystemComponent'] -and [bool]$_.IsSystemComponent }).Count -gt 0)
@@ -1241,6 +1260,10 @@ function Merge-ToolSoftwareInventoryRecords {
         $preferred | Add-Member -NotePropertyName DiscoverySources -NotePropertyValue $sources -Force
         $preferred | Add-Member -NotePropertyName DiscoveryDetails -NotePropertyValue $details -Force
         $preferred | Add-Member -NotePropertyName RegistryPaths -NotePropertyValue $registryPaths -Force
+        # Keep uninstall data bound to the exact source record.  The display
+        # fields above may legitimately be filled from different merged rows;
+        # they must never be combined to authorize a destructive operation.
+        $preferred | Add-Member -NotePropertyName SourceBoundUninstallIdentities -NotePropertyValue $uninstallIdentities -Force
         $preferred | Add-Member -NotePropertyName InstallLocations -NotePropertyValue $installLocations -Force
         $preferred | Add-Member -NotePropertyName Architectures -NotePropertyValue $architectures -Force
         if ($architectures.Count -gt 1) { $preferred | Add-Member -NotePropertyName Architecture -NotePropertyValue ($architectures -join ', ') -Force }
@@ -1483,7 +1506,10 @@ function Get-ToolPackageManagerSoftwareInventory {
         try {
             $processInfo = New-Object Diagnostics.ProcessStartInfo
             $processInfo.FileName = [string]$wingetCommand.Source
-            $processInfo.Arguments = 'list --disable-interactivity --accept-source-agreements'
+            # Inventory is read-only.  Never persist source-agreement consent
+            # as a side effect of a scan; an unaccepted source simply remains
+            # unavailable and the other local inventory adapters continue.
+            $processInfo.Arguments = 'list --disable-interactivity'
             $processInfo.UseShellExecute = $false
             $processInfo.CreateNoWindow = $true
             $processInfo.RedirectStandardOutput = $true

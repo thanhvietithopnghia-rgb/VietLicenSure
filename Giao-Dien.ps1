@@ -997,6 +997,7 @@ $cleanupRedactSensitive = $true
 $cleanupAutoSafeMode = $false
 $cleanupDryRunMode = $false
 $cleanupScanScope = "All"
+$cleanupScanSnapshot = $null
 $softwareCatalogUpdateResultFile = ""
 $softwareCatalogAutoScan = $false
 $softwareCatalogAutoScanScope = "ThirdParty"
@@ -3172,10 +3173,10 @@ function Start-Cleanup {
 }
 
 function Start-ThirdPartyManualReview {
-    # This entry point only starts the assessment.  It never applies a cleanup
-    # on its own: the user must choose one/all eligible exact artifacts and
-    # confirm again in the final plan dialog.
-    Start-Cleanup -ScanScope "ThirdParty"
+    # Menu 5 is report-only.  Every state-changing software action is exposed
+    # exclusively from menu 6 (Khắc phục), after a fresh synchronized scan,
+    # explicit selection, backup/preview and final confirmation.
+    Start-Report "Software" (Get-ToolText -Key "menu.5.title" -Culture $script:dashboardCulture)
 }
 
 function Enable-DashboardOnlineForCurrentCatalogSession {
@@ -3981,11 +3982,32 @@ function Start-CleanupDeep {
         $output = New-ToolReportRunDirectory -Category "KhacPhuc-XuLy"
         $script:cleanupResultFile = New-SecureRuntimePath "tool-license-deep-clean-result-"
         $script:cleanupSelectionFile = New-SecureRuntimePath "tool-license-deep-selection-"
+        if ($null -eq $script:cleanupScanSnapshot -or
+            [string]$script:cleanupScanSnapshot.SnapshotId -notmatch '^[0-9a-fA-F-]{36}$' -or
+            [string]$script:cleanupScanSnapshot.CandidateSetSha256 -notmatch '^[0-9A-Fa-f]{64}$') {
+            throw (Get-DashboardText 'cleanup.selection.sourceSnapshotMissing')
+        }
+        $selectedCandidateSnapshots = @($scopedCleanupItems | Where-Object {
+            @($selection.SelectedIds) -contains [string]$_.Id
+        } | ForEach-Object {
+            if (-not $_.PSObject.Properties['SnapshotSha256'] -or [string]$_.SnapshotSha256 -notmatch '^[0-9A-Fa-f]{64}$') {
+                throw (Get-DashboardText 'cleanup.selection.snapshotMissing' @([string]$_.Name))
+            }
+            [pscustomobject][ordered]@{
+                Id=([string]$_.Id).ToLowerInvariant()
+                SnapshotSha256=([string]$_.SnapshotSha256).ToUpperInvariant()
+            }
+        })
+        if ($selectedCandidateSnapshots.Count -ne @($selection.SelectedIds).Count) {
+            throw (Get-DashboardText 'cleanup.selection.snapshotCountMismatch')
+        }
         [pscustomobject][ordered]@{
-            SchemaVersion='1.0'
+            SchemaVersion='1.1'
             RequestId=[guid]::NewGuid().ToString('D')
             CreatedAtUtc=[DateTimeOffset]::UtcNow.ToString('o')
-            SelectedIds=@($selection.SelectedIds)
+            SourceSnapshotId=[string]$script:cleanupScanSnapshot.SnapshotId
+            SourceCandidateSetSha256=([string]$script:cleanupScanSnapshot.CandidateSetSha256).ToUpperInvariant()
+            SelectedCandidates=@($selectedCandidateSnapshots)
             ScanScope=$script:cleanupScanScope
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:cleanupSelectionFile -Encoding UTF8
         $privacyArgument = if ($script:cleanupRedactSensitive) { " -RedactSensitive" } else { "" }
@@ -4767,6 +4789,7 @@ function Complete-CleanupScan {
         if ($scan.PSObject.Properties['ScanScope'] -and [string]$scan.ScanScope -in @("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")) {
             $script:cleanupScanScope = [string]$scan.ScanScope
         }
+        $script:cleanupScanSnapshot = if ($scan.PSObject.Properties['ScanSnapshot']) { $scan.ScanSnapshot } else { $null }
         $scopedCleanupItems = @(Get-GuiScopedCleanupItems -CleanupItems @($scan.CleanupItems) -Scope $script:cleanupScanScope)
         $scan.CleanupItems = $scopedCleanupItems
         if ($scan.ReportPath -and (Test-Path -LiteralPath $scan.ReportPath -PathType Leaf)) {
@@ -5310,6 +5333,7 @@ function Complete-CleanupRemediation([bool]$wasDeepCleanup) {
         if ($result.PSObject.Properties['ScanScope'] -and [string]$result.ScanScope -in @("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")) {
             $script:cleanupScanScope = [string]$result.ScanScope
         }
+        if ($result.PSObject.Properties['ScanSnapshot']) { $script:cleanupScanSnapshot = $result.ScanSnapshot }
         $result.CleanupItems = @(Get-GuiScopedCleanupItems -CleanupItems @($result.CleanupItems) -Scope $script:cleanupScanScope)
         $postVerificationItems = if ($result.PSObject.Properties['PostVerificationItems']) { @($result.PostVerificationItems) } else { @($result.CleanupItems) }
         $postVerificationSuggestedIds = if ($result.PSObject.Properties['PostVerificationSuggestedIds']) { @($result.PostVerificationSuggestedIds) } else { @() }

@@ -856,7 +856,10 @@ function Safe-Cim {
     param([string]$ClassName, [string]$Namespace = "root/cimv2", [switch]$ThrowOnError)
     if ($ClassName -eq 'SoftwareLicensingProduct' -and (Get-Command Invoke-ToolLicenseDataRead -ErrorAction SilentlyContinue)) {
         if ($null -eq $script:reportLicenseDataRead) {
-            $script:reportLicenseDataRead = Invoke-ToolLicenseDataRead -Namespace $Namespace -ClassName $ClassName -RepairServices
+            # Report modules are read-only.  If WMI/SPP is unavailable, report
+            # that diagnostic state and offer the separate, confirmed
+            # "Khắc phục nguồn quét" workflow instead of starting services.
+            $script:reportLicenseDataRead = Invoke-ToolLicenseDataRead -Namespace $Namespace -ClassName $ClassName
         }
         if ($script:reportLicenseDataRead.Succeeded) { return @($script:reportLicenseDataRead.Items) }
         if ($ThrowOnError) { throw ([string]$script:reportLicenseDataRead.ErrorDetail) }

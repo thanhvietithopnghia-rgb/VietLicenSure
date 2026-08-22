@@ -1027,7 +1027,9 @@ function Resolve-RemediationPostCheckState {
         [bool]$ApprovedInternalKms = $false,
         [string]$PolicyBlockCode = '',
         [string]$PolicyBlockDetail = '',
-        [bool]$VolumeRepairRequired = $false
+        [bool]$VolumeRepairRequired = $false,
+        [bool]$ExpectedApplicationAbsent = $false,
+        [bool]$AllowLicensedState = $false
     )
 
     $Record.DirectCrackEvidenceRemaining = $DirectCrackEvidenceRemaining
@@ -1050,20 +1052,28 @@ function Resolve-RemediationPostCheckState {
             -BlockCode 'VolumeOrMondoRequiresOfficialRepair' `
             -BlockDetail $PolicyBlockDetail -OutcomeMessageKey 'cleanupReport.remediation.needsOfficeRepair'
     }
-    if (-not $DirectCrackEvidenceRemaining -and $ApplicationPresent -and
-        $OfficialLicenseState -in @('Unactivated','Trial')) {
+    $acceptedPresentStates = @('Unactivated','Trial')
+    if ($AllowLicensedState) { $acceptedPresentStates += 'Licensed' }
+    $applicationOutcomeAccepted = if ($ExpectedApplicationAbsent) {
+        -not $ApplicationPresent
+    } else {
+        $ApplicationPresent -and $OfficialLicenseState -in $acceptedPresentStates
+    }
+    if (-not $DirectCrackEvidenceRemaining -and $applicationOutcomeAccepted) {
         return Set-RemediationStateRecord -Record $Record -State VerifiedClean `
             -OutcomeMessageKey 'cleanupReport.remediation.verifiedClean'
     }
 
     $errorCode = if ($ArtifactCleanupCompleted -and -not $DirectCrackEvidenceRemaining) {
         'ArtifactsRemovedLicenseUnverified'
-    } elseif (-not $ApplicationPresent) {
+    } elseif ($ExpectedApplicationAbsent -and $ApplicationPresent) {
+        'ApplicationStillPresentAfterUninstall'
+    } elseif (-not $ExpectedApplicationAbsent -and -not $ApplicationPresent) {
         'ApplicationNotPresentAfterCleanup'
     } elseif ($DirectCrackEvidenceRemaining) {
         'DirectEvidenceStillPresent'
     } else {
-        'OfficialStateNotUnactivatedOrTrial'
+        'OfficialStateNotAcceptedAfterCleanup'
     }
     $messageKey = if ($errorCode -eq 'ArtifactsRemovedLicenseUnverified') {
         'cleanupReport.remediation.artifactsRemovedLicenseUnverified'
@@ -1227,6 +1237,16 @@ function Test-ApprovedKms {
     return $false
 }
 
+function Get-CleanupExecutablePathFromCommandLine {
+    param([string]$CommandLine)
+    if ([string]::IsNullOrWhiteSpace($CommandLine)) { return '' }
+    $expanded = [Environment]::ExpandEnvironmentVariables($CommandLine.Trim())
+    $match = [regex]::Match($expanded, '^\s*"([^"]+\.exe)"|^\s*([^\s"]+\.exe)\b', [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    if (-not $match.Success) { return '' }
+    $path = if ($match.Groups[1].Success) { $match.Groups[1].Value } else { $match.Groups[2].Value }
+    try { return [IO.Path]::GetFullPath($path) } catch { return '' }
+}
+
 function Get-ActivatorFindings {
     # Mẫu đặc hiệu; không dùng chuỗi ngắn như "mas" vì dễ trùng tên hợp lệ.
     $findings = New-Object System.Collections.Generic.List[object]
@@ -1265,6 +1285,7 @@ function Get-ActivatorFindings {
                 Type = "Process"
                 Name = $_.ProcessName
                 Location = $_.Path
+                ProcessId = [int]$_.Id
                 Action = Get-CleanupText "cleanupReport.candidate.stopProcess"
             })
         }
@@ -1288,6 +1309,27 @@ function Get-ActivatorFindings {
         }
     } catch { Add-ScanWarning (Get-CleanupText "cleanupReport.thirdParty.inventorySourceFailed" @('Win32_StartupCommand', $_.Exception.Message)) }
 
+    foreach ($runPath in @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run',
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce'
+    )) {
+        try {
+            $runItem = Get-ItemProperty -LiteralPath $runPath -ErrorAction Stop
+            foreach ($property in @($runItem.PSObject.Properties | Where-Object { [string]$_.Name -notmatch '^PS' })) {
+                $value = [string]$property.Value
+                if (-not (Test-CleanupKnownActivatorText (([string]$property.Name) + ' ' + $value))) { continue }
+                $findings.Add([pscustomobject]@{
+                    Type='StartupRegistry'; Name=[string]$property.Name; Location=$runPath
+                    Action=(Get-CleanupText 'cleanupReport.candidate.removeStartup')
+                    RegistryValueName=[string]$property.Name; ExpectedRegistryValue=$value; ComponentScope='Shared'
+                })
+            }
+        } catch {}
+    }
+
     $scanRoots = @(
         $env:ProgramFiles,
         ${env:ProgramFiles(x86)},
@@ -1301,6 +1343,14 @@ function Get-ActivatorFindings {
 
     foreach ($root in $scanRoots) {
         try {
+            $rootItem = Get-Item -LiteralPath $root -Force -ErrorAction Stop
+            if (Test-CleanupKnownActivatorText ([string]$rootItem.Name)) {
+                $findings.Add([pscustomobject]@{
+                    Type='Folder'; Name=[string]$rootItem.Name; Location=[string]$rootItem.FullName
+                    Action=(Get-CleanupText 'cleanupReport.candidate.reviewFolder')
+                })
+                continue
+            }
             Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue |
                 Where-Object { Test-CleanupKnownActivatorText ([string]$_.Name) } |
                 ForEach-Object {
@@ -1998,6 +2048,47 @@ function Test-ThirdPartyApplicationGuidedRemediationEligible {
         [int]$Application.RemediationEvidenceCount -gt 0)
 }
 
+function Get-ThirdPartyManualUninstallPlan {
+    param([AllowNull()][object]$Application)
+    $plan = New-Object System.Collections.Generic.List[object]
+    if ($null -eq $Application -or [bool]($Application.PSObject.Properties['IsSystemComponent'] -and [bool]$Application.IsSystemComponent)) {
+        return $plan.ToArray()
+    }
+    $sourceBoundIdentities = if ($Application.PSObject.Properties['SourceBoundUninstallIdentities']) {
+        @($Application.SourceBoundUninstallIdentities)
+    } else { @() }
+    foreach ($identity in $sourceBoundIdentities) {
+        $sourceKind = [string]$identity.SourceKind
+        if ($sourceKind -eq 'Registry') {
+            $registryPath = [string]$identity.RegistryPath
+            $uninstallString = [string]$identity.UninstallString
+            $match = [regex]::Match($uninstallString, '(?i)(?:^|[\\\s"])(?:msiexec(?:\.exe)?)\s+(?:/i|/x)\s*"?(\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\})"?')
+            if (-not $match.Success -or [string]::IsNullOrWhiteSpace($registryPath)) { continue }
+            $productCode = $match.Groups[1].Value.ToUpperInvariant()
+            $plan.Add([pscustomobject][ordered]@{
+                Type='Uninstall'; Kind='ThirdPartyCompleteUninstall'; Name=[string]$Application.Name
+                Location=$registryPath; Detail=(Get-CleanupText 'cleanupReport.thirdParty.plan.completeUninstall')
+                Restorable=$false; ManualUninstallAllowed=$true; UninstallMethod='MSI'
+                UninstallIdentity=$productCode; UninstallRegistryPath=$registryPath; UninstallPackageId=''
+                ExpectedName=[string]$identity.Name; ExpectedVersion=[string]$identity.Version
+                ExpectedPublisher=[string]$identity.Publisher; InstallRoot=[string]$identity.InstallLocation
+            })
+        } elseif ($sourceKind -eq 'Appx') {
+            $packageFullName = [string]$identity.PackageFullName
+            if ([string]::IsNullOrWhiteSpace($packageFullName) -or $packageFullName -notmatch '^[A-Za-z0-9._-]+$') { continue }
+            $plan.Add([pscustomobject][ordered]@{
+                Type='Uninstall'; Kind='ThirdPartyCompleteUninstall'; Name=[string]$Application.Name
+                Location=$packageFullName; Detail=(Get-CleanupText 'cleanupReport.thirdParty.plan.completeUninstall')
+                Restorable=$false; ManualUninstallAllowed=$true; UninstallMethod='Appx'
+                UninstallIdentity=$packageFullName; UninstallRegistryPath=''; UninstallPackageId=$packageFullName
+                ExpectedName=[string]$identity.Name; ExpectedVersion=[string]$identity.Version
+                ExpectedPublisher=[string]$identity.Publisher; InstallRoot=[string]$identity.InstallLocation
+            })
+        }
+    }
+    return @($plan.ToArray() | Group-Object { ([string]$_.UninstallMethod + '|' + [string]$_.UninstallIdentity).ToLowerInvariant() } | ForEach-Object { $_.Group[0] })
+}
+
 function Get-ThirdPartyLicenseCandidates {
     param($Applications, $Evidence)
     $candidates = New-Object System.Collections.Generic.List[object]
@@ -2145,6 +2236,29 @@ function Get-ThirdPartyLicenseCandidates {
             -ArtifactCleanupAllowed $false -LicenseStateResetAllowed $false -RecoveryMode $guidanceMode `
             -GuidanceOnly $true -GuidanceReason (Get-CleanupText 'cleanupReport.thirdParty.guidanceOnlyReason') `
             -IdentitySeed ('guided|' + $applicationId)
+        $candidates.Add($candidate)
+    }
+
+    # Complete removal is a separate, never-preselected operation. It is
+    # offered only when inventory retained an exact source-bound MSI or Appx
+    # identity; the elevated executor re-reads that identity before mutation.
+    foreach ($application in @($Applications | Where-Object {
+        Test-ThirdPartyApplicationGuidedRemediationEligible -Application $_
+    })) {
+        $uninstallPlan = @(Get-ThirdPartyManualUninstallPlan -Application $application)
+        if ($uninstallPlan.Count -eq 0) { continue }
+        $applicationId = [string]$application.Id
+        $displayName = [string]$application.Name
+        $methodText = @($uninstallPlan | ForEach-Object { [string]$_.UninstallMethod } | Select-Object -Unique) -join ', '
+        $candidate = New-CleanupItem -Type 'Application' -Kind 'ThirdPartyCompleteUninstall' -Name $displayName `
+            -Location $(if ($application.InstallLocation) { [string]$application.InstallLocation } else { [string]$application.Publisher }) `
+            -TargetId $applicationId -Detail (Get-CleanupText 'cleanupReport.thirdParty.candidateCompleteUninstall' @($methodText)) `
+            -DefaultSelected $false -VendorScope ([string]$application.VendorScope) -AutoEligible:$false `
+            -ApplicationNames @($displayName) -ApplicationIds @($applicationId) -Evidence @($application.Evidence) `
+            -PlanItems $uninstallPlan -RemediationMode 'ManualCompleteUninstall' -ComponentScope 'ThirdParty' `
+            -ArtifactCleanupAllowed $true -LicenseStateResetAllowed $false -RecoveryMode 'ManualCompleteUninstall' `
+            -ManualUninstallAllowed $true -InstallRoot ([string]$application.InstallLocation) `
+            -IdentitySeed ('complete-uninstall|' + $applicationId)
         $candidates.Add($candidate)
     }
 
@@ -2299,6 +2413,17 @@ function New-CleanupItem {
         [bool]$LicenseStateResetAllowed = $false,
         [string]$RecoveryMode = '',
         [bool]$ManualArtifactQuarantineOnly = $false,
+        [bool]$ManualUninstallAllowed = $false,
+        [string]$UninstallMethod = '',
+        [string]$UninstallIdentity = '',
+        [string]$UninstallRegistryPath = '',
+        [string]$UninstallPackageId = '',
+        [string]$InstallRoot = '',
+        [int]$ProcessId = 0,
+        [string]$ExpectedExecutablePath = '',
+        [string]$ExpectedTaskAction = '',
+        [string]$RegistryValueName = '',
+        [string]$ExpectedRegistryValue = '',
         [bool]$GuidanceOnly = $false,
         [string]$GuidanceReason = '',
         [string]$RecoveryBlockReason = '',
@@ -2347,6 +2472,17 @@ function New-CleanupItem {
         LicenseStateResetAllowed = $LicenseStateResetAllowed
         RecoveryMode = $RecoveryMode
         ManualArtifactQuarantineOnly = $ManualArtifactQuarantineOnly
+        ManualUninstallAllowed = $ManualUninstallAllowed
+        UninstallMethod = $UninstallMethod
+        UninstallIdentity = $UninstallIdentity
+        UninstallRegistryPath = $UninstallRegistryPath
+        UninstallPackageId = $UninstallPackageId
+        InstallRoot = $InstallRoot
+        ProcessId = $ProcessId
+        ExpectedExecutablePath = $ExpectedExecutablePath
+        ExpectedTaskAction = $ExpectedTaskAction
+        RegistryValueName = $RegistryValueName
+        ExpectedRegistryValue = $ExpectedRegistryValue
         GuidanceOnly = $GuidanceOnly
         GuidanceReason = $GuidanceReason
         RecoveryBlockReason = $RecoveryBlockReason
@@ -2357,6 +2493,109 @@ function New-CleanupItem {
         Last5 = $Last5
         OsppPathInstance = $OsppPathInstance
         RemediationState = $remediationState
+    }
+}
+
+function ConvertTo-CleanupCanonicalNode {
+    param([AllowNull()][object]$Value)
+
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [bool] -or $Value -is [byte] -or $Value -is [sbyte] -or
+        $Value -is [int16] -or $Value -is [uint16] -or $Value -is [int32] -or
+        $Value -is [uint32] -or $Value -is [int64] -or $Value -is [uint64] -or
+        $Value -is [single] -or $Value -is [double] -or $Value -is [decimal]) { return $Value }
+    if ($Value -is [datetime]) { return ([datetime]$Value).ToUniversalTime().ToString('o') }
+    if ($Value -is [datetimeoffset]) { return ([datetimeoffset]$Value).ToUniversalTime().ToString('o') }
+    if ($Value -is [string] -or $Value -is [char] -or $Value -is [guid]) { return [string]$Value }
+
+    if ($Value -is [Collections.IDictionary]) {
+        $ordered = [ordered]@{}
+        foreach ($key in @($Value.Keys | ForEach-Object { [string]$_ } | Sort-Object)) {
+            $ordered[$key] = ConvertTo-CleanupCanonicalNode -Value $Value[$key]
+        }
+        return [pscustomobject]$ordered
+    }
+
+    if ($Value -is [Collections.IEnumerable] -and -not ($Value -is [string])) {
+        $serialized = @($Value | ForEach-Object {
+            (ConvertTo-CleanupCanonicalNode -Value $_) | ConvertTo-Json -Compress -Depth 16
+        } | Sort-Object)
+        return @($serialized)
+    }
+
+    $properties = @($Value.PSObject.Properties | Where-Object {
+        $_.MemberType -in @('NoteProperty','Property','AliasProperty','ScriptProperty') -and
+        [string]$_.Name -notin @('SnapshotSha256','RemediationState')
+    } | Sort-Object Name)
+    $object = [ordered]@{}
+    foreach ($property in $properties) {
+        try { $object[[string]$property.Name] = ConvertTo-CleanupCanonicalNode -Value $property.Value }
+        catch { $object[[string]$property.Name] = '<unreadable>' }
+    }
+    return [pscustomobject]$object
+}
+
+function Get-CleanupCandidateSnapshotHash {
+    param([Parameter(Mandatory = $true)][object]$Candidate)
+
+    $snapshot = [ordered]@{}
+    foreach ($name in @(
+        'Id','Type','Kind','Name','Location','Detail','TargetId','TargetIdentity','DefaultSelected',
+        'VendorScope','AutoEligible','ApplicationNames','ApplicationIds','Evidence','PlanItems',
+        'RemediationMode','ComponentScope','ArtifactCleanupAllowed','LicenseStateResetAllowed',
+        'RecoveryMode','ManualArtifactQuarantineOnly','GuidanceOnly','GuidanceReason',
+        'RecoveryBlockReason','ExpectedSha256','ExpectedLength','Provider','SkuId','Last5','OsppPathInstance',
+        'ManualUninstallAllowed','UninstallMethod','UninstallIdentity','UninstallCommandPath','UninstallArguments',
+        'UninstallRegistryPath','UninstallPackageId','InstallRoot'
+    )) {
+        $property = $Candidate.PSObject.Properties[$name]
+        $snapshot[$name] = if ($property) { ConvertTo-CleanupCanonicalNode -Value $property.Value } else { $null }
+    }
+    $json = ([pscustomobject]$snapshot | ConvertTo-Json -Compress -Depth 16)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes($json)
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes)) -replace '-', '').ToUpperInvariant()
+    } finally { $sha.Dispose() }
+}
+
+function Set-CleanupCandidateSnapshotHashes {
+    param([AllowNull()][object[]]$Candidates)
+    foreach ($candidate in @($Candidates)) {
+        $hash = Get-CleanupCandidateSnapshotHash -Candidate $candidate
+        if ($candidate.PSObject.Properties['SnapshotSha256']) { $candidate.SnapshotSha256 = $hash }
+        else { $candidate | Add-Member -NotePropertyName SnapshotSha256 -NotePropertyValue $hash }
+    }
+    return @($Candidates)
+}
+
+function Get-CleanupCandidateSetSha256 {
+    param([AllowNull()][object[]]$Candidates)
+    $rows = @($Candidates | ForEach-Object {
+        $candidateHash = if ($_.PSObject.Properties['SnapshotSha256'] -and [string]$_.SnapshotSha256 -match '^[0-9A-Fa-f]{64}$') {
+            ([string]$_.SnapshotSha256).ToUpperInvariant()
+        } else { Get-CleanupCandidateSnapshotHash -Candidate $_ }
+        (([string]$_.Id).ToLowerInvariant() + '|' + $candidateHash)
+    } | Sort-Object)
+    $payload = "cleanup-candidate-set-v1`n" + ($rows -join "`n")
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($payload))) -replace '-', '').ToUpperInvariant()
+    } finally { $sha.Dispose() }
+}
+
+function New-CleanupScanSnapshot {
+    param(
+        [AllowNull()][object[]]$Candidates,
+        [Parameter(Mandatory = $true)][string]$Scope
+    )
+    return [pscustomobject][ordered]@{
+        SchemaVersion='1.0'
+        SnapshotId=[guid]::NewGuid().ToString('D')
+        CreatedAtUtc=[DateTimeOffset]::UtcNow.ToString('o')
+        ScanScope=$Scope
+        CandidateCount=[int]@($Candidates).Count
+        CandidateSetSha256=Get-CleanupCandidateSetSha256 -Candidates $Candidates
     }
 }
 
@@ -2378,6 +2617,8 @@ function Get-ThirdPartyCandidateSafePlan {
     # license store merely by reaching the Administrator process.
     if (-not ($Candidate.PSObject.Properties['ArtifactCleanupAllowed'] -and [bool]$Candidate.ArtifactCleanupAllowed)) { return @() }
     $manualArtifactQuarantineOnly = [bool]($Candidate.PSObject.Properties['ManualArtifactQuarantineOnly'] -and [bool]$Candidate.ManualArtifactQuarantineOnly)
+    $manualUninstallAllowed = [bool]($Candidate.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$Candidate.ManualUninstallAllowed -and
+        [string]$Candidate.Kind -eq 'ThirdPartyCompleteUninstall')
     $allowLicenseStateReset = [bool]($Candidate.PSObject.Properties['LicenseStateResetAllowed'] -and [bool]$Candidate.LicenseStateResetAllowed)
     $safe = New-Object System.Collections.Generic.List[object]
     foreach ($planItem in @($Candidate.PlanItems)) {
@@ -2394,7 +2635,21 @@ function Get-ThirdPartyCandidateSafePlan {
             $safe.Add($planItem)
             continue
         }
-        if ($type -in @('Uninstall','Firewall') -or $kind -notmatch '^ThirdParty') { continue }
+        if ($type -eq 'Uninstall') {
+            if (-not $manualUninstallAllowed -or $kind -ne 'ThirdPartyCompleteUninstall' -or
+                -not ($planItem.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$planItem.ManualUninstallAllowed)) { continue }
+            $method = [string]$planItem.UninstallMethod
+            $identity = [string]$planItem.UninstallIdentity
+            if ($method -eq 'MSI' -and $identity -match '^\{[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\}$' -and
+                -not [string]::IsNullOrWhiteSpace([string]$planItem.UninstallRegistryPath)) {
+                $safe.Add($planItem)
+            } elseif ($method -eq 'Appx' -and $identity -match '^[A-Za-z0-9._-]+$' -and
+                [string]$planItem.UninstallPackageId -eq $identity) {
+                $safe.Add($planItem)
+            }
+            continue
+        }
+        if ($type -eq 'Firewall' -or $kind -notmatch '^ThirdParty') { continue }
         if ($kind -eq 'ThirdPartyLicenseState' -and -not $allowLicenseStateReset) { continue }
         # The elevated executor can revalidate an exact file path or a bounded
         # hosts entry.  Process/service/task/registry/folder operations are
@@ -2416,9 +2671,27 @@ function Get-DeepCleanupCandidates {
         $type = [string]$finding.Type
         if ($type -in @("Process", "Service", "ScheduledTask", "Folder")) {
             $kind = if ($type -eq "ScheduledTask") { "ActivatorTask" } else { "Activator$type" }
+            $expectedExecutablePath = if ($type -in @('Process','Service')) {
+                Get-CleanupExecutablePathFromCommandLine ([string]$finding.Location)
+            } else { '' }
             $items.Add((New-CleanupItem -Type $type -Kind $kind -Name ([string]$finding.Name) `
                 -Location ([string]$finding.Location) -Detail ([string]$finding.Action) `
-                -ComponentScope (Get-CleanupRecordComponentScope -Record $finding)))
+                -ComponentScope (Get-CleanupRecordComponentScope -Record $finding) `
+                -ProcessId $(if ($finding.PSObject.Properties['ProcessId']) { [int]$finding.ProcessId } else { 0 }) `
+                -ExpectedExecutablePath $expectedExecutablePath `
+                -ExpectedTaskAction $(if ($type -eq 'ScheduledTask') { [string]$finding.Location } else { '' })))
+            if ($expectedExecutablePath -and (Test-Path -LiteralPath $expectedExecutablePath -PathType Leaf) -and
+                (Test-CleanupKnownActivatorText (([string]$finding.Name) + ' ' + $expectedExecutablePath))) {
+                $items.Add((New-CleanupItem -Type 'File' -Kind 'ActivatorBoundExecutable' `
+                    -Name ([IO.Path]::GetFileName($expectedExecutablePath)) -Location $expectedExecutablePath `
+                    -Detail (Get-CleanupText 'cleanupReport.candidate.boundExecutable') `
+                    -ComponentScope (Get-CleanupRecordComponentScope -Record $finding)))
+            }
+        } elseif ($type -eq 'StartupRegistry') {
+            $items.Add((New-CleanupItem -Type 'Registry' -Kind 'ActivatorStartupValue' -Name ([string]$finding.Name) `
+                -Location ([string]$finding.Location) -Detail ([string]$finding.Action) `
+                -ComponentScope (Get-CleanupRecordComponentScope -Record $finding) `
+                -RegistryValueName ([string]$finding.RegistryValueName) -ExpectedRegistryValue ([string]$finding.ExpectedRegistryValue)))
         }
     }
 
@@ -2461,12 +2734,15 @@ function Get-DeepCleanupCandidates {
     foreach ($imageName in @("SppExtComObj.exe", "sppsvc.exe", "osppsvc.exe")) {
         $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$imageName"
         try {
-            $valueText = (Get-ItemProperty -LiteralPath $path -ErrorAction Stop | Out-String)
-            if ($valueText -match "(?i)(\bdebugger\b|\bverifierdlls\b|kms|activator|hook\.dll|sppextcomobj(?:hook|patcher))") {
-                $items.Add((New-CleanupItem -Type "Registry" -Kind "IfeoHook" `
-                    -Name "IFEO hook: $imageName" -Location $path `
+            $ifeoItem = Get-ItemProperty -LiteralPath $path -ErrorAction Stop
+            foreach ($property in @($ifeoItem.PSObject.Properties | Where-Object { [string]$_.Name -notmatch '^PS' })) {
+                $valueText = [string]$property.Value
+                if ((([string]$property.Name) + ' ' + $valueText) -notmatch "(?i)(\bdebugger\b|\bverifierdlls\b|kms|activator|hook\.dll|sppextcomobj(?:hook|patcher))") { continue }
+                $items.Add((New-CleanupItem -Type "Registry" -Kind "IfeoHookValue" `
+                    -Name ("IFEO hook: " + $imageName + ' / ' + [string]$property.Name) -Location $path `
                     -Detail (Get-CleanupText "cleanupReport.candidate.ifeoDetail") `
-                    -ComponentScope $(if ($imageName -eq 'osppsvc.exe') { 'Office' } else { 'Windows' })))
+                    -ComponentScope $(if ($imageName -eq 'osppsvc.exe') { 'Office' } else { 'Windows' }) `
+                    -RegistryValueName ([string]$property.Name) -ExpectedRegistryValue $valueText))
             }
         } catch {}
     }
@@ -2503,13 +2779,16 @@ function Get-AllCleanupCandidates {
     foreach ($item in @(Get-DeepCleanupCandidates -Findings $Findings)) { $items.Add($item) }
 
     foreach ($product in @($Products | Where-Object {
-        (Get-LicenseChannel $_) -eq "KMS" -and -not (Test-ApprovedKms ([string]$_.KeyManagementServiceMachine))
+        ((Get-LicenseChannel $_) -eq 'KMS' -and -not (Test-ApprovedKms ([string]$_.KeyManagementServiceMachine))) -or
+        ([int]$_.LicenseStatus -eq 4 -and -not [string]::IsNullOrWhiteSpace([string]$_.PartialProductKey))
     })) {
-        $items.Add((New-CleanupItem -Type "License" -Kind "WindowsKmsLicense" `
+        $channel = Get-LicenseChannel $product
+        $kind = if ([int]$product.LicenseStatus -eq 4 -and $channel -ne 'KMS') { 'WindowsNonGenuineLicense' } else { 'WindowsKmsLicense' }
+        $items.Add((New-CleanupItem -Type "License" -Kind $kind `
             -Name ([string]$product.Name) `
             -Location ("KMS=" + [string]$product.KeyManagementServiceMachine + "; PartialKey=" + [string]$product.PartialProductKey) `
             -TargetId ([string]$product.ID) `
-            -Detail (Get-CleanupText "cleanupReport.candidate.windowsKmsDetail") -ComponentScope 'Windows'))
+            -Detail (Get-CleanupText $(if ($kind -eq 'WindowsNonGenuineLicense') { 'cleanupReport.candidate.windowsNonGenuineDetail' } else { 'cleanupReport.candidate.windowsKmsDetail' })) -ComponentScope 'Windows'))
     }
 
     $unapprovedOfficeEntries = @($OfficeEntries | Where-Object { -not (Test-ApprovedKms ([string]$_.Server)) })
@@ -2565,7 +2844,8 @@ function Get-AllCleanupCandidates {
 
     foreach ($thirdPartyCandidate in @($ThirdPartyCandidates)) { $items.Add($thirdPartyCandidate) }
 
-    return @($items.ToArray() | Group-Object Id | ForEach-Object { $_.Group[0] } | Sort-Object Type, Name, Location)
+    $uniqueItems = @($items.ToArray() | Group-Object Id | ForEach-Object { $_.Group[0] } | Sort-Object Type, Name, Location)
+    return @(Set-CleanupCandidateSnapshotHashes -Candidates $uniqueItems)
 }
 
 function Get-ScopedCleanupCandidates {
@@ -2666,6 +2946,9 @@ function Get-SelectedCleanupIds {
     $script:SelectionAccepted = $false
     $script:SelectionErrorCode = 'SelectionFileMissing'
     $script:SelectionErrorDetail = ''
+    $script:SelectedCleanupSnapshots = @{}
+    $script:SelectedSourceSnapshotId = ''
+    $script:SelectedSourceCandidateSetSha256 = ''
     if ([string]::IsNullOrWhiteSpace($SelectionFile) -or -not (Test-Path -LiteralPath $SelectionFile -PathType Leaf)) { return @() }
     try {
         $allowedRoot = if (-not [string]::IsNullOrWhiteSpace($env:TOOL_SECURE_RUNTIME_DIR)) { $env:TOOL_SECURE_RUNTIME_DIR } else { Join-Path $PSScriptRoot "runtime" }
@@ -2680,15 +2963,32 @@ function Get-SelectedCleanupIds {
         if (($selectionItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'SelectionFileReparsePointRejected' }
         if ([int64]$selectionItem.Length -le 0 -or [int64]$selectionItem.Length -gt 262144) { throw 'SelectionFileSizeInvalid' }
         $selection = Get-Content -LiteralPath $selectionFull -Raw -ErrorAction Stop | ConvertFrom-Json
-        if ([string]$selection.SchemaVersion -ne '1.0') { throw 'SelectionSchemaInvalid' }
+        if ([string]$selection.SchemaVersion -ne '1.1') { throw 'SelectionSchemaInvalid' }
         $requestId = [guid]::Empty
         if (-not [guid]::TryParse([string]$selection.RequestId, [ref]$requestId) -or $requestId -eq [guid]::Empty) { throw 'SelectionRequestIdInvalid' }
         if (-not [string]::Equals([string]$selection.ScanScope, [string]$ScanScope, [StringComparison]::OrdinalIgnoreCase)) { throw 'SelectionScopeMismatch' }
+        $sourceSnapshotId = [guid]::Empty
+        if (-not [guid]::TryParse([string]$selection.SourceSnapshotId, [ref]$sourceSnapshotId) -or $sourceSnapshotId -eq [guid]::Empty) { throw 'SelectionSourceSnapshotInvalid' }
+        $sourceSetHash = ([string]$selection.SourceCandidateSetSha256).Trim().ToUpperInvariant()
+        if ($sourceSetHash -notmatch '^[0-9A-F]{64}$') { throw 'SelectionSourceSnapshotInvalid' }
+        $script:SelectedSourceSnapshotId = $sourceSnapshotId.ToString('D')
+        $script:SelectedSourceCandidateSetSha256 = $sourceSetHash
         $createdAtUtc = [DateTimeOffset]::MinValue
         if (-not [DateTimeOffset]::TryParse([string]$selection.CreatedAtUtc, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$createdAtUtc)) { throw 'SelectionTimestampInvalid' }
         $selectionAge = [DateTimeOffset]::UtcNow - $createdAtUtc.ToUniversalTime()
         if ($selectionAge.TotalMinutes -lt -5 -or $selectionAge.TotalHours -gt 2) { throw 'SelectionExpired' }
-        $ids = @($selection.SelectedIds | ForEach-Object { ([string]$_).Trim().ToLowerInvariant() } | Where-Object { $_ } | Select-Object -Unique)
+        $selectedCandidates = @($selection.SelectedCandidates)
+        if ($selectedCandidates.Count -eq 0 -or $selectedCandidates.Count -gt 2048) { throw 'SelectionSnapshotsInvalid' }
+        foreach ($selectedCandidate in $selectedCandidates) {
+            $selectedId = ([string]$selectedCandidate.Id).Trim().ToLowerInvariant()
+            $selectedHash = ([string]$selectedCandidate.SnapshotSha256).Trim().ToUpperInvariant()
+            if ([string]::IsNullOrWhiteSpace($selectedId) -or $selectedId.Length -gt 4096 -or $selectedHash -notmatch '^[0-9A-F]{64}$') {
+                throw 'SelectionSnapshotsInvalid'
+            }
+            if ($script:SelectedCleanupSnapshots.ContainsKey($selectedId)) { throw 'SelectionSnapshotsInvalid' }
+            $script:SelectedCleanupSnapshots[$selectedId] = $selectedHash
+        }
+        $ids = @($script:SelectedCleanupSnapshots.Keys | Sort-Object)
         if ($ids.Count -eq 0 -or $ids.Count -gt 2048 -or @($ids | Where-Object { $_.Length -gt 4096 }).Count -gt 0) { throw 'SelectionIdsInvalid' }
         $script:SelectionAccepted = $true
         $script:SelectionErrorCode = ''
@@ -2699,7 +2999,8 @@ function Get-SelectedCleanupIds {
         $knownSelectionErrors = @(
             'SecureLaunchRequired','ToolDirectoryAclInvalid','RuntimeDirectoryAclInvalid','SelectionFileOutsideRuntime',
             'SelectionFileMustBeDirectChild','SelectionFileReparsePointRejected','SelectionFileSizeInvalid','SelectionSchemaInvalid',
-            'SelectionRequestIdInvalid','SelectionScopeMismatch','SelectionTimestampInvalid','SelectionExpired','SelectionIdsInvalid'
+            'SelectionRequestIdInvalid','SelectionScopeMismatch','SelectionTimestampInvalid','SelectionExpired','SelectionIdsInvalid',
+            'SelectionSnapshotsInvalid','SelectionSourceSnapshotInvalid'
         )
         $script:SelectionErrorCode = if ($knownSelectionErrors -contains $selectionError) { $selectionError } else { 'SelectionReadFailed' }
         $script:SelectionErrorDetail = [string]$_.Exception.GetType().Name
@@ -3631,7 +3932,7 @@ function Invoke-ScanSourceRepair {
 }
 
 function Write-Report {
-    param($Path, $Products, $Findings, $Decision, $Actions, $History = @(), $Verification = $null, $ThirdPartyApplications = @(), $ThirdPartyEvidence = @(), $ThirdPartyCandidates = @(), $SoftwareDeepScanMetadata = $null)
+    param($Path, $Products, $Findings, $Decision, $Actions, $History = @(), $Verification = $null, $ThirdPartyApplications = @(), $ThirdPartyEvidence = @(), $ThirdPartyCandidates = @(), $SoftwareDeepScanMetadata = $null, $CleanupItems = @(), $ScanSnapshot = $null)
     $lines = New-Object System.Collections.Generic.List[string]
     $yes = Get-CleanupText "common.yes"
     $no = Get-CleanupText "common.no"
@@ -3741,6 +4042,30 @@ function Write-Report {
         $lines.Add((Get-CleanupText "cleanupReport.thirdParty.report.evidence" @($item.VendorScope, $item.Type, $item.Name, $item.Location, $item.Detail)))
     }
     if (@($ThirdPartyEvidence).Count -eq 0) { $lines.Add("- " + (Get-CleanupText "common.none")) }
+    $lines.Add("")
+    $lines.Add((Get-CleanupText 'cleanupReport.report.cleanupItemsHeading'))
+    $candidateSetHash = if ($ScanSnapshot -and $ScanSnapshot.PSObject.Properties['CandidateSetSha256']) {
+        [string]$ScanSnapshot.CandidateSetSha256
+    } else { Get-CleanupCandidateSetSha256 -Candidates @($CleanupItems) }
+    $lines.Add((Get-CleanupText 'cleanupReport.report.cleanupItemsSummary' @(@($CleanupItems).Count, $candidateSetHash)))
+    foreach ($cleanupItem in @($CleanupItems | Sort-Object Id)) {
+        $lines.Add((Get-CleanupText 'cleanupReport.report.cleanupItem' @(
+            [string]$cleanupItem.Id,
+            [string]$cleanupItem.ComponentScope,
+            [string]$cleanupItem.Type,
+            [string]$cleanupItem.Kind,
+            [string]$cleanupItem.Name,
+            [string]$cleanupItem.Location,
+            [string]$cleanupItem.Detail,
+            $(if ($cleanupItem.PSObject.Properties['GuidanceOnly'] -and [bool]$cleanupItem.GuidanceOnly) { $yes } else { $no }),
+            [string]$cleanupItem.SnapshotSha256)))
+        foreach ($planItem in @($cleanupItem.PlanItems)) {
+            $lines.Add((Get-CleanupText 'cleanupReport.report.cleanupPlanItem' @(
+                [string]$planItem.Type, [string]$planItem.Kind, [string]$planItem.Name,
+                [string]$planItem.Location, [string]$planItem.Detail)))
+        }
+    }
+    if (@($CleanupItems).Count -eq 0) { $lines.Add('- ' + (Get-CleanupText 'common.none')) }
     $lines.Add("")
     $lines.Add((Get-CleanupText "cleanupReport.report.historyHeading"))
     $lines.Add((Get-CleanupText "cleanupReport.report.historyNote"))
@@ -3940,16 +4265,9 @@ function Test-OfficeKmsRemediationTarget {
     if ([string]$target.Channel -ne 'KMS' -or (Test-ApprovedKms -Server ([string]$target.Server))) {
         return [pscustomobject]@{ Allowed=$false; RemhstSafe=$false; Reason='TargetNoLongerUnapprovedKms'; TargetIdentity=$targetIdentity; Entries=@($probe.Entries) }
     }
-    if (@($probe.Entries | Where-Object {
-        [string]$_.LicenseStatusCode -eq 'Licensed' -and [string]$_.Channel -in @('Retail','MAK','Subscription')
-    }).Count -gt 0) {
-        return [pscustomobject]@{ Allowed=$false; RemhstSafe=$false; Reason='LicensedOfficialSkuSharesOsppPath'; TargetIdentity=$targetIdentity; Entries=@($probe.Entries) }
-    }
-    if (@($probe.Entries | Where-Object {
-        [string]$_.Channel -eq 'KMS' -and (Test-ApprovedKms -Server ([string]$_.Server))
-    }).Count -gt 0) {
-        return [pscustomobject]@{ Allowed=$false; RemhstSafe=$false; Reason='ApprovedKmsSkuSharesOsppPath'; TargetIdentity=$targetIdentity; Entries=@($probe.Entries) }
-    }
+    # /unpkey:last5 is key-scoped. A genuine SKU sharing this OSPP instance is
+    # preserved and does not block removal of a different uniquely identified
+    # unwanted key. Path-wide /remhst remains protected separately.
     if (@($probe.Entries | Where-Object {
         [string]$_.Channel -eq 'KMS' -and
         [string]::Equals(([string]$_.Last5).Trim(), ([string]$target.Last5).Trim(), [StringComparison]::OrdinalIgnoreCase)
@@ -4133,16 +4451,9 @@ function Invoke-Remediation {
                 $systemChangeCount++
             }
         }
-        if ($removedWindowsKeyCount -gt 0) {
-            $cpkyResult = Invoke-SlmgrCommand -SlmgrArguments @('/cpky')
-            $rilcResult = Invoke-SlmgrCommand -SlmgrArguments @('/rilc')
-            $actions.Add("slmgr /cpky: $($cpkyResult.Summary)")
-            $actions.Add("slmgr /rilc: $($rilcResult.Summary)")
-            if ([bool]$cpkyResult.Success) { $systemChangeCount++ }
-            if ([bool]$rilcResult.Success) { $systemChangeCount++ }
-        } else {
-            $actions.Add((Get-CleanupText "cleanupReport.action.skipCpkyRilc"))
-        }
+        # Keep the mutation scoped to the selected Activation ID. Broad /cpky
+        # and /rilc may alter genuine licenses that the user did not select.
+        if ($removedWindowsKeyCount -eq 0) { $actions.Add((Get-CleanupText "cleanupReport.action.skipCpkyRilc")) }
     } else {
         $actions.Add((Get-CleanupText "cleanupReport.action.keepWindowsKey"))
     }
@@ -4356,7 +4667,18 @@ function Invoke-DeepCleanupV35 {
                 -Name ([string]$planItem.Name) -Location ([string]$planItem.Location) -Detail ([string]$planItem.Detail) `
                 -TargetId ([string]$applicationCandidate.TargetId) -VendorScope ([string]$applicationCandidate.VendorScope) -ComponentScope 'ThirdParty' `
                 -ExpectedSha256 $(if ($planItem.PSObject.Properties['ExpectedSha256']) { [string]$planItem.ExpectedSha256 } else { '' }) `
-                -ExpectedLength $(if ($planItem.PSObject.Properties['ExpectedLength']) { [int64]$planItem.ExpectedLength } else { -1 })
+                -ExpectedLength $(if ($planItem.PSObject.Properties['ExpectedLength']) { [int64]$planItem.ExpectedLength } else { -1 }) `
+                -ManualUninstallAllowed:([bool]($planItem.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$planItem.ManualUninstallAllowed)) `
+                -UninstallMethod $(if ($planItem.PSObject.Properties['UninstallMethod']) { [string]$planItem.UninstallMethod } else { '' }) `
+                -UninstallIdentity $(if ($planItem.PSObject.Properties['UninstallIdentity']) { [string]$planItem.UninstallIdentity } else { '' }) `
+                -UninstallRegistryPath $(if ($planItem.PSObject.Properties['UninstallRegistryPath']) { [string]$planItem.UninstallRegistryPath } else { '' }) `
+                -UninstallPackageId $(if ($planItem.PSObject.Properties['UninstallPackageId']) { [string]$planItem.UninstallPackageId } else { '' }) `
+                -InstallRoot $(if ($planItem.PSObject.Properties['InstallRoot']) { [string]$planItem.InstallRoot } else { '' })
+            foreach ($propertyName in @('ExpectedName','ExpectedVersion','ExpectedPublisher')) {
+                if ($planItem.PSObject.Properties[$propertyName]) {
+                    $child | Add-Member -NotePropertyName $propertyName -NotePropertyValue ([string]$planItem.$propertyName) -Force
+                }
+            }
             $restorable = $true
             if ($planItem.PSObject.Properties['Restorable']) { $restorable = [bool]$planItem.Restorable }
             $child | Add-Member -NotePropertyName Restorable -NotePropertyValue $restorable -Force
@@ -4366,16 +4688,6 @@ function Invoke-DeepCleanupV35 {
         $actions.Add((Get-CleanupText "cleanupReport.thirdParty.action.planExpanded" @($applicationCandidate.Name, $safePlan.Count)))
     }
     $selected = @($expanded.ToArray() | Group-Object Id | ForEach-Object { $_.Group[0] })
-
-    # Chính sách bất biến: Tool chỉ loại bỏ crack/activator và trạng thái kích
-    # hoạt lậu; tuyệt đối không gỡ ứng dụng. Chốt này bảo vệ cả trường hợp một
-    # kế hoạch cũ hoặc thay đổi tương lai vô tình sinh Type=Uninstall.
-    $blockedApplicationUninstalls = @($selected | Where-Object { [string]$_.Type -eq 'Uninstall' })
-    foreach ($candidate in $blockedApplicationUninstalls) {
-        $actions.Add((Get-CleanupText 'cleanupReport.thirdParty.action.softwareUninstallBlocked' @($candidate.Name)))
-        Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'PolicyBlocked' -Changed $false -Message (Get-CleanupText 'cleanupReport.thirdParty.action.softwareUninstallBlocked' @($candidate.Name))
-    }
-    $selected = @($selected | Where-Object { [string]$_.Type -ne 'Uninstall' })
 
     $deepStamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
     $quarantine = ""
@@ -4580,7 +4892,16 @@ function Invoke-DeepCleanupV35 {
     # Dừng các tiến trình được chọn trước để giải phóng tệp/dịch vụ liên quan.
     foreach ($candidate in @($selected | Where-Object { $_.Type -eq "Process" })) {
         try {
-            Stop-Process -Name $candidate.Name -Force -ErrorAction Stop
+            if ([int]$candidate.ProcessId -le 0 -or [string]::IsNullOrWhiteSpace([string]$candidate.ExpectedExecutablePath)) {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+            }
+            $process = Get-Process -Id ([int]$candidate.ProcessId) -ErrorAction Stop
+            $currentPath = [string]$process.Path
+            if (-not [string]::Equals([string]$process.ProcessName, [string]$candidate.Name, [StringComparison]::OrdinalIgnoreCase) -or
+                -not [string]::Equals($currentPath, [string]$candidate.ExpectedExecutablePath, [StringComparison]::OrdinalIgnoreCase)) {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+            }
+            Stop-Process -Id ([int]$candidate.ProcessId) -Force -ErrorAction Stop
             $actions.Add((Get-CleanupText "cleanupReport.action.selectedProcessStopped" @($candidate.Name)))
             $systemChangeCount++
             Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'Succeeded' -Changed $true -Message ([string]$candidate.Detail)
@@ -4620,8 +4941,15 @@ function Invoke-DeepCleanupV35 {
                 }
                 $actions.Add((Get-CleanupText "cleanupReport.action.selectedKmsRemoved" @($candidate.Location)))
                 $systemChangeCount++
-            } elseif ($candidate.Kind -eq "IfeoHook") {
-                Remove-Item -LiteralPath $candidate.Location -Recurse -Force -ErrorAction Stop
+            } elseif ($candidate.Kind -in @('IfeoHookValue','ActivatorStartupValue')) {
+                $valueName = [string]$candidate.RegistryValueName
+                if ([string]::IsNullOrWhiteSpace($valueName)) { throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged') }
+                $currentItem = Get-ItemProperty -LiteralPath $candidate.Location -Name $valueName -ErrorAction Stop
+                $currentValue = [string]$currentItem.$valueName
+                if (-not [string]::Equals($currentValue, [string]$candidate.ExpectedRegistryValue, [StringComparison]::Ordinal)) {
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+                }
+                Remove-ItemProperty -LiteralPath $candidate.Location -Name $valueName -Force -ErrorAction Stop
                 $actions.Add((Get-CleanupText "cleanupReport.action.selectedIfeoRemoved" @($candidate.Name)))
                 $systemChangeCount++
             } elseif ($candidate.Kind -eq 'ThirdPartyUninstallEntry') {
@@ -4690,6 +5018,10 @@ function Invoke-DeepCleanupV35 {
                 [string]::Equals([string]$_.FullName, [string]$candidate.Name, [StringComparison]::OrdinalIgnoreCase)
             } | Select-Object -First 1
             if (-not $task) { throw (Get-CleanupText "cleanupReport.deep.selectedTaskMissing") }
+            if ([string]::IsNullOrWhiteSpace([string]$candidate.ExpectedTaskAction) -or
+                -not [string]::Equals(([string]$task.ActionsText).Trim(), ([string]$candidate.ExpectedTaskAction).Trim(), [StringComparison]::OrdinalIgnoreCase)) {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+            }
             $taskPath = [string]$task.TaskPath
             $taskName = [string]$task.TaskName
             $backupPath = Join-Path $quarantine ("Task_" + ($taskName -replace '[\\/:*?"<>| ]','_') + "_" + [guid]::NewGuid().ToString("N") + ".xml")
@@ -4716,6 +5048,11 @@ function Invoke-DeepCleanupV35 {
             if (-not $serviceInfo) {
                 Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'NoChange' -Changed $false -Message (Get-CleanupText 'cleanupReport.thirdParty.execution.targetMissing')
                 continue
+            }
+            $currentExecutablePath = Get-CleanupExecutablePathFromCommandLine ([string]$serviceInfo.PathName)
+            if ([string]::IsNullOrWhiteSpace([string]$candidate.ExpectedExecutablePath) -or
+                -not [string]::Equals($currentExecutablePath, [string]$candidate.ExpectedExecutablePath, [StringComparison]::OrdinalIgnoreCase)) {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
             }
             $nativeServicePath = "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\$($serviceInfo.Name)"
             $serviceBackupPath = Join-Path $quarantine ("Service_" + ($serviceInfo.Name -replace '[\\/:*?"<>| ]','_') + "_" + [guid]::NewGuid().ToString("N") + ".reg")
@@ -4903,6 +5240,98 @@ function Invoke-DeepCleanupV35 {
             }
         } finally {
             if ($policy) { try { [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($policy) } catch {} }
+        }
+    }
+
+    foreach ($candidate in @($selected | Where-Object {
+        [string]$_.Type -eq 'Uninstall' -and [string]$_.Kind -eq 'ThirdPartyCompleteUninstall'
+    })) {
+        try {
+            if (-not ($candidate.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$candidate.ManualUninstallAllowed)) {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallIdentityRejected')
+            }
+            $method = [string]$candidate.UninstallMethod
+            $identity = [string]$candidate.UninstallIdentity
+            $exitCode = 0
+            if ($method -eq 'MSI') {
+                if ($identity -notmatch '^\{[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}\}$') {
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallIdentityRejected')
+                }
+                $registryPath = ConvertTo-ToolRegistryPath ([string]$candidate.UninstallRegistryPath)
+                if (-not (Test-Path -LiteralPath $registryPath -PathType Container)) {
+                    Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'NoChange' -Changed $false -Message (Get-CleanupText 'cleanupReport.thirdParty.execution.targetMissing')
+                    continue
+                }
+                $entry = Get-ItemProperty -LiteralPath $registryPath -ErrorAction Stop
+                $currentName = [string]$entry.DisplayName
+                $currentVersion = [string]$entry.DisplayVersion
+                $currentPublisher = [string]$entry.Publisher
+                $currentUninstall = [string]$entry.UninstallString
+                $currentMatch = [regex]::Match($currentUninstall, '(?i)(?:^|[\\\s"])(?:msiexec(?:\.exe)?)\s+(?:/i|/x)\s*"?(\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\})"?')
+                if (-not $currentMatch.Success -or $currentMatch.Groups[1].Value.ToUpperInvariant() -ne $identity -or
+                    ($candidate.ExpectedName -and -not [string]::Equals($currentName, [string]$candidate.ExpectedName, [StringComparison]::OrdinalIgnoreCase)) -or
+                    ($candidate.ExpectedVersion -and -not [string]::Equals($currentVersion, [string]$candidate.ExpectedVersion, [StringComparison]::OrdinalIgnoreCase)) -or
+                    ($candidate.ExpectedPublisher -and -not [string]::Equals($currentPublisher, [string]$candidate.ExpectedPublisher, [StringComparison]::OrdinalIgnoreCase))) {
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+                }
+                Add-RestoreItem ([pscustomobject]@{
+                    Type='UninstallNotice'; Name=$currentName; OriginalPath=$registryPath; BackupPath=''
+                    Kind='ThirdPartyCompleteUninstall'; Restorable=$false; Method='MSI'; Identity=$identity
+                })
+                $process = Start-Process -FilePath (Get-ToolNativeSystemPath 'msiexec.exe') `
+                    -ArgumentList @('/x', $identity, '/qn', '/norestart') -Wait -PassThru -WindowStyle Hidden -ErrorAction Stop
+                $exitCode = [int]$process.ExitCode
+                if ($exitCode -notin @(0,1641,3010)) { throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallExitCode' @($exitCode)) }
+                if (Test-Path -LiteralPath $registryPath -PathType Container) {
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallStillPresent')
+                }
+            } elseif ($method -eq 'Appx') {
+                if ($identity -notmatch '^[A-Za-z0-9._-]+$' -or [string]$candidate.UninstallPackageId -ne $identity) {
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallIdentityRejected')
+                }
+                $package = @(Get-AppxPackage -AllUsers -ErrorAction Stop | Where-Object {
+                    [string]::Equals([string]$_.PackageFullName, $identity, [StringComparison]::OrdinalIgnoreCase)
+                })
+                if ($package.Count -ne 1) {
+                    if ($package.Count -eq 0) {
+                        Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'NoChange' -Changed $false -Message (Get-CleanupText 'cleanupReport.thirdParty.execution.targetMissing')
+                        continue
+                    }
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallIdentityRejected')
+                }
+                if ($candidate.ExpectedVersion -and -not [string]::Equals([string]$package[0].Version, [string]$candidate.ExpectedVersion, [StringComparison]::OrdinalIgnoreCase)) {
+                    throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+                }
+                Add-RestoreItem ([pscustomobject]@{
+                    Type='UninstallNotice'; Name=[string]$candidate.Name; OriginalPath=$identity; BackupPath=''
+                    Kind='ThirdPartyCompleteUninstall'; Restorable=$false; Method='Appx'; Identity=$identity
+                })
+                $removeCommand = Get-Command Remove-AppxPackage -ErrorAction Stop
+                if ($removeCommand.Parameters.ContainsKey('AllUsers')) {
+                    Remove-AppxPackage -Package $identity -AllUsers -ErrorAction Stop
+                } else {
+                    Remove-AppxPackage -Package $identity -ErrorAction Stop
+                }
+                $remaining = @(Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue | Where-Object {
+                    [string]::Equals([string]$_.PackageFullName, $identity, [StringComparison]::OrdinalIgnoreCase)
+                })
+                if ($remaining.Count -ne 0) { throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallStillPresent') }
+            } else {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.uninstallIdentityRejected')
+            }
+            $systemChangeCount++
+            $status = if ($exitCode -in @(1641,3010)) { 'RebootRequired' } else { 'Succeeded' }
+            $message = if ($status -eq 'RebootRequired') {
+                Get-CleanupText 'cleanupReport.thirdParty.action.uninstallRebootRequired' @($candidate.Name, $exitCode)
+            } else {
+                Get-CleanupText 'cleanupReport.thirdParty.action.uninstallSucceeded' @($candidate.Name)
+            }
+            $actions.Add($message)
+            Add-ThirdPartyExecutionResult -Candidate $candidate -Status $status -Changed $true -Message $message
+        } catch {
+            $message = Get-CleanupText 'cleanupReport.thirdParty.action.uninstallFailed' @($candidate.Name, $_.Exception.Message)
+            $actions.Add($message)
+            Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'Failed' -Changed $false -Message $message
         }
     }
     foreach ($serviceName in $vendorLicenseServiceState.Keys) {
@@ -5127,7 +5556,7 @@ function Get-DryRunRemediationPlan {
             'Folder' { $actionCode='QuarantineFolder'; $action=Get-CleanupText 'cleanupReport.dryRun.action.quarantineFolder'; $changesSystem=$true; $backupPlanned=$true; $restorable=[bool]([string]$kind -notmatch '^(Activator|ThirdParty)') }
             'Hosts' { $actionCode='BackupAndRemoveHostsEntry'; $action=Get-CleanupText 'cleanupReport.dryRun.action.cleanHosts'; $changesSystem=$true; $backupPlanned=$true; $restorable=$true }
             'Firewall' { $actionCode='RemoveScopedFirewallBlock'; $action=Get-CleanupText 'cleanupReport.dryRun.action.removeFirewallBlock'; $changesSystem=$true; $backupPlanned=$true; $restorable=$false }
-            'Uninstall' { $actionCode='BlockApplicationUninstall'; $action=Get-CleanupText 'cleanupReport.thirdParty.action.softwareUninstallBlocked' @($candidate.Name); $changesSystem=$false }
+            'Uninstall' { $actionCode='CompleteApplicationUninstall'; $action=Get-CleanupText 'cleanupReport.dryRun.action.completeUninstall' @($candidate.Name); $changesSystem=$true; $backupPlanned=$true; $restorable=$false }
             'License' {
                 if ($kind -eq 'WindowsKmsLicense') { $actionCode='RemoveWindowsKmsLicense'; $action=Get-CleanupText 'cleanupReport.dryRun.action.removeWindowsKms' }
                 elseif ($kind -eq 'OfficeKmsLicense') { $actionCode='RemoveOfficeKmsLicense'; $action=Get-CleanupText 'cleanupReport.dryRun.action.removeOfficeKms' }
@@ -5139,8 +5568,14 @@ function Get-DryRunRemediationPlan {
         $plan.Add([pscustomobject][ordered]@{
             Order=$order; CandidateId=[string]$candidate.Id; ParentCandidateId=[string]$candidate.ParentCandidateId
             Type=$type; Kind=$kind; ActionCode=$actionCode; Action=$action; Name=[string]$candidate.Name
-            Target=[string]$candidate.Location; Detail=[string]$candidate.Detail; RequiresAdministrator=[bool]$changesSystem
+            Target=$(if ($type -eq 'Uninstall' -and $candidate.UninstallIdentity) { [string]$candidate.UninstallIdentity } else { [string]$candidate.Location })
+            Detail=[string]$candidate.Detail; RequiresAdministrator=[bool]$changesSystem
             BackupPlanned=[bool]$backupPlanned; Restorable=[bool]$restorable; ChangesSystem=[bool]$changesSystem
+            ApplicationVersion=$(if ($candidate.PSObject.Properties['ExpectedVersion']) { [string]$candidate.ExpectedVersion } else { '' })
+            UninstallMethod=$(if ($candidate.PSObject.Properties['UninstallMethod']) { [string]$candidate.UninstallMethod } else { '' })
+            InstallRoot=$(if ($candidate.PSObject.Properties['InstallRoot']) { [string]$candidate.InstallRoot } else { '' })
+            RebootBehavior=$(if ($type -eq 'Uninstall') { 'MayRequireRestart:1641,3010' } else { '' })
+            NonRestorable=[bool]($type -eq 'Uninstall')
         })
     }
     return $plan.ToArray()
@@ -5165,10 +5600,11 @@ $unapprovedWindowsKmsProducts = @($products | Where-Object {
 $unapprovedWindowsKms = [bool]($unapprovedWindowsKmsProducts.Count -gt 0)
 $allCleanupItems = @(Get-AllCleanupCandidates -Products $products -Findings $findings -OfficeEntries $officeKmsEntries -ThirdPartyCandidates $thirdPartyCandidates)
 $cleanupItems = @(Get-ScopedCleanupCandidates -CleanupItems $allCleanupItems -Scope $ScanScope)
+$scanSnapshot = New-CleanupScanSnapshot -Candidates $cleanupItems -Scope $ScanScope
 $thirdPartyRemediationFindingCount = [int]@($thirdPartyApplications | Where-Object { $_.PSObject.Properties['CleanupFinding'] -and [bool]$_.CleanupFinding }).Count
 $windowsOfficeCleanupCount = [int]@($cleanupItems | Where-Object { [string]$_.Type -ne 'Application' }).Count
 $crackDetected = [bool]($windowsOfficeCleanupCount -gt 0 -or $thirdPartyRemediationFindingCount -gt 0 -or $thirdPartyCandidateCount -gt 0)
-$removeWindowsLicense = [bool]($unapprovedWindowsKms -and -not $protectedActiveChannel)
+$removeWindowsLicense = [bool](@($cleanupItems | Where-Object { [string]$_.Kind -in @('WindowsKmsLicense','WindowsNonGenuineLicense') }).Count -gt 0)
 $unapprovedWindowsConfigResidues = @($configurationResidues | Where-Object {
     $_.Type -eq "KMSConfig" -and $_.Location -match "Windows NT\\CurrentVersion\\SoftwareProtectionPlatform"
 })
@@ -5267,6 +5703,7 @@ $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVers
     UnknownSelectedCleanupIdCount = 0
     BackupWouldBeCreated = $false
     CleanupItems = $cleanupItems
+    ScanSnapshot = $scanSnapshot
     SelectionRequired = [bool]($cleanupItems.Count -gt 0)
     SelectedCleanupItemCount = 0
     BackupDirectory = ""
@@ -5294,6 +5731,34 @@ if ($script:SelectionAccepted -and $unknownSelectedCleanupIds.Count -gt 0) {
     $script:SelectionErrorCode = 'SelectionContainsUnknownIds'
     $script:SelectionErrorDetail = [string]$unknownSelectedCleanupIds.Count
     $selectedCleanupIds = @()
+}
+$changedSelectedCleanupIds = @()
+if ($script:SelectionAccepted) {
+    $currentCandidateSetSha256 = Get-CleanupCandidateSetSha256 -Candidates $cleanupItems
+    if (-not [string]::Equals($currentCandidateSetSha256, [string]$script:SelectedSourceCandidateSetSha256, [StringComparison]::OrdinalIgnoreCase)) {
+        $script:SelectionAccepted = $false
+        $script:SelectionErrorCode = 'SelectionCandidateSetMismatch'
+        $script:SelectionErrorDetail = $currentCandidateSetSha256
+        $selectedCleanupIds = @()
+    }
+}
+if ($script:SelectionAccepted) {
+    $changedSelectedCleanupIds = @($selectedCleanupIds | Where-Object {
+        $selectedId = [string]$_
+        $currentCandidate = @($cleanupItems | Where-Object { [string]::Equals([string]$_.Id, $selectedId, [StringComparison]::OrdinalIgnoreCase) } | Select-Object -First 1)
+        $currentCandidate.Count -ne 1 -or
+        -not $currentCandidate[0].PSObject.Properties['SnapshotSha256'] -or
+        -not [string]::Equals(
+            [string]$currentCandidate[0].SnapshotSha256,
+            [string]$script:SelectedCleanupSnapshots[$selectedId],
+            [StringComparison]::OrdinalIgnoreCase)
+    })
+    if ($changedSelectedCleanupIds.Count -gt 0) {
+        $script:SelectionAccepted = $false
+        $script:SelectionErrorCode = 'SelectionSnapshotMismatch'
+        $script:SelectionErrorDetail = [string]$changedSelectedCleanupIds.Count
+        $selectedCleanupIds = @()
+    }
 }
 $backupDirectory = ""
 $plannedActions = @()
@@ -5331,7 +5796,7 @@ if ($Remediate) {
             $_.RemediationState.PSObject.Copy()
         })
         $selectedThirdPartySnapshots = @($selectedCandidates | Where-Object {
-            [string]$_.Type -eq 'Application' -and [string]$_.Kind -eq 'ThirdPartyLicenseReset'
+            [string]$_.Type -eq 'Application' -and [string]$_.Kind -in @('ThirdPartyLicenseReset','ThirdPartyCompleteUninstall')
         } | ForEach-Object {
             [pscustomobject][ordered]@{
                 Id=[string]$_.Id; TargetId=[string]$_.TargetId; VendorScope=[string]$_.VendorScope
@@ -5339,9 +5804,9 @@ if ($Remediate) {
             }
         })
         $selectedWindowsActivationIds = @($selectedCandidates | Where-Object {
-            $_.Kind -eq "WindowsKmsLicense" -and -not [string]::IsNullOrWhiteSpace([string]$_.TargetId)
+            [string]$_.Kind -in @('WindowsKmsLicense','WindowsNonGenuineLicense') -and -not [string]::IsNullOrWhiteSpace([string]$_.TargetId)
         } | ForEach-Object { [string]$_.TargetId })
-        $windowsProductsToRemove = @($unapprovedWindowsKmsProducts | Where-Object {
+        $windowsProductsToRemove = @($products | Where-Object {
             $selectedWindowsActivationIds -contains [string]$_.ID
         })
         $selectedOfficeTargetIds = @($selectedCandidates | Where-Object { $_.Kind -eq "OfficeKmsLicense" } | ForEach-Object { [string]$_.TargetId } | Where-Object { $_ } | Select-Object -Unique)
@@ -5378,7 +5843,7 @@ if ($Remediate) {
             $basicResult = Invoke-Remediation -Products $products -Findings $findings `
                 -CleanupActivator:$false `
                 -CleanupKmsConfiguration:$false `
-                -WindowsProductsToRemove $(if ($removeWindowsLicense) { $windowsProductsToRemove } else { @() }) `
+                -WindowsProductsToRemove $windowsProductsToRemove `
                 -SkipRestorePoint `
                 -OfficeEntries $officeEntriesToClean `
                 -OfficeHostOverridePaths $selectedOfficeHostPaths
@@ -5426,6 +5891,7 @@ if ($Remediate) {
     Connect-ThirdPartyApplicationsToCandidates -Applications $thirdPartyApplications -Candidates $thirdPartyCandidates
     $allCleanupItems = @(Get-AllCleanupCandidates -Products $products -Findings $findings -OfficeEntries $officeKmsEntries -ThirdPartyCandidates $thirdPartyCandidates)
     $cleanupItems = @(Get-ScopedCleanupCandidates -CleanupItems $allCleanupItems -Scope $ScanScope)
+    $scanSnapshot = New-CleanupScanSnapshot -Candidates $cleanupItems -Scope $ScanScope
     $history = @($(if ($includeWindowsOfficeScan) { Get-InvalidActivationHistory }))
     $verification = Get-CleanupVerification -Products $products -Findings $findings -OfficeEntries $officeKmsEntries -History $history -Scope $ScanScope
     $verification = Add-ThirdPartyVerification -Verification $verification -ThirdPartyCandidates $thirdPartyCandidates -ThirdPartyApplications $thirdPartyApplications -Included:$includeThirdPartyScan
@@ -5455,9 +5921,25 @@ if ($Remediate) {
                 elseif ([string]$state.Provider -eq 'OfficeOSPP') { 'Office' }
                 elseif ([string]$state.Provider -eq 'WindowsSPP') { 'Windows' }
                 else { 'Shared' }
+            $original = if ($originalCandidate.Count -gt 0) { $originalCandidate[0] } else { $null }
+            $originalApplicationIds = if ($original) { @($original.ApplicationIds | ForEach-Object { [string]$_ } | Where-Object { $_ }) } else { @() }
             $remainingDirectCandidates = @($cleanupItems | Where-Object {
-                [string]$_.Type -ne 'Guidance' -and
-                (Get-CleanupRecordComponentScope -Record $_) -eq $component
+                if ([string]$_.Type -eq 'Guidance' -or (Get-CleanupRecordComponentScope -Record $_) -ne $component) { return $false }
+                if ($null -eq $original) { return $true }
+                if ($component -eq 'ThirdParty') {
+                    return [bool](@($_.ApplicationIds | Where-Object { $originalApplicationIds -contains [string]$_ }).Count -gt 0)
+                }
+                if ($component -eq 'Windows') {
+                    return [bool]([string]::Equals([string]$_.TargetId, [string]$original.TargetId, [StringComparison]::OrdinalIgnoreCase))
+                }
+                if ($component -eq 'Office') {
+                    if ([string]$original.Kind -eq 'OfficeKmsHostOverride') {
+                        return [bool]([string]$_.Kind -eq 'OfficeKmsHostOverride' -and
+                            [string]::Equals([string]$_.Location, [string]$original.Location, [StringComparison]::OrdinalIgnoreCase))
+                    }
+                    return [bool]([string]::Equals([string]$_.TargetId, [string]$original.TargetId, [StringComparison]::OrdinalIgnoreCase))
+                }
+                return [bool]([string]::Equals([string]$_.Id, [string]$original.Id, [StringComparison]::OrdinalIgnoreCase))
             })
             $directRemaining = [bool]($remainingDirectCandidates.Count -gt 0)
             $applicationPresent = $false
@@ -5466,7 +5948,8 @@ if ($Remediate) {
                 $applicationPresent = [bool](Test-OfficeProductInstalled -LicenseEntries $officeLicenseEntries)
                 $officialState = [string]$officialLicensePostCheck.Office.StateCode
             } elseif ($component -eq 'Windows') {
-                $applicationPresent = [bool](@($products).Count -gt 0)
+                $nativeSystemDirectory = Split-Path -Parent (Get-ToolNativeSystemPath 'kernel32.dll')
+                $applicationPresent = [bool](Test-Path -LiteralPath $nativeSystemDirectory -PathType Container)
                 $officialState = [string]$officialLicensePostCheck.Windows.StateCode
             } elseif ($component -eq 'ThirdParty' -and $originalCandidate.Count -gt 0) {
                 $applicationIds = @($originalCandidate[0].ApplicationIds | ForEach-Object { [string]$_ } | Where-Object { $_ })
@@ -5477,6 +5960,8 @@ if ($Remediate) {
                     $officialState = 'Unactivated'
                 } elseif ($matchedOutcomes.Count -gt 0) {
                     $officialState = [string]$matchedOutcomes[0].StateCode
+                } elseif (-not $applicationPresent -and [string]$originalCandidate[0].Kind -eq 'ThirdPartyCompleteUninstall') {
+                    $officialState = 'Removed'
                 }
             }
             $artifactCleanupCompleted = [bool]$state.ArtifactCleanupCompleted
@@ -5484,8 +5969,7 @@ if ($Remediate) {
                 $executionMatch = @($thirdPartyExecutionResults | Where-Object {
                     [string]::Equals([string]$_.ParentCandidateId, [string]$state.CandidateId, [StringComparison]::OrdinalIgnoreCase) -and [bool]$_.Changed
                 })
-                $artifactCleanupCompleted = [bool]($executionMatch.Count -gt 0 -or
-                    (-not $directRemaining -and $systemChangeCount -gt 0))
+                $artifactCleanupCompleted = [bool]($executionMatch.Count -gt 0)
             }
             $volumeRepairRequired = [bool]($component -eq 'Office' -and
                 (Test-OfficeVolumeOrMondoRepairRequired -LicenseEntries $officeLicenseEntries `
@@ -5493,7 +5977,9 @@ if ($Remediate) {
             [void](Resolve-RemediationPostCheckState -Record $state `
                 -DirectCrackEvidenceRemaining:$directRemaining -ApplicationPresent:$applicationPresent `
                 -OfficialLicenseState $officialState -ArtifactCleanupCompleted:$artifactCleanupCompleted `
-                -VolumeRepairRequired:$volumeRepairRequired)
+                -VolumeRepairRequired:$volumeRepairRequired `
+                -ExpectedApplicationAbsent:([bool]($originalCandidate.Count -gt 0 -and [string]$originalCandidate[0].Kind -eq 'ThirdPartyCompleteUninstall')) `
+                -AllowLicensedState:([bool]($officialState -eq 'Licensed')))
             if (-not [string]::IsNullOrWhiteSpace([string]$state.OutcomeMessageKey)) {
                 $actions.Add((Get-CleanupText ([string]$state.OutcomeMessageKey) @([string]$state.CandidateId, [string]$state.OfficialLicenseState)))
             }
@@ -5663,6 +6149,7 @@ if ($Remediate) {
         UnknownSelectedCleanupIdCount = [int]$unknownSelectedCleanupIds.Count
         BackupWouldBeCreated = [bool](@($plannedActions | Where-Object { [bool]$_.BackupPlanned }).Count -gt 0)
         CleanupItems = $cleanupItems
+        ScanSnapshot = $scanSnapshot
         SelectionRequired = [bool]($cleanupItems.Count -gt 0)
         SelectedCleanupItemCount = [int]$selectedCleanupIds.Count
         BackupDirectory = [string]$backupDirectory
@@ -5683,7 +6170,7 @@ if ($Remediate) {
 $reportVerification = $verification.PSObject.Copy()
 $reportVerification.ReadyForOfficialActivation = [bool]$finalReadyForOfficialActivation
 $reportVerification.Conclusion = [string]$finalCleanupConclusion
-Write-Report -Path $reportPath -Products $products -Findings $findings -Decision $decision -Actions $actions -History $history -Verification $reportVerification -ThirdPartyApplications $thirdPartyApplications -ThirdPartyEvidence $thirdPartyEvidence -ThirdPartyCandidates $thirdPartyCandidates -SoftwareDeepScanMetadata $softwareDeepScanMetadata
+Write-Report -Path $reportPath -Products $products -Findings $findings -Decision $decision -Actions $actions -History $history -Verification $reportVerification -ThirdPartyApplications $thirdPartyApplications -ThirdPartyEvidence $thirdPartyEvidence -ThirdPartyCandidates $thirdPartyCandidates -SoftwareDeepScanMetadata $softwareDeepScanMetadata -CleanupItems $cleanupItems -ScanSnapshot $scanSnapshot
 
 # Bộ tóm tắt máy đọc được và hash đi kèm giúp đối chiếu hậu kiểm mà không
 # thay đổi luồng xử lý v3.0. Không ghi product key đầy đủ vào JSON.
@@ -5776,6 +6263,7 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     ThirdPartyEvidence = @($thirdPartyEvidence)
     HistoryFindingCount = [int]$verification.HistoryFindingCount
     CleanupItems = @($cleanupItems)
+    ScanSnapshot = $scanSnapshot
     NextActions = @(Get-CleanupNextActions -Verification $verification -CleanupItems $cleanupItems -ProtectedLicense ([bool]$decisionData.ProtectedLicense) -BackupDirectory $backupDirectory -OfficialLicensePostCheck $officialLicensePostCheck -Scope $ScanScope)
     ApprovedKmsServerFile = Protect-CleanupReportText ([string]$approvedKmsConfig.Path)
     ApprovedKmsServerCount = [int]$approvedKmsConfig.Valid.Count

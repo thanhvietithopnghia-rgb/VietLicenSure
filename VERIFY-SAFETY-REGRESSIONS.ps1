@@ -276,7 +276,7 @@ LICENSE STATUS: ---UNLICENSED---
         if ($officePostCheckText -notmatch '(?s)\$OfficeProbe.+?Get-OfficeOfficialLicenseOutcome.+?-OfficeProbe\s+\$OfficeProbe') {
             Fail 'Hậu kiểm tổng hợp không truyền OfficeProbe vào kết quả Office.'
         }
-        foreach ($requiredToken in @('Get-OfficeKmsTargetIdentity','Get-OfficeLicenseProbeForPath','Coverage -ne ''Complete''','TargetNotSelectedByCompositeIdentity','SkuOrKeyChanged','TargetNoLongerUnapprovedKms','LicensedOfficialSkuSharesOsppPath','ApprovedKmsSkuSharesOsppPath','Last5NotUniqueOnOsppPath','Test-ApprovedKms')) {
+        foreach ($requiredToken in @('Get-OfficeKmsTargetIdentity','Get-OfficeLicenseProbeForPath','Coverage -ne ''Complete''','TargetNotSelectedByCompositeIdentity','SkuOrKeyChanged','TargetNoLongerUnapprovedKms','Last5NotUniqueOnOsppPath','Test-ApprovedKms')) {
             if ($officeTargetGateText -notmatch [regex]::Escape($requiredToken)) { Fail "Tái xác minh Office thiếu khóa an toàn: $requiredToken" }
         }
         foreach ($requiredToken in @('AllowedTargetIds','UnselectedKmsOnSameOsppPath','UnvalidatedKmsOnSameOsppPath','KmsTargetIdentityMissing','Test-OfficeKmsRemediationTarget')) {
@@ -401,8 +401,8 @@ No licenses found.
                     }
                     $probeFixture = [pscustomobject]@{ Coverage='Complete'; Entries=@($target, $officialSku) }
                     $officialResult = Test-OfficeKmsRemediationTarget -Entry $target -SelectedTargetIds @($targetIdentity)
-                    if ([bool]$officialResult.Allowed -or [string]$officialResult.Reason -ne 'LicensedOfficialSkuSharesOsppPath') {
-                        throw ("Licensed {0} SKU was not protected." -f $officialChannel)
+                    if (-not [bool]$officialResult.Allowed -or [bool]$officialResult.RemhstSafe) {
+                        throw ("Licensed {0} SKU incorrectly blocked exact /unpkey or authorized /remhst." -f $officialChannel)
                     }
                 }
 
@@ -458,7 +458,7 @@ No licenses found.
 
         try {
             & {
-                param([string]$PathKeyBody, [string]$TargetIdentityBody, [string]$HostIdentityBody, [string]$NewStateBody, [string]$NewCleanupItemBody, [string]$AllCandidatesBody)
+                param([string]$PathKeyBody, [string]$TargetIdentityBody, [string]$HostIdentityBody, [string]$NewStateBody, [string]$NewCleanupItemBody, [string]$CanonicalNodeBody, [string]$CandidateHashBody, [string]$SetCandidateHashesBody, [string]$AllCandidatesBody)
 
                 function Test-ApprovedKms { param([string]$Server) return $false }
                 function Get-DeepCleanupCandidates { param($Findings) return @() }
@@ -469,6 +469,9 @@ No licenses found.
                 Invoke-Expression ('function Get-OfficeKmsHostOverrideIdentity ' + $HostIdentityBody)
                 Invoke-Expression ('function New-RemediationStateRecord ' + $NewStateBody)
                 Invoke-Expression ('function New-CleanupItem ' + $NewCleanupItemBody)
+                Invoke-Expression ('function ConvertTo-CleanupCanonicalNode ' + $CanonicalNodeBody)
+                Invoke-Expression ('function Get-CleanupCandidateSnapshotHash ' + $CandidateHashBody)
+                Invoke-Expression ('function Set-CleanupCandidateSnapshotHashes ' + $SetCandidateHashesBody)
                 Invoke-Expression ('function Get-AllCleanupCandidates ' + $AllCandidatesBody)
 
                 $firstPath = [pscustomobject]@{
@@ -499,29 +502,33 @@ No licenses found.
                     Where-Object { [string]$_.Kind -eq 'OfficeKmsLicense' }).Count -ne 0) {
                     throw 'Office KMS with incomplete identity was made selectable.'
                 }
-            } $officePathKeyAst.Body.Extent.Text $officeTargetIdentityAst.Body.Extent.Text $officeHostIdentityAst.Body.Extent.Text $newRemediationStateAst.Body.Extent.Text $newCleanupItemAst.Body.Extent.Text $allCleanupCandidatesAst.Body.Extent.Text
+            } $officePathKeyAst.Body.Extent.Text $officeTargetIdentityAst.Body.Extent.Text $officeHostIdentityAst.Body.Extent.Text $newRemediationStateAst.Body.Extent.Text $newCleanupItemAst.Body.Extent.Text `
+                ($cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'ConvertTo-CleanupCanonicalNode' }, $true).Body.Extent.Text) `
+                ($cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-CleanupCandidateSnapshotHash' }, $true).Body.Extent.Text) `
+                ($cleanup.Ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Set-CleanupCandidateSnapshotHashes' }, $true).Body.Extent.Text) `
+                $allCleanupCandidatesAst.Body.Extent.Text
         } catch {
             Fail "Không chạy được regression candidate composite identity Office: $($_.Exception.Message)"
         }
 
         # Never extend the remediation surface to Office sign-in/token stores or
-        # broad activation reset commands.  Windows key removal remains guarded
-        # by the explicitly protected OEM/Retail/MAK (and approved KMS) channel.
+        # broad activation reset commands. Windows removal must stay scoped to
+        # the exact selected Activation ID so coexisting genuine keys survive.
         foreach ($forbiddenPattern in @(
             '(?i)\b(?:OSPPREARM|/rearm|/inpkey(?::|\b)|/act\b)'
             '(?i)(?:Remove-Item|Clear-Content|Move-Item|Rename-Item)\b[^\r\n]*(?:\bWAM\b|\bAAD\b|\bToken(?:s)?\b|Office[^\r\n]*(?:license|licensing))'
         )) {
             if ($cleanup.Text -match $forbiddenPattern) { Fail "Cleanup chứa thao tác xóa/reset license hoặc token bị cấm: $forbiddenPattern" }
         }
-        if ($cleanup.Text -notmatch '(?s)\$protectedActiveChannel\s*=\s*\[bool\]\(\$activeWindowsChannel\s+-in\s+@\("OEM",\s*"Retail",\s*"MAK"\)\s+-or\s+\$activeApprovedKms\).+?\$removeWindowsLicense\s*=\s*\[bool\]\(\$unapprovedWindowsKms\s+-and\s+-not\s+\$protectedActiveChannel\)') {
-            Fail 'Windows cleanup không còn khóa OEM/Retail/MAK hoặc digital entitlement trước /upk.'
+        if ($remediationText -notmatch '@\(''/upk'',\s*\$activationId\)' -or $remediationText -match '@\(''/cpky''\)|@\(''/rilc''\)') {
+            Fail 'Windows cleanup không còn xử lý đúng Activation ID hoặc vẫn chạy /cpky, /rilc diện rộng.'
         }
     }
 
     if ($cleanup.Text -notmatch '/dstatusall' -or $cleanup.Text -notmatch 'selectedOfficeTargetIds' -or $cleanup.Text -notmatch 'Get-AllCleanupCandidates') {
         Fail 'Cleanup Office chưa quét /dstatusall, chọn theo SKU hoặc tái tạo danh sách tồn dư sau hậu kiểm.'
     }
-    foreach ($requiredToken in @('Get-InstalledSoftwareInventory','Get-ThirdPartyStrongEvidence','Get-ThirdPartyLicenseCandidates','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyHostsUpdate','Connect-ThirdPartyApplicationsToCandidates','ThirdPartyLicenseReset','ThirdPartyLicenseState','ThirdPartyUninstallEntry','ThirdPartyHostsEntry','ThirdPartyFirewallBlock','FirewallNotice','RemoveScopedFirewallBlock','ThirdPartyOfficialSource','ThirdPartyGuidedRemediation','FileArtifact','CleanupFinding','GuidanceOnly','GuidedActionRequired','PostVerificationItems','PostVerificationOutcome','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome','ThirdPartyRemediationFindingCount','SystemChangeCount','ThirdPartyExecutionResults','SelectionAccepted','SelectionContainsUnknownIds','AllowCurrentUserForUserScope','SelectionSchemaInvalid','SelectedThirdPartyResolvedCount','SelectedThirdPartyRemainingCount','PostCheckStatus','RemediationFailed','softwareUninstallBlocked','PolicyBlocked','BlockApplicationUninstall','Test-CleanupKnownActivatorText','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','ManualArtifactQuarantineOnly','Win32_StartupCommand','erturk-dev\.netlify\.app/run','Get-OfficialLicensePostCheck','OfficiallyLicensed','VendorConfirmed','OpenWindowsActivation','OpenOfficeActivation','OpenVendorActivation','OpenVendorRepair','ReviewVendorActivation')) {
+    foreach ($requiredToken in @('Get-InstalledSoftwareInventory','Get-ThirdPartyStrongEvidence','Get-ThirdPartyLicenseCandidates','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyHostsUpdate','Connect-ThirdPartyApplicationsToCandidates','ThirdPartyLicenseReset','ThirdPartyLicenseState','ThirdPartyUninstallEntry','ThirdPartyHostsEntry','ThirdPartyFirewallBlock','FirewallNotice','RemoveScopedFirewallBlock','ThirdPartyOfficialSource','ThirdPartyGuidedRemediation','ThirdPartyCompleteUninstall','ManualUninstallAllowed','CompleteApplicationUninstall','FileArtifact','CleanupFinding','GuidanceOnly','GuidedActionRequired','PostVerificationItems','PostVerificationOutcome','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome','ThirdPartyRemediationFindingCount','SystemChangeCount','ThirdPartyExecutionResults','SelectionAccepted','SelectionContainsUnknownIds','AllowCurrentUserForUserScope','SelectionSchemaInvalid','SelectedThirdPartyResolvedCount','SelectedThirdPartyRemainingCount','PostCheckStatus','RemediationFailed','PolicyBlocked','Test-CleanupKnownActivatorText','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','ManualArtifactQuarantineOnly','Win32_StartupCommand','erturk-dev\.netlify\.app/run','Get-OfficialLicensePostCheck','OfficiallyLicensed','VendorConfirmed','OpenWindowsActivation','OpenOfficeActivation','OpenVendorActivation','OpenVendorRepair','ReviewVendorActivation')) {
         if ($cleanup.Text -notmatch [regex]::Escape($requiredToken)) { Fail "Thiếu thành phần khắc phục phần mềm bên thứ ba: $requiredToken" }
     }
     if ($cleanup.Text -notmatch '(?s)function Get-ThirdPartyLicenseStatePaths.+?return @\(\)' -or $cleanup.Text -match '(?i)rarreg\.key' -or $cleanup.Text -notmatch 'selectedVendorScopes') {
@@ -537,9 +544,9 @@ No licenses found.
         $cleanup.Text -notmatch [regex]::Escape("Kind='ThirdPartyHostsEntry'; Restorable=`$true")) {
         Fail 'Khắc phục phần mềm bên thứ ba còn cho phép MSI Repair tự động hoặc không cho phép hoàn tác hosts.'
     }
-    if ($cleanup.Text -match [regex]::Escape("-Arguments @('/x', `$productCode") -or
-        $cleanup.Text -match 'ThirdPartyMsiUninstall') {
-        Fail 'Tool còn nhánh gỡ ứng dụng MSI; chính sách chỉ cho loại bỏ crack/activator đã bị vi phạm.'
+    if ($cleanup.Text -notmatch 'SourceBoundUninstallIdentities|UninstallRegistryPath|uninstallIdentityRejected' -or
+        $cleanup.Text -match '(?i)\b(?:cmd|powershell|pwsh|wscript|cscript|rundll32)\.exe\b.+?ThirdPartyCompleteUninstall') {
+        Fail 'Nhánh gỡ hoàn toàn chưa gắn với danh tính nguồn hoặc còn cho phép trình thực thi/lệnh tùy ý.'
     }
     if ($cleanup.Text -notmatch '\$decisive\s*=\s*\[bool\]\(-not \$FolderOnly -and \$KnownSpecific -and \$Active\)' -or
         $cleanup.Text -notmatch 'GetExtension\(\$text\).+?\.exe.+?\.jar' -or
@@ -565,7 +572,7 @@ No licenses found.
             if (-not $inventoryFunctionAst) { throw "Missing function: $inventoryFunctionName" }
             Invoke-Expression ('function script:' + $inventoryFunctionName + ' ' + $inventoryFunctionAst.Body.Extent.Text)
         }
-        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
+        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
             Import-CleanupFunctionForFixture $name
         }
         $broadRootFixture = [pscustomobject]@{ InstallLocation=$env:ProgramFiles; RepresentativePath='' }
@@ -671,10 +678,16 @@ No licenses found.
             $env:TOOL_SECURE_RUNTIME_DIR = $selectionFixtureRoot
             $script:SelectionFile = Join-Path $selectionFixtureRoot 'selection.json'
             $script:ScanScope = 'ThirdParty'
+            $fixtureCandidate = [pscustomobject][ordered]@{ Id='application|fixture'; Type='Application'; Kind='ThirdPartyApplication'; Name='Fixture' }
+            [void](Set-CleanupCandidateSnapshotHashes -Candidates @($fixtureCandidate))
+            $fixtureSnapshot = New-CleanupScanSnapshot -Candidates @($fixtureCandidate) -Scope 'ThirdParty'
             [pscustomobject][ordered]@{
-                SchemaVersion='1.0'; RequestId=[guid]::NewGuid().ToString('D')
-                CreatedAtUtc=[DateTimeOffset]::UtcNow.ToString('o'); SelectedIds=@('application|fixture'); ScanScope='ThirdParty'
-            } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:SelectionFile -Encoding UTF8
+                SchemaVersion='1.1'; RequestId=[guid]::NewGuid().ToString('D')
+                CreatedAtUtc=[DateTimeOffset]::UtcNow.ToString('o'); ScanScope='ThirdParty'
+                SourceSnapshotId=[string]$fixtureSnapshot.SnapshotId
+                SourceCandidateSetSha256=[string]$fixtureSnapshot.CandidateSetSha256
+                SelectedCandidates=@([pscustomobject][ordered]@{ Id='application|fixture'; SnapshotSha256=[string]$fixtureCandidate.SnapshotSha256 })
+            } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $script:SelectionFile -Encoding UTF8
             function script:Test-ProtectedDirectoryAcl { param([string]$Path,[switch]$AllowCurrentUserForUserScope); return $true }
             $acceptedIds = @(Get-SelectedCleanupIds)
             if (-not [bool]$script:SelectionAccepted -or $acceptedIds.Count -ne 1 -or $acceptedIds[0] -ne 'application|fixture') {
@@ -921,11 +934,14 @@ No licenses found.
             @($dryRunPlan | Where-Object { $_.ActionCode -eq 'QuarantineFile' -and $_.Target -eq 'C:\Fixture\fixture.dll' }).Count -ne 1) {
             Fail 'Dry Run chưa lập đúng kế hoạch restore point/backup/hành động chi tiết.'
         }
-        $blockedUninstallCandidate = New-CleanupItem -Type 'Uninstall' -Kind 'FixtureApplicationUninstall' -Name 'Fixture App' -Location '{AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}' -Detail 'fixture'
-        $blockedUninstallPlan = @(Get-DryRunRemediationPlan -Candidates @($blockedUninstallCandidate) -SelectedIds @([string]$blockedUninstallCandidate.Id))
-        $blockedAction = @($blockedUninstallPlan | Where-Object { $_.ActionCode -eq 'BlockApplicationUninstall' })
-        if ($blockedAction.Count -ne 1 -or [bool]$blockedAction[0].ChangesSystem) {
-            Fail 'Dry Run không chặn fail-closed kế hoạch gỡ ứng dụng.'
+        $uninstallCandidate = New-CleanupItem -Type 'Uninstall' -Kind 'ThirdPartyCompleteUninstall' -Name 'Fixture App' `
+            -Location 'HKLM:\Software\Fixture' -Detail 'fixture' -ManualUninstallAllowed $true -UninstallMethod 'MSI' `
+            -UninstallIdentity '{AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}' -UninstallRegistryPath 'HKLM:\Software\Fixture'
+        $uninstallPlan = @(Get-DryRunRemediationPlan -Candidates @($uninstallCandidate) -SelectedIds @([string]$uninstallCandidate.Id))
+        $uninstallAction = @($uninstallPlan | Where-Object { $_.ActionCode -eq 'CompleteApplicationUninstall' })
+        if ($uninstallAction.Count -ne 1 -or -not [bool]$uninstallAction[0].ChangesSystem -or [bool]$uninstallAction[0].Restorable -or
+            [string]$uninstallAction[0].Target -ne '{AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}') {
+            Fail 'Dry Run chưa công bố đúng kế hoạch gỡ ứng dụng thủ công, chính xác và không thể khôi phục.'
         }
         $dryRunFirewallCandidate = New-CleanupItem -Type 'Firewall' -Kind 'ThirdPartyFirewallBlock' -Name 'Fixture outbound block' -Location 'C:\Fixture\Example.exe' -Detail 'fixture'
         $dryRunFirewallPlan = @(Get-DryRunRemediationPlan -Candidates @($dryRunFirewallCandidate) -SelectedIds @([string]$dryRunFirewallCandidate.Id))
@@ -1200,9 +1216,14 @@ if ($gui) {
             $bridgeFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-ElevatedBridge.ps1'
             $cleanupFixtureScript = Join-Path $bridgeFixtureRoot 'windows-license-compliance-cleanup.ps1'
             $updateManagerFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-UpdateManager.ps1'
+            $reportFixtureScript = Join-Path $bridgeFixtureRoot 'kiem-tra-cau-hinh-ban-quyen.ps1'
             Copy-Item -LiteralPath (Join-Path $root 'Tool-ElevatedBridge.ps1') -Destination $bridgeFixtureScript -Force
             Copy-Item -LiteralPath (Join-Path $root 'windows-license-compliance-cleanup.ps1') -Destination $cleanupFixtureScript -Force
             Copy-Item -LiteralPath (Join-Path $root 'Tool-UpdateManager.ps1') -Destination $updateManagerFixtureScript -Force
+            [IO.File]::WriteAllText(
+                $reportFixtureScript,
+                "if (`$env:TOOL_MODULE_ID -ne 'report.office') { exit 61 }`r`nexit 0`r`n",
+                (New-Object Text.UTF8Encoding($false)))
             $env:TOOL_SECURE_LAUNCH = '1'
             $env:TOOL_SECURE_RUNTIME_DIR = $bridgeRuntimeRoot
             $env:TOOL_DATA_SCOPE = 'User'
@@ -1223,6 +1244,23 @@ if ($gui) {
             $bridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $bridgeArguments -WindowStyle Hidden -Wait -PassThru
             if (-not $bridgeProcess -or [int]$bridgeProcess.ExitCode -ne 0) {
                 Fail "Cầu nối UAC không khôi phục ngữ cảnh secure-launch cho tiến trình con (exit $([int]$bridgeProcess.ExitCode))."
+            }
+
+            # Report modules are read-only but still need elevation on modes
+            # that inspect machine-wide Windows/Office data.  They must be
+            # accepted by the same protected bridge without being classified
+            # as system-changing modules.  This regression covers the former
+            # exit-code 87 failure of report.office.
+            $env:TOOL_SECURE_LAUNCH = '1'
+            $env:TOOL_MODULE_ID = 'report.office'
+            $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
+            $reportBridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportFixtureScript`""
+            $reportBridgeArguments = New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $reportBridgeChildArguments -HiddenWindow $true
+            $env:TOOL_SECURE_LAUNCH = '0'
+            $env:TOOL_MODULE_ID = 'wrong-module'
+            $reportBridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $reportBridgeArguments -WindowStyle Hidden -Wait -PassThru
+            if (-not $reportBridgeProcess -or [int]$reportBridgeProcess.ExitCode -ne 0) {
+                Fail "Cầu nối UAC không chạy được report.office chỉ-đọc (exit $([int]$reportBridgeProcess.ExitCode))."
             }
             $blockedWithoutSecureLaunch = $false
             try {

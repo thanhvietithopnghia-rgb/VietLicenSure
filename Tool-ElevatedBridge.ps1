@@ -105,6 +105,11 @@ try {
     }
 
     $moduleScripts = @{
+        'report.all' = 'kiem-tra-cau-hinh-ban-quyen.ps1'
+        'report.hardware' = 'kiem-tra-cau-hinh-ban-quyen.ps1'
+        'report.windows' = 'kiem-tra-cau-hinh-ban-quyen.ps1'
+        'report.office' = 'kiem-tra-cau-hinh-ban-quyen.ps1'
+        'report.software' = 'kiem-tra-cau-hinh-ban-quyen.ps1'
         'cleanup.scan' = 'windows-license-compliance-cleanup.ps1'
         'cleanup.deep' = 'windows-license-compliance-cleanup.ps1'
         'cleanup.repair' = 'windows-license-compliance-cleanup.ps1'
@@ -117,7 +122,7 @@ try {
         'restore.apply' = 'windows-license-restore.ps1'
     }
     if (-not $moduleScripts.ContainsKey($moduleId)) { throw 'ElevatedBridgeModuleIdInvalid' }
-    $systemChangeModules = @('cleanup.repair','application.update.apply','oem.apply','license.manager','restore.apply')
+    $systemChangeModules = @('cleanup.deep','cleanup.repair','application.update.apply','oem.apply','license.manager','backup.create','restore.apply')
     if ($systemChangeModules -contains $moduleId -and (
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -ne 'Official' -or
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne '4.9.0.0-production-20260822' -or

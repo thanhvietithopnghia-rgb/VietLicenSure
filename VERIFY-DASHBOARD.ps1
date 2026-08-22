@@ -483,9 +483,9 @@ if ([string]$viCatalog.'cleanup.remediation.readyStatus' -notmatch 'OfficiallyLi
 }
 Assert-SourcePattern $text 'progress\.slowTask' 'Dashboard thiếu cảnh báo tác vụ chạy lâu nhưng còn phản hồi.'
 if ([string]$viCatalog.'menu.5.title' -ne 'Phần mềm & dấu hiệu can thiệp' -or
-    [string]$viCatalog.'menu.5.description' -ne 'Quét bằng chứng và chọn thủ công từng/tất cả tệp nghi vấn đã xác thực' -or
+    [string]$viCatalog.'menu.5.description' -ne 'Chỉ quét, phân tích và xuất báo cáo phần mềm cùng dấu hiệu can thiệp' -or
     [string]$enCatalog.'menu.5.title' -ne 'Software & tampering indicators' -or
-    [string]$enCatalog.'menu.5.description' -ne 'Scan evidence and manually select one/all verified suspicious artifacts' -or
+    [string]$enCatalog.'menu.5.description' -ne 'Scan, analyze and export software and tampering evidence only' -or
     [string]$viCatalog.'report.title.software' -ne 'Báo cáo phần mềm và dấu hiệu can thiệp' -or
     [string]$enCatalog.'report.title.software' -ne 'Software and tampering indicator report') {
     Add-Failure 'Mục 5 chưa giữ đúng hợp đồng kiểm kê/báo cáo và luồng chọn thủ công artifact đã xác thực.'
@@ -752,7 +752,7 @@ foreach ($pattern in @(
     'Start-Report\s+"Windows"',
     'Start-Report\s+"Office"',
     'Start-ThirdPartyManualReview',
-    'Start-Cleanup\s+-ScanScope\s+"ThirdParty"',
+    'Start-Report\s+"Software"',
     'Show-CleanupMenu',
     'Start-OemInspect',
     'Open-LicenseManager',
