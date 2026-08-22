@@ -157,7 +157,10 @@ $integrityFiles = @(
 
 $provenanceSignatureName = 'OFFICIAL-PROVENANCE-v1.json.p7s'
 $provenanceSignaturePath = Join-Path $sourceDirectory $provenanceSignatureName
-if ($AllowUnsignedDevelopmentBuild -and -not (Test-Path -LiteralPath $provenanceSignaturePath -PathType Leaf)) {
+if ($AllowUnsignedDevelopmentBuild) {
+    # Development launchers deliberately omit the stable-build compile marker,
+    # so their embedded payload list must also omit the official provenance
+    # signature even when that production signature exists in the source tree.
     $payloadFiles = @($payloadFiles | Where-Object { $_ -ne $provenanceSignatureName })
     $integrityFiles = @($integrityFiles | Where-Object { $_ -ne $provenanceSignatureName })
 } elseif (-not (Test-Path -LiteralPath $provenanceSignaturePath -PathType Leaf)) {
@@ -235,6 +238,8 @@ function Write-SourcePackageHashManifest {
     $sourcePackageFiles = @(Get-ChildItem -LiteralPath $sourceDirectory -Recurse -File -Force | Where-Object {
         $_.FullName -ne $sourcePackageManifestPath -and
         -not $_.FullName.StartsWith($outputRootPrefix, [StringComparison]::OrdinalIgnoreCase) -and
+        (-not $AllowUnsignedDevelopmentBuild -or
+            [IO.Path]::GetFileName($_.FullName) -notin @('OFFICIAL-PROVENANCE-v1.json.p7s','update-manifest-v1.json.p7s')) -and
         # Keep all generated build/release verification directories out of the
         # source package.  They are local artifacts, may contain a complete
         # prior source archive, and must never change the fixed source-manifest
@@ -448,6 +453,7 @@ if (-not [bool]$provenanceMetadata.IsOfficial) {
         -SignaturePath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s') `
         -AllowUnsignedDevelopmentTest
 }
+$releaseProvenanceState = if ($AllowUnsignedDevelopmentBuild) { 'Unverified' } else { [string]$provenanceMetadata.State }
 $assistantMetadata = Get-ToolAssistantMetadata
 $softwareCatalogMetadata = Import-ToolSoftwareCatalogFile `
     -Path (Join-Path $sourceDirectory 'software-license-catalog-v1.0.json') `
@@ -662,8 +668,12 @@ $releaseSidecars = @(
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s'
 )
-if ($AllowUnsignedDevelopmentBuild -and -not (Test-Path -LiteralPath $provenanceSignaturePath -PathType Leaf)) {
+if ($AllowUnsignedDevelopmentBuild) {
     $releaseSidecars = @($releaseSidecars | Where-Object { $_ -ne $provenanceSignatureName })
+    $staleDevelopmentProvenanceSignature = Join-Path $OutputDirectory $provenanceSignatureName
+    if (Test-Path -LiteralPath $staleDevelopmentProvenanceSignature -PathType Leaf) {
+        Remove-Item -LiteralPath $staleDevelopmentProvenanceSignature -Force
+    }
 }
 foreach ($sidecar in $releaseSidecars) {
     Copy-Item -LiteralPath (Join-Path $sourceDirectory $sidecar) -Destination (Join-Path $OutputDirectory $sidecar) -Force
@@ -758,13 +768,13 @@ $releaseManifest = [ordered]@{
     ApplicationUpdateDeferral = 'After next completed task or 2 hours; next launch rechecks only when Online is allowed'
     ApplicationUpdateVerification = 'Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback'
     OfficialBuildProvenance = [ordered]@{
-        State = [string]$provenanceMetadata.State
+        State = $releaseProvenanceState
         BuildId = $releaseLabel
         ManifestFile = 'OFFICIAL-PROVENANCE-v1.json'
         SignatureFile = 'OFFICIAL-PROVENANCE-v1.json.p7s'
         VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build'
-        SourcePolicyId = 'ThanhViet.ToolKiemTra.ControlledSource.v4.9'
-        SourceDistribution = 'PrivateControlled'
+        SourcePolicyId = 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9'
+        SourceDistribution = 'CommunityControlledSource'
         RuntimeSystemChangePolicy = 'Official launcher and pinned provenance must both verify before system-change actions'
     }
     LocalizationSchemaVersion = [string]$localizationMetadata.SchemaVersion
@@ -957,7 +967,7 @@ $applicationUpdateManifest = [ordered]@{
             'Catalog online 1.5.0.0 mở rộng lên 92 nhóm sản phẩm, chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist và chống hạ phiên bản bằng watermark bền vững.',
             'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
             'Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.',
-            'Từ v4.9, mã nguồn phiên bản mới thuộc kho riêng có kiểm soát; Tool chính thức vẫn miễn phí cho cộng đồng và nhu cầu nghiên cứu thiện chí có thể xin phép tác giả bằng văn bản.',
+            'Từ v4.9, Tool miễn phí phát triển cùng cộng đồng với mã nguồn có kiểm soát; người muốn tham khảo, học tập, nghiên cứu hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả.',
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
@@ -965,7 +975,7 @@ $applicationUpdateManifest = [ordered]@{
             'Online catalog 1.5.0.0 expands coverage to 92 product families and accepts only signed declarative data with allowlisted fields/profiles and a persistent anti-rollback watermark.',
             'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
             'Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.',
-            'From v4.9 onward, new source is kept in a private controlled repository; the official Tool remains free for the community and good-faith research access may be requested in writing.',
+            'From v4.9 onward, the free Tool is community-developed with controlled source; anyone wishing to review, study, research, or contribute to the source must first obtain the author''s written approval.',
             'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
     }

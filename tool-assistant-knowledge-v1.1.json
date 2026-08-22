@@ -57,11 +57,11 @@
     },
     {
       "Id": "source-code-license",
-      "TitleVi": "Mã nguồn công khai và quyền sử dụng",
-      "TitleEn": "Public source and usage rights",
-      "Keywords": ["ma nguon cong khai o dau", "kho ma nguon cua tool", "github ma nguon", "source code repository", "repository cong khai co duoc sua khong", "can i modify the public repository", "tool co phai ma nguon mo", "public source code", "license notice ma nguon"],
-      "AnswerVi": "Từ v4.9, mã nguồn phiên bản mới thuộc kho riêng có kiểm soát và chỉ được xem khi tác giả chấp thuận bằng văn bản. Quyền xem không tự cấp quyền sao chép, sửa đổi, phân phối, đóng gói lại, thương mại hóa hoặc đổi thương hiệu. Các bản cũ đã công khai vẫn theo điều khoản đi kèm tại thời điểm phát hành.",
-      "AnswerEn": "From v4.9 onward, source for new versions is kept in a private controlled repository and may be viewed only with the author's written approval. Viewing does not grant rights to copy, modify, distribute, repackage, commercialize, or rebrand it. Earlier public releases remain governed by the terms distributed with them."
+      "TitleVi": "Phát triển cộng đồng và quyền sử dụng mã nguồn",
+      "TitleEn": "Community development and source rights",
+      "Keywords": ["ma nguon cong khai o dau", "kho ma nguon cua tool", "github ma nguon", "source code repository", "repository cong khai co duoc sua khong", "can i modify the public repository", "tool co phai ma nguon mo", "public source code", "license notice ma nguon", "muon hoc hoi ma nguon", "xin phep xem ma nguon", "tool co phat trien cong dong khong", "phat trien cung cong dong", "community developed tool", "request source access"],
+      "AnswerVi": "Tool miễn phí và phát triển cùng cộng đồng thông qua phản hồi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Từ v4.9, mã nguồn được quản lý theo cơ chế truy cập có kiểm soát, không phải mã nguồn mở. Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả. Quyền xem không tự cấp quyền sao chép, sửa đổi, phân phối, đóng gói lại, thương mại hóa, dùng làm dữ liệu huấn luyện hoặc đổi thương hiệu. Các bản cũ vẫn theo điều khoản đi kèm tại thời điểm phát hành.",
+      "AnswerEn": "The Tool is free and developed with community feedback, proposals, documentation, translations, testing, and technical contributions. From v4.9 onward, source is managed through controlled access and is not open source. Anyone wishing to review, study, research, security-test, or contribute to the source must first obtain the author's written approval. Viewing does not grant rights to copy, modify, distribute, repackage, commercialize, use as training data, or rebrand it. Earlier releases remain governed by the terms distributed with them."
     },
     {
       "Id": "status-terms",

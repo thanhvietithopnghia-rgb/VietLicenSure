@@ -188,10 +188,12 @@ if ($errors.Count -eq 0) {
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='tool mien phi hay tra phi'; Expected='cung cấp miễn phí' }
         @{ Question='có tốn tiền ko'; Expected='cung cấp miễn phí' }
-        @{ Question='ma nguon cong khaio dau'; Expected='kho riêng có kiểm soát' }
-        @{ Question='ma ngun cong khai o dau'; Expected='kho riêng có kiểm soát' }
+        @{ Question='ma nguon cong khaio dau'; Expected='truy cập có kiểm soát' }
+        @{ Question='ma ngun cong khai o dau'; Expected='truy cập có kiểm soát' }
         @{ Question='repo công khai có được sửa không'; Expected='không tự cấp quyền sao chép, sửa đổi, phân phối' }
-        @{ Question='code công khai có phải open source k'; Expected='mã nguồn phiên bản mới thuộc kho riêng' }
+        @{ Question='code công khai có phải open source k'; Expected='không phải mã nguồn mở' }
+        @{ Question='muốn học hỏi mã nguồn'; Expected='xin ý kiến và nhận chấp thuận bằng văn bản' }
+        @{ Question='tool có phát triển cộng đồng không'; Expected='phát triển cùng cộng đồng' }
         @{ Question='chưa xác định nghĩa là gì'; Expected='CHƯA XÁC ĐỊNH/Unknown' }
         @{ Question='chua xac minh la sao'; Expected='bằng chứng hiện tại chưa đủ xác nhận' }
         @{ Question='chua xac mnih la sao'; Expected='bằng chứng hiện tại chưa đủ xác nhận' }
@@ -241,7 +243,7 @@ if ($errors.Count -eq 0) {
         $releaseDateVi -notmatch 'v4\.9\.0\.0.*21/08/2026' -or
         $releaseDateEn -notmatch 'v4\.9\.0\.0.*21 August 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
-        $sourceEn -notmatch 'private controlled repository' -or
+        $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's written approval" -or
         $statusTermsEn -notmatch 'UNDETERMINED/Unknown' -or $statusTermsEn -notmatch 'UNVERIFIED' -or
         $statusTermsEn -notmatch 'SUSPICIOUS' -or $statusTermsEn -notmatch 'CRACKCONFIRMED' -or
@@ -309,8 +311,8 @@ if ($errors.Count -eq 0) {
     if ($oemFollowUp -notmatch 'Chức năng 7.*OEM' -or $oemFollowUp -match 'không phải chức năng số 7') {
         Add-AssistantVerificationError 'Context follow-up cross-routed feature 7 away from OEM recovery.'
     }
-    if ($sourceFollowUp -notmatch 'kho riêng có kiểm soát' -or
-        $sourceFollowUpEn -notmatch 'private controlled repository') {
+    if ($sourceFollowUp -notmatch 'truy cập có kiểm soát' -or
+        $sourceFollowUpEn -notmatch 'controlled access') {
         Add-AssistantVerificationError 'Short where/o dau follow-up did not retain the source-access topic.'
     }
 

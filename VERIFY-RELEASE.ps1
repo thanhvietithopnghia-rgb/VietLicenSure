@@ -643,7 +643,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '4.9.0.0-production-20260821' -or
             [string]$releaseManifest.OfficialBuildProvenance.ManifestFile -ne 'OFFICIAL-PROVENANCE-v1.json' -or
             [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
-            [string]$releaseManifest.OfficialBuildProvenance.SourceDistribution -ne 'PrivateControlled' -or
+            [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9' -or
+            [string]$releaseManifest.OfficialBuildProvenance.SourceDistribution -ne 'CommunityControlledSource' -or
             [string]$releaseManifest.OfficialBuildProvenance.RuntimeSystemChangePolicy -notmatch 'Official launcher and pinned provenance') {
             throw 'Metadata provenance v4.9 không đúng trạng thái hoặc chính sách fail-closed.'
         }
