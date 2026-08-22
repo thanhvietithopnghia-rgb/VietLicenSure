@@ -539,7 +539,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
-    'LICENSE-NOTICE.txt','SOURCE-POLICY-v4.9.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json',
+    'LICENSE-NOTICE.txt','SOURCE-POLICY-v4.9.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','Tool-Kiem-Tra-icon.svg','Tool-Kiem-Tra.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
@@ -553,7 +553,7 @@ $payloadFiles = @(
     'windows-license-forensics.ps1','windows-oem-license-assistant.ps1','windows-office-license-manager.ps1',
     'windows-license-assurance.ps1','builtin-windows-office-trust.plugin.json'
 )
-if (-not $AllowDevelopmentManifest) { $payloadFiles += 'OFFICIAL-PROVENANCE-v1.json.p7s' }
+if ($AllowDevelopmentManifest) { $payloadFiles = @($payloadFiles | Where-Object { $_ -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' }) }
 $payloadListArgument = $payloadFiles -join '|'
 $targetFileName = 'Tool-Kiem-Tra-v4.9.exe'
 $exePath = Join-Path $distributionDirectoryFull $targetFileName

@@ -1,6 +1,6 @@
 [CmdletBinding(DefaultParameterSetName = 'Store')]
 param(
-    [string]$ManifestPath = (Join-Path $PSScriptRoot 'update-manifest-v1.json'),
+    [string]$ManifestPath = '',
     [Parameter(Mandatory = $true, ParameterSetName = 'Store')][string]$CertificateThumbprint,
     [Parameter(ParameterSetName = 'Store')][ValidateSet('CurrentUser','LocalMachine')][string]$StoreLocation = 'CurrentUser',
     [Parameter(Mandatory = $true, ParameterSetName = 'Pfx')][string]$PfxPath,
@@ -10,6 +10,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
+if ([string]::IsNullOrWhiteSpace($ManifestPath)) { $ManifestPath = Join-Path $PSScriptRoot 'update-manifest-v1.json' }
 $expectedThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
 $expectedCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 $allowedFields = @(

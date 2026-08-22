@@ -1,6 +1,6 @@
 [CmdletBinding(DefaultParameterSetName = 'Store')]
 param(
-    [string]$ManifestPath = (Join-Path $PSScriptRoot 'OFFICIAL-PROVENANCE-v1.json'),
+    [string]$ManifestPath = '',
     [Parameter(Mandatory = $true, ParameterSetName = 'Store')][string]$CertificateThumbprint,
     [Parameter(ParameterSetName = 'Store')][ValidateSet('CurrentUser','LocalMachine')][string]$StoreLocation = 'CurrentUser',
     [Parameter(Mandatory = $true, ParameterSetName = 'Pfx')][string]$PfxPath,
@@ -10,6 +10,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
+if ([string]::IsNullOrWhiteSpace($ManifestPath)) { $ManifestPath = Join-Path $PSScriptRoot 'OFFICIAL-PROVENANCE-v1.json' }
 
 $helperPath = Join-Path $PSScriptRoot 'Tool-Provenance.ps1'
 if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) { throw 'Tool-Provenance.ps1 is missing.' }
