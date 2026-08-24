@@ -1364,7 +1364,7 @@ if ($gui) {
     if ($gui.Text -notmatch 'Start-CleanupDeep\s+-CleanupItems.+-AutomaticSafeMode' -or $gui.Text -notmatch 'Confirm-AutomaticSafeCleanup') {
         Fail 'Luồng tự động chưa bắt buộc xem trước/xác nhận bằng bộ lọc an toàn.'
     }
-    foreach ($requiredToken in @('Show-LicenseScopeChooser','Show-CleanupScopeChecklist','cleanup.scope.scanWindows','cleanup.scope.scanOffice','cleanup.scope.scanThirdParty','Show-CleanupMenu -FixedScope "Windows"','Show-CleanupMenu -FixedScope "Office"','Show-CleanupMenu -FixedScope "ThirdParty"','Start-CleanupBackup -Scope $selectedScope','Start-CleanupRestore -Scope $selectedScope','cleanup.report.readyOnDemand','progress.slowTask')) {
+    foreach ($requiredToken in @('Show-LicenseScopeChooser','Show-CleanupScopeChecklist','cleanup.scope.scanWindows','cleanup.scope.scanOffice','cleanup.scope.scanThirdParty','Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows"','Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office"','Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty"','Start-CleanupBackup -Scope $selectedScope','Start-CleanupRestore -Scope $selectedScope','cleanup.report.readyOnDemand','progress.slowTask')) {
         if ($gui.Text -notmatch [regex]::Escape($requiredToken)) { Fail "GUI thiếu luồng phạm vi hoặc bảo vệ chống treo: $requiredToken" }
     }
     foreach ($requiredToken in @('Show-ThirdPartyAssessmentResults','Get-GuiThirdPartyCleanupFindings','Get-GuiThirdPartyStandaloneCleanupRows','ThirdPartyRemediationFindingCount','software.online.button','Start-SoftwareCatalogOnlineUpdate','status.chooseTask')) {
