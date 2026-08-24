@@ -28,7 +28,7 @@ try {
     $nativeScPath = Get-ToolNativeSystemPath "sc.exe"
 } catch { Write-Host $_.Exception.Message; exit 12 }
 $ErrorActionPreference = "Continue"
-$releaseVersion = "4.9.0.0"
+$releaseVersion = "5.0.0.0"
 if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra" }
 $strictPattern = "(?i)(kmspico|kmsauto(?:s|[\s._-]*(?:net|lite|portable|plus|\+\+))?|auto[\s._-]*kms|autokms|kms[\s._-]*(?:38|vl(?:[\s._-]*all)?)|kms-r|aact(?:[\s._-]*(?:network|portable))?|sppextcomobj(?:patcher|hook)|spp[\s._-]*(?:hook|patcher)|microsoft[\s_-]+toolkit|hwidgen|\bmassgrave\b|mas[\s._-]*aio|tsforge|ohook)"
 $includeWindows = [bool]($Scope -in @("All", "Windows"))
@@ -309,7 +309,7 @@ $protectedKey = [Security.Cryptography.ProtectedData]::Protect($hmacKey, $null, 
 function Save-Manifest {
     $manifest = [ordered]@{
         SchemaVersion="2.0"
-        ToolVersion="4.9"
+        ToolVersion="5.0"
         BackupMode="PreCleanup"
         BackupScope=$Scope
         ComputerName=$env:COMPUTERNAME

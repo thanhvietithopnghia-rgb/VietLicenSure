@@ -55,7 +55,7 @@ if (Get-Command Get-ToolSafetyPolicyMetadata -ErrorAction SilentlyContinue) {
     }
 
     $metadata = Get-ToolSafetyPolicyMetadata
-if ([string]$metadata.SchemaVersion -ne '1.0' -or [string]$metadata.ToolVersion -ne '4.9') { Fail 'Metadata safety policy sai phiên bản.' }
+if ([string]$metadata.SchemaVersion -ne '1.0' -or [string]$metadata.ToolVersion -ne '5.0') { Fail 'Metadata safety policy sai phiên bản.' }
     if ([bool]$metadata.StartupTypeChangesAllowedByQuickRepair) { Fail 'Quick repair không được phép đổi StartupType.' }
     $services = @(Get-ToolScanSourceServicePolicy)
     if ($services.Count -ne 3 -or @($services | Where-Object { $_.AllowStartupTypeChange }).Count -ne 0) { Fail 'Service policy không khóa toàn bộ thay đổi StartupType.' }
@@ -1230,7 +1230,7 @@ if ($gui) {
             $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
             $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
-            $env:TOOL_OFFICIAL_BUILD_ID = '4.9.0.0-production-20260822'
+            $env:TOOL_OFFICIAL_BUILD_ID = '5.0.0.0-production-20260824'
             $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')

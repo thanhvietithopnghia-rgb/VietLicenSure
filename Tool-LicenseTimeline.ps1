@@ -1,5 +1,5 @@
 ﻿$script:ToolTimelineSchemaVersion = "1.0"
-$script:ToolTimelineToolVersion = "4.9"
+$script:ToolTimelineToolVersion = "5.0"
 $script:ToolTimelineCompatibilityBindingPrefix = "Tool-Kiem-Tra-v4.4"
 $script:ToolTimelineCompatibilityEntropy = "ThanhViet.ToolKiemTra.v4.4.Timeline"
 $script:ToolTimelineCompatibilityMutex = "ThanhViet.ToolKiemTra.v4.4.Timeline"
@@ -120,7 +120,7 @@ function Test-ToolTimelinePath {
 
 function Initialize-ToolLicenseTimeline {
     [CmdletBinding()]
-    param([string]$ToolVersion = "4.9")
+    param([string]$ToolVersion = "5.0")
 
     $state = [pscustomobject][ordered]@{
         Enabled = $false

@@ -70,7 +70,7 @@ try {
 } catch { Write-Host $_.Exception.Message; exit 12 }
 
 $ErrorActionPreference = "Continue"
-$releaseVersion = "4.9.0.0"
+$releaseVersion = "5.0.0.0"
 if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra" }
 if ([string]::IsNullOrWhiteSpace($ApprovedKmsServerFile)) { $ApprovedKmsServerFile = Join-Path $PSScriptRoot "approved-kms-servers.txt" }
 $script:StrictActivatorPattern = "(?i)(\bkmspico\b|\bkmsauto(?:s|[\s._-]*(?:net|lite|portable|plus|\+\+))?\b|\bauto[\s._-]*kms\b|\bautokms\b|\bkms[\s._-]*38\b|\bkms[\s._-]*vl(?:[\s._-]*all)?\b|\bkms-r\b|\baact(?:[\s._-]*(?:network|portable))?\b|\bsppextcomobj(?:patcher|hook)\b|\bspp[\s._-]*(?:hook|patcher)\b|\bmicrosoft[\s_-]+toolkit\b|\bhwidgen\b|\bmassgrave\b|\bmas[\s._-]*(?:aio|all[\s._-]*in[\s._-]*one|activat(?:ion|or)|hwid|kms|ohook|tsforge)\b|\bpmas(?:[\s._-]*(?:aio|all[\s._-]*in[\s._-]*one|activat(?:ion|or)|hwid|kms|ohook|tsforge))?\b|\bmicrosoft[\s._-]*activation[\s._-]*scripts?\b|\bactivation[\s._-]*program[\s._-]*(?:v(?:ersion)?[\s._-]*)?1(?:\.|\s+|[_-])17\b|\btsforge\b|\bohook\b)"
@@ -3915,7 +3915,7 @@ function Invoke-ScanSourceRepair {
         catch { $serviceStateAfter.Add([pscustomobject]@{ Name=[string]$servicePolicy.Name; DisplayName=[string]$servicePolicy.DisplayName; Status=(Get-CleanupText "common.unknown"); StartMode=(Get-CleanupText "common.unknown"); Error=$_.Exception.Message }) }
     }
 
-    return (New-ToolReportEnvelope -ReportKind "ScanSourceRepair" -ToolVersion "4.9" -Data ([ordered]@{
+    return (New-ToolReportEnvelope -ReportKind "ScanSourceRepair" -ToolVersion "5.0" -Data ([ordered]@{
         RepairAttempted = $true
         RecheckPassed = $recheckPassed
         StartupTypeChanged = $false
@@ -4722,7 +4722,7 @@ function Invoke-DeepCleanupV35 {
     function Save-RestoreManifest {
         $manifest = [ordered]@{
             SchemaVersion = "2.0"
-        ToolVersion = "4.9"
+        ToolVersion = "5.0"
             BackupMode = "DeepCleanup"
             RemediationScope = $ScanScope
             ComputerName = $env:COMPUTERNAME
@@ -5621,7 +5621,7 @@ $initialPostVerificationSuggestedIds = @($initialPostVerificationItems | Where-O
 } | ForEach-Object { [string]$_.CandidateId } | Select-Object -Unique)
 $initialPostVerificationOutcome = Get-CleanupPostVerificationOutcome -PostVerificationItems $initialPostVerificationItems `
     -ScopeReady:$scopeReadyForOriginalState -OfficiallyLicensed:([bool]$officialLicensePostCheck.OfficiallyLicensed)
-$decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.9" -Data ([ordered]@{
+$decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "5.0" -Data ([ordered]@{
     ScanScope = $ScanScope
     CrackDetected = $crackDetected
     ProtectedLicense = [bool]$protectedLicense.Protected
@@ -6060,7 +6060,7 @@ if ($Remediate) {
     $finalReadyForOfficialActivation = [bool]($verification.ReadyForOfficialActivation -and $postExecutionAccepted -and $remediationPostCheckPassed)
     $finalScopeReadyForOriginalState = [bool]($scopeReadyForOriginalState -and $postExecutionAccepted -and $remediationPostCheckPassed)
     if (-not $DryRun) { $actions.Add((Get-CleanupText "cleanupReport.action.postCheck" @($verification.Conclusion))) }
-    $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.9" -Data ([ordered]@{
+    $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "5.0" -Data ([ordered]@{
         ScanScope = $ScanScope
         CrackDetected = $postCrackDetected
         ProtectedLicense = [bool]$postProtectedLicense.Protected
@@ -6176,7 +6176,7 @@ Write-Report -Path $reportPath -Products $products -Findings $findings -Decision
 # thay đổi luồng xử lý v3.0. Không ghi product key đầy đủ vào JSON.
 $jsonReportPath = [IO.Path]::ChangeExtension($reportPath, ".json")
 $hashReportPath = [IO.Path]::ChangeExtension($reportPath, ".sha256")
-$cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "4.9" -Data ([ordered]@{
+$cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "5.0" -Data ([ordered]@{
     ScanScope = $ScanScope
     ComputerName = $reportComputer
     CreatedAt = (Get-Date).ToString("o")
@@ -6273,7 +6273,7 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     ScopeNote = Protect-CleanupReportText ([string]$verification.ScopeNote)
     Actions = @($actions | ForEach-Object { Protect-CleanupReportText $_ })
 })
-$cleanupSummaryValidation = Test-ToolReportEnvelope -Report $cleanupSummary -ExpectedReportKind "CleanupCompliance" -ExpectedToolVersion "4.9"
+$cleanupSummaryValidation = Test-ToolReportEnvelope -Report $cleanupSummary -ExpectedReportKind "CleanupCompliance" -ExpectedToolVersion "5.0"
 if (-not $cleanupSummaryValidation.Valid) { throw (Get-CleanupText "cleanupReport.output.schemaInvalid" @($cleanupSummaryValidation.Errors -join '; ')) }
 $cleanupJson = $cleanupSummary | ConvertTo-Json -Depth 8
 Protect-CleanupReportText $cleanupJson | Set-Content -LiteralPath $jsonReportPath -Encoding UTF8

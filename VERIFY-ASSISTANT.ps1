@@ -39,7 +39,7 @@ if ($errors.Count -eq 0) {
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
     $compatibleFutureKnowledge.KnowledgeVersion = '1.4.2'
     $compatibleFutureKnowledge.UpdatedAtUtc = '2026-08-22T07:01:00Z'
-    $compatibleFutureKnowledge.ReleasedWithToolVersion = '4.9.0.0'
+    $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.0'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
         Add-AssistantVerificationError 'A newer signed-compatible knowledge version cannot evolve independently of the EXE.'
     }
@@ -181,8 +181,8 @@ if ($errors.Count -eq 0) {
         @{ Question='mỗi lần quét có tạo thư mục riêng k'; Expected='không tạo thư mục con' }
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
-        @{ Question='phiên bản hiện tại của tool'; Expected='v4.9.0.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='22/08/2026' }
+        @{ Question='phiên bản hiện tại của tool'; Expected='v5.0.0.0' }
+        @{ Question='ngày build hiện tại của tool'; Expected='24/08/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -240,8 +240,8 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0 on 17 July 2026' -or
-        $releaseDateVi -notmatch 'v4\.9\.0\.0.*22/08/2026' -or
-        $releaseDateEn -notmatch 'v4\.9\.0\.0.*22 August 2026' -or
+        $releaseDateVi -notmatch 'v5\.0\.0\.0.*24/08/2026' -or
+        $releaseDateEn -notmatch 'v5\.0\.0\.0.*24 August 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's written approval" -or

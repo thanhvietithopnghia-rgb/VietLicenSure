@@ -6,35 +6,93 @@ param(
     [ValidateSet('CurrentUser','LocalMachine')][string]$SigningCertificateStore = 'CurrentUser',
     [string]$SigningPfxPath = '',
     [Security.SecureString]$SigningPfxPassword,
+    [string]$UpdateManifestCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA',
+    [ValidateSet('CurrentUser','LocalMachine')][string]$UpdateManifestCertificateStore = 'CurrentUser',
     [string]$TimestampServer = 'http://timestamp.digicert.com',
     [switch]$RequireAuthenticode,
+    [switch]$AllowManagedSignedBuild,
     [switch]$AllowUnsignedDevelopmentBuild
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
-$productVersion = '4.9'
-$releaseVersion = '4.9.0.0'
-$releaseBuildDate = '2026.08.22'
-$releaseLabel = "$releaseVersion-production-20260822"
+$productVersion = '5.0'
+$releaseVersion = '5.0.0.0'
+$releaseBuildDate = '2026.08.24'
+$officialBuildId = "$releaseVersion-production-20260824"
+$managedBuildId = "$releaseVersion-managed-signed-20260824"
+$requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
+$releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
+    "$releaseVersion-development-unsigned"
+} elseif ($AllowManagedSignedBuild) {
+    $managedBuildId
+} else {
+    $officialBuildId
+}
 # Keep a hard payload-size budget for in-place updates.  The added safety UI,
 # localized evidence explanations, and post-verification data are intentional;
 # 911,024 bytes keeps a narrow cap while leaving one KiB of signing/timestamp headroom.
 $maximumInPlaceExecutableBytes = 911024
 $sourceDirectory = $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = Join-Path $sourceDirectory 'dist' }
+$OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 $sourceName = "Tool-Kiem-Tra-v$productVersion-OneFile.cs"
 $applicationManifestName = "Tool-Kiem-Tra-v$productVersion-OneFile.manifest"
 $embeddedVerifierName = 'VERIFY-EMBEDDED-PAYLOAD.ps1'
 $peHardeningName = 'PE-HARDENING.ps1'
 
-if ($RequireAuthenticode -and $AllowUnsignedDevelopmentBuild) {
-    throw 'Không được đồng thời bật RequireAuthenticode và AllowUnsignedDevelopmentBuild.'
+function Assert-BuildOutputDirectoryReady {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    $existingAncestor = $fullPath
+    if (Test-Path -LiteralPath $fullPath) {
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Container)) {
+            throw 'OutputDirectory exists but is not a directory.'
+        }
+        if (@(Get-ChildItem -LiteralPath $fullPath -Force -ErrorAction Stop).Count -ne 0) {
+            throw 'OutputDirectory must be new or empty; refusing to mix a release with stale or unmanifested files.'
+        }
+    } else {
+        while (-not (Test-Path -LiteralPath $existingAncestor)) {
+            $parent = Split-Path -Parent $existingAncestor
+            if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $existingAncestor) { break }
+            $existingAncestor = $parent
+        }
+    }
+    if (-not (Test-Path -LiteralPath $existingAncestor)) {
+        throw 'OutputDirectory has no resolvable existing ancestor.'
+    }
+    $cursor = Get-Item -LiteralPath $existingAncestor -Force -ErrorAction Stop
+    while ($null -ne $cursor) {
+        if (($cursor.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "OutputDirectory cannot traverse a reparse point: $($cursor.FullName)"
+        }
+        $cursor = $cursor.Parent
+    }
 }
-if (-not $RequireAuthenticode -and -not $AllowUnsignedDevelopmentBuild) {
-    throw 'Build stable bắt buộc Authenticode. Chỉ dùng -AllowUnsignedDevelopmentBuild cho artefact phát triển không phát hành.'
+
+if (([int][bool]$RequireAuthenticode + [int][bool]$AllowManagedSignedBuild + [int][bool]$AllowUnsignedDevelopmentBuild) -ne 1) {
+    throw 'Chọn đúng một chế độ build: RequireAuthenticode (public Stable), AllowManagedSignedBuild hoặc AllowUnsignedDevelopmentBuild.'
 }
+if ($requiresSignedArtifact -and $SkipVerification) {
+    throw 'Build có chữ ký không cho phép SkipVerification; mọi verifier, Authenticode/timestamp và provenance phải chạy.'
+}
+if ($requiresSignedArtifact -and -not [string]::IsNullOrWhiteSpace($SigningPfxPath)) {
+    throw 'Build có chữ ký không nhận PFX dạng tệp. Hãy dùng khóa trong certificate store/HSM bằng SigningCertificateThumbprint.'
+}
+if ($requiresSignedArtifact) {
+    $normalizedStableSignerThumbprint = ($SigningCertificateThumbprint -replace '\s', '').ToUpperInvariant()
+    if ($normalizedStableSignerThumbprint -notmatch '^[A-F0-9]{40}$') {
+        throw 'Build có chữ ký cần thumbprint SHA-1 40 ký tự của chứng thư code-signing trong certificate store/HSM.'
+    }
+    $normalizedUpdateManifestSignerThumbprint = ($UpdateManifestCertificateThumbprint -replace '\s', '').ToUpperInvariant()
+    if ($normalizedUpdateManifestSignerThumbprint -notmatch '^[A-F0-9]{40}$') {
+        throw 'Build stable cần thumbprint SHA-1 40 ký tự riêng cho chứng thư ký detached CMS của update manifest.'
+    }
+}
+Assert-BuildOutputDirectoryReady -Path $OutputDirectory
 
 if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) {
     throw 'BUILD.ps1 phải chạy bằng Windows PowerShell 64-bit để build AnyCPU và kiểm tra trên cả CLR x64/x86.'
@@ -85,6 +143,7 @@ $payloadFiles = @(
     'Tool-LicenseTimeline.ps1',
     'Tool-SafetyPolicy.ps1',
     'Tool-Enterprise.ps1',
+    'Tool-EnterpriseCli.ps1',
     'Tool-EnterpriseHost.ps1',
     'Tool-EnterpriseAgent.ps1',
     'enterprise-license-manager.ps1',
@@ -141,6 +200,7 @@ $integrityFiles = @(
     'Tool-LicenseTimeline.ps1',
     'Tool-SafetyPolicy.ps1',
     'Tool-Enterprise.ps1',
+    'Tool-EnterpriseCli.ps1',
     'Tool-EnterpriseHost.ps1',
     'Tool-EnterpriseAgent.ps1',
     'enterprise-license-manager.ps1',
@@ -170,12 +230,16 @@ if ($AllowUnsignedDevelopmentBuild) {
 $sourceFiles = @(
     $payloadFiles
     '.gitattributes'
+    '.gitignore'
     '00-Tool-Kiem-Tra.ico'
+    'AUDIT-SCOPE-v1.md'
     'BUILD.ps1'
+    'CODE-SIGNING-POLICY-v1.md'
     'DANH-GIA-VA-NANG-CAP-v4.8.md'
     'LICENSE-NOTICE.txt'
     'SOURCE-POLICY-v4.9.md'
     'RELEASE-NOTES-v4.9.md'
+    'RELEASE-NOTES-v5.0.md'
     'README.md'
     'README-MA-NGUON.md'
     'MODULE-CONTRACT-v1.0.md'
@@ -187,7 +251,14 @@ $sourceFiles = @(
     'COMPATIBILITY-MATRIX-v4.8.md'
     'OFFLINE-AND-REPORTING-v4.8.md'
     'LOCALIZATION-v1.0.md'
+    'Manage-ToolEnterpriseDeployment.ps1'
+    'New-ClientVmTestSummary.ps1'
+    'PLUGIN-PUBLISHER-TRUST-v1.md'
+    'REPORT-VIEWER-POLICY-v1.md'
     'SAFETY-POLICY-v1.0.md'
+    'SECURITY.md'
+    'SECURITY-REVIEW-PROCESS-v1.md'
+    'SECURITY-TEST-RESULTS.md'
     $sourceName
     $applicationManifestName
     $embeddedVerifierName
@@ -207,6 +278,10 @@ $sourceFiles = @(
     'VERIFY-APPLICATION-UPDATE.ps1'
     'VERIFY-ASSISTANT.ps1'
     'VERIFY-CATALOG-V4.9.ps1'
+    'VERIFY-CATALOG-PLUGIN-TRUST-V5.ps1'
+    'VERIFY-CODE-SIGNING-READINESS.ps1'
+    'VERIFY-ENTERPRISE-GOVERNANCE.ps1'
+    'VERIFY-NO-SIGNING-SECRETS.ps1'
     'VERIFY-REMEDIATION-V4.9.ps1'
     'VERIFY-SOFTWARE-DETECTION-V4.9.ps1'
     'VERIFY-PROVENANCE.ps1'
@@ -220,6 +295,11 @@ $sourceFiles = @(
     $peHardeningName
     'VERIFY-RELEASE.ps1'
 ) | Select-Object -Unique
+
+# SOURCE-SHA256SUMS.txt deliberately stays a flat-file manifest for backward
+# compatibility with VERIFY-RELEASE.ps1. The nested GitHub workflow is still a
+# required build input below and is covered by the recursive
+# SOURCE-PACKAGE-SHA256SUMS.txt manifest.
 
 function Get-Sha256Hex {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -373,12 +453,17 @@ function Get-VerificationPowerShell([string]$Architecture) {
 }
 
 $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }) + @(
+    '.gitignore',
+    '.github\workflows\client-vm-matrix.yml',
     '00-Tool-Kiem-Tra.ico',
+    'AUDIT-SCOPE-v1.md',
     'BUILD.ps1',
+    'CODE-SIGNING-POLICY-v1.md',
     'DANH-GIA-VA-NANG-CAP-v4.8.md',
     'LICENSE-NOTICE.txt',
     'SOURCE-POLICY-v4.9.md',
     'RELEASE-NOTES-v4.9.md',
+    'RELEASE-NOTES-v5.0.md',
     'README.md',
     'README-MA-NGUON.md',
     'MODULE-CONTRACT-v1.0.md',
@@ -390,7 +475,14 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md',
     'LOCALIZATION-v1.0.md',
+    'Manage-ToolEnterpriseDeployment.ps1',
+    'New-ClientVmTestSummary.ps1',
+    'PLUGIN-PUBLISHER-TRUST-v1.md',
+    'REPORT-VIEWER-POLICY-v1.md',
     'SAFETY-POLICY-v1.0.md',
+    'SECURITY.md',
+    'SECURITY-REVIEW-PROCESS-v1.md',
+    'SECURITY-TEST-RESULTS.md',
     $sourceName,
     $applicationManifestName,
     $embeddedVerifierName,
@@ -409,6 +501,10 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-APPLICATION-UPDATE.ps1',
     'VERIFY-ASSISTANT.ps1',
     'VERIFY-CATALOG-V4.9.ps1',
+    'VERIFY-CATALOG-PLUGIN-TRUST-V5.ps1',
+    'VERIFY-CODE-SIGNING-READINESS.ps1',
+    'VERIFY-ENTERPRISE-GOVERNANCE.ps1',
+    'VERIFY-NO-SIGNING-SECRETS.ps1',
     'VERIFY-REMEDIATION-V4.9.ps1',
     'VERIFY-SOFTWARE-DETECTION-V4.9.ps1',
     'VERIFY-PROVENANCE.ps1',
@@ -427,6 +523,9 @@ foreach ($name in ($requiredFiles | Select-Object -Unique)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Thiếu tệp nguồn bắt buộc: $name" }
 }
 
+& (Join-Path $sourceDirectory 'VERIFY-NO-SIGNING-SECRETS.ps1') -SourceDirectory $sourceDirectory
+if ($LASTEXITCODE -ne 0) { throw "Phát hiện hoặc không thể loại trừ bí mật code-signing trong cây nguồn, mã thoát: $LASTEXITCODE" }
+
 . (Join-Path $sourceDirectory $peHardeningName)
 . (Join-Path $sourceDirectory 'Tool-ModuleContract.ps1')
 . (Join-Path $sourceDirectory 'Tool-ReportSchema.ps1')
@@ -438,6 +537,7 @@ foreach ($name in ($requiredFiles | Select-Object -Unique)) {
 . (Join-Path $sourceDirectory 'Tool-Provenance.ps1')
 . (Join-Path $sourceDirectory 'Tool-Assistant.ps1')
 . (Join-Path $sourceDirectory 'Tool-SoftwareInventory.ps1')
+. (Join-Path $sourceDirectory 'Tool-PluginEngine.ps1')
 $moduleContractMetadata = Get-ToolModuleContractMetadata
 $reportSchemaMetadata = Get-ToolReportSchemaMetadata
 $reportExportMetadata = Get-ToolReportExportMetadata
@@ -445,18 +545,53 @@ $safetyPolicyMetadata = Get-ToolSafetyPolicyMetadata
 $compatibilityMetadata = Get-ToolCompatibilityMetadata
 $localizationMetadata = Get-ToolLocalizationMetadata
 $offlinePolicyMetadata = Get-ToolOfflinePolicyMetadata
-$provenanceMetadata = Get-ToolOfficialBuildState `
-    -ManifestPath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json') `
-    -SignaturePath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s')
-if (-not [bool]$provenanceMetadata.IsOfficial) {
-    if (-not $AllowUnsignedDevelopmentBuild) { throw "Provenance v4.9 chưa đạt Official: $($provenanceMetadata.Code)" }
+$provenanceManifestPath = Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json'
+$provenanceSignaturePath = Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s'
+if ($AllowUnsignedDevelopmentBuild) {
     $provenanceMetadata = Test-ToolOfficialProvenance `
-        -ManifestPath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json') `
-        -SignaturePath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s') `
+        -ManifestPath $provenanceManifestPath `
+        -SignaturePath (Join-Path $sourceDirectory '.development-unsigned-provenance.p7s') `
         -AllowUnsignedDevelopmentTest
+} else {
+    $provenanceMetadata = Get-ToolOfficialBuildState `
+        -ManifestPath $provenanceManifestPath `
+        -SignaturePath $provenanceSignaturePath
+    if (-not [bool]$provenanceMetadata.IsOfficial) {
+        throw "Provenance v5.0 chưa đạt Official: $($provenanceMetadata.Code)"
+    }
 }
 $releaseProvenanceState = if ($AllowUnsignedDevelopmentBuild) { 'Unverified' } else { [string]$provenanceMetadata.State }
+if ($requiresSignedArtifact) {
+    $gitCommand = Get-Command git.exe -ErrorAction SilentlyContinue
+    if (-not $gitCommand) { $gitCommand = Get-Command git -ErrorAction SilentlyContinue }
+    if (-not $gitCommand) { throw 'Build stable cần Git để ràng buộc provenance với source commit.' }
+    $headCommit = (& $gitCommand.Source -C $sourceDirectory rev-parse HEAD 2>$null | Select-Object -First 1).Trim()
+    $provenanceDocument = Get-Content -LiteralPath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $declaredCommit = ([string]$provenanceDocument.SourceSnapshotCommit).Trim().ToLowerInvariant()
+    if ($declaredCommit -notmatch '^[0-9a-f]{40}$') { throw 'Provenance SourceSnapshotCommit không phải commit SHA-1 đầy đủ.' }
+    & $gitCommand.Source -C $sourceDirectory merge-base --is-ancestor $declaredCommit $headCommit 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Provenance source snapshot không phải tổ tiên của HEAD: manifest=$declaredCommit, HEAD=$headCommit"
+    }
+    $releaseMetadataAllowList = @(
+        'OFFICIAL-PROVENANCE-v1.json',
+        'OFFICIAL-PROVENANCE-v1.json.p7s',
+        'SOURCE-PACKAGE-SHA256SUMS.txt',
+        'SOURCE-SHA256SUMS.txt',
+        'TOOL-SHA256SUMS.txt',
+        'update-manifest-v1.json',
+        'update-manifest-v1.json.p7s'
+    )
+    $postSnapshotChanges = @(& $gitCommand.Source -C $sourceDirectory diff --name-only $declaredCommit $headCommit -- | ForEach-Object { ([string]$_).Replace('\','/') })
+    $unexpectedPostSnapshotChanges = @($postSnapshotChanges | Where-Object { $releaseMetadataAllowList -notcontains $_ })
+    if ($unexpectedPostSnapshotChanges.Count -gt 0) {
+        throw "Có mã nguồn thay đổi sau SourceSnapshotCommit ngoài allowlist metadata phát hành: $($unexpectedPostSnapshotChanges -join ', ')"
+    }
+    $worktreeChanges = @(& $gitCommand.Source -C $sourceDirectory status --porcelain --untracked-files=all)
+    if ($worktreeChanges.Count -gt 0) { throw 'Build stable yêu cầu worktree sạch và mọi tệp nguồn đều đã được Git theo dõi trước khi tạo artefact.' }
+}
 $assistantMetadata = Get-ToolAssistantMetadata
+$pluginMetadata = Get-ToolPluginMetadata
 $softwareCatalogMetadata = Import-ToolSoftwareCatalogFile `
     -Path (Join-Path $sourceDirectory 'software-license-catalog-v1.0.json') `
     -SignaturePath (Join-Path $sourceDirectory 'software-license-catalog-v1.0.json.p7s') `
@@ -470,7 +605,7 @@ $engineeringCatalogRules = @($softwareCatalogMetadata.Products | Where-Object {
 if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.0.0' -or
     [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-22T11:00:00Z' -or
     @($softwareCatalogMetadata.Products).Count -lt 92 -or $engineeringCatalogRules.Count -lt 16) {
-    throw 'Catalog phần mềm v4.9 chưa đạt phiên bản 1.6.0.0 / ngày bảo trì 2026-08-22T11:00:00Z / 92 quy tắc / 16 quy tắc kỹ thuật.'
+    throw 'Catalog phần mềm tích hợp cho v5.0 chưa đạt phiên bản 1.6.0.0 / ngày bảo trì 2026-08-22T11:00:00Z / 92 quy tắc / 16 quy tắc kỹ thuật.'
 }
 
 Write-Host '[1/8] Tạo TOOL-SHA256SUMS.txt...'
@@ -528,6 +663,21 @@ foreach ($staleName in @("Tool-Kiem-Tra-v$productVersion-x64.exe", "Tool-Kiem-Tr
 $payloadBuildDirectory = Join-Path $OutputDirectory ('.payload-build-' + [Guid]::NewGuid().ToString('N'))
 try {
     New-Item -ItemType Directory -Path $payloadBuildDirectory | Out-Null
+    $compilerSourcePath = Join-Path $sourceDirectory $sourceName
+    if ($requiresSignedArtifact) {
+        $compilerSourceText = [IO.File]::ReadAllText($compilerSourcePath, [Text.Encoding]::UTF8)
+        $signerConstantPattern = 'private const string OfficialSignerThumbprint = "[A-Fa-f0-9]{40}";'
+        if (-not [regex]::IsMatch($compilerSourceText, $signerConstantPattern)) {
+            throw 'Không tìm thấy OfficialSignerThumbprint hợp lệ trong launcher source.'
+        }
+        $compilerSourceText = [regex]::Replace(
+            $compilerSourceText,
+            $signerConstantPattern,
+            ('private const string OfficialSignerThumbprint = "' + $normalizedStableSignerThumbprint + '";'),
+            1)
+        $compilerSourcePath = Join-Path $payloadBuildDirectory $sourceName
+        [IO.File]::WriteAllText($compilerSourcePath, $compilerSourceText, (New-Object Text.UTF8Encoding($false)))
+    }
     $payloadBundlePath = Join-Path $payloadBuildDirectory 'payload.bundle.v1'
     $compressedPayloadPath = Join-Path $payloadBuildDirectory 'payload.bundle.v1.deflate'
     $bundleStats = New-SolidPayloadBundle -SourceDirectory $sourceDirectory -PayloadFiles $payloadFiles -DestinationPath $payloadBundlePath
@@ -569,7 +719,7 @@ try {
         '/target:winexe',
         "/platform:$($target.Platform)",
         '/deterministic+',
-        "/pathmap:$sourceDirectory=C:\_src\Tool-Kiem-Tra-v4.9",
+        "/pathmap:$sourceDirectory=C:\_src\Tool-Kiem-Tra-v5.0",
         '/langversion:5',
         '/debug-',
         '/optimize+',
@@ -587,12 +737,16 @@ try {
         # development builds, even when they have the same version number as
         # the public stable release.
         $compilerArguments += '/define:TOOL_SIGNED_STABLE_BUILD'
+    } elseif ($AllowManagedSignedBuild) {
+        # Managed builds are signed, timestamped and provenance-verified, but
+        # they must never inherit the public Stable self-update marker.
+        $compilerArguments += '/define:TOOL_MANAGED_SIGNED_BUILD'
     }
     if ($target.HighEntropy) { $compilerArguments += '/highentropyva+' }
     foreach ($resource in $embeddedPayloadResources) {
         $compilerArguments += "/resource:$($resource.Path),$($resource.ResourceName)"
     }
-    $compilerArguments += (Join-Path $sourceDirectory $sourceName)
+    $compilerArguments += $compilerSourcePath
 
     & $compiler @compilerArguments
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $outputPath -PathType Leaf)) {
@@ -624,24 +778,28 @@ try {
         $signingScript = Join-Path $sourceDirectory 'SIGN-RELEASE.ps1'
         if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
             & $signingScript -FilePath $outputPath -CertificateThumbprint $SigningCertificateThumbprint `
-                -StoreLocation $SigningCertificateStore -TimestampServer $TimestampServer -RequireTrustedSignature:$RequireAuthenticode
+                -StoreLocation $SigningCertificateStore -TimestampServer $TimestampServer -RequireTrustedSignature:$requiresSignedArtifact `
+                -RequireWindowsTrustedCaCertificate:$RequireAuthenticode
         } else {
             if ($null -eq $SigningPfxPassword) { throw 'SigningPfxPassword là bắt buộc khi dùng SigningPfxPath.' }
             & $signingScript -FilePath $outputPath -PfxPath $SigningPfxPath -PfxPassword $SigningPfxPassword `
-                -TimestampServer $TimestampServer -RequireTrustedSignature:$RequireAuthenticode
+                -TimestampServer $TimestampServer -RequireTrustedSignature:$requiresSignedArtifact
         }
         if ($LASTEXITCODE -ne 0) { throw "Ký Authenticode thất bại, mã thoát: $LASTEXITCODE" }
-    } elseif ($RequireAuthenticode) {
-        throw 'RequireAuthenticode được bật nhưng chưa cung cấp chứng thư code-signing.'
+    } elseif ($requiresSignedArtifact) {
+        throw 'Chế độ build có chữ ký được bật nhưng chưa cung cấp chứng thư code-signing.'
     }
 
     $signature = Get-AuthenticodeSignature -LiteralPath $outputPath
-    if ($RequireAuthenticode -and $signature.Status -ne 'Valid') {
+    if ($requiresSignedArtifact -and $signature.Status -ne 'Valid') {
         throw "Artefact chưa có chữ ký Authenticode hợp lệ: $($signature.Status)"
+    }
+    if ($requiresSignedArtifact -and $null -eq $signature.TimeStamperCertificate) {
+        throw 'Artefact có chữ ký nhưng chưa có RFC 3161 timestamp.'
     }
     $artifactLength = [int64](Get-Item -LiteralPath $outputPath).Length
     if ($artifactLength -gt $maximumInPlaceExecutableBytes) {
-        throw "EXE vượt ngân sách dung lượng bản v4.9: $artifactLength / $maximumInPlaceExecutableBytes byte."
+        throw "EXE vượt ngân sách dung lượng bản v5.0: $artifactLength / $maximumInPlaceExecutableBytes byte."
     }
     [void]$artifactResults.Add([pscustomobject]@{
         FileName = $target.OutputName
@@ -664,8 +822,10 @@ try {
 Write-Host '[5/8] Tạo metadata phát hành...'
 $releaseSidecars = @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v4.9.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
+    'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
+    'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s'
@@ -711,13 +871,20 @@ $manifestArtifacts = @($artifactResults.ToArray() | ForEach-Object {
     }
 })
 $releaseManifestPath = Join-Path $OutputDirectory 'RELEASE-MANIFEST.json'
+$releaseStatus = if ($AllowUnsignedDevelopmentBuild) {
+    'DevelopmentUnsigned'
+} elseif ($AllowManagedSignedBuild) {
+    'ManagedSigned'
+} else {
+    'Production'
+}
 $releaseManifest = [ordered]@{
     SchemaVersion = '2.0'
     ToolVersion = $productVersion
     ReleaseVersion = $releaseVersion
     ReleaseBuildDate = $releaseBuildDate
     ReleaseLabel = $releaseLabel
-    ReleaseStatus = 'Production'
+    ReleaseStatus = $releaseStatus
     PrimaryFileName = "Tool-Kiem-Tra-v$productVersion.exe"
     RuntimeArchitecture = 'Auto: x64 on Windows 64-bit; x86 on Windows 32-bit'
     Artifacts = $manifestArtifacts
@@ -750,8 +917,9 @@ $releaseManifest = [ordered]@{
     ElevationPolicy = 'On demand for system changes, application update and enterprise administration'
     DefaultDataRoot = '%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\v4.6'
     ElevatedDataRoot = '%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6'
-    StartupTheme = 'Light'
-    DarkMode = 'Optional per-session / WCAG-aware palette'
+    StartupTheme = 'System'
+    DarkMode = 'System-aware Light/Dark preference with persisted explicit override and WCAG-aware palette'
+    DpiAwareness = 'PerMonitorV2 -> PerMonitor -> System-aware fallback; Win7 remains supported'
     QuickActionNumberLabels = $false
     DirectReportActionCount = 7
     OfflinePolicySchemaVersion = [string]$offlinePolicyMetadata.SchemaVersion
@@ -771,7 +939,7 @@ $releaseManifest = [ordered]@{
     ApplicationUpdateVerification = 'Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback'
     OfficialBuildProvenance = [ordered]@{
         State = $releaseProvenanceState
-        BuildId = $releaseLabel
+        BuildId = $officialBuildId
         ManifestFile = 'OFFICIAL-PROVENANCE-v1.json'
         SignatureFile = 'OFFICIAL-PROVENANCE-v1.json.p7s'
         VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build'
@@ -810,6 +978,11 @@ $releaseManifest = [ordered]@{
     UniversalDeepSoftwareScan = $true
     SoftwareLicenseCatalogVersion = [string]$softwareCatalogMetadata.CatalogVersion
     SoftwareLicenseCatalogGeneratedAtUtc = [string]$softwareCatalogMetadata.GeneratedAtUtc
+    SoftwareLicenseCatalogFreshnessStatus = [string]$softwareCatalogMetadata.CatalogFreshnessStatus
+    SoftwareLicenseCatalogFreshForDecisiveEvidence = [bool]$softwareCatalogMetadata.CatalogFreshForDecisiveEvidence
+    SoftwareLicenseCatalogAgeDays = [double]$softwareCatalogMetadata.CatalogAgeDays
+    SoftwareLicenseCatalogFreshnessWarningAgeDays = [int]$softwareCatalogMetadata.CatalogFreshnessWarningAgeDays
+    SoftwareLicenseCatalogFreshnessMaximumAgeDays = [int]$softwareCatalogMetadata.CatalogFreshnessMaximumAgeDays
     SoftwareLicenseCatalogProductRules = [int]@($softwareCatalogMetadata.Products).Count
     SoftwareLicenseCatalogSignatureFile = 'software-license-catalog-v1.0.json.p7s'
     SoftwareLicenseCatalogSignatureRequired = $true
@@ -850,12 +1023,20 @@ $releaseManifest = [ordered]@{
     EnterpriseEndpointDiagnostics = @('InvalidEndpoint','TcpUnavailable','ServiceUnavailable','ServiceRejected','ProtocolMismatch','VersionMismatch','Connected')
     EnterpriseDiscovery = 'Neighbor/ARP + ICMP + TCP probes; blank workstation address invokes local server discovery'
     EnterpriseReportRetry = 'DPAPI-protected local outbox retried by the workstation agent'
+    EnterpriseBatchExportFormats = @('JSON','CSV','HTML','PDF')
+    EnterpriseBatchExportPrivacy = 'Redacted by default; explicit sensitive export only in a controlled administrative environment'
+    EnterpriseCentralAdministration = 'Headless CLI plus idempotent Install/Detect/Repair/Uninstall helper for Intune/MDM or central scripts'
+    ClientVmMatrix = @('Windows 10 22H2','Windows 11 previous supported release','Windows 11 current supported release')
     OfficeLicenseEnumeration = 'OSPP /dstatusall per SKU'
     OfficialActivationPostCheck = 'Windows LicenseStatus=1 plus submitted-key Last5; Office OSPP LICENSED plus submitted-key Last5; process exit code alone never confirms activation'
     GenuineLicensePreservation = 'Verified OEM/Retail/MAK or approved organization KMS remains unchanged; readiness for activation is separate from licensed=True'
     OfficeScanExecution = 'Parallel runspace pool with bounded throttle'
     FileScanExecution = 'Parallel per-root enumeration with bounded depth and reparse-point exclusion'
-    UserPreferencePersistence = @('Culture')
+    ScanProfiles = @('Quick','Standard','Deep')
+    ScanMaximumExplicitRoots = 8
+    ScanLowResourceMode = $true
+    ScanRootPolicy = 'Existing absolute local directories only; UNC and reparse-point roots rejected; include/exclude scope is recorded in reports'
+    UserPreferencePersistence = @('Culture','Theme','ScanProfileAndScope')
     EnvironmentWarnings = @('VirtualMachine','RemoteDesktop')
     ProgressUtilities = @('CopyAllLog','OpenReportFolder')
     VersionHistoryPresentation = 'InToolModal'
@@ -904,11 +1085,17 @@ $releaseManifest = [ordered]@{
     HtmlAssets = 'Embedded local CSS only; CSP default-src none'
     PdfNetworkPolicy = 'Background networking disabled; host resolver mapped to 0.0.0.0'
     PdfEngines = @('Microsoft Edge','Google Chrome','Microsoft Word')
+    OptionalReportViewerPolicy = 'WebView2 is not mandatory or bundled; supported Windows may add a signed optional viewer while Win7 and the default-browser/PDF fallback remain functional'
     PdfProfileRoot = [string]$reportExportMetadata.PdfProfileRoot
     PdfProfileAcl = [string]$reportExportMetadata.PdfProfileAcl
     PdfProfileCleanup = [string]$reportExportMetadata.PdfProfileCleanup
-    PluginSchemaVersion = '1.0'
-    PluginModel = 'DeclarativeReadOnlyRules'
+    PluginSchemaVersion = [string]$pluginMetadata.SchemaVersion
+    PluginModel = [string]$pluginMetadata.Model
+    PluginSignaturePolicy = 'Detached CMS SHA-256; administrator-pinned publisher certificate SHA-256; external plugins fail closed in secure launch'
+    ThirdPartyPluginCatalogSchemaVersion = [string]$pluginMetadata.ThirdPartyCatalogSchemaVersion
+    ThirdPartyPluginCatalogMaximumEntries = [int]$pluginMetadata.MaximumCatalogEntries
+    ThirdPartyPluginCatalogFreshness = 'Fresh/Warning remains installable; Stale/Future/Invalid is read-only and blocked from installation'
+    ThirdPartyPluginCatalogNetworkPolicy = 'Signed metadata is parsed offline; no automatic download or code execution'
     TimelineSchemaVersion = '1.0'
     TimelineIntegrity = 'DPAPI LocalMachine + HMAC-SHA256 + hash chain'
     CertificateAudit = 'Windows/Office Authenticode + offline chain'
@@ -934,7 +1121,8 @@ $releaseManifest = [ordered]@{
     CompilerFileVersion = [string]$compilerVersion
     DeterministicManagedBuild = $true
     DeterministicScope = 'Unsigned managed image; Authenticode intentionally changes final bytes when enabled.'
-    AuthenticodeRequired = [bool]$RequireAuthenticode
+    AuthenticodeRequired = $requiresSignedArtifact
+    AuthenticodeTrustScope = $(if ($AllowUnsignedDevelopmentBuild) { 'None' } elseif ($AllowManagedSignedBuild) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' })
     ControlFlowGuard = [ordered]@{
         Status = 'NotClaimed'
         Reason = 'Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia.'
@@ -946,7 +1134,7 @@ $releaseManifest = [ordered]@{
 $primaryArtifact = @($artifactResults.ToArray())[0]
 $primaryArtifactPath = Join-Path $OutputDirectory $primaryArtifact.FileName
 $updateSignerThumbprints = @()
-$updateAuthenticodeRequired = [bool]$RequireAuthenticode
+$updateAuthenticodeRequired = $requiresSignedArtifact
 if ($updateAuthenticodeRequired) {
     if ($primaryArtifact.AuthenticodeStatus -ne 'Valid' -or
         [string]::IsNullOrWhiteSpace([string]$primaryArtifact.AuthenticodeThumbprint)) {
@@ -959,13 +1147,18 @@ $applicationUpdateManifest = [ordered]@{
     Channel = if ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
     LatestVersion = $releaseVersion
     MinimumUpdaterVersion = '4.6.1.0'
-    PublishedAtUtc = '2026-08-22T00:00:00Z'
+    PublishedAtUtc = '2026-08-24T00:00:00Z'
     Title = [ordered]@{
-        'vi-VN' = 'v4.9 - Xác thực nguồn gốc, catalog mở rộng, làm sạch có hậu kiểm'
-        'en-US' = 'v4.9 - Provenance, expanded catalog, and verified cleanup'
+        'vi-VN' = 'v5.0 - Nâng độ tin cậy, quản trị doanh nghiệp và quét linh hoạt'
+        'en-US' = 'v5.0 - Trust hardening, enterprise management, and flexible scanning'
     }
     Changes = [ordered]@{
         'vi-VN' = @(
+            'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
+            'Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.',
+            'Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.',
+            'Giao diện hỗ trợ theme theo hệ thống, dark/light override và PerMonitorV2 DPI.',
+            'Bổ sung xuất fleet JSON/CSV/HTML/PDF có redaction, chống CSV injection; CLI headless, script Intune/MDM và ma trận VM Windows 10/11.',
             'Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.',
             'Catalog online 1.6.0.0 bao phủ 92 nhóm sản phẩm, bổ sung mẫu tệp lõi Adobe/Autodesk và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.',
             'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
@@ -978,6 +1171,11 @@ $applicationUpdateManifest = [ordered]@{
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
+            'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',
+            'Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.',
+            'Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.',
+            'The UI follows the system theme, supports dark/light overrides, and declares PerMonitorV2 DPI awareness.',
+            'Fleet JSON/CSV/HTML/PDF export adds redaction and CSV-injection guards, with a headless CLI, Intune/MDM scripts, and a Windows 10/11 VM matrix.',
             'Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.',
             'Online catalog 1.6.0.0 covers 92 product families, adds Adobe/Autodesk core-file rules, and accepts only signed declarative data with allowlisted fields and profiles.',
             'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
@@ -1005,17 +1203,16 @@ $outputUpdateSignaturePath = $outputUpdateManifestPath + '.p7s'
 if ($AllowUnsignedDevelopmentBuild) {
     # Một build phát triển không được làm hỏng manifest stable đang dùng để cập nhật
     # từ nguồn. Manifest development chỉ tồn tại trong thư mục artefact cục bộ.
+    if (Test-Path -LiteralPath $outputUpdateSignaturePath -PathType Leaf) {
+        Remove-Item -LiteralPath $outputUpdateSignaturePath -Force
+    }
     [IO.File]::WriteAllText($outputUpdateManifestPath, $applicationUpdateManifestJson, (New-Object Text.UTF8Encoding($false)))
 } else {
     [IO.File]::WriteAllText($sourceUpdateManifestPath, $applicationUpdateManifestJson, (New-Object Text.UTF8Encoding($false)))
     $updateSigningScript = Join-Path $sourceDirectory 'SIGN-UPDATE-MANIFEST.ps1'
-    if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
-        & $updateSigningScript -ManifestPath $sourceUpdateManifestPath -CertificateThumbprint $SigningCertificateThumbprint `
-            -StoreLocation $SigningCertificateStore -Force
-    } else {
-        & $updateSigningScript -ManifestPath $sourceUpdateManifestPath -PfxPath $SigningPfxPath `
-            -PfxPassword $SigningPfxPassword -Force
-    }
+    & $updateSigningScript -ManifestPath $sourceUpdateManifestPath `
+        -CertificateThumbprint $normalizedUpdateManifestSignerThumbprint `
+        -StoreLocation $UpdateManifestCertificateStore -Force
     if (-not (Test-Path -LiteralPath $sourceUpdateSignaturePath -PathType Leaf)) { throw 'Thiếu chữ ký tách rời của manifest cập nhật.' }
     if (-not $sourceUpdateManifestPath.Equals($outputUpdateManifestPath, [StringComparison]::OrdinalIgnoreCase)) {
         Copy-Item -LiteralPath $sourceUpdateManifestPath -Destination $outputUpdateManifestPath -Force
@@ -1030,7 +1227,7 @@ if ($AllowUnsignedDevelopmentBuild) {
 }
 Write-SourcePackageHashManifest
 
-$infoName = 'THONG-TIN-PHAT-HANH-v4.9.txt'
+$infoName = 'THONG-TIN-PHAT-HANH-v5.0.txt'
 $authenticodeInfo = if (-not [string]::IsNullOrWhiteSpace([string]$primaryArtifact.AuthenticodeThumbprint)) {
     "Authenticode signer: $($primaryArtifact.AuthenticodeSigner); thumbprint $($primaryArtifact.AuthenticodeThumbprint); status $($primaryArtifact.AuthenticodeStatus)."
 } else {
@@ -1050,7 +1247,7 @@ $infoLines = @(
     "Release version: $releaseVersion",
     "Release build date: $releaseBuildDate",
     "Release label: $releaseLabel",
-    'Release status: Production (da dat ma tran E2E HTML/JSON/XML/PDF, x64/x86, ky so va hash).',
+    "Release status: $releaseStatus.",
     "Tep chay duy nhat: Tool-Kiem-Tra-v$productVersion.exe",
     "SHA-256: $($primaryArtifact.Sha256)",
     'AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.',
@@ -1060,10 +1257,10 @@ $infoLines = @(
     'Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.',
     "Payload nhung duoc toi uu $($payloadCompressionStats.Scheme): $($payloadFiles.Count) tep trong mot resource Deflate co header fail-closed; giam $($payloadCompressionStats.SavingsPercent)% va van doi chieu SHA-256 tung tep sau giai nen.",
     'Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.',
-    'Dashboard schema 2.0: WinForms hien dai, bang mau trung tinh, the trang thai Windows/Office, tile co mo ta, responsive DPI va mac dinh giao dien sang.',
+    'Dashboard schema 2.0: WinForms hien dai, theo Light/Dark cua he thong, cho phep ghi nho tuy chon va co fallback DPI tu PerMonitorV2 den Win7.',
     'Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.',
     'Da ngon ngu: vi-VN va en-US dung catalog JSON dong bo cho dashboard, log trang thai, bao cao, trung tam doanh nghiep va trinh quan ly Windows/Office cuc bo; lua chon duoc ghi nho theo tai khoan.',
-    'Ghi nho ngon ngu; moi lan mo luon bat dau bang giao dien sang va che do Offline, khong khoi phuc Online tu phien truoc.',
+    'Ghi nho ngon ngu, giao dien System/Light/Dark va profile quet; moi lan mo van bat dau Offline, khong khoi phuc Online tu phien truoc.',
     'Canh bao khi phat hien may ao hoac Remote Desktop; khong khoa cac chuc nang hien co.',
     'Them nut Sao chep toan bo log va Mo thu muc bao cao; lich su phien ban hien thi ngay trong Tool.',
     'Bo nhan danh so cu tren cua so chuc nang; toan bo nut WinForms dung mau va icon vector hanh dong chung o Light/Dark.',
@@ -1091,7 +1288,7 @@ $infoLines = @(
     'Enterprise UI close hotfix: ve tab dung RectangleF de tranh loi overload DrawString va dam bao nut Dong trung tam doanh nghiep hoat dong.',
     'Enterprise local manager restore: khoi phuc quan ly license cuc bo duoi ten chuc nang moi, khong dung lai ten tab Tren may nay.',
     'Enterprise quick scan hotfix: sua loi hien thi ket qua khi IP phan hoi va them kiem thu hoi quy PowerShell 5.1.',
-    'Dark mode van co the bat trong phien hien tai, phu dashboard, cua so con, chuc nang 8 va quan ly cuc bo Windows/Office.',
+    'Dark mode theo he thong hoac tuy chon ghi nho, phu dashboard, cua so con, chuc nang 8 va quan ly cuc bo Windows/Office.',
     'May tram tu dong gui bao cao hoac xep hang DPAPI khi mat route; thay doi license tu xa mac dinh tat va phai duoc may tram cho phep.',
     'Cleanup Action Center co vung cuon/nut xu ly tiep; Office KMS dung OSPP /dstatusall va rang buoc lua chon theo tung SKU/Last5.',
     'Kich hoat chinh hang tach sach crack khoi da cap phep: Windows chi TRUE khi LicenseStatus=1 dung Last5; Office chi TRUE khi OSPP /dstatusall bao LICENSED dung Last5; neu chua dat thi FALSE va mo luong chinh thuc.',
@@ -1136,8 +1333,10 @@ $infoLines = @(
 
 $releaseHashFiles = @($targets.OutputName) + @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v4.9.md', 'OFFICIAL-PROVENANCE-v1.json',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
+    'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
+    'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s', 'RELEASE-MANIFEST.json', 'update-manifest-v1.json', $infoName
@@ -1182,11 +1381,17 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-SOFTWARE-DETECTION-V4.9.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     Write-Host '[7/8] Kiểm tra phát hành tổng thể...'
     & (Join-Path $sourceDirectory 'VERIFY-RELEASE.ps1') -SourceDirectory $sourceDirectory -DistributionDirectory $OutputDirectory `
-        -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild
+        -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowManagedSignedManifest:$AllowManagedSignedBuild
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-RELEASE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
-    if ($RequireAuthenticode) {
+    if ($requiresSignedArtifact) {
         & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "Tool-Kiem-Tra-v$productVersion.exe") -RequireTimestamp
         if ($LASTEXITCODE -ne 0) { throw "VERIFY-AUTHENTICODE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+        & (Join-Path $sourceDirectory 'VERIFY-CODE-SIGNING-READINESS.ps1') `
+            -CertificateThumbprint $normalizedStableSignerThumbprint `
+            -StoreLocation $SigningCertificateStore `
+            -ArtifactPath (Join-Path $OutputDirectory "Tool-Kiem-Tra-v$productVersion.exe") `
+            -AllowManagedSelfSigned:$AllowManagedSignedBuild
+        if ($LASTEXITCODE -ne 0) { throw "VERIFY-CODE-SIGNING-READINESS.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     }
 }
 

@@ -2,9 +2,11 @@
 
 Developed by Thanh Viet
 
-Version: **v4.9.0.0** · Build **2026.08.22**
-Official file: `Tool-Kiem-Tra-v4.9.exe`
+Development version: **v5.0.0.0** · Build **2026.08.24** · `DevelopmentUnsigned`
+Test file: `Tool-Kiem-Tra-v5.0.exe`
 Stable latest-release page: <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+
+> A `DevelopmentUnsigned` build is for local testing only and is not Stable. Self-update and every system-changing action remain blocked until Authenticode, timestamp, and provenance are valid.
 
 This guide explains how to use the Tool's features on a Windows computer. Release-specific changes are documented separately in **Version History**; this guide focuses only on actions, result interpretation, and safe operating practices.
 
@@ -26,7 +28,7 @@ This guide explains how to use the Tool's features on a Windows computer. Releas
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
 6. Keep Offline enabled unless you intentionally need a catalog update or authorized LAN management.
 
-The single-file EXE carries a signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download `Tool-Kiem-Tra-v4.9.exe` only from <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>, compare its SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
+A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download Stable builds only from <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
 
 ## How to run the Tool
 
@@ -42,7 +44,12 @@ The single-file EXE carries a signature and provenance manifest for tamper detec
 
 You do not need source access, configuration files, or technical documentation to use the executable.
 
-## What v4.9 changes
+## What v5.0 changes
+
+- Unsigned development builds use a distinct amber label and keep every system-changing action blocked by design.
+- Stable requires a CA-issued/HSM signing certificate, RFC3161 timestamp, valid CMS provenance, a clean source commit, and a fully passing verifier suite.
+- Catalog freshness is explicit, and third-party plugins accept only signed declarative metadata from pinned publisher fingerprints.
+- Quick, Standard, and Deep scans, system-aware dark/light themes, PerMonitorV2 DPI, and safe fleet exports support larger deployments.
 
 - The launcher and provenance manifest verify the signature, pinned certificate, metadata, and Build ID. A modified or unverifiable build is warned about and fails closed for updates and system-changing actions.
 - The online catalog is signed, accepts only allowlisted declarative rules, maintains a persistent version floor to prevent downgrades, and retains a previous-cache fallback.

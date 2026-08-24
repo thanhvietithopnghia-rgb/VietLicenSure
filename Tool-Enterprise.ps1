@@ -7,7 +7,15 @@ if (-not (Get-Command Get-ToolDataRoot -ErrorAction SilentlyContinue) -and
 }
 
 $toolEnterpriseLocalizationPath = Join-Path $PSScriptRoot "Tool-Localization.ps1"
-if (-not (Get-Command Get-ToolText -ErrorAction SilentlyContinue) -and
+$toolEnterpriseLocalizationReady = (
+    $null -ne (Get-Command Get-ToolText -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Command Get-ToolCulture -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Command Test-ToolSupportedCulture -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Variable -Name ToolLocalizationDefaultCulture -Scope Script -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Variable -Name ToolLocalizationSupportedCultures -Scope Script -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Variable -Name ToolLocalizationCatalogCache -Scope Script -ErrorAction SilentlyContinue)
+)
+if (-not $toolEnterpriseLocalizationReady -and
     (Test-Path -LiteralPath $toolEnterpriseLocalizationPath -PathType Leaf)) {
     . $toolEnterpriseLocalizationPath
 }
@@ -32,7 +40,7 @@ function Get-ToolEnterpriseText {
 
 $script:ToolEnterpriseSchemaVersion = "1.0"
 $script:ToolEnterpriseProtocolVersion = "1.0"
-$script:ToolEnterpriseToolVersion = "4.9.0.0"
+$script:ToolEnterpriseToolVersion = "5.0.0.0"
 $script:ToolEnterpriseDefaultPort = 49420
 $script:ToolEnterpriseMaximumRequestBytes = 1048576
 $script:ToolEnterpriseMaximumScanHosts = 1024
@@ -48,6 +56,41 @@ function ConvertTo-ToolEnterpriseSafeText {
     $text = [regex]::Replace($text, '(?i)(?<![A-Z0-9])[A-Z0-9]{25}(?![A-Z0-9])', (Get-ToolEnterpriseText "enterpriseCore.redaction.productKey"))
     if ($text.Length -gt $MaximumLength) { return $text.Substring(0, $MaximumLength) }
     return $text
+}
+
+function ConvertTo-ToolEnterpriseCsvSafeText {
+    param([AllowNull()][object]$Value, [int]$MaximumLength = 2048)
+
+    $text = ConvertTo-ToolEnterpriseSafeText -Value $Value -MaximumLength $MaximumLength
+    # Spreadsheet applications can treat these leading characters as a
+    # formula even when the value is quoted by Export-Csv.  Prefix the cell
+    # with a literal apostrophe so fleet exports are safe to open directly.
+    if ($text -match '^\s*[=+\-@]') { return ("'" + $text) }
+    return $text
+}
+
+function Get-ToolEnterpriseStableClientReference {
+    param([Parameter(Mandatory = $true)][string]$ClientId)
+
+    $bytes = [Text.Encoding]::UTF8.GetBytes($ClientId.Trim().ToUpperInvariant())
+    $hash = Get-ToolEnterpriseSha256Bytes -Bytes $bytes
+    return ("CLIENT-" + (([BitConverter]::ToString($hash)).Replace("-", "").Substring(0, 12)))
+}
+
+function Get-ToolEnterpriseClientAgeHours {
+    param([AllowNull()][object]$LastSeenUtc)
+
+    $lastSeen = [DateTime]::MinValue
+    if (-not [DateTime]::TryParse(
+        [string]$LastSeenUtc,
+        [Globalization.CultureInfo]::InvariantCulture,
+        ([Globalization.DateTimeStyles]::AssumeUniversal -bor [Globalization.DateTimeStyles]::AdjustToUniversal),
+        [ref]$lastSeen)) {
+        return [double]::PositiveInfinity
+    }
+    $age = ([DateTime]::UtcNow - $lastSeen.ToUniversalTime()).TotalHours
+    if ($age -lt 0) { return 0.0 }
+    return $age
 }
 
 function Get-ToolEnterpriseRoot {
@@ -1691,43 +1734,156 @@ function Invoke-ToolEnterpriseLicenseJob {
 }
 
 function Export-ToolEnterpriseFleetReport {
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$DestinationDirectory,
-        [switch]$IncludePdf
+        [ValidateSet("Json", "Csv", "Html", "Pdf")][string[]]$Formats = @("Json", "Csv", "Html"),
+        [switch]$IncludePdf,
+        [bool]$RedactSensitive = $true,
+        [string[]]$ClientId = @(),
+        [ValidateRange(0, 876000)][int]$MaximumClientAgeHours = 0,
+        [ValidateRange(1, 876000)][int]$StaleAfterHours = 72
     )
-    if (-not (Get-Command New-ToolProfessionalHtmlDocument -ErrorAction SilentlyContinue)) {
+
+    $requestedFormats = New-Object System.Collections.Generic.List[string]
+    foreach ($format in @($Formats)) {
+        $canonical = switch ([string]$format) {
+            { $_ -ieq "Json" } { "Json"; break }
+            { $_ -ieq "Csv" } { "Csv"; break }
+            { $_ -ieq "Html" } { "Html"; break }
+            { $_ -ieq "Pdf" } { "Pdf"; break }
+        }
+        if ($canonical -and -not $requestedFormats.Contains($canonical)) { [void]$requestedFormats.Add($canonical) }
+    }
+    if ($IncludePdf -and -not $requestedFormats.Contains("Pdf")) { [void]$requestedFormats.Add("Pdf") }
+    if ($requestedFormats.Count -eq 0) { throw (Get-ToolEnterpriseText 'enterpriseReport.error.formatRequired') }
+
+    $needsHtmlEngine = $requestedFormats.Contains("Html") -or $requestedFormats.Contains("Pdf")
+    if ($needsHtmlEngine -and -not (Get-Command New-ToolProfessionalHtmlDocument -ErrorAction SilentlyContinue)) {
         $reportExportHelper = Join-Path $PSScriptRoot "Tool-ReportExport.ps1"
         if (-not (Test-Path -LiteralPath $reportExportHelper -PathType Leaf)) { throw (Get-ToolEnterpriseText "enterpriseReport.error.helperMissing") }
         . $reportExportHelper
     }
+
     $fullDestination = [IO.Path]::GetFullPath($DestinationDirectory)
     if (-not (Test-Path -LiteralPath $fullDestination -PathType Container)) { New-Item -ItemType Directory -Path $fullDestination -Force | Out-Null }
-    $clients = @(Get-ToolEnterpriseServerClients)
+    if (Test-ToolEnterpriseReparsePoint -Path $fullDestination) {
+        throw (Get-ToolEnterpriseText "enterpriseReport.error.destinationReparse" @($fullDestination))
+    }
+
+    $clientIdFilter = @{}
+    foreach ($requestedClientId in @($ClientId)) {
+        if ([string]::IsNullOrWhiteSpace([string]$requestedClientId)) { continue }
+        $parsedClientId = [Guid]::Empty
+        if (-not [Guid]::TryParse([string]$requestedClientId, [ref]$parsedClientId)) {
+            throw (Get-ToolEnterpriseText 'enterpriseReport.error.clientIdInvalid' @($requestedClientId))
+        }
+        $clientIdFilter[$parsedClientId.ToString("D")] = $true
+    }
+
+    $allClients = @(Get-ToolEnterpriseServerClients)
+    $filteredClients = New-Object System.Collections.Generic.List[object]
+    $excludedById = 0
+    $excludedByAge = 0
+    foreach ($client in $allClients) {
+        $rawClientId = [string]$client.ClientId
+        $parsedRecordClientId = [Guid]::Empty
+        $normalizedClientId = if ([Guid]::TryParse($rawClientId, [ref]$parsedRecordClientId)) { $parsedRecordClientId.ToString("D") } else { $rawClientId }
+        if ($clientIdFilter.Count -gt 0 -and -not $clientIdFilter.ContainsKey($normalizedClientId)) {
+            $excludedById++
+            continue
+        }
+        $clientAgeHours = Get-ToolEnterpriseClientAgeHours -LastSeenUtc $client.LastSeenUtc
+        if ($MaximumClientAgeHours -gt 0 -and $clientAgeHours -gt $MaximumClientAgeHours) {
+            $excludedByAge++
+            continue
+        }
+        [void]$filteredClients.Add([pscustomobject][ordered]@{
+            Source = $client
+            AgeHours = $clientAgeHours
+            Freshness = if ($clientAgeHours -le $StaleAfterHours) { "Current" } else { "Stale" }
+        })
+    }
+
+    $clients = New-Object System.Collections.Generic.List[object]
+    foreach ($entry in $filteredClients) {
+        $source = $entry.Source
+        $rawId = [string]$source.ClientId
+        $clientReference = if ([string]::IsNullOrWhiteSpace($rawId)) { "CLIENT-UNKNOWN" } else { Get-ToolEnterpriseStableClientReference -ClientId $rawId }
+        $redactionMarker = "[REDACTED]"
+        $exportNetworkAddresses = @()
+        if (-not $RedactSensitive) {
+            $exportNetworkAddresses = @($source.NetworkAddresses | ForEach-Object { ConvertTo-ToolEnterpriseSafeText $_ 80 })
+        }
+        [void]$clients.Add([pscustomobject][ordered]@{
+            ClientId = if ($RedactSensitive) { $clientReference } else { ConvertTo-ToolEnterpriseSafeText $rawId 80 }
+            ComputerName = if ($RedactSensitive) { $clientReference } else { ConvertTo-ToolEnterpriseSafeText $source.ComputerName 100 }
+            RemoteAddress = if ($RedactSensitive) { $redactionMarker } else { ConvertTo-ToolEnterpriseSafeText $source.RemoteAddress 80 }
+            NetworkAddresses = $exportNetworkAddresses
+            LastSeenUtc = ConvertTo-ToolEnterpriseSafeText $source.LastSeenUtc 80
+            AgeHours = if ([double]::IsPositiveInfinity([double]$entry.AgeHours)) { $null } else { [Math]::Round([double]$entry.AgeHours, 2) }
+            Freshness = [string]$entry.Freshness
+            WindowsStatus = ConvertTo-ToolEnterpriseSafeText $source.WindowsStatus 100
+            WindowsChannel = ConvertTo-ToolEnterpriseSafeText $source.WindowsChannel 120
+            WindowsLast5 = if ($RedactSensitive -and -not [string]::IsNullOrWhiteSpace([string]$source.WindowsLast5)) { $redactionMarker } else { ConvertTo-ToolEnterpriseSafeText $source.WindowsLast5 10 }
+            OfficeStatus = ConvertTo-ToolEnterpriseSafeText $source.OfficeStatus 100
+            OfficeChannel = ConvertTo-ToolEnterpriseSafeText $source.OfficeChannel 120
+            OfficeLast5 = if ($RedactSensitive -and -not [string]::IsNullOrWhiteSpace([string]$source.OfficeLast5)) { $redactionMarker } else { ConvertTo-ToolEnterpriseSafeText $source.OfficeLast5 10 }
+            AllowRemoteLicenseChanges = [bool]$source.AllowRemoteLicenseChanges
+        })
+    }
+
     $stamp = [DateTime]::Now.ToString("yyyyMMdd-HHmmss-fff")
-    $baseName = Get-ToolEnterpriseText "enterpriseReport.fileBase" @($stamp)
-    $jsonPath = Join-Path $fullDestination ($baseName + ".json")
-    $csvPath = Join-Path $fullDestination ($baseName + ".csv")
-    $htmlPath = Join-Path $fullDestination ($baseName + ".html")
-    $pdfPath = Join-Path $fullDestination ($baseName + ".pdf")
-    $manifestPath = Join-Path $fullDestination ($baseName + "-SHA256SUMS.txt")
+    $baseName = ([string](Get-ToolEnterpriseText "enterpriseReport.fileBase" @($stamp))) -replace '[<>:"/\\|?*]', '-'
+    $finalDirectory = Join-Path $fullDestination $baseName
+    if (Test-Path -LiteralPath $finalDirectory) { $finalDirectory = Join-Path $fullDestination ($baseName + "-" + [Guid]::NewGuid().ToString("N").Substring(0, 8)) }
+    $stagingDirectory = Join-Path $fullDestination (".enterprise-export-" + [Guid]::NewGuid().ToString("N") + ".staging")
+    New-Item -ItemType Directory -Path $stagingDirectory -Force | Out-Null
+    $jsonStagePath = Join-Path $stagingDirectory ($baseName + ".json")
+    $csvStagePath = Join-Path $stagingDirectory ($baseName + ".csv")
+    $htmlStagePath = Join-Path $stagingDirectory ($baseName + ".html")
+    $pdfStagePath = Join-Path $stagingDirectory ($baseName + ".pdf")
+    $manifestStagePath = Join-Path $stagingDirectory ($baseName + "-SHA256SUMS.txt")
+    $staleCount = @($clients | Where-Object { [string]$_.Freshness -eq "Stale" }).Count
+    $redactedFields = @()
+    if ($RedactSensitive) {
+        $redactedFields = @("ClientId", "ComputerName", "RemoteAddress", "NetworkAddresses", "WindowsLast5", "OfficeLast5")
+    }
     $fleet = [pscustomobject][ordered]@{
         SchemaVersion = $script:ToolEnterpriseSchemaVersion
         ToolVersion = $script:ToolEnterpriseToolVersion
         CreatedAtUtc = [DateTime]::UtcNow.ToString("o")
         ClientCount = $clients.Count
-        Clients = $clients
+        Selection = [pscustomobject][ordered]@{
+            SourceClientCount = $allClients.Count
+            IncludedClientCount = $clients.Count
+            ExcludedByClientId = $excludedById
+            ExcludedByMaximumAge = $excludedByAge
+            MaximumClientAgeHours = $MaximumClientAgeHours
+            ClientIdFilterCount = $clientIdFilter.Count
+        }
+        Freshness = [pscustomobject][ordered]@{
+            StaleAfterHours = $StaleAfterHours
+            CurrentClientCount = $clients.Count - $staleCount
+            StaleClientCount = $staleCount
+            InvalidOrMissingLastSeenCountsAsStale = $true
+        }
+        Privacy = [pscustomobject][ordered]@{
+            RedactSensitive = $RedactSensitive
+            FullProductKeysIncluded = $false
+            InternalSourcePathsIncluded = $false
+            RedactedFields = $redactedFields
+            CsvFormulaProtection = $true
+        }
+        Formats = @($requestedFormats.ToArray())
+        Clients = @($clients.ToArray())
     }
-    # Fleet exports are intentionally allowed outside the protected
-    # ProgramData store (for example to a file share or the administrator's
-    # desktop).  Write them directly after resolving the destination; the
-    # internal state files continue to use Write-ToolEnterpriseJson.
-    if (Test-ToolEnterpriseReparsePoint -Path $fullDestination) {
-        throw (Get-ToolEnterpriseText "enterpriseReport.error.destinationReparse" @($fullDestination))
-    }
-    [IO.File]::WriteAllText($jsonPath, ($fleet | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
+
     $columnComputer = Get-ToolEnterpriseText "enterpriseReport.column.computer"
     $columnIp = Get-ToolEnterpriseText "enterpriseReport.column.ip"
     $columnLastSeen = Get-ToolEnterpriseText "enterpriseReport.column.lastSeen"
+    $columnAgeHours = "AgeHours"
+    $columnFreshness = "Freshness"
     $columnWindows = Get-ToolEnterpriseText "enterpriseReport.column.windows"
     $columnWindowsChannel = Get-ToolEnterpriseText "enterpriseReport.column.windowsChannel"
     $columnWindowsLast5 = Get-ToolEnterpriseText "enterpriseReport.column.windowsLast5"
@@ -1742,6 +1898,8 @@ function Export-ToolEnterpriseFleetReport {
         $row[$columnComputer] = [string]$_.ComputerName
         $row[$columnIp] = [string]$_.RemoteAddress
         $row[$columnLastSeen] = [string]$_.LastSeenUtc
+        $row[$columnAgeHours] = if ($null -eq $_.AgeHours) { "" } else { [string]$_.AgeHours }
+        $row[$columnFreshness] = [string]$_.Freshness
         $row[$columnWindows] = [string]$_.WindowsStatus
         $row[$columnWindowsChannel] = [string]$_.WindowsChannel
         $row[$columnWindowsLast5] = [string]$_.WindowsLast5
@@ -1751,74 +1909,115 @@ function Export-ToolEnterpriseFleetReport {
         $row[$columnRemoteChanges] = if ([bool]$_.AllowRemoteLicenseChanges) { $valueYes } else { $valueNo }
         [pscustomobject]$row
     })
-    $fleetRows | Export-Csv -LiteralPath $csvPath -NoTypeInformation -Encoding UTF8
-    $createdAt = [DateTime]::Now
-    $activeWindows = @($clients | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.WindowsStatus) -and [string]$_.WindowsStatus -notin @("NotReported","Unknown") }).Count
-    $activeOffice = @($clients | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.OfficeStatus) -and [string]$_.OfficeStatus -notin @("NotReported","Unknown") }).Count
-    $reportCulture = if (Get-Command Get-ToolCulture -ErrorAction SilentlyContinue) {
-        Get-ToolCulture
-    } elseif ([string]$env:TOOL_UI_CULTURE -in @("vi-VN", "en-US")) {
-        [string]$env:TOOL_UI_CULTURE
-    } else {
-        "vi-VN"
-    }
-    $html = New-ToolProfessionalHtmlDocument `
-        -Title (Get-ToolEnterpriseText "enterpriseReport.title") `
-        -Subtitle (Get-ToolEnterpriseText "enterpriseReport.subtitle") `
-        -Eyebrow (Get-ToolEnterpriseText "enterpriseReport.eyebrow") `
-        -Metadata @(
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.server");Value=[string]$env:COMPUTERNAME},
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.time");Value=$createdAt.ToString("yyyy-MM-dd HH:mm:ss")},
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.scope");Value=(Get-ToolEnterpriseText "enterpriseReport.value.scope")},
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.privacy");Value=(Get-ToolEnterpriseText "enterpriseReport.value.privacy")}
-        ) `
-        -Cards @(
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.clients");Value=[string]$clients.Count;Tone="info"},
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.windowsStatus");Value=[string]$activeWindows;Tone=$(if ($activeWindows -eq $clients.Count) {"ok"} else {"warning"})},
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.officeStatus");Value=[string]$activeOffice;Tone=$(if ($activeOffice -eq $clients.Count) {"ok"} else {"warning"})},
-            [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.formats");Value="HTML / PDF / JSON / CSV";Tone="info"}
-        ) `
-        -Sections @(
-            [pscustomobject]@{
-                Title=(Get-ToolEnterpriseText "enterpriseReport.section.clientList")
-                BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnIp,$columnLastSeen,$columnWindows,$columnOffice))
-            },
-            [pscustomobject]@{
-                Title=(Get-ToolEnterpriseText "enterpriseReport.section.windowsDetails")
-                BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnWindows,$columnWindowsChannel,$columnWindowsLast5))
-            },
-            [pscustomobject]@{
-                Title=(Get-ToolEnterpriseText "enterpriseReport.section.officeDetails")
-                BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnRemoteChanges))
-            },
-            [pscustomobject]@{
-                Title=(Get-ToolEnterpriseText "enterpriseReport.section.limitations")
-                BodyHtml="<p class='note'>$(ConvertTo-ToolHtmlText (Get-ToolEnterpriseText "enterpriseReport.limitationsNote"))</p>"
-            }
-        ) `
-        -Footer (Get-ToolEnterpriseText "enterpriseReport.footer" @($script:ToolEnterpriseToolVersion)) -Culture $reportCulture -OfflineMode $true
-    [IO.File]::WriteAllText($htmlPath, $html, (New-Object Text.UTF8Encoding($false)))
-    if (-not (Test-ToolHtmlOfflineSafe -HtmlPath $htmlPath)) { throw (Get-ToolEnterpriseText "enterpriseReport.error.htmlUnsafe") }
+
     $pdfResult = [pscustomobject][ordered]@{ Success=$false; Engine=""; Path=""; Error=(Get-ToolEnterpriseText "enterpriseReport.pdf.notRequested") }
-    if ($IncludePdf) { $pdfResult = Convert-ToolHtmlToPdf -HtmlPath $htmlPath -PdfPath $pdfPath }
-    if ($pdfResult.Success) {
-        $pdfGuide = New-ToolReportPdfGuideHtml -PdfRequested $true -PdfCreated $true -PdfFileName ([IO.Path]::GetFileName($pdfPath)) -Culture $reportCulture
-        $html = $html.Replace('</main>', ($pdfGuide + '</main>'))
-        [IO.File]::WriteAllText($htmlPath, $html, (New-Object Text.UTF8Encoding($false)))
+    $published = $false
+    try {
+        if ($requestedFormats.Contains("Json")) {
+            [IO.File]::WriteAllText($jsonStagePath, ($fleet | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
+        }
+        if ($requestedFormats.Contains("Csv")) {
+            $csvRows = @($fleetRows | ForEach-Object {
+                $safeRow = [ordered]@{}
+                foreach ($property in $_.PSObject.Properties) { $safeRow[$property.Name] = ConvertTo-ToolEnterpriseCsvSafeText $property.Value 2048 }
+                [pscustomobject]$safeRow
+            })
+            if ($csvRows.Count -gt 0) {
+                $csvRows | Export-Csv -LiteralPath $csvStagePath -NoTypeInformation -Encoding UTF8
+            } else {
+                $emptyRow = [ordered]@{}
+                foreach ($columnName in @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnWindowsChannel,$columnWindowsLast5,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnRemoteChanges)) {
+                    $emptyRow[$columnName] = ""
+                }
+                $header = @([pscustomobject]$emptyRow | ConvertTo-Csv -NoTypeInformation)[0]
+                [IO.File]::WriteAllText($csvStagePath, ($header + [Environment]::NewLine), (New-Object Text.UTF8Encoding($false)))
+            }
+        }
+        if ($needsHtmlEngine) {
+            $createdAt = [DateTime]::Now
+            $activeWindows = @($clients | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.WindowsStatus) -and [string]$_.WindowsStatus -notin @("NotReported","Unknown") }).Count
+            $activeOffice = @($clients | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_.OfficeStatus) -and [string]$_.OfficeStatus -notin @("NotReported","Unknown") }).Count
+            $reportCulture = if (Get-Command Get-ToolCulture -ErrorAction SilentlyContinue) {
+                Get-ToolCulture
+            } elseif ([string]$env:TOOL_UI_CULTURE -in @("vi-VN", "en-US")) {
+                [string]$env:TOOL_UI_CULTURE
+            } else { "vi-VN" }
+            $html = New-ToolProfessionalHtmlDocument `
+                -Title (Get-ToolEnterpriseText "enterpriseReport.title") `
+                -Subtitle (Get-ToolEnterpriseText "enterpriseReport.subtitle") `
+                -Eyebrow (Get-ToolEnterpriseText "enterpriseReport.eyebrow") `
+                -Metadata @(
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.server");Value=if ($RedactSensitive) { "[REDACTED]" } else { [string]$env:COMPUTERNAME }},
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.time");Value=$createdAt.ToString("yyyy-MM-dd HH:mm:ss")},
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.scope");Value=("Included {0}/{1}; stale {2}; age limit {3}h" -f $clients.Count,$allClients.Count,$staleCount,$MaximumClientAgeHours)},
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.meta.privacy");Value=("Redacted={0}; full keys=false; CSV formula protection=true" -f $RedactSensitive)}
+                ) `
+                -Cards @(
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.clients");Value=[string]$clients.Count;Tone="info"},
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.windowsStatus");Value=[string]$activeWindows;Tone=$(if ($activeWindows -eq $clients.Count) {"ok"} else {"warning"})},
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.officeStatus");Value=[string]$activeOffice;Tone=$(if ($activeOffice -eq $clients.Count) {"ok"} else {"warning"})},
+                    [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.formats");Value=(@($requestedFormats.ToArray()) -join " / ").ToUpperInvariant();Tone="info"}
+                ) `
+                -Sections @(
+                    [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.clientList"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnOffice)) },
+                    [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.windowsDetails"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnWindows,$columnWindowsChannel,$columnWindowsLast5)) },
+                    [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.officeDetails"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnRemoteChanges)) },
+                    [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.limitations"); BodyHtml="<p class='note'>$(ConvertTo-ToolHtmlText (Get-ToolEnterpriseText "enterpriseReport.limitationsNote"))</p>" }
+                ) `
+                -Footer (Get-ToolEnterpriseText "enterpriseReport.footer" @($script:ToolEnterpriseToolVersion)) -Culture $reportCulture -OfflineMode $true
+            [IO.File]::WriteAllText($htmlStagePath, $html, (New-Object Text.UTF8Encoding($false)))
+            if (-not (Test-ToolHtmlOfflineSafe -HtmlPath $htmlStagePath)) { throw (Get-ToolEnterpriseText "enterpriseReport.error.htmlUnsafe") }
+            if ($requestedFormats.Contains("Pdf")) {
+                $pdfResult = Convert-ToolHtmlToPdf -HtmlPath $htmlStagePath -PdfPath $pdfStagePath
+                if (-not $pdfResult.Success -or -not (Test-Path -LiteralPath $pdfStagePath -PathType Leaf)) {
+                    $pdfError = if (-not [string]::IsNullOrWhiteSpace([string]$pdfResult.Error)) { [string]$pdfResult.Error } else { 'Unknown PDF conversion failure.' }
+                    throw (Get-ToolEnterpriseText 'enterpriseReport.error.pdfFailed' @($pdfError))
+                }
+                $pdfGuide = New-ToolReportPdfGuideHtml -PdfRequested $true -PdfCreated $true -PdfFileName ([IO.Path]::GetFileName($pdfStagePath)) -Culture $reportCulture
+                $html = $html.Replace('</main>', ($pdfGuide + '</main>'))
+                [IO.File]::WriteAllText($htmlStagePath, $html, (New-Object Text.UTF8Encoding($false)))
+            }
+            if (-not $requestedFormats.Contains("Html") -and (Test-Path -LiteralPath $htmlStagePath -PathType Leaf)) {
+                Remove-Item -LiteralPath $htmlStagePath -Force
+            }
+        }
+
+        $manifestLines = @((Get-ToolEnterpriseText "enterpriseReport.manifestHeader" @($script:ToolEnterpriseToolVersion)))
+        foreach ($path in @($jsonStagePath,$csvStagePath,$htmlStagePath,$pdfStagePath)) {
+            if (Test-Path -LiteralPath $path -PathType Leaf) { $manifestLines += "$(Get-ToolEnterpriseSha256Hex -Path $path)  $([IO.Path]::GetFileName($path))" }
+        }
+        [IO.File]::WriteAllLines($manifestStagePath, $manifestLines, (New-Object Text.UTF8Encoding($false)))
+        Move-Item -LiteralPath $stagingDirectory -Destination $finalDirectory
+        $published = $true
+    } finally {
+        if (-not $published -and (Test-Path -LiteralPath $stagingDirectory -PathType Container)) {
+            $expectedPrefix = $fullDestination.TrimEnd('\') + '\.enterprise-export-'
+            $resolvedStage = [IO.Path]::GetFullPath($stagingDirectory)
+            if ($resolvedStage.StartsWith($expectedPrefix, [StringComparison]::OrdinalIgnoreCase) -and $resolvedStage.EndsWith('.staging', [StringComparison]::OrdinalIgnoreCase)) {
+                Remove-Item -LiteralPath $resolvedStage -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
     }
-    $manifestLines = @((Get-ToolEnterpriseText "enterpriseReport.manifestHeader" @($script:ToolEnterpriseToolVersion)))
-    foreach ($path in @($jsonPath,$csvPath,$htmlPath,$pdfPath)) {
-        if (Test-Path -LiteralPath $path -PathType Leaf) { $manifestLines += "$(Get-ToolEnterpriseSha256Hex -Path $path)  $([IO.Path]::GetFileName($path))" }
-    }
-    [IO.File]::WriteAllLines($manifestPath, $manifestLines, (New-Object Text.UTF8Encoding($false)))
-    return [pscustomobject]@{
-        JsonPath=$jsonPath
-        CsvPath=$csvPath
-        HtmlPath=$htmlPath
-        PdfPath=if ($pdfResult.Success) { $pdfPath } else { "" }
-        Pdf=$pdfResult
-        ManifestPath=$manifestPath
-        ClientCount=$clients.Count
+
+    $jsonPath = if ($requestedFormats.Contains("Json")) { Join-Path $finalDirectory ([IO.Path]::GetFileName($jsonStagePath)) } else { "" }
+    $csvPath = if ($requestedFormats.Contains("Csv")) { Join-Path $finalDirectory ([IO.Path]::GetFileName($csvStagePath)) } else { "" }
+    $htmlPath = if ($requestedFormats.Contains("Html")) { Join-Path $finalDirectory ([IO.Path]::GetFileName($htmlStagePath)) } else { "" }
+    $pdfPath = if ($pdfResult.Success) { Join-Path $finalDirectory ([IO.Path]::GetFileName($pdfStagePath)) } else { "" }
+    if ($pdfResult.Success -and $pdfResult.PSObject.Properties["Path"]) { $pdfResult.Path = $pdfPath }
+    $manifestPath = Join-Path $finalDirectory ([IO.Path]::GetFileName($manifestStagePath))
+    return [pscustomobject][ordered]@{
+        ExportDirectory = $finalDirectory
+        JsonPath = $jsonPath
+        CsvPath = $csvPath
+        HtmlPath = $htmlPath
+        PdfPath = $pdfPath
+        Pdf = $pdfResult
+        ManifestPath = $manifestPath
+        ClientCount = $clients.Count
+        SourceClientCount = $allClients.Count
+        StaleClientCount = $staleCount
+        RedactSensitive = $RedactSensitive
+        Formats = @($requestedFormats.ToArray())
     }
 }
 

@@ -1,11 +1,12 @@
 ﻿param()
 
-$toolVersion = "4.9.0"
+$toolVersion = "5.0.0"
 $dashboardSchemaVersion = "2.0"
-$releaseVersion = "4.9.0.0"
-$releaseBuildDate = "2026.08.22"
+$releaseVersion = "5.0.0.0"
+$releaseBuildDate = "2026.08.24"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v$releaseVersion"
+$script:isUnsignedDevelopmentBuild = $false
 
 if ($PSVersionTable.PSVersion.Major -lt 3) {
     exit 10
@@ -80,10 +81,16 @@ try {
     . $provenanceHelper
     . $assistantHelper
     . $softwareInventoryHelper
+    $script:softwareCatalogFreshnessState = $null
+    try {
+        $startupSoftwareCatalog = Get-ToolSoftwareLicenseCatalog -PreferCache
+        if ($startupSoftwareCatalog) { $script:softwareCatalogFreshnessState = Get-ToolSoftwareCatalogFreshness -Catalog $startupSoftwareCatalog }
+    } catch {}
     $provenanceState = Get-ToolOfficialBuildState -ManifestPath $provenanceManifest -SignaturePath $provenanceSignature
     $launcherOfficialState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
-    if ($launcherOfficialState -eq 'Official' -and [string]$provenanceState.State -eq 'Official') {
-        $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
+    $launcherOfficialFailure = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_FAILURE)) { 'NotChecked' } else { [string]$env:TOOL_OFFICIAL_BUILD_FAILURE }
+    if ($launcherOfficialState -in @('Official','Managed') -and [string]$provenanceState.State -eq 'Official') {
+        $env:TOOL_OFFICIAL_BUILD_STATE = $launcherOfficialState
         $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
     } elseif ($launcherOfficialState -eq 'Modified' -or [string]$provenanceState.State -eq 'Modified') {
         $env:TOOL_OFFICIAL_BUILD_STATE = 'Modified'
@@ -91,7 +98,8 @@ try {
         $env:TOOL_SELF_UPDATE_ALLOWED = '0'
     } else {
         $env:TOOL_OFFICIAL_BUILD_STATE = 'Unverified'
-        $env:TOOL_OFFICIAL_BUILD_FAILURE = 'Provenance:' + [string]$provenanceState.Code
+        $script:isUnsignedDevelopmentBuild = [bool]($launcherOfficialFailure -eq 'DevelopmentBuild')
+        $env:TOOL_OFFICIAL_BUILD_FAILURE = if ($script:isUnsignedDevelopmentBuild) { 'DevelopmentBuild' } else { 'Provenance:' + [string]$provenanceState.Code }
         $env:TOOL_SELF_UPDATE_ALLOWED = '0'
     }
     $architectureState = Assert-ToolNativeArchitecture
@@ -133,6 +141,7 @@ try {
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+$script:dpiAwarenessState = Initialize-ToolDpiAwareness
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
@@ -450,7 +459,7 @@ $requiredIntegrityFiles = @(
     "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "Tool-Kiem-Tra-icon.svg",
     "Tool-Kiem-Tra.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
     "Tool-ReportSchema.ps1", "Tool-ReportExport.ps1", "Tool-PluginEngine.ps1", "Tool-LicenseTimeline.ps1", "Tool-SafetyPolicy.ps1",
-    "Tool-Enterprise.ps1", "Tool-EnterpriseHost.ps1", "Tool-EnterpriseAgent.ps1", "enterprise-license-manager.ps1",
+    "Tool-Enterprise.ps1", "Tool-EnterpriseCli.ps1", "Tool-EnterpriseHost.ps1", "Tool-EnterpriseAgent.ps1", "enterprise-license-manager.ps1",
     "windows-license-compliance-cleanup.ps1", "windows-license-restore.ps1",
     "windows-license-deep-scan.ps1", "windows-license-forensics.ps1",
     "windows-oem-license-assistant.ps1", "windows-office-license-manager.ps1",
@@ -521,8 +530,8 @@ $form.Font = $fontNormal
 $form.AutoScroll = $false
 $form.AutoScrollMargin = New-Object System.Drawing.Size(0, 0)
 $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
-$script:dashboardTheme = "Light"
-$env:TOOL_UI_THEME = $script:dashboardTheme
+$script:dashboardThemePreference = Get-ToolUiThemePreference
+$script:dashboardTheme = Get-ToolUiTheme
 $script:toolUiPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
 $script:dashboardCulture = Get-ToolCulture
 $script:offlineMode = [bool](Get-ToolOfflineMode)
@@ -654,6 +663,7 @@ $themeButton.Size = New-Object System.Drawing.Size(152, 32)
 $themeButton.Location = New-Object System.Drawing.Point(820, 12)
 $themeButton.Add_Click({
     $script:dashboardTheme = if ($script:dashboardTheme -eq "Light") { "Dark" } else { "Light" }
+    $script:dashboardThemePreference = $script:dashboardTheme
     $script:toolUiPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
     [void](Set-ToolUiThemePreference -Mode $script:dashboardTheme)
     Set-DashboardTheme -Mode $script:dashboardTheme
@@ -737,13 +747,29 @@ $introSummary.Size = New-Object System.Drawing.Size(650, 20)
 $introPanel.Controls.Add($introSummary)
 
 $script:officialBuildState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
-if ($script:officialBuildState -ne 'Official') {
-    $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
-    $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
-    $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
-    $description.Text = Get-DashboardText 'officialBuild.banner.title'
-    $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
-    $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
+if ($script:officialBuildState -eq 'Managed') {
+    $introPanel.BackColor = [System.Drawing.Color]::FromArgb(232, 245, 255)
+    $introAccent.BackColor = [System.Drawing.Color]::FromArgb(2, 132, 199)
+    $description.ForeColor = [System.Drawing.Color]::FromArgb(3, 105, 161)
+    $description.Text = Get-DashboardText 'officialBuild.banner.managedTitle'
+    $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(7, 89, 133)
+    $introSummary.Text = Get-DashboardText 'officialBuild.banner.managedBody'
+} elseif ($script:officialBuildState -ne 'Official') {
+    if ($script:isUnsignedDevelopmentBuild) {
+        $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 225)
+        $introAccent.BackColor = [System.Drawing.Color]::FromArgb(217, 119, 6)
+        $description.ForeColor = [System.Drawing.Color]::FromArgb(146, 64, 14)
+        $description.Text = Get-DashboardText 'officialBuild.banner.developmentTitle'
+        $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(120, 53, 15)
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.developmentBody'
+    } else {
+        $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
+        $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
+        $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
+        $description.Text = Get-DashboardText 'officialBuild.banner.title'
+        $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
+    }
 }
 
 $introAssistantButton = New-Object System.Windows.Forms.Button
@@ -794,7 +820,7 @@ $form.Controls.Add($dashboardPanel)
 $cardDefinitions = @(
     @{ Key="Compatibility"; IconKind="Windows"; Tone="Windows"; Caption=(Get-ToolText -Key "dashboard.windows" -Culture $script:dashboardCulture); Value=[string]$capabilityState.WindowsReleaseName },
     @{ Key="Architecture"; IconKind="Office"; Tone="Office"; Caption=(Get-ToolText -Key "dashboard.office" -Culture $script:dashboardCulture); Value=[string]$capabilityState.OfficeSummary },
-    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
+    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'Managed') { Get-DashboardText 'officialBuild.state.managed' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
     @{ Key="Integrity"; IconKind="Check"; Tone="Integrity"; Caption=(Get-ToolText -Key "dashboard.integrity" -Culture $script:dashboardCulture); Value=(Get-ToolText -Key "dashboard.checking" -Culture $script:dashboardCulture) }
 )
 for ($cardIndex = 0; $cardIndex -lt $cardDefinitions.Count; $cardIndex++) {
@@ -1066,6 +1092,10 @@ function Open-ToolHtmlReport {
     $extension = [IO.Path]::GetExtension([string]$Path).ToLowerInvariant()
     if ($extension -notin @('.html', '.htm')) {
         Write-ProgressLog (Get-DashboardText "report.htmlOnly" @([IO.Path]::GetFileName([string]$Path)))
+        return $false
+    }
+    if ((Get-Command Test-ToolHtmlOfflineSafe -ErrorAction SilentlyContinue) -and -not (Test-ToolHtmlOfflineSafe -HtmlPath $Path)) {
+        Write-ProgressLog (Get-DashboardText 'report.viewer.unsafeBlocked' @([IO.Path]::GetFileName([string]$Path)))
         return $false
     }
     Register-ToolReportPath -Path $Path
@@ -1957,9 +1987,14 @@ function Show-DashboardPreferences {
 
     $settingsTheme = New-Object System.Windows.Forms.ComboBox
     $settingsTheme.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+    [void]$settingsTheme.Items.Add((Get-DashboardText "app.theme.system"))
     [void]$settingsTheme.Items.Add((Get-DashboardText "app.theme.light"))
     [void]$settingsTheme.Items.Add((Get-DashboardText "app.theme.dark"))
-    $settingsTheme.SelectedIndex = if ($script:dashboardTheme -eq "Dark") { 1 } else { 0 }
+    $settingsTheme.SelectedIndex = switch ([string]$script:dashboardThemePreference) {
+        'Light' { 1 }
+        'Dark' { 2 }
+        default { 0 }
+    }
     $settingsTheme.Location = New-Object System.Drawing.Point(190, 147)
     $settingsTheme.Size = New-Object System.Drawing.Size(244, 30)
     $dialog.Controls.Add($settingsTheme)
@@ -1985,12 +2020,17 @@ function Show-DashboardPreferences {
         $selectedCulture = if ($settingsLanguage.SelectedIndex -eq 1) { "en-US" } else { "vi-VN" }
         if ($selectedCulture -ne $script:dashboardCulture) { Set-DashboardLanguage -Culture $selectedCulture }
 
-        $selectedTheme = if ($settingsTheme.SelectedIndex -eq 1) { "Dark" } else { "Light" }
-        if ($selectedTheme -ne $script:dashboardTheme) {
-            $script:dashboardTheme = $selectedTheme
-            $script:toolUiPalette = Get-ToolUiPalette -Mode $selectedTheme
-            [void](Set-ToolUiThemePreference -Mode $selectedTheme)
-            Set-DashboardTheme -Mode $selectedTheme
+        $selectedThemePreference = switch ($settingsTheme.SelectedIndex) {
+            1 { 'Light' }
+            2 { 'Dark' }
+            default { 'System' }
+        }
+        if ($selectedThemePreference -ne [string]$script:dashboardThemePreference) {
+            [void](Set-ToolUiThemePreference -Mode $selectedThemePreference)
+            $script:dashboardThemePreference = $selectedThemePreference
+            $script:dashboardTheme = Get-ToolUiTheme
+            $script:toolUiPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
+            Set-DashboardTheme -Mode $script:dashboardTheme
         }
 
         $requestedOffline = [bool]$settingsOffline.Checked
@@ -2074,6 +2114,12 @@ function Set-DashboardLanguage {
     if ($script:officialBuildState -eq 'Official') {
         $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
         $introSummary.Text = Get-ToolText -Key "dashboard.overview.subtitle" -Culture $Culture
+    } elseif ($script:officialBuildState -eq 'Managed') {
+        $description.Text = Get-DashboardText 'officialBuild.banner.managedTitle'
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.managedBody'
+    } elseif ($script:isUnsignedDevelopmentBuild) {
+        $description.Text = Get-DashboardText 'officialBuild.banner.developmentTitle'
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.developmentBody'
     } else {
         $description.Text = Get-DashboardText 'officialBuild.banner.title'
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
@@ -2099,6 +2145,8 @@ function Set-DashboardLanguage {
     $dashboardCards["Integrity"].Caption.Text = Get-ToolText -Key "dashboard.integrity" -Culture $Culture
     $dashboardCards["SecureLaunch"].Value.Text = if ($script:officialBuildState -eq 'Official') {
         Get-DashboardText 'officialBuild.state.official'
+    } elseif ($script:officialBuildState -eq 'Managed') {
+        Get-DashboardText 'officialBuild.state.managed'
     } elseif ($script:officialBuildState -eq 'Modified') {
         Get-DashboardText 'officialBuild.state.modified'
     } else {
@@ -2192,6 +2240,16 @@ function Set-DashboardTheme {
         $introAccent.BackColor = $primary
         $description.ForeColor = $primary
         $introSummary.ForeColor = $text
+    } elseif ($script:officialBuildState -eq 'Managed') {
+        $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(8, 47, 73) } else { [System.Drawing.Color]::FromArgb(232, 245, 255) }
+        $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(56, 189, 248) } else { [System.Drawing.Color]::FromArgb(2, 132, 199) }
+        $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(186, 230, 253) } else { [System.Drawing.Color]::FromArgb(3, 105, 161) }
+        $introSummary.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(224, 242, 254) } else { [System.Drawing.Color]::FromArgb(7, 89, 133) }
+    } elseif ($script:isUnsignedDevelopmentBuild) {
+        $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(69, 45, 15) } else { [System.Drawing.Color]::FromArgb(255, 248, 225) }
+        $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(251, 191, 36) } else { [System.Drawing.Color]::FromArgb(217, 119, 6) }
+        $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 240, 138) } else { [System.Drawing.Color]::FromArgb(146, 64, 14) }
+        $introSummary.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 243, 199) } else { [System.Drawing.Color]::FromArgb(120, 53, 15) }
     } else {
         $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(67, 28, 33) } else { [System.Drawing.Color]::FromArgb(255, 235, 238) }
         $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(248, 113, 113) } else { [System.Drawing.Color]::FromArgb(185, 28, 28) }
@@ -2296,16 +2354,31 @@ function Update-DashboardStatus {
     } else {
         Get-DashboardText "dashboard.compatibility.catalogFresh" @($compatibilityState.ReviewedAtUtc, $catalogAgeDays, $catalogMaximumAgeDays)
     }
-    $compatibilityCard.Value.Text = if ($catalogHealth -eq "Stale") {
+    $softwareCatalogHealth = if ($script:softwareCatalogFreshnessState) { [string]$script:softwareCatalogFreshnessState.Status } else { 'Unavailable' }
+    if ($softwareCatalogHealth -notin @('Fresh','Warning','Stale','Future','Invalid','Unavailable')) {
+        $softwareCatalogHealth = 'Unavailable'
+    }
+    $softwareCatalogStatusKey = $softwareCatalogHealth.ToLowerInvariant()
+    $softwareCatalogTooltip = if ($script:softwareCatalogFreshnessState) {
+        Get-DashboardText ("dashboard.softwareCatalog." + $softwareCatalogStatusKey) @(
+            [int]$script:softwareCatalogFreshnessState.AgeDays,
+            [int]$script:softwareCatalogFreshnessState.MaximumAgeDays)
+    } else {
+        Get-DashboardText 'dashboard.softwareCatalog.unavailable'
+    }
+    $catalogTooltip = $catalogTooltip + "`r`n`r`n" + $softwareCatalogTooltip
+    $compatibilityValue = if ($catalogHealth -eq "Stale") {
         Get-DashboardText "dashboard.compatibility.valueStale" @($capabilityState.WindowsReleaseName)
     } elseif ($catalogHealth -eq "Warning") {
         Get-DashboardText "dashboard.compatibility.valueWarning" @($capabilityState.WindowsReleaseName, $catalogAgeDays)
     } else {
         [string]$capabilityState.WindowsReleaseName
     }
+    $softwareCatalogValue = Get-DashboardText ("dashboard.softwareCatalog.value." + $softwareCatalogStatusKey)
+    $compatibilityCard.Value.Text = $compatibilityValue + "`r`n" + $softwareCatalogValue
     $toolTip.SetToolTip($compatibilityCard.Panel, $catalogTooltip)
     $toolTip.SetToolTip($compatibilityCard.Value, $catalogTooltip)
-    if ($catalogHealth -in @("Warning", "Stale")) {
+    if ($catalogHealth -in @("Warning", "Stale") -or $softwareCatalogHealth -in @('Warning','Stale','Future','Invalid','Unavailable')) {
         $compatibilityCard.Value.ForeColor = $warningColor
         $compatibilityCard.Value.Tag = "StatusColor"
     } else {
@@ -2316,6 +2389,8 @@ function Update-DashboardStatus {
     $dashboardCards["Architecture"].Value.Text = [string]$capabilityState.OfficeSummary
     $dashboardCards["SecureLaunch"].Value.Text = if ($script:officialBuildState -eq 'Official') {
         Get-DashboardText 'officialBuild.state.official'
+    } elseif ($script:officialBuildState -eq 'Managed') {
+        Get-DashboardText 'officialBuild.state.managed'
     } elseif ($script:officialBuildState -eq 'Modified') {
         Get-DashboardText 'officialBuild.state.modified'
     } else {
@@ -2328,7 +2403,7 @@ function Update-DashboardStatus {
     }
     $dashboardCards["Integrity"].Value.ForeColor = if ($IntegrityResult.Valid) { $successColor } else { $warningColor }
     $dashboardCards["Integrity"].Value.Tag = "StatusColor"
-    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -eq 'Official') { $successColor } else { $warningColor }
+    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -in @('Official','Managed')) { $successColor } else { $warningColor }
     $dashboardCards["SecureLaunch"].Value.Tag = "StatusColor"
     Update-DashboardOfflineUi
 }
@@ -2434,6 +2509,7 @@ function Confirm-KmsApprovalConfiguration {
     if ($config.Entries.Count -gt 0 -and $config.Invalid.Count -eq 0 -and $unapprovedDetected.Count -eq 0) { return $true }
 
     $dialog = New-Object System.Windows.Forms.Form
+    $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $dialog.Text = Get-DashboardText "kms.dialog.title"
     $dialog.StartPosition = "CenterParent"
     $dialog.FormBorderStyle = "FixedDialog"
@@ -2794,7 +2870,7 @@ function Stop-ActiveTask {
 function Get-ReadyToolModule([string]$moduleId, [bool]$elevatedLaunch) {
     $availability = Test-ToolModuleAvailability -ModuleId $moduleId -CapabilityProfile $capabilityState -SourceDirectory $baseDir
     if (-not $availability.Available) { throw (Get-DashboardText "module.unavailable" @($moduleId, $availability.Message)) }
-    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -ne 'Official') {
+    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -notin @('Official','Managed')) {
         throw (Get-DashboardText 'officialBuild.systemChangeBlocked' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL))
     }
     if ($availability.Descriptor.RequiresElevation -and -not $elevatedLaunch) { throw (Get-DashboardText "module.elevationRequired" @($moduleId)) }
@@ -3002,6 +3078,213 @@ function Show-ReportPrivacyChooser {
     return $choice
 }
 
+function Show-ReportScanChooser {
+    $preference = Get-ToolScanPreference
+    $dialog = New-Object System.Windows.Forms.Form
+    $dialog.Text = Get-DashboardText 'scan.dialog.title'
+    $dialog.StartPosition = 'CenterParent'
+    $dialog.FormBorderStyle = 'Sizable'
+    $dialog.MaximizeBox = $false
+    $dialog.MinimizeBox = $false
+    $dialog.ShowInTaskbar = $false
+    $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
+    $dialog.MinimumSize = New-Object System.Drawing.Size(640, 650)
+    $dialog.ClientSize = New-Object System.Drawing.Size(690, 680)
+    $dialog.Tag = $null
+
+    $layout = New-Object System.Windows.Forms.TableLayoutPanel
+    $layout.Dock = 'Fill'
+    $layout.Padding = New-Object System.Windows.Forms.Padding(22, 18, 22, 16)
+    $layout.ColumnCount = 1
+    $layout.RowCount = 10
+    [void]$layout.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 58)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 40)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 38)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 38)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 46)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 38)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 46)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 52)))
+    $dialog.Controls.Add($layout)
+
+    $intro = New-Object System.Windows.Forms.Label
+    $intro.Text = Get-DashboardText 'scan.dialog.summary'
+    $intro.Dock = 'Fill'
+    $intro.AutoEllipsis = $true
+    $layout.Controls.Add($intro, 0, 0)
+
+    $profileRow = New-Object System.Windows.Forms.FlowLayoutPanel
+    $profileRow.Dock = 'Fill'
+    $profileRow.WrapContents = $false
+    $profileLabel = New-Object System.Windows.Forms.Label
+    $profileLabel.Text = Get-DashboardText 'scan.dialog.level'
+    $profileLabel.Size = New-Object System.Drawing.Size(180, 28)
+    $profileLabel.TextAlign = 'MiddleLeft'
+    $profileCombo = New-Object System.Windows.Forms.ComboBox
+    $profileCombo.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+    $profileCombo.Size = New-Object System.Drawing.Size(260, 30)
+    [void]$profileCombo.Items.Add((Get-DashboardText 'scan.profile.quick'))
+    [void]$profileCombo.Items.Add((Get-DashboardText 'scan.profile.standard'))
+    [void]$profileCombo.Items.Add((Get-DashboardText 'scan.profile.deep'))
+    $profileCombo.SelectedIndex = switch ([string]$preference.Profile) { 'Quick' { 0 }; 'Deep' { 2 }; default { 1 } }
+    $profileRow.Controls.Add($profileLabel)
+    $profileRow.Controls.Add($profileCombo)
+    $layout.Controls.Add($profileRow, 0, 1)
+
+    $lowResourceCheck = New-Object System.Windows.Forms.CheckBox
+    $lowResourceCheck.Text = Get-DashboardText 'scan.dialog.lowResource'
+    $lowResourceCheck.Checked = [bool]$preference.LowResource
+    $lowResourceCheck.Dock = 'Fill'
+    $layout.Controls.Add($lowResourceCheck, 0, 2)
+
+    $rootLabel = New-Object System.Windows.Forms.Label
+    $rootLabel.Text = Get-DashboardText 'scan.dialog.roots'
+    $rootLabel.Dock = 'Fill'
+    $rootLabel.TextAlign = 'MiddleLeft'
+    $layout.Controls.Add($rootLabel, 0, 3)
+
+    $rootList = New-Object System.Windows.Forms.ListBox
+    $rootList.Dock = 'Fill'
+    $rootList.HorizontalScrollbar = $true
+    foreach ($root in @($preference.IncludedRoots)) { if ($root) { [void]$rootList.Items.Add([string]$root) } }
+    $layout.Controls.Add($rootList, 0, 4)
+
+    $rootButtons = New-Object System.Windows.Forms.FlowLayoutPanel
+    $rootButtons.Dock = 'Fill'
+    $rootButtons.WrapContents = $false
+    $addRootButton = New-Object System.Windows.Forms.Button
+    $addRootButton.Text = Get-DashboardText 'scan.dialog.addFolder'
+    $addRootButton.Size = New-Object System.Drawing.Size(150, 34)
+    $addRootButton.Add_Click({
+        if ($rootList.Items.Count -ge 8) {
+            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'scan.dialog.maximumRoots'), $dialog.Text, 'OK', 'Warning') | Out-Null
+            return
+        }
+        $folderPicker = New-Object System.Windows.Forms.FolderBrowserDialog
+        $folderPicker.Description = Get-DashboardText 'scan.dialog.folderPrompt'
+        if ($folderPicker.ShowDialog($dialog) -ne [System.Windows.Forms.DialogResult]::OK) { return }
+        try {
+            $currentExcludedRoots = @($excludedRootList.Items | ForEach-Object { [string]$_ })
+            $candidatePlan = Resolve-ToolScanPlan -Profile 'Standard' -IncludedRoots @([string]$folderPicker.SelectedPath) -ExcludedRoots $currentExcludedRoots
+            $candidateRoot = [string]@($candidatePlan.IncludedRoots)[0]
+            if ([string]::IsNullOrWhiteSpace($candidateRoot)) { throw 'ScanRootRejected' }
+            if (-not @($rootList.Items) -contains $candidateRoot) { [void]$rootList.Items.Add($candidateRoot) }
+        } catch {
+            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'scan.dialog.invalidRoot' @($_.Exception.Message)), $dialog.Text, 'OK', 'Warning') | Out-Null
+        }
+    })
+    $removeRootButton = New-Object System.Windows.Forms.Button
+    $removeRootButton.Text = Get-DashboardText 'scan.dialog.removeFolder'
+    $removeRootButton.Size = New-Object System.Drawing.Size(150, 34)
+    $removeRootButton.Add_Click({ if ($rootList.SelectedIndex -ge 0) { $rootList.Items.RemoveAt($rootList.SelectedIndex) } })
+    $defaultRootsButton = New-Object System.Windows.Forms.Button
+    $defaultRootsButton.Text = Get-DashboardText 'scan.dialog.defaultScope'
+    $defaultRootsButton.Size = New-Object System.Drawing.Size(190, 34)
+    $defaultRootsButton.Add_Click({ $rootList.Items.Clear() })
+    $rootButtons.Controls.Add($addRootButton)
+    $rootButtons.Controls.Add($removeRootButton)
+    $rootButtons.Controls.Add($defaultRootsButton)
+    $layout.Controls.Add($rootButtons, 0, 5)
+
+    $excludedRootLabel = New-Object System.Windows.Forms.Label
+    $excludedRootLabel.Text = Get-DashboardText 'scan.dialog.excludedRoots'
+    $excludedRootLabel.Dock = 'Fill'
+    $excludedRootLabel.TextAlign = 'MiddleLeft'
+    $layout.Controls.Add($excludedRootLabel, 0, 6)
+
+    $excludedRootList = New-Object System.Windows.Forms.ListBox
+    $excludedRootList.Dock = 'Fill'
+    $excludedRootList.HorizontalScrollbar = $true
+    foreach ($excludedRoot in @($preference.ExcludedRoots)) {
+        if ($excludedRoot) { [void]$excludedRootList.Items.Add([string]$excludedRoot) }
+    }
+    $layout.Controls.Add($excludedRootList, 0, 7)
+
+    $excludedRootButtons = New-Object System.Windows.Forms.FlowLayoutPanel
+    $excludedRootButtons.Dock = 'Fill'
+    $excludedRootButtons.WrapContents = $false
+    $addExcludedRootButton = New-Object System.Windows.Forms.Button
+    $addExcludedRootButton.Text = Get-DashboardText 'scan.dialog.addExclusion'
+    $addExcludedRootButton.Size = New-Object System.Drawing.Size(150, 34)
+    $addExcludedRootButton.Add_Click({
+        if ($excludedRootList.Items.Count -ge 8) {
+            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'scan.dialog.maximumRoots'), $dialog.Text, 'OK', 'Warning') | Out-Null
+            return
+        }
+        $folderPicker = New-Object System.Windows.Forms.FolderBrowserDialog
+        $folderPicker.Description = Get-DashboardText 'scan.dialog.exclusionPrompt'
+        if ($folderPicker.ShowDialog($dialog) -ne [System.Windows.Forms.DialogResult]::OK) { return }
+        try {
+            $currentIncludedRoots = @($rootList.Items | ForEach-Object { [string]$_ })
+            $candidatePlan = Resolve-ToolScanPlan -Profile 'Standard' -IncludedRoots $currentIncludedRoots -ExcludedRoots @([string]$folderPicker.SelectedPath)
+            $candidateRoot = [string]@($candidatePlan.ExcludedRoots)[0]
+            if ([string]::IsNullOrWhiteSpace($candidateRoot)) { throw 'ScanRootRejected' }
+            if (-not @($excludedRootList.Items) -contains $candidateRoot) { [void]$excludedRootList.Items.Add($candidateRoot) }
+        } catch {
+            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'scan.dialog.invalidRoot' @($_.Exception.Message)), $dialog.Text, 'OK', 'Warning') | Out-Null
+        }
+    })
+    $removeExcludedRootButton = New-Object System.Windows.Forms.Button
+    $removeExcludedRootButton.Text = Get-DashboardText 'scan.dialog.removeExclusion'
+    $removeExcludedRootButton.Size = New-Object System.Drawing.Size(150, 34)
+    $removeExcludedRootButton.Add_Click({
+        if ($excludedRootList.SelectedIndex -ge 0) { $excludedRootList.Items.RemoveAt($excludedRootList.SelectedIndex) }
+    })
+    $clearExcludedRootsButton = New-Object System.Windows.Forms.Button
+    $clearExcludedRootsButton.Text = Get-DashboardText 'scan.dialog.clearExclusions'
+    $clearExcludedRootsButton.Size = New-Object System.Drawing.Size(190, 34)
+    $clearExcludedRootsButton.Add_Click({ $excludedRootList.Items.Clear() })
+    $excludedRootButtons.Controls.Add($addExcludedRootButton)
+    $excludedRootButtons.Controls.Add($removeExcludedRootButton)
+    $excludedRootButtons.Controls.Add($clearExcludedRootsButton)
+    $layout.Controls.Add($excludedRootButtons, 0, 8)
+
+    $footer = New-Object System.Windows.Forms.FlowLayoutPanel
+    $footer.Dock = 'Fill'
+    $footer.FlowDirection = 'RightToLeft'
+    $footer.WrapContents = $false
+    $okButton = New-Object System.Windows.Forms.Button
+    $okButton.Text = Get-DashboardText 'scan.dialog.continue'
+    $okButton.Size = New-Object System.Drawing.Size(150, 38)
+    $okButton.Add_Click({
+        $profile = switch ($profileCombo.SelectedIndex) { 0 { 'Quick' }; 2 { 'Deep' }; default { 'Standard' } }
+        $roots = @($rootList.Items | ForEach-Object { [string]$_ })
+        $excludedRoots = @($excludedRootList.Items | ForEach-Object { [string]$_ })
+        try {
+            $validatedPlan = Resolve-ToolScanPlan -Profile $profile -LowResource:([bool]$lowResourceCheck.Checked) -IncludedRoots $roots -ExcludedRoots $excludedRoots
+            [void](Set-ToolScanPreference -Profile $profile -LowResource:([bool]$lowResourceCheck.Checked) -IncludedRoots @($validatedPlan.IncludedRoots) -ExcludedRoots @($validatedPlan.ExcludedRoots))
+            $dialog.Tag = [pscustomobject][ordered]@{
+                Profile = $profile
+                LowResource = [bool]$lowResourceCheck.Checked
+                IncludedRoots = @($validatedPlan.IncludedRoots)
+                ExcludedRoots = @($validatedPlan.ExcludedRoots)
+                DeleteAfterRead = $true
+            }
+            $dialog.Close()
+        } catch {
+            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'scan.dialog.invalidRoot' @($_.Exception.Message)), $dialog.Text, 'OK', 'Warning') | Out-Null
+        }
+    })
+    $cancelButton = New-Object System.Windows.Forms.Button
+    $cancelButton.Text = Get-DashboardText 'report.privacy.cancelButton'
+    $cancelButton.Size = New-Object System.Drawing.Size(130, 38)
+    $cancelButton.Add_Click({ $dialog.Tag = $null; $dialog.Close() })
+    $footer.Controls.Add($okButton)
+    $footer.Controls.Add($cancelButton)
+    $layout.Controls.Add($footer, 0, 9)
+    $dialog.AcceptButton = $okButton
+    $dialog.CancelButton = $cancelButton
+    Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
+    Set-ToolUiPrimaryActionButtonVisual -Button $okButton -Mode $script:dashboardTheme
+    [void]$dialog.ShowDialog($form)
+    $result = $dialog.Tag
+    $dialog.Dispose()
+    return $result
+}
+
 function Start-Report([string]$mode, [string]$displayName) {
     if (-not (Test-Path -LiteralPath $reportScript)) {
         [System.Windows.Forms.MessageBox]::Show(
@@ -3012,13 +3295,18 @@ function Start-Report([string]$mode, [string]$displayName) {
     }
     $privacyChoice = Show-ReportPrivacyChooser
     if ($privacyChoice -eq 'Cancel') { return }
+    $scanChoice = Show-ReportScanChooser
+    if ($null -eq $scanChoice) { return }
     $redactSensitive = [bool]($privacyChoice -eq 'Redacted')
     try {
         Start-ProgressDisplay $displayName (Get-ToolText -Key "report.starting" -Culture $script:dashboardCulture) $false
         Write-ProgressLog (Get-ToolText -Key $(if ($redactSensitive) { "report.redactedProgress" } else { "report.internalProgress" }) -Culture $script:dashboardCulture)
         $privacyArgument = if ($redactSensitive) { " -RedactSensitive" } else { " -FullInternal" }
         $output = New-ToolReportRunDirectory -Category "BaoCao-$mode"
-        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -Pdf$privacyArgument"
+        $scanSettingsPath = Join-Path $output 'scan-request.json'
+        $scanRequestJson = $scanChoice | ConvertTo-Json -Depth 4
+        [IO.File]::WriteAllText($scanSettingsPath, $scanRequestJson, (New-Object Text.UTF8Encoding($false)))
+        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -ScanSettingsPath `"$scanSettingsPath`" -Pdf$privacyArgument"
         $moduleId = Get-ToolReportModuleId -Mode $mode
         # Windows licensing, all-user AppX and other-user registry hives can
         # require an elevated token. The click is the user's action and UAC is
@@ -3278,6 +3566,7 @@ function Show-SoftwareCatalogFailureDialog {
     param([Parameter(Mandatory = $true)][string]$Detail)
 
     $dialog = New-Object System.Windows.Forms.Form
+    $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $dialog.Text = Get-DashboardText 'software.online.failedTitle'
     $dialog.StartPosition = 'CenterParent'
     $dialog.FormBorderStyle = 'FixedDialog'
@@ -3348,6 +3637,11 @@ function Complete-SoftwareCatalogOnlineUpdate {
     }
 
     if ([bool]$result.Success) {
+        try {
+            $updatedSoftwareCatalog = Get-ToolSoftwareLicenseCatalog -PreferCache
+            if ($updatedSoftwareCatalog) { $script:softwareCatalogFreshnessState = Get-ToolSoftwareCatalogFreshness -Catalog $updatedSoftwareCatalog }
+            if ($script:lastIntegrityResult) { Update-DashboardStatus -IntegrityResult $script:lastIntegrityResult }
+        } catch {}
         $status.Text = Get-DashboardText "software.online.successStatus" @($result.CatalogVersion, $result.ProductRuleCount)
         $status.ForeColor = [System.Drawing.Color]::DarkGreen
         Write-ProgressLog (Get-DashboardText "software.online.successLog" @($result.CatalogVersion, $result.ProductRuleCount, $result.CachePath))
@@ -3562,6 +3856,7 @@ function Show-ApplicationUpdateDialog {
     param([Parameter(Mandatory = $true)][object]$Candidate)
 
     $dialog = New-Object System.Windows.Forms.Form
+    $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $dialog.Text = Get-DashboardText "update.dialog.title"
     $dialog.StartPosition = "CenterParent"
     $dialog.Size = New-Object System.Drawing.Size(750, 610)
@@ -4040,6 +4335,7 @@ function Show-ScanWarningRecoveryDialog {
     $warningText = if ($warningLines.Count -gt 0) { $warningLines -join "`r`n" } else { Get-DashboardText "scanWarning.noDetail" }
 
     $dialog = New-Object System.Windows.Forms.Form
+    $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $dialog.Text = Get-DashboardText "scanWarning.title"
     $dialog.StartPosition = "CenterParent"
     $dialog.FormBorderStyle = "Sizable"
@@ -4957,6 +5253,7 @@ function Open-GuiVendorLicenseAction {
         return
     }
     $picker = New-Object System.Windows.Forms.Form
+    $picker.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $picker.Text = Get-DashboardText 'cleanup.result.vendorTitle'
     $picker.StartPosition = 'CenterParent'; $picker.ClientSize = New-Object System.Drawing.Size(700,160); $picker.Tag = ''
     $label = New-Object System.Windows.Forms.Label
@@ -6030,6 +6327,7 @@ function Open-VersionHistory {
 
 function Show-AdvancedScanMenu {
     $chooser = New-Object System.Windows.Forms.Form
+    $chooser.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $chooser.Text = Get-ToolText -Key "advanced.form.title" -Culture $script:dashboardCulture
     $chooser.StartPosition = "CenterParent"
     $chooser.FormBorderStyle = "FixedDialog"
@@ -6877,16 +7175,62 @@ function Install-PluginFromDialog {
         }
         $directoryState = Test-ToolPluginDirectory -Path $pluginDirectory
         if (-not $directoryState.Valid) { throw ($directoryState.Errors -join "; ") }
+        $requireTrustedPluginSignature = [bool]($env:TOOL_SECURE_LAUNCH -eq '1')
+        $trustedPluginSigners = @(Get-ToolPluginTrustedSignerCertificateSha256 -PluginDirectory $directoryState.Path)
+        if ($requireTrustedPluginSignature -and $trustedPluginSigners.Count -eq 0) {
+            throw (Get-DashboardText 'plugin.trustedPublisherPolicyMissing' @((Get-ToolPluginPublisherTrustPath -PluginDirectory $directoryState.Path)))
+        }
         $picker = New-Object System.Windows.Forms.OpenFileDialog
         $picker.Title = Get-DashboardText "plugin.pickerTitle"
         $picker.Filter = Get-DashboardText "plugin.pickerFilter"
         $picker.Multiselect = $false
         if ($picker.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) { return }
-        $package = Read-ToolPluginPackage -Path $picker.FileName -AllowOutsideProtectedDirectory
+        $catalogInstall = [bool]$picker.FileName.EndsWith('.plugin-catalog.json', [StringComparison]::OrdinalIgnoreCase)
+        $catalogResult = $null
+        if ($catalogInstall) {
+            if ($trustedPluginSigners.Count -eq 0) {
+                throw (Get-DashboardText 'plugin.trustedPublisherPolicyMissing' @((Get-ToolPluginPublisherTrustPath -PluginDirectory $directoryState.Path)))
+            }
+            $catalogResult = Read-ToolPluginCatalog -Path $picker.FileName `
+                -TrustedSignerCertificateSha256 $trustedPluginSigners
+            if (-not $catalogResult.Valid) { throw ($catalogResult.Errors -join "`r`n") }
+            if (-not $catalogResult.InstallationAllowed) {
+                throw (Get-DashboardText 'foundation.plugin.catalogInstallBlocked' @($catalogResult.FreshnessStatus))
+            }
+            $packagePicker = New-Object System.Windows.Forms.OpenFileDialog
+            $packagePicker.Title = Get-DashboardText 'plugin.catalogPackagePickerTitle'
+            $packagePicker.Filter = Get-DashboardText 'plugin.catalogPackagePickerFilter'
+            $packagePicker.Multiselect = $false
+            if ($packagePicker.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) { return }
+            $package = Read-ToolPluginPackage -Path $packagePicker.FileName -AllowOutsideProtectedDirectory `
+                -TrustedSignerCertificateSha256 @([string]$catalogResult.SignerCertificateSha256) -RequireTrustedSignature
+        } else {
+            $package = Read-ToolPluginPackage -Path $picker.FileName -AllowOutsideProtectedDirectory `
+                -TrustedSignerCertificateSha256 $trustedPluginSigners -RequireTrustedSignature:$requireTrustedPluginSignature
+        }
         if (-not $package.Valid) { throw ($package.Errors -join "`r`n") }
         $plugin = $package.Plugin
+        if ($catalogInstall) {
+            $catalogEntries = @($catalogResult.Entries | Where-Object {
+                [string]::Equals([string]$_.PluginId, [string]$plugin.PluginId, [StringComparison]::Ordinal)
+            })
+            if ($catalogEntries.Count -ne 1 -or
+                -not [string]::Equals([string]$catalogEntries[0].Version, [string]$plugin.Version, [StringComparison]::Ordinal)) {
+                throw (Get-DashboardText 'foundation.plugin.catalogPackageIdentityMismatch')
+            }
+            if (-not [string]::Equals([string]$catalogEntries[0].PackageSha256, [string]$package.Sha256, [StringComparison]::OrdinalIgnoreCase)) {
+                throw (Get-DashboardText 'foundation.plugin.catalogPackageHashMismatch')
+            }
+        }
+        $promptKey = if ($catalogInstall) { 'plugin.catalogInstallPrompt' } else { 'plugin.installPrompt' }
+        $promptArguments = if ($catalogInstall) {
+            @($plugin.Name, $plugin.PluginId, $plugin.Version, $plugin.Publisher, @($plugin.Rules).Count, $package.Sha256,
+                $catalogResult.Catalog.CatalogId, $catalogResult.FreshnessStatus, $catalogResult.SignerCertificateSha256)
+        } else {
+            @($plugin.Name, $plugin.PluginId, $plugin.Version, $plugin.Publisher, @($plugin.Rules).Count, $package.Sha256)
+        }
         $confirmation = [System.Windows.Forms.MessageBox]::Show(
-            (Get-DashboardText "plugin.installPrompt" @($plugin.Name, $plugin.PluginId, $plugin.Version, $plugin.Publisher, @($plugin.Rules).Count, $package.Sha256)),
+            (Get-DashboardText $promptKey $promptArguments),
             (Get-DashboardText "plugin.confirmTitle"),
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Warning,
@@ -6901,12 +7245,21 @@ function Install-PluginFromDialog {
             if ($overwrite -ne [System.Windows.Forms.DialogResult]::Yes) { return }
             $force = $true
         }
-        $installed = Install-ToolPluginPackage -SourcePath $package.Path -PluginDirectory $directoryState.Path -Force:$force
+        $installed = if ($catalogInstall) {
+            Install-ToolPluginPackageFromCatalog -CatalogPath $picker.FileName -PluginId ([string]$plugin.PluginId) `
+                -SourcePath $package.Path -PluginDirectory $directoryState.Path -Force:$force `
+                -TrustedSignerCertificateSha256 $trustedPluginSigners
+        } else {
+            Install-ToolPluginPackage -SourcePath $package.Path -PluginDirectory $directoryState.Path -Force:$force `
+                -TrustedSignerCertificateSha256 $trustedPluginSigners -RequireTrustedSignature:$requireTrustedPluginSignature
+        }
         [void](Write-ToolLog -Level "AUDIT" -Event "Plugin.Installed" -Message $installed.Name -Data ([ordered]@{
             PluginId=$installed.PluginId; Version=$installed.Version; Publisher=$installed.Publisher; Sha256=$installed.Sha256
+            CatalogId=$(if ($installed.PSObject.Properties['CatalogId']) { [string]$installed.CatalogId } else { '' })
         }))
         [void](Write-LicenseTimelineEventSafe -EventType "PluginInstalled" -Source "GUI" -IsChange:$true -Data ([ordered]@{
             PluginId=$installed.PluginId; Version=$installed.Version; Publisher=$installed.Publisher; Sha256=$installed.Sha256
+            CatalogId=$(if ($installed.PSObject.Properties['CatalogId']) { [string]$installed.CatalogId } else { '' })
         }))
         [System.Windows.Forms.MessageBox]::Show(
             (Get-DashboardText "plugin.installedMessage" @($installed.Path, $installed.Sha256)),

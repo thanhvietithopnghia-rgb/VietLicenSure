@@ -1,5 +1,5 @@
 ﻿$script:ToolReportSchemaVersion = "1.5"
-$script:ToolReportSchemaToolVersion = "4.9"
+$script:ToolReportSchemaToolVersion = "5.0"
 $script:ToolReportKinds = @(
     "InventoryAndLicense",
     "CleanupCompliance",

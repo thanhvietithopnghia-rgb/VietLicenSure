@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $script:ToolUpdateSchemaVersion = '1.0'
-$script:ToolUpdateToolVersion = '4.9.0.0'
+$script:ToolUpdateToolVersion = '5.0.0.0'
 $script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
 $script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
 $script:ToolUpdateManifestHost = 'raw.githubusercontent.com'
@@ -246,7 +246,8 @@ function ConvertFrom-ToolUpdateManifest {
         [Parameter(Mandatory = $true)][string]$InstalledVersion,
         [string]$InstalledSha256 = '',
         [ValidateSet('vi-VN','en-US')][string]$SelectedCulture = 'vi-VN',
-        [string]$SourceUrl = ''
+        [string]$SourceUrl = '',
+        [switch]$ManifestSignatureVerified
     )
     $schemaVersion = [string](Get-ToolUpdateProperty $Manifest 'SchemaVersion' -Required)
     $channel = [string](Get-ToolUpdateProperty $Manifest 'Channel' -Required)
@@ -304,14 +305,16 @@ function ConvertFrom-ToolUpdateManifest {
     $signerThumbprints = New-Object System.Collections.Generic.List[string]
     foreach ($signerValue in @(Get-ToolUpdateProperty $Manifest 'SignerThumbprints')) {
         $thumbprint = ([string]$signerValue).Replace(' ', '').ToUpperInvariant()
-        if ($thumbprint -notmatch '^[0-9A-F]{40,64}$') {
+        if ($thumbprint -notmatch '^[0-9A-F]{40}$') {
             throw 'Update manifest contains an invalid signer thumbprint.'
         }
-        if ($script:ToolUpdateSignerThumbprints -notcontains $thumbprint) {
+        if (-not $ManifestSignatureVerified -and $script:ToolUpdateSignerThumbprints -notcontains $thumbprint) {
             throw 'Update manifest declares a signer that is not pinned by this Tool build.'
         }
-        if (-not $signerThumbprints.Contains($thumbprint)) { [void]$signerThumbprints.Add($thumbprint) }
+        if ($signerThumbprints.Contains($thumbprint)) { throw 'Update manifest contains a duplicate signer thumbprint.' }
+        [void]$signerThumbprints.Add($thumbprint)
     }
+    if ($signerThumbprints.Count -gt 4) { throw 'Update manifest declares too many Authenticode signers.' }
     if ($authenticodeRequired -and $signerThumbprints.Count -eq 0) {
         throw 'Signed update is required but no trusted signer thumbprint is declared.'
     }
@@ -377,7 +380,7 @@ function Invoke-ToolUpdateFixedBytesDownload {
     $request.Timeout = $TimeoutMilliseconds
     $request.ReadWriteTimeout = $TimeoutMilliseconds
     $request.AllowAutoRedirect = $false
-    $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/4.9.0 update-check'
+    $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/5.0.0 update-check'
     $response = $null
     $stream = $null
     $memory = $null
@@ -423,7 +426,8 @@ function Invoke-ToolUpdateCheck {
     }
     $raw = (New-Object Text.UTF8Encoding($false, $true)).GetString($manifestBytes)
     $manifest = $raw | ConvertFrom-Json
-    return ConvertFrom-ToolUpdateManifest -Manifest $manifest -InstalledVersion $InstalledVersion -InstalledSha256 $InstalledSha256 -SelectedCulture $SelectedCulture -SourceUrl $uri.AbsoluteUri
+    return ConvertFrom-ToolUpdateManifest -Manifest $manifest -InstalledVersion $InstalledVersion -InstalledSha256 $InstalledSha256 `
+        -SelectedCulture $SelectedCulture -SourceUrl $uri.AbsoluteUri -ManifestSignatureVerified
 }
 
 function Get-ToolUpdateCacheRoot {

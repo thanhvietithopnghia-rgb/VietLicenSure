@@ -6,7 +6,8 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = "Pfx")][string]$PfxPath,
     [Parameter(Mandatory = $true, ParameterSetName = "Pfx")][Security.SecureString]$PfxPassword,
     [string]$TimestampServer = "http://timestamp.digicert.com",
-    [switch]$RequireTrustedSignature
+    [switch]$RequireTrustedSignature,
+    [Alias('RequirePubliclyTrustedCertificate')][switch]$RequireWindowsTrustedCaCertificate
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,7 +16,7 @@ Set-StrictMode -Version 2.0
 function Get-SigningCertificate {
     if ($PSCmdlet.ParameterSetName -eq "Store") {
         $normalized = ($CertificateThumbprint -replace '\s', '').ToUpperInvariant()
-        if ($normalized -notmatch '^[A-F0-9]{40,64}$') { throw "Thumbprint chứng thư không hợp lệ." }
+        if ($normalized -notmatch '^[A-F0-9]{40}$') { throw "Thumbprint chứng thư SHA-1 không hợp lệ." }
         $certificatePath = "Cert:\$StoreLocation\My\$normalized"
         if (-not (Test-Path -LiteralPath $certificatePath -PathType Leaf)) { throw "Không tìm thấy chứng thư trong $StoreLocation\My." }
         return Get-Item -LiteralPath $certificatePath -ErrorAction Stop
@@ -39,7 +40,10 @@ function Get-SigningCertificate {
 }
 
 function Test-CodeSigningCertificate {
-    param([Parameter(Mandatory = $true)][Security.Cryptography.X509Certificates.X509Certificate2]$Certificate)
+    param(
+        [Parameter(Mandatory = $true)][Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
+        [switch]$RequireWindowsTrust
+    )
 
     if (-not $Certificate.HasPrivateKey) { throw "Chứng thư không có private key." }
     $now = Get-Date
@@ -55,24 +59,74 @@ function Test-CodeSigningCertificate {
         }
     }
     if (-not $hasCodeSigningEku) { throw "Chứng thư không có EKU Code Signing (1.3.6.1.5.5.7.3.3)." }
+    if ($RequireWindowsTrust) {
+        if ([string]$Certificate.Subject -eq [string]$Certificate.Issuer) {
+            throw 'Build stable từ chối chứng thư tự ký. Hãy dùng chứng thư code-signing do CA phát hành (EV nếu phù hợp).'
+        }
+        $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+        try {
+            $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::Online
+            $chain.ChainPolicy.RevocationFlag = [Security.Cryptography.X509Certificates.X509RevocationFlag]::ExcludeRoot
+            $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+            $chain.ChainPolicy.UrlRetrievalTimeout = [TimeSpan]::FromSeconds(20)
+            if (-not $chain.Build($Certificate)) {
+                $errors = @($chain.ChainStatus | ForEach-Object { ([string]$_.Status).Trim() + ': ' + ([string]$_.StatusInformation).Trim() }) -join '; '
+                throw "Chuỗi tin cậy Windows của chứng thư không hợp lệ: $errors"
+            }
+        } finally {
+            $chain.Dispose()
+        }
+    }
+}
+
+function Find-WindowsSignTool {
+    $fromPath = Get-Command signtool.exe -ErrorAction SilentlyContinue
+    if ($fromPath) { return [string]$fromPath.Source }
+    $kitsRoot = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+    if (Test-Path -LiteralPath $kitsRoot -PathType Container) {
+        $candidate = @(Get-ChildItem -LiteralPath $kitsRoot -Filter signtool.exe -File -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
+            Sort-Object { try { [Version]$_.Directory.Parent.Name } catch { [Version]'0.0' } } -Descending |
+            Select-Object -First 1)
+        if ($candidate.Count -eq 1) { return [string]$candidate[0].FullName }
+    }
+    return ''
 }
 
 $certificate = Get-SigningCertificate
 try {
-    Test-CodeSigningCertificate -Certificate $certificate
+    Test-CodeSigningCertificate -Certificate $certificate -RequireWindowsTrust:$RequireWindowsTrustedCaCertificate
     foreach ($inputPath in $FilePath) {
         $fullPath = [IO.Path]::GetFullPath($inputPath)
         if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { throw "Không tìm thấy artefact: $fullPath" }
         if ([IO.Path]::GetExtension($fullPath) -notin @(".exe", ".dll", ".ps1", ".psm1")) {
             throw "Không ký loại tệp ngoài EXE/DLL/PS1/PSM1: $fullPath"
         }
-        $parameters = @{
-            LiteralPath = $fullPath
-            Certificate = $certificate
-            HashAlgorithm = "SHA256"
+        if ($RequireWindowsTrustedCaCertificate) {
+            if ($PSCmdlet.ParameterSetName -ne 'Store') { throw 'Stable signing requires a certificate-store/HSM key.' }
+            if ([string]::IsNullOrWhiteSpace($TimestampServer)) { throw 'Stable signing requires an RFC 3161 timestamp server.' }
         }
-        if (-not [string]::IsNullOrWhiteSpace($TimestampServer)) { $parameters.TimestampServer = $TimestampServer }
-        $result = Set-AuthenticodeSignature @parameters
+        if ($PSCmdlet.ParameterSetName -eq 'Store' -and -not [string]::IsNullOrWhiteSpace($TimestampServer)) {
+            # Always prefer SignTool for certificate-store keys so both public
+            # Stable and ManagedSigned builds receive an RFC 3161 timestamp.
+            $signTool = Find-WindowsSignTool
+            if ([string]::IsNullOrWhiteSpace($signTool)) { throw 'signtool.exe from the Windows SDK is required for RFC 3161 signing.' }
+            $signerThumbprint = ([string]$certificate.Thumbprint -replace '\s', '').ToUpperInvariant()
+            if ($signerThumbprint -notmatch '^[A-F0-9]{40}$') { throw 'Signing certificate does not expose a valid SHA-1 store thumbprint.' }
+            $signToolArguments = @('sign','/sha1',$signerThumbprint,'/fd','SHA256','/tr',$TimestampServer,'/td','SHA256')
+            if ($StoreLocation -eq 'LocalMachine') { $signToolArguments += '/sm' }
+            $signToolArguments += $fullPath
+            & $signTool @signToolArguments
+            if ($LASTEXITCODE -ne 0) { throw "signtool.exe failed with exit code $LASTEXITCODE for $fullPath" }
+        } else {
+            $parameters = @{
+                LiteralPath = $fullPath
+                Certificate = $certificate
+                HashAlgorithm = "SHA256"
+            }
+            if (-not [string]::IsNullOrWhiteSpace($TimestampServer)) { $parameters.TimestampServer = $TimestampServer }
+            $result = Set-AuthenticodeSignature @parameters
+        }
         $verification = Get-AuthenticodeSignature -LiteralPath $fullPath
         if (-not $verification.SignerCertificate -or
             -not ([string]$verification.SignerCertificate.Thumbprint).Equals([string]$certificate.Thumbprint, [StringComparison]::OrdinalIgnoreCase)) {
@@ -80,6 +134,9 @@ try {
         }
         if ($RequireTrustedSignature -and $verification.Status -ne "Valid") {
             throw "Chữ ký chưa được Windows tin cậy: $($verification.Status) - $($verification.StatusMessage)"
+        }
+        if ($RequireTrustedSignature -and -not $verification.TimeStamperCertificate) {
+            throw "Chữ ký stable chưa có timestamp: $fullPath"
         }
         $hash = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash
         Write-Host "SIGNED: $fullPath"

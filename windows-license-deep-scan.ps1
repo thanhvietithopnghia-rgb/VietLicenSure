@@ -8,8 +8,8 @@
     [switch]$NoOpen
 )
 
-$toolVersion = "4.9"
-$releaseVersion = "4.9.0.0"
+$toolVersion = "5.0"
+$releaseVersion = "5.0.0.0"
 $runtimeHelper = Join-Path $PSScriptRoot "Tool-Runtime.ps1"
 $reportSchemaHelper = Join-Path $PSScriptRoot "Tool-ReportSchema.ps1"
 $reportExportHelper = Join-Path $PSScriptRoot "Tool-ReportExport.ps1"

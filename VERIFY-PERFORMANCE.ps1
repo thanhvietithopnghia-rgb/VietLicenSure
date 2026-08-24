@@ -5,7 +5,8 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
-$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v4.9-performance-" + [Guid]::NewGuid().ToString('N'))
+$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v5.0-performance-" + [Guid]::NewGuid().ToString('N'))
+$previousScanSettingsPath = [string]$env:TOOL_SCAN_SETTINGS_PATH
 
 function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
 
@@ -18,11 +19,44 @@ try {
     . $softwareInventoryPath
 
     $metadata = Get-ToolScanOptimizationMetadata
-if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4.9' -or
+    if ([string]$metadata.Version -ne '1.1' -or [string]$metadata.ToolVersion -ne '5.0' -or
         -not [bool]$metadata.PreservesExistingScanRoots -or [int]$metadata.OfficeStatusThrottle -gt 3 -or
         [int]$metadata.FileScanThrottle -gt 4 -or [int]$metadata.FileScanMaximumDepth -ne 4 -or
-        [int]$metadata.FileScanPerRootTimeoutSeconds -ne 12) {
-        Add-Failure 'Scan optimization metadata does not match the v4.9 contract.'
+        [int]$metadata.FileScanPerRootTimeoutSeconds -ne 12 -or [int]$metadata.MaximumRootCount -ne 8 -or
+        @($metadata.SupportedProfiles).Count -ne 3 -or -not [bool]$metadata.SupportsLowResourceMode -or
+        -not [bool]$metadata.SupportsExcludedRoots) {
+        Add-Failure 'Scan optimization metadata does not match the v5 profile contract.'
+    }
+
+    $quickPlan = Resolve-ToolScanPlan -Profile Quick
+    $standardPlan = Resolve-ToolScanPlan -Profile Standard
+    $deepPlan = Resolve-ToolScanPlan -Profile Deep
+    $lowResourcePlan = Resolve-ToolScanPlan -Profile Deep -LowResource
+    $requiredPlanProperties = @(
+        'Profile','LowResource','IncludedRoots','ExcludedRoots','OfficeMaximumDepth','OfficeThrottleLimit',
+        'OfficeTimeoutSeconds','IncludePortable','IncludePackageManagers','PortableMaximumResults',
+        'PortableMaximumDepth','FileMaximumResults','FileThrottleLimit','FileMaximumDepth',
+        'PerRootTimeoutSeconds','DeepAssessment','DeepScanMaximumDurationSeconds',
+        'DeepScanMaximumSignatureChecks','DeepScanMaximumHashChecks','CoverageComplete','CoverageNote'
+    )
+    foreach ($propertyName in $requiredPlanProperties) {
+        if ($null -eq $standardPlan.PSObject.Properties[$propertyName]) {
+            Add-Failure "Scan plan is missing required metadata: $propertyName"
+        }
+    }
+    if ($quickPlan.IncludePortable -or $quickPlan.DeepAssessment -or $quickPlan.CoverageComplete -or
+        $standardPlan.CoverageComplete -or $standardPlan.FileMaximumDepth -ne 4 -or $standardPlan.FileMaximumResults -ne 60 -or
+        $deepPlan.CoverageComplete -or -not $deepPlan.DeepAssessment -or $deepPlan.FileMaximumDepth -le $standardPlan.FileMaximumDepth -or
+        $lowResourcePlan.FileThrottleLimit -ne 1 -or $lowResourcePlan.DeepScanMaximumSignatureChecks -ge $deepPlan.DeepScanMaximumSignatureChecks -or
+        $lowResourcePlan.CoverageComplete) {
+        Add-Failure 'Quick/Standard/Deep or low-resource scan budgets violate their boundaries.'
+    }
+    foreach ($boundedPlan in @($quickPlan, $standardPlan, $deepPlan, $lowResourcePlan)) {
+        if ([string]::IsNullOrWhiteSpace([string]$boundedPlan.CoverageNote) -or
+            [string]$boundedPlan.CoverageNote -notmatch '(?i)(bounded|caps|timeouts)' -or
+            [string]$boundedPlan.CoverageNote -notmatch '(?i)must not be treated as clean') {
+            Add-Failure "Scan profile $($boundedPlan.Profile) does not explain its incomplete bounded coverage conservatively."
+        }
     }
 
     $rootOne = Join-Path $tempRoot 'disk-one'
@@ -32,14 +66,63 @@ if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4
     [IO.File]::WriteAllText((Join-Path $rootOne 'nested\kms-tool.exe'), 'fixture')
     [IO.File]::WriteAllText((Join-Path $rootTwo 'activator-readme.txt'), 'fixture')
     [IO.File]::WriteAllText((Join-Path $rootTwo 'normal.txt'), 'fixture')
+    $excludedFolder = Join-Path $rootTwo 'excluded'
+    [void](New-Item -ItemType Directory -Path $excludedFolder -Force)
+    [IO.File]::WriteAllText((Join-Path $excludedFolder 'kms-excluded.txt'), 'fixture')
     $tooDeep = Join-Path $rootOne 'd1\d2\d3\d4\d5'
     [void](New-Item -ItemType Directory -Path $tooDeep -Force)
     [IO.File]::WriteAllText((Join-Path $tooDeep 'activator-too-deep.txt'), 'fixture')
 
-    $matches = @(Find-ToolPatternFilesParallel -Roots @($rootOne, $rootTwo) -Pattern '(?i)(kms|activator)' -MaximumResults 10 -ThrottleLimit 2)
+    $matches = @(Find-ToolPatternFilesParallel -Roots @($rootOne, $rootTwo) -ExcludedRoots @($excludedFolder) -Pattern '(?i)(kms|activator)' -MaximumResults 10 -ThrottleLimit 2)
     $unexpectedMatches = @($matches | Where-Object { $_ -notmatch '(kms-tool|activator-readme)' })
     if ($matches.Count -ne 2 -or $unexpectedMatches.Count -ne 0) {
         Add-Failure 'Parallel file scan did not return the expected multi-root fixtures.'
+    }
+
+    $resolvedPlan = Resolve-ToolScanPlan -Profile Deep -LowResource -IncludedRoots @($rootOne, $rootTwo) -ExcludedRoots @($excludedFolder)
+    if ($resolvedPlan.IncludedRoots.Count -ne 2 -or $resolvedPlan.ExcludedRoots.Count -ne 1) {
+        Add-Failure 'Validated include/exclude roots were not preserved in the scan plan.'
+    }
+    foreach ($invalidRoots in @(
+        @('relative-folder'),
+        @('C:drive-relative'),
+        @('\\server\share')
+    )) {
+        $rejected = $false
+        try { [void](Resolve-ToolLocalScanRoots -Roots $invalidRoots) } catch { $rejected = $true }
+        if (-not $rejected) { Add-Failure "Unsafe scan root was accepted: $($invalidRoots -join ', ')" }
+    }
+    $nineRoots = New-Object System.Collections.Generic.List[string]
+    foreach ($rootIndex in 1..9) {
+        $boundaryRoot = Join-Path $tempRoot ("boundary-root-$rootIndex")
+        [void](New-Item -ItemType Directory -Path $boundaryRoot -Force)
+        [void]$nineRoots.Add($boundaryRoot)
+    }
+    $tooManyRejected = $false
+    try { [void](Resolve-ToolLocalScanRoots -Roots $nineRoots.ToArray()) } catch { $tooManyRejected = $true }
+    if (-not $tooManyRejected) { Add-Failure 'More than eight scan roots were accepted.' }
+
+    $junctionPath = Join-Path $tempRoot 'reparse-root'
+    $junctionCreated = $false
+    try {
+        [void](New-Item -ItemType Junction -Path $junctionPath -Target $rootOne -ErrorAction Stop)
+        $junctionCreated = $true
+    } catch {}
+    if ($junctionCreated) {
+        $reparseRejected = $false
+        try { [void](Resolve-ToolLocalScanRoots -Roots @($junctionPath)) } catch { $reparseRejected = $true }
+        if (-not $reparseRejected) { Add-Failure 'A junction/reparse scan root was accepted.' }
+    }
+
+    $env:TOOL_SCAN_SETTINGS_PATH = Join-Path $tempRoot 'settings\scan-settings.json'
+    if (-not (Set-ToolScanPreference -Profile Deep -LowResource -IncludedRoots @($rootOne) -ExcludedRoots @($excludedFolder))) {
+        Add-Failure 'Scan preference could not be persisted atomically.'
+    } else {
+        $savedPlan = Get-ToolScanPreference
+        if ($savedPlan.Profile -ne 'Deep' -or -not $savedPlan.LowResource -or $savedPlan.IncludedRoots.Count -ne 1 -or
+            $savedPlan.ExcludedRoots.Count -ne 1) {
+            Add-Failure 'Persisted scan preference did not round-trip safely.'
+        }
     }
     $officeResults = @(Invoke-ToolParallelOfficeStatus -CscriptPath "$env:SystemRoot\System32\cscript.exe" -OsppPaths @() -ThrottleLimit 2)
     if ($officeResults.Count -ne 0) {
@@ -131,11 +214,16 @@ if ([string]$metadata.Version -ne '1.0' -or [string]$metadata.ToolVersion -ne '4
     }
     Add-Failure $failureDetail
 } finally {
+    if ([string]::IsNullOrWhiteSpace($previousScanSettingsPath)) {
+        Remove-Item Env:TOOL_SCAN_SETTINGS_PATH -ErrorAction SilentlyContinue
+    } else {
+        $env:TOOL_SCAN_SETTINGS_PATH = $previousScanSettingsPath
+    }
     if (Test-Path -LiteralPath $tempRoot -PathType Container) {
         $resolvedTemp = [IO.Path]::GetFullPath($tempRoot)
         $systemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
         if ($resolvedTemp.StartsWith($systemTemp, [StringComparison]::OrdinalIgnoreCase) -and
-            [IO.Path]::GetFileName($resolvedTemp).StartsWith('Tool-Kiem-Tra-v4.9-performance-', [StringComparison]::OrdinalIgnoreCase)) {
+            [IO.Path]::GetFileName($resolvedTemp).StartsWith('Tool-Kiem-Tra-v5.0-performance-', [StringComparison]::OrdinalIgnoreCase)) {
             Remove-Item -LiteralPath $resolvedTemp -Recurse -Force
         }
     }

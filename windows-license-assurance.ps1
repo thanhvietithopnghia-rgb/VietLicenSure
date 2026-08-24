@@ -10,8 +10,8 @@ param(
     [switch]$NoOpen
 )
 
-$ToolVersion = "4.9"
-$ReleaseVersion = "4.9.0.0"
+$ToolVersion = "5.0"
+$ReleaseVersion = "5.0.0.0"
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Off
 
@@ -369,7 +369,9 @@ if ($Operation -eq "CertificateAudit") {
         Overall=$overall; ValidSignatureCount=$validCount; InvalidSignatureCount=$invalidRecords.Count; RequiredFailureCount=$requiredFailures.Count
     })
 } elseif ($Operation -eq "PluginAudit") {
-    $audit = Invoke-ToolPluginAudit
+    $pluginTrustedSigners = @(Get-ToolPluginTrustedSignerCertificateSha256)
+    $audit = Invoke-ToolPluginAudit -TrustedSignerCertificateSha256 $pluginTrustedSigners `
+        -RequireTrustedSignature:([bool]($env:TOOL_SECURE_LAUNCH -eq '1'))
     $reportPlugins = ConvertTo-AssuranceRedactedObject $audit.Plugins
     $reportFindings = ConvertTo-AssuranceRedactedObject $audit.Findings
     $reportInvalidPlugins = ConvertTo-AssuranceRedactedObject $audit.InvalidPlugins

@@ -1,28 +1,34 @@
-# Tool Kiểm Tra v4.9 — xác minh nguồn gốc, cập nhật nhận diện, khắc phục có hậu kiểm
+# Tool Kiểm Tra v5.0 — nhánh phát triển tăng cường độ tin cậy và quản trị
 
-**Phiên bản hiện tại:** v4.9.0.0 · Build 2026.08.22
+**Phiên bản đang phát triển:** v5.0.0.0 · Build 2026.08.24 · `DevelopmentUnsigned`
 **Tác giả và phát triển:** Thanh Việt
 **Trang tải luôn trỏ tới bản mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 
 Tool Kiểm Tra là ứng dụng Windows miễn phí cho cộng đồng, hỗ trợ kiểm kê cấu hình máy, kiểm tra trạng thái Windows/Office/phần mềm, rà soát dấu hiệu KMS/activator/can thiệp và tạo báo cáo. Tool hoạt động Offline theo mặc định, không có telemetry và chỉ dùng mạng sau khi người dùng chủ động bật Online.
 
-v4.9 tăng khả năng chứng minh bản chính thức, mở rộng catalog nhận diện có ký số, sửa luồng khắc phục để chỉ báo thành công sau hậu kiểm và bảo vệ dữ liệu định danh trong báo cáo. Công cụ cung cấp bằng chứng kỹ thuật hỗ trợ quản trị; không thay thế hóa đơn, hợp đồng, tài khoản hãng hoặc tư vấn pháp lý và không thể cam kết nhận diện/làm sạch 100% mọi sản phẩm hay biến thể.
+v5.0 tăng cường cổng ký phát hành fail-closed, trạng thái độ mới catalog, plugin ký số, ba mức quét, giao diện dark/DPI, xuất fleet và triển khai Intune/MDM. Bản build chưa ký chỉ dùng kiểm thử, luôn khóa tự cập nhật và thao tác thay đổi hệ thống; không được gọi hoặc phân phối như Stable. Công cụ cung cấp bằng chứng kỹ thuật hỗ trợ quản trị, không thay thế hóa đơn, hợp đồng, tài khoản hãng hoặc tư vấn pháp lý.
 
 ## Tải và bắt đầu
 
 1. Mở [trang tải bản mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
-2. Tải `Tool-Kiem-Tra-v4.9.exe` cùng tệp checksum/chứng minh nguồn gốc đi kèm.
+2. Với Stable, tải đúng tệp được công bố trên trang phát hành. Với nhánh kiểm thử cục bộ, dùng `Tool-Kiem-Tra-v5.0.exe` và xác nhận manifest ghi `DevelopmentUnsigned`.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
 
 ```powershell
-Get-FileHash .\Tool-Kiem-Tra-v4.9.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\Tool-Kiem-Tra-v4.9.exe |
+Get-FileHash .\Tool-Kiem-Tra-v5.0.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\Tool-Kiem-Tra-v5.0.exe |
   Format-List Status,StatusMessage,SignerCertificate
 ```
 
-## Điểm mới trong v4.9
+## Điểm mới trong v5.0
+
+- **Phát hành fail-closed:** Stable bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS đúng commit.
+- **Catalog và plugin có biên tin cậy:** catalog phân loại Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký từ fingerprint nhà phát hành được quản trị viên ghim.
+- **Quét theo mục tiêu:** Quick/Standard/Deep dùng ngân sách rõ ràng và giới hạn include/exclude/root an toàn.
+- **Trải nghiệm và quản trị:** theme theo hệ thống, dark/light override, PerMonitorV2 DPI, fleet export có redaction/chống CSV injection, CLI headless và script Intune/MDM.
+- **Trạng thái dev minh bạch:** bản chưa ký hiển thị nhãn phát triển riêng thay vì giả làm Official; mọi chức năng thay đổi hệ thống vẫn bị khóa.
 
 - **Nguồn gốc và chống giả mạo:** launcher kiểm tra chữ ký, chứng thư ghim, metadata, Build ID và manifest nguồn gốc. Bản bị sửa hoặc không xác minh được được cảnh báo rõ và fail-closed đối với cập nhật cùng thao tác thay đổi hệ thống.
 - **Catalog online an toàn:** catalog khai báo có chữ ký CMS, giới hạn trường/quy tắc được phép, chống hạ phiên bản và giữ cache dự phòng. Chỉ tải sau khi người dùng bật Online; inventory, đường dẫn, key và báo cáo không được tải lên.
@@ -78,8 +84,16 @@ Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật
 - [English user guide](USER-GUIDE-en-US.md)
 - [Lịch sử phiên bản](LICH-SU-PHIEN-BAN.txt)
 - [English version history](VERSION-HISTORY-en-US.md)
+- [Release notes v5.0](RELEASE-NOTES-v5.0.md)
 - [Release notes v4.9](RELEASE-NOTES-v4.9.md)
 - [Chính sách an toàn](SAFETY-POLICY-v1.0.md)
+- [Report schema và artifact quản trị](REPORT-SCHEMA-v1.5.md)
+- [Chính sách trình xem báo cáo/fallback](REPORT-VIEWER-POLICY-v1.md)
+- [Chính sách báo cáo bảo mật](SECURITY.md)
+- [Phạm vi audit và quy trình review](AUDIT-SCOPE-v1.md)
+- [Chính sách code-signing](CODE-SIGNING-POLICY-v1.md)
+- [Lộ trình/tiến độ nhánh v5.0](ROADMAP-v5.0.md)
+- [Kết quả kiểm thử bảo mật và tương thích](SECURITY-TEST-RESULTS.md)
 
 ## Nguồn chính thức và hỗ trợ
 

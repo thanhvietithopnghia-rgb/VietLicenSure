@@ -2,11 +2,19 @@
 
 This document summarizes the core changes in the main public releases.
 
-Current release: **v4.9.0.0**
-FileVersion: **4.9.0.0** · Build **2026.08.22**
+Current development version: **v5.0.0.0** (`DevelopmentUnsigned`)
+FileVersion: **5.0.0.0** · Build **2026.08.24**
 
 Stable latest-release page:
 <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+
+## v5.0.0.0 — August 24, 2026 — unsigned development build
+
+- **Trusted release chain:** Stable fails closed without a CA-issued/HSM certificate, RFC3161 timestamp, source-bound CMS provenance, and a clean worktree.
+- **Catalogs and plugins:** Fresh/Warning/Stale/Future/Invalid states; external plugins accept only signed declarative metadata from administrator-pinned publishers.
+- **Flexible scanning:** Quick, Standard, and Deep levels with explicit budgets and safe include/exclude/root limits.
+- **UI and deployment:** system-aware themes, dark/light overrides, PerMonitorV2 DPI, safe fleet export, a headless CLI, and Intune/MDM scripts.
+- **Current state:** testing only; self-update and system changes remain blocked until all Stable evidence passes.
 
 ## v4.9.0.0 — August 22, 2026
 

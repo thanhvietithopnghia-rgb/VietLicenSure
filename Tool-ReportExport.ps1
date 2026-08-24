@@ -1,4 +1,4 @@
-﻿$script:ToolReportExportToolVersion = "4.9"
+﻿$script:ToolReportExportToolVersion = "5.0"
 $script:ToolReportExportSchemaVersion = "1.4"
 $script:ToolReportPdfTheme = "v4.8-classic-a4"
 

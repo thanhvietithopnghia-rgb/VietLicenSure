@@ -4,6 +4,12 @@
     [string]$Mode = "All",
     [ValidateSet("vi-VN", "en-US")]
     [string]$Culture = "vi-VN",
+    [ValidateSet("Quick", "Standard", "Deep")]
+    [string]$ScanLevel = "Standard",
+    [switch]$LowResource,
+    [string[]]$ScanRoot = @(),
+    [string[]]$ExcludeScanRoot = @(),
+    [string]$ScanSettingsPath = "",
     [string]$ApprovedKmsServerFile = "",
     [switch]$Pdf,
     [switch]$RedactSensitive,
@@ -11,8 +17,8 @@
     [switch]$NoOpen
 )
 
-$ToolVersion = "4.9"
-$ToolReleaseVersion = "4.9.0.0"
+$ToolVersion = "5.0"
+$ToolReleaseVersion = "5.0.0.0"
 
 # A report can contain hardware serials, UUIDs, asset tags, and other
 # identifying data.  Fail closed for direct CLI use: callers must explicitly
@@ -63,6 +69,33 @@ try {
     . $offlinePolicyHelper
     . $scanOptimizationHelper
     . $softwareInventoryHelper
+    $requestedScanLevel = $ScanLevel
+    $requestedLowResource = [bool]$LowResource
+    $requestedScanRoots = @($ScanRoot)
+    $requestedExcludedScanRoots = @($ExcludeScanRoot)
+    if (-not [string]::IsNullOrWhiteSpace($ScanSettingsPath)) {
+        $resolvedScanSettingsPath = [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($ScanSettingsPath))
+        if (-not (Test-Path -LiteralPath $resolvedScanSettingsPath -PathType Leaf)) { throw 'ScanSettingsFileMissing' }
+        $scanSettingsInfo = Get-Item -LiteralPath $resolvedScanSettingsPath -Force -ErrorAction Stop
+        if (($scanSettingsInfo.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'ScanSettingsFileReparsePoint' }
+        if ($scanSettingsInfo.Length -le 0 -or $scanSettingsInfo.Length -gt 65536) { throw 'ScanSettingsFileSizeInvalid' }
+        $scanSettingsRequest = Get-Content -LiteralPath $resolvedScanSettingsPath -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+        if ([string]$scanSettingsRequest.Profile -notin @('Quick','Standard','Deep')) { throw 'ScanSettingsProfileInvalid' }
+        $requestedScanLevel = [string]$scanSettingsRequest.Profile
+        $requestedLowResource = [bool]$scanSettingsRequest.LowResource
+        $requestedScanRoots = @($scanSettingsRequest.IncludedRoots)
+        $requestedExcludedScanRoots = @($scanSettingsRequest.ExcludedRoots)
+        if ($scanSettingsRequest.PSObject.Properties['DeleteAfterRead'] -and
+            $scanSettingsRequest.DeleteAfterRead -is [bool] -and [bool]$scanSettingsRequest.DeleteAfterRead) {
+            $requestParent = [IO.Path]::GetFullPath((Split-Path -Parent $resolvedScanSettingsPath)).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+            $requestedOutputRoot = [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($OutputDir)).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+            if ([IO.Path]::GetFileName($resolvedScanSettingsPath) -eq 'scan-request.json' -and
+                $requestParent.Equals($requestedOutputRoot, [StringComparison]::OrdinalIgnoreCase)) {
+                Remove-Item -LiteralPath $resolvedScanSettingsPath -Force -ErrorAction Stop
+            }
+        }
+    }
+    $scanPlan = Resolve-ToolScanPlan -Profile $requestedScanLevel -LowResource:$requestedLowResource -IncludedRoots $requestedScanRoots -ExcludedRoots $requestedExcludedScanRoots
     [void](Assert-ToolNativeArchitecture)
     $nativeCscriptPath = Get-ToolNativeSystemPath "cscript.exe"
     $nativeExplorerPath = Get-ToolNativeSystemPath "explorer.exe"
@@ -81,7 +114,7 @@ try {
     $moduleInvocation = New-ToolModuleInvocation -ModuleId $reportModuleId
     $loggingState = Initialize-ToolLogging -Component "Report" -ToolVersion $ToolVersion
     $timelineState = Initialize-ToolLicenseTimeline -ToolVersion $ToolVersion
-    [void](Write-ToolLog -Level "INFO" -Event "Report.Start" -Message (Get-ReportText "report.log.started" @($Mode)) -Data ([ordered]@{ ModuleId=$reportModuleId; InvocationId=$moduleInvocation.InvocationId; Mode=$Mode; Culture=$Culture; OfflineMode=[bool]$script:reportOfflineMode; Redacted=[bool]$RedactSensitive; Capabilities=$capabilityState }))
+    [void](Write-ToolLog -Level "INFO" -Event "Report.Start" -Message (Get-ReportText "report.log.started" @($Mode)) -Data ([ordered]@{ ModuleId=$reportModuleId; InvocationId=$moduleInvocation.InvocationId; Mode=$Mode; Culture=$Culture; OfflineMode=[bool]$script:reportOfflineMode; Redacted=[bool]$RedactSensitive; ScanProfile=[string]$scanPlan.Profile; LowResource=[bool]$scanPlan.LowResource; Capabilities=$capabilityState }))
 } catch {
     Write-Host $_.Exception.Message
     exit 12
@@ -114,6 +147,9 @@ $strongCrackPattern = "(?i)(\bkmspico\b|\bkmsauto(?:s|[\s._-]*(?:net|lite|portab
 $reportActivatorArtifactExtensions = @('.exe','.dll','.com','.scr','.cmd','.bat','.ps1','.vbs','.js','.msi','.zip','.rar','.7z','.jar')
 $crackFindings = @()
 $manualReviewFindings = @()
+$completeSoftwareInventory = @()
+$softwareCatalog = $null
+$softwareCatalogFreshness = $null
 $reportTitle = $modeInfo.Title
 $reportBasePath = Join-Path $OutputDir ((Get-ReportText "report.file.prefix") + "_$($modeInfo.Suffix)_${reportComputer}_${stamp}")
 $reportPath = "$reportBasePath.html"
@@ -763,13 +799,19 @@ function Get-ReportActivatorArtifactFindings {
     } catch {}
 
     if ($IncludeFileSearch -and (Get-Command Find-ToolPatternFilesParallel -ErrorAction SilentlyContinue)) {
-        $roots = @(
-            $env:ProgramData, $env:LOCALAPPDATA, $env:APPDATA,
-            [Environment]::GetFolderPath('Desktop'),
-            (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Downloads'),
-            $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramW6432
-        ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
-        foreach ($path in @(Find-ToolPatternFilesParallel -Roots $roots -Pattern $Pattern -MaximumResults 80 -ThrottleLimit 4 -MaximumDepth 4 -PerRootTimeoutSeconds 5)) {
+        $roots = if (@($scanPlan.IncludedRoots).Count -gt 0) {
+            @($scanPlan.IncludedRoots)
+        } else {
+            @(
+                $env:ProgramData, $env:LOCALAPPDATA, $env:APPDATA,
+                [Environment]::GetFolderPath('Desktop'),
+                (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Downloads'),
+                $env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramW6432
+            ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
+        }
+        foreach ($path in @(Find-ToolPatternFilesParallel -Roots $roots -ExcludedRoots @($scanPlan.ExcludedRoots) -Pattern $Pattern `
+            -MaximumResults ([int]$scanPlan.FileMaximumResults) -ThrottleLimit ([int]$scanPlan.FileThrottleLimit) `
+            -MaximumDepth ([int]$scanPlan.FileMaximumDepth) -PerRootTimeoutSeconds ([int]$scanPlan.PerRootTimeoutSeconds))) {
             if (([IO.Path]::GetExtension([string]$path)).ToLowerInvariant() -notin $reportActivatorArtifactExtensions) { continue }
             & $addFinding 'File scan' ([IO.Path]::GetFileName([string]$path)) ([string]$path) 'Dau hieu theo ten file'
         }
@@ -1413,8 +1455,9 @@ $officeRawStatus = @()
 $officeCimLicenses = @()
 $clickToRun = $null
 if ($wantOffice) {
-$osppPaths = @(Get-ToolOptimizedOfficeOsppPaths)
-$officeStatusResults = @(Invoke-ToolParallelOfficeStatus -CscriptPath $nativeCscriptPath -OsppPaths $osppPaths)
+$osppPaths = @(Get-ToolOptimizedOfficeOsppPaths -MaximumDepth ([int]$scanPlan.OfficeMaximumDepth))
+$officeStatusResults = @(Invoke-ToolParallelOfficeStatus -CscriptPath $nativeCscriptPath -OsppPaths $osppPaths `
+    -ThrottleLimit ([int]$scanPlan.OfficeThrottleLimit) -PerCommandTimeoutSeconds ([int]$scanPlan.OfficeTimeoutSeconds))
 foreach ($statusResult in $officeStatusResults) {
     if (-not $statusResult.Readable) { continue }
     $status = @([string]$statusResult.Output -split "`r?`n")
@@ -1781,7 +1824,7 @@ Add-Section "Ban cap nhat Windows gan day" (Add-Table $hotfixes @("HotFix","Mo t
 # Bản cũ chỉ chạy nhánh này trong báo cáo Phần mềm/Toàn bộ nên có thể hiển thị
 # kênh license nhưng bỏ qua MAS/OHook/TSforge/Toolkit còn nằm trên máy.
 if (($wantWindows -or $wantOffice) -and -not $wantSoftware) {
-    $crackFindings = @(Get-ReportActivatorArtifactFindings -Pattern $strongCrackPattern -IncludeFileSearch)
+    $crackFindings = @(Get-ReportActivatorArtifactFindings -Pattern $strongCrackPattern -IncludeFileSearch:([bool]($scanPlan.Profile -ne 'Quick')))
     Add-Section "Dau hieu crack / activator / KMS" `
         (Add-Table $crackFindings @("Nguon","Dau hieu","Vi tri","Muc do")) `
         $(if ($wantWindows) { 'Windows' } else { 'Office' })
@@ -1792,10 +1835,29 @@ if ($wantSoftware) {
     # Kiểm kê toàn máy: Registry chỉ là một nguồn. Bổ sung AppX/MSIX, shortcut
     # Start Menu/Desktop và ứng dụng portable trong các vùng chương trình phổ
     # biến. Desktop chỉ là nguồn phát hiện phụ, không phải phạm vi quét.
-    $completeSoftwareInventory = @(Get-ToolInstalledSoftwareInventory -IncludeAppx -IncludeShortcuts -IncludePortable -IncludePackageManagers -PortableMaximumResults 350 -PortableMaximumDepth 3)
+    $inventoryParameters = @{
+        IncludeAppx = $true
+        IncludeShortcuts = [bool]($scanPlan.Profile -ne 'Quick')
+        IncludePortable = [bool]$scanPlan.IncludePortable
+        IncludePackageManagers = [bool]$scanPlan.IncludePackageManagers
+        PortableMaximumResults = [int]$scanPlan.PortableMaximumResults
+        PortableMaximumDepth = [int]$scanPlan.PortableMaximumDepth
+        IncludedRoots = @($scanPlan.IncludedRoots)
+        ExcludedRoots = @($scanPlan.ExcludedRoots)
+    }
+    $completeSoftwareInventory = @(Get-ToolInstalledSoftwareInventory @inventoryParameters)
     $softwareInventoryMetadata = Get-ToolSoftwareInventoryCollectionMetadata
     $softwareCatalog = Get-ToolSoftwareLicenseCatalog -PreferCache
-    $softwareAssessments = @(Get-ToolSoftwareAssessments -Applications $completeSoftwareInventory -Catalog $softwareCatalog)
+    $softwareCatalogFreshness = if ($softwareCatalog) { Get-ToolSoftwareCatalogFreshness -Catalog $softwareCatalog } else { $null }
+    $assessmentParameters = @{
+        Applications = $completeSoftwareInventory
+        Catalog = $softwareCatalog
+        DeepScan = [bool]$scanPlan.DeepAssessment
+        DeepScanMaximumDurationSeconds = [int]$scanPlan.DeepScanMaximumDurationSeconds
+        DeepScanMaximumSignatureChecks = [int]$scanPlan.DeepScanMaximumSignatureChecks
+        DeepScanMaximumHashChecks = [int]$scanPlan.DeepScanMaximumHashChecks
+    }
+    $softwareAssessments = @(Get-ToolSoftwareAssessments @assessmentParameters)
     $discoverySourceColumn = Get-ReportText "report.software.column.discoverySource"
     $licenseModelColumn = Get-ReportText "report.software.column.licenseModel"
     $assessmentCodeColumn = Get-ReportText "report.software.column.assessmentCode"
@@ -2065,6 +2127,9 @@ if ($wantSoftware) {
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.integrityCompromised"); "Gia tri"=@($apps | Where-Object { $_.AssessmentCode -eq 'IntegrityCompromised' }).Count },
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.unverified"); "Gia tri"=@($apps | Where-Object { $_.AssessmentCode -in @('Unverified','TrialOrUnverified') }).Count },
         [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.catalog"); "Gia tri"=$(if ($softwareCatalog) { "$($softwareCatalog.CatalogSource) · $($softwareCatalog.CatalogVersion) · $(@($softwareCatalog.Products).Count)" } else { Get-ReportText 'common.unknown' }) }
+        [pscustomobject]@{ "Muc"=(Get-ReportText "report.software.overview.catalogFreshness"); "Gia tri"=$(if ($softwareCatalogFreshness) { Get-ReportText ("report.catalog.freshness." + ([string]$softwareCatalogFreshness.Status).ToLowerInvariant()) @([int]$softwareCatalogFreshness.AgeDays, [int]$softwareCatalogFreshness.MaximumAgeDays) } else { Get-ReportText 'common.unknown' }) }
+        [pscustomobject]@{ "Muc"=(Get-ReportText "report.scan.profile"); "Gia tri"=(Get-ReportText ("scan.profile." + ([string]$scanPlan.Profile).ToLowerInvariant())) }
+        [pscustomobject]@{ "Muc"=(Get-ReportText "report.scan.coverage"); "Gia tri"=$(if ([bool]$scanPlan.CoverageComplete) { Get-ReportText 'report.scan.coverageComplete' } else { Get-ReportText 'report.scan.coverageLimited' }) }
     )
 
     $systemAppendixLink = "<p class='note system-app-link'><a href='#system-software-appendix'>$(Html (Get-ReportText 'report.software.system.open' @(@($systemApps).Count)))</a></p>"
@@ -2226,16 +2291,25 @@ if ($wantSoftware) {
         Where-Object { Test-Path -LiteralPath $_ -PathType Container } |
         Select-Object -Unique |
         Select-Object -First 32)
-    $scanRoots = @(
-        [Environment]::GetFolderPath("Desktop"),
-        [Environment]::GetFolderPath("MyDocuments"),
-        "$env:USERPROFILE\Downloads",
-        "$env:ProgramData",
-        $env:LOCALAPPDATA,
-        $env:APPDATA
-        $installedProductRoots
-    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique
-    foreach ($path in @(Find-ToolPatternFilesParallel -Roots $scanRoots -Pattern $strongCrackPattern -MaximumResults 120 -ThrottleLimit 4 -MaximumDepth 4 -PerRootTimeoutSeconds 5)) {
+    $scanRoots = if (@($scanPlan.IncludedRoots).Count -gt 0) {
+        @($scanPlan.IncludedRoots)
+    } else {
+        @(
+            [Environment]::GetFolderPath("Desktop"),
+            [Environment]::GetFolderPath("MyDocuments"),
+            "$env:USERPROFILE\Downloads",
+            "$env:ProgramData",
+            $env:LOCALAPPDATA,
+            $env:APPDATA
+            $installedProductRoots
+        ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique
+    }
+    $fileScanEnabled = [bool]($scanPlan.Profile -ne 'Quick')
+    foreach ($path in @($(if ($fileScanEnabled) {
+        Find-ToolPatternFilesParallel -Roots $scanRoots -ExcludedRoots @($scanPlan.ExcludedRoots) -Pattern $strongCrackPattern `
+            -MaximumResults ([int]$scanPlan.FileMaximumResults) -ThrottleLimit ([int]$scanPlan.FileThrottleLimit) `
+            -MaximumDepth ([int]$scanPlan.FileMaximumDepth) -PerRootTimeoutSeconds ([int]$scanPlan.PerRootTimeoutSeconds)
+    } else { @() }))) {
         if (([IO.Path]::GetExtension([string]$path)).ToLowerInvariant() -notin $reportActivatorArtifactExtensions) { continue }
         $crackFindings += [pscustomobject]@{
             "Nguon" = "File scan"
@@ -2411,7 +2485,9 @@ Add-Section "Scheduled tasks dang bat" (Add-Table $tasks @("Task","Path","State"
 $pluginAudit = $null
 if ($wantSoftware) {
     try {
-        $pluginAudit = Invoke-ToolPluginAudit
+        $pluginTrustedSigners = @(Get-ToolPluginTrustedSignerCertificateSha256)
+        $pluginAudit = Invoke-ToolPluginAudit -TrustedSignerCertificateSha256 $pluginTrustedSigners `
+            -RequireTrustedSignature:([bool]($env:TOOL_SECURE_LAUNCH -eq '1'))
         $pluginRows = @($pluginAudit.Plugins | ForEach-Object {
             [pscustomobject]@{
                 "Plugin"=$_.Name
@@ -2848,12 +2924,39 @@ if ($wantSoftware) {
             Sha256=[string]$softwareCatalog.CatalogSha256
             SignatureValid=[bool]$softwareCatalog.CatalogSignatureValid
             SignatureFile=$(if (-not [string]::IsNullOrWhiteSpace([string]$softwareCatalog.CatalogSignaturePath)) { [IO.Path]::GetFileName([string]$softwareCatalog.CatalogSignaturePath) } else { '' })
+            GeneratedAtUtc=$(if ($softwareCatalogFreshness) { [string]$softwareCatalogFreshness.GeneratedAtUtc } else { '' })
+            FreshnessStatus=$(if ($softwareCatalogFreshness) { [string]$softwareCatalogFreshness.Status } else { 'Unavailable' })
+            AgeDays=$(if ($softwareCatalogFreshness) { [int]$softwareCatalogFreshness.AgeDays } else { -1 })
+            WarningAgeDays=$(if ($softwareCatalogFreshness) { [int]$softwareCatalogFreshness.WarningAgeDays } else { 30 })
+            MaximumAgeDays=$(if ($softwareCatalogFreshness) { [int]$softwareCatalogFreshness.MaximumAgeDays } else { 45 })
             TrustedForDecisiveEvidence=[bool](Test-ToolSoftwareCatalogTrustedForDecisiveEvidence -Catalog $softwareCatalog)
         } } else { $null })
+        Scan = [ordered]@{
+            Profile=[string]$scanPlan.Profile
+            LowResource=[bool]$scanPlan.LowResource
+            IncludedRoots=@($scanPlan.IncludedRoots)
+            ExcludedRoots=@($scanPlan.ExcludedRoots)
+            CoverageComplete=[bool]$scanPlan.CoverageComplete
+            CoverageNote=[string]$scanPlan.CoverageNote
+            FileMaximumDepth=[int]$scanPlan.FileMaximumDepth
+            FileMaximumResults=[int]$scanPlan.FileMaximumResults
+            PerRootTimeoutSeconds=[int]$scanPlan.PerRootTimeoutSeconds
+        }
         InventoryMetadata = Get-ToolSoftwareInventoryMetadata -Applications $completeSoftwareInventory -Catalog $softwareCatalog
     }
 }
 $detailedInventoryForExport = ConvertTo-ReportRedactedObject (ConvertTo-ReportLocalizedExportObject $detailedInventory)
+$scanPlanForExport = ConvertTo-ReportRedactedObject ([pscustomobject][ordered]@{
+    Profile=[string]$scanPlan.Profile
+    LowResource=[bool]$scanPlan.LowResource
+    IncludedRoots=@($scanPlan.IncludedRoots)
+    ExcludedRoots=@($scanPlan.ExcludedRoots)
+    CoverageComplete=[bool]$scanPlan.CoverageComplete
+    CoverageNote=[string]$scanPlan.CoverageNote
+    FileMaximumDepth=[int]$scanPlan.FileMaximumDepth
+    FileMaximumResults=[int]$scanPlan.FileMaximumResults
+    PerRootTimeoutSeconds=[int]$scanPlan.PerRootTimeoutSeconds
+})
 if ($detailedInventoryForExport.PSObject.Properties['ActivatorFindings']) {
     $localizedActivatorFindings = $detailedInventoryForExport.ActivatorFindings
     $detailedInventoryForExport.ActivatorFindings = if (@($crackFindings).Count -eq 0) {
@@ -2875,6 +2978,7 @@ $summary = New-ToolReportEnvelope -ReportKind "InventoryAndLicense" -ToolVersion
     Mode = $Mode
     Culture = $Culture
     OfflineMode = [bool]$script:reportOfflineMode
+    Scan = $scanPlanForExport
     HtmlReport = Protect-ReportText $reportPath
     PdfReport = ""
     WindowsStatus = [string]$windowsSummaryStatus
@@ -2929,6 +3033,8 @@ Write-Host (Get-ReportText "report.output.manifest" @($package.ManifestPath))
     Mode = $Mode
     Culture = $Culture
     OfflineMode = [bool]$script:reportOfflineMode
+    ScanProfile = [string]$scanPlan.Profile
+    ScanCoverageComplete = [bool]$scanPlan.CoverageComplete
     Redacted = [bool]$RedactSensitive
     SuspiciousFindingCount = [int]@($crackFindings).Count
     ManualReviewFindingCount = [int]@($manualReviewFindings).Count

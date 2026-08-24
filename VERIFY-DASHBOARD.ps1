@@ -81,8 +81,8 @@ if ($guiAst) {
 }
 
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
-Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"4\.9\.0\.0"' 'Dashboard chưa dùng release 4.9.0.0.'
-Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.08\.22"' 'Dashboard chưa dùng ngày build 2026.08.22.'
+Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.0"' 'Dashboard chưa dùng release 5.0.0.0.'
+Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.08\.24"' 'Dashboard chưa dùng ngày build 2026.08.24.'
 Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases"' 'Nút Giới thiệu chưa dùng trang Releases cố định, nơi luôn hiển thị bản mới nhất ở đầu.'
 if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/(?:latest|tag/)') {
     Add-Failure 'Nút Giới thiệu đang trỏ tới alias/tag riêng thay vì trang Releases cố định.'
@@ -160,6 +160,12 @@ Add-Type -AssemblyName System.Windows.Forms
 . (Join-Path $root 'Tool-UiTheme.ps1')
 $themeText = Get-Content -LiteralPath (Join-Path $root 'Tool-UiTheme.ps1') -Raw -Encoding UTF8
 foreach ($themePattern in @(
+    'function\s+Get-ToolUiSystemTheme',
+    'function\s+Get-ToolUiThemePreference',
+    'ValidateSet\("System",\s*"Light",\s*"Dark"\)',
+    'function\s+Initialize-ToolDpiAwareness',
+    'SetProcessDpiAwarenessContext',
+    'SetProcessDPIAware',
     'function\s+Get-ToolUiButtonRole',
     'function\s+Get-ToolUiButtonPalette',
     'function\s+Get-ToolUiPrimaryActionPalette',
@@ -176,6 +182,53 @@ foreach ($themePattern in @(
     'Set-ToolUiActionButtons\s+-Root\s+[$]Root'
 )) {
     if ($themeText -notmatch $themePattern) { Add-Failure "Theme dùng chung thiếu action style/icon: $themePattern" }
+}
+$manifestText = Get-Content -LiteralPath (Join-Path $root 'Tool-Kiem-Tra-v5.0-OneFile.manifest') -Raw -Encoding UTF8
+if ($manifestText -notmatch '<dpiAware[^>]*>true/pm</dpiAware>' -or
+    $manifestText -notmatch '<dpiAwareness[^>]*>PerMonitorV2,PerMonitor,System</dpiAwareness>') {
+    Add-Failure 'Manifest thiếu DPI awareness tương thích Windows 7 và PerMonitorV2 trên Windows mới.'
+}
+foreach ($dpiPattern in @(
+    'Application\]::OpenForms\.Count',
+    "Status='TooLate'",
+    'PER_MONITOR_AWARE_V2',
+    'Windows 7 fallback'
+)) {
+    if ($themeText -notmatch $dpiPattern) { Add-Failure "DPI helper thiếu guard/fallback: $dpiPattern" }
+}
+
+$previousTheme = [string]$env:TOOL_UI_THEME
+$previousThemeSettingsPath = [string]$env:TOOL_UI_THEME_SETTINGS_PATH
+$themeSettingsFixture = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Kiem-Tra-theme-' + [Guid]::NewGuid().ToString('N') + '.json')
+try {
+    $env:TOOL_UI_THEME_SETTINGS_PATH = $themeSettingsFixture
+    Remove-Item Env:TOOL_UI_THEME -ErrorAction SilentlyContinue
+    if ((Get-ToolUiThemePreference) -ne 'System') { Add-Failure 'Theme preference mới không mặc định theo hệ thống.' }
+    if ((Get-ToolUiSystemTheme -RegistryPath 'HKCU:\__ToolMissingThemeFixture') -ne 'Light') {
+        Add-Failure 'System theme không fallback Light khi khóa registry không tồn tại.'
+    }
+    if (-not (Set-ToolUiThemePreference -Mode Light) -or -not (Set-ToolUiThemePreference -Mode System)) {
+        Add-Failure 'Theme preference không được ghi nguyên tử.'
+    } elseif ((Get-ToolUiThemePreference) -ne 'System' -or $env:TOOL_UI_THEME -notin @('Light','Dark')) {
+        Add-Failure 'System preference không round-trip hoặc TOOL_UI_THEME không phải effective Light/Dark.'
+    }
+    [IO.File]::WriteAllText($themeSettingsFixture, '{invalid-json', (New-Object Text.UTF8Encoding($false)))
+    Remove-Item Env:TOOL_UI_THEME -ErrorAction SilentlyContinue
+    if ((Get-ToolUiThemePreference) -ne 'System' -or (Get-ToolUiTheme) -notin @('Light','Dark')) {
+        Add-Failure 'Theme setting lỗi không fallback an toàn về System/effective palette.'
+    }
+} finally {
+    Remove-Item -LiteralPath $themeSettingsFixture -Force -ErrorAction SilentlyContinue
+    if ([string]::IsNullOrWhiteSpace($previousThemeSettingsPath)) {
+        Remove-Item Env:TOOL_UI_THEME_SETTINGS_PATH -ErrorAction SilentlyContinue
+    } else {
+        $env:TOOL_UI_THEME_SETTINGS_PATH = $previousThemeSettingsPath
+    }
+    if ([string]::IsNullOrWhiteSpace($previousTheme)) {
+        Remove-Item Env:TOOL_UI_THEME -ErrorAction SilentlyContinue
+    } else {
+        $env:TOOL_UI_THEME = $previousTheme
+    }
 }
 foreach ($buttonMode in @('Light','Dark')) {
     foreach ($buttonTone in @('Primary','Success','Warning','Danger','Purple','Teal','Neutral')) {
@@ -370,14 +423,14 @@ foreach ($colorPair in $enterpriseColorPairs) {
     if ($contrast -lt 4.5) { Add-Failure "Màu Mục 8 $($colorPair[0]) không đạt tương phản 4.5:1." }
 }
 
-# Dashboard always starts in Light mode and keeps Dark available per session.
+# Dashboard resolves System/Light/Dark preference to an effective Light/Dark palette.
 Assert-SourcePattern $text 'function\s+Set-DashboardTheme' 'Thiếu hàm áp dụng theme.'
 Assert-SourcePattern $text 'Set-ToolUiLiteralText\s+-Root\s+[$]form' 'Dashboard chưa hiển thị nguyên văn dấu & trên tile và nhãn.'
-Assert-SourcePattern $text 'ValidateSet\("Light",\s*"Dark"\)' 'Thiếu lựa chọn theme sáng/tối.'
+Assert-SourcePattern $text 'Get-ToolUiThemePreference' 'Dashboard thiếu lựa chọn theme theo hệ thống/sáng/tối.'
 Assert-SourcePattern $text 'Tool-UiTheme\.ps1' 'Dashboard chưa nạp theme dùng chung.'
 Assert-SourcePattern $text 'Set-ToolUiThemePreference' 'Dashboard chưa ghi nhớ theme.'
 Assert-SourcePattern $text 'TOOL_UI_THEME' 'Dashboard chưa truyền theme sang tiến trình con.'
-Assert-SourcePattern $text '[$]script:dashboardTheme\s*=\s*"Light"' 'Dashboard chưa mặc định mở bằng giao diện sáng.'
+Assert-SourcePattern $text '[$]script:dashboardTheme\s*=\s*Get-ToolUiTheme' 'Dashboard chưa khởi động theo effective system theme.'
 $themedDialogCount = [regex]::Matches($text, 'Set-ToolWindowTheme\s+-Root\s+[$](dialog|chooser|screen)\s+-Mode\s+[$]script:dashboardTheme').Count
 if ($themedDialogCount -lt 9) {
     Add-Failure "Dark mode chưa phủ đủ cửa sổ con; tìm thấy $themedDialogCount lượt áp dụng."
@@ -398,6 +451,44 @@ foreach ($foundationFile in @(
 }
 $viCatalog = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $enCatalog = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.en-US.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+foreach ($scanKey in @(
+    'scan.dialog.excludedRoots','scan.dialog.addExclusion','scan.dialog.removeExclusion',
+    'scan.dialog.clearExclusions','scan.dialog.exclusionPrompt'
+)) {
+    if ($null -eq $viCatalog.PSObject.Properties[$scanKey] -or $null -eq $enCatalog.PSObject.Properties[$scanKey]) {
+        Add-Failure "Dashboard thiếu chuỗi chọn thư mục loại trừ vi/en: $scanKey"
+    }
+}
+foreach ($catalogStatus in @('fresh','warning','stale','future','invalid','unavailable')) {
+    $catalogValueKey = "dashboard.softwareCatalog.value.$catalogStatus"
+    if ($null -eq $viCatalog.PSObject.Properties[$catalogValueKey] -or $null -eq $enCatalog.PSObject.Properties[$catalogValueKey]) {
+        Add-Failure "Dashboard thiếu trạng thái catalog phần mềm hiển thị trực tiếp vi/en: $catalogValueKey"
+    }
+}
+if ($guiAst) {
+    $scanChooserAst = $guiAst.Find({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Show-ReportScanChooser'
+    }, $true)
+    if (-not $scanChooserAst) {
+        Add-Failure 'Dashboard thiếu hộp chọn mức/phạm vi quét báo cáo.'
+    } else {
+        $scanChooserText = [string]$scanChooserAst.Extent.Text
+        foreach ($scanContract in @(
+            @('[$]preference\.ExcludedRoots', 'Hộp chọn quét không nạp lại thư mục loại trừ đã lưu.'),
+            @('-ExcludedRoots\s+[$]excludedRoots', 'Hộp chọn quét không đưa thư mục loại trừ qua bước xác thực.'),
+            @('-ExcludedRoots\s+@\([$]validatedPlan\.ExcludedRoots\)', 'Hộp chọn quét không lưu lại thư mục loại trừ đã xác thực.'),
+            @('ExcludedRoots\s*=\s*@\([$]validatedPlan\.ExcludedRoots\)', 'Yêu cầu tạo báo cáo không mang theo thư mục loại trừ đã xác thực.')
+        )) {
+            if ($scanChooserText -notmatch [string]$scanContract[0]) { Add-Failure ([string]$scanContract[1]) }
+        }
+        if ($scanChooserText -match 'ExcludedRoots\s*=\s*@\(\)') {
+            Add-Failure 'Hộp chọn quét vẫn ghi đè cấu hình thư mục loại trừ thành mảng rỗng.'
+        }
+    }
+}
+Assert-SourcePattern $text 'dashboard\.softwareCatalog\.value\.' 'Trạng thái catalog phần mềm chưa hiển thị trực tiếp trong thẻ dashboard.'
+Assert-SourcePattern $text "'Warning','Stale','Future','Invalid','Unavailable'" 'Invalid/Unavailable của catalog phần mềm chưa kích hoạt trạng thái cảnh báo.'
 if ([string]$viCatalog.'menu.6.title' -ne 'Khắc phục KMS/Activator Win, Office & phần mềm') {
     Add-Failure 'Tên tiếng Việt của chức năng khắc phục bản quyền toàn bộ phần mềm chưa đúng yêu cầu.'
 }
@@ -614,13 +705,13 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     if ($guideViText -match '(?im)^\s*(Bản|Phiên bản)\s+v?\d' -or $guideEnText -match '(?im)^\s*(Version|Release)\s+v?\d') {
         Add-Failure 'HDSD còn trộn nhật ký cập nhật phiên bản thay vì chỉ hướng dẫn chức năng.'
     }
-    if ($historyText -notmatch 'FileVersion:\s*\*\*4\.9\.0\.0\*\*' -or
-        $historyText -notmatch 'v4\.9\.0\.0' -or
+    if ($historyText -notmatch 'FileVersion:\s*\*\*5\.0\.0\.0\*\*' -or
+        $historyText -notmatch 'v5\.0\.0\.0' -or
         $historyText -notmatch 'Nền tảng/công nghệ:' -or
         $historyText -notmatch 'Trọng tâm:') {
         Add-Failure 'Tài liệu phiên bản chưa mô tả bản mới, mô hình triển khai và công nghệ/ngôn ngữ.'
     }
-    foreach ($mainVersion in @('1.0','1.1','1.2','1.3','2.4','2.5','2.6','2.7','2.8','2.9','3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','4.0','4.1','4.2','4.3','4.4','4.6','4.8','4.9')) {
+    foreach ($mainVersion in @('1.0','1.1','1.2','1.3','2.4','2.5','2.6','2.7','2.8','2.9','3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','4.0','4.1','4.2','4.3','4.4','4.6','4.8','4.9','5.0')) {
         if ($historyText -notmatch "(?m)^##\s+v$([regex]::Escape($mainVersion))\b") {
             Add-Failure "Tài liệu lịch sử thiếu phiên bản chính v$mainVersion."
         }
@@ -705,7 +796,7 @@ if ($menuMatches.Count -ne 10) {
 if ($text -match '[$]number\s*=\s*"\{0:00\}"' -or $text -match 'return\s+"[$]number\s+') {
     Add-Failure 'Tile tác vụ vẫn còn ghép số thứ tự 01–10 vào nhãn hiển thị.'
 }
-Assert-SourcePattern $text '[$]script:dashboardTheme\s*=\s*"Light"' 'Ứng dụng chưa khởi động bằng giao diện sáng.'
+Assert-SourcePattern $text '[$]script:dashboardTheme\s*=\s*Get-ToolUiTheme' 'Ứng dụng chưa khởi động theo effective system theme.'
 Assert-SourcePattern $text '[$]cardValue\.AutoEllipsis\s*=\s*[$]true' 'Thẻ trạng thái chưa có ellipsis/tooltip an toàn khi cửa sổ quá hẹp.'
 Assert-SourcePattern $text 'function\s+New-DashboardTileIconBitmap' 'Tile chưa có khoảng đệm ảnh riêng để icon không sát chữ.'
 Assert-SourcePattern $text 'IconSize\s+32\s+-RightGap\s+12' 'Khoảng cách icon/chữ của tile chưa được chuẩn hóa.'

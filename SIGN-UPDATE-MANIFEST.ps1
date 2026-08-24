@@ -29,7 +29,7 @@ function Get-UpdateSigningSha256 {
 function Get-UpdateSigningCertificate {
     if ($PSCmdlet.ParameterSetName -eq 'Store') {
         $normalized = ($CertificateThumbprint -replace '\s', '').ToUpperInvariant()
-        if ($normalized -notmatch '^[A-F0-9]{40,64}$') { throw 'Certificate thumbprint is invalid.' }
+        if ($normalized -notmatch '^[A-F0-9]{40}$') { throw 'Certificate thumbprint is invalid.' }
         $certificatePath = "Cert:\$StoreLocation\My\$normalized"
         if (-not (Test-Path -LiteralPath $certificatePath -PathType Leaf)) { throw 'Signing certificate was not found.' }
         return Get-Item -LiteralPath $certificatePath -ErrorAction Stop
@@ -115,8 +115,9 @@ if ($actualFields.Count -ne $allowedFields.Count -or @($actualFields | Where-Obj
     throw 'Update manifest contains missing or unknown root fields.'
 }
 if ([string]$manifest.SchemaVersion -ne '1.0' -or [string]$manifest.Channel -ne 'stable' -or
-    [string]$manifest.LatestVersion -ne '4.9.0.0' -or [bool]$manifest.AuthenticodeRequired -ne $true -or
-    @($manifest.SignerThumbprints).Count -ne 1 -or ([string]$manifest.SignerThumbprints[0]).ToUpperInvariant() -ne $expectedThumbprint) {
+    [string]$manifest.LatestVersion -ne '5.0.0.0' -or [bool]$manifest.AuthenticodeRequired -ne $true -or
+    @($manifest.SignerThumbprints).Count -ne 1 -or
+    ([string]$manifest.SignerThumbprints[0]).Replace(' ', '').ToUpperInvariant() -notmatch '^[A-F0-9]{40}$') {
     throw 'Update manifest identity or stable signing policy is invalid.'
 }
 

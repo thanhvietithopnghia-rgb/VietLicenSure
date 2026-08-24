@@ -2,11 +2,19 @@
 
 Tài liệu tóm tắt các thay đổi cốt lõi của những phiên bản công khai chính.
 
-Phiên bản hiện tại: **v4.9.0.0**
-FileVersion: **4.9.0.0** · Build **2026.08.22**
+Phiên bản đang phát triển: **v5.0.0.0** (`DevelopmentUnsigned`)
+FileVersion: **5.0.0.0** · Build **2026.08.24**
 
 Trang tải mới nhất:
 https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest
+
+## v5.0.0.0 — 24/08/2026 — bản phát triển chưa ký
+
+- **Chuỗi phát hành tin cậy:** Stable fail-closed nếu thiếu chứng thư CA-issued/HSM, timestamp RFC3161, provenance CMS đúng source commit hoặc worktree sạch.
+- **Catalog/plugin:** phân loại Fresh/Warning/Stale/Future/Invalid; plugin ngoài chỉ dùng metadata khai báo ký CMS từ fingerprint quản trị viên ghim.
+- **Quét linh hoạt:** Quick/Standard/Deep, ngân sách quét và giới hạn include/exclude/root an toàn.
+- **Giao diện và triển khai:** theme theo hệ thống, dark/light override, PerMonitorV2 DPI, fleet export an toàn, CLI headless và script Intune/MDM.
+- **Trạng thái hiện tại:** chỉ dùng kiểm thử; không tự cập nhật và không cho phép thay đổi hệ thống cho tới khi đủ bằng chứng Stable.
 
 ## v4.9.0.0 — 22/08/2026
 

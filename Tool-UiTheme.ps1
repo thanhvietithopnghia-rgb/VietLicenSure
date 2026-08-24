@@ -1,6 +1,6 @@
 ﻿<#
     Bộ theme WinForms dùng chung cho Tool Kiểm Tra.
-    Chỉ lưu tên theme (Light/Dark), không lưu dữ liệu máy hoặc thông tin license.
+    Chỉ lưu lựa chọn theme (System/Light/Dark), không lưu dữ liệu máy hoặc thông tin license.
     Các API và control đều có trên Windows 7 SP1 / Windows PowerShell 3+.
 #>
 
@@ -12,6 +12,9 @@ if (-not (Get-Variable -Name ToolUiContrastUpdate -Scope Script -ErrorAction Sil
 }
 if (-not (Get-Variable -Name ToolUiActionIconCache -Scope Script -ErrorAction SilentlyContinue)) {
     $script:ToolUiActionIconCache = @{}
+}
+if (-not (Get-Variable -Name ToolUiDpiInitialization -Scope Script -ErrorAction SilentlyContinue)) {
+    $script:ToolUiDpiInitialization = $null
 }
 
 function Get-ToolUiThemeSettingsPath {
@@ -26,29 +29,63 @@ function Get-ToolUiThemeSettingsPath {
     return (Join-Path (Join-Path $localAppData "ThanhViet-Tool-Kiem-Tra") "ui-settings.json")
 }
 
-function Get-ToolUiTheme {
-    $environmentTheme = [string]$env:TOOL_UI_THEME
-    if ($environmentTheme -in @("Light", "Dark")) { return $environmentTheme }
+function Get-ToolUiSystemTheme {
+    [CmdletBinding()]
+    param(
+        [string]$RegistryPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize',
+        [string]$ValueName = 'AppsUseLightTheme'
+    )
+
+    try {
+        $value = (Get-ItemProperty -LiteralPath $RegistryPath -Name $ValueName -ErrorAction Stop).$ValueName
+        if ([int]$value -eq 0) { return 'Dark' }
+    } catch {}
+    # Windows 7 and Windows versions without the personalization value use the
+    # long-standing light palette. Registry failures must never block startup.
+    return 'Light'
+}
+
+function Get-ToolUiThemePreference {
+    [CmdletBinding()]
+    param()
+
     try {
         $settingsPath = Get-ToolUiThemeSettingsPath
         if (Test-Path -LiteralPath $settingsPath -PathType Leaf) {
             $settings = Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
             $savedTheme = [string]$settings.Theme
-            if ($savedTheme -in @("Light", "Dark")) {
-                $env:TOOL_UI_THEME = $savedTheme
-                return $savedTheme
-            }
+            if ($savedTheme -in @("System", "Light", "Dark")) { return $savedTheme }
         }
     } catch {}
-    $env:TOOL_UI_THEME = "Light"
-    return "Light"
+    return 'System'
+}
+
+function Get-ToolUiTheme {
+    [CmdletBinding()]
+    param()
+
+    # TOOL_UI_THEME is deliberately an effective-palette contract for child
+    # processes. "System" is never exported because older helpers only know
+    # the concrete Light/Dark values.
+    $environmentTheme = [string]$env:TOOL_UI_THEME
+    if ($environmentTheme -in @("Light", "Dark")) { return $environmentTheme }
+    $preference = Get-ToolUiThemePreference
+    $effectiveTheme = if ($preference -eq 'System') { Get-ToolUiSystemTheme } else { $preference }
+    if ($effectiveTheme -notin @('Light','Dark')) { $effectiveTheme = 'Light' }
+    $env:TOOL_UI_THEME = $effectiveTheme
+    return $effectiveTheme
 }
 
 function Set-ToolUiThemePreference {
-    param([Parameter(Mandatory = $true)][ValidateSet("Light", "Dark")][string]$Mode)
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][ValidateSet("System", "Light", "Dark")][string]$Mode)
 
-    $env:TOOL_UI_THEME = $Mode
+    $effectiveTheme = if ($Mode -eq 'System') { Get-ToolUiSystemTheme } else { $Mode }
+    if ($effectiveTheme -notin @('Light','Dark')) { $effectiveTheme = 'Light' }
+    $env:TOOL_UI_THEME = $effectiveTheme
+    $settingsPath = ""
     $temporaryPath = ""
+    $backupPath = ""
     try {
         $settingsPath = Get-ToolUiThemeSettingsPath
         $settingsDirectory = Split-Path -Parent $settingsPath
@@ -62,7 +99,10 @@ function Set-ToolUiThemePreference {
         } | ConvertTo-Json -Depth 3
         [IO.File]::WriteAllText($temporaryPath, $json, (New-Object Text.UTF8Encoding($false)))
         if (Test-Path -LiteralPath $settingsPath -PathType Leaf) {
-            [IO.File]::Replace($temporaryPath, $settingsPath, $null, $true)
+            $backupPath = $settingsPath + "." + [Guid]::NewGuid().ToString("N") + ".bak"
+            [IO.File]::Replace($temporaryPath, $settingsPath, $backupPath, $true)
+            Remove-Item -LiteralPath $backupPath -Force -ErrorAction SilentlyContinue
+            $backupPath = ""
         } else {
             [IO.File]::Move($temporaryPath, $settingsPath)
         }
@@ -72,9 +112,116 @@ function Set-ToolUiThemePreference {
             if ($temporaryPath -and (Test-Path -LiteralPath $temporaryPath -PathType Leaf)) {
                 Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
             }
+            if ($backupPath -and (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
+                if ($settingsPath -and -not (Test-Path -LiteralPath $settingsPath -PathType Leaf)) {
+                    [IO.File]::Move($backupPath, $settingsPath)
+                } else {
+                    Remove-Item -LiteralPath $backupPath -Force -ErrorAction SilentlyContinue
+                }
+            }
         } catch {}
         return $false
     }
+}
+
+function Initialize-ToolDpiAwareness {
+    [CmdletBinding()]
+    param([switch]$AsBoolean)
+
+    if ($null -ne $script:ToolUiDpiInitialization) {
+        if ($AsBoolean) { return [bool]$script:ToolUiDpiInitialization.Applied }
+        return $script:ToolUiDpiInitialization
+    }
+
+    $startedAtUtc = [DateTime]::UtcNow
+    $openFormCount = 0
+    try { $openFormCount = [int][Windows.Forms.Application]::OpenForms.Count } catch {}
+    if ($openFormCount -gt 0) {
+        $script:ToolUiDpiInitialization = [pscustomobject][ordered]@{
+            Applied=$false; Method='None'; Status='TooLate'; TooLate=$true
+            OpenFormCount=$openFormCount; StartedAtUtc=$startedAtUtc.ToString('o')
+        }
+        if ($AsBoolean) { return $false }
+        return $script:ToolUiDpiInitialization
+    }
+
+    try {
+        if (-not ('ToolKiemTra.UiDpiNativeMethods' -as [type])) {
+            Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+namespace ToolKiemTra {
+    public static class UiDpiNativeMethods {
+        [DllImport("user32.dll", SetLastError=true)]
+        public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
+        [DllImport("shcore.dll")]
+        public static extern int SetProcessDpiAwareness(int value);
+        [DllImport("user32.dll", SetLastError=true)]
+        public static extern bool SetProcessDPIAware();
+    }
+}
+'@ -ErrorAction Stop
+        }
+
+        $method = 'None'
+        $status = 'Unavailable'
+        $applied = $false
+        try {
+            # PER_MONITOR_AWARE_V2; absent on Windows 7 and therefore guarded.
+            if ([ToolKiemTra.UiDpiNativeMethods]::SetProcessDpiAwarenessContext([IntPtr](-4))) {
+                $method = 'SetProcessDpiAwarenessContext'
+                $status = 'Applied'
+                $applied = $true
+            }
+        } catch [EntryPointNotFoundException] {
+        } catch [DllNotFoundException] {
+        } catch {}
+
+        if (-not $applied) {
+            try {
+                # PROCESS_PER_MONITOR_DPI_AWARE. shcore.dll starts at Windows 8.1.
+                $hresult = [ToolKiemTra.UiDpiNativeMethods]::SetProcessDpiAwareness(2)
+                if ($hresult -eq 0) {
+                    $method = 'SetProcessDpiAwareness'
+                    $status = 'Applied'
+                    $applied = $true
+                } elseif ($hresult -eq -2147024891) {
+                    # A manifest or an earlier pre-HWND call already selected
+                    # awareness. E_ACCESSDENIED is expected in that case.
+                    $method = 'ManifestOrExistingContext'
+                    $status = 'AlreadyConfigured'
+                    $applied = $true
+                }
+            } catch [EntryPointNotFoundException] {
+            } catch [DllNotFoundException] {
+            } catch {}
+        }
+
+        if (-not $applied) {
+            try {
+                # Vista/Windows 7 fallback. The manifest remains the preferred
+                # path; this call only supplies system-DPI awareness.
+                if ([ToolKiemTra.UiDpiNativeMethods]::SetProcessDPIAware()) {
+                    $method = 'SetProcessDPIAware'
+                    $status = 'AppliedLegacy'
+                    $applied = $true
+                }
+            } catch {}
+        }
+
+        $script:ToolUiDpiInitialization = [pscustomobject][ordered]@{
+            Applied=[bool]$applied; Method=$method; Status=$status; TooLate=$false
+            OpenFormCount=$openFormCount; StartedAtUtc=$startedAtUtc.ToString('o')
+        }
+    } catch {
+        $script:ToolUiDpiInitialization = [pscustomobject][ordered]@{
+            Applied=$false; Method='None'; Status='InitializationFailed'; TooLate=$false
+            OpenFormCount=$openFormCount; StartedAtUtc=$startedAtUtc.ToString('o')
+        }
+    }
+
+    if ($AsBoolean) { return [bool]$script:ToolUiDpiInitialization.Applied }
+    return $script:ToolUiDpiInitialization
 }
 
 function Get-ToolUiPalette {

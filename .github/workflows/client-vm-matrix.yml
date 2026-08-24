@@ -1,0 +1,201 @@
+name: Protected Windows client VM matrix
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_client_matrix:
+        description: Run the protected self-hosted Windows client matrix
+        required: true
+        default: false
+        type: boolean
+  schedule:
+    - cron: '23 4 * * 2'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: client-vm-matrix
+  cancel-in-progress: false
+
+jobs:
+  source-preflight:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Parse VM automation and enterprise governance scripts
+        shell: powershell
+        run: |
+          $paths = @(
+            '.\Tool-Enterprise.ps1',
+            '.\Tool-EnterpriseCli.ps1',
+            '.\Manage-ToolEnterpriseDeployment.ps1',
+            '.\New-ClientVmTestSummary.ps1',
+            '.\VERIFY-ENTERPRISE-GOVERNANCE.ps1'
+          )
+          foreach ($path in $paths) {
+            $errors = $null
+            [void][Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$null, [ref]$errors)
+            if (@($errors).Count -gt 0) { throw "Parse failed for ${path}: $(@($errors) -join '; ')" }
+          }
+
+  client-matrix:
+    needs: source-preflight
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_client_matrix) ||
+      (github.event_name == 'schedule' && vars.ENABLE_CLIENT_VM_MATRIX == 'true')
+    environment: client-vm-validation
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win10-22h2
+            runner: tool-win10-22h2
+            expected_display_version: 22H2
+            expected_build: '19045'
+          - platform: win11-previous
+            runner: tool-win11-previous
+            expected_display_version: 24H2
+            expected_build: '26100'
+          - platform: win11-current
+            runner: tool-win11-current
+            expected_display_version: 25H2
+            expected_build: '26200'
+    runs-on: [self-hosted, Windows, X64, '${{ matrix.runner }}']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Run compatibility and enterprise tests
+        id: tests
+        shell: powershell
+        env:
+          TOOL_VM_PLATFORM: ${{ matrix.platform }}
+          TOOL_VM_EXPECTED_DISPLAY_VERSION: ${{ matrix.expected_display_version }}
+          TOOL_VM_EXPECTED_BUILD: ${{ matrix.expected_build }}
+        run: |
+          $resultRoot = Join-Path $PWD 'vm-test-results'
+          New-Item -ItemType Directory -Path $resultRoot -Force | Out-Null
+          $tests = @(
+            [pscustomobject]@{ Path='.\VERIFY-FOUNDATION.ps1'; Arguments=@('-SourceDirectory','.', '-ExpectedArchitecture','x64') },
+            [pscustomobject]@{ Path='.\VERIFY-COMPATIBILITY.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-REPORT-SCHEMA.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-DASHBOARD.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-OFFLINE-I18N.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-LOCALIZATION-COVERAGE.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-PERFORMANCE.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-CATALOG-PLUGIN-TRUST-V5.ps1'; Arguments=@() },
+            [pscustomobject]@{ Path='.\VERIFY-ENTERPRISE.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-ENTERPRISE-GOVERNANCE.ps1'; Arguments=@('-SourceDirectory','.') },
+            [pscustomobject]@{ Path='.\VERIFY-NO-SIGNING-SECRETS.ps1'; Arguments=@('-SourceDirectory','.') }
+          )
+          $testResults = @()
+          $overall = 'Passed'
+          $powershellExe = (Get-Command powershell.exe -ErrorAction Stop).Source
+          foreach ($test in $tests) {
+            $testArguments = @($test.Arguments)
+            $output = @(& $powershellExe -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -File $test.Path @testArguments 2>&1)
+            $code = $LASTEXITCODE
+            if ($code -ne 0) { $overall = 'Failed' }
+            # Verifier stdout/stderr can contain host-specific paths or other
+            # operational context. Publish only the allowlisted status tuple;
+            # rerun a failed verifier inside the protected environment to debug.
+            Write-Host ("[{0}] exit={1}; status={2}" -f `
+              ([IO.Path]::GetFileName($test.Path)), $code, $(if ($code -eq 0) { 'Passed' } else { 'Failed' }))
+            $testResults += [pscustomobject][ordered]@{
+              Name = [IO.Path]::GetFileName($test.Path)
+              ExitCode = $code
+              Status = if ($code -eq 0) { 'Passed' } else { 'Failed' }
+            }
+            $output = $null
+          }
+          $os = Get-CimInstance Win32_OperatingSystem
+          $windowsVersion = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
+          $actualDisplayVersion = [string]$windowsVersion.DisplayVersion
+          $actualBuild = [string]$os.BuildNumber
+          $osIdentityVerified = (
+            $actualDisplayVersion -eq [string]$env:TOOL_VM_EXPECTED_DISPLAY_VERSION -and
+            $actualBuild -eq [string]$env:TOOL_VM_EXPECTED_BUILD
+          )
+          if (-not $osIdentityVerified) {
+            $overall = 'Failed'
+            Write-Error ("Runner identity mismatch for {0}: expected {1}/{2}, actual {3}/{4}." -f `
+              $env:TOOL_VM_PLATFORM,$env:TOOL_VM_EXPECTED_DISPLAY_VERSION,$env:TOOL_VM_EXPECTED_BUILD,$actualDisplayVersion,$actualBuild) -ErrorAction Continue
+          }
+          $record = [pscustomobject][ordered]@{
+            SchemaVersion = '1.0'
+            Platform = $env:TOOL_VM_PLATFORM
+            Status = $overall
+            OsCaption = [string]$os.Caption
+            OsBuild = $actualBuild
+            OsUbr = [int]$windowsVersion.UBR
+            OsDisplayVersion = $actualDisplayVersion
+            ExpectedOsBuild = [string]$env:TOOL_VM_EXPECTED_BUILD
+            ExpectedOsDisplayVersion = [string]$env:TOOL_VM_EXPECTED_DISPLAY_VERSION
+            OsIdentityVerified = [bool]$osIdentityVerified
+            PowerShell = [string]$PSVersionTable.PSVersion
+            Commit = [string]$env:GITHUB_SHA
+            CompletedAtUtc = [DateTime]::UtcNow.ToString('o')
+            Tests = $testResults
+          }
+          $recordPath = Join-Path $resultRoot ($env:TOOL_VM_PLATFORM + '.vm-result.json')
+          [IO.File]::WriteAllText($recordPath, ($record | ConvertTo-Json -Depth 10), (New-Object Text.UTF8Encoding($false)))
+          .\New-ClientVmTestSummary.ps1 -ResultsDirectory $resultRoot -ExpectedPlatforms @($env:TOOL_VM_PLATFORM) | Out-Host
+      - name: Upload VM evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: client-vm-${{ matrix.platform }}
+          path: vm-test-results/
+          if-no-files-found: error
+      - name: Enforce VM result
+        if: always()
+        shell: powershell
+        env:
+          TOOL_VM_PLATFORM: ${{ matrix.platform }}
+        run: |
+          $path = Join-Path $PWD ('vm-test-results\' + $env:TOOL_VM_PLATFORM + '.vm-result.json')
+          if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'VM result was not created.' }
+          $result = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if ([string]$result.Status -ne 'Passed') { throw "VM validation failed for $env:TOOL_VM_PLATFORM" }
+
+  publish-summary:
+    needs: client-matrix
+    if: always() && needs.client-matrix.result != 'skipped'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: client-vm-*
+          path: collected-vm-results
+          merge-multiple: true
+      - name: Build public-safe JSON and Markdown summary
+        shell: powershell
+        run: |
+          $result = .\New-ClientVmTestSummary.ps1 `
+            -ResultsDirectory .\collected-vm-results `
+            -JsonOutputPath .\client-vm-summary.json `
+            -MarkdownOutputPath .\client-vm-summary.md
+          Get-Content -LiteralPath $result.MarkdownPath -Raw | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+          if ([string]$result.Status -ne 'Passed') { Write-Warning 'One or more protected VM results failed or are missing.' }
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: client-vm-matrix-summary
+          path: |
+            client-vm-summary.json
+            client-vm-summary.md
+          if-no-files-found: error
+      - name: Enforce complete passing matrix
+        if: always()
+        shell: powershell
+        run: |
+          if (-not (Test-Path -LiteralPath .\client-vm-summary.json -PathType Leaf)) {
+            throw 'The protected VM matrix did not produce a public-safe summary.'
+          }
+          $summary = Get-Content -LiteralPath .\client-vm-summary.json -Raw | ConvertFrom-Json
+          if ([string]$summary.Status -ne 'Passed') {
+            throw 'One or more protected Windows VM results failed or are missing.'
+          }

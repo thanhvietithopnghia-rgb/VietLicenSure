@@ -1,5 +1,5 @@
 ﻿$script:ToolAssistantSchemaVersion = "1.1"
-$script:ToolAssistantToolVersion = "4.9.0.0"
+$script:ToolAssistantToolVersion = "5.0.0.0"
 $script:ToolAssistantMinimumKnowledgeVersion = [Version]"1.4.0"
 $script:ToolAssistantKnowledgeFileName = "tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/tool-assistant-knowledge-v1.1.json"

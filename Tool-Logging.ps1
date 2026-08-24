@@ -20,7 +20,7 @@ function Initialize-ToolLogging {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$Component,
-        [string]$ToolVersion = "4.9"
+        [string]$ToolVersion = "5.0"
     )
 
     $path = [string]$env:TOOL_LOG_PATH

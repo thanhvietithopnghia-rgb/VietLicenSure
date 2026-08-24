@@ -22,9 +22,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Thanh Việt")]
 [assembly: AssemblyProduct("Công cụ kiểm tra cấu hình máy và bản quyền phần mềm")]
 [assembly: AssemblyCopyright("Copyright © Thanh Việt 2026")]
-[assembly: AssemblyVersion("4.9.0.0")]
-[assembly: AssemblyFileVersion("4.9.0.0")]
-[assembly: AssemblyInformationalVersion("4.9.0.0")]
+[assembly: AssemblyVersion("5.0.0.0")]
+[assembly: AssemblyFileVersion("5.0.0.0")]
+[assembly: AssemblyInformationalVersion("5.0.0.0")]
 
 namespace ThanhViet.ToolKiemTra
 {
@@ -45,8 +45,8 @@ namespace ThanhViet.ToolKiemTra
         private const int MaximumPayloadDataBytes = 16 * 1024 * 1024;
         private const int MaximumSinglePayloadBytes = 8 * 1024 * 1024;
         private const string PayloadBundleFailureCode = "PAYLOAD_BUNDLE_INVALID";
-        private const string OfficialSignerThumbprint = "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA";
-        private const string OfficialBuildId = "4.9.0.0-production-20260822";
+        private const string OfficialSignerThumbprint = "0000000000000000000000000000000000000000";
+        private const string OfficialBuildId = "5.0.0.0-production-20260824";
         private const string OfficialVerificationUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest";
 #if TOOL_SIGNED_STABLE_BUILD
         // Only a build that is required to pass Authenticode verification may
@@ -54,8 +54,16 @@ namespace ThanhViet.ToolKiemTra
         // runnable in place and must never replace themselves from the public
         // stable manifest merely because their hash is different.
         private const string SignedStableBuildMarker = "1";
+        private const string ManagedSignedBuildMarker = "0";
+#elif TOOL_MANAGED_SIGNED_BUILD
+        // ManagedSigned uses a locally distributed trust anchor.  It may run
+        // approved system changes after WinVerifyTrust succeeds, but it must
+        // never identify itself as public Stable or use public self-update.
+        private const string SignedStableBuildMarker = "0";
+        private const string ManagedSignedBuildMarker = "1";
 #else
         private const string SignedStableBuildMarker = "0";
+        private const string ManagedSignedBuildMarker = "0";
 #endif
         private static string OfficialBuildState = "Unverified";
         private static string OfficialBuildFailureCode = "NotChecked";
@@ -110,6 +118,7 @@ namespace ThanhViet.ToolKiemTra
             "Tool-LicenseTimeline.ps1",
             "Tool-SafetyPolicy.ps1",
             "Tool-Enterprise.ps1",
+            "Tool-EnterpriseCli.ps1",
             "Tool-EnterpriseHost.ps1",
             "Tool-EnterpriseAgent.ps1",
             "enterprise-license-manager.ps1",
@@ -169,6 +178,7 @@ namespace ThanhViet.ToolKiemTra
             "Tool-LicenseTimeline.ps1",
             "Tool-SafetyPolicy.ps1",
             "Tool-Enterprise.ps1",
+            "Tool-EnterpriseCli.ps1",
             "Tool-EnterpriseHost.ps1",
             "Tool-EnterpriseAgent.ps1",
             "enterprise-license-manager.ps1",
@@ -221,9 +231,10 @@ namespace ThanhViet.ToolKiemTra
             if (!IsArchitectureSupported())
                 return 12;
             OfficialBuildState = EvaluateOfficialBuildState(out OfficialBuildFailureCode);
-            if (SignedStableBuildMarker == "1" && OfficialBuildState != "Official" && IsInteractiveMode(mode))
+            if ((SignedStableBuildMarker == "1" || ManagedSignedBuildMarker == "1") &&
+                OfficialBuildState != "Official" && OfficialBuildState != "Managed" && IsInteractiveMode(mode))
                 ShowMessage(mode, L("launcher.officialBuildInvalid", OfficialBuildFailureCode, OfficialVerificationUrl), MessageBoxIcon.Warning);
-            if (RequiresAdministrator(mode) && OfficialBuildState != "Official")
+            if (RequiresAdministrator(mode) && OfficialBuildState != "Official" && OfficialBuildState != "Managed")
             {
                 ShowMessage(mode, L("launcher.officialBuildChangeBlocked", OfficialVerificationUrl), MessageBoxIcon.Error);
                 return 15;
@@ -400,14 +411,14 @@ namespace ThanhViet.ToolKiemTra
         private static string EvaluateOfficialBuildState(out string failureCode)
         {
             failureCode = "DevelopmentBuild";
-            if (SignedStableBuildMarker != "1")
+            if (SignedStableBuildMarker != "1" && ManagedSignedBuildMarker != "1")
                 return "Unverified";
             try
             {
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 string filePath = assembly.Location;
                 if (String.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath) ||
-                    assembly.GetName().Version != new Version(4, 9, 0, 0))
+                    assembly.GetName().Version != new Version(5, 0, 0, 0))
                 {
                     failureCode = "IdentityMismatch";
                     return "Modified";
@@ -434,17 +445,17 @@ namespace ThanhViet.ToolKiemTra
                 }
 
                 uint trustStatus = GetAuthenticodeTrustStatus(filePath);
-                // A pinned self-signed publisher can be cryptographically valid
-                // while Windows reports only an untrusted root/subject on a new
-                // machine. Bad digest, missing signature, or explicit distrust
-                // are never accepted.
-                if (trustStatus != 0 && trustStatus != 0x800B0109 && trustStatus != 0x800B010A && trustStatus != 0x800B0004)
+                // Signed releases must validate through Windows trust policy.
+                // Public Stable additionally enforces its CA policy in the
+                // release pipeline; ManagedSigned relies on an explicitly
+                // distributed local trust anchor and remains a distinct state.
+                if (trustStatus != 0)
                 {
                     failureCode = "Authenticode-0x" + trustStatus.ToString("X8", CultureInfo.InvariantCulture);
                     return "Modified";
                 }
                 failureCode = String.Empty;
-                return "Official";
+                return ManagedSignedBuildMarker == "1" ? "Managed" : "Official";
             }
             catch (Exception ex)
             {
@@ -1102,7 +1113,7 @@ namespace ThanhViet.ToolKiemTra
                 startInfo.EnvironmentVariables["TOOL_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
                 startInfo.EnvironmentVariables["TOOL_LAUNCH_MODE"] = mode.ToString();
                 startInfo.EnvironmentVariables["TOOL_AGENT_FORCE"] = mode == LaunchMode.EnterpriseAgentForce ? "1" : "0";
-                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "4.9.0.0";
+                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "5.0.0.0";
                 startInfo.EnvironmentVariables["TOOL_UI_CULTURE"] = GetUiCulture();
                 startInfo.EnvironmentVariables["TOOL_CORRELATION_ID"] = correlationId;
                 startInfo.EnvironmentVariables["TOOL_CAPABILITY_SCHEMA"] = "1.1";

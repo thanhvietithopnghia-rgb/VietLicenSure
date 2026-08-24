@@ -21,6 +21,9 @@ if (-not ('System.Security.Cryptography.ProtectedData' -as [type])) {
 $script:ToolSoftwareCatalogSignerCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 $script:ToolSoftwareCatalogMaximumBytes = 2097152
 $script:ToolSoftwareCatalogMaximumSignatureBytes = 65536
+$script:ToolSoftwareCatalogFreshnessWarningAgeDays = 30
+$script:ToolSoftwareCatalogFreshnessMaximumAgeDays = 45
+$script:ToolSoftwareCatalogFreshnessFutureSkewHours = 24
 $script:ToolSoftwareOfflinePolicyPath = Join-Path $PSScriptRoot 'Tool-OfflinePolicy.ps1'
 $script:ToolSoftwareSignatureCache = @{}
 $script:ToolSoftwareFileHashCache = @{}
@@ -293,12 +296,67 @@ function Get-ToolSoftwareCatalogSemanticSha256 {
     try {
         $signedProperties = [ordered]@{}
         foreach ($property in $Catalog.PSObject.Properties) {
-            if ([string]$property.Name -in @('CatalogSource','CatalogPath','CatalogSha256','CatalogSignatureValid','CatalogSignaturePath')) { continue }
+            if ([string]$property.Name -in @(
+                'CatalogSource','CatalogPath','CatalogSha256','CatalogSignatureValid','CatalogSignaturePath',
+                'CatalogGeneratedAtUtc','CatalogAgeDays','CatalogFreshnessStatus','CatalogFreshnessEvaluatedAtUtc',
+                'CatalogFreshnessWarningAgeDays','CatalogFreshnessMaximumAgeDays','CatalogFreshnessFutureSkewHours',
+                'CatalogFreshForDecisiveEvidence','CatalogFreshnessMessageCode'
+            )) { continue }
             $signedProperties[[string]$property.Name] = $property.Value
         }
         $semanticJson = ([pscustomobject]$signedProperties | ConvertTo-Json -Depth 64 -Compress)
         return Get-ToolSoftwareSha256Text -Text $semanticJson
     } catch { return '' }
+}
+
+function Get-ToolSoftwareCatalogFreshness {
+    param(
+        [AllowNull()][object]$Catalog,
+        [DateTimeOffset]$NowUtc = [DateTimeOffset]::UtcNow
+    )
+
+    $generatedAt = [DateTimeOffset]::MinValue
+    $generatedAtText = Get-ToolSoftwareOptionalPropertyString -InputObject $Catalog -Name 'GeneratedAtUtc'
+    $timestampValid = -not [string]::IsNullOrWhiteSpace($generatedAtText) -and
+        [DateTimeOffset]::TryParse($generatedAtText, [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::RoundtripKind, [ref]$generatedAt)
+    $status = 'Invalid'
+    $messageCode = 'CatalogTimestampInvalidReadOnly'
+    $ageDays = $null
+    $decisiveEvidenceAllowed = $false
+    if ($timestampValid) {
+        $evaluatedAt = $NowUtc.ToUniversalTime()
+        $generatedAt = $generatedAt.ToUniversalTime()
+        $age = $evaluatedAt - $generatedAt
+        $ageDays = [Math]::Round($age.TotalDays, 3)
+        if ($generatedAt -gt $evaluatedAt.AddHours($script:ToolSoftwareCatalogFreshnessFutureSkewHours)) {
+            $status = 'Future'
+            $messageCode = 'CatalogFutureTimestampReadOnly'
+        } elseif ($age.TotalDays -ge $script:ToolSoftwareCatalogFreshnessMaximumAgeDays) {
+            $status = 'Stale'
+            $messageCode = 'CatalogStaleReadOnly'
+        } elseif ($age.TotalDays -ge $script:ToolSoftwareCatalogFreshnessWarningAgeDays) {
+            $status = 'Warning'
+            $messageCode = 'CatalogFreshnessWarning'
+            $decisiveEvidenceAllowed = $true
+        } else {
+            $status = 'Fresh'
+            $messageCode = 'CatalogFresh'
+            $decisiveEvidenceAllowed = $true
+        }
+    }
+
+    return [pscustomobject][ordered]@{
+        GeneratedAtUtc = if ($timestampValid) { $generatedAt.ToString('o') } else { '' }
+        AgeDays = $ageDays
+        Status = $status
+        WarningAgeDays = [int]$script:ToolSoftwareCatalogFreshnessWarningAgeDays
+        MaximumAgeDays = [int]$script:ToolSoftwareCatalogFreshnessMaximumAgeDays
+        FutureSkewHours = [int]$script:ToolSoftwareCatalogFreshnessFutureSkewHours
+        DecisiveEvidenceAllowed = [bool]$decisiveEvidenceAllowed
+        MessageCode = $messageCode
+        EvaluatedAtUtc = $NowUtc.ToUniversalTime().ToString('o')
+    }
 }
 
 function Test-ToolSoftwareCatalogPropertyAllowlist {
@@ -563,6 +621,16 @@ function Import-ToolSoftwareCatalogFile {
         $catalog | Add-Member -NotePropertyName CatalogSha256 -NotePropertyValue $catalogSha256 -Force
         $catalog | Add-Member -NotePropertyName CatalogSignatureValid -NotePropertyValue ([bool]$signatureValid) -Force
         $catalog | Add-Member -NotePropertyName CatalogSignaturePath -NotePropertyValue $(if ($signatureValid) {[IO.Path]::GetFullPath($SignaturePath)} else {''}) -Force
+        $freshness = Get-ToolSoftwareCatalogFreshness -Catalog $catalog
+        $catalog | Add-Member -NotePropertyName CatalogGeneratedAtUtc -NotePropertyValue ([string]$freshness.GeneratedAtUtc) -Force
+        $catalog | Add-Member -NotePropertyName CatalogAgeDays -NotePropertyValue $freshness.AgeDays -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshnessStatus -NotePropertyValue ([string]$freshness.Status) -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshnessEvaluatedAtUtc -NotePropertyValue ([string]$freshness.EvaluatedAtUtc) -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshnessWarningAgeDays -NotePropertyValue ([int]$freshness.WarningAgeDays) -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshnessMaximumAgeDays -NotePropertyValue ([int]$freshness.MaximumAgeDays) -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshnessFutureSkewHours -NotePropertyValue ([int]$freshness.FutureSkewHours) -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshForDecisiveEvidence -NotePropertyValue ([bool]$freshness.DecisiveEvidenceAllowed) -Force
+        $catalog | Add-Member -NotePropertyName CatalogFreshnessMessageCode -NotePropertyValue ([string]$freshness.MessageCode) -Force
         if ($signatureValid -and $Source -in @('Bundled','OnlineCache','OnlinePreviousCache')) {
             $semanticSha256 = Get-ToolSoftwareCatalogSemanticSha256 -Catalog $catalog
             if (-not [string]::IsNullOrWhiteSpace($semanticSha256)) {
@@ -617,6 +685,8 @@ function Test-ToolSoftwareCatalogTrustedForDecisiveEvidence {
     $catalogSha256 = Get-ToolSoftwareOptionalPropertyString -InputObject $Catalog -Name 'CatalogSha256'
     if ($catalogSource -notin @('Bundled','OnlineCache','OnlinePreviousCache') -or [string]::IsNullOrWhiteSpace($catalogSha256) -or
         -not [bool](Get-ToolSoftwareOptionalPropertyValues -InputObject $Catalog -Name 'CatalogSignatureValid' | Select-Object -First 1)) { return $false }
+    $freshness = Get-ToolSoftwareCatalogFreshness -Catalog $Catalog
+    if (-not [bool]$freshness.DecisiveEvidenceAllowed) { return $false }
     foreach ($entry in $script:ToolSoftwareTrustedCatalogReferences) {
         if (-not [object]::ReferenceEquals($entry.Catalog, $Catalog)) { continue }
         if ([string]$entry.Source -ne $catalogSource -or [string]$entry.Sha256 -ne $catalogSha256) { return $false }
@@ -1713,26 +1783,43 @@ function Get-ToolBoundedExecutableFiles {
 }
 
 function Get-ToolPortableSoftwareInventory {
-    param([int]$MaximumResults = 350, [string[]]$ExcludedRoots = @(), [int]$MaximumDepth = 3)
+    param(
+        [int]$MaximumResults = 350,
+        [string[]]$IncludedRoots = @(),
+        [string[]]$ExcludedRoots = @(),
+        [int]$MaximumDepth = 3
+    )
     $records = New-Object System.Collections.Generic.List[object]
     $roots = New-Object System.Collections.Generic.List[string]
-    foreach ($root in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Programs' }))) {
-        if ($root -and (Test-Path -LiteralPath $root -PathType Container)) { $roots.Add([string]$root) }
-    }
-    foreach ($profile in @(Get-ToolUserProfileDirectories)) {
-        foreach ($relative in @('AppData\Local\Programs','scoop\apps','Apps','Programs','Tools','PortableApps','Desktop\PortableApps','Documents\PortableApps','Downloads\PortableApps')) {
-            $candidate = Join-Path $profile $relative
-            if (Test-Path -LiteralPath $candidate -PathType Container) { $roots.Add($candidate) }
+    $requestedIncludedRoots = @($IncludedRoots | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -Unique)
+    if ($requestedIncludedRoots.Count -gt 0) {
+        foreach ($root in $requestedIncludedRoots) {
+            try {
+                $rootInfo = Get-Item -LiteralPath ([IO.Path]::GetFullPath([string]$root) ) -Force -ErrorAction Stop
+                if ($rootInfo.PSIsContainer -and ($rootInfo.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) {
+                    $roots.Add([string]$rootInfo.FullName)
+                }
+            } catch {}
         }
-    }
-    try {
-        foreach ($drive in @(Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' -ErrorAction SilentlyContinue)) {
-            foreach ($folder in @('PortableApps','Apps','Programs','Tools','Software')) {
-                $candidate = Join-Path ([string]$drive.DeviceID + '\') $folder
+    } else {
+        foreach ($root in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA 'Programs' }))) {
+            if ($root -and (Test-Path -LiteralPath $root -PathType Container)) { $roots.Add([string]$root) }
+        }
+        foreach ($profile in @(Get-ToolUserProfileDirectories)) {
+            foreach ($relative in @('AppData\Local\Programs','scoop\apps','Apps','Programs','Tools','PortableApps','Desktop\PortableApps','Documents\PortableApps','Downloads\PortableApps')) {
+                $candidate = Join-Path $profile $relative
                 if (Test-Path -LiteralPath $candidate -PathType Container) { $roots.Add($candidate) }
             }
         }
-    } catch {}
+        try {
+            foreach ($drive in @(Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' -ErrorAction SilentlyContinue)) {
+                foreach ($folder in @('PortableApps','Apps','Programs','Tools','Software')) {
+                    $candidate = Join-Path ([string]$drive.DeviceID + '\') $folder
+                    if (Test-Path -LiteralPath $candidate -PathType Container) { $roots.Add($candidate) }
+                }
+            }
+        } catch {}
+    }
     $candidatePaths = @(Get-ToolBoundedExecutableFiles -Roots $roots.ToArray() -MaximumDepth $MaximumDepth -MaximumResults ($MaximumResults * 4) | Where-Object {
         $candidatePath = [string]$_
         $excluded = $false
@@ -1783,7 +1870,9 @@ function Get-ToolInstalledSoftwareInventory {
     param(
         [switch]$IncludeAppx, [switch]$IncludeShortcuts, [switch]$IncludePortable,
         [switch]$IncludePackageManagers, [int]$PortableMaximumResults = 350,
-        [ValidateRange(1,5)][int]$PortableMaximumDepth = 3
+        [ValidateRange(1,5)][int]$PortableMaximumDepth = 3,
+        [string[]]$IncludedRoots = @(),
+        [string[]]$ExcludedRoots = @()
     )
     $all = New-Object System.Collections.Generic.List[object]
     $sourceCounts = [ordered]@{ Registry=0; Appx=0; Shortcut=0; PackageManager=0; VendorRegistration=0; PortableDiscovery=0 }
@@ -1804,7 +1893,9 @@ function Get-ToolInstalledSoftwareInventory {
         } | Where-Object {
             $_ -and $_.Length -ge 8 -and $broadRoots -notcontains $_
         } | Sort-Object Length -Descending -Unique)
-        foreach ($item in @(Get-ToolPortableSoftwareInventory -MaximumResults $PortableMaximumResults -MaximumDepth $PortableMaximumDepth -ExcludedRoots $knownRoots)) {
+        $portableExcludedRoots = @(@($knownRoots) + @($ExcludedRoots) | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -Unique)
+        foreach ($item in @(Get-ToolPortableSoftwareInventory -MaximumResults $PortableMaximumResults -MaximumDepth $PortableMaximumDepth `
+            -IncludedRoots $IncludedRoots -ExcludedRoots $portableExcludedRoots)) {
             $candidatePath = ''
             try { if ($item.RepresentativePath) { $candidatePath = [IO.Path]::GetFullPath([string]$item.RepresentativePath) } } catch {}
             $coveredByRegisteredApplication = $false
