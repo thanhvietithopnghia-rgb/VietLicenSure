@@ -16,6 +16,7 @@ $runtimeHelper = Join-Path $PSScriptRoot "Tool-Runtime.ps1"
 $dataLifecycleHelper = Join-Path $PSScriptRoot "Tool-DataLifecycle.ps1"
 $compatibilityHelper = Join-Path $PSScriptRoot "Tool-Compatibility.ps1"
 $capabilityHelper = Join-Path $PSScriptRoot "Tool-Capabilities.ps1"
+$scanOptimizationHelper = Join-Path $PSScriptRoot "Tool-ScanOptimization.ps1"
 $loggingHelper = Join-Path $PSScriptRoot "Tool-Logging.ps1"
 $moduleContractHelper = Join-Path $PSScriptRoot "Tool-ModuleContract.ps1"
 $reportSchemaHelper = Join-Path $PSScriptRoot "Tool-ReportSchema.ps1"
@@ -53,7 +54,7 @@ function Get-DashboardText {
     return "[$Key]"
 }
 
-$missingFoundationFiles = @($runtimeHelper, $dataLifecycleHelper, $compatibilityHelper, $capabilityHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $safetyPolicyHelper, $enterpriseHelper, $uiThemeHelper, $localizationHelper, $offlinePolicyHelper, $provenanceHelper, $provenanceManifest, $assistantHelper, $softwareInventoryHelper, $softwareCatalogUpdateScript, $applicationUpdateScript) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+$missingFoundationFiles = @($runtimeHelper, $dataLifecycleHelper, $compatibilityHelper, $capabilityHelper, $scanOptimizationHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $safetyPolicyHelper, $enterpriseHelper, $uiThemeHelper, $localizationHelper, $offlinePolicyHelper, $provenanceHelper, $provenanceManifest, $assistantHelper, $softwareInventoryHelper, $softwareCatalogUpdateScript, $applicationUpdateScript) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
 if ($missingFoundationFiles.Count -gt 0) {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
@@ -67,6 +68,7 @@ try {
     $dataLifecycleState = Initialize-ToolDataLifecycle
     . $compatibilityHelper
     . $capabilityHelper
+    . $scanOptimizationHelper
     . $loggingHelper
     . $moduleContractHelper
     . $reportSchemaHelper

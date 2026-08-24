@@ -83,6 +83,10 @@ if ($guiAst) {
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
 Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.0"' 'Dashboard chưa dùng release 5.0.0.0.'
 Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.08\.24"' 'Dashboard chưa dùng ngày build 2026.08.24.'
+Assert-SourcePattern $text '[$]scanOptimizationHelper\s*=\s*Join-Path\s+[$]PSScriptRoot\s+"Tool-ScanOptimization\.ps1"' 'Dashboard chưa khai báo helper tối ưu phạm vi quét.'
+Assert-SourcePattern $text '(?s)[$]missingFoundationFiles\s*=\s*@\(.+?[$]scanOptimizationHelper.+?\)\s*\|\s*Where-Object' 'Dashboard chưa fail-closed khi thiếu Tool-ScanOptimization.ps1.'
+Assert-SourcePattern $text '(?s)try\s*\{.+?\.\s+[$]capabilityHelper\s*\r?\n\s*\.\s+[$]scanOptimizationHelper\s*\r?\n\s*\.\s+[$]loggingHelper' 'Dashboard chưa nạp Tool-ScanOptimization.ps1 trước khi mở hộp phạm vi quét.'
+Assert-SourcePattern $text 'Resolve-ToolScanPlan\s+-Profile\s+[$]profile' 'Hộp phạm vi quét không còn xác thực lựa chọn bằng Resolve-ToolScanPlan.'
 Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases"' 'Nút Giới thiệu chưa dùng trang Releases cố định, nơi luôn hiển thị bản mới nhất ở đầu.'
 if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/(?:latest|tag/)') {
     Add-Failure 'Nút Giới thiệu đang trỏ tới alias/tag riêng thay vì trang Releases cố định.'
