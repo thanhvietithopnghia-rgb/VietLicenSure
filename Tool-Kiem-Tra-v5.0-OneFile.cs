@@ -84,7 +84,7 @@ namespace ThanhViet.ToolKiemTra
             "SOURCE-POLICY-v4.9.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
-#if TOOL_SIGNED_STABLE_BUILD
+#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD
             "OFFICIAL-PROVENANCE-v1.json.p7s",
 #endif
             "Giao-Dien.ps1",
@@ -144,7 +144,7 @@ namespace ThanhViet.ToolKiemTra
             "SOURCE-POLICY-v4.9.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
-#if TOOL_SIGNED_STABLE_BUILD
+#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD
             "OFFICIAL-PROVENANCE-v1.json.p7s",
 #endif
             "Giao-Dien.ps1",
