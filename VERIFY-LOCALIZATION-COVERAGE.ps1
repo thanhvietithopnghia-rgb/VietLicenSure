@@ -103,7 +103,15 @@ foreach ($requiredDynamicKey in @(
     'cleanupReport.status.fail',
     'cleanupReport.status.pass',
     'cleanupReport.status.review',
-    'cleanupReport.status.unverified'
+    'cleanupReport.status.unverified',
+    'menu.11.title',
+    'menu.11.description',
+    'menu.12.title',
+    'menu.12.description',
+    'menu.13.title',
+    'menu.13.description',
+    'cleanup.menu.fixedScopeHeading',
+    'cleanup.menu.fixedScopeNote'
 )) { [void]$staticKeys.Add($requiredDynamicKey) }
 
 $builtinPluginPath = Join-Path $SourceDirectory 'builtin-windows-office-trust.plugin.json'

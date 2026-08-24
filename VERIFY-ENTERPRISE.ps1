@@ -37,6 +37,15 @@ foreach ($name in $required) {
     }
 }
 
+$enterpriseUiText = Get-Content -LiteralPath (Join-Path $SourceDirectory 'enterprise-license-manager.ps1') -Raw -Encoding UTF8
+Assert-Enterprise ($enterpriseUiText -match '[$]enterpriseVersionFromLauncher\s*=\s*\[string\][$]env:TOOL_TOOL_VERSION') 'Enterprise UI chưa nhận phiên bản từ launcher.'
+Assert-Enterprise ($enterpriseUiText -match '"5\.0\.0\.0"') 'Enterprise UI thiếu fallback v5.0.0.0.'
+Assert-Enterprise ($enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Server' -and
+    $enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Agent') 'Tên Firewall/Task mới chưa theo phiên bản hiện hành.'
+foreach ($legacyInfrastructureName in @('ThanhViet Tool v4.8 Enterprise Server','ThanhViet Tool v4.6 Enterprise Server','ThanhViet Tool v4.8 Enterprise Agent','ThanhViet Tool v4.6 Enterprise Agent')) {
+    Assert-Enterprise ($enterpriseUiText -match [regex]::Escape($legacyInfrastructureName)) "Thiếu dọn tương thích hạ tầng cũ: $legacyInfrastructureName"
+}
+
 $previousRoot = [string]$env:TOOL_ENTERPRISE_ROOT
 $previousSkipAcl = [string]$env:TOOL_ENTERPRISE_SKIP_ACL
 $previousOfflineMode = [string]$env:TOOL_OFFLINE_MODE

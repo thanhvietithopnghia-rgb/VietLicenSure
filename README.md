@@ -1,17 +1,18 @@
-# Tool Kiểm Tra v5.0 — nhánh phát triển tăng cường độ tin cậy và quản trị
+# Tool Kiểm Tra v5.0 — ManagedSigned preview cho môi trường quản trị
 
-**Phiên bản đang phát triển:** v5.0.0.0 · Build 2026.08.24 · `DevelopmentUnsigned`
+**Phiên bản mới nhất của nhánh v5:** v5.0.0.0 · Build 2026.08.24 · `ManagedSigned`
 **Tác giả và phát triển:** Thanh Việt
-**Trang tải luôn trỏ tới bản mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+**Trang v5 ManagedSigned:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0>
+**Stable công khai mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 
 Tool Kiểm Tra là ứng dụng Windows miễn phí cho cộng đồng, hỗ trợ kiểm kê cấu hình máy, kiểm tra trạng thái Windows/Office/phần mềm, rà soát dấu hiệu KMS/activator/can thiệp và tạo báo cáo. Tool hoạt động Offline theo mặc định, không có telemetry và chỉ dùng mạng sau khi người dùng chủ động bật Online.
 
-v5.0 tăng cường cổng ký phát hành fail-closed, trạng thái độ mới catalog, plugin ký số, ba mức quét, giao diện dark/DPI, xuất fleet và triển khai Intune/MDM. Bản build chưa ký chỉ dùng kiểm thử, luôn khóa tự cập nhật và thao tác thay đổi hệ thống; không được gọi hoặc phân phối như Stable. Công cụ cung cấp bằng chứng kỹ thuật hỗ trợ quản trị, không thay thế hóa đơn, hợp đồng, tài khoản hãng hoặc tư vấn pháp lý.
+v5.0 tăng cường cổng ký phát hành fail-closed, trạng thái độ mới catalog, plugin ký số, ba mức quét, giao diện dark/DPI, xuất fleet và triển khai Intune/MDM. Bản `ManagedSigned` cho phép thao tác đã phê duyệt trên máy được quản trị viên phân phối chứng thư tin cậy, nhưng không phải public-CA Stable và vẫn khóa tự cập nhật công khai. Công cụ cung cấp bằng chứng kỹ thuật hỗ trợ quản trị, không thay thế hóa đơn, hợp đồng, tài khoản hãng hoặc tư vấn pháp lý.
 
 ## Tải và bắt đầu
 
-1. Mở [trang tải bản mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
-2. Với Stable, tải đúng tệp được công bố trên trang phát hành. Với nhánh kiểm thử cục bộ, dùng `Tool-Kiem-Tra-v5.0.exe` và xác nhận manifest ghi `DevelopmentUnsigned`.
+1. Mở [trang v5.0.0.0 ManagedSigned](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0) hoặc [Stable công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
+2. Với v5 ManagedSigned, dùng `Tool-Kiem-Tra-v5.0.exe`, xác nhận manifest ghi `ManagedSigned` và chỉ chạy trên máy đã nhận chứng thư quản trị hợp lệ.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
@@ -28,7 +29,8 @@ Get-AuthenticodeSignature .\Tool-Kiem-Tra-v5.0.exe |
 - **Catalog và plugin có biên tin cậy:** catalog phân loại Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký từ fingerprint nhà phát hành được quản trị viên ghim.
 - **Quét theo mục tiêu:** Quick/Standard/Deep dùng ngân sách rõ ràng và giới hạn include/exclude/root an toàn.
 - **Trải nghiệm và quản trị:** theme theo hệ thống, dark/light override, PerMonitorV2 DPI, fleet export có redaction/chống CSV injection, CLI headless và script Intune/MDM.
-- **Trạng thái dev minh bạch:** bản chưa ký hiển thị nhãn phát triển riêng thay vì giả làm Official; mọi chức năng thay đổi hệ thống vẫn bị khóa.
+- **Khắc phục theo phạm vi rõ ràng:** mục Khắc phục tách thành Windows, Microsoft Office và phần mềm khác; phạm vi được khóa xuyên suốt quét, Dry Run, backup, xác nhận và hậu kiểm.
+- **Trạng thái phát hành minh bạch:** ManagedSigned chỉ được tin cậy trong môi trường đã phân phối chứng thư; bản chưa ký vẫn khóa mọi thay đổi và chỉ public-CA mới được gọi Stable.
 
 - **Nguồn gốc và chống giả mạo:** launcher kiểm tra chữ ký, chứng thư ghim, metadata, Build ID và manifest nguồn gốc. Bản bị sửa hoặc không xác minh được được cảnh báo rõ và fail-closed đối với cập nhật cùng thao tác thay đổi hệ thống.
 - **Catalog online an toàn:** catalog khai báo có chữ ký CMS, giới hạn trường/quy tắc được phép, chống hạ phiên bản và giữ cache dự phòng. Chỉ tải sau khi người dùng bật Online; inventory, đường dẫn, key và báo cáo không được tải lên.
@@ -47,7 +49,7 @@ Get-AuthenticodeSignature .\Tool-Kiem-Tra-v5.0.exe |
 3. Bản quyền Windows.
 4. Bản quyền Microsoft Office.
 5. Phần mềm và dấu hiệu can thiệp.
-6. Khắc phục KMS/Activator có Dry Run, backup và hậu kiểm.
+6. Khắc phục KMS/Activator có Dry Run, backup và hậu kiểm; trong mục Khắc phục được tách thành Windows, Microsoft Office và phần mềm khác.
 7. Khôi phục key OEM khi edition phù hợp.
 8. Quản lý giấy phép hợp lệ cục bộ hoặc trong LAN được cho phép.
 9. Kiểm tra chuyên sâu dành cho quản trị viên.

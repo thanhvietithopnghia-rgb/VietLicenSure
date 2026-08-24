@@ -499,6 +499,17 @@ if ([string]$viCatalog.'menu.6.title' -ne 'Khắc phục KMS/Activator Win, Offi
 if ([string]$enCatalog.'menu.6.title' -ne 'Windows, Office & software KMS/Activator remediation') {
     Add-Failure 'Tên tiếng Anh của chức năng khắc phục bản quyền toàn bộ phần mềm chưa đồng bộ.'
 }
+foreach ($remediationMenu in @(
+    @('11','Khắc phục Windows','Remediate Windows','Windows'),
+    @('12','Khắc phục Microsoft Office','Remediate Microsoft Office','Office'),
+    @('13','Khắc phục phần mềm khác','Remediate other software','ThirdParty')
+)) {
+    $menuNumber = [string]$remediationMenu[0]
+    if ([string]$viCatalog.("menu.$menuNumber.title") -ne [string]$remediationMenu[1] -or
+        [string]$enCatalog.("menu.$menuNumber.title") -ne [string]$remediationMenu[2]) {
+        Add-Failure "Tên song ngữ của chức năng khắc phục phạm vi $($remediationMenu[3]) chưa đồng bộ."
+    }
+}
 foreach ($catalogInfo in @(@('vi-VN',$viCatalog), @('en-US',$enCatalog))) {
     foreach ($property in $catalogInfo[1].PSObject.Properties) {
         if ([string]$property.Value -match '(?i)\b(?:Mục|Function)\s*0?[0-9]+') {
@@ -534,6 +545,19 @@ Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]
 Assert-SourcePattern $text 'Start-CleanupBackup\s+-Scope\s+[$]selectedScope' 'Backup chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-CleanupRestore\s+-Scope\s+[$]selectedScope' 'Khôi phục chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-Cleanup\s+-ScanScope\s+[$]selectedScope' 'Quét khắc phục chưa nhận phạm vi người dùng chọn.'
+Assert-SourcePattern $text '"Remediation"\s*\{\s*@\(11,\s*12,\s*13\)\s*\}' 'Thanh Khắc phục chưa chỉ hiển thị ba chức năng con theo phạm vi.'
+Assert-SourcePattern $text 'Show-CleanupMenu\s+-FixedScope\s+"Windows"' 'Chức năng con Windows chưa khóa đúng phạm vi.'
+Assert-SourcePattern $text 'Show-CleanupMenu\s+-FixedScope\s+"Office"' 'Chức năng con Office chưa khóa đúng phạm vi.'
+Assert-SourcePattern $text 'Show-CleanupMenu\s+-FixedScope\s+"ThirdParty"' 'Chức năng con phần mềm khác chưa khóa đúng phạm vi.'
+Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+[$]choice\s+-FixedScope\s+[$]FixedScope' 'Menu khắc phục chưa truyền phạm vi cố định vào màn hình thao tác.'
+Assert-SourcePattern $text '[$]autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\([$]FixedScope\)\)' 'Tự động làm sạch chưa tôn trọng phạm vi cố định.'
+Assert-SourcePattern $text '[$]selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\([$]FixedScope\)\)' 'Backup/Cleanup/Restore chưa ưu tiên phạm vi cố định.'
+if ([string]$viCatalog.'cleanup.menu.fixedScopeNote' -notmatch '\{0\}' -or
+    [string]$enCatalog.'cleanup.menu.fixedScopeNote' -notmatch '\{0\}' -or
+    [string]$viCatalog.'cleanup.scope.dialogTitle' -match 'v4\.8' -or
+    [string]$enCatalog.'cleanup.scope.dialogTitle' -match 'v4\.8') {
+    Add-Failure 'Thông báo phạm vi cố định hoặc tiêu đề phạm vi vẫn chưa đồng bộ phiên bản.'
+}
 foreach ($activationPattern in @(
     'function\s+Test-GuiOfficialHttpsTarget',
     'function\s+Open-GuiVendorLicenseAction',
@@ -616,8 +640,8 @@ if ([string]$viCatalog.'app.title' -ne 'CÔNG CỤ KIỂM TRA CẤU HÌNH MÁY V
     [string]$viCatalog.'app.developer' -ne 'Hỗ trợ người dùng cá nhân và doanh nghiệp' -or
     [string]$viCatalog.'dashboard.sidebar.brand' -ne 'TOOL' -or
     [string]$viCatalog.'dashboard.sidebar.edition' -ne 'KIỂM TRA MÁY TÍNH' -or
-    [string]$viCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Việt`r`nPhiên bản phần mềm: {0}" -or
-    [string]$enCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Viet`r`nSoftware version: {0}" -or
+    [string]$viCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Việt" -or
+    [string]$enCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Viet" -or
     [string]$enCatalog.'app.title' -ne 'COMPUTER CONFIGURATION AND SOFTWARE LICENSE CHECK TOOL') {
     Add-Failure 'Tên sản phẩm chưa đúng phạm vi hỗ trợ cá nhân và doanh nghiệp.'
 }
@@ -692,7 +716,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     $guideViText = Get-Content -LiteralPath $guideViPath -Raw -Encoding UTF8
     $guideEnText = Get-Content -LiteralPath $guideEnPath -Raw -Encoding UTF8
     $historyText = Get-Content -LiteralPath $historyPath -Raw -Encoding UTF8
-    foreach ($functionNumber in 1..10) {
+    foreach ($functionNumber in @(1,2,3,4,5,7,8,9,10)) {
         $viTaskTitle = [string]$viCatalog.("menu.$functionNumber.title")
         $enTaskTitle = [string]$enCatalog.("menu.$functionNumber.title")
         if ($guideViText -notmatch "(?m)^##\s+$([regex]::Escape($viTaskTitle))\s*$") {
@@ -700,6 +724,16 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         }
         if ($guideEnText -notmatch "(?m)^##\s+$([regex]::Escape($enTaskTitle))\s*$") {
             Add-Failure "English guide thiếu mục hướng dẫn theo tên tác vụ: $enTaskTitle."
+        }
+    }
+    foreach ($functionNumber in 11..13) {
+        $viTaskTitle = [string]$viCatalog.("menu.$functionNumber.title")
+        $enTaskTitle = [string]$enCatalog.("menu.$functionNumber.title")
+        if ($guideViText -notmatch "(?m)^###\s+$([regex]::Escape($viTaskTitle))\s*$") {
+            Add-Failure "HDSD tiếng Việt thiếu mục con khắc phục: $viTaskTitle."
+        }
+        if ($guideEnText -notmatch "(?m)^###\s+$([regex]::Escape($enTaskTitle))\s*$") {
+            Add-Failure "English guide thiếu remediation sub-entry: $enTaskTitle."
         }
     }
     if ($guideViText -match '(?i)(?:Chức năng|Mục)\s+(?:0?[1-9]|10)\b|Chọn\s+(?:0[1-9]|10)\b' -or
@@ -786,10 +820,10 @@ $menuMatches = [regex]::Matches(
     $text,
     '(?m)^\s*Add-MenuButton\s+([0-9]+)\s+"menu\.[0-9]+\.title"\s+"menu\.[0-9]+\.description"\s+([0-9]+)\s+\{'
 )
-if ($menuMatches.Count -ne 10) {
-    Add-Failure "Menu phải có đúng 10 mục; tìm thấy $($menuMatches.Count)."
+if ($menuMatches.Count -ne 13) {
+    Add-Failure "Dashboard phải có 10 tác vụ Tổng quan và 3 chức năng con Khắc phục; tìm thấy $($menuMatches.Count)."
 } else {
-    for ($index = 0; $index -lt 10; $index++) {
+    for ($index = 0; $index -lt 13; $index++) {
         if ([int]$menuMatches[$index].Groups[1].Value -ne ($index + 1) -or
             [int]$menuMatches[$index].Groups[2].Value -ne $index) {
             Add-Failure "Thứ tự menu sai tại vị trí $($index + 1)."

@@ -621,7 +621,7 @@ for ($navIndex = 0; $navIndex -lt $sidebarNavDefinitions.Count; $navIndex++) {
 }
 
 $sidebarFooter = New-Object System.Windows.Forms.Label
-$sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer" @($toolDisplayVersion)
+$sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer"
 $sidebarFooter.Font = $fontSmall
 $sidebarFooter.ForeColor = [System.Drawing.Color]::FromArgb(182, 214, 248)
 $sidebarFooter.TextAlign = "MiddleLeft"
@@ -1913,7 +1913,7 @@ function Set-DashboardSection {
     $script:dashboardSection = $Section
     $allowedNumbers = switch ($Section) {
         "Scan" { @(1, 2, 3, 4, 5, 9) }
-        "Remediation" { @(6, 7, 8) }
+        "Remediation" { @(11, 12, 13) }
         "Reports" { @() }
         default { @(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) }
     }
@@ -2112,7 +2112,7 @@ function Set-DashboardLanguage {
     $form.Text = "$(Get-ToolText -Key "app.title" -Culture $Culture) - $releaseDisplayName"
     $title.Text = Get-ToolText -Key "app.title" -Culture $Culture
     $developer.Text = Get-ToolText -Key "app.developer" -Culture $Culture
-    $sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer" @($toolDisplayVersion)
+    $sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer"
     if ($script:officialBuildState -eq 'Official') {
         $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
         $introSummary.Text = Get-ToolText -Key "dashboard.overview.subtitle" -Culture $Culture
@@ -6681,7 +6681,7 @@ function Complete-CleanupRestore {
 
 function Show-CleanupScopeChecklist {
     $scopeDialog = New-Object System.Windows.Forms.Form
-    $scopeDialog.Text = Get-DashboardText "cleanup.scope.dialogTitle"
+    $scopeDialog.Text = Get-DashboardText "cleanup.scope.dialogTitle" @($releaseDisplayName)
     $scopeDialog.StartPosition = "CenterParent"
     $scopeDialog.FormBorderStyle = "Sizable"
     $scopeDialog.MaximizeBox = $false
@@ -6819,7 +6819,7 @@ function Show-LicenseScopeChooser {
     $hintKey = "cleanup.scope.$($Mode.ToLowerInvariant())Hint"
 
     $scopeDialog = New-Object System.Windows.Forms.Form
-    $scopeDialog.Text = Get-DashboardText "cleanup.scope.dialogTitle"
+    $scopeDialog.Text = Get-DashboardText "cleanup.scope.dialogTitle" @($releaseDisplayName)
     $scopeDialog.StartPosition = "CenterParent"
     $scopeDialog.FormBorderStyle = "Sizable"
     $scopeDialog.MaximizeBox = $false
@@ -6907,7 +6907,10 @@ function Show-LicenseScopeChooser {
 }
 
 function Show-CleanupFunctionScreen {
-    param([ValidateSet("Backup","Cleanup","Restore","AutoCleanup")][string]$Mode)
+    param(
+        [ValidateSet("Backup","Cleanup","Restore","AutoCleanup")][string]$Mode,
+        [ValidateSet("", "Windows", "Office", "ThirdParty")][string]$FixedScope = ""
+    )
     $titleKeys = @{
         Backup="cleanup.menu.backupTitle"
         Cleanup="cleanup.menu.cleanupTitle"
@@ -6960,6 +6963,9 @@ function Show-CleanupFunctionScreen {
 
     $descriptionLabel = New-Object System.Windows.Forms.Label
     $descriptionLabel.Text = Get-DashboardText $descriptionKeys[$Mode]
+    if (-not [string]::IsNullOrWhiteSpace($FixedScope)) {
+        $descriptionLabel.Text += "`r`n`r`n" + (Get-DashboardText "cleanup.menu.fixedScopeNote" @((Get-CleanupScopeLabel -Scope $FixedScope)))
+    }
     $descriptionLabel.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
     $descriptionLabel.TextAlign = "MiddleLeft"
     $descriptionLabel.Dock = "Fill"
@@ -7005,13 +7011,15 @@ function Show-CleanupFunctionScreen {
         $dryRunButton.Add_Click({ $screen.Tag = 'DryRun'; $screen.Close() })
         $footer.Controls.Add($dryRunButton)
 
-        $onlineButton = New-Object System.Windows.Forms.Button
-        $onlineButton.Text = Get-DashboardText "software.online.button"
-        $onlineButton.Font = $fontTile
-        $onlineButton.Size = New-Object System.Drawing.Size($compactCleanupButtonWidth, 40)
-        $onlineButton.BackColor = [System.Drawing.Color]::FromArgb(232, 247, 240)
-        $onlineButton.Add_Click({ $screen.Tag = "Online"; $screen.Close() })
-        $footer.Controls.Add($onlineButton)
+        if ($FixedScope -notin @("Windows", "Office")) {
+            $onlineButton = New-Object System.Windows.Forms.Button
+            $onlineButton.Text = Get-DashboardText "software.online.button"
+            $onlineButton.Font = $fontTile
+            $onlineButton.Size = New-Object System.Drawing.Size($compactCleanupButtonWidth, 40)
+            $onlineButton.BackColor = [System.Drawing.Color]::FromArgb(232, 247, 240)
+            $onlineButton.Add_Click({ $screen.Tag = "Online"; $screen.Close() })
+            $footer.Controls.Add($onlineButton)
+        }
     }
 
     Set-ToolWindowTheme -Root $screen -Mode $script:dashboardTheme
@@ -7028,11 +7036,16 @@ function Show-CleanupFunctionScreen {
     if ($choice -notin @("Action", "DryRun", "Online")) { return $false }
 
     if ($Mode -eq "AutoCleanup") {
-        Start-Cleanup -AutoSafeMode -ScanScope "All"
+        $autoScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) { "All" } else { $FixedScope }
+        Start-Cleanup -AutoSafeMode -ScanScope $autoScope
         return $true
     }
     $scopeMode = if ($Mode -eq "Cleanup") { "Cleanup" } elseif ($Mode -eq "Backup") { "Backup" } else { "Restore" }
-    $selectedScope = Show-LicenseScopeChooser -Mode $scopeMode
+    $selectedScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) {
+        Show-LicenseScopeChooser -Mode $scopeMode
+    } else {
+        $FixedScope
+    }
     if ([string]::IsNullOrWhiteSpace($selectedScope)) { return $false }
     if ($Mode -eq "Cleanup" -and $choice -eq "Online") { Start-SoftwareCatalogOnlineUpdate -ScanScope $selectedScope }
     elseif ($Mode -eq "Backup") { Start-CleanupBackup -Scope $selectedScope }
@@ -7042,6 +7055,8 @@ function Show-CleanupFunctionScreen {
 }
 
 function Show-CleanupMenu {
+    param([ValidateSet("", "Windows", "Office", "ThirdParty")][string]$FixedScope = "")
+    $fixedScopeLabel = if ([string]::IsNullOrWhiteSpace($FixedScope)) { "" } else { Get-CleanupScopeLabel -Scope $FixedScope }
     while ($true) {
         $chooser = New-Object System.Windows.Forms.Form
         $chooser.Text = Get-DashboardText "cleanup.menu.title"
@@ -7072,7 +7087,11 @@ function Show-CleanupMenu {
         $chooser.Controls.Add($layout)
 
         $heading = New-Object System.Windows.Forms.Label
-        $heading.Text = Get-DashboardText "cleanup.menu.heading"
+        $heading.Text = if ([string]::IsNullOrWhiteSpace($fixedScopeLabel)) {
+            Get-DashboardText "cleanup.menu.heading"
+        } else {
+            Get-DashboardText "cleanup.menu.fixedScopeHeading" @($fixedScopeLabel)
+        }
         $heading.Font = $fontTitle
         $heading.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
         $heading.TextAlign = "MiddleCenter"
@@ -7128,7 +7147,7 @@ function Show-CleanupMenu {
             $status.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
             return
         }
-        if (Show-CleanupFunctionScreen -Mode $choice) { return }
+        if (Show-CleanupFunctionScreen -Mode $choice -FixedScope $FixedScope) { return }
     }
 }
 
@@ -7373,6 +7392,9 @@ function Get-DashboardMenuIconKind([int]$Number) {
         8 { return "License" }
         9 { return "DeepScan" }
         10 { return "Report" }
+        11 { return "Windows" }
+        12 { return "Office" }
+        13 { return "Software" }
         default { return "Search" }
     }
 }
@@ -7580,6 +7602,9 @@ Add-MenuButton 7 "menu.7.title" "menu.7.description" 6 { Start-OemInspect } $tru
 Add-MenuButton 8 "menu.8.title" "menu.8.description" 7 { Open-LicenseManager } $false
 Add-MenuButton 9 "menu.9.title" "menu.9.description" 8 { Show-AdvancedScanMenu } $false
 Add-MenuButton 10 "menu.10.title" "menu.10.description" 9 { Show-AssuranceCenter } $false
+Add-MenuButton 11 "menu.11.title" "menu.11.description" 10 { Show-CleanupMenu -FixedScope "Windows" } $true
+Add-MenuButton 12 "menu.12.title" "menu.12.description" 11 { Show-CleanupMenu -FixedScope "Office" } $true
+Add-MenuButton 13 "menu.13.title" "menu.13.description" 12 { Show-CleanupMenu -FixedScope "ThirdParty" } $true
 
 Add-ReportMenuButton "Certificate" "assurance.certificate" "dashboard.report.certificate.description" 0 "Shield"
 Add-ReportMenuButton "PluginAudit" "assurance.pluginAudit" "dashboard.report.pluginAudit.description" 1 "Software"

@@ -1164,6 +1164,8 @@ if ($gui) {
             -not $onlineCompleteAst -or $onlineCompleteAst.Extent.Text -notmatch 'Start-Cleanup\s+-ScanScope\s+\$requestedScanScope' -or
             -not $cleanupScreenAst -or $cleanupScreenAst.Extent.Text -notmatch '"Online"' -or
             $cleanupScreenAst.Extent.Text -notmatch 'Show-LicenseScopeChooser\s+-Mode\s+\$scopeMode' -or
+            $cleanupScreenAst.Extent.Text -notmatch '\$selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
+            $cleanupScreenAst.Extent.Text -notmatch '\$autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
             $cleanupScreenAst.Extent.Text -notmatch 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+\$selectedScope') {
             Fail 'Luồng Online chưa dùng cùng hộp ba phạm vi và chưa giữ lựa chọn đến bước quét.'
         }
@@ -1362,7 +1364,7 @@ if ($gui) {
     if ($gui.Text -notmatch 'Start-CleanupDeep\s+-CleanupItems.+-AutomaticSafeMode' -or $gui.Text -notmatch 'Confirm-AutomaticSafeCleanup') {
         Fail 'Luồng tự động chưa bắt buộc xem trước/xác nhận bằng bộ lọc an toàn.'
     }
-    foreach ($requiredToken in @('Show-LicenseScopeChooser','Show-CleanupScopeChecklist','cleanup.scope.scanWindows','cleanup.scope.scanOffice','cleanup.scope.scanThirdParty','Start-CleanupBackup -Scope $selectedScope','Start-CleanupRestore -Scope $selectedScope','cleanup.report.readyOnDemand','progress.slowTask')) {
+    foreach ($requiredToken in @('Show-LicenseScopeChooser','Show-CleanupScopeChecklist','cleanup.scope.scanWindows','cleanup.scope.scanOffice','cleanup.scope.scanThirdParty','Show-CleanupMenu -FixedScope "Windows"','Show-CleanupMenu -FixedScope "Office"','Show-CleanupMenu -FixedScope "ThirdParty"','Start-CleanupBackup -Scope $selectedScope','Start-CleanupRestore -Scope $selectedScope','cleanup.report.readyOnDemand','progress.slowTask')) {
         if ($gui.Text -notmatch [regex]::Escape($requiredToken)) { Fail "GUI thiếu luồng phạm vi hoặc bảo vệ chống treo: $requiredToken" }
     }
     foreach ($requiredToken in @('Show-ThirdPartyAssessmentResults','Get-GuiThirdPartyCleanupFindings','Get-GuiThirdPartyStandaloneCleanupRows','ThirdPartyRemediationFindingCount','software.online.button','Start-SoftwareCatalogOnlineUpdate','status.chooseTask')) {

@@ -10,8 +10,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 $baseDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$script:enterpriseReleaseVersion = "4.8.0.1"
+$enterpriseVersionFromLauncher = [string]$env:TOOL_TOOL_VERSION
+$script:enterpriseReleaseVersion = if ($enterpriseVersionFromLauncher -match '^\d+\.\d+\.\d+\.\d+$') {
+    $enterpriseVersionFromLauncher
+} else {
+    "5.0.0.0"
+}
 $script:enterpriseReleaseDisplayName = "v$($script:enterpriseReleaseVersion)"
+$enterpriseReleaseParts = @($script:enterpriseReleaseVersion -split '\.')
+$script:enterpriseInfrastructureVersion = "v$($enterpriseReleaseParts[0]).$($enterpriseReleaseParts[1])"
 . (Join-Path $baseDir "Tool-ReportSchema.ps1")
 . (Join-Path $baseDir "Tool-Enterprise.ps1")
 $localizationHelper = Join-Path $baseDir "Tool-Localization.ps1"
@@ -498,7 +505,7 @@ function Enable-EnterpriseServerListenerAccess {
         throw (Get-EnterpriseText 'enterprise.error.urlAclNotApplied' @($url))
     }
 
-    $firewallName = "ThanhViet Tool v4.8 Enterprise Server"
+    $firewallName = "ThanhViet Tool $($script:enterpriseInfrastructureVersion) Enterprise Server"
     $firewallReady = $false
     if (Get-Command Get-NetFirewallRule -ErrorAction SilentlyContinue) {
         try {
@@ -544,7 +551,7 @@ function Remove-EnterpriseServerNetworkAccess {
     }
 
     try {
-        foreach ($firewallName in @('ThanhViet Tool v4.8 Enterprise Server','ThanhViet Tool v4.6 Enterprise Server')) {
+        foreach ($firewallName in @("ThanhViet Tool $($script:enterpriseInfrastructureVersion) Enterprise Server",'ThanhViet Tool v4.8 Enterprise Server','ThanhViet Tool v4.6 Enterprise Server') | Select-Object -Unique) {
             $firewallArguments = 'advfirewall firewall delete rule name="' + $firewallName + '" protocol=TCP localport=' + $Port
             $process = Start-Process -FilePath $netsh -ArgumentList $firewallArguments -Wait -PassThru -WindowStyle Hidden
             if ($process.ExitCode -ne 0) { [void]$warnings.Add((Get-EnterpriseText "enterprise.server.revokeFirewallExit" @($Port, $process.ExitCode))) }
@@ -779,7 +786,7 @@ function Invoke-ClientSchedule {
         if ($Enable -and -not (Confirm-EnterpriseNetworkAccess -ActionKey "enterprise.action.scheduleAgent")) { return }
         $launcher = Get-EnterpriseLauncherPath
         if (-not $launcher) { throw (Get-EnterpriseText "enterprise.error.oneFileRequired") }
-        $taskName = "ThanhViet Tool v4.8 Enterprise Agent"
+        $taskName = "ThanhViet Tool $($script:enterpriseInfrastructureVersion) Enterprise Agent"
         if ($Enable) {
             if (-not (Confirm-EnterpriseAction (Get-EnterpriseText "enterprise.client.enableSchedulePrompt"))) { return }
             $taskRun = "`"$launcher`" --enterprise-agent"
@@ -790,7 +797,7 @@ function Invoke-ClientSchedule {
         } else {
             if (-not (Confirm-EnterpriseAction (Get-EnterpriseText "enterprise.client.disableSchedulePrompt"))) { return }
             $exitCode = 0
-            foreach ($scheduledTaskName in @($taskName,"ThanhViet Tool v4.6 Enterprise Agent")) {
+            foreach ($scheduledTaskName in @($taskName,"ThanhViet Tool v4.8 Enterprise Agent","ThanhViet Tool v4.6 Enterprise Agent") | Select-Object -Unique) {
                 $arguments = "/Delete /TN `"$scheduledTaskName`" /F"
                 $p = Start-Process -FilePath (Join-Path $env:SystemRoot "System32\schtasks.exe") -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
                 if ($scheduledTaskName -eq $taskName) { $exitCode = $p.ExitCode }
