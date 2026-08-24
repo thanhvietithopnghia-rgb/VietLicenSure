@@ -1913,7 +1913,7 @@ function Set-DashboardSection {
     $script:dashboardSection = $Section
     $allowedNumbers = switch ($Section) {
         "Scan" { @(1, 2, 3, 4, 5, 9) }
-        "Remediation" { @(11, 12, 13) }
+        "Remediation" { @(11, 12, 13, 7, 8) }
         "Reports" { @() }
         default { @(1, 2, 3, 4, 5, 6, 7, 8, 9, 10) }
     }
@@ -2376,8 +2376,9 @@ function Update-DashboardStatus {
     } else {
         [string]$capabilityState.WindowsReleaseName
     }
-    $softwareCatalogValue = Get-DashboardText ("dashboard.softwareCatalog.value." + $softwareCatalogStatusKey)
-    $compatibilityCard.Value.Text = $compatibilityValue + "`r`n" + $softwareCatalogValue
+    # Keep software-catalog freshness enforcement and its tooltip, but do not
+    # add a second "Catalog phần mềm: mới" line to the compact status card.
+    $compatibilityCard.Value.Text = $compatibilityValue
     $toolTip.SetToolTip($compatibilityCard.Panel, $catalogTooltip)
     $toolTip.SetToolTip($compatibilityCard.Value, $catalogTooltip)
     if ($catalogHealth -in @("Warning", "Stale") -or $softwareCatalogHealth -in @('Warning','Stale','Future','Invalid','Unavailable')) {
@@ -6923,6 +6924,22 @@ function Show-CleanupFunctionScreen {
         Restore="cleanup.menu.restoreDescription"
         AutoCleanup="cleanup.menu.autoDescription"
     }
+    if ($Mode -eq "Cleanup" -and -not [string]::IsNullOrWhiteSpace($FixedScope)) {
+        switch ($FixedScope) {
+            "Windows" {
+                $titleKeys["Cleanup"] = "menu.11.title"
+                $descriptionKeys["Cleanup"] = "menu.11.description"
+            }
+            "Office" {
+                $titleKeys["Cleanup"] = "menu.12.title"
+                $descriptionKeys["Cleanup"] = "menu.12.description"
+            }
+            "ThirdParty" {
+                $titleKeys["Cleanup"] = "menu.13.title"
+                $descriptionKeys["Cleanup"] = "menu.13.description"
+            }
+        }
+    }
     $actionKeys = @{ Backup="cleanup.menu.backupAction"; Cleanup="cleanup.menu.cleanupAction"; Restore="cleanup.menu.restoreAction"; AutoCleanup="cleanup.menu.autoAction" }
 
     $screen = New-Object System.Windows.Forms.Form
@@ -7598,13 +7615,13 @@ Add-MenuButton 3 "menu.3.title" "menu.3.description" 2 { Start-Report "Windows" 
 Add-MenuButton 4 "menu.4.title" "menu.4.description" 3 { Start-Report "Office" (Get-ToolText -Key "menu.4.title" -Culture $script:dashboardCulture) } $false
 Add-MenuButton 5 "menu.5.title" "menu.5.description" 4 { Start-ThirdPartyManualReview } $false
 Add-MenuButton 6 "menu.6.title" "menu.6.description" 5 { Show-CleanupMenu } $true
+Add-MenuButton 11 "menu.11.title" "menu.11.description" 10 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows") } $true
+Add-MenuButton 12 "menu.12.title" "menu.12.description" 11 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office") } $true
+Add-MenuButton 13 "menu.13.title" "menu.13.description" 12 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty") } $true
 Add-MenuButton 7 "menu.7.title" "menu.7.description" 6 { Start-OemInspect } $true
 Add-MenuButton 8 "menu.8.title" "menu.8.description" 7 { Open-LicenseManager } $false
 Add-MenuButton 9 "menu.9.title" "menu.9.description" 8 { Show-AdvancedScanMenu } $false
 Add-MenuButton 10 "menu.10.title" "menu.10.description" 9 { Show-AssuranceCenter } $false
-Add-MenuButton 11 "menu.11.title" "menu.11.description" 10 { Show-CleanupMenu -FixedScope "Windows" } $true
-Add-MenuButton 12 "menu.12.title" "menu.12.description" 11 { Show-CleanupMenu -FixedScope "Office" } $true
-Add-MenuButton 13 "menu.13.title" "menu.13.description" 12 { Show-CleanupMenu -FixedScope "ThirdParty" } $true
 
 Add-ReportMenuButton "Certificate" "assurance.certificate" "dashboard.report.certificate.description" 0 "Shield"
 Add-ReportMenuButton "PluginAudit" "assurance.pluginAudit" "dashboard.report.pluginAudit.description" 1 "Software"

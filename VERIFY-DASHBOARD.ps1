@@ -491,7 +491,7 @@ if ($guiAst) {
         }
     }
 }
-Assert-SourcePattern $text 'dashboard\.softwareCatalog\.value\.' 'Trạng thái catalog phần mềm chưa hiển thị trực tiếp trong thẻ dashboard.'
+Assert-SourcePattern $text '[$]catalogTooltip\s*=\s*[$]catalogTooltip[\s\S]{0,100}[$]softwareCatalogTooltip' 'Chi tiết độ mới catalog phần mềm chưa được giữ trong tooltip dashboard.'
 Assert-SourcePattern $text "'Warning','Stale','Future','Invalid','Unavailable'" 'Invalid/Unavailable của catalog phần mềm chưa kích hoạt trạng thái cảnh báo.'
 if ([string]$viCatalog.'menu.6.title' -ne 'Khắc phục KMS/Activator Win, Office & phần mềm') {
     Add-Failure 'Tên tiếng Việt của chức năng khắc phục bản quyền toàn bộ phần mềm chưa đúng yêu cầu.'
@@ -545,10 +545,14 @@ Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]
 Assert-SourcePattern $text 'Start-CleanupBackup\s+-Scope\s+[$]selectedScope' 'Backup chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-CleanupRestore\s+-Scope\s+[$]selectedScope' 'Khôi phục chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-Cleanup\s+-ScanScope\s+[$]selectedScope' 'Quét khắc phục chưa nhận phạm vi người dùng chọn.'
-Assert-SourcePattern $text '"Remediation"\s*\{\s*@\(11,\s*12,\s*13\)\s*\}' 'Thanh Khắc phục chưa chỉ hiển thị ba chức năng con theo phạm vi.'
-Assert-SourcePattern $text 'Show-CleanupMenu\s+-FixedScope\s+"Windows"' 'Chức năng con Windows chưa khóa đúng phạm vi.'
-Assert-SourcePattern $text 'Show-CleanupMenu\s+-FixedScope\s+"Office"' 'Chức năng con Office chưa khóa đúng phạm vi.'
-Assert-SourcePattern $text 'Show-CleanupMenu\s+-FixedScope\s+"ThirdParty"' 'Chức năng con phần mềm khác chưa khóa đúng phạm vi.'
+Assert-SourcePattern $text '"Remediation"\s*\{\s*@\(11,\s*12,\s*13,\s*7,\s*8\)\s*\}' 'Thanh Khắc phục chưa hiển thị đúng năm chức năng Windows, Office, phần mềm khác, OEM và quản lý giấy phép.'
+Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+"Cleanup"\s+-FixedScope\s+"Windows"' 'Chức năng Windows chưa mở thẳng màn hình khắc phục đúng phạm vi.'
+Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+"Cleanup"\s+-FixedScope\s+"Office"' 'Chức năng Office chưa mở thẳng màn hình khắc phục đúng phạm vi.'
+Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+"Cleanup"\s+-FixedScope\s+"ThirdParty"' 'Chức năng phần mềm khác chưa mở thẳng màn hình khắc phục đúng phạm vi.'
+Assert-SourcePattern $text '[$]titleKeys\["Cleanup"\]\s*=\s*"menu\.11\.title"' 'Màn hình khắc phục Windows chưa dùng tiêu đề riêng.'
+Assert-SourcePattern $text '[$]titleKeys\["Cleanup"\]\s*=\s*"menu\.12\.title"' 'Màn hình khắc phục Office chưa dùng tiêu đề riêng.'
+Assert-SourcePattern $text '[$]titleKeys\["Cleanup"\]\s*=\s*"menu\.13\.title"' 'Màn hình khắc phục phần mềm khác chưa dùng tiêu đề riêng.'
+Assert-SourcePattern $text '[$]compatibilityCard\.Value\.Text\s*=\s*[$]compatibilityValue\s*(?:\r?\n)' 'Thẻ tương thích vẫn còn ghép dòng trạng thái catalog phần mềm.'
 Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+[$]choice\s+-FixedScope\s+[$]FixedScope' 'Menu khắc phục chưa truyền phạm vi cố định vào màn hình thao tác.'
 Assert-SourcePattern $text '[$]autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\([$]FixedScope\)\)' 'Tự động làm sạch chưa tôn trọng phạm vi cố định.'
 Assert-SourcePattern $text '[$]selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\([$]FixedScope\)\)' 'Backup/Cleanup/Restore chưa ưu tiên phạm vi cố định.'
@@ -821,11 +825,13 @@ $menuMatches = [regex]::Matches(
     '(?m)^\s*Add-MenuButton\s+([0-9]+)\s+"menu\.[0-9]+\.title"\s+"menu\.[0-9]+\.description"\s+([0-9]+)\s+\{'
 )
 if ($menuMatches.Count -ne 13) {
-    Add-Failure "Dashboard phải có 10 tác vụ Tổng quan và 3 chức năng con Khắc phục; tìm thấy $($menuMatches.Count)."
+    Add-Failure "Dashboard phải có 10 tác vụ Tổng quan và 5 chức năng Khắc phục (OEM/giấy phép dùng chung khai báo); tìm thấy $($menuMatches.Count)."
 } else {
+    $expectedMenuNumbers = @(1, 2, 3, 4, 5, 6, 11, 12, 13, 7, 8, 9, 10)
+    $expectedMenuIndexes = @(0, 1, 2, 3, 4, 5, 10, 11, 12, 6, 7, 8, 9)
     for ($index = 0; $index -lt 13; $index++) {
-        if ([int]$menuMatches[$index].Groups[1].Value -ne ($index + 1) -or
-            [int]$menuMatches[$index].Groups[2].Value -ne $index) {
+        if ([int]$menuMatches[$index].Groups[1].Value -ne $expectedMenuNumbers[$index] -or
+            [int]$menuMatches[$index].Groups[2].Value -ne $expectedMenuIndexes[$index]) {
             Add-Failure "Thứ tự menu sai tại vị trí $($index + 1)."
         }
     }
