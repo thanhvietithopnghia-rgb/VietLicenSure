@@ -1232,7 +1232,7 @@ if ($gui) {
             $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
             $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
-            $env:TOOL_OFFICIAL_BUILD_ID = '5.0.0.0-production-20260824'
+            $env:TOOL_OFFICIAL_BUILD_ID = '5.0.0.0-production-20260825'
             $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')

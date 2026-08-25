@@ -692,11 +692,11 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.ControlFlowGuard.Status -ne 'NotClaimed') { throw 'Trạng thái CFG không minh bạch.' }
         if (-not [bool]$releaseManifest.DeterministicManagedBuild) { throw 'Release manifest chưa xác nhận deterministic managed build.' }
         if ([string]$releaseManifest.CapabilitySchemaVersion -ne '1.1' -or [string]$releaseManifest.LogSchemaVersion -ne '1.0-jsonl') { throw 'Thiếu metadata capability/log schema v4.3.' }
-        if ([string]$releaseManifest.ReleaseVersion -ne '5.0.0.0' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.24') {
-            throw 'Release manifest chưa đồng bộ phiên bản 5.0.0.0 / Build 2026.08.24.'
+        if ([string]$releaseManifest.ReleaseVersion -ne '5.0.0.0' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.25') {
+            throw 'Release manifest chưa đồng bộ phiên bản 5.0.0.0 / Build 2026.08.25.'
         }
         $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
-        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { '5.0.0.0-development-unsigned' } elseif ($AllowManagedSignedManifest) { '5.0.0.0-managed-signed-20260824' } else { '5.0.0.0-production-20260824' }
+        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { '5.0.0.0-development-unsigned' } elseif ($AllowManagedSignedManifest) { '5.0.0.0-managed-signed-20260825' } else { '5.0.0.0-production-20260825' }
         $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowManagedSignedManifest) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' }
         if ([string]$releaseManifest.ReleaseLabel -ne $expectedReleaseLabel -or
             [string]$releaseManifest.ReleaseStatus -ne $expectedReleaseStatus -or
@@ -706,7 +706,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         }
         $expectedProvenanceState = if ($AllowDevelopmentManifest) { 'Unverified' } else { 'Official' }
         if ([string]$releaseManifest.OfficialBuildProvenance.State -ne $expectedProvenanceState -or
-            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '5.0.0.0-production-20260824' -or
+            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '5.0.0.0-production-20260825' -or
             [string]$releaseManifest.OfficialBuildProvenance.ManifestFile -ne 'OFFICIAL-PROVENANCE-v1.json' -or
             [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
             [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9' -or
