@@ -361,6 +361,45 @@ function Get-OfficeActivationStatusText {
     return Get-LocalLicenseText 'localLicense.office.status.unknown'
 }
 
+function Get-LocalLicenseWrappedTextHeight {
+    param(
+        [Parameter(Mandatory = $true)][System.Windows.Forms.Control]$Control,
+        [int]$Width,
+        [int]$MinimumHeight = 18
+    )
+
+    $availableWidth = [Math]::Max(80, $Width)
+    if ([string]::IsNullOrWhiteSpace([string]$Control.Text)) { return $MinimumHeight }
+    $flags = [System.Windows.Forms.TextFormatFlags]::WordBreak -bor
+        [System.Windows.Forms.TextFormatFlags]::NoPrefix -bor
+        [System.Windows.Forms.TextFormatFlags]::TextBoxControl
+    $measured = [System.Windows.Forms.TextRenderer]::MeasureText(
+        [string]$Control.Text,
+        $Control.Font,
+        (New-Object System.Drawing.Size($availableWidth, 10000)),
+        $flags)
+    return [Math]::Max($MinimumHeight, ([int]$measured.Height + 2))
+}
+
+function Get-LocalLicenseClippedTextControls {
+    param([Parameter(Mandatory = $true)][System.Windows.Forms.Control]$Root)
+
+    foreach ($control in $Root.Controls) {
+        if ($control -is [System.Windows.Forms.Button] -and -not [string]::IsNullOrWhiteSpace([string]$control.Text)) {
+            if ($control.Width -lt (Get-ToolUiButtonRequiredWidth -Button $control -HorizontalSafety 8) -or
+                (([string]$control.Text).Contains('&') -and $control.UseMnemonic)) {
+                Write-Output "Button: $([string]$control.Text)"
+            }
+        } elseif ($control -is [System.Windows.Forms.Label] -and -not [string]::IsNullOrWhiteSpace([string]$control.Text)) {
+            $requiredHeight = Get-LocalLicenseWrappedTextHeight -Control $control -Width $control.ClientSize.Width -MinimumHeight 1
+            if ($control.ClientSize.Width -lt 1 -or $control.ClientSize.Height -lt $requiredHeight) {
+                Write-Output "Label: $([string]$control.Text)"
+            }
+        }
+        Get-LocalLicenseClippedTextControls -Root $control
+    }
+}
+
 $localTypography = Get-ToolUiTypography
 $font = New-Object System.Drawing.Font($localTypography.FontFamily, $localTypography.NormalSize)
 $fontBold = New-Object System.Drawing.Font($localTypography.FontFamily, $localTypography.NormalSize, [System.Drawing.FontStyle]::Bold)
@@ -730,15 +769,10 @@ if ([string]$env:TOOL_UI_SMOKE_TEST -eq "1") {
         ) -join "`n"
         if ($visibleText -cmatch '[À-ỹ]') { throw (Get-LocalLicenseText "localLicense.smoke.englishLeak" @($visibleText)) }
     }
-    $clippedButtons = New-Object System.Collections.Generic.List[string]
-    foreach ($localButton in @($close,$winApply,$winActivation,$winStore,$officeApply,$officeSwitch,$officeRedeem)) {
-        $requiredButtonWidth = Get-ToolUiButtonRequiredWidth -Button $localButton -HorizontalSafety 8
-        if ($localButton.Width -lt $requiredButtonWidth -or (([string]$localButton.Text).Contains('&') -and $localButton.UseMnemonic)) {
-            [void]$clippedButtons.Add([string]$localButton.Text)
-        }
-    }
-    if ($clippedButtons.Count -gt 0) {
-        throw (Get-LocalLicenseText "localLicense.smoke.buttonClipped" @(($clippedButtons -join ', ')))
+    $form.PerformLayout()
+    $clippedControls = @(Get-LocalLicenseClippedTextControls -Root $form)
+    if ($clippedControls.Count -gt 0) {
+        throw (Get-LocalLicenseText "localLicense.smoke.buttonClipped" @(($clippedControls -join ', ')))
     }
     Write-Output (Get-LocalLicenseText "localLicense.smoke.pass" @($script:localLicenseCulture, (-not $script:localOfflineMode)))
     foreach ($resource in @($font, $fontBold, $fontTitle)) { try { $resource.Dispose() } catch {} }

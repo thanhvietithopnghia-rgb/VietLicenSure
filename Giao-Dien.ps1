@@ -694,6 +694,35 @@ $languageCombo.Add_SelectedIndexChanged({
 })
 $headerPanel.Controls.Add($languageCombo)
 
+$script:syncingCompactNavigation = $false
+$compactNavigation = New-Object System.Windows.Forms.ComboBox
+$compactNavigation.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+$compactNavigation.Font = $fontBold
+$compactNavigation.Size = New-Object System.Drawing.Size(190, 30)
+$compactNavigation.Visible = $false
+$compactNavigation.Tag = @('Overview', 'Scan', 'Remediation', 'Reports', 'Settings')
+foreach ($definition in $sidebarNavDefinitions) {
+    [void]$compactNavigation.Items.Add((Get-DashboardText ([string]$definition.TextKey)))
+}
+$compactNavigation.SelectedIndex = 0
+$compactNavigation.Add_SelectedIndexChanged({
+    if ($script:syncingCompactNavigation -or $compactNavigation.SelectedIndex -lt 0) { return }
+    $selectedCompactSection = [string]$compactNavigation.Tag[$compactNavigation.SelectedIndex]
+    if ($selectedCompactSection -eq 'Settings') {
+        Show-DashboardPreferences
+        $script:syncingCompactNavigation = $true
+        try {
+            $sectionIndex = @('Overview', 'Scan', 'Remediation', 'Reports').IndexOf([string]$script:dashboardSection)
+            $compactNavigation.SelectedIndex = [Math]::Max(0, $sectionIndex)
+        } finally {
+            $script:syncingCompactNavigation = $false
+        }
+    } else {
+        Set-DashboardSection -Section $selectedCompactSection
+    }
+})
+$headerPanel.Controls.Add($compactNavigation)
+
 $developer = New-Object System.Windows.Forms.Label
 $developer.Text = Get-ToolText -Key "app.developer" -Culture $script:dashboardCulture
 $developer.Font = $fontSupportSmall
@@ -891,6 +920,7 @@ $buttonPanel.Location = New-Object System.Drawing.Point(38, ($dashboardPanel.Bot
 $buttonPanel.Size = New-Object System.Drawing.Size(860, 334)
 $buttonPanel.BackColor = [System.Drawing.Color]::White
 $buttonPanel.BorderStyle = "None"
+$buttonPanel.AutoScroll = $true
 $form.Controls.Add($buttonPanel)
 
 $menuCaption = New-Object System.Windows.Forms.Label
@@ -1299,6 +1329,27 @@ function Get-DashboardComboRequiredWidth {
     return [int]($maximumTextWidth + [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + $HorizontalSafety)
 }
 
+function Get-DashboardWrappedTextHeight {
+    param(
+        [AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory = $true)][System.Drawing.Font]$Font,
+        [ValidateRange(1, 4096)][int]$Width,
+        [ValidateRange(1, 512)][int]$MinimumHeight = 18,
+        [ValidateRange(1, 512)][int]$MaximumHeight = 72
+    )
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $MinimumHeight }
+    $flags = [System.Windows.Forms.TextFormatFlags]::WordBreak -bor
+        [System.Windows.Forms.TextFormatFlags]::NoPrefix -bor
+        [System.Windows.Forms.TextFormatFlags]::NoPadding -bor
+        [System.Windows.Forms.TextFormatFlags]::TextBoxControl
+    $measured = [System.Windows.Forms.TextRenderer]::MeasureText(
+        $Text,
+        $Font,
+        (New-Object System.Drawing.Size([Math]::Max(1, $Width), 1024)),
+        $flags)
+    return [int][Math]::Max($MinimumHeight, [Math]::Min($MaximumHeight, ($measured.Height + 2)))
+}
+
 function Update-MainLayout {
     if ($script:updatingMainLayout) { return }
     $script:updatingMainLayout = $true
@@ -1307,7 +1358,7 @@ function Update-MainLayout {
         $form.AutoScrollMinSize = New-Object System.Drawing.Size(0, 0)
         $clientWidth = [Math]::Max(1, $form.ClientSize.Width)
         $clientHeight = [Math]::Max(1, $form.ClientSize.Height)
-        $sidebarWidth = if ($clientWidth -ge 1040) { 196 } else { 0 }
+        $sidebarWidth = if ($clientWidth -ge 940) { 196 } else { 0 }
         $outerGap = if ($clientWidth -lt 900) { 12 } else { 18 }
         $left = $sidebarWidth + $outerGap
         $right = $outerGap
@@ -1341,6 +1392,13 @@ function Update-MainLayout {
         $headerPanel.Top = 0
         $headerPanel.Width = $clientWidth - $sidebarWidth
         $headerPanel.Height = if ($ultraCompactHeight) { 70 } else { 86 }
+
+        $compactNavigation.Visible = [bool]($sidebarWidth -eq 0)
+        if ($compactNavigation.Visible) {
+            $compactNavigation.Left = 24
+            $compactNavigation.Top = if ($ultraCompactHeight) { 39 } else { 48 }
+            $compactNavigation.Width = [Math]::Min(220, [Math]::Max(160, $headerPanel.ClientSize.Width - 48))
+        }
 
         $showHeaderBrand = [bool]($headerPanel.ClientSize.Width -ge 1000)
         $headerBrandIcon.Visible = $showHeaderBrand
@@ -1379,11 +1437,12 @@ function Update-MainLayout {
         $developer.Top = 40
         $developer.Height = [Math]::Max(20, $developer.PreferredHeight)
         $developer.Width = [Math]::Max(220, $headerPanel.ClientSize.Width - $developer.Left - 24)
+        $developer.Visible = [bool]($sidebarWidth -gt 0)
         $version.Left = $headerTextLeft
         $version.Top = 61
         $version.Height = [Math]::Max(18, $version.PreferredHeight)
         $version.Width = [Math]::Max(220, $headerPanel.ClientSize.Width - $version.Left - 24)
-        $version.Visible = -not $ultraCompactHeight
+        $version.Visible = [bool]($sidebarWidth -gt 0 -and -not $ultraCompactHeight)
 
         $introPanel.Left = $left
         $introPanel.Top = $headerPanel.Bottom + $(if ($ultraCompactHeight) { 8 } else { 14 })
@@ -1468,14 +1527,32 @@ function Update-MainLayout {
         $tileGap = 10
         $rowGap = if ($ultraCompactHeight) { 3 } elseif ($compactHeight) { 5 } else { 8 }
         $tileMargin = 13
-        $tileWidth = [Math]::Max(220, [Math]::Floor(($buttonPanel.ClientSize.Width - ($tileMargin * 2) - $tileGap) / 2))
+        $scrollbarReserve = [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + 2
+        $tileLayoutWidth = [Math]::Max(470, $buttonPanel.ClientSize.Width - $scrollbarReserve)
+        $tileWidth = [Math]::Max(220, [Math]::Floor(($tileLayoutWidth - ($tileMargin * 2) - $tileGap) / 2))
         $buttonPanelBottomPadding = if ($ultraCompactHeight) { 5 } else { 10 }
         $visibleButtons = @($buttons | Where-Object { $_.Visible })
         $visibleRowCount = [Math]::Max(1, [Math]::Ceiling($visibleButtons.Count / 2.0))
         $availableButtonHeight = $buttonPanel.ClientSize.Height - 42 - (($visibleRowCount - 1) * $rowGap) - $buttonPanelBottomPadding
         $calculatedTileHeight = [Math]::Floor($availableButtonHeight / $visibleRowCount)
-        $minimumTileHeight = if ($ultraCompactHeight) { 42 } elseif ($compactHeight) { 46 } else { 50 }
-        $tileHeight = [Math]::Max($minimumTileHeight, [Math]::Min(78, $calculatedTileHeight))
+        $minimumTileHeight = if ($ultraCompactHeight) { 64 } elseif ($compactHeight) { 68 } else { 72 }
+        $requiredTileHeight = $minimumTileHeight
+        foreach ($candidateButton in $visibleButtons) {
+            if (-not $candidateButton.Tag -or [string]$candidateButton.Tag.Kind -notin @('QuickAction', 'ReportAction')) { continue }
+            $candidateTextLeft = if ($tileWidth -lt 280) { 54 } else { 60 }
+            $candidateTextWidth = [Math]::Max(80, $tileWidth - $candidateTextLeft - 10)
+            $candidateTitleHeight = Get-DashboardWrappedTextHeight -Text ([string]$candidateButton.Tag.TitleLabel.Text) -Font $candidateButton.Tag.TitleLabel.Font -Width $candidateTextWidth -MinimumHeight 18 -MaximumHeight 38
+            $candidateDescriptionHeight = Get-DashboardWrappedTextHeight -Text ([string]$candidateButton.Tag.DescriptionLabel.Text) -Font $candidateButton.Tag.DescriptionLabel.Font -Width $candidateTextWidth -MinimumHeight 17 -MaximumHeight 44
+            $requiredTileHeight = [Math]::Max($requiredTileHeight, ($candidateTitleHeight + $candidateDescriptionHeight + 12))
+        }
+        $requiredTileHeight = [Math]::Min(98, $requiredTileHeight)
+        $tileHeight = if ($calculatedTileHeight -ge $requiredTileHeight) {
+            [Math]::Min(98, $calculatedTileHeight)
+        } else {
+            $requiredTileHeight
+        }
+        $requiredButtonPanelHeight = 42 + ($visibleRowCount * $tileHeight) + (($visibleRowCount - 1) * $rowGap) + $buttonPanelBottomPadding
+        $buttonPanel.AutoScrollMinSize = New-Object System.Drawing.Size(0, $requiredButtonPanelHeight)
         for ($buttonIndex = 0; $buttonIndex -lt $visibleButtons.Count; $buttonIndex++) {
             $button = $visibleButtons[$buttonIndex]
             $row = [Math]::Floor($buttonIndex / 2)
@@ -1487,18 +1564,22 @@ function Update-MainLayout {
             if ($button.Tag -and [string]$button.Tag.Kind -in @("QuickAction", "ReportAction")) {
                 $textLeft = if ($tileWidth -lt 280) { 54 } else { 60 }
                 $textWidth = [Math]::Max(80, $tileWidth - $textLeft - 10)
-                $titleHeight = if ($tileHeight -le 46) { 17 } else { 20 }
-                $descriptionHeight = if ($tileHeight -le 46) { 15 } else { [Math]::Min(22, $tileHeight - $titleHeight - 9) }
+                $requiredTitleHeight = Get-DashboardWrappedTextHeight -Text ([string]$button.Tag.TitleLabel.Text) -Font $button.Tag.TitleLabel.Font -Width $textWidth -MinimumHeight 18 -MaximumHeight 38
+                $titleHeight = [Math]::Min($requiredTitleHeight, [Math]::Max(18, $tileHeight - 31))
+                $requiredDescriptionHeight = Get-DashboardWrappedTextHeight -Text ([string]$button.Tag.DescriptionLabel.Text) -Font $button.Tag.DescriptionLabel.Font -Width $textWidth -MinimumHeight 17 -MaximumHeight 44
+                $descriptionHeight = [Math]::Min($requiredDescriptionHeight, [Math]::Max(17, $tileHeight - $titleHeight - 8))
                 $contentHeight = $titleHeight + $descriptionHeight + 2
                 $contentTop = [Math]::Max(3, [Math]::Floor(($tileHeight - $contentHeight) / 2))
                 $button.Tag.TitleLabel.Left = $textLeft
                 $button.Tag.TitleLabel.Top = $contentTop
                 $button.Tag.TitleLabel.Width = $textWidth
                 $button.Tag.TitleLabel.Height = $titleHeight
+                $button.Tag.TitleLabel.AutoEllipsis = [bool]($requiredTitleHeight -gt $titleHeight)
                 $button.Tag.DescriptionLabel.Left = $textLeft
                 $button.Tag.DescriptionLabel.Top = $contentTop + $titleHeight + 2
                 $button.Tag.DescriptionLabel.Width = $textWidth
                 $button.Tag.DescriptionLabel.Height = $descriptionHeight
+                $button.Tag.DescriptionLabel.AutoEllipsis = [bool]($requiredDescriptionHeight -gt $descriptionHeight)
             }
             if ($script:dashboardSection -eq "Reports" -and
                 $visibleButtons.Count % 2 -eq 1 -and $buttonIndex -eq ($visibleButtons.Count - 1)) {
@@ -1911,6 +1992,7 @@ function Set-DashboardSection {
     param([ValidateSet("Overview", "Scan", "Remediation", "Reports")][string]$Section = "Overview")
 
     $script:dashboardSection = $Section
+    $buttonPanel.AutoScrollPosition = New-Object System.Drawing.Point(0, 0)
     $allowedNumbers = switch ($Section) {
         "Scan" { @(1, 2, 3, 4, 5, 9) }
         "Remediation" { @(11, 12, 13, 7, 8) }
@@ -1937,6 +2019,15 @@ function Set-DashboardSection {
             if ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(7, 31, 61) } else { [System.Drawing.Color]::FromArgb(6, 61, 125) }
         }
         $navButton.Font = if ($selected) { $fontBold } else { $fontSidebar }
+    }
+    $script:syncingCompactNavigation = $true
+    try {
+        $compactIndex = @('Overview', 'Scan', 'Remediation', 'Reports').IndexOf($Section)
+        if ($compactIndex -ge 0 -and $compactNavigation.SelectedIndex -ne $compactIndex) {
+            $compactNavigation.SelectedIndex = $compactIndex
+        }
+    } finally {
+        $script:syncingCompactNavigation = $false
     }
     Update-MainLayout
 }
@@ -2134,6 +2225,17 @@ function Set-DashboardLanguage {
     $sidebarEdition.Text = Get-ToolText -Key "dashboard.sidebar.edition" -Culture $Culture
     foreach ($navButton in $sidebarNavButtons) {
         $navButton.Text = Get-ToolText -Key ([string]$navButton.Tag.TextKey) -Culture $Culture
+    }
+    $compactSelectedIndex = [Math]::Max(0, $compactNavigation.SelectedIndex)
+    $script:syncingCompactNavigation = $true
+    try {
+        $compactNavigation.Items.Clear()
+        foreach ($definition in $sidebarNavDefinitions) {
+            [void]$compactNavigation.Items.Add((Get-ToolText -Key ([string]$definition.TextKey) -Culture $Culture))
+        }
+        $compactNavigation.SelectedIndex = [Math]::Min($compactSelectedIndex, ($compactNavigation.Items.Count - 1))
+    } finally {
+        $script:syncingCompactNavigation = $false
     }
     $closeButton.Text = Get-ToolText -Key "app.close" -Culture $Culture
     $stopButton.Text = Get-ToolText -Key "progress.stop" -Culture $Culture
@@ -2515,39 +2617,85 @@ function Confirm-KmsApprovalConfiguration {
     $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $dialog.Text = Get-DashboardText "kms.dialog.title"
     $dialog.StartPosition = "CenterParent"
-    $dialog.FormBorderStyle = "FixedDialog"
+    $dialog.FormBorderStyle = "Sizable"
     $dialog.MaximizeBox = $false; $dialog.MinimizeBox = $false; $dialog.ShowInTaskbar = $false
-    $dialog.ClientSize = New-Object System.Drawing.Size(740, 390)
+    $workArea = [System.Windows.Forms.Screen]::FromControl($form).WorkingArea
+    $dialogWidth = [Math]::Max(620, [Math]::Min(920, $workArea.Width - 36))
+    $dialogHeight = [Math]::Max(440, [Math]::Min(540, $workArea.Height - 48))
+    $dialog.MinimumSize = New-Object System.Drawing.Size([Math]::Min(720, $dialogWidth), [Math]::Min(440, $dialogHeight))
+    $dialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $dialog.BackColor = [System.Drawing.Color]::FromArgb(244,246,249); $dialog.Font = $fontNormal
+
+    $layout = New-Object System.Windows.Forms.TableLayoutPanel
+    $layout.Dock = 'Fill'
+    $layout.Padding = New-Object System.Windows.Forms.Padding(18, 14, 18, 14)
+    $layout.ColumnCount = 1
+    $layout.RowCount = 5
+    [void]$layout.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
+    $dialog.Controls.Add($layout)
+
     $heading = New-Object System.Windows.Forms.Label
     $heading.Text = Get-DashboardText "kms.dialog.heading"
     $heading.Font = $fontBold; $heading.ForeColor = [System.Drawing.Color]::DarkRed
-    $heading.Location = New-Object System.Drawing.Point(18, 14); $heading.Size = New-Object System.Drawing.Size(700, 26)
-    $dialog.Controls.Add($heading)
+    $heading.AutoSize = $true; $heading.Dock = 'Fill'; $heading.Margin = New-Object System.Windows.Forms.Padding(4, 2, 4, 8)
+    $heading.MaximumSize = New-Object System.Drawing.Size(($dialogWidth - 52), 0)
+    $layout.Controls.Add($heading, 0, 0)
     $info = New-Object System.Windows.Forms.Label
     $detectedText = if ($detected.Count) { $detected -join ', ' } else { Get-DashboardText "kms.dialog.noneDetected" }
     $unapprovedText = if ($unapprovedDetected.Count) { Get-DashboardText "kms.dialog.unapproved" @(($unapprovedDetected -join ', ')) } else { '' }
     $info.Text = Get-DashboardText "kms.dialog.summary" @($detectedText, $unapprovedText)
-    $info.Location = New-Object System.Drawing.Point(18, 48); $info.Size = New-Object System.Drawing.Size(700, 70)
-    $dialog.Controls.Add($info)
+    $info.AutoSize = $true; $info.Dock = 'Fill'; $info.Margin = New-Object System.Windows.Forms.Padding(4, 0, 4, 8)
+    $info.MaximumSize = New-Object System.Drawing.Size(($dialogWidth - 52), 0)
+    $layout.Controls.Add($info, 0, 1)
     $editor = New-Object System.Windows.Forms.TextBox
     $editor.Multiline = $true; $editor.ScrollBars = 'Vertical'; $editor.Font = $fontSmall
-    $editor.Location = New-Object System.Drawing.Point(18, 126); $editor.Size = New-Object System.Drawing.Size(700, 125)
+    $editor.Dock = 'Fill'; $editor.MinimumSize = New-Object System.Drawing.Size(300, 140)
+    $editor.Margin = New-Object System.Windows.Forms.Padding(4, 0, 4, 8)
     $editor.Text = (@($config.Entries) -join [Environment]::NewLine)
-    $dialog.Controls.Add($editor)
+    $layout.Controls.Add($editor, 0, 2)
     $hint = New-Object System.Windows.Forms.Label
     $hint.Text = Get-DashboardText "kms.dialog.hint"
-    $hint.ForeColor = [System.Drawing.Color]::FromArgb(102,112,133); $hint.Location = New-Object System.Drawing.Point(18, 258); $hint.Size = New-Object System.Drawing.Size(700, 22)
-    $dialog.Controls.Add($hint)
-    $open = New-Object System.Windows.Forms.Button; $open.Text = Get-DashboardText "kms.dialog.openFile"; $open.Location = New-Object System.Drawing.Point(18, 302); $open.Size = New-Object System.Drawing.Size(170, 34)
-    $open.Add_Click({ Start-Process -FilePath $nativeNotepadPath -ArgumentList ('"' + $approvedKmsFile + '"') }); $dialog.Controls.Add($open)
-    $strict = New-Object System.Windows.Forms.Button; $strict.Text = Get-DashboardText "kms.dialog.strict"; $strict.Location = New-Object System.Drawing.Point(196, 302); $strict.Size = New-Object System.Drawing.Size(184, 34)
-    $strict.Add_Click({ $dialog.Tag = 'Strict'; $dialog.Close() }); $dialog.Controls.Add($strict)
-    $save = New-Object System.Windows.Forms.Button; $save.Text = Get-DashboardText "kms.dialog.save"; $save.Font = $fontBold; $save.Location = New-Object System.Drawing.Point(388, 302); $save.Size = New-Object System.Drawing.Size(172, 34)
-    $save.Add_Click({ $dialog.Tag = 'Save'; $dialog.Close() }); $dialog.Controls.Add($save)
-    $cancel = New-Object System.Windows.Forms.Button; $cancel.Text = Get-DashboardText "app.close"; $cancel.Location = New-Object System.Drawing.Point(568, 302); $cancel.Size = New-Object System.Drawing.Size(150, 34)
-    $cancel.Add_Click({ $dialog.Tag = 'Cancel'; $dialog.Close() }); $dialog.CancelButton = $cancel; $dialog.Controls.Add($cancel)
+    $hint.ForeColor = [System.Drawing.Color]::FromArgb(102,112,133)
+    $hint.AutoSize = $true; $hint.Dock = 'Fill'; $hint.Margin = New-Object System.Windows.Forms.Padding(4, 0, 4, 4)
+    $hint.MaximumSize = New-Object System.Drawing.Size(($dialogWidth - 52), 0)
+    $layout.Controls.Add($hint, 0, 3)
+
+    $footer = New-Object System.Windows.Forms.FlowLayoutPanel
+    $footer.Dock = 'Fill'; $footer.AutoSize = $true; $footer.AutoSizeMode = 'GrowAndShrink'
+    $footer.FlowDirection = 'LeftToRight'; $footer.WrapContents = $true
+    $footer.Margin = New-Object System.Windows.Forms.Padding(0, 2, 0, 0)
+    $footer.Padding = New-Object System.Windows.Forms.Padding(0, 4, 0, 0)
+    $layout.Controls.Add($footer, 0, 4)
+
+    $open = New-Object System.Windows.Forms.Button; $open.Text = Get-DashboardText "kms.dialog.openFile"
+    $open.AutoSize = $true; $open.AutoSizeMode = 'GrowAndShrink'; $open.MinimumSize = New-Object System.Drawing.Size(150, 36); $open.Margin = New-Object System.Windows.Forms.Padding(4)
+    $open.Add_Click({ Start-Process -FilePath $nativeNotepadPath -ArgumentList ('"' + $approvedKmsFile + '"') }); $footer.Controls.Add($open)
+    $strict = New-Object System.Windows.Forms.Button; $strict.Text = Get-DashboardText "kms.dialog.strict"
+    $strict.AutoSize = $true; $strict.AutoSizeMode = 'GrowAndShrink'; $strict.MinimumSize = New-Object System.Drawing.Size(184, 36); $strict.Margin = New-Object System.Windows.Forms.Padding(4)
+    $strict.Add_Click({ $dialog.Tag = 'Strict'; $dialog.Close() }); $footer.Controls.Add($strict)
+    $save = New-Object System.Windows.Forms.Button; $save.Text = Get-DashboardText "kms.dialog.save"; $save.Font = $fontBold
+    $save.AutoSize = $true; $save.AutoSizeMode = 'GrowAndShrink'; $save.MinimumSize = New-Object System.Drawing.Size(150, 36); $save.Margin = New-Object System.Windows.Forms.Padding(4)
+    $save.Add_Click({ $dialog.Tag = 'Save'; $dialog.Close() }); $footer.Controls.Add($save)
+    $cancel = New-Object System.Windows.Forms.Button; $cancel.Text = Get-DashboardText "app.close"
+    $cancel.AutoSize = $true; $cancel.AutoSizeMode = 'GrowAndShrink'; $cancel.MinimumSize = New-Object System.Drawing.Size(108, 36); $cancel.Margin = New-Object System.Windows.Forms.Padding(4)
+    $cancel.Add_Click({ $dialog.Tag = 'Cancel'; $dialog.Close() }); $dialog.CancelButton = $cancel; $footer.Controls.Add($cancel)
+
+    $resizeKmsText = {
+        $maximumTextWidth = [Math]::Max(300, $layout.ClientSize.Width - $layout.Padding.Horizontal - 12)
+        $heading.MaximumSize = New-Object System.Drawing.Size($maximumTextWidth, 0)
+        $info.MaximumSize = New-Object System.Drawing.Size($maximumTextWidth, 0)
+        $hint.MaximumSize = New-Object System.Drawing.Size($maximumTextWidth, 0)
+        $layout.PerformLayout()
+    }
+    $dialog.Add_SizeChanged($resizeKmsText)
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
+    & $resizeKmsText
+    $footer.PerformLayout()
     [void]$dialog.ShowDialog($form)
     $choice = [string]$dialog.Tag; $entriesToSave = @($editor.Lines | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     $dialog.Dispose()
@@ -3038,38 +3186,48 @@ function Show-ReportPrivacyChooser {
     $dialog.MinimizeBox = $false
     $dialog.ShowInTaskbar = $false
     $dialog.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
-    $dialog.ClientSize = New-Object System.Drawing.Size(650, 260)
+    $dialog.ClientSize = New-Object System.Drawing.Size(760, 300)
     $dialog.Tag = 'Cancel'
 
     $message = New-Object System.Windows.Forms.Label
     $message.Text = Get-ToolText -Key 'report.privacy.promptExplicit' -Culture $script:dashboardCulture
     $message.Font = $fontNormal
     $message.Location = New-Object System.Drawing.Point(28, 24)
-    $message.Size = New-Object System.Drawing.Size(594, 140)
-    $message.AutoEllipsis = $true
+    $message.Size = New-Object System.Drawing.Size(704, 176)
+    $message.Anchor = 'Top,Bottom,Left,Right'
+    $message.AutoEllipsis = $false
     $dialog.Controls.Add($message)
+
+    $privacyFooter = New-Object System.Windows.Forms.FlowLayoutPanel
+    $privacyFooter.Location = New-Object System.Drawing.Point(20, 222)
+    $privacyFooter.Size = New-Object System.Drawing.Size(720, 56)
+    $privacyFooter.Anchor = 'Bottom,Left,Right'
+    $privacyFooter.FlowDirection = 'LeftToRight'
+    $privacyFooter.WrapContents = $false
+    $privacyFooter.Padding = New-Object System.Windows.Forms.Padding(4)
+    $dialog.Controls.Add($privacyFooter)
 
     $redactedButton = New-Object System.Windows.Forms.Button
     $redactedButton.Text = Get-ToolText -Key 'report.privacy.redactedButton' -Culture $script:dashboardCulture
-    $redactedButton.Location = New-Object System.Drawing.Point(28, 188)
-    $redactedButton.Size = New-Object System.Drawing.Size(212, 42)
+    $redactedButton.AutoSize = $true; $redactedButton.AutoSizeMode = 'GrowAndShrink'; $redactedButton.MinimumSize = New-Object System.Drawing.Size(212, 42)
+    $redactedButton.Margin = New-Object System.Windows.Forms.Padding(4)
     $redactedButton.Font = $fontBold
     $redactedButton.Add_Click({ $dialog.Tag = 'Redacted'; $dialog.Close() })
-    $dialog.Controls.Add($redactedButton)
+    $privacyFooter.Controls.Add($redactedButton)
 
     $internalButton = New-Object System.Windows.Forms.Button
     $internalButton.Text = Get-ToolText -Key 'report.privacy.internalButton' -Culture $script:dashboardCulture
-    $internalButton.Location = New-Object System.Drawing.Point(252, 188)
-    $internalButton.Size = New-Object System.Drawing.Size(220, 42)
+    $internalButton.AutoSize = $true; $internalButton.AutoSizeMode = 'GrowAndShrink'; $internalButton.MinimumSize = New-Object System.Drawing.Size(220, 42)
+    $internalButton.Margin = New-Object System.Windows.Forms.Padding(4)
     $internalButton.Add_Click({ $dialog.Tag = 'Internal'; $dialog.Close() })
-    $dialog.Controls.Add($internalButton)
+    $privacyFooter.Controls.Add($internalButton)
 
     $cancelButton = New-Object System.Windows.Forms.Button
     $cancelButton.Text = Get-ToolText -Key 'report.privacy.cancelButton' -Culture $script:dashboardCulture
-    $cancelButton.Location = New-Object System.Drawing.Point(484, 188)
-    $cancelButton.Size = New-Object System.Drawing.Size(138, 42)
+    $cancelButton.AutoSize = $true; $cancelButton.AutoSizeMode = 'GrowAndShrink'; $cancelButton.MinimumSize = New-Object System.Drawing.Size(138, 42)
+    $cancelButton.Margin = New-Object System.Windows.Forms.Padding(4)
     $cancelButton.Add_Click({ $dialog.Tag = 'Cancel'; $dialog.Close() })
-    $dialog.Controls.Add($cancelButton)
+    $privacyFooter.Controls.Add($cancelButton)
     $dialog.AcceptButton = $redactedButton
     $dialog.CancelButton = $cancelButton
 
@@ -5258,23 +5416,32 @@ function Open-GuiVendorLicenseAction {
     $picker = New-Object System.Windows.Forms.Form
     $picker.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $picker.Text = Get-DashboardText 'cleanup.result.vendorTitle'
-    $picker.StartPosition = 'CenterParent'; $picker.ClientSize = New-Object System.Drawing.Size(700,160); $picker.Tag = ''
+    $picker.StartPosition = 'CenterParent'; $picker.FormBorderStyle = 'Sizable'; $picker.MaximizeBox = $false; $picker.MinimizeBox = $false
+    $picker.MinimumSize = New-Object System.Drawing.Size(620, 220); $picker.ClientSize = New-Object System.Drawing.Size(760,190); $picker.Tag = ''
     $label = New-Object System.Windows.Forms.Label
-    $label.Text = Get-DashboardText 'cleanup.result.vendorHint'; $label.Location = New-Object System.Drawing.Point(16,14); $label.Size = New-Object System.Drawing.Size(668,38)
+    $label.Text = Get-DashboardText 'cleanup.result.vendorHint'; $label.Location = New-Object System.Drawing.Point(16,14); $label.Size = New-Object System.Drawing.Size(728,52); $label.Anchor = 'Top,Left,Right'
     $picker.Controls.Add($label)
     $combo = New-Object System.Windows.Forms.ComboBox
-    $combo.DropDownStyle = 'DropDownList'; $combo.Location = New-Object System.Drawing.Point(16,58); $combo.Size = New-Object System.Drawing.Size(668,28)
+    $combo.DropDownStyle = 'DropDownList'; $combo.Location = New-Object System.Drawing.Point(16,72); $combo.Size = New-Object System.Drawing.Size(728,28); $combo.Anchor = 'Top,Left,Right'
     foreach ($target in $targets) {
         [void]$combo.Items.Add([pscustomobject]@{ Label="$([string]$target.Name) — $([string]$target.Target)"; Target=[string]$target.Target })
     }
     $combo.DisplayMember = 'Label'; if ($combo.Items.Count -gt 0) { $combo.SelectedIndex = 0 }; $picker.Controls.Add($combo)
     $open = New-Object System.Windows.Forms.Button
-    $open.Text = Get-DashboardText 'software.results.openOfficial'; $open.Location = New-Object System.Drawing.Point(454,108); $open.Size = New-Object System.Drawing.Size(140,32)
+    $open.Text = Get-DashboardText 'software.results.openOfficial'; $open.Location = New-Object System.Drawing.Point(452,132); $open.Size = New-Object System.Drawing.Size(190,36); $open.Anchor = 'Bottom,Right'
     $open.Add_Click({ if ($combo.SelectedItem) { $picker.Tag=[string]$combo.SelectedItem.Target; $picker.Close() } }); $picker.Controls.Add($open)
     $cancel = New-Object System.Windows.Forms.Button
-    $cancel.Text = Get-DashboardText 'app.close'; $cancel.Location = New-Object System.Drawing.Point(600,108); $cancel.Size = New-Object System.Drawing.Size(84,32)
+    $cancel.Text = Get-DashboardText 'app.close'; $cancel.Location = New-Object System.Drawing.Point(650,132); $cancel.Size = New-Object System.Drawing.Size(94,36); $cancel.Anchor = 'Bottom,Right'
     $cancel.Add_Click({ $picker.Close() }); $picker.CancelButton=$cancel; $picker.Controls.Add($cancel)
     Set-ToolWindowTheme -Root $picker -Mode $script:dashboardTheme
+    $resizeVendorButtons = {
+        $cancel.Width = [Math]::Max(94, (Get-ToolUiButtonRequiredWidth -Button $cancel -HorizontalSafety 12))
+        $open.Width = [Math]::Max(180, (Get-ToolUiButtonRequiredWidth -Button $open -HorizontalSafety 12))
+        $cancel.Left = $picker.ClientSize.Width - $cancel.Width - 16
+        $open.Left = $cancel.Left - $open.Width - 8
+    }
+    $picker.Add_SizeChanged($resizeVendorButtons)
+    & $resizeVendorButtons
     [void]$picker.ShowDialog($form); $targetUrl=[string]$picker.Tag; $picker.Dispose()
     if (Test-GuiOfficialHttpsTarget $targetUrl) { try { Start-Process -FilePath $targetUrl } catch { [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'software.results.openOfficialFailed' @($_.Exception.Message)), (Get-DashboardText 'common.errorTitle'), 'OK', 'Error') | Out-Null } }
 }
@@ -7466,7 +7633,7 @@ function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey
     $descriptionLabel.Font = $fontSupportSmall
     $descriptionLabel.BackColor = [System.Drawing.Color]::Transparent
     $descriptionLabel.ForeColor = $initialTilePalette.DescriptionColor
-    $descriptionLabel.AutoEllipsis = $true
+    $descriptionLabel.AutoEllipsis = $false
     $descriptionLabel.UseCompatibleTextRendering = $false
     $descriptionLabel.UseMnemonic = $false
     $descriptionLabel.Cursor = [System.Windows.Forms.Cursors]::Hand
@@ -7630,8 +7797,10 @@ Add-ReportMenuButton "InstallPlugin" "assurance.installPlugin" "dashboard.report
 Add-ReportMenuButton "PluginFolder" "assurance.pluginFolder" "dashboard.report.pluginFolder.description" 4 "Report"
 Add-ReportMenuButton "Guide" "assurance.guide" "dashboard.report.guide.description" 5 "Report"
 Add-ReportMenuButton "History" "assurance.history" "dashboard.report.history.description" 6 "License"
+Fit-MainWindowToWorkingArea
 Set-DashboardSection -Section "Overview"
 Set-DashboardTheme -Mode $script:dashboardTheme
+Update-MainLayout
 $form.Add_Shown({
     Fit-MainWindowToWorkingArea
     Update-MainLayout

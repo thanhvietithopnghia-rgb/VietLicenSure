@@ -19,9 +19,9 @@ Set-StrictMode -Version 2.0
 
 $productVersion = '5.0'
 $releaseVersion = '5.0.0.0'
-$releaseBuildDate = '2026.08.24'
-$officialBuildId = "$releaseVersion-production-20260824"
-$managedBuildId = "$releaseVersion-managed-signed-20260824"
+$releaseBuildDate = '2026.08.25'
+$officialBuildId = "$releaseVersion-production-20260825"
+$managedBuildId = "$releaseVersion-managed-signed-20260825"
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
 $releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
     "$releaseVersion-development-unsigned"
