@@ -38,6 +38,20 @@ try {
     $assembly = [Reflection.Assembly]::LoadFile([IO.Path]::GetFullPath($ExePath))
     $launcherType = $assembly.GetType("ThanhViet.ToolKiemTra.Program", $true)
     $bindingFlags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
+    $provenanceHelperPath = Join-Path $SourceDirectory 'Tool-Provenance.ps1'
+    if (-not (Test-Path -LiteralPath $provenanceHelperPath -PathType Leaf)) {
+        throw 'Thiếu Tool-Provenance.ps1 để xác minh BuildId đã biên dịch.'
+    }
+    . $provenanceHelperPath
+    $expectedBuildId = [string](Get-ToolProvenanceExpectedValues).BuildId
+    $buildIdField = $launcherType.GetField('OfficialBuildId', $bindingFlags)
+    if (-not $buildIdField -or -not $buildIdField.IsLiteral) {
+        throw 'Không đọc được hằng OfficialBuildId từ launcher đã biên dịch.'
+    }
+    $compiledBuildId = [string]$buildIdField.GetRawConstantValue()
+    if ($compiledBuildId -cne $expectedBuildId) {
+        throw "BuildId trong EXE không khớp nguồn chuẩn: $compiledBuildId / $expectedBuildId"
+    }
     $payloadField = $launcherType.GetField("PayloadFiles", $bindingFlags)
     $integrityField = $launcherType.GetField("RequiredIntegrityFiles", $bindingFlags)
     if (-not $payloadField -or -not $integrityField) {
@@ -176,7 +190,30 @@ try {
         }
     }
 
-    Write-Host "EMBEDDED-PAYLOAD $ExpectedArchitecture`: ĐẠT ($($payloadFiles.Count)/$($payloadFiles.Count); solid-deflate=1; format=1)" -ForegroundColor Green
+    $bridgeIndex = [Array]::IndexOf([string[]]$payloadFiles, 'Tool-ElevatedBridge.ps1')
+    if ($bridgeIndex -lt 0) { throw 'Danh sách payload không chứa Tool-ElevatedBridge.ps1.' }
+    try {
+        $bridgeSegment = [IO.Stream]$openPayloadMethod.Invoke($null, @($assembly, [int]$bridgeIndex))
+    } catch {
+        $detail = if ($_.Exception.InnerException) { $_.Exception.InnerException.Message } else { $_.Exception.Message }
+        throw "Không đọc được Bridge nhúng để kiểm tra BuildId: $detail"
+    }
+    if (-not $bridgeSegment) { throw 'Launcher không trả về Bridge nhúng.' }
+    try {
+        $bridgeReader = New-Object IO.StreamReader($bridgeSegment, (New-Object Text.UTF8Encoding($false, $true)), $true, 4096, $true)
+        try { $embeddedBridgeText = $bridgeReader.ReadToEnd() }
+        finally { $bridgeReader.Dispose() }
+    } finally { $bridgeSegment.Dispose() }
+    if ($embeddedBridgeText -notmatch "Tool-Provenance\.ps1" -or
+        $embeddedBridgeText -notmatch 'Get-ToolProvenanceExpectedValues' -or
+        $embeddedBridgeText -notmatch 'TOOL_OFFICIAL_BUILD_ID''\]\s*-ne\s+\$expectedOfficialBuildId') {
+        throw 'Bridge nhúng chưa ràng buộc TOOL_OFFICIAL_BUILD_ID với nguồn provenance chuẩn.'
+    }
+    if ($embeddedBridgeText -match '\d+\.\d+\.\d+\.\d+-production-\d{8}') {
+        throw 'Bridge nhúng vẫn chứa BuildId hard-code độc lập.'
+    }
+
+    Write-Host "EMBEDDED-PAYLOAD $ExpectedArchitecture`: ĐẠT ($($payloadFiles.Count)/$($payloadFiles.Count); BuildId=$compiledBuildId; Bridge=canonical; solid-deflate=1; format=1)" -ForegroundColor Green
     exit 0
 } catch {
     Write-Error $_.Exception.Message

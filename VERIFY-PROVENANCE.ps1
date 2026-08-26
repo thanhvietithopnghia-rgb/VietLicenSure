@@ -34,10 +34,11 @@ try {
     $signaturePath = Join-Path $sourceFull 'OFFICIAL-PROVENANCE-v1.json.p7s'
     if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) { throw 'Tool-Provenance.ps1 is missing.' }
     . $helperPath
+    $expectedIdentity = Get-ToolProvenanceExpectedValues
 
     $base = Read-ToolOfficialProvenanceManifest -ManifestPath $manifestPath -AllowSourceCommitPlaceholder -RequireCanonical
-    Assert-ProvenanceTest ($base.Document.ReleaseVersion -ceq '5.0.0.0') 'ReleaseVersion is not v5.0.0.0.'
-    Assert-ProvenanceTest ($base.Document.BuildId -ceq '5.0.0.0-production-20260825') 'BuildId is invalid.'
+    Assert-ProvenanceTest ($base.Document.ReleaseVersion -ceq [string]$expectedIdentity.ReleaseVersion) 'ReleaseVersion does not match the canonical release identity.'
+    Assert-ProvenanceTest ($base.Document.BuildId -ceq [string]$expectedIdentity.BuildId) 'BuildId does not match the canonical release identity.'
 
     $strictUnsigned = Test-ToolOfficialProvenance -ManifestPath $manifestPath -SignaturePath $signaturePath
     if (Test-Path -LiteralPath $signaturePath -PathType Leaf) {

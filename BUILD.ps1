@@ -17,11 +17,22 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
-$productVersion = '5.0'
-$releaseVersion = '5.0.0.0'
-$releaseBuildDate = '2026.08.25'
-$officialBuildId = "$releaseVersion-production-20260825"
-$managedBuildId = "$releaseVersion-managed-signed-20260825"
+. (Join-Path $PSScriptRoot 'Tool-Provenance.ps1')
+$releaseIdentity = Get-ToolProvenanceExpectedValues
+$releaseVersion = [string]$releaseIdentity.ReleaseVersion
+$releaseBuildTime = [string]$releaseIdentity.BuildTime
+$officialBuildId = [string]$releaseIdentity.BuildId
+$releaseVersionMatch = [regex]::Match($releaseVersion, '^(?<major>\d+)\.(?<minor>\d+)\.\d+\.\d+$')
+if (-not $releaseVersionMatch.Success -or
+    $releaseBuildTime -notmatch '^\d{4}-\d{2}-\d{2}$' -or
+    $officialBuildId -cne ($releaseVersion + '-production-' + $releaseBuildTime.Replace('-', ''))) {
+    throw 'Tool-Provenance.ps1 chứa release identity không nhất quán.'
+}
+$productVersion = $releaseVersionMatch.Groups['major'].Value + '.' + $releaseVersionMatch.Groups['minor'].Value
+$releaseBuildDate = $releaseBuildTime.Replace('-', '.')
+$releaseDateToken = $releaseBuildTime.Replace('-', '')
+$managedBuildId = "$releaseVersion-managed-signed-$releaseDateToken"
+$publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
 $releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
     "$releaseVersion-development-unsigned"
@@ -523,6 +534,19 @@ foreach ($name in ($requiredFiles | Select-Object -Unique)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Thiếu tệp nguồn bắt buộc: $name" }
 }
 
+# Third-party workflow code is executable supply-chain input. Refuse a release
+# if an official GitHub Action is referenced by a mutable tag or branch.
+$workflowDirectory = Join-Path $sourceDirectory '.github\workflows'
+if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
+    foreach ($workflowFile in @(Get-ChildItem -LiteralPath $workflowDirectory -File | Where-Object { $_.Extension -in @('.yml','.yaml') })) {
+        $workflowText = [IO.File]::ReadAllText($workflowFile.FullName, [Text.Encoding]::UTF8)
+        $mutableAction = [regex]::Match($workflowText, '(?im)^\s*(?:-\s*)?uses:\s*actions/[A-Za-z0-9_.-]+@(?![0-9a-f]{40}(?:\s|#|$))\S+')
+        if ($mutableAction.Success) {
+            throw "GitHub Action phải khóa theo full commit SHA: $($workflowFile.Name): $($mutableAction.Value.Trim())"
+        }
+    }
+}
+
 & (Join-Path $sourceDirectory 'VERIFY-NO-SIGNING-SECRETS.ps1') -SourceDirectory $sourceDirectory
 if ($LASTEXITCODE -ne 0) { throw "Phát hiện hoặc không thể loại trừ bí mật code-signing trong cây nguồn, mã thoát: $LASTEXITCODE" }
 
@@ -664,8 +688,17 @@ $payloadBuildDirectory = Join-Path $OutputDirectory ('.payload-build-' + [Guid]:
 try {
     New-Item -ItemType Directory -Path $payloadBuildDirectory | Out-Null
     $compilerSourcePath = Join-Path $sourceDirectory $sourceName
+    $compilerSourceText = [IO.File]::ReadAllText($compilerSourcePath, [Text.Encoding]::UTF8)
+    $buildIdConstantPattern = 'private const string OfficialBuildId = "REPLACE_AT_BUILD_FROM_TOOL_PROVENANCE";'
+    if ([regex]::Matches($compilerSourceText, $buildIdConstantPattern).Count -ne 1) {
+        throw 'Launcher source phải chứa đúng một placeholder OfficialBuildId do BUILD.ps1 quản lý.'
+    }
+    $compilerSourceText = [regex]::Replace(
+        $compilerSourceText,
+        $buildIdConstantPattern,
+        ('private const string OfficialBuildId = "' + $officialBuildId + '";'),
+        1)
     if ($requiresSignedArtifact) {
-        $compilerSourceText = [IO.File]::ReadAllText($compilerSourcePath, [Text.Encoding]::UTF8)
         $signerConstantPattern = 'private const string OfficialSignerThumbprint = "[A-Fa-f0-9]{40}";'
         if (-not [regex]::IsMatch($compilerSourceText, $signerConstantPattern)) {
             throw 'Không tìm thấy OfficialSignerThumbprint hợp lệ trong launcher source.'
@@ -675,9 +708,9 @@ try {
             $signerConstantPattern,
             ('private const string OfficialSignerThumbprint = "' + $normalizedStableSignerThumbprint + '";'),
             1)
-        $compilerSourcePath = Join-Path $payloadBuildDirectory $sourceName
-        [IO.File]::WriteAllText($compilerSourcePath, $compilerSourceText, (New-Object Text.UTF8Encoding($false)))
     }
+    $compilerSourcePath = Join-Path $payloadBuildDirectory $sourceName
+    [IO.File]::WriteAllText($compilerSourcePath, $compilerSourceText, (New-Object Text.UTF8Encoding($false)))
     $payloadBundlePath = Join-Path $payloadBuildDirectory 'payload.bundle.v1'
     $compressedPayloadPath = Join-Path $payloadBuildDirectory 'payload.bundle.v1.deflate'
     $bundleStats = New-SolidPayloadBundle -SourceDirectory $sourceDirectory -PayloadFiles $payloadFiles -DestinationPath $payloadBundlePath
@@ -878,6 +911,57 @@ $releaseStatus = if ($AllowUnsignedDevelopmentBuild) {
 } else {
     'Production'
 }
+$primaryArtifact = @($artifactResults.ToArray())[0]
+$primaryArtifactPath = Join-Path $OutputDirectory $primaryArtifact.FileName
+$sbomPath = Join-Path $OutputDirectory 'SBOM.cdx.json'
+$sbomSourceCommit = [string](Get-Content -LiteralPath $provenanceManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json).SourceSnapshotCommit
+$sbomActionComponents = @(
+    [ordered]@{
+        type = 'library'; 'bom-ref' = 'github-actions:actions/checkout@11d5960a326750d5838078e36cf38b85af677262'
+        name = 'actions/checkout'; version = '4.4.0'; licenses = @([ordered]@{ license = [ordered]@{ id = 'MIT' } })
+        properties = @([ordered]@{ name = 'tool:gitCommit'; value = '11d5960a326750d5838078e36cf38b85af677262' })
+    },
+    [ordered]@{
+        type = 'library'; 'bom-ref' = 'github-actions:actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02'
+        name = 'actions/upload-artifact'; version = '4.6.2'; licenses = @([ordered]@{ license = [ordered]@{ id = 'MIT' } })
+        properties = @([ordered]@{ name = 'tool:gitCommit'; value = 'ea165f8d65b6e75b540449e92b4886f43607fa02' })
+    },
+    [ordered]@{
+        type = 'library'; 'bom-ref' = 'github-actions:actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093'
+        name = 'actions/download-artifact'; version = '4.3.0'; licenses = @([ordered]@{ license = [ordered]@{ id = 'MIT' } })
+        properties = @([ordered]@{ name = 'tool:gitCommit'; value = 'd3f86a106a0bac45b974a628896c90dbdf5c8093' })
+    }
+)
+$sbomRuntimeComponents = @(
+    [ordered]@{ type = 'framework'; 'bom-ref' = 'runtime:dotnet-framework-4'; name = '.NET Framework'; version = '4 / CLR v4' },
+    [ordered]@{ type = 'framework'; 'bom-ref' = 'runtime:windows-powershell-3'; name = 'Windows PowerShell'; version = '3+' },
+    [ordered]@{ type = 'application'; 'bom-ref' = 'build:compiler-csc'; name = 'Microsoft C# Compiler'; version = [string]$compilerVersion }
+)
+$sbomComponentRefs = @($sbomRuntimeComponents + $sbomActionComponents | ForEach-Object { [string]$_['bom-ref'] })
+$sbomDocument = [ordered]@{
+    bomFormat = 'CycloneDX'
+    specVersion = '1.5'
+    version = 1
+    metadata = [ordered]@{
+        timestamp = $publishedAtUtc
+        tools = @([ordered]@{ vendor = 'Thanh Viet'; name = 'BUILD.ps1'; version = $releaseVersion })
+        component = [ordered]@{
+            type = 'application'; 'bom-ref' = 'application:tool-kiem-tra'
+            name = 'Tool Kiem Tra'; version = $releaseVersion
+            hashes = @([ordered]@{ alg = 'SHA-256'; content = [string]$primaryArtifact.Sha256 })
+            licenses = @([ordered]@{ license = [ordered]@{ name = 'Proprietary' } })
+            properties = @(
+                [ordered]@{ name = 'tool:buildId'; value = $officialBuildId },
+                [ordered]@{ name = 'tool:sourceSnapshotCommit'; value = $sbomSourceCommit },
+                [ordered]@{ name = 'tool:releaseStatus'; value = $releaseStatus }
+            )
+        }
+    }
+    components = @($sbomRuntimeComponents + $sbomActionComponents)
+    dependencies = @([ordered]@{ ref = 'application:tool-kiem-tra'; dependsOn = $sbomComponentRefs })
+}
+[IO.File]::WriteAllText($sbomPath, ($sbomDocument | ConvertTo-Json -Depth 12), (New-Object Text.UTF8Encoding($false)))
+$sbomSha256 = Get-Sha256Hex $sbomPath
 $releaseManifest = [ordered]@{
     SchemaVersion = '2.0'
     ToolVersion = $productVersion
@@ -888,6 +972,12 @@ $releaseManifest = [ordered]@{
     PrimaryFileName = "Tool-Kiem-Tra-v$productVersion.exe"
     RuntimeArchitecture = 'Auto: x64 on Windows 64-bit; x86 on Windows 32-bit'
     Artifacts = $manifestArtifacts
+    Sbom = [ordered]@{
+        FileName = 'SBOM.cdx.json'
+        Format = 'CycloneDX'
+        SpecVersion = '1.5'
+        Sha256 = $sbomSha256
+    }
     PayloadCount = [int]$payloadFiles.Count
     IntegrityFileCount = [int]$integrityFiles.Count
     PayloadCompression = [ordered]@{
@@ -1131,8 +1221,6 @@ $releaseManifest = [ordered]@{
 }
 [IO.File]::WriteAllText($releaseManifestPath, ($releaseManifest | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding($false)))
 
-$primaryArtifact = @($artifactResults.ToArray())[0]
-$primaryArtifactPath = Join-Path $OutputDirectory $primaryArtifact.FileName
 $updateSignerThumbprints = @()
 $updateAuthenticodeRequired = $requiresSignedArtifact
 if ($updateAuthenticodeRequired) {
@@ -1147,7 +1235,7 @@ $applicationUpdateManifest = [ordered]@{
     Channel = if ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
     LatestVersion = $releaseVersion
     MinimumUpdaterVersion = '4.6.1.0'
-    PublishedAtUtc = '2026-08-24T00:00:00Z'
+    PublishedAtUtc = $publishedAtUtc
     Title = [ordered]@{
         'vi-VN' = 'v5.0 - Nâng độ tin cậy, quản trị doanh nghiệp và quét linh hoạt'
         'en-US' = 'v5.0 - Trust hardening, enterprise management, and flexible scanning'
@@ -1339,7 +1427,7 @@ $releaseHashFiles = @($targets.OutputName) + @(
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
-    'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s', 'RELEASE-MANIFEST.json', 'update-manifest-v1.json', $infoName
+    'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s', 'RELEASE-MANIFEST.json', 'SBOM.cdx.json', 'update-manifest-v1.json', $infoName
 )
 if (Test-Path -LiteralPath (Join-Path $OutputDirectory $provenanceSignatureName) -PathType Leaf) {
     $releaseHashFiles += $provenanceSignatureName

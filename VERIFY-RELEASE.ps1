@@ -7,7 +7,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$productVersion = '5.0'
+$productVersion = ''
 if ($AllowManagedSignedManifest -and $AllowDevelopmentManifest) { throw 'ManagedSigned và DevelopmentUnsigned là hai chế độ loại trừ nhau.' }
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = Join-Path $SourceDirectory 'dist' }
@@ -120,6 +120,22 @@ function Get-VerificationPowerShell([string]$Architecture) {
 
 $sourceDirectoryFull = [IO.Path]::GetFullPath($SourceDirectory)
 $distributionDirectoryFull = [IO.Path]::GetFullPath($DistributionDirectory)
+$releaseIdentityHelperPath = Join-Path $sourceDirectoryFull 'Tool-Provenance.ps1'
+if (-not (Test-Path -LiteralPath $releaseIdentityHelperPath -PathType Leaf)) {
+    $failures.Add('Thiếu Tool-Provenance.ps1 để lấy release identity chuẩn.')
+} else {
+    . $releaseIdentityHelperPath
+    $expectedReleaseIdentity = Get-ToolProvenanceExpectedValues
+    $expectedReleaseVersion = [string]$expectedReleaseIdentity.ReleaseVersion
+    $expectedOfficialBuildId = [string]$expectedReleaseIdentity.BuildId
+    $expectedReleaseBuildTime = [string]$expectedReleaseIdentity.BuildTime
+    $expectedReleaseBuildDate = $expectedReleaseBuildTime.Replace('-', '.')
+    $expectedReleaseDateToken = $expectedReleaseBuildTime.Replace('-', '')
+    $expectedManagedBuildId = $expectedReleaseVersion + '-managed-signed-' + $expectedReleaseDateToken
+    $expectedPublishedAtUtc = $expectedReleaseBuildTime + 'T00:00:00Z'
+    $expectedVersionObject = [version]$expectedReleaseVersion
+    $productVersion = [string]$expectedVersionObject.Major + '.' + [string]$expectedVersionObject.Minor
+}
 $peHelperPath = Join-Path $sourceDirectoryFull 'PE-HARDENING.ps1'
 $embeddedVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-EMBEDDED-PAYLOAD.ps1'
 $foundationVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-FOUNDATION.ps1'
@@ -177,10 +193,20 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
     foreach ($parseError in @($parseErrors)) { $failures.Add("Lỗi cú pháp $($script.Name): $($parseError.Message)") }
 }
 
+$workflowDirectory = Join-Path $sourceDirectoryFull '.github\workflows'
+if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
+    foreach ($workflowFile in @(Get-ChildItem -LiteralPath $workflowDirectory -File | Where-Object { $_.Extension -in @('.yml','.yaml') })) {
+        $workflowText = [IO.File]::ReadAllText($workflowFile.FullName, [Text.Encoding]::UTF8)
+        foreach ($mutableUse in [regex]::Matches($workflowText, '(?im)^\s*(?:-\s*)?uses:\s*actions/[A-Za-z0-9_.-]+@(?![0-9a-f]{40}(?:\s|#|$))\S+')) {
+            $failures.Add("GitHub Action chưa khóa theo full commit SHA trong $($workflowFile.Name): $($mutableUse.Value.Trim())")
+        }
+    }
+}
+
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 52 } else { 53 }
 $expectedSourceHashCount = if ($AllowDevelopmentManifest) { 117 } else { 118 }
 $expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 130 } else { 132 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 35 } else { 37 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 36 } else { 38 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -202,7 +228,7 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
 $versionChecks = @(
     @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0\.0"' },
     @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0\.0\.0"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.08\.25"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.08\.26"' },
     @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-forensics.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0"' },
     @{ File='Tool-Kiem-Tra-v5.0-OneFile.cs'; Pattern='AssemblyVersion\("5\.0\.0\.0"\)' },
@@ -682,21 +708,56 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
 } else {
     try {
         $releaseManifest = Get-Content -LiteralPath $releaseManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ([string]$releaseManifest.SchemaVersion -ne '2.0' -or [string]$releaseManifest.ToolVersion -ne '5.0') { throw 'Sai schema/tool version.' }
+        if ([string]$releaseManifest.SchemaVersion -ne '2.0' -or [string]$releaseManifest.ToolVersion -ne $productVersion) { throw 'Sai schema/tool version.' }
         if (@($releaseManifest.Artifacts).Count -ne 1) { throw 'Release manifest phải có đúng một artefact AnyCPU.' }
         if ([string]$releaseManifest.PrimaryFileName -ne $targetFileName) { throw 'Sai PrimaryFileName.' }
         $entry = @($releaseManifest.Artifacts)[0]
         if ([string]$entry.FileName -ne $targetFileName -or [string]$entry.Architecture -ne 'AnyCPU') { throw 'Entry EXE không phải AnyCPU duy nhất.' }
         if ([string]$entry.Pe.ManagedPlatform -ne 'AnyCPU' -or [bool]$entry.Pe.Required32Bit -or [bool]$entry.Pe.Preferred32Bit) { throw 'Metadata CLR flags AnyCPU không hợp lệ.' }
         if ([string]$entry.Sha256 -ne (Get-Sha256Hex $exePath)) { throw "Sai SHA-256 metadata: $targetFileName." }
+        $sbomPath = Join-Path $distributionDirectoryFull 'SBOM.cdx.json'
+        if (-not (Test-Path -LiteralPath $sbomPath -PathType Leaf)) { throw 'Thiếu SBOM.cdx.json.' }
+        $sbom = Get-Content -LiteralPath $sbomPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ([string]$sbom.bomFormat -ne 'CycloneDX' -or [string]$sbom.specVersion -ne '1.5' -or [int]$sbom.version -ne 1) {
+            throw 'SBOM không phải CycloneDX 1.5 hợp lệ.'
+        }
+        $sbomRoot = $sbom.metadata.component
+        $sbomRootHash = @($sbomRoot.hashes | Where-Object { [string]$_.alg -eq 'SHA-256' } | Select-Object -First 1)
+        $sbomBuildId = @($sbomRoot.properties | Where-Object { [string]$_.name -eq 'tool:buildId' } | Select-Object -First 1)
+        $sbomSourceCommit = @($sbomRoot.properties | Where-Object { [string]$_.name -eq 'tool:sourceSnapshotCommit' } | Select-Object -First 1)
+        $expectedSourceCommit = [string](Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'OFFICIAL-PROVENANCE-v1.json') -Raw -Encoding UTF8 | ConvertFrom-Json).SourceSnapshotCommit
+        if ([string]$sbomRoot.name -ne 'Tool Kiem Tra' -or [string]$sbomRoot.version -ne $expectedReleaseVersion -or
+            $sbomRootHash.Count -ne 1 -or [string]$sbomRootHash[0].content -ne (Get-Sha256Hex $exePath) -or
+            $sbomBuildId.Count -ne 1 -or [string]$sbomBuildId[0].value -ne $expectedOfficialBuildId -or
+            $sbomSourceCommit.Count -ne 1 -or [string]$sbomSourceCommit[0].value -ne $expectedSourceCommit) {
+            throw 'SBOM không khớp EXE, BuildId hoặc source commit provenance.'
+        }
+        $expectedActionPins = [ordered]@{
+            'actions/checkout' = '11d5960a326750d5838078e36cf38b85af677262'
+            'actions/upload-artifact' = 'ea165f8d65b6e75b540449e92b4886f43607fa02'
+            'actions/download-artifact' = 'd3f86a106a0bac45b974a628896c90dbdf5c8093'
+        }
+        foreach ($actionPin in $expectedActionPins.GetEnumerator()) {
+            $component = @($sbom.components | Where-Object { [string]$_.name -eq [string]$actionPin.Key })
+            $commitProperty = @($component | ForEach-Object { @($_.properties | Where-Object { [string]$_.name -eq 'tool:gitCommit' }) })
+            if ($component.Count -ne 1 -or $commitProperty.Count -ne 1 -or [string]$commitProperty[0].value -ne [string]$actionPin.Value) {
+                throw "SBOM thiếu pin GitHub Action: $($actionPin.Key)@$($actionPin.Value)"
+            }
+        }
+        if ([string]$releaseManifest.Sbom.FileName -ne 'SBOM.cdx.json' -or
+            [string]$releaseManifest.Sbom.Format -ne 'CycloneDX' -or
+            [string]$releaseManifest.Sbom.SpecVersion -ne '1.5' -or
+            [string]$releaseManifest.Sbom.Sha256 -ne (Get-Sha256Hex $sbomPath)) {
+            throw 'RELEASE-MANIFEST.json không ràng buộc đúng SBOM.'
+        }
         if ([string]$releaseManifest.ControlFlowGuard.Status -ne 'NotClaimed') { throw 'Trạng thái CFG không minh bạch.' }
         if (-not [bool]$releaseManifest.DeterministicManagedBuild) { throw 'Release manifest chưa xác nhận deterministic managed build.' }
         if ([string]$releaseManifest.CapabilitySchemaVersion -ne '1.1' -or [string]$releaseManifest.LogSchemaVersion -ne '1.0-jsonl') { throw 'Thiếu metadata capability/log schema v4.3.' }
-        if ([string]$releaseManifest.ReleaseVersion -ne '5.0.0.0' -or [string]$releaseManifest.ReleaseBuildDate -ne '2026.08.25') {
-            throw 'Release manifest chưa đồng bộ phiên bản 5.0.0.0 / Build 2026.08.25.'
+        if ([string]$releaseManifest.ReleaseVersion -ne $expectedReleaseVersion -or [string]$releaseManifest.ReleaseBuildDate -ne $expectedReleaseBuildDate) {
+            throw 'Release manifest chưa đồng bộ với release identity chuẩn.'
         }
         $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
-        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { '5.0.0.0-development-unsigned' } elseif ($AllowManagedSignedManifest) { '5.0.0.0-managed-signed-20260825' } else { '5.0.0.0-production-20260825' }
+        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { $expectedReleaseVersion + '-development-unsigned' } elseif ($AllowManagedSignedManifest) { $expectedManagedBuildId } else { $expectedOfficialBuildId }
         $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowManagedSignedManifest) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' }
         if ([string]$releaseManifest.ReleaseLabel -ne $expectedReleaseLabel -or
             [string]$releaseManifest.ReleaseStatus -ne $expectedReleaseStatus -or
@@ -706,7 +767,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         }
         $expectedProvenanceState = if ($AllowDevelopmentManifest) { 'Unverified' } else { 'Official' }
         if ([string]$releaseManifest.OfficialBuildProvenance.State -ne $expectedProvenanceState -or
-            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne '5.0.0.0-production-20260825' -or
+            [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne $expectedOfficialBuildId -or
             [string]$releaseManifest.OfficialBuildProvenance.ManifestFile -ne 'OFFICIAL-PROVENANCE-v1.json' -or
             [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
             [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9' -or
@@ -948,8 +1009,8 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
         $applicationUpdateManifest = Get-Content -LiteralPath $applicationUpdateManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $expectedUpdateChannel = if ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
         if ([string]$applicationUpdateManifest.SchemaVersion -ne '1.0' -or [string]$applicationUpdateManifest.Channel -ne $expectedUpdateChannel -or
-            [string]$applicationUpdateManifest.LatestVersion -ne '5.0.0.0' -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
-            [string]$applicationUpdateManifest.PublishedAtUtc -ne '2026-08-24T00:00:00Z') {
+            [string]$applicationUpdateManifest.LatestVersion -ne $expectedReleaseVersion -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
+            [string]$applicationUpdateManifest.PublishedAtUtc -ne $expectedPublishedAtUtc) {
             throw 'Sai schema/channel/version cập nhật.'
         }
         if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0' -or

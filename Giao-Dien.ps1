@@ -3,7 +3,7 @@
 $toolVersion = "5.0.0"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0.0.0"
-$releaseBuildDate = "2026.08.25"
+$releaseBuildDate = "2026.08.26"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v$releaseVersion"
 $script:isUnsignedDevelopmentBuild = $false

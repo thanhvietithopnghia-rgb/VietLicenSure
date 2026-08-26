@@ -1219,7 +1219,9 @@ if ($gui) {
             $cleanupFixtureScript = Join-Path $bridgeFixtureRoot 'windows-license-compliance-cleanup.ps1'
             $updateManagerFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-UpdateManager.ps1'
             $reportFixtureScript = Join-Path $bridgeFixtureRoot 'kiem-tra-cau-hinh-ban-quyen.ps1'
+            $provenanceFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-Provenance.ps1'
             Copy-Item -LiteralPath (Join-Path $root 'Tool-ElevatedBridge.ps1') -Destination $bridgeFixtureScript -Force
+            Copy-Item -LiteralPath (Join-Path $root 'Tool-Provenance.ps1') -Destination $provenanceFixtureScript -Force
             Copy-Item -LiteralPath (Join-Path $root 'windows-license-compliance-cleanup.ps1') -Destination $cleanupFixtureScript -Force
             Copy-Item -LiteralPath (Join-Path $root 'Tool-UpdateManager.ps1') -Destination $updateManagerFixtureScript -Force
             [IO.File]::WriteAllText(
@@ -1232,7 +1234,8 @@ if ($gui) {
             $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
             $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
-            $env:TOOL_OFFICIAL_BUILD_ID = '5.0.0.0-production-20260825'
+            . $provenanceFixtureScript
+            $env:TOOL_OFFICIAL_BUILD_ID = [string](Get-ToolProvenanceExpectedValues).BuildId
             $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')

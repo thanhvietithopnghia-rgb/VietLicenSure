@@ -54,6 +54,13 @@ function Test-BridgeProtectedDirectoryAcl {
 }
 
 try {
+    $provenanceHelperPath = Join-Path $PSScriptRoot 'Tool-Provenance.ps1'
+    if (-not (Test-Path -LiteralPath $provenanceHelperPath -PathType Leaf)) { throw 'ElevatedBridgeProvenanceMissing' }
+    . $provenanceHelperPath
+    $bridgeReleaseIdentity = Get-ToolProvenanceExpectedValues
+    $expectedOfficialBuildId = [string]$bridgeReleaseIdentity.BuildId
+    if ([string]::IsNullOrWhiteSpace($expectedOfficialBuildId)) { throw 'ElevatedBridgeBuildIdMissing' }
+
     if ([Environment]::Is64BitOperatingSystem -and -not [Environment]::Is64BitProcess) { throw 'ElevatedBridgeArchitectureMismatch' }
     $payloadBytes = [Convert]::FromBase64String($PayloadBase64)
     if ($payloadBytes.Length -le 0 -or $payloadBytes.Length -gt 18000) { throw 'ElevatedBridgePayloadSizeInvalid' }
@@ -125,7 +132,7 @@ try {
     $systemChangeModules = @('cleanup.deep','cleanup.repair','application.update.apply','oem.apply','license.manager','backup.create','restore.apply')
     if ($systemChangeModules -contains $moduleId -and (
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -ne 'Official' -or
-        [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne '5.0.0.0-production-20260825' -or
+        [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne $expectedOfficialBuildId -or
         [string]$environmentValues['TOOL_OFFICIAL_VERIFICATION_URL'] -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
     )) {
         throw 'ElevatedBridgeOfficialBuildRequired'
