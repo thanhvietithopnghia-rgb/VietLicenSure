@@ -182,7 +182,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0.0.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='24/08/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='26/08/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -240,8 +240,8 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0 on 17 July 2026' -or
-        $releaseDateVi -notmatch 'v5\.0\.0\.0.*24/08/2026' -or
-        $releaseDateEn -notmatch 'v5\.0\.0\.0.*24 August 2026' -or
+        $releaseDateVi -notmatch 'v5\.0\.0\.0.*26/08/2026' -or
+        $releaseDateEn -notmatch 'v5\.0\.0\.0.*26 August 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's written approval" -or
