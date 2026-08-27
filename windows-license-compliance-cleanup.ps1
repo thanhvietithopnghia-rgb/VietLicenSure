@@ -26,7 +26,7 @@ if ($BridgeEnvironmentProbe) {
     $bridgeInvocationId = [guid]::Empty
     $bridgeContextValid = $env:TOOL_SECURE_LAUNCH -eq '1' -and
         -not [string]::IsNullOrWhiteSpace($env:TOOL_SECURE_RUNTIME_DIR) -and
-        [string]$env:TOOL_MODULE_ID -eq 'cleanup.scan' -and
+        [string]$env:TOOL_MODULE_ID -in @('cleanup.scan','cleanup.repair') -and
         [guid]::TryParse([string]$env:TOOL_MODULE_INVOCATION_ID, [ref]$bridgeInvocationId) -and
         $bridgeInvocationId -ne [guid]::Empty
     if ($bridgeContextValid) { exit 0 }

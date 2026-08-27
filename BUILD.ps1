@@ -1242,6 +1242,7 @@ $applicationUpdateManifest = [ordered]@{
     }
     Changes = [ordered]@{
         'vi-VN' = @(
+            'Preview R6 sửa cầu nối ManagedSigned cho repair nguồn quét, báo rõ mã thoát khi tiến trình lỗi, phân biệt thiếu tệp kết quả và thêm nút Sửa nguồn quét trong danh sách chỉ xem.',
             'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
             'Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.',
             'Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.',
@@ -1259,6 +1260,7 @@ $applicationUpdateManifest = [ordered]@{
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
+            'Preview R6 fixes the ManagedSigned scan-source repair bridge, reports child-process exit codes, distinguishes missing result files, and adds a Repair scan sources action to the read-only inventory.',
             'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',
             'Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.',
             'Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.',

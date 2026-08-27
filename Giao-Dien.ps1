@@ -3127,6 +3127,7 @@ function Start-ToolModuleProcess {
     }
 
     $script:activeProcess = $process
+    $script:lastModuleResult = $null
     $script:activeAction = $Action
     $script:activeTaskKind = $descriptor.TaskKind
     $script:activeModuleId = $descriptor.ModuleId
@@ -4591,6 +4592,11 @@ function Complete-ScanSourceRepair {
     Set-ButtonsEnabled $true
     try {
         if (-not (Test-Path -LiteralPath $script:cleanupRepairDecisionFile -PathType Leaf)) {
+            if ($script:lastModuleResult -and
+                [string]$script:lastModuleResult.ModuleId -eq 'cleanup.repair' -and
+                [int]$script:lastModuleResult.ExitCode -ne 0) {
+                throw (Get-DashboardText "scanRepair.processFailed" @([int]$script:lastModuleResult.ExitCode))
+            }
             throw (Get-DashboardText "scanRepair.resultMissing")
         }
         $result = Get-Content -LiteralPath $script:cleanupRepairDecisionFile -Raw | ConvertFrom-Json
@@ -4626,6 +4632,10 @@ function Complete-ScanSourceRepair {
             Write-ProgressLog (Get-DashboardText "cleanup.report.readyOnDemand" @($result.ReportPath))
         }
     } catch {
+        if ($script:cleanupRepairDecisionFile -and (Test-Path -LiteralPath $script:cleanupRepairDecisionFile -PathType Leaf)) {
+            Remove-Item -LiteralPath $script:cleanupRepairDecisionFile -Force -ErrorAction SilentlyContinue
+        }
+        $script:cleanupRepairDecisionFile = ""
         $status.Text = Get-DashboardText "scanRepair.readFailed" @($_.Exception.Message)
         $status.ForeColor = [System.Drawing.Color]::DarkRed
         Write-ProgressLog $status.Text
@@ -4848,7 +4858,7 @@ function Show-ThirdPartyAssessmentResults {
     $dialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $dialog.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $dialog.Font = $fontNormal
-    $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@() }
+    $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@(); RepairSources=$false }
 
     $mainLayout = New-Object System.Windows.Forms.TableLayoutPanel
     $mainLayout.Dock = "Fill"
@@ -4869,6 +4879,9 @@ function Show-ThirdPartyAssessmentResults {
     $heading.Font = $fontTitle
     $heading.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
     $heading.AutoSize = $true
+    $heading.AutoEllipsis = $false
+    $heading.UseMnemonic = $false
+    $heading.MaximumSize = New-Object System.Drawing.Size(([Math]::Max(120, $dialogWidth - 54)), 0)
     $heading.TextAlign = "MiddleCenter"
     $heading.Dock = "Top"
     $mainLayout.Controls.Add($heading, 0, 0)
@@ -4884,11 +4897,23 @@ function Show-ThirdPartyAssessmentResults {
     $summary.Font = $fontBold
     $summary.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
     $summary.AutoSize = $true
+    $summary.AutoEllipsis = $false
+    $summary.UseMnemonic = $false
+    $summary.MaximumSize = New-Object System.Drawing.Size(([Math]::Max(120, $dialogWidth - 54)), 0)
     $summary.Dock = "Top"
     $mainLayout.Controls.Add($summary, 0, 1)
 
     $hint = New-Object System.Windows.Forms.Label
-    $hint.Text = Get-DashboardText $(if ($ReadOnly) { "software.results.hint.readOnly" } elseif ($allApplications.Count -eq 0) { "software.results.noApplications" } else { "software.results.hint" })
+    $hintKey = if ($ReadOnly) {
+        "software.results.hint.readOnly"
+    } elseif ($allApplications.Count -eq 0) {
+        "software.results.noApplications"
+    } elseif ($selectableCount -eq 0) {
+        "software.results.hint.noSelectable"
+    } else {
+        "software.results.hint"
+    }
+    $hint.Text = (Get-DashboardText "software.results.scopeNote") + "`r`n" + (Get-DashboardText $hintKey)
     if ($ReadOnly -and @($Warnings).Count -gt 0) {
         $hint.Text = (Get-DashboardText 'software.results.hint.scanWarning' @((@($Warnings | Select-Object -First 3) -join '; '))) + "`r`n" + $hint.Text
     }
@@ -4904,6 +4929,9 @@ function Show-ThirdPartyAssessmentResults {
     }
     $hint.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
     $hint.AutoSize = $true
+    $hint.AutoEllipsis = $false
+    $hint.UseMnemonic = $false
+    $hint.MaximumSize = New-Object System.Drawing.Size(([Math]::Max(120, $dialogWidth - 54)), 0)
     $hint.Dock = "Top"
     $mainLayout.Controls.Add($hint, 0, 2)
 
@@ -5165,11 +5193,23 @@ function Show-ThirdPartyAssessmentResults {
                 [System.Windows.Forms.MessageBoxIcon]::Warning,
                 [System.Windows.Forms.MessageBoxDefaultButton]::Button2)
             if ($warning -eq [System.Windows.Forms.DialogResult]::Yes) {
-                $dialog.Tag = [pscustomobject]@{ Proceed=$true; SelectedCandidateIds=$candidateIds }
+                $dialog.Tag = [pscustomobject]@{ Proceed=$true; SelectedCandidateIds=$candidateIds; RepairSources=$false }
                 $dialog.Close()
             }
         })
         $footer.Controls.Add($continueButton)
+    }
+
+    if ($ReadOnly -and @($Warnings).Count -gt 0) {
+        $repairSourcesButton = New-Object System.Windows.Forms.Button
+        $repairSourcesButton.Text = Get-DashboardText "software.results.repairScanSources"
+        $repairSourcesButton.Font = $fontBold
+        $repairSourcesButton.Size = New-Object System.Drawing.Size(210, 38)
+        $repairSourcesButton.Add_Click({
+            $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@(); RepairSources=$true }
+            $dialog.Close()
+        })
+        $footer.Controls.Add($repairSourcesButton)
     }
 
     $officialButton = New-Object System.Windows.Forms.Button
@@ -5238,6 +5278,11 @@ function Show-ThirdPartyAssessmentResults {
 function Complete-CleanupScan {
     try {
         if (-not (Test-Path -LiteralPath $script:cleanupDecisionFile)) {
+            if ($script:lastModuleResult -and
+                [string]$script:lastModuleResult.ModuleId -eq 'cleanup.scan' -and
+                [int]$script:lastModuleResult.ExitCode -ne 0) {
+                throw (Get-DashboardText "cleanup.scan.processFailed" @([int]$script:lastModuleResult.ExitCode))
+            }
             throw (Get-DashboardText "cleanup.scan.resultMissing")
         }
         $scan = Get-Content -LiteralPath $script:cleanupDecisionFile -Raw | ConvertFrom-Json
@@ -5261,10 +5306,11 @@ function Complete-CleanupScan {
             $status.ForeColor = [System.Drawing.Color]::DarkOrange
             Write-ProgressLog (Get-DashboardText "cleanup.scan.incompleteLog" @($scan.ScanWarningCount))
             if (Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "ThirdParty") {
-                # A partial scan still has useful evidence, but it must never
-                # unlock execution.  Show it read-only before the recovery
-                # choice instead of making the inventory appear empty.
-                [void](Show-ThirdPartyAssessmentResults -Scan $scan -ReadOnly -Warnings @($scan.ScanWarnings))
+                $assessmentChoice = Show-ThirdPartyAssessmentResults -Scan $scan -ReadOnly -Warnings @($scan.ScanWarnings)
+                if ($assessmentChoice.PSObject.Properties['RepairSources'] -and [bool]$assessmentChoice.RepairSources) {
+                    Start-ScanSourceRepair
+                    return
+                }
             }
             $choice = Show-ScanWarningRecoveryDialog -Scan $scan
             if ($choice -eq "Repair") {
@@ -5379,6 +5425,10 @@ function Complete-CleanupScan {
             $status.ForeColor = [System.Drawing.Color]::DarkOrange
         }
     } catch {
+        if ($script:cleanupDecisionFile -and (Test-Path -LiteralPath $script:cleanupDecisionFile -PathType Leaf)) {
+            Remove-Item -LiteralPath $script:cleanupDecisionFile -Force -ErrorAction SilentlyContinue
+        }
+        $script:cleanupDecisionFile = ""
         Set-ButtonsEnabled $true
         $status.Text = Get-DashboardText "cleanup.scan.readFailed" @($_.Exception.Message)
         Write-ProgressLog (Get-DashboardText "cleanup.scan.readFailedLog" @($_.Exception.Message))

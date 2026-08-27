@@ -1251,6 +1251,20 @@ if ($gui) {
                 Fail "Cầu nối UAC không khôi phục ngữ cảnh secure-launch cho tiến trình con (exit $([int]$bridgeProcess.ExitCode))."
             }
 
+            $env:TOOL_SECURE_LAUNCH = '1'
+            $env:TOOL_OFFICIAL_BUILD_STATE = 'Managed'
+            $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
+            $env:TOOL_MODULE_ID = 'cleanup.repair'
+            $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
+            $managedBridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -BridgeEnvironmentProbe"
+            $managedBridgeArguments = New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $managedBridgeChildArguments -HiddenWindow $true
+            $env:TOOL_SECURE_LAUNCH = '0'
+            $env:TOOL_MODULE_ID = 'wrong-module'
+            $managedBridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $managedBridgeArguments -WindowStyle Hidden -Wait -PassThru
+            if (-not $managedBridgeProcess -or [int]$managedBridgeProcess.ExitCode -ne 0) {
+                Fail "Cầu nối UAC không cho phép ManagedSigned repair an toàn (exit $([int]$managedBridgeProcess.ExitCode))."
+            }
+
             # Report modules are read-only but still need elevation on modes
             # that inspect machine-wide Windows/Office data.  They must be
             # accepted by the same protected bridge without being classified
@@ -1370,7 +1384,7 @@ if ($gui) {
     foreach ($requiredToken in @('Show-LicenseScopeChooser','Show-CleanupScopeChecklist','cleanup.scope.scanWindows','cleanup.scope.scanOffice','cleanup.scope.scanThirdParty','Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows"','Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office"','Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty"','Start-CleanupBackup -Scope $selectedScope','Start-CleanupRestore -Scope $selectedScope','cleanup.report.readyOnDemand','progress.slowTask')) {
         if ($gui.Text -notmatch [regex]::Escape($requiredToken)) { Fail "GUI thiếu luồng phạm vi hoặc bảo vệ chống treo: $requiredToken" }
     }
-    foreach ($requiredToken in @('Show-ThirdPartyAssessmentResults','Get-GuiThirdPartyCleanupFindings','Get-GuiThirdPartyStandaloneCleanupRows','ThirdPartyRemediationFindingCount','software.online.button','Start-SoftwareCatalogOnlineUpdate','status.chooseTask')) {
+    foreach ($requiredToken in @('Show-ThirdPartyAssessmentResults','Get-GuiThirdPartyCleanupFindings','Get-GuiThirdPartyStandaloneCleanupRows','ThirdPartyRemediationFindingCount','software.results.repairScanSources','RepairSources=$true','scanRepair.processFailed','cleanup.scan.processFailed','software.online.button','Start-SoftwareCatalogOnlineUpdate','status.chooseTask')) {
         if ($gui.Text -notmatch [regex]::Escape($requiredToken)) { Fail "GUI thiếu kết quả phần mềm/Kết nối online/trạng thái ban đầu: $requiredToken" }
     }
     try {

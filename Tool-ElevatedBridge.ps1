@@ -131,11 +131,11 @@ try {
     if (-not $moduleScripts.ContainsKey($moduleId)) { throw 'ElevatedBridgeModuleIdInvalid' }
     $systemChangeModules = @('cleanup.deep','cleanup.repair','application.update.apply','oem.apply','license.manager','backup.create','restore.apply')
     if ($systemChangeModules -contains $moduleId -and (
-        [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -ne 'Official' -or
+        [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -notin @('Official','Managed') -or
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne $expectedOfficialBuildId -or
         [string]$environmentValues['TOOL_OFFICIAL_VERIFICATION_URL'] -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
     )) {
-        throw 'ElevatedBridgeOfficialBuildRequired'
+        throw 'ElevatedBridgeTrustedBuildRequired'
     }
 
     $bridgeRoot = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\')
