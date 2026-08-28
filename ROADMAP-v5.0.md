@@ -1,6 +1,6 @@
 # Lộ trình Tool Kiểm Tra v5.0
 
-Trạng thái ngày 24/08/2026: các hạng mục dưới đây đang được tích hợp trên nhánh tính năng `feature/v5.0-trust-enterprise`. Có mã nguồn hoặc workflow không đồng nghĩa đã có bằng chứng phát hành. Đây chưa phải bản stable; mọi build không ký của nhánh phải mang `ReleaseStatus=DevelopmentUnsigned` và nhãn development, không được mô tả là production.
+Trạng thái cập nhật ngày 28/08/2026: các hạng mục dưới đây đang được tích hợp trên nhánh tính năng `feature/v5.0-trust-enterprise`. Có mã nguồn hoặc workflow không đồng nghĩa đã có bằng chứng phát hành. ManagedSigned Preview R6 đã được phát hành có kiểm soát nhưng chưa phải Public Stable; mọi build không ký của nhánh vẫn phải mang `ReleaseStatus=DevelopmentUnsigned` và nhãn development.
 
 ## Đã tích hợp trên nhánh tính năng
 
@@ -15,7 +15,7 @@ Trạng thái ngày 24/08/2026: các hạng mục dưới đây đang được t
 
 ## Trạng thái bằng chứng hiện tại
 
-- [Kết quả kiểm thử bảo mật và tương thích](SECURITY-TEST-RESULTS.md) vẫn ghi cả ba nền tảng VM là `Missing`; chưa có artifact VM được bảo vệ gắn với đúng release candidate.
+- ManagedSigned Preview R6 có evidence `Passed=1`, `Failed=0`, `Missing=2`: Windows 11 current/25H2 đạt 11 verifier; Windows 10 22H2 và Windows 11 previous/24H2 còn thiếu. Evidence chỉ áp dụng cho commit R6 đã ghi, không tự động áp dụng cho commit phát triển mới.
 - Chưa có hậu kiểm stable bằng chứng thư CA-issued và timestamp thật. Build development, kể cả khi verifier cục bộ đạt, không đủ điều kiện đưa lên kênh production.
 - Chưa có kiểm thử WebView2 vì tính năng này được hoãn. Fallback Windows 7, chuyển màn hình/DPI, accessibility và đổi theme khi đang chạy vẫn cần kiểm thử máy thật phù hợp.
 - Scan profile chỉ cam kết cho luồng tạo báo cáo/kiểm kê read-only; tài liệu và UI không được mô tả nó là profile quét toàn ứng dụng.
@@ -27,5 +27,7 @@ Trạng thái ngày 24/08/2026: các hạng mục dưới đây đang được t
 3. Cấu hình environment `client-vm-validation`, ba self-hosted runner được cô lập và biến `ENABLE_CLIENT_VM_MATRIX`; chạy ma trận trên đúng release candidate và công bố artifact tóm tắt.
 4. Tổ chức security review độc lập hoặc chương trình disclosure/bug-bounty có phạm vi, kênh riêng và ngân sách rõ ràng. Không gọi là bug bounty trước khi các điều kiện này được công bố.
 5. Chạy accessibility/DPI thủ công, kiểm thử máy thật và kiểm thử nâng cấp/rollback trước khi gắn nhãn stable.
+
+Build Public Stable nay có cổng fail-closed bổ sung: bắt buộc nạp JSON ma trận VM đủ 3/3 Passed và attestation security review độc lập gắn đúng source snapshot commit. Thiếu một trong hai bằng chứng thì `BUILD.ps1 -RequireAuthenticode` phải dừng.
 
 EV giúp xác minh nhà phát hành và bảo vệ khóa tốt hơn nhưng không bảo đảm SmartScreen hết cảnh báo ngay. Uy tín còn phụ thuộc lịch sử phát hành sạch, publisher ổn định, kênh tải đáng tin cậy và tỷ lệ false positive thấp.

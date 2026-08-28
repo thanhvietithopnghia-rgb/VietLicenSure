@@ -9,6 +9,8 @@ param(
     [string]$UpdateManifestCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA',
     [ValidateSet('CurrentUser','LocalMachine')][string]$UpdateManifestCertificateStore = 'CurrentUser',
     [string]$TimestampServer = 'http://timestamp.digicert.com',
+    [string]$ClientVmSummaryPath = '',
+    [string]$IndependentSecurityReviewPath = '',
     [switch]$RequireAuthenticode,
     [switch]$AllowManagedSignedBuild,
     [switch]$AllowUnsignedDevelopmentBuild
@@ -269,6 +271,7 @@ $sourceFiles = @(
     'SAFETY-POLICY-v1.0.md'
     'SECURITY.md'
     'SECURITY-REVIEW-PROCESS-v1.md'
+    'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json'
     'SECURITY-TEST-RESULTS.md'
     $sourceName
     $applicationManifestName
@@ -305,6 +308,7 @@ $sourceFiles = @(
     'VERIFY-AUTHENTICODE.ps1'
     $peHardeningName
     'VERIFY-RELEASE.ps1'
+    'VERIFY-STABLE-READINESS.ps1'
 ) | Select-Object -Unique
 
 # SOURCE-SHA256SUMS.txt deliberately stays a flat-file manifest for backward
@@ -493,6 +497,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'SAFETY-POLICY-v1.0.md',
     'SECURITY.md',
     'SECURITY-REVIEW-PROCESS-v1.md',
+    'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json',
     'SECURITY-TEST-RESULTS.md',
     $sourceName,
     $applicationManifestName,
@@ -527,7 +532,8 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'SIGN-RELEASE.ps1',
     'VERIFY-AUTHENTICODE.ps1',
     $peHardeningName,
-    'VERIFY-RELEASE.ps1'
+    'VERIFY-RELEASE.ps1',
+    'VERIFY-STABLE-READINESS.ps1'
 )
 foreach ($name in ($requiredFiles | Select-Object -Unique)) {
     $path = Join-Path $sourceDirectory $name
@@ -549,6 +555,15 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 
 & (Join-Path $sourceDirectory 'VERIFY-NO-SIGNING-SECRETS.ps1') -SourceDirectory $sourceDirectory
 if ($LASTEXITCODE -ne 0) { throw "Phát hiện hoặc không thể loại trừ bí mật code-signing trong cây nguồn, mã thoát: $LASTEXITCODE" }
+
+if ($RequireAuthenticode) {
+    if ([string]::IsNullOrWhiteSpace($ClientVmSummaryPath) -or [string]::IsNullOrWhiteSpace($IndependentSecurityReviewPath)) {
+        throw 'Public Stable build requires ClientVmSummaryPath and IndependentSecurityReviewPath.'
+    }
+    $stableProvenance = Get-Content -LiteralPath (Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    & (Join-Path $sourceDirectory 'VERIFY-STABLE-READINESS.ps1') -ClientVmSummaryPath $ClientVmSummaryPath -IndependentSecurityReviewPath $IndependentSecurityReviewPath -ExpectedSourceCommit ([string]$stableProvenance.SourceSnapshotCommit) -ExpectedReleaseVersion $releaseVersion
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-STABLE-READINESS.ps1 failed with exit code: $LASTEXITCODE" }
+}
 
 . (Join-Path $sourceDirectory $peHardeningName)
 . (Join-Path $sourceDirectory 'Tool-ModuleContract.ps1')
@@ -857,7 +872,7 @@ $releaseSidecars = @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
     'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
-    'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
+    'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
@@ -1425,7 +1440,7 @@ $releaseHashFiles = @($targets.OutputName) + @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
     'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
-    'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
+    'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',

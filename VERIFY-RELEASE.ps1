@@ -160,6 +160,7 @@ $codeSigningReadinessVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-CODE-
 $remediationV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-REMEDIATION-V4.9.ps1'
 $softwareDetectionV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-SOFTWARE-DETECTION-V4.9.ps1'
 $provenanceVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-PROVENANCE.ps1'
+$stableReadinessVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-STABLE-READINESS.ps1'
 if (-not (Test-Path -LiteralPath $peHelperPath -PathType Leaf)) { $failures.Add('Thiếu PE-HARDENING.ps1.') }
 else { . $peHelperPath }
 if (-not (Test-Path -LiteralPath $embeddedVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-EMBEDDED-PAYLOAD.ps1.') }
@@ -185,6 +186,7 @@ if (-not (Test-Path -LiteralPath $codeSigningReadinessVerifierPath -PathType Lea
 if (-not (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-REMEDIATION-V4.9.ps1.') }
 if (-not (Test-Path -LiteralPath $softwareDetectionV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-SOFTWARE-DETECTION-V4.9.ps1.') }
 if (-not (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-PROVENANCE.ps1.') }
+if (-not (Test-Path -LiteralPath $stableReadinessVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-STABLE-READINESS.ps1.') }
 
 foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.ps1' -File) {
     $tokens = $null
@@ -204,9 +206,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 52 } else { 53 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 117 } else { 118 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 130 } else { 132 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 36 } else { 38 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 119 } else { 120 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 132 } else { 134 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 37 } else { 39 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
