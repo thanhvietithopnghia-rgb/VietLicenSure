@@ -3,9 +3,10 @@ param(
     [Parameter(Mandatory = $true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ExecutablePath,
     [Parameter(Mandatory = $true)][string]$OutputDirectory,
     [ValidateSet('Development','Store')][string]$Mode = 'Development',
-    [string]$PackageName = 'ThanhViet.ToolKiemTra',
+    [string]$PackageName = '',
     [string]$Publisher = '',
-    [string]$PublisherDisplayName = 'Thanh Viet',
+    [string]$PublisherDisplayName = '',
+    [string]$StoreIdentityPath = '',
     [string]$SigningCertificateThumbprint = '',
     [ValidateSet('CurrentUser','LocalMachine')][string]$SigningCertificateStore = 'CurrentUser',
     [string]$TimestampServer = 'http://timestamp.digicert.com',
@@ -84,8 +85,63 @@ function New-LogoPng {
     }
 }
 
+function Get-RequiredJsonProperty {
+    param(
+        [Parameter(Mandatory = $true)][object]$InputObject,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    $property = $InputObject.PSObject.Properties[$Name]
+    if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
+        throw "Store identity is missing required property: $Name"
+    }
+    return [string]$property.Value
+}
+
 if (-not (Test-Path -LiteralPath $makeAppx -PathType Leaf)) { throw "MakeAppx not found: $makeAppx" }
 if (-not (Test-Path -LiteralPath $signTool -PathType Leaf)) { throw "SignTool not found: $signTool" }
+
+if ([string]::IsNullOrWhiteSpace($StoreIdentityPath)) {
+    $StoreIdentityPath = Join-Path $PSScriptRoot 'STORE-PRODUCT-IDENTITY.json'
+}
+if (-not (Test-Path -LiteralPath $StoreIdentityPath -PathType Leaf)) {
+    throw "Store identity file not found: $StoreIdentityPath"
+}
+$storeIdentity = [IO.File]::ReadAllText(
+    [IO.Path]::GetFullPath($StoreIdentityPath),
+    [Text.Encoding]::UTF8
+) | ConvertFrom-Json
+if ([int]$storeIdentity.SchemaVersion -ne 1) { throw 'Unsupported Store identity schema version.' }
+
+$storeProductId = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ProductId'
+$storeReservedName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ReservedName'
+$storePackageName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageIdentityName'
+$storePublisher = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageIdentityPublisher'
+$storePublisherDisplayName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PublisherDisplayName'
+$storeDescription = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'Description'
+$storeApplicationDescription = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ApplicationDescription'
+
+if ($storeProductId -notmatch '^[A-Z0-9]{12}$') { throw 'Store ProductId is not valid.' }
+if ($storePackageName -notmatch '^[A-Za-z0-9.-]{3,50}$') { throw 'Store PackageIdentityName is not valid.' }
+if ($storePublisher -notmatch '^CN=[A-Za-z0-9-]+$') { throw 'Store PackageIdentityPublisher is not valid.' }
+
+if ($Mode -eq 'Store') {
+    if (-not [string]::IsNullOrWhiteSpace($PackageName) -and $PackageName -cne $storePackageName) {
+        throw 'PackageName does not match the Partner Center Store identity.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Publisher) -and $Publisher -cne $storePublisher) {
+        throw 'Publisher does not match the Partner Center Store identity.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($PublisherDisplayName) -and $PublisherDisplayName -cne $storePublisherDisplayName) {
+        throw 'PublisherDisplayName does not match the Partner Center Store identity.'
+    }
+    $PackageName = $storePackageName
+    $Publisher = $storePublisher
+    $PublisherDisplayName = $storePublisherDisplayName
+} else {
+    if ([string]::IsNullOrWhiteSpace($PackageName)) { $PackageName = 'ThanhViet.ToolKiemTra.Development' }
+    if ([string]::IsNullOrWhiteSpace($PublisherDisplayName)) { $PublisherDisplayName = $storePublisherDisplayName }
+}
 if ($PackageName -notmatch '^[A-Za-z0-9.-]{3,50}$') { throw 'PackageName is not valid for an MSIX identity.' }
 
 $exe = Get-Item -LiteralPath $ExecutablePath
@@ -111,8 +167,6 @@ if ($Mode -eq 'Development') {
     }
     if ($certificate.NotAfter.ToUniversalTime() -le [DateTime]::UtcNow) { throw 'Development signing certificate is expired.' }
     $Publisher = $certificate.Subject
-} elseif ([string]::IsNullOrWhiteSpace($Publisher)) {
-    throw 'Store mode requires the exact Publisher value assigned by Partner Center.'
 }
 
 $staging = Join-Path $output 'staging'
@@ -128,6 +182,9 @@ New-LogoPng -Path (Join-Path $assets 'Wide310x150Logo.png') -Width 310 -Height 1
 $escapedPackageName = [Security.SecurityElement]::Escape($PackageName)
 $escapedPublisher = [Security.SecurityElement]::Escape($Publisher)
 $escapedPublisherDisplayName = [Security.SecurityElement]::Escape($PublisherDisplayName)
+$escapedProductDisplayName = [Security.SecurityElement]::Escape($storeReservedName)
+$escapedDescription = [Security.SecurityElement]::Escape($storeDescription)
+$escapedApplicationDescription = [Security.SecurityElement]::Escape($storeApplicationDescription)
 $elevationCapability = if ($IncludeAllowElevation) { '    <rescap:Capability Name="allowElevation" />' } else { '' }
 $manifest = @"
 <?xml version="1.0" encoding="utf-8"?>
@@ -138,9 +195,9 @@ $manifest = @"
   IgnorableNamespaces="uap rescap">
   <Identity Name="$escapedPackageName" Publisher="$escapedPublisher" Version="$version" ProcessorArchitecture="x64" />
   <Properties>
-    <DisplayName>Tool Kiểm Tra</DisplayName>
+    <DisplayName>$escapedProductDisplayName</DisplayName>
     <PublisherDisplayName>$escapedPublisherDisplayName</PublisherDisplayName>
-    <Description>Kiểm tra cấu hình, bằng chứng và trạng thái tuân thủ bản quyền Windows/Office.</Description>
+    <Description>$escapedDescription</Description>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Resources>
@@ -153,8 +210,8 @@ $manifest = @"
   <Applications>
     <Application Id="ToolKiemTra" Executable="Tool-Kiem-Tra-v5.0.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Tool Kiểm Tra"
-        Description="Kiểm tra cấu hình và tuân thủ bản quyền"
+        DisplayName="$escapedProductDisplayName"
+        Description="$escapedApplicationDescription"
         BackgroundColor="#112C48"
         Square44x44Logo="Assets\Square44x44Logo.png"
         Square150x150Logo="Assets\Square150x150Logo.png">
@@ -192,7 +249,15 @@ $unpack = Join-Path $output 'verification-unpacked'
 & $makeAppx unpack /p $packagePath /d $unpack /o
 if ($LASTEXITCODE -ne 0) { throw "MakeAppx unpack failed with exit code $LASTEXITCODE." }
 
-[xml]$unpackedManifest = Get-Content -LiteralPath (Join-Path $unpack 'AppxManifest.xml') -Raw
+$unpackedManifestPath = Join-Path $unpack 'AppxManifest.xml'
+[xml]$unpackedManifest = [IO.File]::ReadAllText($unpackedManifestPath, [Text.Encoding]::UTF8)
+$unpackedIdentity = $unpackedManifest.Package.Identity
+$unpackedProperties = $unpackedManifest.Package.Properties
+if ([string]$unpackedIdentity.Name -cne $PackageName) { throw 'Packaged identity Name does not match the requested identity.' }
+if ([string]$unpackedIdentity.Publisher -cne $Publisher) { throw 'Packaged identity Publisher does not match the requested identity.' }
+if ([string]$unpackedProperties.DisplayName -cne $storeReservedName) { throw 'Packaged DisplayName does not match the reserved Store name.' }
+if ([string]$unpackedProperties.PublisherDisplayName -cne $PublisherDisplayName) { throw 'Packaged PublisherDisplayName does not match the requested value.' }
+if ([string]$unpackedProperties.Description -cne $storeDescription) { throw 'Packaged Description is not valid UTF-8 Store text.' }
 $packagedExe = Join-Path $unpack 'Tool-Kiem-Tra-v5.0.exe'
 $sourceExeHash = (Get-FileHash -LiteralPath $exe.FullName -Algorithm SHA256).Hash
 $packagedExeHash = (Get-FileHash -LiteralPath $packagedExe -Algorithm SHA256).Hash
@@ -202,8 +267,12 @@ $report = [ordered]@{
     SchemaVersion = 1
     CreatedAtUtc = [DateTime]::UtcNow.ToString('o')
     Mode = $Mode
+    StoreProductId = $storeProductId
+    StoreIdentityPath = [IO.Path]::GetFullPath($StoreIdentityPath)
+    ProductDisplayName = $storeReservedName
     PackageName = $PackageName
     Publisher = $Publisher
+    PublisherDisplayName = $PublisherDisplayName
     Version = $version
     Architecture = 'x64'
     IncludeRunFullTrust = $true

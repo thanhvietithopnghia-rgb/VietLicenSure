@@ -1,4 +1,4 @@
-# MSIX packaging for Tool Kiểm Tra v5.0
+# MSIX packaging for Tool Kiểm Tra Bản Quyền v5.0
 
 This directory creates two deliberately separate package types:
 
@@ -30,13 +30,20 @@ After the test, uninstall the development package and remove only the imported d
 
 ## Store candidate
 
-First reserve the app name in Partner Center and copy the exact package identity values. Then run:
+The Partner Center identity assigned on 2026-08-28 is stored in `STORE-PRODUCT-IDENTITY.json`:
+
+- Product ID: `9NHGPJG831ZH`
+- Reserved name: `Tool Kiểm Tra Bản Quyền`
+- Package/Identity/Name: `ThanhVit.ToolKimTraBnQuyn`
+- Package/Identity/Publisher: `CN=3EB43154-43D8-4A10-BD13-AB0D250530BE`
+- Package/Properties/PublisherDisplayName: `Thanh Việt`
+
+Generate the Store candidate with the tracked identity file:
 
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\packaging\msix\New-ToolKiemTraMsix.ps1 `
       -ExecutablePath .\dist-v5-evidence-final-20260828\Tool-Kiem-Tra-v5.0.exe `
       -OutputDirectory .\dist-msix-store `
       -Mode Store `
-      -PackageName '<Partner Center Package/Identity/Name>' `
-      -Publisher '<Partner Center Package/Identity/Publisher>'
+      -StoreIdentityPath .\packaging\msix\STORE-PRODUCT-IDENTITY.json
 
-Do not submit the development package. Do not call the unsigned Store candidate Public Stable. Store certification, restricted-capability approval, three-VM evidence and independent security review remain release gates.
+The script rejects command-line identity overrides that differ from the tracked Partner Center values. Do not submit the development package. Do not call the unsigned Store candidate Public Stable. Store certification, restricted-capability approval, three-VM evidence and independent security review remain release gates.

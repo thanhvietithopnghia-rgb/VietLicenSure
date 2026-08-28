@@ -2,7 +2,10 @@
 
 ## Application
 
-- Product: Tool Kiểm Tra v5.0
+- Product: Tool Kiểm Tra Bản Quyền v5.0
+- Partner Center product ID: `9NHGPJG831ZH`
+- Package identity name: `ThanhVit.ToolKimTraBnQuyn`
+- Publisher: `CN=3EB43154-43D8-4A10-BD13-AB0D250530BE`
 - Package type: x64 desktop MSIX
 - Main process integrity: medium IL / asInvoker
 - Restricted capabilities requested: `runFullTrust` and `allowElevation`
@@ -37,5 +40,4 @@ If UAC is rejected, the requested change is cancelled and the dashboard continue
 - Three-VM results for Windows 10 22H2, Windows 11 24H2 and Windows 11 25H2.
 - Independent security-review attestation showing zero unresolved Critical/High findings.
 
-This document is a submission draft. Replace placeholders with the Partner Center product identity and current evidence identifiers before submission.
-
+The Partner Center identity above is final for this product. Attach the current evidence identifiers before submission; do not alter the assigned package identity values.

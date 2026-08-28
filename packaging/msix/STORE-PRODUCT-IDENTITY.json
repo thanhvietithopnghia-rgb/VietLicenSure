@@ -1,0 +1,10 @@
+{
+  "SchemaVersion": 1,
+  "ProductId": "9NHGPJG831ZH",
+  "ReservedName": "Tool Kiểm Tra Bản Quyền",
+  "PackageIdentityName": "ThanhVit.ToolKimTraBnQuyn",
+  "PackageIdentityPublisher": "CN=3EB43154-43D8-4A10-BD13-AB0D250530BE",
+  "PublisherDisplayName": "Thanh Việt",
+  "Description": "Kiểm tra cấu hình, bằng chứng và trạng thái tuân thủ bản quyền Windows/Office.",
+  "ApplicationDescription": "Kiểm tra cấu hình và tuân thủ bản quyền Windows/Office."
+}

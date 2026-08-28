@@ -13,6 +13,7 @@ $sourceRoot = [IO.Path]::GetFullPath($SourceDirectory)
 $packagingScript = Join-Path $sourceRoot 'packaging\msix\New-ToolKiemTraMsix.ps1'
 $packagingReadme = Join-Path $sourceRoot 'packaging\msix\README.md'
 $capabilityJustification = Join-Path $sourceRoot 'packaging\msix\STORE-CAPABILITY-JUSTIFICATION.md'
+$storeIdentityPath = Join-Path $sourceRoot 'packaging\msix\STORE-PRODUCT-IDENTITY.json'
 $applicationManifest = Join-Path $sourceRoot 'Tool-Kiem-Tra-v5.0-OneFile.manifest'
 
 function Read-RequiredText {
@@ -71,9 +72,29 @@ function Test-Package {
         }
         $manifestPath = Join-Path $tempRoot 'AppxManifest.xml'
         $manifestText = Read-RequiredText -Path $manifestPath
+        [xml]$manifestXml = $manifestText
         Assert-Contains $manifestText 'EntryPoint="Windows\.FullTrustApplication"' "$Mode package is not a full-trust desktop package."
         Assert-Contains $manifestText '<rescap:Capability\s+Name="runFullTrust"\s*/>' "$Mode package does not declare runFullTrust."
         Assert-Contains $manifestText '<rescap:Capability\s+Name="allowElevation"\s*/>' "$Mode package does not declare allowElevation."
+        $identity = $manifestXml.Package.Identity
+        $properties = $manifestXml.Package.Properties
+        if ([string]$properties.DisplayName -cne [string]$storeIdentity.ReservedName) {
+            $failures.Add("$Mode package DisplayName does not match the reserved Store name.")
+        }
+        if ([string]$properties.PublisherDisplayName -cne [string]$storeIdentity.PublisherDisplayName) {
+            $failures.Add("$Mode package PublisherDisplayName does not match Partner Center.")
+        }
+        if ([string]$properties.Description -cne [string]$storeIdentity.Description) {
+            $failures.Add("$Mode package Description is not the expected UTF-8 text.")
+        }
+        if ($Mode -eq 'Store') {
+            if ([string]$identity.Name -cne [string]$storeIdentity.PackageIdentityName) {
+                $failures.Add('Store package identity Name does not match Partner Center.')
+            }
+            if ([string]$identity.Publisher -cne [string]$storeIdentity.PackageIdentityPublisher) {
+                $failures.Add('Store package identity Publisher does not match Partner Center.')
+            }
+        }
         $packagedExe = Join-Path $tempRoot 'Tool-Kiem-Tra-v5.0.exe'
         if (-not (Test-Path -LiteralPath $packagedExe -PathType Leaf)) {
             $failures.Add("$Mode package is missing Tool-Kiem-Tra-v5.0.exe.")
@@ -92,7 +113,26 @@ function Test-Package {
 $scriptText = Read-RequiredText -Path $packagingScript
 $readmeText = Read-RequiredText -Path $packagingReadme
 $capabilityText = Read-RequiredText -Path $capabilityJustification
+$storeIdentityText = Read-RequiredText -Path $storeIdentityPath
 $appManifestText = Read-RequiredText -Path $applicationManifest
+
+$storeIdentity = $null
+if ($storeIdentityText.Length -gt 0) {
+    try { $storeIdentity = $storeIdentityText | ConvertFrom-Json }
+    catch { $failures.Add("Store identity JSON is invalid: $($_.Exception.Message)") }
+}
+if ($null -ne $storeIdentity) {
+    if ([int]$storeIdentity.SchemaVersion -ne 1) { $failures.Add('Store identity schema version is unsupported.') }
+    if ([string]$storeIdentity.ProductId -notmatch '^[A-Z0-9]{12}$') { $failures.Add('Store ProductId is invalid.') }
+    if ([string]$storeIdentity.PackageIdentityName -notmatch '^[A-Za-z0-9.-]{3,50}$') { $failures.Add('Store PackageIdentityName is invalid.') }
+    if ([string]$storeIdentity.PackageIdentityPublisher -notmatch '^CN=[A-Za-z0-9-]+$') { $failures.Add('Store PackageIdentityPublisher is invalid.') }
+    foreach ($name in @('ReservedName','PublisherDisplayName','Description','ApplicationDescription')) {
+        $property = $storeIdentity.PSObject.Properties[$name]
+        if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
+            $failures.Add("Store identity property is missing: $name")
+        }
+    }
+}
 
 $tokens = $null
 $parseErrors = $null
@@ -109,7 +149,10 @@ Assert-Contains $scriptText 'Development signing certificate has no private key'
 Assert-Contains $scriptText '1\.3\.6\.1\.5\.5\.7\.3\.3' 'MSIX script does not enforce Code Signing EKU.'
 Assert-Contains $scriptText '/fd SHA256' 'MSIX script does not use SHA-256 file digest signing.'
 Assert-Contains $scriptText '/tr \$TimestampServer /td SHA256' 'MSIX script does not use an RFC3161 SHA-256 timestamp.'
-Assert-Contains $scriptText 'Store mode requires the exact Publisher value assigned by Partner Center' 'Store mode does not require the Partner Center Publisher value.'
+Assert-Contains $scriptText 'STORE-PRODUCT-IDENTITY\.json' 'MSIX script is not bound to the Partner Center identity file.'
+Assert-Contains $scriptText 'does not match the Partner Center Store identity' 'Store mode does not reject mismatched Partner Center identity values.'
+Assert-Contains $scriptText '\[Text\.Encoding\]::UTF8' 'MSIX script does not read Store display text explicitly as UTF-8.'
+Assert-Contains $scriptText 'ReadAllText\(\$unpackedManifestPath, \[Text\.Encoding\]::UTF8\)' 'MSIX script does not verify the unpacked manifest explicitly as UTF-8.'
 Assert-Contains $scriptText 'PackageName.*not valid for an MSIX identity' 'MSIX package identity validation is missing.'
 Assert-Contains $scriptText 'Packaged executable hash does not match source executable' 'MSIX script does not compare the packaged executable hash.'
 Assert-Contains $scriptText '<rescap:Capability Name="runFullTrust" />' 'MSIX manifest template does not declare runFullTrust.'
@@ -143,4 +186,3 @@ if ($failures.Count -gt 0) {
 
 Write-Host 'VERIFY-MSIX-PACKAGING: Passed'
 exit 0
-
