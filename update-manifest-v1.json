@@ -10,6 +10,7 @@
               },
     "Changes":  {
                     "vi-VN":  [
+                                  "Preview R6 sửa cầu nối ManagedSigned cho repair nguồn quét, báo rõ mã thoát khi tiến trình lỗi, phân biệt thiếu tệp kết quả và thêm nút Sửa nguồn quét trong danh sách chỉ xem.",
                                   "Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.",
                                   "Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.",
                                   "Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.",
@@ -27,6 +28,7 @@
                                   "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
                               ],
                     "en-US":  [
+                                  "Preview R6 fixes the ManagedSigned scan-source repair bridge, reports child-process exit codes, distinguishes missing result files, and adds a Repair scan sources action to the read-only inventory.",
                                   "Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.",
                                   "Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.",
                                   "Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.",
@@ -46,8 +48,8 @@
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.0/Tool-Kiem-Tra-v5.0.exe",
-    "DownloadSha256":  "1BAF4061496043D765B25D5AB07C6A024D0E9DED8BD52EB1258FECACFB9671B4",
-    "DownloadSize":  737016,
+    "DownloadSha256":  "53599BA88321A745E2724A61B36E5E0889EE808F09851C1AA2AB0C30F90426E4",
+    "DownloadSize":  738552,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"
