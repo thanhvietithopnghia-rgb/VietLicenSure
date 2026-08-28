@@ -177,7 +177,12 @@ jobs:
           $result = .\New-ClientVmTestSummary.ps1 `
             -ResultsDirectory .\collected-vm-results `
             -JsonOutputPath .\client-vm-summary.json `
-            -MarkdownOutputPath .\client-vm-summary.md
+            -MarkdownOutputPath .\client-vm-summary.md `
+            -Repository $env:GITHUB_REPOSITORY `
+            -WorkflowName $env:GITHUB_WORKFLOW `
+            -WorkflowRunId $env:GITHUB_RUN_ID `
+            -WorkflowRunAttempt ([int]$env:GITHUB_RUN_ATTEMPT)
+          Get-ChildItem -LiteralPath .\collected-vm-results -Filter '*.vm-result.json' -File | Copy-Item -Destination . -Force
           Get-Content -LiteralPath $result.MarkdownPath -Raw | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
           if ([string]$result.Status -ne 'Passed') { Write-Warning 'One or more protected VM results failed or are missing.' }
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -187,6 +192,7 @@ jobs:
           path: |
             client-vm-summary.json
             client-vm-summary.md
+            *.vm-result.json
           if-no-files-found: error
       - name: Enforce complete passing matrix
         if: always()

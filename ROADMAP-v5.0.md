@@ -28,6 +28,6 @@ Trạng thái cập nhật ngày 28/08/2026: các hạng mục dưới đây đa
 4. Tổ chức security review độc lập hoặc chương trình disclosure/bug-bounty có phạm vi, kênh riêng và ngân sách rõ ràng. Không gọi là bug bounty trước khi các điều kiện này được công bố.
 5. Chạy accessibility/DPI thủ công, kiểm thử máy thật và kiểm thử nâng cấp/rollback trước khi gắn nhãn stable.
 
-Build Public Stable nay có cổng fail-closed bổ sung: bắt buộc nạp JSON ma trận VM đủ 3/3 Passed và attestation security review độc lập gắn đúng source snapshot commit. Thiếu một trong hai bằng chứng thì `BUILD.ps1 -RequireAuthenticode` phải dừng.
+Build Public Stable nay có cổng fail-closed bổ sung: bắt buộc nạp JSON ma trận VM đủ 3/3 Passed, ba kết quả VM thô có hash/kích thước kiểm chứng được và attestation security review độc lập gắn đúng source snapshot commit. Thiếu bằng chứng, raw evidence bị sửa hoặc generator không khớp snapshot thì `BUILD.ps1 -RequireAuthenticode` phải dừng.
 
 EV giúp xác minh nhà phát hành và bảo vệ khóa tốt hơn nhưng không bảo đảm SmartScreen hết cảnh báo ngay. Uy tín còn phụ thuộc lịch sử phát hành sạch, publisher ổn định, kênh tải đáng tin cậy và tỷ lệ false positive thấp.

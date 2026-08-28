@@ -12,7 +12,7 @@ Trạng thái: tài liệu sống cho nhánh phát triển v5. Không dùng tài
 
 ## Cách đọc kết quả VM
 
-Workflow tạo `client-vm-summary.json` và `client-vm-summary.md`, gồm commit, Windows build, PowerShell, trạng thái từng verifier và thời gian UTC. `Missing` không phải là `Passed`. Workflow lịch chỉ chạy khi biến kho `ENABLE_CLIENT_VM_MATRIX=true`; chạy thủ công phải bật input và có thể yêu cầu phê duyệt environment `client-vm-validation`.
+Workflow tạo `client-vm-summary.json`, `client-vm-summary.md` và ba tệp `*.vm-result.json` thô. Summary ghi commit, Windows build, PowerShell, trạng thái từng verifier, test/platform manifest, hash generator, SHA-256 và kích thước từng kết quả VM. `Missing` không phải là `Passed`. Workflow lịch chỉ chạy khi biến kho `ENABLE_CLIENT_VM_MATRIX=true`; chạy thủ công phải bật input và có thể yêu cầu phê duyệt environment `client-vm-validation`.
 
 ## Bằng chứng của ManagedSigned Preview R6
 
@@ -28,4 +28,4 @@ Giới hạn: VM tự động không chứng minh không có lỗ hổng; nó ch
 
 ## Cổng Public Stable
 
-`BUILD.ps1 -RequireAuthenticode` bắt buộc nhận cả `ClientVmSummaryPath` và `IndependentSecurityReviewPath`. `VERIFY-STABLE-READINESS.ps1` từ chối build nếu ma trận không đủ 3/3 Passed, commit không khớp provenance, hoặc security review độc lập còn finding Critical/High mở. Tệp attestation mẫu mang trạng thái `NotReviewed` và không thể vượt cổng.
+`BUILD.ps1 -RequireAuthenticode` bắt buộc nhận cả `ClientVmSummaryPath` và `IndependentSecurityReviewPath`. Ba tệp VM thô phải nằm cạnh summary; verifier tính lại SHA-256/kích thước, kiểm tra OS/test trong dữ liệu thô và buộc hash generator khớp source snapshot hiện tại. Cổng từ chối build nếu ma trận không đủ 3/3 Passed, commit không khớp provenance, raw evidence bị sửa, hoặc security review độc lập còn finding Critical/High mở. Tệp attestation mẫu mang trạng thái `NotReviewed` và không thể vượt cổng.

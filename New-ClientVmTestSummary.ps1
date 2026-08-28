@@ -3,6 +3,10 @@ param(
     [Parameter(Mandatory = $true)][string]$ResultsDirectory,
     [string]$JsonOutputPath = "",
     [string]$MarkdownOutputPath = "",
+    [string]$Repository = "",
+    [string]$WorkflowName = "",
+    [string]$WorkflowRunId = "",
+    [int]$WorkflowRunAttempt = 0,
     [string[]]$ExpectedPlatforms = @("win10-22h2", "win11-previous", "win11-current")
 )
 
@@ -73,6 +77,10 @@ foreach ($file in @(Get-ChildItem -LiteralPath $resultsRoot -Filter "*.vm-result
         -not $seenPlatforms.Add($platform) -or [string]$record.Status -notin @("Passed", "Failed")) {
         throw "VM result schema is invalid: $($file.FullName)"
     }
+    $expectedResultFileName = $platform + '.vm-result.json'
+    if ([string]$file.Name -cne $expectedResultFileName) {
+        throw "VM result filename does not match its platform: $($file.FullName)"
+    }
     $policy = $platformPolicies[$platform]
     $commit = (ConvertTo-ClientVmSafeScalar $record.Commit 40).ToLowerInvariant()
     $completedAt = [DateTime]::MinValue
@@ -137,6 +145,9 @@ foreach ($file in @(Get-ChildItem -LiteralPath $resultsRoot -Filter "*.vm-result
         PowerShell = ConvertTo-ClientVmSafeScalar $record.PowerShell 40
         Commit = $commit
         CompletedAtUtc = $completedAt.ToUniversalTime().ToString('o')
+        ResultFileName = $expectedResultFileName
+        ResultSha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToUpperInvariant()
+        ResultBytes = [int64]$file.Length
         Tests = @($safeTests.ToArray())
     })
 }
@@ -149,7 +160,7 @@ foreach ($platform in $ExpectedPlatforms) {
         [void]$rows.Add([pscustomobject][ordered]@{
             SchemaVersion='1.0'; Platform=$platform; Status="Missing"; OsCaption=""; OsBuild=""; OsUbr=0; OsDisplayVersion=""
             ExpectedOsBuild=[string]$policy.Build; ExpectedOsDisplayVersion=[string]$policy.DisplayVersion; OsIdentityVerified=$false
-            PowerShell=""; Commit=""; CompletedAtUtc=""; Tests=@()
+            PowerShell=""; Commit=""; CompletedAtUtc=""; ResultFileName=""; ResultSha256=""; ResultBytes=0; Tests=@()
         })
     } else {
         [void]$rows.Add($record[0])
@@ -165,6 +176,28 @@ $missing = @($rows | Where-Object { [string]$_.Status -eq "Missing" }).Count
 $summary = [pscustomobject][ordered]@{
     SchemaVersion = "1.0"
     GeneratedAtUtc = [DateTime]::UtcNow.ToString("o")
+    Generator = [pscustomobject][ordered]@{
+        Name = [IO.Path]::GetFileName($PSCommandPath)
+        Sha256 = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToUpperInvariant()
+        PowerShell = [string]$PSVersionTable.PSVersion
+    }
+    Automation = [pscustomobject][ordered]@{
+        Repository = ConvertTo-ClientVmSafeScalar $Repository 200
+        WorkflowName = ConvertTo-ClientVmSafeScalar $WorkflowName 160
+        WorkflowRunId = ConvertTo-ClientVmSafeScalar $WorkflowRunId 64
+        WorkflowRunAttempt = [Math]::Max(0, $WorkflowRunAttempt)
+    }
+    TestManifest = @($requiredTestNames | ForEach-Object {
+        [pscustomobject][ordered]@{ Name = $_; ExpectedExitCode = 0; ExpectedStatus = 'Passed' }
+    })
+    PlatformManifest = @($ExpectedPlatforms | ForEach-Object {
+        $policy = $platformPolicies[[string]$_]
+        [pscustomobject][ordered]@{
+            Platform = [string]$_
+            ExpectedOsDisplayVersion = [string]$policy.DisplayVersion
+            ExpectedOsBuild = [string]$policy.Build
+        }
+    })
     ExpectedPlatformCount = $ExpectedPlatforms.Count
     ResultCount = $records.Count
     PassedCount = $passed

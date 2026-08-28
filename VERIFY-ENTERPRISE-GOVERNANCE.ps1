@@ -168,9 +168,13 @@ try {
     $summaryJsonText = Get-Content -LiteralPath $summaryResult.JsonPath -Raw -Encoding UTF8
     $summaryJson = $summaryJsonText | ConvertFrom-Json
     Assert-EnterpriseGovernance ([string]$summaryJson.SourceCommit -eq $fixtureCommit -and @($summaryJson.Results).Count -eq 3) "VM summary did not preserve a single verified source commit and all platforms."
+    Assert-EnterpriseGovernance ([string]$summaryJson.Generator.Name -eq 'New-ClientVmTestSummary.ps1' -and [string]$summaryJson.Generator.Sha256 -match '^[A-F0-9]{64}$') "VM summary generator identity is missing or invalid."
+    Assert-EnterpriseGovernance (@($summaryJson.TestManifest).Count -eq $requiredVmTests.Count -and @($summaryJson.PlatformManifest).Count -eq 3) "VM summary does not include a complete reproducible test/platform manifest."
     Assert-EnterpriseGovernance ($summaryJsonText -notmatch 'OutputTail|PRIVATE-FIXTURE-OUTPUT') "Public VM JSON summary leaked private verifier output."
     foreach ($summaryRow in @($summaryJson.Results)) {
+        $fixturePath = Join-Path $summaryRoot ([string]$summaryRow.ResultFileName)
         Assert-EnterpriseGovernance ([bool]$summaryRow.OsIdentityVerified -and @($summaryRow.Tests).Count -eq $requiredVmTests.Count) "VM summary contains an unverified OS identity or an incomplete test set."
+        Assert-EnterpriseGovernance ([string]$summaryRow.ResultSha256 -eq (Get-FileHash -LiteralPath $fixturePath -Algorithm SHA256).Hash -and [int64]$summaryRow.ResultBytes -eq (Get-Item -LiteralPath $fixturePath).Length) "VM summary raw evidence hash or size is invalid."
     }
 
     $mismatchPath = Join-Path $summaryRoot 'win11-current.vm-result.json'
