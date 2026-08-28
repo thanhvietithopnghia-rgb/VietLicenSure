@@ -294,6 +294,7 @@ $sourceFiles = @(
     'VERIFY-CATALOG-V4.9.ps1'
     'VERIFY-CATALOG-PLUGIN-TRUST-V5.ps1'
     'VERIFY-CODE-SIGNING-READINESS.ps1'
+    'VERIFY-MSIX-PACKAGING.ps1'
     'VERIFY-ENTERPRISE-GOVERNANCE.ps1'
     'VERIFY-NO-SIGNING-SECRETS.ps1'
     'VERIFY-REMEDIATION-V4.9.ps1'
@@ -519,6 +520,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-CATALOG-V4.9.ps1',
     'VERIFY-CATALOG-PLUGIN-TRUST-V5.ps1',
     'VERIFY-CODE-SIGNING-READINESS.ps1',
+    'VERIFY-MSIX-PACKAGING.ps1',
     'VERIFY-ENTERPRISE-GOVERNANCE.ps1',
     'VERIFY-NO-SIGNING-SECRETS.ps1',
     'VERIFY-REMEDIATION-V4.9.ps1',
@@ -1484,6 +1486,8 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-ASSISTANT.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-SOFTWARE-DETECTION-V4.9.ps1')
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-SOFTWARE-DETECTION-V4.9.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+    & (Join-Path $sourceDirectory 'VERIFY-MSIX-PACKAGING.ps1') -SourceDirectory $sourceDirectory
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-MSIX-PACKAGING.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     Write-Host '[7/8] Kiểm tra phát hành tổng thể...'
     & (Join-Path $sourceDirectory 'VERIFY-RELEASE.ps1') -SourceDirectory $sourceDirectory -DistributionDirectory $OutputDirectory `
         -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowManagedSignedManifest:$AllowManagedSignedBuild
