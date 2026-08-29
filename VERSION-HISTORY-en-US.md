@@ -5,6 +5,8 @@ This document summarizes the core changes in the main public releases.
 Current ManagedSigned preview: **v5.0.0.0 — Preview R6**
 FileVersion: **5.0.0.0** · Build **2026.08.26**
 
+A separate `StoreSubmission` candidate is being prepared for Microsoft Store and has not been released. It binds trust to Store package identity/origin and routes elevation through the compiled launcher so the UAC boundary remains fail-closed.
+
 Public Stable release page:
 <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 

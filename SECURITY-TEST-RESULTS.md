@@ -6,7 +6,7 @@ Trạng thái: tài liệu sống cho nhánh phát triển v5. Không dùng tài
 
 - `VERIFY-ENTERPRISE.ps1`: protocol, DPAPI/envelope, pairing, report schema, UI smoke và giới hạn endpoint;
 - `VERIFY-ENTERPRISE-GOVERNANCE.ps1`: redaction mặc định, freshness/filter, CSV formula protection, export staging và script MDM/CLI;
-- `VERIFY-SAFETY-REGRESSIONS.ps1`: catalog ký số và quyết định fail-closed;
+- `VERIFY-SAFETY-REGRESSIONS.ps1`: catalog ký số, quyết định fail-closed và broker UAC qua launcher đã biên dịch; fixture xác nhận payload gốc bị sửa sẽ bị chặn trước tiến trình quản trị;
 - `VERIFY-AUTHENTICODE.ps1`: Authenticode, EKU, signer/timestamp theo tham số release;
 - `.github/workflows/client-vm-matrix.yml`: Windows 10 22H2, Windows 11 nhánh trước và Windows 11 nhánh hiện hành trên runner tự quản được bảo vệ; workflow ghi lại DisplayVersion/build/UBR thực tế.
 

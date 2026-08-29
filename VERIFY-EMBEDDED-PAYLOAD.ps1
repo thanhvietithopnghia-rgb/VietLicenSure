@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory = $true)][string]$ExePath,
     [Parameter(Mandatory = $true)][string]$SourceDirectory,
     [Parameter(Mandatory = $true)][string]$PayloadList,
-    [Parameter(Mandatory = $true)][ValidateSet("x64", "x86")][string]$ExpectedArchitecture
+    [Parameter(Mandatory = $true)][ValidateSet("x64", "x86")][string]$ExpectedArchitecture,
+    [ValidateSet('Production','ManagedSigned','StoreSubmission','DevelopmentUnsigned')][string]$ExpectedTrustMode = 'DevelopmentUnsigned'
 )
 
 $ErrorActionPreference = "Stop"
@@ -59,6 +60,88 @@ try {
     }
 
     $launcherPayloadFiles = @($payloadField.GetValue($null))
+    $stableMarkerField = $launcherType.GetField('SignedStableBuildMarker', $bindingFlags)
+    $managedMarkerField = $launcherType.GetField('ManagedSignedBuildMarker', $bindingFlags)
+    $storeMarkerField = $launcherType.GetField('StoreBuildMarker', $bindingFlags)
+    if (-not $stableMarkerField -or -not $managedMarkerField -or -not $storeMarkerField) {
+        throw 'Launcher thiếu marker trust tách biệt cho Stable/ManagedSigned/Microsoft Store.'
+    }
+    $actualMarkers = @(
+        [string]$stableMarkerField.GetRawConstantValue(),
+        [string]$managedMarkerField.GetRawConstantValue(),
+        [string]$storeMarkerField.GetRawConstantValue()) -join ''
+    $expectedMarkers = switch ($ExpectedTrustMode) {
+        'Production' { '100' }
+        'ManagedSigned' { '010' }
+        'StoreSubmission' { '001' }
+        default { '000' }
+    }
+    if ($actualMarkers -cne $expectedMarkers) {
+        throw "Marker trust không khớp chế độ ${ExpectedTrustMode}: $actualMarkers / $expectedMarkers."
+    }
+    $parseLaunchMode = $launcherType.GetMethod('ParseLaunchMode', $bindingFlags)
+    $requiresTrustedBuild = $launcherType.GetMethod('RequiresTrustedBuild', $bindingFlags)
+    $getScriptName = $launcherType.GetMethod('GetScriptName', $bindingFlags)
+    if (-not $parseLaunchMode -or -not $requiresTrustedBuild -or -not $getScriptName) {
+        throw 'Launcher thiếu broker nâng quyền đã biên dịch.'
+    }
+    $brokerFixtureJson = '{"SchemaVersion":"2.0"}'
+    $brokerFixtureBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($brokerFixtureJson))
+    $brokerMode = $parseLaunchMode.Invoke($null, [object[]]@(,[string[]]@('--elevated-module-broker',$brokerFixtureBase64)))
+    if ([string]$brokerMode -cne 'ElevatedModuleBroker' -or
+        [bool]$requiresTrustedBuild.Invoke($null, @($brokerMode)) -or
+        [string]$getScriptName.Invoke($null, @($brokerMode)) -cne 'Tool-ElevatedBridge.ps1') {
+        throw 'Broker nâng quyền không dispatch qua Bridge nhúng hoặc không tách trust read-only/system-change.'
+    }
+    $invalidBrokerBlocked = $false
+    try { [void]$parseLaunchMode.Invoke($null, [object[]]@(,[string[]]@('--elevated-module-broker','bm90LWpzb24='))) }
+    catch { $invalidBrokerBlocked = $true }
+    if (-not $invalidBrokerBlocked) { throw 'Broker nâng quyền không từ chối payload không phải JSON.' }
+    $containsProvenanceSignature = [bool]($launcherPayloadFiles -contains 'OFFICIAL-PROVENANCE-v1.json.p7s')
+    if ($ExpectedTrustMode -eq 'DevelopmentUnsigned' -and $containsProvenanceSignature) {
+        throw 'Build development không được nhúng provenance signature production.'
+    }
+    if ($ExpectedTrustMode -ne 'DevelopmentUnsigned' -and -not $containsProvenanceSignature) {
+        throw "Build $ExpectedTrustMode thiếu provenance signature production."
+    }
+    if ($ExpectedTrustMode -eq 'StoreSubmission') {
+        $storeConstants = [ordered]@{
+            StorePackageName = 'ThanhVit.ToolKimTraBnQuyn'
+            StorePackageVersion = '5.0.0.0'
+            StorePackagePublisherId = '9tjmpwr25h78w'
+            StorePackageFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
+        }
+        foreach ($entry in $storeConstants.GetEnumerator()) {
+            $field = $launcherType.GetField([string]$entry.Key, $bindingFlags)
+            if (-not $field -or [string]$field.GetRawConstantValue() -cne [string]$entry.Value) {
+                throw "Store identity constant không khớp: $($entry.Key)."
+            }
+        }
+        $identityValidator = $launcherType.GetMethod('IsExpectedStorePackageIdentity', $bindingFlags)
+        if (-not $identityValidator) { throw 'Launcher thiếu Store package identity validator.' }
+        $trustValidator = $launcherType.GetMethod('IsExpectedStorePackageTrust', $bindingFlags)
+        if (-not $trustValidator) { throw 'Launcher thiếu Store package origin validator.' }
+        $validFullName = 'ThanhVit.ToolKimTraBnQuyn_5.0.0.0_x64__9tjmpwr25h78w'
+        $validFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
+        if (-not [bool]$identityValidator.Invoke($null, @($validFullName, $validFamilyName)) -or
+            [bool]$identityValidator.Invoke($null, @($validFullName.Replace('5.0.0.0','5.0.0.1'), $validFamilyName)) -or
+            [bool]$identityValidator.Invoke($null, @($validFullName, $validFamilyName.Replace('9tjmpwr25h78w','8wekyb3d8bbwe'))) -or
+            [bool]$identityValidator.Invoke($null, @($validFullName.Replace('ThanhVit.ToolKimTraBnQuyn','Other.Product'), $validFamilyName))) {
+            throw 'Store package identity validator không fail-closed với name/version/publisher sai.'
+        }
+        if (-not [bool]$trustValidator.Invoke($null, @($validFullName, $validFamilyName, 3)) -or
+            [bool]$trustValidator.Invoke($null, @($validFullName, $validFamilyName, 5)) -or
+            [bool]$trustValidator.Invoke($null, @($validFullName, $validFamilyName, 6))) {
+            throw 'Store package origin validator không khóa DeveloperSigned/LineOfBusiness sideload.'
+        }
+        $stateEvaluator = $launcherType.GetMethod('EvaluateOfficialBuildState', $bindingFlags)
+        if (-not $stateEvaluator) { throw 'Launcher thiếu runtime Store trust evaluator.' }
+        $stateArguments = @('')
+        $unpackagedState = [string]$stateEvaluator.Invoke($null, $stateArguments)
+        if ($unpackagedState -cne 'Modified' -or [string]$stateArguments[0] -cne 'StorePackageIdentityMissing') {
+            throw "Store EXE chạy ngoài package không bị khóa đúng cách: $unpackagedState / $($stateArguments[0])."
+        }
+    }
     if ($launcherPayloadFiles.Count -ne $payloadFiles.Count) {
         throw "Danh sách payload nội bộ lệch số lượng so với build: $($launcherPayloadFiles.Count)/$($payloadFiles.Count)."
     }
@@ -206,14 +289,23 @@ try {
     } finally { $bridgeSegment.Dispose() }
     if ($embeddedBridgeText -notmatch "Tool-Provenance\.ps1" -or
         $embeddedBridgeText -notmatch 'Get-ToolProvenanceExpectedValues' -or
+        $embeddedBridgeText -notmatch 'Get-ToolOfficialBuildState' -or
+        $embeddedBridgeText -notmatch 'ElevatedBrokerCompiledLauncherRequired' -or
+        $embeddedBridgeText -notmatch 'Assert-BridgeOriginalPayloadIntegrity' -or
+        $embeddedBridgeText -notmatch 'ConvertFrom-BridgeTargetArguments' -or
+        $embeddedBridgeText -notmatch 'Assert-BridgeModuleArgumentProfile' -or
+        $embeddedBridgeText -notmatch "'cleanup\.scan'" -or
+        $embeddedBridgeText -notmatch 'ElevatedBridgeModuleArgumentNotAllowed' -or
+        $embeddedBridgeText -notmatch 'DataScope Machine' -or
+        $embeddedBridgeText -notmatch '\$protectedScriptPath' -or
         $embeddedBridgeText -notmatch 'TOOL_OFFICIAL_BUILD_ID''\]\s*-ne\s+\$expectedOfficialBuildId') {
-        throw 'Bridge nhúng chưa ràng buộc TOOL_OFFICIAL_BUILD_ID với nguồn provenance chuẩn.'
+        throw 'Bridge nhúng chưa ràng buộc broker/provenance/BuildId và payload bảo vệ sau UAC.'
     }
     if ($embeddedBridgeText -match '\d+\.\d+\.\d+\.\d+-production-\d{8}') {
         throw 'Bridge nhúng vẫn chứa BuildId hard-code độc lập.'
     }
 
-    Write-Host "EMBEDDED-PAYLOAD $ExpectedArchitecture`: ĐẠT ($($payloadFiles.Count)/$($payloadFiles.Count); BuildId=$compiledBuildId; Bridge=canonical; solid-deflate=1; format=1)" -ForegroundColor Green
+    Write-Host "EMBEDDED-PAYLOAD $ExpectedArchitecture`: ĐẠT ($($payloadFiles.Count)/$($payloadFiles.Count); Trust=$ExpectedTrustMode; BuildId=$compiledBuildId; Bridge=canonical; solid-deflate=1; format=1)" -ForegroundColor Green
     exit 0
 } catch {
     Write-Error $_.Exception.Message

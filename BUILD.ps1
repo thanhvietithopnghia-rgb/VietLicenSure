@@ -13,6 +13,7 @@ param(
     [string]$IndependentSecurityReviewPath = '',
     [switch]$RequireAuthenticode,
     [switch]$AllowManagedSignedBuild,
+    [switch]$AllowStoreBuild,
     [switch]$AllowUnsignedDevelopmentBuild
 )
 
@@ -36,8 +37,11 @@ $releaseDateToken = $releaseBuildTime.Replace('-', '')
 $managedBuildId = "$releaseVersion-managed-signed-$releaseDateToken"
 $publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
+$requiresVerifiedProvenance = [bool]($requiresSignedArtifact -or $AllowStoreBuild)
 $releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
     "$releaseVersion-development-unsigned"
+} elseif ($AllowStoreBuild) {
+    "$releaseVersion-store-submission"
 } elseif ($AllowManagedSignedBuild) {
     $managedBuildId
 } else {
@@ -86,11 +90,11 @@ function Assert-BuildOutputDirectoryReady {
     }
 }
 
-if (([int][bool]$RequireAuthenticode + [int][bool]$AllowManagedSignedBuild + [int][bool]$AllowUnsignedDevelopmentBuild) -ne 1) {
-    throw 'Chọn đúng một chế độ build: RequireAuthenticode (public Stable), AllowManagedSignedBuild hoặc AllowUnsignedDevelopmentBuild.'
+if (([int][bool]$RequireAuthenticode + [int][bool]$AllowManagedSignedBuild + [int][bool]$AllowStoreBuild + [int][bool]$AllowUnsignedDevelopmentBuild) -ne 1) {
+    throw 'Chọn đúng một chế độ build: RequireAuthenticode (public Stable), AllowManagedSignedBuild, AllowStoreBuild hoặc AllowUnsignedDevelopmentBuild.'
 }
-if ($requiresSignedArtifact -and $SkipVerification) {
-    throw 'Build có chữ ký không cho phép SkipVerification; mọi verifier, Authenticode/timestamp và provenance phải chạy.'
+if ($requiresVerifiedProvenance -and $SkipVerification) {
+    throw 'Build production/Store không cho phép SkipVerification; mọi verifier và provenance bắt buộc phải chạy.'
 }
 if ($requiresSignedArtifact -and -not [string]::IsNullOrWhiteSpace($SigningPfxPath)) {
     throw 'Build có chữ ký không nhận PFX dạng tệp. Hãy dùng khóa trong certificate store/HSM bằng SigningCertificateThumbprint.'
@@ -602,7 +606,7 @@ if ($AllowUnsignedDevelopmentBuild) {
     }
 }
 $releaseProvenanceState = if ($AllowUnsignedDevelopmentBuild) { 'Unverified' } else { [string]$provenanceMetadata.State }
-if ($requiresSignedArtifact) {
+if ($requiresVerifiedProvenance) {
     $gitCommand = Get-Command git.exe -ErrorAction SilentlyContinue
     if (-not $gitCommand) { $gitCommand = Get-Command git -ErrorAction SilentlyContinue }
     if (-not $gitCommand) { throw 'Build stable cần Git để ràng buộc provenance với source commit.' }
@@ -791,6 +795,11 @@ try {
         # Managed builds are signed, timestamped and provenance-verified, but
         # they must never inherit the public Stable self-update marker.
         $compilerArguments += '/define:TOOL_MANAGED_SIGNED_BUILD'
+    } elseif ($AllowStoreBuild) {
+        # Partner Center signs the MSIX package, not this pre-submission EXE.
+        # Runtime trust is therefore bound to the exact Windows package
+        # identity instead of an Authenticode marker on the inner executable.
+        $compilerArguments += '/define:TOOL_STORE_BUILD'
     }
     if ($target.HighEntropy) { $compilerArguments += '/highentropyva+' }
     foreach ($resource in $embeddedPayloadResources) {
@@ -817,8 +826,9 @@ try {
 
     foreach ($runtimeArchitecture in @('x64', 'x86')) {
         $verificationPowerShell = Get-VerificationPowerShell $runtimeArchitecture
+        $expectedTrustMode = if ($RequireAuthenticode) { 'Production' } elseif ($AllowManagedSignedBuild) { 'ManagedSigned' } elseif ($AllowStoreBuild) { 'StoreSubmission' } else { 'DevelopmentUnsigned' }
         & $verificationPowerShell -NoProfile -ExecutionPolicy RemoteSigned -File (Join-Path $sourceDirectory $embeddedVerifierName) `
-            -ExePath $outputPath -SourceDirectory $sourceDirectory -PayloadList $payloadListArgument -ExpectedArchitecture $runtimeArchitecture
+            -ExePath $outputPath -SourceDirectory $sourceDirectory -PayloadList $payloadListArgument -ExpectedArchitecture $runtimeArchitecture -ExpectedTrustMode $expectedTrustMode
         if ($LASTEXITCODE -ne 0) { throw "Đối chiếu cùng EXE AnyCPU trên CLR $runtimeArchitecture thất bại, mã thoát: $LASTEXITCODE" }
     }
 
@@ -923,6 +933,8 @@ $manifestArtifacts = @($artifactResults.ToArray() | ForEach-Object {
 $releaseManifestPath = Join-Path $OutputDirectory 'RELEASE-MANIFEST.json'
 $releaseStatus = if ($AllowUnsignedDevelopmentBuild) {
     'DevelopmentUnsigned'
+} elseif ($AllowStoreBuild) {
+    'StoreSubmission'
 } elseif ($AllowManagedSignedBuild) {
     'ManagedSigned'
 } else {
@@ -1052,7 +1064,7 @@ $releaseManifest = [ordered]@{
         VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build'
         SourcePolicyId = 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9'
         SourceDistribution = 'CommunityControlledSource'
-        RuntimeSystemChangePolicy = 'Official launcher and pinned provenance must both verify before system-change actions'
+        RuntimeSystemChangePolicy = $(if ($AllowStoreBuild) { 'Microsoft Store package identity and pinned provenance must both verify before system-change actions' } else { 'Official launcher and pinned provenance must both verify before system-change actions' })
     }
     LocalizationSchemaVersion = [string]$localizationMetadata.SchemaVersion
     DefaultCulture = [string]$localizationMetadata.DefaultCulture
@@ -1229,7 +1241,7 @@ $releaseManifest = [ordered]@{
     DeterministicManagedBuild = $true
     DeterministicScope = 'Unsigned managed image; Authenticode intentionally changes final bytes when enabled.'
     AuthenticodeRequired = $requiresSignedArtifact
-    AuthenticodeTrustScope = $(if ($AllowUnsignedDevelopmentBuild) { 'None' } elseif ($AllowManagedSignedBuild) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' })
+    AuthenticodeTrustScope = $(if ($AllowUnsignedDevelopmentBuild) { 'None' } elseif ($AllowStoreBuild) { 'MicrosoftStorePackageIdentity' } elseif ($AllowManagedSignedBuild) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' })
     ControlFlowGuard = [ordered]@{
         Status = 'NotClaimed'
         Reason = 'Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia.'
@@ -1249,7 +1261,7 @@ if ($updateAuthenticodeRequired) {
 }
 $applicationUpdateManifest = [ordered]@{
     SchemaVersion = '1.0'
-    Channel = if ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
+    Channel = if ($AllowStoreBuild) { 'store' } elseif ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
     LatestVersion = $releaseVersion
     MinimumUpdaterVersion = '4.6.1.0'
     PublishedAtUtc = $publishedAtUtc
@@ -1307,9 +1319,9 @@ $sourceUpdateManifestPath = Join-Path $sourceDirectory 'update-manifest-v1.json'
 $outputUpdateManifestPath = Join-Path $OutputDirectory 'update-manifest-v1.json'
 $sourceUpdateSignaturePath = $sourceUpdateManifestPath + '.p7s'
 $outputUpdateSignaturePath = $outputUpdateManifestPath + '.p7s'
-if ($AllowUnsignedDevelopmentBuild) {
-    # Một build phát triển không được làm hỏng manifest stable đang dùng để cập nhật
-    # từ nguồn. Manifest development chỉ tồn tại trong thư mục artefact cục bộ.
+if ($AllowUnsignedDevelopmentBuild -or $AllowStoreBuild) {
+    # Build development/Store không được làm hỏng manifest stable đang dùng để
+    # cập nhật từ nguồn. Manifest riêng chỉ tồn tại trong thư mục artefact cục bộ.
     if (Test-Path -LiteralPath $outputUpdateSignaturePath -PathType Leaf) {
         Remove-Item -LiteralPath $outputUpdateSignaturePath -Force
     }
@@ -1490,7 +1502,7 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-MSIX-PACKAGING.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     Write-Host '[7/8] Kiểm tra phát hành tổng thể...'
     & (Join-Path $sourceDirectory 'VERIFY-RELEASE.ps1') -SourceDirectory $sourceDirectory -DistributionDirectory $OutputDirectory `
-        -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowManagedSignedManifest:$AllowManagedSignedBuild
+        -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowManagedSignedManifest:$AllowManagedSignedBuild -AllowStoreManifest:$AllowStoreBuild
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-RELEASE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     if ($requiresSignedArtifact) {
         & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "Tool-Kiem-Tra-v$productVersion.exe") -RequireTimestamp

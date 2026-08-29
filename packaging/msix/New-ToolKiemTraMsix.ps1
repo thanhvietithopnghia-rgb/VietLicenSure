@@ -98,6 +98,26 @@ function Get-RequiredJsonProperty {
     return [string]$property.Value
 }
 
+function Get-LauncherTrustProfile {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Path)))
+    $type = $assembly.GetType('ThanhViet.ToolKiemTra.Program', $true)
+    $flags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
+    $values = [ordered]@{}
+    foreach ($name in @('SignedStableBuildMarker','ManagedSignedBuildMarker','StoreBuildMarker','StorePackageName','StorePackageVersion','StorePackagePublisherId','StorePackageFamilyName')) {
+        $field = $type.GetField($name, $flags)
+        if (-not $field) { throw "Executable is missing trust marker: $name" }
+        $values[$name] = [string]$field.GetRawConstantValue()
+    }
+    $payloadField = $type.GetField('PayloadFiles', $flags)
+    if (-not $payloadField) { throw 'Executable is missing PayloadFiles.' }
+    $payloads = @($payloadField.GetValue($null))
+    $values['PayloadCount'] = [int]$payloads.Count
+    $values['ProvenanceSignatureEmbedded'] = [bool]($payloads -contains 'OFFICIAL-PROVENANCE-v1.json.p7s')
+    return [pscustomobject]$values
+}
+
 if (-not (Test-Path -LiteralPath $makeAppx -PathType Leaf)) { throw "MakeAppx not found: $makeAppx" }
 if (-not (Test-Path -LiteralPath $signTool -PathType Leaf)) { throw "SignTool not found: $signTool" }
 
@@ -117,6 +137,8 @@ $storeProductId = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'Pr
 $storeReservedName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ReservedName'
 $storePackageName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageIdentityName'
 $storePublisher = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageIdentityPublisher'
+$storePublisherId = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackagePublisherId'
+$storeFamilyName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageFamilyName'
 $storePublisherDisplayName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PublisherDisplayName'
 $storeDescription = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'Description'
 $storeApplicationDescription = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ApplicationDescription'
@@ -124,6 +146,9 @@ $storeApplicationDescription = Get-RequiredJsonProperty -InputObject $storeIdent
 if ($storeProductId -notmatch '^[A-Z0-9]{12}$') { throw 'Store ProductId is not valid.' }
 if ($storePackageName -notmatch '^[A-Za-z0-9.-]{3,50}$') { throw 'Store PackageIdentityName is not valid.' }
 if ($storePublisher -notmatch '^CN=[A-Za-z0-9-]+$') { throw 'Store PackageIdentityPublisher is not valid.' }
+if ($storePublisherId -notmatch '^[0-9a-hjkmnp-tv-z]{13}$' -or $storeFamilyName -cne ($storePackageName + '_' + $storePublisherId)) {
+    throw 'Store PackagePublisherId/PackageFamilyName is not valid.'
+}
 
 if ($Mode -eq 'Store') {
     if (-not [string]::IsNullOrWhiteSpace($PackageName) -and $PackageName -cne $storePackageName) {
@@ -145,6 +170,37 @@ if ($Mode -eq 'Store') {
 if ($PackageName -notmatch '^[A-Za-z0-9.-]{3,50}$') { throw 'PackageName is not valid for an MSIX identity.' }
 
 $exe = Get-Item -LiteralPath $ExecutablePath
+$launcherTrustProfile = Get-LauncherTrustProfile -Path $exe.FullName
+if ($Mode -eq 'Store') {
+    if ([string]$launcherTrustProfile.SignedStableBuildMarker -ne '0' -or
+        [string]$launcherTrustProfile.ManagedSignedBuildMarker -ne '0' -or
+        [string]$launcherTrustProfile.StoreBuildMarker -ne '1' -or
+        [string]$launcherTrustProfile.StorePackageName -cne $storePackageName -or
+        [string]$launcherTrustProfile.StorePackageVersion -cne $version -or
+        [string]$launcherTrustProfile.StorePackagePublisherId -cne $storePublisherId -or
+        [string]$launcherTrustProfile.StorePackageFamilyName -cne $storeFamilyName -or
+        [int]$launcherTrustProfile.PayloadCount -ne 55 -or
+        -not [bool]$launcherTrustProfile.ProvenanceSignatureEmbedded) {
+        throw 'Store mode requires a fail-closed StoreSubmission executable with exact Partner Center identity and signed provenance.'
+    }
+    $exeSignature = Get-AuthenticodeSignature -LiteralPath $exe.FullName
+    if ($exeSignature.Status -ne [Management.Automation.SignatureStatus]::NotSigned) {
+        throw "StoreSubmission executable must remain unsigned before Partner Center packaging: $($exeSignature.Status)"
+    }
+    $releaseManifestPath = Join-Path $exe.DirectoryName 'RELEASE-MANIFEST.json'
+    if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
+        throw 'StoreSubmission executable is missing its RELEASE-MANIFEST.json.'
+    }
+    $releaseManifest = Get-Content -LiteralPath $releaseManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $releaseArtifact = @($releaseManifest.Artifacts | Where-Object { [string]$_.FileName -ceq $exe.Name })
+    if ([string]$releaseManifest.ReleaseStatus -cne 'StoreSubmission' -or
+        [string]$releaseManifest.AuthenticodeTrustScope -cne 'MicrosoftStorePackageIdentity' -or
+        [string]$releaseManifest.OfficialBuildProvenance.State -cne 'Official' -or
+        $releaseArtifact.Count -ne 1 -or
+        [string]$releaseArtifact[0].Sha256 -cne (Get-FileHash -LiteralPath $exe.FullName -Algorithm SHA256).Hash) {
+        throw 'StoreSubmission release manifest does not bind the executable, package trust scope, and official provenance.'
+    }
+}
 $output = Assert-PlainDirectory -Path $OutputDirectory
 if (Test-Path -LiteralPath $output) {
     if (@(Get-ChildItem -LiteralPath $output -Force).Count -ne 0) {
@@ -272,11 +328,14 @@ $report = [ordered]@{
     ProductDisplayName = $storeReservedName
     PackageName = $PackageName
     Publisher = $Publisher
+    PackagePublisherId = $storePublisherId
+    PackageFamilyName = $storeFamilyName
     PublisherDisplayName = $PublisherDisplayName
     Version = $version
     Architecture = 'x64'
     IncludeRunFullTrust = $true
     IncludeAllowElevation = $IncludeAllowElevation
+    LauncherTrustProfile = $launcherTrustProfile
     Signed = $signed
     SigningCertificateThumbprint = if ($certificate) { $certificate.Thumbprint } else { $null }
     DevelopmentCertificatePath = $developmentCertificatePath

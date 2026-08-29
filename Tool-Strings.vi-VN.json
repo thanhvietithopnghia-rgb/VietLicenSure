@@ -3079,6 +3079,7 @@
   "officialBuild.banner.managedBody": "Authenticode, RFC 3161 timestamp và provenance đều hợp lệ trên máy quản trị. Thao tác hệ thống được mở; tự cập nhật public vẫn khóa.",
   "officialBuild.state.official": "Chính thức",
   "officialBuild.state.managed": "Đã ký quản trị",
+  "officialBuild.state.store": "Microsoft Store",
   "officialBuild.state.modified": "Đã bị sửa đổi",
   "officialBuild.state.unverified": "Chưa xác minh",
   "officialBuild.systemChangeBlocked": "Thao tác thay đổi hệ thống đã bị khóa vì bản dựng này chưa được xác minh là chính thức. Hãy tải và kiểm tra Tool tại {0}.",

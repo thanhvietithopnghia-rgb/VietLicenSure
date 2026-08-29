@@ -1190,7 +1190,24 @@ if ($gui) {
         if ([regex]::Matches($gui.Text, 'New-ToolElevatedBootstrapArguments\s+-BridgeScriptPath\s+\$elevatedBridgeScript\s+-TargetFilePath\s+\$toolPowerShellPath').Count -lt 2) {
             Fail 'Luồng tiến trình quản trị chưa dùng cầu nối môi trường cho cả tác vụ theo dõi và tác vụ tách rời.'
         }
-        $bridgeEnvironmentNames = @('TOOL_SECURE_LAUNCH','TOOL_SECURE_RUNTIME_DIR','TOOL_MODULE_ID','TOOL_MODULE_INVOCATION_ID','TOOL_DATA_SCOPE','TOOL_DATA_OWNER_SID','TOOL_SELF_UPDATE_ALLOWED','TOOL_OFFLINE_MODE','TOOL_OFFICIAL_BUILD_STATE','TOOL_OFFICIAL_BUILD_FAILURE','TOOL_OFFICIAL_BUILD_ID','TOOL_OFFICIAL_VERIFICATION_URL')
+        if ([regex]::Matches($gui.Text, '\$startParameters\.FilePath\s*=\s*\[IO\.Path\]::GetFullPath\(\[string\]\$env:TOOL_LAUNCHER_PATH\)').Count -lt 2) {
+            Fail 'Luồng nâng quyền chưa chuyển dispatch sang launcher đã biên dịch.'
+        }
+        $launcherText = Get-Content -LiteralPath (Join-Path $root 'Tool-Kiem-Tra-v5.0-OneFile.cs') -Raw -Encoding UTF8
+        if ($launcherText -notmatch 'ElevatedModuleBroker' -or $launcherText -notmatch '--elevated-module-broker' -or
+            $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or $launcherText -notmatch 'case LaunchMode\.ElevatedModuleBroker: return "Tool-ElevatedBridge\.ps1"') {
+            Fail 'Launcher chưa triển khai broker nâng quyền từ payload nhúng.'
+        }
+        if ($elevatedBridge.Text -notmatch 'ElevatedBrokerCompiledLauncherRequired' -or
+            $elevatedBridge.Text -notmatch 'Get-ToolOfficialBuildState' -or
+            $elevatedBridge.Text -notmatch 'TOOL_OFFICIAL_BUILD_STATE''\] = \$brokerBuildState' -or
+            $elevatedBridge.Text -notmatch 'Test-BridgeProtectedDirectoryAcl -Path \$bridgeRoot -DataScope Machine' -or
+            $elevatedBridge.Text -notmatch 'Assert-BridgeOriginalPayloadIntegrity -TrustedRoot \$bridgeRoot -OriginalRoot \$originalRoot' -or
+            $elevatedBridge.Text -notmatch '\$protectedScriptPath' -or
+            $elevatedBridge.Text -notmatch '\$targetArguments\.Substring') {
+            Fail 'Broker nâng quyền chưa khóa trust, provenance, cây payload gốc và script bảo vệ sau UAC.'
+        }
+        $bridgeEnvironmentNames = @('TOOL_LAUNCHER_PATH','TOOL_SECURE_LAUNCH','TOOL_SECURE_RUNTIME_DIR','TOOL_MODULE_ID','TOOL_MODULE_INVOCATION_ID','TOOL_DATA_SCOPE','TOOL_DATA_OWNER_SID','TOOL_SELF_UPDATE_ALLOWED','TOOL_OFFLINE_MODE','TOOL_OFFICIAL_BUILD_STATE','TOOL_OFFICIAL_BUILD_FAILURE','TOOL_OFFICIAL_BUILD_ID','TOOL_OFFICIAL_VERIFICATION_URL')
         $previousBridgeEnvironment = [ordered]@{}
         $bridgeFixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Elevated-Bridge-Fixture-' + [guid]::NewGuid().ToString('N'))
         foreach ($name in $bridgeEnvironmentNames) {
@@ -1202,85 +1219,32 @@ if ($gui) {
             $bridgeRuntimeRoot = Join-Path $bridgeFixtureRoot 'runtime'
             [void][IO.Directory]::CreateDirectory($bridgeFixtureRoot)
             [void][IO.Directory]::CreateDirectory($bridgeRuntimeRoot)
-            $administratorsSid = New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')
-            $systemSid = New-Object Security.Principal.SecurityIdentifier('S-1-5-18')
             $currentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
-            $inheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
-            foreach ($protectedDirectory in @($bridgeFixtureRoot,$bridgeRuntimeRoot)) {
-                $fixtureAcl = New-Object Security.AccessControl.DirectorySecurity
-                $fixtureAcl.SetAccessRuleProtection($true, $false)
-                $fixtureAcl.SetOwner($currentUserSid)
-                foreach ($sid in @($administratorsSid,$systemSid,$currentUserSid)) {
-                    $fixtureAcl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($sid,'FullControl',$inheritance,'None','Allow')))
-                }
-                Set-Acl -LiteralPath $protectedDirectory -AclObject $fixtureAcl -ErrorAction Stop
-            }
             $bridgeFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-ElevatedBridge.ps1'
             $cleanupFixtureScript = Join-Path $bridgeFixtureRoot 'windows-license-compliance-cleanup.ps1'
-            $updateManagerFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-UpdateManager.ps1'
-            $reportFixtureScript = Join-Path $bridgeFixtureRoot 'kiem-tra-cau-hinh-ban-quyen.ps1'
-            $provenanceFixtureScript = Join-Path $bridgeFixtureRoot 'Tool-Provenance.ps1'
             Copy-Item -LiteralPath (Join-Path $root 'Tool-ElevatedBridge.ps1') -Destination $bridgeFixtureScript -Force
-            Copy-Item -LiteralPath (Join-Path $root 'Tool-Provenance.ps1') -Destination $provenanceFixtureScript -Force
             Copy-Item -LiteralPath (Join-Path $root 'windows-license-compliance-cleanup.ps1') -Destination $cleanupFixtureScript -Force
-            Copy-Item -LiteralPath (Join-Path $root 'Tool-UpdateManager.ps1') -Destination $updateManagerFixtureScript -Force
-            [IO.File]::WriteAllText(
-                $reportFixtureScript,
-                "if (`$env:TOOL_MODULE_ID -ne 'report.office') { exit 61 }`r`nexit 0`r`n",
-                (New-Object Text.UTF8Encoding($false)))
+            $env:TOOL_LAUNCHER_PATH = $bridgePowerShell
             $env:TOOL_SECURE_LAUNCH = '1'
             $env:TOOL_SECURE_RUNTIME_DIR = $bridgeRuntimeRoot
             $env:TOOL_DATA_SCOPE = 'User'
             $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
             $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
-            . $provenanceFixtureScript
+            . (Join-Path $root 'Tool-Provenance.ps1')
             $env:TOOL_OFFICIAL_BUILD_ID = [string](Get-ToolProvenanceExpectedValues).BuildId
             $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
             $bridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -BridgeEnvironmentProbe"
             $bridgeArguments = New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $bridgeChildArguments -HiddenWindow $true
-
-            # Simulate the RunAs broker dropping/replacing the caller environment.
-            # The protected bridge must restore the captured values, not inherit these mutations.
-            $env:TOOL_SECURE_LAUNCH = '0'
-            $env:TOOL_MODULE_ID = 'wrong-module'
-            $bridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $bridgeArguments -WindowStyle Hidden -Wait -PassThru
-            if (-not $bridgeProcess -or [int]$bridgeProcess.ExitCode -ne 0) {
-                Fail "Cầu nối UAC không khôi phục ngữ cảnh secure-launch cho tiến trình con (exit $([int]$bridgeProcess.ExitCode))."
+            if ($bridgeArguments -notmatch '^--elevated-module-broker\s+"([A-Za-z0-9+/=]+)"$') { throw 'Elevated broker arguments are not launcher-bound.' }
+            $capturedPayload = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String([string]$matches[1])) | ConvertFrom-Json
+            if ([string]$capturedPayload.SchemaVersion -ne '2.0' -or [string]$capturedPayload.Environment.TOOL_MODULE_ID -ne 'cleanup.scan' -or
+                [string]$capturedPayload.Environment.TOOL_SECURE_LAUNCH -ne '1' -or -not [bool]$capturedPayload.HiddenWindow) {
+                Fail 'Yêu cầu broker không chụp đúng schema/ngữ cảnh trước UAC.'
             }
-
-            $env:TOOL_SECURE_LAUNCH = '1'
-            $env:TOOL_OFFICIAL_BUILD_STATE = 'Managed'
-            $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
-            $env:TOOL_MODULE_ID = 'cleanup.repair'
-            $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
-            $managedBridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -BridgeEnvironmentProbe"
-            $managedBridgeArguments = New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $managedBridgeChildArguments -HiddenWindow $true
             $env:TOOL_SECURE_LAUNCH = '0'
-            $env:TOOL_MODULE_ID = 'wrong-module'
-            $managedBridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $managedBridgeArguments -WindowStyle Hidden -Wait -PassThru
-            if (-not $managedBridgeProcess -or [int]$managedBridgeProcess.ExitCode -ne 0) {
-                Fail "Cầu nối UAC không cho phép ManagedSigned repair an toàn (exit $([int]$managedBridgeProcess.ExitCode))."
-            }
-
-            # Report modules are read-only but still need elevation on modes
-            # that inspect machine-wide Windows/Office data.  They must be
-            # accepted by the same protected bridge without being classified
-            # as system-changing modules.  This regression covers the former
-            # exit-code 87 failure of report.office.
-            $env:TOOL_SECURE_LAUNCH = '1'
-            $env:TOOL_MODULE_ID = 'report.office'
-            $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
-            $reportBridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportFixtureScript`""
-            $reportBridgeArguments = New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $reportBridgeChildArguments -HiddenWindow $true
-            $env:TOOL_SECURE_LAUNCH = '0'
-            $env:TOOL_MODULE_ID = 'wrong-module'
-            $reportBridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $reportBridgeArguments -WindowStyle Hidden -Wait -PassThru
-            if (-not $reportBridgeProcess -or [int]$reportBridgeProcess.ExitCode -ne 0) {
-                Fail "Cầu nối UAC không chạy được report.office chỉ-đọc (exit $([int]$reportBridgeProcess.ExitCode))."
-            }
             $blockedWithoutSecureLaunch = $false
             try {
                 [void](New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $bridgeChildArguments)
@@ -1289,25 +1253,54 @@ if ($gui) {
             }
             if (-not $blockedWithoutSecureLaunch) { Fail 'Cầu nối UAC không fail-closed khi nguồn gọi thiếu secure launch.' }
 
-            # A same-version development build must never reach the updater.
-            # Conversely, a stable build marker captured before the RunAs
-            # boundary must survive the bridge.  The deliberately incomplete
-            # Apply request fails before any network or file operation with
-            # exit 3; exit 2 would mean the bridge lost the captured marker.
-            $env:TOOL_SECURE_LAUNCH = '1'
-            $env:TOOL_SELF_UPDATE_ALLOWED = '1'
-            $env:TOOL_OFFLINE_MODE = '0'
-            $env:TOOL_MODULE_ID = 'application.update.apply'
-            $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
-            $updateBridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$updateManagerFixtureScript`" -Mode Apply -ConsentGranted -NoUi -NoRestart"
-            $updateBridgeArguments = New-ToolElevatedBootstrapArguments -BridgeScriptPath $bridgeFixtureScript -TargetFilePath $bridgePowerShell -TargetArguments $updateBridgeChildArguments -HiddenWindow $true
-            $env:TOOL_SELF_UPDATE_ALLOWED = '0'
-            $env:TOOL_OFFLINE_MODE = '1'
-            $env:TOOL_MODULE_ID = 'wrong-module'
-            $updateBridgeProcess = Start-Process -FilePath $bridgePowerShell -ArgumentList $updateBridgeArguments -WindowStyle Hidden -Wait -PassThru
-            if (-not $updateBridgeProcess -or [int]$updateBridgeProcess.ExitCode -ne 3) {
-                Fail "Cầu nối UAC làm mất self-update gate khi áp dụng cập nhật (exit $([int]$updateBridgeProcess.ExitCode))."
+            foreach ($functionName in @(
+                'Get-BridgeSha256','Get-BridgeIntegrityManifest','Assert-BridgeOriginalPayloadIntegrity',
+                'ConvertFrom-BridgeTargetArguments','Get-BridgeArgumentValue','Test-BridgePathWithin','Assert-BridgeModuleArgumentProfile')) {
+                $functionAst = $elevatedBridge.Ast.Find({
+                    param($node)
+                    $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $functionName
+                }, $true)
+                if (-not $functionAst) { throw "Missing bridge function: $functionName" }
+                Invoke-Expression ("function script:" + $functionName + " " + $functionAst.Body.Extent.Text)
             }
+            $validScanArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -OutputDir `"$bridgeFixtureRoot`" -ApprovedKmsServerFile `"$cleanupFixtureScript`" -TreatUnapprovedKmsAsNonCompliant -DecisionFile `"$(Join-Path $bridgeRuntimeRoot 'scan.json')`" -ScanScope `"All`" -Culture `"vi-VN`""
+            $parsedValidScan = ConvertFrom-BridgeTargetArguments -Arguments $validScanArguments
+            Assert-BridgeModuleArgumentProfile -ModuleId 'cleanup.scan' -ParsedArguments $parsedValidScan `
+                -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            $moduleConfusionBlocked = $false
+            try {
+                $parsedConfusedScan = ConvertFrom-BridgeTargetArguments -Arguments ($validScanArguments + ' -Remediate -DeepClean')
+                Assert-BridgeModuleArgumentProfile -ModuleId 'cleanup.scan' -ParsedArguments $parsedConfusedScan `
+                    -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            } catch { $moduleConfusionBlocked = [string]$_.Exception.Message -eq 'ElevatedBridgeModuleArgumentNotAllowed' }
+            if (-not $moduleConfusionBlocked) { Fail 'Broker cho phép cleanup.scan lén mang cờ thay đổi hệ thống.' }
+            $commandInjectionBlocked = $false
+            try { [void](ConvertFrom-BridgeTargetArguments -Arguments ($validScanArguments + '; whoami.exe')) }
+            catch { $commandInjectionBlocked = [string]$_.Exception.Message -eq 'ElevatedBridgeArgumentsCommandCountInvalid' }
+            if (-not $commandInjectionBlocked) { Fail 'Broker không chặn lệnh thứ hai trong TargetArguments.' }
+            $trustedFixtureRoot = Join-Path $bridgeFixtureRoot 'trusted'
+            $originalFixtureRoot = Join-Path $bridgeFixtureRoot 'original'
+            [void][IO.Directory]::CreateDirectory($trustedFixtureRoot)
+            [void][IO.Directory]::CreateDirectory($originalFixtureRoot)
+            $manifestLines = @('# synthetic broker integrity fixture')
+            foreach ($index in 0..49) {
+                $name = ('fixture-{0:D2}.txt' -f $index)
+                $content = 'broker-integrity-' + [string]$index
+                foreach ($fixtureRoot in @($trustedFixtureRoot,$originalFixtureRoot)) {
+                    [IO.File]::WriteAllText((Join-Path $fixtureRoot $name), $content, (New-Object Text.UTF8Encoding($false)))
+                }
+                $manifestLines += "$(Get-BridgeSha256 (Join-Path $trustedFixtureRoot $name))  $name"
+            }
+            foreach ($fixtureRoot in @($trustedFixtureRoot,$originalFixtureRoot)) {
+                [IO.File]::WriteAllLines((Join-Path $fixtureRoot 'TOOL-SHA256SUMS.txt'), $manifestLines, (New-Object Text.UTF8Encoding($false)))
+            }
+            $verifiedEntries = Assert-BridgeOriginalPayloadIntegrity -TrustedRoot $trustedFixtureRoot -OriginalRoot $originalFixtureRoot
+            if ($verifiedEntries.Count -ne 50) { Fail 'Broker không xác minh đủ closed-set payload gốc.' }
+            [IO.File]::AppendAllText((Join-Path $originalFixtureRoot 'fixture-07.txt'), 'tampered', (New-Object Text.UTF8Encoding($false)))
+            $tamperBlocked = $false
+            try { [void](Assert-BridgeOriginalPayloadIntegrity -TrustedRoot $trustedFixtureRoot -OriginalRoot $originalFixtureRoot) }
+            catch { $tamperBlocked = [string]$_.Exception.Message -eq 'ElevatedBrokerPayloadHashMismatch' }
+            if (-not $tamperBlocked) { Fail 'Broker không chặn payload gốc bị sửa trước UAC.' }
         } finally {
             foreach ($name in $bridgeEnvironmentNames) {
                 [Environment]::SetEnvironmentVariable($name, $previousBridgeEnvironment[$name], [EnvironmentVariableTarget]::Process)

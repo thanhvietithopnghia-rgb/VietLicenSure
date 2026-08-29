@@ -6,6 +6,7 @@
 - Partner Center product ID: `9NHGPJG831ZH`
 - Package identity name: `ThanhVit.ToolKimTraBnQuyn`
 - Publisher: `CN=3EB43154-43D8-4A10-BD13-AB0D250530BE`
+- Package family: `ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w`
 - Package type: x64 desktop MSIX
 - Main process integrity: medium IL / asInvoker
 - Restricted capabilities requested: `runFullTrust` and `allowElevation`
@@ -29,6 +30,8 @@ For every elevated action, the application is designed to:
 7. Run post-verification and report partial failure clearly.
 
 If UAC is rejected, the requested change is cancelled and the dashboard continues without elevation. The application does not bypass UAC, install a persistent privileged service or silently modify system configuration.
+
+The StoreSubmission launcher also fails closed before elevation unless Windows reports the exact Microsoft Store package family, version, x64 architecture and publisher ID compiled into the reviewed build and reports `PackageOrigin_Store`. Every UAC request is re-dispatched through that compiled launcher, which re-checks Store trust after elevation, extracts a fresh Administrator/SYSTEM-only payload, verifies the original payload tree by SHA-256, verifies signed provenance, and enforces a per-module argument allowlist before starting PowerShell. A read-only module ID cannot carry remediation switches. Copying the unsigned inner EXE out of the installed package, installing a DeveloperSigned/line-of-business sideload with a matching identity string, modifying a script between checks, or forging the caller's environment cannot enable administrative changes.
 
 ## Certification evidence to attach
 

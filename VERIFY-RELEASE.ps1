@@ -3,12 +3,17 @@ param(
     [string]$SourceDirectory = '',
     [string]$DistributionDirectory = '',
     [switch]$AllowManagedSignedManifest,
+    [switch]$AllowStoreManifest,
     [switch]$AllowDevelopmentManifest
 )
 
 $ErrorActionPreference = 'Stop'
 $productVersion = ''
-if ($AllowManagedSignedManifest -and $AllowDevelopmentManifest) { throw 'ManagedSigned và DevelopmentUnsigned là hai chế độ loại trừ nhau.' }
+if (([int][bool]$AllowManagedSignedManifest + [int][bool]$AllowStoreManifest + [int][bool]$AllowDevelopmentManifest) -gt 1) {
+    throw 'ManagedSigned, StoreSubmission và DevelopmentUnsigned là các chế độ loại trừ nhau.'
+}
+$unsignedExecutableManifest = [bool]($AllowDevelopmentManifest -or $AllowStoreManifest)
+$expectedTrustMode = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = Join-Path $SourceDirectory 'dist' }
 $failures = New-Object System.Collections.Generic.List[string]
@@ -208,7 +213,7 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 52 } else { 53 }
 $expectedSourceHashCount = if ($AllowDevelopmentManifest) { 120 } else { 121 }
 $expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 137 } else { 139 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 37 } else { 39 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 37 } elseif ($AllowStoreManifest) { 38 } else { 39 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -293,7 +298,17 @@ if ($guiText -notmatch 'introAssistantButton' -or $guiText -notmatch 'Show-ToolA
 }
 if ($guiText -notmatch 'TOOL_SECURE_LAUNCH' -or $guiText -notmatch 'Test-ProtectedToolDirectoryAcl') { $failures.Add('Giao diện thiếu khóa secure-launch/ACL.') }
 if ($guiText -notmatch 'New-ToolElevatedBootstrapArguments' -or $guiText -notmatch 'Tool-ElevatedBridge\.ps1' -or
+    $guiText -notmatch '--elevated-module-broker' -or
+    $guiText -notmatch '\$startParameters\.FilePath\s*=\s*\[IO\.Path\]::GetFullPath\(\[string\]\$env:TOOL_LAUNCHER_PATH\)' -or
     $elevatedBridgeText -notmatch 'Test-BridgeProtectedDirectoryAcl' -or
+    $elevatedBridgeText -notmatch 'ElevatedBrokerCompiledLauncherRequired' -or
+    $elevatedBridgeText -notmatch 'Get-ToolOfficialBuildState' -or
+    $elevatedBridgeText -notmatch 'Assert-BridgeOriginalPayloadIntegrity' -or
+    $elevatedBridgeText -notmatch 'ConvertFrom-BridgeTargetArguments' -or
+    $elevatedBridgeText -notmatch 'Assert-BridgeModuleArgumentProfile' -or
+    $elevatedBridgeText -notmatch 'ElevatedBridgeModuleArgumentNotAllowed' -or
+    $elevatedBridgeText -notmatch 'DataScope Machine' -or
+    $elevatedBridgeText -notmatch '\$protectedScriptPath' -or
     $elevatedBridgeText -notmatch 'ElevatedBridgeScriptBindingInvalid' -or
     $elevatedBridgeText -notmatch "'cleanup\.deep'\s*=\s*'windows-license-compliance-cleanup\.ps1'" -or
     $elevatedBridgeText -notmatch 'ProcessStartInfo' -or
@@ -302,6 +317,7 @@ if ($guiText -notmatch 'New-ToolElevatedBootstrapArguments' -or $guiText -notmat
     $failures.Add('Thiếu cầu nối UAC đã khóa module/script/runtime và allowlist biến môi trường.')
 }
 if ($launcherText -notmatch 'RequiresAdministrator' -or $launcherText -notmatch 'RelaunchElevated' -or
+    $launcherText -notmatch 'ElevatedModuleBroker' -or $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or
     $launcherText -notmatch 'SpecialFolder\.LocalApplicationData' -or $launcherText -notmatch 'TOOL_DATA_SCOPE') {
     $failures.Add('Launcher thiếu dashboard user-scope hoặc nâng quyền theo nhu cầu.')
 }
@@ -659,7 +675,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
             $failures.Add("Không có PowerShell $runtimeArchitecture để đối chiếu EXE AnyCPU.")
         } elseif (Test-Path -LiteralPath $embeddedVerifierPath -PathType Leaf) {
             & $verificationPowerShell -NoProfile -ExecutionPolicy RemoteSigned -File $embeddedVerifierPath `
-                -ExePath $exePath -SourceDirectory $sourceDirectoryFull -PayloadList $payloadListArgument -ExpectedArchitecture $runtimeArchitecture
+                -ExePath $exePath -SourceDirectory $sourceDirectoryFull -PayloadList $payloadListArgument -ExpectedArchitecture $runtimeArchitecture -ExpectedTrustMode $expectedTrustMode
             if ($LASTEXITCODE -ne 0) { $failures.Add("Đối chiếu EXE AnyCPU trên CLR $runtimeArchitecture thất bại.") }
         }
         if ($verificationPowerShell -and (Test-Path -LiteralPath $foundationVerifierPath -PathType Leaf)) {
@@ -675,7 +691,11 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
     }
 
     $signature = Get-AuthenticodeSignature -LiteralPath $exePath
-    if ($AllowDevelopmentManifest) {
+    if ($AllowStoreManifest) {
+        if ($signature.Status -ne 'NotSigned') {
+            $failures.Add("$targetFileName phải chưa ký Authenticode trước khi Partner Center ký gói Store: $($signature.Status)")
+        }
+    } elseif ($AllowDevelopmentManifest) {
         if ($signature.Status -ne 'Valid') {
             $warnings.Add("$targetFileName chưa có chữ ký Authenticode hợp lệ: $($signature.Status)")
         }
@@ -692,7 +712,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
          [string]$signature.SignerCertificate.Subject -match '(?i)Self-Signed')) {
         if ($AllowManagedSignedManifest) {
             $warnings.Add("$targetFileName dùng chứng thư tự ký được máy quản trị tin cậy; đây là ManagedSigned, không phải danh tính public-CA.")
-        } elseif (-not $AllowDevelopmentManifest) {
+        } elseif (-not $unsignedExecutableManifest) {
             $failures.Add("$targetFileName dùng chứng thư tự ký; public Stable yêu cầu signer CA-issued.")
         } else {
             $warnings.Add("$targetFileName dùng chứng thư tự ký; chỉ phù hợp thử nghiệm có kiểm soát khi chứng thư đã được phân phối qua kênh tin cậy.")
@@ -758,14 +778,15 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.ReleaseVersion -ne $expectedReleaseVersion -or [string]$releaseManifest.ReleaseBuildDate -ne $expectedReleaseBuildDate) {
             throw 'Release manifest chưa đồng bộ với release identity chuẩn.'
         }
-        $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
-        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { $expectedReleaseVersion + '-development-unsigned' } elseif ($AllowManagedSignedManifest) { $expectedManagedBuildId } else { $expectedOfficialBuildId }
-        $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowManagedSignedManifest) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' }
+        $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
+        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { $expectedReleaseVersion + '-development-unsigned' } elseif ($AllowStoreManifest) { $expectedReleaseVersion + '-store-submission' } elseif ($AllowManagedSignedManifest) { $expectedManagedBuildId } else { $expectedOfficialBuildId }
+        $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowStoreManifest) { 'MicrosoftStorePackageIdentity' } elseif ($AllowManagedSignedManifest) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' }
+        $expectedAuthenticodeRequired = [bool](-not $unsignedExecutableManifest)
         if ([string]$releaseManifest.ReleaseLabel -ne $expectedReleaseLabel -or
             [string]$releaseManifest.ReleaseStatus -ne $expectedReleaseStatus -or
             [string]$releaseManifest.AuthenticodeTrustScope -ne $expectedAuthenticodeTrustScope -or
-            [bool]$releaseManifest.AuthenticodeRequired -ne [bool](-not $AllowDevelopmentManifest)) {
-            throw 'Release status không khớp chế độ build stable/development.'
+            [bool]$releaseManifest.AuthenticodeRequired -ne $expectedAuthenticodeRequired) {
+            throw 'Release status không khớp chế độ build Stable/ManagedSigned/Store/development.'
         }
         $expectedProvenanceState = if ($AllowDevelopmentManifest) { 'Unverified' } else { 'Official' }
         if ([string]$releaseManifest.OfficialBuildProvenance.State -ne $expectedProvenanceState -or
@@ -774,7 +795,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
             [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9' -or
             [string]$releaseManifest.OfficialBuildProvenance.SourceDistribution -ne 'CommunityControlledSource' -or
-            [string]$releaseManifest.OfficialBuildProvenance.RuntimeSystemChangePolicy -notmatch 'Official launcher and pinned provenance') {
+            [string]$releaseManifest.OfficialBuildProvenance.RuntimeSystemChangePolicy -notmatch '(?:Official launcher|Microsoft Store package identity).+pinned provenance') {
             throw 'Metadata provenance v5.0 không đúng trạng thái hoặc chính sách fail-closed.'
         }
         $sourceProvenanceSignaturePath = Join-Path $sourceDirectoryFull 'OFFICIAL-PROVENANCE-v1.json.p7s'
@@ -993,10 +1014,10 @@ $sourceApplicationUpdateSignaturePath = $sourceApplicationUpdateManifestPath + '
 $applicationUpdateSignaturePath = $applicationUpdateManifestPath + '.p7s'
 if (-not (Test-Path -LiteralPath $sourceApplicationUpdateManifestPath -PathType Leaf)) {
     $failures.Add('Thiếu update-manifest-v1.json trong gói mã nguồn.')
-} elseif (-not $AllowDevelopmentManifest -and (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf) -and
+} elseif (-not $unsignedExecutableManifest -and (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf) -and
     (Get-Sha256Hex $sourceApplicationUpdateManifestPath) -ne (Get-Sha256Hex $applicationUpdateManifestPath)) {
     $failures.Add('update-manifest-v1.json trong Source và Release không giống hệt từng byte.')
-} elseif ($AllowDevelopmentManifest) {
+} elseif ($unsignedExecutableManifest) {
     try {
         $sourceApplicationUpdateManifest = Get-Content -LiteralPath $sourceApplicationUpdateManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
         if ([string]$sourceApplicationUpdateManifest.Channel -ne 'stable' -or -not [bool]$sourceApplicationUpdateManifest.AuthenticodeRequired) {
@@ -1009,7 +1030,7 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
 } elseif (Test-Path -LiteralPath $exePath -PathType Leaf) {
     try {
         $applicationUpdateManifest = Get-Content -LiteralPath $applicationUpdateManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-        $expectedUpdateChannel = if ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
+        $expectedUpdateChannel = if ($AllowStoreManifest) { 'store' } elseif ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
         if ([string]$applicationUpdateManifest.SchemaVersion -ne '1.0' -or [string]$applicationUpdateManifest.Channel -ne $expectedUpdateChannel -or
             [string]$applicationUpdateManifest.LatestVersion -ne $expectedReleaseVersion -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
             [string]$applicationUpdateManifest.PublishedAtUtc -ne $expectedPublishedAtUtc) {
@@ -1032,8 +1053,8 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
         if ($expectedUpdateChannel -eq 'stable' -and -not $manifestRequiresAuthenticode) {
             throw 'Manifest stable chưa bắt buộc Authenticode.'
         }
-        if ($expectedUpdateChannel -eq 'development' -and $manifestRequiresAuthenticode) {
-            throw 'Manifest development không được giả làm stable signed release.'
+        if ($expectedUpdateChannel -in @('development','store') -and $manifestRequiresAuthenticode) {
+            throw 'Manifest development/Store không được giả làm stable signed release.'
         }
         if ($manifestRequiresAuthenticode) {
             if ($manifestSignerThumbprints.Count -ne 1 -or @($manifestSignerThumbprints | Where-Object { $_ -notmatch '^[0-9A-F]{40}$' }).Count -gt 0) {
@@ -1052,7 +1073,7 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
                 throw 'Chữ ký detached CMS của manifest cập nhật thiếu, sai signer hoặc không đồng bộ.'
             }
         } elseif (Test-Path -LiteralPath $applicationUpdateSignaturePath -PathType Leaf) {
-            throw 'Manifest development không được mang chữ ký stable.'
+            throw 'Manifest development/Store không được mang chữ ký stable.'
         }
     } catch { $failures.Add("update-manifest-v1.json không hợp lệ: $($_.Exception.Message)") }
 }

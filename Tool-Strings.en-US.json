@@ -3079,6 +3079,7 @@
   "officialBuild.banner.managedBody": "Authenticode, the RFC 3161 timestamp, and provenance are valid on this managed machine. System-changing actions are enabled; public self-update remains disabled.",
   "officialBuild.state.official": "Official",
   "officialBuild.state.managed": "Managed signed",
+  "officialBuild.state.store": "Microsoft Store",
   "officialBuild.state.modified": "Modified",
   "officialBuild.state.unverified": "Unverified",
   "officialBuild.systemChangeBlocked": "System-changing actions are blocked because this build is not verified as official. Download and verify the Tool at {0}.",

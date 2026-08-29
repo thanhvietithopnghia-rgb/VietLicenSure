@@ -46,6 +46,10 @@ namespace ThanhViet.ToolKiemTra
         private const int MaximumSinglePayloadBytes = 8 * 1024 * 1024;
         private const string PayloadBundleFailureCode = "PAYLOAD_BUNDLE_INVALID";
         private const string OfficialSignerThumbprint = "0000000000000000000000000000000000000000";
+        private const string StorePackageName = "ThanhVit.ToolKimTraBnQuyn";
+        private const string StorePackageVersion = "5.0.0.0";
+        private const string StorePackagePublisherId = "9tjmpwr25h78w";
+        private const string StorePackageFamilyName = "ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w";
         // BUILD.ps1 replaces this exact placeholder from Tool-Provenance.ps1.
         // The repository source deliberately contains no duplicated BuildId.
         private const string OfficialBuildId = "REPLACE_AT_BUILD_FROM_TOOL_PROVENANCE";
@@ -57,15 +61,26 @@ namespace ThanhViet.ToolKiemTra
         // stable manifest merely because their hash is different.
         private const string SignedStableBuildMarker = "1";
         private const string ManagedSignedBuildMarker = "0";
+        private const string StoreBuildMarker = "0";
 #elif TOOL_MANAGED_SIGNED_BUILD
         // ManagedSigned uses a locally distributed trust anchor.  It may run
         // approved system changes after WinVerifyTrust succeeds, but it must
         // never identify itself as public Stable or use public self-update.
         private const string SignedStableBuildMarker = "0";
         private const string ManagedSignedBuildMarker = "1";
+        private const string StoreBuildMarker = "0";
+#elif TOOL_STORE_BUILD
+        // Microsoft Store builds are unsigned before Partner Center. They may
+        // perform approved system changes only while Windows attaches the
+        // exact Store package identity reserved for this product. Copying the
+        // EXE out of the package therefore fails closed.
+        private const string SignedStableBuildMarker = "0";
+        private const string ManagedSignedBuildMarker = "0";
+        private const string StoreBuildMarker = "1";
 #else
         private const string SignedStableBuildMarker = "0";
         private const string ManagedSignedBuildMarker = "0";
+        private const string StoreBuildMarker = "0";
 #endif
         private static string OfficialBuildState = "Unverified";
         private static string OfficialBuildFailureCode = "NotChecked";
@@ -86,7 +101,7 @@ namespace ThanhViet.ToolKiemTra
             "SOURCE-POLICY-v4.9.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
-#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD
+#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD || TOOL_STORE_BUILD
             "OFFICIAL-PROVENANCE-v1.json.p7s",
 #endif
             "Giao-Dien.ps1",
@@ -146,7 +161,7 @@ namespace ThanhViet.ToolKiemTra
             "SOURCE-POLICY-v4.9.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
-#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD
+#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD || TOOL_STORE_BUILD
             "OFFICIAL-PROVENANCE-v1.json.p7s",
 #endif
             "Giao-Dien.ps1",
@@ -198,6 +213,7 @@ namespace ThanhViet.ToolKiemTra
         private enum LaunchMode
         {
             Gui,
+            ElevatedModuleBroker,
             EnterpriseUi,
             EnterpriseServer,
             EnterpriseAgent,
@@ -208,6 +224,7 @@ namespace ThanhViet.ToolKiemTra
 
         private static string RepairUserDataBase = String.Empty;
         private static SecurityIdentifier RepairUserSid;
+        private static string ElevatedModulePayloadBase64 = String.Empty;
 
         [STAThread]
         private static int Main(string[] args)
@@ -233,10 +250,10 @@ namespace ThanhViet.ToolKiemTra
             if (!IsArchitectureSupported())
                 return 12;
             OfficialBuildState = EvaluateOfficialBuildState(out OfficialBuildFailureCode);
-            if ((SignedStableBuildMarker == "1" || ManagedSignedBuildMarker == "1") &&
-                OfficialBuildState != "Official" && OfficialBuildState != "Managed" && IsInteractiveMode(mode))
+            if ((SignedStableBuildMarker == "1" || ManagedSignedBuildMarker == "1" || StoreBuildMarker == "1") &&
+                OfficialBuildState != "Official" && OfficialBuildState != "Managed" && OfficialBuildState != "Store" && IsInteractiveMode(mode))
                 ShowMessage(mode, L("launcher.officialBuildInvalid", OfficialBuildFailureCode, OfficialVerificationUrl), MessageBoxIcon.Warning);
-            if (RequiresAdministrator(mode) && OfficialBuildState != "Official" && OfficialBuildState != "Managed")
+            if (RequiresTrustedBuild(mode) && OfficialBuildState != "Official" && OfficialBuildState != "Managed" && OfficialBuildState != "Store")
             {
                 ShowMessage(mode, L("launcher.officialBuildChangeBlocked", OfficialVerificationUrl), MessageBoxIcon.Error);
                 return 15;
@@ -297,6 +314,24 @@ namespace ThanhViet.ToolKiemTra
         {
             if (args == null || args.Length == 0 || String.Equals(args[0], "--gui", StringComparison.OrdinalIgnoreCase))
                 return LaunchMode.Gui;
+            if (args.Length == 2 && String.Equals(args[0], "--elevated-module-broker", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    if (String.IsNullOrWhiteSpace(args[1]) || args[1].Length > 24000)
+                        throw new ArgumentException(L("launcher.invalidArguments"));
+                    byte[] payloadBytes = Convert.FromBase64String(args[1]);
+                    if (payloadBytes.Length == 0 || payloadBytes.Length > 18000)
+                        throw new ArgumentException(L("launcher.invalidArguments"));
+                    string payloadText = new UTF8Encoding(false, true).GetString(payloadBytes).Trim();
+                    if (!payloadText.StartsWith("{", StringComparison.Ordinal) || !payloadText.EndsWith("}", StringComparison.Ordinal))
+                        throw new ArgumentException(L("launcher.invalidArguments"));
+                    ElevatedModulePayloadBase64 = args[1];
+                    return LaunchMode.ElevatedModuleBroker;
+                }
+                catch (ArgumentException) { throw; }
+                catch { throw new ArgumentException(L("launcher.invalidArguments")); }
+            }
             if (args.Length == 3 && String.Equals(args[0], "--repair-user-data-acl", StringComparison.OrdinalIgnoreCase))
             {
                 try
@@ -333,6 +368,15 @@ namespace ThanhViet.ToolKiemTra
             return mode != LaunchMode.Gui;
         }
 
+        private static bool RequiresTrustedBuild(LaunchMode mode)
+        {
+            // The compiled broker re-evaluates trust after UAC and lets its
+            // protected second stage distinguish read-only from system-change
+            // modules. All other administrative entry points require trust up
+            // front as before.
+            return RequiresAdministrator(mode) && mode != LaunchMode.ElevatedModuleBroker;
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct WinTrustFileInfo
         {
@@ -361,6 +405,99 @@ namespace ThanhViet.ToolKiemTra
 
         [DllImport("wintrust.dll", ExactSpelling = true, SetLastError = false, CharSet = CharSet.Unicode)]
         private static extern uint WinVerifyTrust(IntPtr windowHandle, ref Guid actionId, ref WinTrustData trustData);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetCurrentPackageFullName(ref uint packageFullNameLength, StringBuilder packageFullName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetCurrentPackageFamilyName(ref uint packageFamilyNameLength, StringBuilder packageFamilyName);
+
+        [DllImport("kernelbase.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetStagedPackageOrigin(string packageFullName, out int origin);
+
+        private static bool TryGetCurrentPackageIdentity(out string packageFullName, out string packageFamilyName)
+        {
+            packageFullName = String.Empty;
+            packageFamilyName = String.Empty;
+            const int ErrorSuccess = 0;
+            const int ErrorInsufficientBuffer = 122;
+            try
+            {
+                uint fullNameLength = 0;
+                int fullNameResult = GetCurrentPackageFullName(ref fullNameLength, null);
+                if (fullNameResult != ErrorInsufficientBuffer || fullNameLength == 0 || fullNameLength > 1024)
+                    return false;
+                StringBuilder fullNameBuffer = new StringBuilder((int)fullNameLength);
+                fullNameResult = GetCurrentPackageFullName(ref fullNameLength, fullNameBuffer);
+                if (fullNameResult != ErrorSuccess)
+                    return false;
+
+                uint familyNameLength = 0;
+                int familyNameResult = GetCurrentPackageFamilyName(ref familyNameLength, null);
+                if (familyNameResult != ErrorInsufficientBuffer || familyNameLength == 0 || familyNameLength > 1024)
+                    return false;
+                StringBuilder familyNameBuffer = new StringBuilder((int)familyNameLength);
+                familyNameResult = GetCurrentPackageFamilyName(ref familyNameLength, familyNameBuffer);
+                if (familyNameResult != ErrorSuccess)
+                    return false;
+
+                packageFullName = fullNameBuffer.ToString();
+                packageFamilyName = familyNameBuffer.ToString();
+                return packageFullName.Length > 0 && packageFamilyName.Length > 0;
+            }
+            catch (EntryPointNotFoundException) { return false; }
+            catch (DllNotFoundException) { return false; }
+        }
+
+        private static bool IsExpectedStorePackageIdentity(string packageFullName, string packageFamilyName)
+        {
+            if (!String.Equals(packageFamilyName, StorePackageFamilyName, StringComparison.Ordinal))
+                return false;
+            string expectedFullName = StorePackageName + "_" + StorePackageVersion + "_x64__" + StorePackagePublisherId;
+            return String.Equals(packageFullName, expectedFullName, StringComparison.Ordinal);
+        }
+
+        private static bool IsExpectedStorePackageTrust(string packageFullName, string packageFamilyName, int packageOrigin)
+        {
+            const int PackageOriginStore = 3;
+            return packageOrigin == PackageOriginStore && IsExpectedStorePackageIdentity(packageFullName, packageFamilyName);
+        }
+
+        private static bool TryGetCurrentStorePackageTrust(out string failureCode)
+        {
+            failureCode = "StorePackageIdentityMissing";
+            string packageFullName;
+            string packageFamilyName;
+            if (!TryGetCurrentPackageIdentity(out packageFullName, out packageFamilyName))
+                return false;
+            if (!IsExpectedStorePackageIdentity(packageFullName, packageFamilyName))
+            {
+                failureCode = "StorePackageIdentityMismatch";
+                return false;
+            }
+            try
+            {
+                int packageOrigin;
+                int originResult = GetStagedPackageOrigin(packageFullName, out packageOrigin);
+                if (originResult != 0 || !IsExpectedStorePackageTrust(packageFullName, packageFamilyName, packageOrigin))
+                {
+                    failureCode = "StorePackageOriginMismatch";
+                    return false;
+                }
+            }
+            catch (EntryPointNotFoundException)
+            {
+                failureCode = "StorePackageOriginUnavailable";
+                return false;
+            }
+            catch (DllNotFoundException)
+            {
+                failureCode = "StorePackageOriginUnavailable";
+                return false;
+            }
+            failureCode = String.Empty;
+            return true;
+        }
 
         private static uint GetAuthenticodeTrustStatus(string filePath)
         {
@@ -413,6 +550,10 @@ namespace ThanhViet.ToolKiemTra
         private static string EvaluateOfficialBuildState(out string failureCode)
         {
             failureCode = "DevelopmentBuild";
+            if (StoreBuildMarker == "1")
+            {
+                return TryGetCurrentStorePackageTrust(out failureCode) ? "Store" : "Modified";
+            }
             if (SignedStableBuildMarker != "1" && ManagedSignedBuildMarker != "1")
                 return "Unverified";
             try
@@ -488,6 +629,10 @@ namespace ThanhViet.ToolKiemTra
                 case LaunchMode.EnterpriseAgent: return "--enterprise-agent";
                 case LaunchMode.EnterpriseAgentForce: return "--enterprise-agent-force";
                 case LaunchMode.LocalLicenseManager: return "--local-license-manager";
+                case LaunchMode.ElevatedModuleBroker:
+                    if (String.IsNullOrWhiteSpace(ElevatedModulePayloadBase64))
+                        throw new InvalidOperationException(L("launcher.invalidArguments"));
+                    return "--elevated-module-broker \"" + ElevatedModulePayloadBase64 + "\"";
                 case LaunchMode.RepairUserDataAcl:
                     if (String.IsNullOrWhiteSpace(RepairUserDataBase) || RepairUserSid == null)
                         throw new InvalidOperationException(L("launcher.invalidArguments"));
@@ -656,6 +801,7 @@ namespace ThanhViet.ToolKiemTra
                 case LaunchMode.EnterpriseAgentForce: return "Global\\ThanhViet.ToolKiemTra.v4.6.AgentLauncher";
                 case LaunchMode.EnterpriseUi: return "Local\\ThanhViet.ToolKiemTra.v4.6.EnterpriseUi";
                 case LaunchMode.LocalLicenseManager: return "Local\\ThanhViet.ToolKiemTra.v4.6.LocalLicenseManager";
+                case LaunchMode.ElevatedModuleBroker: return "Local\\ThanhViet.ToolKiemTra.v5.0.ElevatedModuleBroker";
                 default: return "Local\\ThanhViet.ToolKiemTra.v4.6.Gui";
             }
         }
@@ -726,6 +872,7 @@ namespace ThanhViet.ToolKiemTra
                 case LaunchMode.EnterpriseAgent:
                 case LaunchMode.EnterpriseAgentForce: return "Tool-EnterpriseAgent.ps1";
                 case LaunchMode.LocalLicenseManager: return "windows-office-license-manager.ps1";
+                case LaunchMode.ElevatedModuleBroker: return "Tool-ElevatedBridge.ps1";
                 default: return "Giao-Dien.ps1";
             }
         }
@@ -1083,8 +1230,19 @@ namespace ThanhViet.ToolKiemTra
                 startInfo.FileName = powershellPath;
                 string sta = IsInteractiveMode(mode) ? "-STA " : "";
                 string agentModeArguments = mode == LaunchMode.EnterpriseAgentForce ? " -Force" : "";
-                startInfo.Arguments = "-NoProfile -ExecutionPolicy RemoteSigned " + sta +
-                    "-WindowStyle Hidden -File \"" + scriptPath + "\"" + agentModeArguments;
+                if (mode == LaunchMode.ElevatedModuleBroker)
+                {
+                    if (String.IsNullOrWhiteSpace(ElevatedModulePayloadBase64))
+                        throw new InvalidDataException(L("launcher.invalidArguments"));
+                    startInfo.Arguments = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned " +
+                        "-WindowStyle Hidden -File \"" + scriptPath + "\" -PayloadBase64 \"" +
+                        ElevatedModulePayloadBase64 + "\"";
+                }
+                else
+                {
+                    startInfo.Arguments = "-NoProfile -ExecutionPolicy RemoteSigned " + sta +
+                        "-WindowStyle Hidden -File \"" + scriptPath + "\"" + agentModeArguments;
+                }
                 startInfo.WorkingDirectory = tempDirectory;
                 startInfo.UseShellExecute = false;
                 startInfo.CreateNoWindow = true;
@@ -1098,6 +1256,7 @@ namespace ThanhViet.ToolKiemTra
                 startInfo.EnvironmentVariables["TOOL_DATA_SCHEMA_VERSION"] = "2.0";
                 startInfo.EnvironmentVariables["TOOL_SECURE_RUNTIME_DIR"] = Path.Combine(tempDirectory, "runtime");
                 startInfo.EnvironmentVariables["TOOL_SECURE_LAUNCH"] = "1";
+                startInfo.EnvironmentVariables["TOOL_ELEVATION_BROKER"] = mode == LaunchMode.ElevatedModuleBroker ? "1" : "0";
                 startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_STATE"] = OfficialBuildState;
                 startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_FAILURE"] = OfficialBuildFailureCode;
                 startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_ID"] = OfficialBuildId;

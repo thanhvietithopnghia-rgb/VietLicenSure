@@ -4,6 +4,8 @@ Build date: 2026-08-26
 Published revision: 2026-08-27 (R6)
 Status: `ManagedSigned` — Authenticode, RFC 3161 timestamp, and provenance are verified on managed machines; this is not the public-CA Stable channel
 
+Store preparation note (2026-08-29): a separate `StoreSubmission` candidate is under development and is not released. Its inner EXE is unsigned before Partner Center, trust is bound to the exact Store origin/package identity, and every elevated module is re-dispatched by the compiled launcher into an Administrator-only, hash-verified payload directory. Store certification, three-VM evidence, and independent review remain open gates.
+
 Preview R4 was withdrawn before Stable promotion because its compiled launcher
 contained a BuildId that differed from the Bridge/provenance identity. Preview
 R5 established the canonical v5.0.0.0 identity. Preview R6 is the hotfix

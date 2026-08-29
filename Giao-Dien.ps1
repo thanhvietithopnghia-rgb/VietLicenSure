@@ -91,7 +91,7 @@ try {
     $provenanceState = Get-ToolOfficialBuildState -ManifestPath $provenanceManifest -SignaturePath $provenanceSignature
     $launcherOfficialState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
     $launcherOfficialFailure = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_FAILURE)) { 'NotChecked' } else { [string]$env:TOOL_OFFICIAL_BUILD_FAILURE }
-    if ($launcherOfficialState -in @('Official','Managed') -and [string]$provenanceState.State -eq 'Official') {
+    if ($launcherOfficialState -in @('Official','Managed','Store') -and [string]$provenanceState.State -eq 'Official') {
         $env:TOOL_OFFICIAL_BUILD_STATE = $launcherOfficialState
         $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
     } elseif ($launcherOfficialState -eq 'Modified' -or [string]$provenanceState.State -eq 'Modified') {
@@ -785,7 +785,7 @@ if ($script:officialBuildState -eq 'Managed') {
     $description.Text = Get-DashboardText 'officialBuild.banner.managedTitle'
     $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(7, 89, 133)
     $introSummary.Text = Get-DashboardText 'officialBuild.banner.managedBody'
-} elseif ($script:officialBuildState -ne 'Official') {
+} elseif ($script:officialBuildState -notin @('Official','Store')) {
     if ($script:isUnsignedDevelopmentBuild) {
         $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 225)
         $introAccent.BackColor = [System.Drawing.Color]::FromArgb(217, 119, 6)
@@ -851,7 +851,7 @@ $form.Controls.Add($dashboardPanel)
 $cardDefinitions = @(
     @{ Key="Compatibility"; IconKind="Windows"; Tone="Windows"; Caption=(Get-ToolText -Key "dashboard.windows" -Culture $script:dashboardCulture); Value=[string]$capabilityState.WindowsReleaseName },
     @{ Key="Architecture"; IconKind="Office"; Tone="Office"; Caption=(Get-ToolText -Key "dashboard.office" -Culture $script:dashboardCulture); Value=[string]$capabilityState.OfficeSummary },
-    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'Managed') { Get-DashboardText 'officialBuild.state.managed' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
+    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'Managed') { Get-DashboardText 'officialBuild.state.managed' } elseif ($script:officialBuildState -eq 'Store') { Get-DashboardText 'officialBuild.state.store' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
     @{ Key="Integrity"; IconKind="Check"; Tone="Integrity"; Caption=(Get-ToolText -Key "dashboard.integrity" -Culture $script:dashboardCulture); Value=(Get-ToolText -Key "dashboard.checking" -Culture $script:dashboardCulture) }
 )
 for ($cardIndex = 0; $cardIndex -lt $cardDefinitions.Count; $cardIndex++) {
@@ -2204,7 +2204,7 @@ function Set-DashboardLanguage {
     $title.Text = Get-ToolText -Key "app.title" -Culture $Culture
     $developer.Text = Get-ToolText -Key "app.developer" -Culture $Culture
     $sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer"
-    if ($script:officialBuildState -eq 'Official') {
+    if ($script:officialBuildState -in @('Official','Store')) {
         $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
         $introSummary.Text = Get-ToolText -Key "dashboard.overview.subtitle" -Culture $Culture
     } elseif ($script:officialBuildState -eq 'Managed') {
@@ -2251,6 +2251,8 @@ function Set-DashboardLanguage {
         Get-DashboardText 'officialBuild.state.official'
     } elseif ($script:officialBuildState -eq 'Managed') {
         Get-DashboardText 'officialBuild.state.managed'
+    } elseif ($script:officialBuildState -eq 'Store') {
+        Get-DashboardText 'officialBuild.state.store'
     } elseif ($script:officialBuildState -eq 'Modified') {
         Get-DashboardText 'officialBuild.state.modified'
     } else {
@@ -2339,7 +2341,7 @@ function Set-DashboardTheme {
     $title.ForeColor = $primary
     $developer.ForeColor = $primary
     $version.ForeColor = $muted
-    if ($script:officialBuildState -eq 'Official') {
+    if ($script:officialBuildState -in @('Official','Store')) {
         $introPanel.BackColor = $introSurface
         $introAccent.BackColor = $primary
         $description.ForeColor = $primary
@@ -2496,6 +2498,8 @@ function Update-DashboardStatus {
         Get-DashboardText 'officialBuild.state.official'
     } elseif ($script:officialBuildState -eq 'Managed') {
         Get-DashboardText 'officialBuild.state.managed'
+    } elseif ($script:officialBuildState -eq 'Store') {
+        Get-DashboardText 'officialBuild.state.store'
     } elseif ($script:officialBuildState -eq 'Modified') {
         Get-DashboardText 'officialBuild.state.modified'
     } else {
@@ -2508,7 +2512,7 @@ function Update-DashboardStatus {
     }
     $dashboardCards["Integrity"].Value.ForeColor = if ($IntegrityResult.Valid) { $successColor } else { $warningColor }
     $dashboardCards["Integrity"].Value.Tag = "StatusColor"
-    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -in @('Official','Managed')) { $successColor } else { $warningColor }
+    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -in @('Official','Managed','Store')) { $successColor } else { $warningColor }
     $dashboardCards["SecureLaunch"].Value.Tag = "StatusColor"
     Update-DashboardOfflineUi
 }
@@ -3021,7 +3025,7 @@ function Stop-ActiveTask {
 function Get-ReadyToolModule([string]$moduleId, [bool]$elevatedLaunch) {
     $availability = Test-ToolModuleAvailability -ModuleId $moduleId -CapabilityProfile $capabilityState -SourceDirectory $baseDir
     if (-not $availability.Available) { throw (Get-DashboardText "module.unavailable" @($moduleId, $availability.Message)) }
-    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -notin @('Official','Managed')) {
+    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -notin @('Official','Managed','Store')) {
         throw (Get-DashboardText 'officialBuild.systemChangeBlocked' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL))
     }
     if ($availability.Descriptor.RequiresElevation -and -not $elevatedLaunch) { throw (Get-DashboardText "module.elevationRequired" @($moduleId)) }
@@ -3077,8 +3081,14 @@ function New-ToolElevatedBootstrapArguments {
 
     if (-not (Test-Path -LiteralPath $BridgeScriptPath -PathType Leaf)) { throw 'ElevatedBridgeScriptMissing' }
     if (-not (Test-Path -LiteralPath $TargetFilePath -PathType Leaf)) { throw 'ElevatedBridgeTargetMissing' }
+    $elevatedLauncherPath = [string]$env:TOOL_LAUNCHER_PATH
+    if ([string]::IsNullOrWhiteSpace($elevatedLauncherPath) -or -not (Test-Path -LiteralPath $elevatedLauncherPath -PathType Leaf)) {
+        throw 'ElevatedBrokerLauncherMissing'
+    }
+    $elevatedLauncherItem = Get-Item -LiteralPath $elevatedLauncherPath -Force -ErrorAction Stop
+    if (($elevatedLauncherItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'ElevatedBrokerLauncherReparsePointRejected' }
     $payload = [ordered]@{
-        SchemaVersion = '1.0'
+        SchemaVersion = '2.0'
         CreatedAtUtc = [DateTimeOffset]::UtcNow.ToString('o')
         TargetFilePath = [IO.Path]::GetFullPath($TargetFilePath)
         TargetArguments = [string]$TargetArguments
@@ -3088,7 +3098,7 @@ function New-ToolElevatedBootstrapArguments {
     $payloadJson = $payload | ConvertTo-Json -Depth 5 -Compress
     $payloadBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($payloadJson))
     if ($payloadBase64.Length -gt 24000) { throw 'ElevatedBridgePayloadTooLarge' }
-    return "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"$BridgeScriptPath`" -PayloadBase64 `"$payloadBase64`""
+    return "--elevated-module-broker `"$payloadBase64`""
 }
 
 function Start-ToolModuleProcess {
@@ -3116,6 +3126,7 @@ function Start-ToolModuleProcess {
         }
         if ($Elevate) {
             $startParameters.ArgumentList = New-ToolElevatedBootstrapArguments -BridgeScriptPath $elevatedBridgeScript -TargetFilePath $toolPowerShellPath -TargetArguments $Arguments -HiddenWindow ([bool]$Hidden)
+            $startParameters.FilePath = [IO.Path]::GetFullPath([string]$env:TOOL_LAUNCHER_PATH)
             $startParameters.Verb = "RunAs"
         }
         if ($Hidden) { $startParameters.WindowStyle = "Hidden" }
@@ -3159,6 +3170,7 @@ function Start-DetachedToolModuleProcess {
         $startParameters = @{ FilePath=$toolPowerShellPath; ArgumentList=$Arguments; PassThru=$true }
         if ($Elevate) {
             $startParameters.ArgumentList = New-ToolElevatedBootstrapArguments -BridgeScriptPath $elevatedBridgeScript -TargetFilePath $toolPowerShellPath -TargetArguments $Arguments -HiddenWindow ([bool]$Hidden)
+            $startParameters.FilePath = [IO.Path]::GetFullPath([string]$env:TOOL_LAUNCHER_PATH)
             $startParameters.Verb = "RunAs"
         }
         if ($Hidden) { $startParameters.WindowStyle = "Hidden" }

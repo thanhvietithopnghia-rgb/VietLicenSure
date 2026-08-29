@@ -5,6 +5,8 @@ Tài liệu tóm tắt các thay đổi cốt lõi của những phiên bản c�
 Phiên bản ManagedSigned hiện tại: **v5.0.0.0 — Preview R6**
 FileVersion: **5.0.0.0** · Build **2026.08.26**
 
+Ứng viên `StoreSubmission` đang được chuẩn bị riêng cho Microsoft Store; chưa phải bản đã phát hành. Bản này dùng package identity/origin của Store và broker nâng quyền đã biên dịch để khóa fail-closed qua ranh giới UAC.
+
 Trang Stable công khai mới nhất:
 https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest
 

@@ -35,6 +35,35 @@ function Assert-Contains {
     if ($Text -notmatch $Pattern) { $failures.Add($Message) }
 }
 
+function Test-StoreLauncherTrustProfile {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    try {
+        $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes($Path))
+        $type = $assembly.GetType('ThanhViet.ToolKiemTra.Program', $true)
+        $flags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
+        $expected = [ordered]@{
+            SignedStableBuildMarker = '0'
+            ManagedSignedBuildMarker = '0'
+            StoreBuildMarker = '1'
+            StorePackageName = 'ThanhVit.ToolKimTraBnQuyn'
+            StorePackageVersion = '5.0.0.0'
+            StorePackagePublisherId = '9tjmpwr25h78w'
+            StorePackageFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
+        }
+        foreach ($entry in $expected.GetEnumerator()) {
+            $field = $type.GetField([string]$entry.Key, $flags)
+            if (-not $field -or [string]$field.GetRawConstantValue() -cne [string]$entry.Value) { return $false }
+        }
+        $payloadField = $type.GetField('PayloadFiles', $flags)
+        if (-not $payloadField) { return $false }
+        $payloads = @($payloadField.GetValue($null))
+        return [bool]($payloads.Count -eq 55 -and $payloads -contains 'OFFICIAL-PROVENANCE-v1.json.p7s')
+    } catch {
+        return $false
+    }
+}
+
 function Test-Package {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
@@ -98,6 +127,8 @@ function Test-Package {
         $packagedExe = Join-Path $tempRoot 'Tool-Kiem-Tra-v5.0.exe'
         if (-not (Test-Path -LiteralPath $packagedExe -PathType Leaf)) {
             $failures.Add("$Mode package is missing Tool-Kiem-Tra-v5.0.exe.")
+        } elseif ($Mode -eq 'Store' -and -not (Test-StoreLauncherTrustProfile -Path $packagedExe)) {
+            $failures.Add('Store package contains a DevelopmentUnsigned or mismatched launcher instead of the exact StoreSubmission trust profile.')
         }
     } finally {
         if (Test-Path -LiteralPath $tempRoot) {
@@ -126,6 +157,10 @@ if ($null -ne $storeIdentity) {
     if ([string]$storeIdentity.ProductId -notmatch '^[A-Z0-9]{12}$') { $failures.Add('Store ProductId is invalid.') }
     if ([string]$storeIdentity.PackageIdentityName -notmatch '^[A-Za-z0-9.-]{3,50}$') { $failures.Add('Store PackageIdentityName is invalid.') }
     if ([string]$storeIdentity.PackageIdentityPublisher -notmatch '^CN=[A-Za-z0-9-]+$') { $failures.Add('Store PackageIdentityPublisher is invalid.') }
+    if ([string]$storeIdentity.PackagePublisherId -ne '9tjmpwr25h78w' -or
+        [string]$storeIdentity.PackageFamilyName -ne 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w') {
+        $failures.Add('Store PackagePublisherId/PackageFamilyName is invalid.')
+    }
     foreach ($name in @('ReservedName','PublisherDisplayName','Description','ApplicationDescription')) {
         $property = $storeIdentity.PSObject.Properties[$name]
         if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
@@ -151,6 +186,8 @@ Assert-Contains $scriptText '/fd SHA256' 'MSIX script does not use SHA-256 file 
 Assert-Contains $scriptText '/tr \$TimestampServer /td SHA256' 'MSIX script does not use an RFC3161 SHA-256 timestamp.'
 Assert-Contains $scriptText 'STORE-PRODUCT-IDENTITY\.json' 'MSIX script is not bound to the Partner Center identity file.'
 Assert-Contains $scriptText 'does not match the Partner Center Store identity' 'Store mode does not reject mismatched Partner Center identity values.'
+Assert-Contains $scriptText 'StoreSubmission executable with exact Partner Center identity and signed provenance' 'Store mode does not reject DevelopmentUnsigned launchers.'
+Assert-Contains $scriptText 'MicrosoftStorePackageIdentity' 'Store mode does not require the Store-specific release trust scope.'
 Assert-Contains $scriptText '\[Text\.Encoding\]::UTF8' 'MSIX script does not read Store display text explicitly as UTF-8.'
 Assert-Contains $scriptText 'ReadAllText\(\$unpackedManifestPath, \[Text\.Encoding\]::UTF8\)' 'MSIX script does not verify the unpacked manifest explicitly as UTF-8.'
 Assert-Contains $scriptText 'PackageName.*not valid for an MSIX identity' 'MSIX package identity validation is missing.'
