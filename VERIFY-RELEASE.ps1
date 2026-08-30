@@ -14,6 +14,9 @@ if (([int][bool]$AllowManagedSignedManifest + [int][bool]$AllowStoreManifest + [
 }
 $unsignedExecutableManifest = [bool]($AllowDevelopmentManifest -or $AllowStoreManifest)
 $expectedTrustMode = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
+$expectedApplicationSelfUpdateAllowed = [bool]($expectedTrustMode -eq 'Production')
+$expectedApplicationUpdateAuthority = if ($AllowStoreManifest) { 'MicrosoftStore' } elseif ($AllowManagedSignedManifest) { 'ManagedDeployment' } elseif ($AllowDevelopmentManifest) { 'None' } else { 'PublicStableManifest' }
+$expectedBundledUpdateManifestChannel = if ($AllowStoreManifest) { 'store' } elseif ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = Join-Path $SourceDirectory 'dist' }
 $failures = New-Object System.Collections.Generic.List[string]
@@ -305,8 +308,10 @@ if ($guiText -notmatch 'New-ToolElevatedBootstrapArguments' -or $guiText -notmat
     $elevatedBridgeText -notmatch 'Get-ToolOfficialBuildState' -or
     $elevatedBridgeText -notmatch 'Assert-BridgeOriginalPayloadIntegrity' -or
     $elevatedBridgeText -notmatch 'ConvertFrom-BridgeTargetArguments' -or
+    $elevatedBridgeText -notmatch 'Test-BridgeLocalAbsolutePath' -or
     $elevatedBridgeText -notmatch 'Assert-BridgeModuleArgumentProfile' -or
     $elevatedBridgeText -notmatch 'ElevatedBridgeModuleArgumentNotAllowed' -or
+    $elevatedBridgeText -notmatch 'ElevatedBridgeEnvironmentPathInvalid' -or
     $elevatedBridgeText -notmatch 'DataScope Machine' -or
     $elevatedBridgeText -notmatch '\$protectedScriptPath' -or
     $elevatedBridgeText -notmatch 'ElevatedBridgeScriptBindingInvalid' -or
@@ -314,7 +319,7 @@ if ($guiText -notmatch 'New-ToolElevatedBootstrapArguments' -or $guiText -notmat
     $elevatedBridgeText -notmatch 'ProcessStartInfo' -or
     $elevatedBridgeText -notmatch 'UseShellExecute\s*=\s*\$false' -or
     $elevatedBridgeText -notmatch 'EnvironmentVariables\[\$name\]') {
-    $failures.Add('Thiếu cầu nối UAC đã khóa module/script/runtime và allowlist biến môi trường.')
+    $failures.Add('Thiếu cầu nối UAC đã khóa module/script/runtime, đường dẫn cục bộ và allowlist biến môi trường.')
 }
 if ($launcherText -notmatch 'RequiresAdministrator' -or $launcherText -notmatch 'RelaunchElevated' -or
     $launcherText -notmatch 'ElevatedModuleBroker' -or $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or
@@ -902,6 +907,9 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.AutomaticUpdateCheckTrigger -ne 'UserEnabledOnline' -or
             [bool]$releaseManifest.BackgroundUpdateService -or [bool]$releaseManifest.SilentUpdate -or
             [string]$releaseManifest.ApplicationUpdateSchemaVersion -ne '1.0' -or
+            [bool]$releaseManifest.ApplicationSelfUpdateAllowed -ne $expectedApplicationSelfUpdateAllowed -or
+            [string]$releaseManifest.ApplicationUpdateAuthority -ne $expectedApplicationUpdateAuthority -or
+            [string]$releaseManifest.BundledUpdateManifestChannel -ne $expectedBundledUpdateManifestChannel -or
             [string]$releaseManifest.ApplicationUpdateManifestSignatureUrl -ne 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s' -or
             [string]$releaseManifest.ApplicationUpdateVerification -notmatch 'Pinned detached-CMS manifest' -or
             -not [bool]$releaseManifest.OfflineResetOnEveryLaunch -or
@@ -1030,7 +1038,7 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
 } elseif (Test-Path -LiteralPath $exePath -PathType Leaf) {
     try {
         $applicationUpdateManifest = Get-Content -LiteralPath $applicationUpdateManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-        $expectedUpdateChannel = if ($AllowStoreManifest) { 'store' } elseif ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
+        $expectedUpdateChannel = $expectedBundledUpdateManifestChannel
         if ([string]$applicationUpdateManifest.SchemaVersion -ne '1.0' -or [string]$applicationUpdateManifest.Channel -ne $expectedUpdateChannel -or
             [string]$applicationUpdateManifest.LatestVersion -ne $expectedReleaseVersion -or [string]$applicationUpdateManifest.MinimumUpdaterVersion -ne '4.6.1.0' -or
             [string]$applicationUpdateManifest.PublishedAtUtc -ne $expectedPublishedAtUtc) {

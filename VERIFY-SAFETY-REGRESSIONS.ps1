@@ -1255,7 +1255,8 @@ if ($gui) {
 
             foreach ($functionName in @(
                 'Get-BridgeSha256','Get-BridgeIntegrityManifest','Assert-BridgeOriginalPayloadIntegrity',
-                'ConvertFrom-BridgeTargetArguments','Get-BridgeArgumentValue','Test-BridgePathWithin','Assert-BridgeModuleArgumentProfile')) {
+                'ConvertFrom-BridgeTargetArguments','Get-BridgeArgumentValue','Test-BridgePathWithin',
+                'Test-BridgeLocalAbsolutePath','Assert-BridgeModuleArgumentProfile')) {
                 $functionAst = $elevatedBridge.Ast.Find({
                     param($node)
                     $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $functionName
@@ -1267,6 +1268,18 @@ if ($gui) {
             $parsedValidScan = ConvertFrom-BridgeTargetArguments -Arguments $validScanArguments
             Assert-BridgeModuleArgumentProfile -ModuleId 'cleanup.scan' -ParsedArguments $parsedValidScan `
                 -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            foreach ($unsafePath in @('\\attacker.example\share\reports','\\?\C:\Temp\reports','C:\Temp\report.txt:stream')) {
+                $unsafePathArguments = $validScanArguments.Replace(
+                    "-OutputDir `"$bridgeFixtureRoot`"",
+                    "-OutputDir `"$unsafePath`"")
+                $unsafePathBlocked = $false
+                try {
+                    $parsedUnsafePath = ConvertFrom-BridgeTargetArguments -Arguments $unsafePathArguments
+                    Assert-BridgeModuleArgumentProfile -ModuleId 'cleanup.scan' -ParsedArguments $parsedUnsafePath `
+                        -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+                } catch { $unsafePathBlocked = [string]$_.Exception.Message -eq 'ElevatedBridgePathArgumentInvalid' }
+                if (-not $unsafePathBlocked) { Fail "Broker không chặn đường dẫn nâng quyền không an toàn: $unsafePath" }
+            }
             $moduleConfusionBlocked = $false
             try {
                 $parsedConfusedScan = ConvertFrom-BridgeTargetArguments -Arguments ($validScanArguments + ' -Remediate -DeepClean')

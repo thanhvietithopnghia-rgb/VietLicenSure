@@ -197,6 +197,21 @@ function Test-BridgePathWithin {
     } catch { return $false }
 }
 
+function Test-BridgeLocalAbsolutePath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    try {
+        if ([string]::IsNullOrWhiteSpace($Path) -or $Path -match "[`0`r`n]" -or $Path -notmatch '^[A-Za-z]:\\') {
+            return $false
+        }
+        $fullPath = [IO.Path]::GetFullPath($Path)
+        $root = [IO.Path]::GetPathRoot($fullPath)
+        if ($root -notmatch '^[A-Za-z]:\\$' -or $fullPath.Substring(2).Contains(':') -or $fullPath -match '[*?]') {
+            return $false
+        }
+        return $true
+    } catch { return $false }
+}
+
 function Assert-BridgeModuleArgumentProfile {
     param(
         [Parameter(Mandatory = $true)][string]$ModuleId,
@@ -285,7 +300,8 @@ function Assert-BridgeModuleArgumentProfile {
         throw 'ElevatedBridgeScanScopeInvalid'
     }
     foreach ($pathName in @('outputdir','approvedkmsserverfile','scansettingspath','decisionfile','selectionfile','launcherpath','backupdir')) {
-        if ($parameters.ContainsKey($pathName) -and -not [IO.Path]::IsPathRooted((Get-BridgeArgumentValue -Parameters $parameters -Name $pathName))) {
+        if ($parameters.ContainsKey($pathName) -and
+            -not (Test-BridgeLocalAbsolutePath -Path (Get-BridgeArgumentValue -Parameters $parameters -Name $pathName))) {
             throw 'ElevatedBridgePathArgumentInvalid'
         }
     }
@@ -417,6 +433,18 @@ try {
     $environmentValues['TOOL_EXPECTED_PROCESS_ARCHITECTURE'] = [string]$env:TOOL_EXPECTED_PROCESS_ARCHITECTURE
     $environmentValues['TOOL_POWERSHELL_PATH'] = [string]$env:TOOL_POWERSHELL_PATH
     $environmentValues['TOOL_TOOL_VERSION'] = [string]$env:TOOL_TOOL_VERSION
+    foreach ($pathName in @(
+        'TOOL_APPROVED_KMS_FILE','TOOL_COMPATIBILITY_CATALOG','TOOL_DATA_ROOT',
+        'TOOL_ENTERPRISE_NETWORK_SETTINGS_PATH','TOOL_ENTERPRISE_ROOT','TOOL_LAUNCHER_PATH',
+        'TOOL_LEGACY_DATA_ROOT','TOOL_LOG_PATH','TOOL_OFFLINE_SETTINGS_PATH','TOOL_PLUGIN_DIR',
+        'TOOL_POWERSHELL_PATH','TOOL_SECURE_RUNTIME_DIR','TOOL_TIMELINE_KEY_PATH','TOOL_TIMELINE_PATH',
+        'TOOL_UI_CULTURE_SETTINGS_PATH','TOOL_UI_THEME_SETTINGS_PATH','TOOL_UPDATE_CACHE_ROOT')) {
+        if ($environmentValues.ContainsKey($pathName) -and
+            -not [string]::IsNullOrWhiteSpace([string]$environmentValues[$pathName]) -and
+            -not (Test-BridgeLocalAbsolutePath -Path ([string]$environmentValues[$pathName]))) {
+            throw 'ElevatedBridgeEnvironmentPathInvalid'
+        }
+    }
     if ([string]$environmentValues['TOOL_SECURE_LAUNCH'] -ne '1') { throw 'ElevatedBridgeSecureLaunchRequired' }
     $dataScope = [string]$environmentValues['TOOL_DATA_SCOPE']
     if ($dataScope -notin @('User','Machine')) { throw 'ElevatedBridgeDataScopeInvalid' }

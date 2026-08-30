@@ -38,6 +38,17 @@ $managedBuildId = "$releaseVersion-managed-signed-$releaseDateToken"
 $publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
 $requiresVerifiedProvenance = [bool]($requiresSignedArtifact -or $AllowStoreBuild)
+$bundledUpdateManifestChannel = if ($AllowStoreBuild) { 'store' } elseif ($requiresSignedArtifact) { 'stable' } else { 'development' }
+$applicationSelfUpdateAllowed = [bool]$RequireAuthenticode
+$applicationUpdateAuthority = if ($AllowStoreBuild) {
+    'MicrosoftStore'
+} elseif ($AllowManagedSignedBuild) {
+    'ManagedDeployment'
+} elseif ($AllowUnsignedDevelopmentBuild) {
+    'None'
+} else {
+    'PublicStableManifest'
+}
 $releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
     "$releaseVersion-development-unsigned"
 } elseif ($AllowStoreBuild) {
@@ -1051,6 +1062,9 @@ $releaseManifest = [ordered]@{
     BackgroundUpdateService = [bool]$offlinePolicyMetadata.BackgroundUpdateService
     SilentUpdate = [bool]$offlinePolicyMetadata.SilentUpdate
     ApplicationUpdateSchemaVersion = '1.0'
+    ApplicationSelfUpdateAllowed = $applicationSelfUpdateAllowed
+    ApplicationUpdateAuthority = $applicationUpdateAuthority
+    BundledUpdateManifestChannel = $bundledUpdateManifestChannel
     ApplicationUpdateManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
     ApplicationUpdateManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
     ApplicationUpdateChoices = @('UpdateNow','Later','DismissForSession')
@@ -1261,7 +1275,7 @@ if ($updateAuthenticodeRequired) {
 }
 $applicationUpdateManifest = [ordered]@{
     SchemaVersion = '1.0'
-    Channel = if ($AllowStoreBuild) { 'store' } elseif ($updateAuthenticodeRequired) { 'stable' } else { 'development' }
+    Channel = $bundledUpdateManifestChannel
     LatestVersion = $releaseVersion
     MinimumUpdaterVersion = '4.6.1.0'
     PublishedAtUtc = $publishedAtUtc

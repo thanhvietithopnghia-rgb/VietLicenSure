@@ -293,13 +293,15 @@ try {
         $embeddedBridgeText -notmatch 'ElevatedBrokerCompiledLauncherRequired' -or
         $embeddedBridgeText -notmatch 'Assert-BridgeOriginalPayloadIntegrity' -or
         $embeddedBridgeText -notmatch 'ConvertFrom-BridgeTargetArguments' -or
+        $embeddedBridgeText -notmatch 'Test-BridgeLocalAbsolutePath' -or
         $embeddedBridgeText -notmatch 'Assert-BridgeModuleArgumentProfile' -or
         $embeddedBridgeText -notmatch "'cleanup\.scan'" -or
         $embeddedBridgeText -notmatch 'ElevatedBridgeModuleArgumentNotAllowed' -or
+        $embeddedBridgeText -notmatch 'ElevatedBridgeEnvironmentPathInvalid' -or
         $embeddedBridgeText -notmatch 'DataScope Machine' -or
         $embeddedBridgeText -notmatch '\$protectedScriptPath' -or
         $embeddedBridgeText -notmatch 'TOOL_OFFICIAL_BUILD_ID''\]\s*-ne\s+\$expectedOfficialBuildId') {
-        throw 'Bridge nhúng chưa ràng buộc broker/provenance/BuildId và payload bảo vệ sau UAC.'
+        throw 'Bridge nhúng chưa ràng buộc broker/provenance/BuildId, đường dẫn cục bộ và payload bảo vệ sau UAC.'
     }
     if ($embeddedBridgeText -match '\d+\.\d+\.\d+\.\d+-production-\d{8}') {
         throw 'Bridge nhúng vẫn chứa BuildId hard-code độc lập.'
