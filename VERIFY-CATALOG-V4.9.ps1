@@ -32,8 +32,8 @@ if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) { throw "Missing 
 $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 Assert-CatalogVerification -Condition (Test-ToolSoftwareCatalogObject -Catalog $catalog) -Message 'The bundled v4.9 catalog failed strict schema validation.'
-Assert-CatalogVerification -Condition ([string]$catalog.CatalogVersion -eq '1.6.0.0') -Message 'CatalogVersion must be 1.6.0.0.'
-Assert-CatalogVerification -Condition ([string]$catalog.GeneratedAtUtc -eq '2026-08-22T11:00:00Z') -Message 'GeneratedAtUtc must use the 2026-08-22 maintenance date.'
+Assert-CatalogVerification -Condition ([string]$catalog.CatalogVersion -eq '1.6.1.0') -Message 'CatalogVersion must be 1.6.1.0.'
+Assert-CatalogVerification -Condition ([string]$catalog.GeneratedAtUtc -eq '2026-08-30T15:45:00Z') -Message 'GeneratedAtUtc must use the 2026-08-30 maintenance date.'
 $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
 Assert-CatalogVerification -Condition ($catalogIds.Count -ge 92) -Message 'The v4.9 catalog must contain at least 92 conservative product rules.'
 Assert-CatalogVerification -Condition (@($catalogIds | Select-Object -Unique).Count -eq $catalogIds.Count) -Message 'Catalog product IDs must be unique.'
@@ -103,6 +103,25 @@ $badTask = Copy-CatalogFixture -Catalog $typedFixture
 $badTask.Products[0].TaskEvidence[0].TaskPath = '\Vendor\..\Outside\'
 Assert-CatalogVerification -Condition (-not (Test-ToolSoftwareCatalogObject -Catalog $badTask)) -Message 'A task traversal rule was accepted.'
 
+$baselineFixture = [pscustomobject][ordered]@{
+    CatalogVersion='1.6.1.0'; CatalogSha256=('A' * 64); Products=@($catalog.Products)
+}
+Assert-CatalogVerification -Condition ((Get-ToolSoftwareCatalogUpdateDisposition `
+    -CandidateVersion ([version]'1.6.0.0') -CandidateSha256 ('B' * 64) -TrustedBaseline $baselineFixture) -eq 'LocalNewer') `
+    -Message 'An older signed online catalog was not retained as a no-downgrade LocalNewer result.'
+Assert-CatalogVerification -Condition ((Get-ToolSoftwareCatalogUpdateDisposition `
+    -CandidateVersion ([version]'1.6.1.0') -CandidateSha256 ('A' * 64) -TrustedBaseline $baselineFixture) -eq 'AlreadyCurrent') `
+    -Message 'An identical online catalog was not recognized as AlreadyCurrent.'
+Assert-CatalogVerification -Condition ((Get-ToolSoftwareCatalogUpdateDisposition `
+    -CandidateVersion ([version]'1.6.2.0') -CandidateSha256 ('B' * 64) -TrustedBaseline $baselineFixture) -eq 'Update') `
+    -Message 'A newer online catalog was not accepted for update.'
+$equalVersionConflictBlocked = $false
+try {
+    [void](Get-ToolSoftwareCatalogUpdateDisposition `
+        -CandidateVersion ([version]'1.6.1.0') -CandidateSha256 ('B' * 64) -TrustedBaseline $baselineFixture)
+} catch { $equalVersionConflictBlocked = ([string]$_.Exception.Message -match 'different content') }
+Assert-CatalogVerification -Condition $equalVersionConflictBlocked -Message 'Equal-version different catalog content was not blocked.'
+
 $watermarkRoot = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Catalog-V49-' + [guid]::NewGuid().ToString('N'))
 $previousOverride = [string]$script:ToolSoftwareCatalogDataRootOverride
 try {
@@ -140,5 +159,5 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host ('VERIFY-CATALOG-V4.9: OK (strict fields + compiled profiles + declarative evidence + DPAPI anti-rollback + ' + $catalogIds.Count + ' products)') -ForegroundColor Green
+Write-Host ('VERIFY-CATALOG-V4.9: OK (strict fields + compiled profiles + declarative evidence + no-downgrade online handling + DPAPI anti-rollback + ' + $catalogIds.Count + ' products)') -ForegroundColor Green
 exit 0

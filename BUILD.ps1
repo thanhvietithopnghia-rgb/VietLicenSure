@@ -658,10 +658,10 @@ if (-not $softwareCatalogMetadata -or -not [bool]$softwareCatalogMetadata.Catalo
 $engineeringCatalogRules = @($softwareCatalogMetadata.Products | Where-Object {
     $_.PSObject.Properties['Category'] -and -not [string]::IsNullOrWhiteSpace([string]$_.Category)
 })
-if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.0.0' -or
-    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-22T11:00:00Z' -or
-    @($softwareCatalogMetadata.Products).Count -lt 92 -or $engineeringCatalogRules.Count -lt 16) {
-    throw 'Catalog phần mềm tích hợp cho v5.0 chưa đạt phiên bản 1.6.0.0 / ngày bảo trì 2026-08-22T11:00:00Z / 92 quy tắc / 16 quy tắc kỹ thuật.'
+if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.1.0' -or
+    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-30T15:45:00Z' -or
+    @($softwareCatalogMetadata.Products).Count -lt 93 -or $engineeringCatalogRules.Count -lt 16) {
+    throw 'Catalog phần mềm tích hợp cho v5.0 chưa đạt phiên bản 1.6.1.0 / ngày bảo trì 2026-08-30T15:45:00Z / 93 quy tắc / 16 quy tắc kỹ thuật.'
 }
 
 Write-Host '[1/8] Tạo TOOL-SHA256SUMS.txt...'
@@ -1305,7 +1305,7 @@ $applicationUpdateManifest = [ordered]@{
             'Giao diện hỗ trợ theme theo hệ thống, dark/light override và PerMonitorV2 DPI.',
             'Bổ sung xuất fleet JSON/CSV/HTML/PDF có redaction, chống CSV injection; CLI headless, script Intune/MDM và ma trận VM Windows 10/11.',
             'Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.',
-            'Catalog online 1.6.0.0 bao phủ 92 nhóm sản phẩm, bổ sung mẫu tệp lõi Adobe/Autodesk và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.',
+            'Catalog online 1.6.1.0 bao phủ 93 nhóm sản phẩm, bổ sung nhận diện driver máy in Canon LBP/CAPT và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.',
             'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
             'Các chế độ Quét/Báo cáo chỉ đọc; Khắc phục gỡ đúng khóa hoặc Activation ID xấu, bảo toàn bản quyền hợp lệ cùng tồn tại và chỉ cho phép gỡ hoàn chỉnh ứng dụng được chọn khi danh tính MSI/AppX gắn với nguồn đã được xác minh.',
             'Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.',
@@ -1323,7 +1323,7 @@ $applicationUpdateManifest = [ordered]@{
             'The UI follows the system theme, supports dark/light overrides, and declares PerMonitorV2 DPI awareness.',
             'Fleet JSON/CSV/HTML/PDF export adds redaction and CSV-injection guards, with a headless CLI, Intune/MDM scripts, and a Windows 10/11 VM matrix.',
             'Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.',
-            'Online catalog 1.6.0.0 covers 92 product families, adds Adobe/Autodesk core-file rules, and accepts only signed declarative data with allowlisted fields and profiles.',
+            'Online catalog 1.6.1.0 covers 93 product families, adds Canon LBP/CAPT printer-driver recognition, and accepts only signed declarative data with allowlisted fields and profiles.',
             'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
             'Scan and report modes are read-only; remediation removes only the selected bad key or Activation ID, preserves coexisting genuine licences, and permits complete removal of an explicitly selected application only through a validated source-bound MSI/AppX identity.',
             'Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.',
@@ -1447,7 +1447,7 @@ $infoLines = @(
     'HTML, PDF va cac bao cao dung chung giu du nam o ket qua tren cung mot hang khi du rong; Muc xac minh/Huong xu ly tach thanh o con va chan trang PDF chia hai hang.',
     'Tro ly dong bo day du vi-VN/en-US cho nut, trang thai dong bo va dien giai bao cao hien tai theo ma ket qua.',
     'Tro ly schema 1.1 / knowledge 1.5.1 co tri thuc cuc bo ky CMS SHA-256, ghim chung thu, chong ha phien ban va khong tai cau hoi/bao cao len mang.',
-    'Catalogue phan mem 1.6.0.0 co it nhat 92 quy tac khai bao ky CMS; du lieu online khong duoc mang lenh/script tuy y va Low chi de tham khao.',
+    'Catalogue phan mem 1.6.1.0 co it nhat 93 quy tac khai bao ky CMS; du lieu online khong duoc mang lenh/script tuy y va Low chi de tham khao.',
     'Bao cao Windows/Office thuong van ra kenh KMS khi license o Notification, hien chu ky KMS toi da 180 ngay va ra MAS/PMAS, Activation Program 1.17, lenh erturk-dev.netlify.app/run, TSforge, OHook, KMS toolkit/Microsoft Toolkit con hien huu.',
     'Quet phan mem thuong ra them artifact trong thu muc cai dat thuong mai co gioi han, khong chi du lieu Download; ngay cai duoc chuan hoa yyyy-MM-dd.',
     'Ten man hinh co fallback EDID/DesktopMonitor/PNP; hop chon rieng tu co nut Ban da che, Ban day du noi bo va Huy; timeline tach trang thai hien tai khoi su kien lich su.',

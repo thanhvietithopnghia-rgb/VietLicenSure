@@ -1091,6 +1091,8 @@ $progressPhase = 0
 $taskStartedAt = $null
 $lastProgressHeartbeat = 0
 $taskStallWarningShown = $false
+$taskProgressPhaseIndex = -1
+$taskProgressTargetSeconds = 120
 $buttons = New-Object System.Collections.ArrayList
 $script:reportPresentationCache = @{}
 $script:updatingMainLayout = $false
@@ -2836,6 +2838,71 @@ function Write-ProgressLog([string]$message) {
     [System.Windows.Forms.Application]::DoEvents()
 }
 
+function Get-TaskProgressPlan([string]$TaskKind) {
+    $scanPlan = @(
+        [pscustomobject]@{ Ratio=0.00; Percent=3; Key='progress.phase.prepare' },
+        [pscustomobject]@{ Ratio=0.10; Percent=15; Key='progress.phase.inventory' },
+        [pscustomobject]@{ Ratio=0.36; Percent=42; Key='progress.phase.classify' },
+        [pscustomobject]@{ Ratio=0.62; Percent=70; Key='progress.phase.evidence' },
+        [pscustomobject]@{ Ratio=0.84; Percent=90; Key='progress.phase.finalize' }
+    )
+    $repairPlan = @(
+        [pscustomobject]@{ Ratio=0.00; Percent=3; Key='progress.phase.prepare' },
+        [pscustomobject]@{ Ratio=0.12; Percent=18; Key='progress.phase.backup' },
+        [pscustomobject]@{ Ratio=0.30; Percent=40; Key='progress.phase.apply' },
+        [pscustomobject]@{ Ratio=0.66; Percent=72; Key='progress.phase.verify' },
+        [pscustomobject]@{ Ratio=0.86; Percent=92; Key='progress.phase.finalize' }
+    )
+    $networkPlan = @(
+        [pscustomobject]@{ Ratio=0.00; Percent=5; Key='progress.phase.prepare' },
+        [pscustomobject]@{ Ratio=0.18; Percent=28; Key='progress.phase.network' },
+        [pscustomobject]@{ Ratio=0.58; Percent=68; Key='progress.phase.verify' },
+        [pscustomobject]@{ Ratio=0.82; Percent=90; Key='progress.phase.finalize' }
+    )
+    $reportPlan = @(
+        [pscustomobject]@{ Ratio=0.00; Percent=4; Key='progress.phase.prepare' },
+        [pscustomobject]@{ Ratio=0.12; Percent=20; Key='progress.phase.inventory' },
+        [pscustomobject]@{ Ratio=0.42; Percent=52; Key='progress.phase.evidence' },
+        [pscustomobject]@{ Ratio=0.72; Percent=78; Key='progress.phase.package' },
+        [pscustomobject]@{ Ratio=0.88; Percent=93; Key='progress.phase.finalize' }
+    )
+    if ($TaskKind -in @('CleanupScan','DeepLicenseScan','ForensicsScan')) { return $scanPlan }
+    if ($TaskKind -in @('CleanupRemediate','CleanupDeep','CleanupScanRepair','CleanupRestore','OemApply')) { return $repairPlan }
+    if ($TaskKind -in @('SoftwareCatalogUpdate','ApplicationUpdateCheck','ApplicationUpdateApply')) { return $networkPlan }
+    if ($TaskKind -in @('Report','CleanupBackup','OemInspect','CertificateAudit','PluginAudit','TimelineExport')) { return $reportPlan }
+    return $scanPlan
+}
+
+function Update-TaskProgressDisplay([TimeSpan]$Elapsed) {
+    $targetSeconds = [Math]::Max(30, [int]$script:taskProgressTargetSeconds)
+    $ratio = [Math]::Min(0.98, [Math]::Max(0.0, $Elapsed.TotalSeconds / $targetSeconds))
+    $plan = @(Get-TaskProgressPlan -TaskKind ([string]$script:activeTaskKind))
+    $phaseIndex = 0
+    for ($index = 0; $index -lt $plan.Count; $index++) {
+        if ($ratio -ge [double]$plan[$index].Ratio) { $phaseIndex = $index }
+    }
+    $phase = $plan[$phaseIndex]
+    $nextPercent = if ($phaseIndex -lt ($plan.Count - 1)) { [int]$plan[$phaseIndex + 1].Percent } else { 98 }
+    $phaseStart = [double]$phase.Ratio
+    $phaseEnd = if ($phaseIndex -lt ($plan.Count - 1)) { [double]$plan[$phaseIndex + 1].Ratio } else { 1.0 }
+    $phaseRatio = if ($phaseEnd -gt $phaseStart) { [Math]::Min(1.0, ($ratio - $phaseStart) / ($phaseEnd - $phaseStart)) } else { 1.0 }
+    $percent = [int][Math]::Min(98, [Math]::Round(([int]$phase.Percent + (($nextPercent - [int]$phase.Percent) * $phaseRatio))))
+    $remainingSeconds = [Math]::Max(0, [int][Math]::Ceiling($targetSeconds - $Elapsed.TotalSeconds))
+    $remainingText = if ($remainingSeconds -gt 0) {
+        '{0:00}:{1:00}' -f [Math]::Floor($remainingSeconds / 60), ($remainingSeconds % 60)
+    } else {
+        Get-DashboardText 'progress.eta.finishing'
+    }
+    $phaseText = Get-DashboardText ([string]$phase.Key)
+    $activityLabel.Text = Get-DashboardText 'progress.phase.summary' @($percent, $phaseText, $remainingText)
+    $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
+    $progressBar.Value = [Math]::Max(0, [Math]::Min(100, $percent))
+    if ($phaseIndex -ne [int]$script:taskProgressPhaseIndex) {
+        $script:taskProgressPhaseIndex = $phaseIndex
+        Write-ProgressLog (Get-DashboardText 'progress.phase.log' @($percent, $phaseText))
+    }
+}
+
 function Refresh-DashboardLocalizedActivity {
     if (-not $script:hasTaskActivity) {
         $status.Text = Get-DashboardText "status.chooseTask"
@@ -2878,12 +2945,15 @@ function Start-ProgressDisplay([string]$action, [string]$detail, [bool]$preserve
     $script:taskStallWarningShown = $false
     $script:progressTick = 0
     $script:progressPhase = 0
+    $script:taskProgressPhaseIndex = -1
+    $script:taskProgressTargetSeconds = 120
     $activityLabel.Text = $detail
     $activityLabel.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
     $elapsedLabel.Text = "00:00"
     $progressBar.Value = 0
-    $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
-    $progressBar.MarqueeAnimationSpeed = 24
+    $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
+    $progressBar.MarqueeAnimationSpeed = 0
+    $progressBar.Value = 2
     Update-MainLayout
     Write-ProgressLog (Get-ToolText -Key "progress.started" -Culture $script:dashboardCulture -FormatArguments @($action))
     [void](Write-ToolLog -Level "INFO" -Event "Action.Start" -Message $action -Data ([ordered]@{
@@ -3826,12 +3896,28 @@ function Complete-SoftwareCatalogOnlineUpdate {
             if ($updatedSoftwareCatalog) { $script:softwareCatalogFreshnessState = Get-ToolSoftwareCatalogFreshness -Catalog $updatedSoftwareCatalog }
             if ($script:lastIntegrityResult) { Update-DashboardStatus -IntegrityResult $script:lastIntegrityResult }
         } catch {}
-        $status.Text = Get-DashboardText "software.online.successStatus" @($result.CatalogVersion, $result.ProductRuleCount)
+        $resultCode = if ($result.PSObject.Properties['ResultCode']) { [string]$result.ResultCode } else { 'Updated' }
+        $downloadedVersion = if ($result.PSObject.Properties['DownloadedCatalogVersion']) { [string]$result.DownloadedCatalogVersion } else { [string]$result.CatalogVersion }
+        if ($resultCode -eq 'LocalNewer') {
+            $status.Text = Get-DashboardText 'software.online.localNewerStatus' @($result.CatalogVersion, $downloadedVersion)
+            $successLog = Get-DashboardText 'software.online.localNewerLog' @($result.CatalogVersion, $downloadedVersion)
+            $successMessage = Get-DashboardText 'software.online.localNewerMessage' @($result.CatalogVersion, $downloadedVersion, $result.ProductRuleCount)
+            $successTitle = Get-DashboardText 'software.online.readyTitle'
+        } elseif ($resultCode -eq 'AlreadyCurrent') {
+            $status.Text = Get-DashboardText 'software.online.alreadyCurrentStatus' @($result.CatalogVersion, $result.ProductRuleCount)
+            $successLog = Get-DashboardText 'software.online.alreadyCurrentLog' @($result.CatalogVersion)
+            $successMessage = Get-DashboardText 'software.online.alreadyCurrentMessage' @($result.CatalogVersion, $result.ProductRuleCount)
+            $successTitle = Get-DashboardText 'software.online.readyTitle'
+        } else {
+            $status.Text = Get-DashboardText "software.online.successStatus" @($result.CatalogVersion, $result.ProductRuleCount)
+            $successLog = Get-DashboardText "software.online.successLog" @($result.CatalogVersion, $result.ProductRuleCount, $result.CachePath)
+            $successMessage = Get-DashboardText "software.online.successMessage" @($result.CatalogVersion, $result.ProductRuleCount)
+            $successTitle = Get-DashboardText "software.online.successTitle"
+        }
         $status.ForeColor = [System.Drawing.Color]::DarkGreen
-        Write-ProgressLog (Get-DashboardText "software.online.successLog" @($result.CatalogVersion, $result.ProductRuleCount, $result.CachePath))
+        Write-ProgressLog $successLog
         [System.Windows.Forms.MessageBox]::Show(
-            (Get-DashboardText "software.online.successMessage" @($result.CatalogVersion, $result.ProductRuleCount)),
-            (Get-DashboardText "software.online.successTitle"), "OK", "Information") | Out-Null
+            $successMessage, $successTitle, "OK", "Information") | Out-Null
         if ($shouldScan) { Start-Cleanup -ScanScope $requestedScanScope }
         return
     }
@@ -4757,7 +4843,7 @@ function Get-GuiThirdPartyStandaloneCleanupRows {
         $rows.Add([pscustomobject][ordered]@{
             Id=('standalone:' + [string]$candidate.Id); Name=[string]$candidate.Name; Version=''; Publisher=''
             LicenseModel='Unknown'; AssessmentCode='Suspicious'; TechnicalStatus=(Get-DashboardText 'report.software.status.suspicious')
-            Confidence='Medium'; Evidence=@($candidate.Evidence); NeedsReview=$true; CleanupFinding=$true
+            Confidence='Medium'; AttentionLevel='High'; AssessmentSortPriority=0; Evidence=@($candidate.Evidence); NeedsReview=$true; CleanupFinding=$true
             IsSystemComponent=$false; SystemComponentReason=''
             RemediationSupported=$true; CleanupCandidateId=[string]$candidate.Id
             CleanupRemediationMode=[string]$candidate.RemediationMode; OfficialReferenceUrl=''
@@ -4869,6 +4955,7 @@ function Show-ThirdPartyAssessmentResults {
     $standaloneRows = @(Get-GuiThirdPartyStandaloneCleanupRows -Candidates @($Scan.ThirdPartyCandidates))
     $allApplications = @($inventoryApplications) + @($standaloneRows)
     $sortProperties = @(
+        @{ Expression = { if ($_.PSObject.Properties['AssessmentSortPriority']) { [int]$_.AssessmentSortPriority } else { 500 } }; Ascending = $true }
         @{ Expression = { if (Test-GuiThirdPartyDirectRemediationEvidence -Application $_) { 0 } elseif (Test-GuiThirdPartySelectionAllowed -Application $_) { 1 } else { 2 } }; Ascending = $true }
         @{ Expression = { [string]$_.Name }; Ascending = $true }
         @{ Expression = { [string]$_.Publisher }; Ascending = $true }
@@ -5008,25 +5095,26 @@ function Show-ThirdPartyAssessmentResults {
 
     $resizeListColumns = {
         param($Target)
-        if ($null -eq $Target -or $Target.Columns.Count -lt 6) { return }
+        if ($null -eq $Target -or $Target.Columns.Count -lt 7) { return }
         $availableWidth = [Math]::Max(280, [int]$Target.ClientSize.Width - 8)
         $Target.BeginUpdate()
         try {
             if ($availableWidth -lt 860) {
                 # At narrow widths, keep just identity, version and status. All
                 # hidden values remain visible in the word-wrapped detail pane.
-                $applicationWidth = [Math]::Max(170, [int][Math]::Floor($availableWidth * 0.48))
-                $versionWidth = [Math]::Max(80, [int][Math]::Floor($availableWidth * 0.16))
-                $statusWidth = [Math]::Max(1, $availableWidth - $applicationWidth - $versionWidth)
-                $widths = @($applicationWidth, $versionWidth, 0, 0, $statusWidth, 0)
+                $applicationWidth = [Math]::Max(155, [int][Math]::Floor($availableWidth * 0.43))
+                $priorityWidth = [Math]::Max(84, [int][Math]::Floor($availableWidth * 0.17))
+                $statusWidth = [Math]::Max(1, $availableWidth - $applicationWidth - $priorityWidth)
+                $widths = @($applicationWidth, $priorityWidth, 0, 0, 0, $statusWidth, 0)
             } else {
-                $applicationWidth = [Math]::Max(190, [int][Math]::Floor($availableWidth * 0.25))
-                $versionWidth = [Math]::Max(75, [int][Math]::Floor($availableWidth * 0.11))
-                $publisherWidth = [Math]::Max(110, [int][Math]::Floor($availableWidth * 0.18))
-                $modelWidth = [Math]::Max(80, [int][Math]::Floor($availableWidth * 0.13))
-                $statusWidth = [Math]::Max(130, [int][Math]::Floor($availableWidth * 0.18))
-                $confidenceWidth = [Math]::Max(1, $availableWidth - $applicationWidth - $versionWidth - $publisherWidth - $modelWidth - $statusWidth)
-                $widths = @($applicationWidth, $versionWidth, $publisherWidth, $modelWidth, $statusWidth, $confidenceWidth)
+                $applicationWidth = [Math]::Max(180, [int][Math]::Floor($availableWidth * 0.22))
+                $priorityWidth = [Math]::Max(82, [int][Math]::Floor($availableWidth * 0.10))
+                $versionWidth = [Math]::Max(70, [int][Math]::Floor($availableWidth * 0.09))
+                $publisherWidth = [Math]::Max(105, [int][Math]::Floor($availableWidth * 0.16))
+                $modelWidth = [Math]::Max(80, [int][Math]::Floor($availableWidth * 0.12))
+                $statusWidth = [Math]::Max(125, [int][Math]::Floor($availableWidth * 0.18))
+                $confidenceWidth = [Math]::Max(1, $availableWidth - $applicationWidth - $priorityWidth - $versionWidth - $publisherWidth - $modelWidth - $statusWidth)
+                $widths = @($applicationWidth, $priorityWidth, $versionWidth, $publisherWidth, $modelWidth, $statusWidth, $confidenceWidth)
             }
             for ($columnIndex = 0; $columnIndex -lt $widths.Count; $columnIndex++) {
                 $Target.Columns[$columnIndex].Width = [int]$widths[$columnIndex]
@@ -5046,6 +5134,7 @@ function Show-ThirdPartyAssessmentResults {
         $application = $metadata.Application
         $lines = New-Object System.Collections.Generic.List[string]
         $lines.Add((Get-DashboardText 'software.results.column.application') + ': ' + [string]$application.Name)
+        $lines.Add((Get-DashboardText 'software.results.column.priority') + ': ' + [string]$metadata.PriorityText)
         $lines.Add((Get-DashboardText 'software.results.column.version') + ': ' + [string]$application.Version)
         $lines.Add((Get-DashboardText 'software.results.column.publisher') + ': ' + [string]$application.Publisher)
         $lines.Add((Get-DashboardText 'software.results.column.model') + ': ' + [string]$metadata.LicenseText)
@@ -5093,6 +5182,7 @@ function Show-ThirdPartyAssessmentResults {
         $list.MultiSelect = $true
         $list.Dock = "Fill"
         [void]$list.Columns.Add((Get-DashboardText "software.results.column.application"), 220)
+        [void]$list.Columns.Add((Get-DashboardText "software.results.column.priority"), 92)
         [void]$list.Columns.Add((Get-DashboardText "software.results.column.version"), 92)
         [void]$list.Columns.Add((Get-DashboardText "software.results.column.publisher"), 152)
         [void]$list.Columns.Add((Get-DashboardText "software.results.column.model"), 110)
@@ -5145,6 +5235,13 @@ function Show-ThirdPartyAssessmentResults {
             if (-not $confidenceLabels.ContainsKey($confidence)) { $confidence = 'Low' }
             $licenseText = [string]$licenseLabels[$licenseModel]
             $confidenceText = [string]$confidenceLabels[$confidence]
+            $attentionLevel = if ($application.PSObject.Properties['AttentionLevel']) { [string]$application.AttentionLevel } else { 'Low' }
+            $priorityText = switch ($attentionLevel) {
+                'High' { Get-DashboardText 'software.results.priority.high' }
+                'Medium' { Get-DashboardText 'software.results.priority.medium' }
+                'System' { Get-DashboardText 'software.results.priority.system' }
+                default { Get-DashboardText 'software.results.priority.low' }
+            }
             $presenceState = if ($application.PSObject.Properties['PresenceState'] -and $application.PresenceState) { [string]$application.PresenceState } else { 'UnverifiedPresence' }
             $presenceText = if ($presenceLabels.ContainsKey($presenceState)) { [string]$presenceLabels[$presenceState] } else { [string]$presenceLabels.UnverifiedPresence }
             $statusText = Get-GuiThirdPartyDisplayStatus -Application $application
@@ -5152,6 +5249,7 @@ function Show-ThirdPartyAssessmentResults {
                 $statusText = $presenceText + ' | ' + $statusText
             }
             $row = New-Object System.Windows.Forms.ListViewItem([string]$application.Name)
+            [void]$row.SubItems.Add($priorityText)
             [void]$row.SubItems.Add([string]$application.Version)
             [void]$row.SubItems.Add([string]$application.Publisher)
             [void]$row.SubItems.Add($licenseText)
@@ -5160,7 +5258,7 @@ function Show-ThirdPartyAssessmentResults {
             $row.Tag = [pscustomobject]@{
                 Application=$application; CandidateId=$candidateId; Actionable=$actionable; SelectionAllowed=$selectionAllowed
                 GuidanceOnly=$guidanceOnly; IsSystemComponent=$IsSystemView; EvidenceText=$evidenceText; ActionText=$actionText
-                LicenseText=$licenseText; ConfidenceText=$confidenceText; PresenceText=$presenceText; StatusText=$statusText
+                PriorityText=$priorityText; LicenseText=$licenseText; ConfidenceText=$confidenceText; PresenceText=$presenceText; StatusText=$statusText
             }
             $row.ToolTipText = "$([string]$application.Name)`r`n$statusText`r`n$evidenceText`r`n$actionText"
             if (-not $selectionAllowed) { $row.ForeColor = [System.Drawing.Color]::FromArgb(105, 112, 125) }
@@ -7911,16 +8009,11 @@ $timer.Add_Tick({
         $elapsed = (Get-Date) - $script:taskStartedAt
         $elapsedSeconds = [int][Math]::Floor($elapsed.TotalSeconds)
         $elapsedLabel.Text = "{0:00}:{1:00}" -f [Math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds
-        if ($elapsedSeconds -ge ($script:lastProgressHeartbeat + 10)) {
-            $script:lastProgressHeartbeat = $elapsedSeconds
-            $elapsedText = "{0:00}:{1:00}" -f [Math]::Floor($elapsed.TotalMinutes), $elapsed.Seconds
-            Write-ProgressLog (Get-ToolText -Key "progress.taskRunning" -Culture $script:dashboardCulture -FormatArguments @($elapsedText))
-        }
-        if ($elapsedSeconds -ge 60 -and -not $script:taskStallWarningShown) {
+        Update-TaskProgressDisplay -Elapsed $elapsed
+        if ($elapsedSeconds -ge 120 -and -not $script:taskStallWarningShown) {
             $script:taskStallWarningShown = $true
             $slowMessage = Get-ToolText -Key "progress.slowTask" -Culture $script:dashboardCulture
             Write-ProgressLog $slowMessage
-            $activityLabel.Text = $slowMessage
             [void](Write-ToolLog -Level "WARN" -Event "Action.Slow" -Message $slowMessage -Data ([ordered]@{
                 TaskKind = $script:activeTaskKind
                 ModuleId = $script:activeModuleId

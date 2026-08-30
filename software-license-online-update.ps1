@@ -35,7 +35,7 @@ try {
     exit 3
 } catch {
     $failure = [pscustomobject][ordered]@{
-        Success=$false; CatalogVersion=''; ProductRuleCount=0; CachePath=(Get-ToolSoftwareCatalogCachePath)
+        Success=$false; UpdateApplied=$false; ResultCode='Failed'; CatalogVersion=''; DownloadedCatalogVersion=''; ProductRuleCount=0; CachePath=(Get-ToolSoftwareCatalogCachePath)
         SourceUrl=$CatalogUrl; Sha256=''; StartedAtUtc=''; CompletedAtUtc=[DateTime]::UtcNow.ToString('o')
         Error=[string]$_.Exception.Message
         ErrorCode=$(if (Get-Command Get-ToolSoftwareCatalogFailureCode -ErrorAction SilentlyContinue) { Get-ToolSoftwareCatalogFailureCode -Message ([string]$_.Exception.Message) } else { 'Unknown' })

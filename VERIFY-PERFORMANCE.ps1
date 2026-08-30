@@ -212,7 +212,7 @@ try {
     }
     foreach ($requiredToken in @(
         'Get-ToolSoftwareSignatureStatesParallel','ToolSoftwareDeepDirectoryCache','EnumerateFileSystemInfos',
-        'CreateRunspacePool(1, 4)','New-ToolSoftwareMergeDescriptor','quickSignatureResults',
+        'CreateRunspacePool(1, [Math]::Min(8','ProcessorCount','New-ToolSoftwareMergeDescriptor','quickSignatureResults',
         'NameBucket','clustersByNameBucket','externalEvidenceByApplication','externalEvidenceByVendor','resultData'
     )) {
         if ($softwareInventoryText -notmatch [regex]::Escape($requiredToken)) {

@@ -82,8 +82,8 @@ $runtime = Read-And-Parse 'Tool-Runtime.ps1'
 
 try {
     $viStrings = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ([string]$viStrings.'officialBuild.banner.managedTitle' -match '(?i)ManagedSigned|xác minh' -or
-        [string]$viStrings.'officialBuild.banner.managedTitle' -ne 'Bản đang chạy bình thường' -or
+    if ([string]$viStrings.'officialBuild.banner.managedTitle' -match '(?i)ManagedSigned|xác minh|chạy bình thường' -or
+        [string]$viStrings.'officialBuild.banner.managedTitle' -ne 'Kết quả kiểm tra gần nhất' -or
         [string]$viStrings.'dashboard.runMode' -ne 'BẢN ĐANG DÙNG') {
         Fail 'Banner bản đang dùng vẫn lộ thuật ngữ phát hành hoặc chưa dùng câu chữ phổ thông.'
     }
@@ -1845,11 +1845,11 @@ if ($softwareInventory) {
         $catalogSignaturePath = $catalogPath + '.p7s'
         $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
-        if ([string]$catalog.CatalogVersion -ne '1.6.0.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-22T11:00:00Z' -or
-            $catalogIds.Count -lt 92 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
-            Fail 'Catalogue phần mềm v4.9 chưa đạt 1.6.0.0 / ngày bảo trì / 92 quy tắc duy nhất.'
+        if ([string]$catalog.CatalogVersion -ne '1.6.1.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-30T15:45:00Z' -or
+            $catalogIds.Count -lt 93 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
+            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.1.0 / ngày bảo trì / 93 quy tắc duy nhất.'
         }
-        foreach ($requiredCatalogId in @('iobit-driver-booster','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
+        foreach ($requiredCatalogId in @('iobit-driver-booster','canon-lbp-capt-printer-driver','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
             if ($catalogIds -notcontains $requiredCatalogId) { Fail "Catalogue phần mềm thiếu quy tắc: $requiredCatalogId" }
         }
         $blankNamePatternCatalog = ($catalog | ConvertTo-Json -Depth 64 | ConvertFrom-Json)
@@ -1864,7 +1864,7 @@ if ($softwareInventory) {
         }
         $trustedBundledCatalog = Import-ToolSoftwareCatalogFile -Path $catalogPath -SignaturePath $catalogSignaturePath -Source 'Bundled' -RequireSignature
         if (-not $trustedBundledCatalog -or -not [bool]$trustedBundledCatalog.CatalogSignatureValid -or
-            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.0.0') {
+            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.1.0') {
             Fail 'Catalogue phần mềm tích hợp chưa mở được bằng chữ ký CMS và signer đã ghim.'
         }
         $forgedCatalog = (Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json)
@@ -1919,6 +1919,7 @@ if ($softwareInventory) {
             (New-ToolSoftwareInventoryRecord -Name 'IDM 6.42' -Version '6.42' -Publisher 'Tonec' -InstallLocation 'C:\Fixture\IDM' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Zoom Workplace' -Version '6.0' -Publisher 'Zoom Video Communications, Inc.' -InstallLocation 'C:\Fixture\Zoom' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'MATLAB Runtime R2025a' -Version '25.1' -Publisher 'MathWorks' -InstallLocation 'C:\Fixture\MATLABRuntime' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Canon LBP2900 CAPT Printer Driver' -Version '3.30' -Publisher 'Canon Inc.' -InstallLocation 'C:\Fixture\CanonLBP2900' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Microsoft Visual Studio Community 2022' -Version '17.0' -Publisher 'Microsoft Corporation' -InstallLocation 'C:\Fixture\VSCommunity' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Microsoft Visual Studio Professional 2022' -Version '17.0' -Publisher 'Microsoft Corporation' -InstallLocation 'C:\Fixture\VSProfessional' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'ABBYY FineReader PDF' -Version '16.0' -Publisher 'ABBYY Development, Inc.' -InstallLocation 'C:\Fixture\FineReader' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
@@ -1936,6 +1937,7 @@ if ($softwareInventory) {
         $idmResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'internet-download-manager' })
         $zoomResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'communication-freemium' })
         $matlabRuntimeResult = @($classificationResults | Where-Object { $_.Name -eq 'MATLAB Runtime R2025a' })
+        $canonLbpResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'canon-lbp-capt-printer-driver' })
         $visualStudioCommunityResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'microsoft-visual-studio-community' })
         $visualStudioPaidResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'microsoft-visual-studio-paid' })
         $abbyyResult = @($classificationResults | Where-Object { $_.Name -eq 'ABBYY FineReader PDF' })
@@ -1957,6 +1959,18 @@ if ($softwareInventory) {
         if ($matlabRuntimeResult.Count -ne 1 -or [string]$matlabRuntimeResult[0].CatalogProductId -ne 'mathworks-matlab-simulink' -or
             [string]$matlabRuntimeResult[0].LicenseModel -ne 'Paid' -or [bool]$matlabRuntimeResult[0].IsSystemComponent) {
             Fail 'MATLAB Runtime vẫn bị quy tắc Driver tổng quát chiếm trước.'
+        }
+        if ($canonLbpResult.Count -ne 1 -or [string]$canonLbpResult[0].CatalogLicenseModel -ne 'Driver' -or
+            -not [bool]$canonLbpResult[0].IsSystemComponent -or [string]$canonLbpResult[0].AttentionLevel -ne 'System' -or
+            [bool]$canonLbpResult[0].RemediationSupported) {
+            Fail 'Canon LBP2900 chưa được nhận diện là driver máy in và loại khỏi luồng xử lý phần mềm.'
+        }
+        $priorityOrder = @($classificationResults | Where-Object { -not [bool]$_.IsSystemComponent } | Select-Object -ExpandProperty AssessmentSortPriority)
+        for ($priorityIndex = 1; $priorityIndex -lt $priorityOrder.Count; $priorityIndex++) {
+            if ([int]$priorityOrder[$priorityIndex] -lt [int]$priorityOrder[$priorityIndex - 1]) {
+                Fail 'Kết quả phần mềm chưa được sắp theo mức cần xử lý Cao, Trung bình, Thấp.'
+                break
+            }
         }
         if ($visualStudioCommunityResult.Count -ne 1 -or [string]$visualStudioCommunityResult[0].LicenseModel -ne 'Free' -or
             $visualStudioPaidResult.Count -ne 1 -or [string]$visualStudioPaidResult[0].LicenseModel -ne 'Paid') {

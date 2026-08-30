@@ -759,6 +759,27 @@ function Get-ToolSoftwareCatalogFailureCode {
     return 'Unknown'
 }
 
+function Get-ToolSoftwareCatalogUpdateDisposition {
+    param(
+        [Parameter(Mandatory = $true)][version]$CandidateVersion,
+        [Parameter(Mandatory = $true)][ValidatePattern('^[0-9A-Fa-f]{64}$')][string]$CandidateSha256,
+        [AllowNull()][object]$TrustedBaseline
+    )
+
+    if (-not $TrustedBaseline) { return 'Update' }
+    $baselineVersion = [version](Get-ToolSoftwareOptionalPropertyString -InputObject $TrustedBaseline -Name 'CatalogVersion')
+    $baselineSha256 = Get-ToolSoftwareOptionalPropertyString -InputObject $TrustedBaseline -Name 'CatalogSha256'
+    if ($baselineSha256 -notmatch '^[0-9A-Fa-f]{64}$') {
+        throw 'Trusted local catalog baseline has an invalid content hash.'
+    }
+    if ($CandidateVersion -lt $baselineVersion) { return 'LocalNewer' }
+    if ($CandidateVersion -gt $baselineVersion) { return 'Update' }
+    if (-not [string]::Equals($CandidateSha256, $baselineSha256, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Downloaded catalog reuses a trusted version with different content.'
+    }
+    return 'AlreadyCurrent'
+}
+
 function Update-ToolSoftwareLicenseCatalog {
     param(
         [Parameter(Mandatory = $true)][switch]$ConsentGranted,
@@ -789,9 +810,6 @@ function Update-ToolSoftwareLicenseCatalog {
         if (-not (Test-ToolSoftwareCatalogObject -Catalog $catalog)) { throw 'Downloaded catalog failed schema validation.' }
         $candidateVersion = [version](Get-ToolSoftwareOptionalPropertyString -InputObject $catalog -Name 'CatalogVersion')
         $candidateSha = Get-ToolSoftwareSha256Bytes -Bytes $contentBytes
-        if (-not (Test-ToolSoftwareCatalogAllowedByWatermark -CatalogVersion $candidateVersion -CatalogSha256 $candidateSha)) {
-            throw 'Downloaded catalog is older than or conflicts with the protected last-seen version.'
-        }
         $cachePath = Get-ToolSoftwareCatalogCachePath
         $cacheSignaturePath = Get-ToolSoftwareCatalogCacheSignaturePath
         $previousCachePath = Get-ToolSoftwareCatalogPreviousCachePath
@@ -804,12 +822,26 @@ function Update-ToolSoftwareLicenseCatalog {
         $trustedBaselines = New-Object System.Collections.Generic.List[object]
         foreach ($trustedCatalog in @($bundled,$existing,$previous)) { if ($trustedCatalog) { $trustedBaselines.Add($trustedCatalog) } }
         $baselineCatalog = @($trustedBaselines.ToArray() | Sort-Object { [version]$_.CatalogVersion } -Descending | Select-Object -First 1)[0]
-        if ($baselineCatalog) {
+        $updateDisposition = Get-ToolSoftwareCatalogUpdateDisposition `
+            -CandidateVersion $candidateVersion -CandidateSha256 $candidateSha -TrustedBaseline $baselineCatalog
+        if ($updateDisposition -in @('LocalNewer','AlreadyCurrent')) {
             $baselineVersion = [version](Get-ToolSoftwareOptionalPropertyString -InputObject $baselineCatalog -Name 'CatalogVersion')
-            if ($candidateVersion -lt $baselineVersion) { throw 'Downloaded catalog version is older than the trusted local baseline.' }
-            if ($candidateVersion -eq $baselineVersion -and $candidateSha -ne (Get-ToolSoftwareOptionalPropertyString -InputObject $baselineCatalog -Name 'CatalogSha256')) {
-                throw 'Downloaded catalog reuses a trusted version with different content.'
+            $baselineSha = Get-ToolSoftwareOptionalPropertyString -InputObject $baselineCatalog -Name 'CatalogSha256'
+            [void](Set-ToolSoftwareCatalogWatermark -CatalogVersion $baselineVersion -CatalogSha256 $baselineSha)
+            return [pscustomobject][ordered]@{
+                Success=$true; UpdateApplied=$false; ResultCode=$updateDisposition
+                CatalogVersion=$baselineVersion.ToString(); DownloadedCatalogVersion=$candidateVersion.ToString()
+                ProductRuleCount=[int]@(Get-ToolSoftwareOptionalPropertyValues -InputObject $baselineCatalog -Name 'Products').Count
+                CachePath=(Get-ToolSoftwareOptionalPropertyString -InputObject $baselineCatalog -Name 'CatalogPath')
+                SignaturePath=(Get-ToolSoftwareOptionalPropertyString -InputObject $baselineCatalog -Name 'CatalogSignaturePath')
+                SourceUrl=$uri.AbsoluteUri; SignatureUrl=$signatureUri.AbsoluteUri
+                Sha256=$baselineSha; DownloadedSha256=$candidateSha; SignatureValid=$true
+                StartedAtUtc=$started.ToString('o'); CompletedAtUtc=[DateTime]::UtcNow.ToString('o'); Error=''; ErrorCode=''
+                UploadedInventory=$false; SentLicenseKeys=$false
             }
+        }
+        if (-not (Test-ToolSoftwareCatalogAllowedByWatermark -CatalogVersion $candidateVersion -CatalogSha256 $candidateSha)) {
+            throw 'Downloaded catalog is older than or conflicts with the protected last-seen version.'
         }
         $cacheDirectory = Split-Path -Parent $cachePath
         if (-not (Test-Path -LiteralPath $cacheDirectory -PathType Container)) {
@@ -843,17 +875,18 @@ function Update-ToolSoftwareLicenseCatalog {
         if (-not $committed) { throw 'Catalog cache could not be reopened after commit; the previous signed cache remains available.' }
         [void](Set-ToolSoftwareCatalogWatermark -CatalogVersion $candidateVersion -CatalogSha256 $candidateSha)
         return [pscustomobject][ordered]@{
-            Success=$true
+            Success=$true; UpdateApplied=$true; ResultCode='Updated'
             CatalogVersion=(Get-ToolSoftwareOptionalPropertyString -InputObject $catalog -Name 'CatalogVersion')
+            DownloadedCatalogVersion=$candidateVersion.ToString()
             ProductRuleCount=[int]@(Get-ToolSoftwareOptionalPropertyValues -InputObject $catalog -Name 'Products').Count
             CachePath=$cachePath; SignaturePath=$cacheSignaturePath; SourceUrl=$uri.AbsoluteUri; SignatureUrl=$signatureUri.AbsoluteUri
-            Sha256=(Get-ToolSoftwareSha256Bytes -Bytes $contentBytes); SignatureValid=$true
+            Sha256=$candidateSha; DownloadedSha256=$candidateSha; SignatureValid=$true
             StartedAtUtc=$started.ToString('o'); CompletedAtUtc=[DateTime]::UtcNow.ToString('o'); Error=''; ErrorCode=''
             UploadedInventory=$false; SentLicenseKeys=$false
         }
     } catch {
         return [pscustomobject][ordered]@{
-            Success=$false; CatalogVersion=''; ProductRuleCount=0; CachePath=(Get-ToolSoftwareCatalogCachePath); SignaturePath=(Get-ToolSoftwareCatalogCacheSignaturePath)
+            Success=$false; UpdateApplied=$false; ResultCode='Failed'; CatalogVersion=''; DownloadedCatalogVersion=''; ProductRuleCount=0; CachePath=(Get-ToolSoftwareCatalogCachePath); SignaturePath=(Get-ToolSoftwareCatalogCacheSignaturePath)
             SourceUrl=$(if ($uri) {$uri.AbsoluteUri} else {[string]$CatalogUrl}); SignatureUrl=$(if ($signatureUri) {$signatureUri.AbsoluteUri} else {[string]$SignatureUrl}); Sha256=''; SignatureValid=$false; StartedAtUtc=$started.ToString('o'); CompletedAtUtc=[DateTime]::UtcNow.ToString('o')
             Error=[string]$_.Exception.Message; ErrorCode=(Get-ToolSoftwareCatalogFailureCode -Message ([string]$_.Exception.Message)); UploadedInventory=$false; SentLicenseKeys=$false
         }
@@ -940,7 +973,7 @@ function Get-ToolSoftwareSignatureState {
 function Get-ToolSoftwareSignatureStatesParallel {
     param(
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Paths,
-        [ValidateRange(1, 6)][int]$ThrottleLimit = 4,
+        [ValidateRange(1, 12)][int]$ThrottleLimit = 6,
         [AllowNull()][object]$RunspacePool
     )
     $results = @{}
@@ -1064,6 +1097,8 @@ function Test-ToolSoftwareLikelySystemComponent {
         $Publisher -match '(?i)\b(?:Microsoft|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom|ASUS|ASUSTeK|Canon|Toshiba)\b') { return $true }
     if ($Publisher -match '(?i)\b(?:ASUS|ASUSTeK|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom)\b' -and
         $Name -match '(?i)(?:HAL|Framework|SDK|Service|Driver)(?:32|64)?$') { return $true }
+    if ($Publisher -match '(?i)\bCanon\b' -and
+        $Name -match '(?i)\b(?:LBP\s*(?:2900|2900B|3010|3018|3050|3100|3108|3150)|CAPT(?:\s+Printer)?|Canon Advanced Printing Technology)\b') { return $true }
     if ($Name -match '(?i)\b(?:driver|chipset|runtime|redistributable|language pack|support component|update service)\b' -and
         $Publisher -match '(?i)\b(?:Microsoft|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom)\b') { return $true }
     # AppX do Microsoft phát hành phần lớn là thành phần/hộp thư mặc định của
@@ -3112,7 +3147,7 @@ function Get-ToolSoftwareAssessments {
     $signatureRunspacePool = $null
     if ($DeepScan) {
         try {
-            $signatureRunspacePool = [RunspaceFactory]::CreateRunspacePool(1, 4)
+            $signatureRunspacePool = [RunspaceFactory]::CreateRunspacePool(1, [Math]::Min(8, [Math]::Max(4, [Environment]::ProcessorCount)))
             $signatureRunspacePool.Open()
         } catch {
             if ($signatureRunspacePool) { try { $signatureRunspacePool.Dispose() } catch {} }
@@ -3137,7 +3172,7 @@ function Get-ToolSoftwareAssessments {
         -not [string]::IsNullOrWhiteSpace([string]$_.RepresentativePath)
     } | ForEach-Object { [string]$_.RepresentativePath } | Select-Object -Unique)
     $inventorySignatureResults = if ($inventorySignaturePaths.Count -gt 0) {
-        Get-ToolSoftwareSignatureStatesParallel -Paths $inventorySignaturePaths -ThrottleLimit 4
+        Get-ToolSoftwareSignatureStatesParallel -Paths $inventorySignaturePaths -ThrottleLimit ([Math]::Min(8, [Math]::Max(4, [Environment]::ProcessorCount)))
     } else { @{} }
     foreach ($inventoryApplication in $applicationList) {
         if ([string]$inventoryApplication.SignatureStatus -ne 'NotChecked' -or
@@ -3467,6 +3502,17 @@ function Get-ToolSoftwareAssessments {
         # later plan can opt in only after its concrete actions are checked.
         $autoEligible = $false
         $needsReview = [bool]($statusCode -notin @('FreeOrIncluded','GenuineVerified','Unactivated'))
+        $attentionLevel = if ($isSystemComponent) { 'System' }
+            elseif ([bool]$directCrackSummary.Confirmed -or $manualEligible -or $statusCode -eq 'NonGenuine') { 'High' }
+            elseif ($statusCode -in @('Suspicious','IntegrityCompromised') -or $guidedRemediationEligible -or
+                $licenseModel -in @('Paid','Subscription','Trial','Unknown')) { 'Medium' }
+            else { 'Low' }
+        $assessmentSortPriority = switch ($attentionLevel) {
+            'High' { 0 }
+            'Medium' { 100 }
+            'Low' { 200 }
+            default { 900 }
+        }
         $referenceUrl = Get-ToolSoftwareOptionalPropertyString -InputObject $catalogProduct -Name 'OfficialUrl'
         $catalogMatchReason = if ($catalogMatch) { [string]$catalogMatch.Reason } else { 'NoSignedCatalogRuleMatched' }
         $licenseModelReason = if ($catalogProduct) {
@@ -3505,7 +3551,7 @@ function Get-ToolSoftwareAssessments {
             @('ConclusiveEvidenceCount',[int]$conclusiveCount), @('StrongEvidenceCount',[int]$strongCount),
             @('ModerateEvidenceCount',[int]$moderateCount), @('WeakEvidenceCount',[int]$weakCount),
             @('DecisiveEvidenceCount',[int]$decisiveCount), @('IndependentStrongEvidenceGroupCount',[int]$strongEvidenceGroupCount),
-            @('TechnicalStatus',$statusCode), @('LicenseTechnicalState',$technicalState), @('AssessmentSortPriority',$assessmentSortPriority),
+            @('TechnicalStatus',$statusCode), @('LicenseTechnicalState',$technicalState), @('AttentionLevel',$attentionLevel), @('AssessmentSortPriority',$assessmentSortPriority),
             @('PublisherVerification',$publisherVerification),
             @('NeedsReview',$needsReview), @('CleanupFinding',$cleanupFinding),
             @('RemediationEvidenceCount',[int]$remediationEvidenceCount), @('ActivationStateProbe',$knownActivationState),
