@@ -5,16 +5,16 @@
 **Trang v5 ManagedSigned:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0>
 **Stable công khai mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 
-Tool Kiểm Tra là ứng dụng Windows miễn phí cho cộng đồng, hỗ trợ kiểm kê cấu hình máy, kiểm tra trạng thái Windows/Office/phần mềm, rà soát dấu hiệu KMS/activator/can thiệp và tạo báo cáo. Tool hoạt động Offline theo mặc định, không có telemetry và chỉ dùng mạng sau khi người dùng chủ động bật Online.
+Tiếp nối nền tảng của v4.9, Tool Kiểm Tra v5.0 được nâng cấp để kiểm tra nhanh hơn, nhận diện chính xác hơn và sử dụng thuận tiện hơn. Phiên bản mới có ba mức kiểm tra từ cơ bản đến chuyên sâu, tách riêng Windows, Microsoft Office và các phần mềm khác, đồng thời cải thiện giao diện để hiển thị tốt trên nhiều kích thước màn hình.
 
-v5.0 tăng cường kiểm tra nguồn gốc, ba mức quét, giao diện Sáng/Tối, khả năng hiển thị trên màn hình DPI cao, xuất báo cáo và triển khai cho nhiều máy. Bản R8 sửa lỗi `Authenticode=0x800B0109`, vì vậy có thể chạy trên máy mới mà không cần cài sẵn chứng thư của tác giả. Launcher vẫn đối chiếu đúng người ký bằng cả SHA-1 và SHA-256, đồng thời khóa tệp bị sửa hoặc ký bằng chứng thư khác. Đây vẫn là ngoại lệ tự ký, không phải danh tính public-CA, nên Windows có thể hiện `Unknown publisher`/SmartScreen.
+Quy trình khắc phục cũng an toàn và rõ ràng hơn: người dùng được xem trước nội dung, sao lưu, xác nhận trước khi thực hiện và kiểm tra lại kết quả sau xử lý. v5.0 còn bổ sung báo cáo dễ theo dõi hơn và hỗ trợ quản lý nhiều máy. Tool vẫn hoạt động **Offline theo mặc định, không tự động gửi dữ liệu ra Internet** và chỉ kết nối mạng khi người dùng chủ động cho phép.
 
-`ManagedSigned Preview R6` là bản hotfix của cùng danh tính v5.0.0.0: sửa cầu nối UAC cho repair nguồn quét, báo rõ lỗi tiến trình/tệp kết quả, thêm nút **Sửa nguồn quét** trong danh sách chỉ xem và làm rõ phạm vi Windows/Office/phần mềm khác. Bản này vẫn là Preview; không được gọi là Stable public-CA.
+R8 sửa lỗi chữ ký `0x800B0109` trên máy mới chưa cài sẵn chứng thư của tác giả. Tool vẫn đối chiếu đúng người ký bằng cả SHA-1 và SHA-256, đồng thời khóa tệp bị sửa hoặc ký bằng chứng thư khác. Nếu Windows PowerShell bị chính sách của máy chặn hoặc thiếu thành phần cần thiết, launcher sẽ hiện mã lỗi thay vì thoát im lặng. Đây vẫn là bản dùng chứng thư tự ký, nên Windows có thể hiện `Unknown publisher` hoặc SmartScreen.
 
 ## Tải và bắt đầu
 
 1. Mở [trang v5.0.0.0 ManagedSigned](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0) hoặc [Stable công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
-2. Với R8, dùng `Tool-Kiem-Tra-v5.0.exe` trực tiếp; không cần cài chứng thư trước. Nếu Windows hiện SmartScreen/`Unknown publisher`, chỉ tiếp tục khi tệp được tải từ trang chính thức và SHA-256 khớp bản phát hành.
+2. Nếu đang dùng R7, hãy tải R8 thủ công và thay tệp EXE cũ vì hai bản cùng mang số phiên bản `5.0.0.0` và kênh ManagedSigned không tự cập nhật. R8 không cần cài chứng thư trước.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
@@ -32,7 +32,7 @@ Get-AuthenticodeSignature .\Tool-Kiem-Tra-v5.0.exe |
 - **Quét theo mục tiêu:** Quick/Standard/Deep dùng ngân sách rõ ràng và giới hạn include/exclude/root an toàn.
 - **Trải nghiệm và quản trị:** theme theo hệ thống, dark/light override, PerMonitorV2 DPI, fleet export có redaction/chống CSV injection, CLI headless và script Intune/MDM.
 - **Khắc phục theo phạm vi rõ ràng:** mục Khắc phục tách thành Windows, Microsoft Office và phần mềm khác; phạm vi được khóa xuyên suốt quét, Dry Run, backup, xác nhận và hậu kiểm.
-- **Trạng thái phát hành minh bạch:** ManagedSigned chỉ được tin cậy trong môi trường đã phân phối chứng thư; bản chưa ký vẫn khóa mọi thay đổi và chỉ public-CA mới được gọi Stable.
+- **Trạng thái phát hành minh bạch:** R8 là ngoại lệ ManagedSigned tự ký đã ghim đúng chứng thư; Windows vẫn có thể cảnh báo `Unknown publisher`, và đây không phải danh tính public-CA.
 
 - **Nguồn gốc và chống giả mạo:** launcher kiểm tra chữ ký, chứng thư ghim, metadata, Build ID và manifest nguồn gốc. Bản bị sửa hoặc không xác minh được được cảnh báo rõ và fail-closed đối với cập nhật cùng thao tác thay đổi hệ thống.
 - **Catalog online an toàn:** catalog khai báo có chữ ký CMS, giới hạn trường/quy tắc được phép, chống hạ phiên bản và giữ cache dự phòng. Chỉ tải sau khi người dùng bật Online; inventory, đường dẫn, key và báo cáo không được tải lên.

@@ -329,8 +329,9 @@ if ($guiText -notmatch 'New-ToolElevatedBootstrapArguments' -or $guiText -notmat
 }
 if ($launcherText -notmatch 'RequiresAdministrator' -or $launcherText -notmatch 'RelaunchElevated' -or
     $launcherText -notmatch 'ElevatedModuleBroker' -or $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or
-    $launcherText -notmatch 'SpecialFolder\.LocalApplicationData' -or $launcherText -notmatch 'TOOL_DATA_SCOPE') {
-    $failures.Add('Launcher thiếu dashboard user-scope hoặc nâng quyền theo nhu cầu.')
+    $launcherText -notmatch 'SpecialFolder\.LocalApplicationData' -or $launcherText -notmatch 'TOOL_DATA_SCOPE' -or
+    $launcherText -notmatch 'launcher\.childProcessFailed') {
+    $failures.Add('Launcher thiếu dashboard user-scope, nâng quyền theo nhu cầu hoặc chẩn đoán mã thoát tiến trình con.')
 }
 if ($launcherText -notmatch '--repair-user-data-acl' -or
     $launcherText -notmatch 'EnsureGuiUserDataAccess' -or
@@ -843,7 +844,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         }
         $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
         $expectedReleaseLabel = if ($AllowDevelopmentManifest) { $expectedReleaseVersion + '-development-unsigned' } elseif ($AllowStoreManifest) { $expectedReleaseVersion + '-store-submission' } elseif ($AllowManagedSignedManifest) { $expectedManagedBuildId } else { $expectedOfficialBuildId }
-        $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowStoreManifest) { 'MicrosoftStorePackageIdentity' } elseif ($AllowManagedSignedManifest) { 'ManagedCurrentUserTrust' } else { 'PublicWindowsTrust' }
+        $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowStoreManifest) { 'MicrosoftStorePackageIdentity' } elseif ($AllowManagedSignedManifest) { 'PinnedSelfSignedPortable' } else { 'PublicWindowsTrust' }
         $expectedAuthenticodeRequired = [bool](-not $unsignedExecutableManifest)
         if ([string]$releaseManifest.ReleaseLabel -ne $expectedReleaseLabel -or
             [string]$releaseManifest.ReleaseStatus -ne $expectedReleaseStatus -or

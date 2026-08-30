@@ -23,7 +23,7 @@ Tách hai vai trò giúp thay chứng thư Authenticode mà không phải đồn
 
 1. Dev/test không ký phải mang trạng thái `DevelopmentUnsigned`; artifact không được đưa lên kênh stable.
 2. Public Stable phải có trạng thái WinVerifyTrust thành công; không chấp nhận self-signed hoặc untrusted root như bản chính thức.
-3. `ManagedSigned` chỉ chấp nhận signer tự ký khi Windows trên máy quản trị đã tin cậy đúng trust anchor, chữ ký/timestamp/provenance đều hợp lệ và manifest ghi rõ phạm vi tin cậy quản trị.
+3. `ManagedSigned` chấp nhận signer tự ký khi Windows đã tin cậy đúng trust anchor; ngoại lệ portable chỉ chấp nhận thêm `CERT_E_UNTRUSTEDROOT` khi signer tự ký khớp đồng thời SHA-1 và SHA-256 đã ghim. Chữ ký/timestamp/provenance phải hợp lệ và manifest phải ghi `PinnedSelfSignedPortable`.
 4. `StoreSubmission` chỉ chấp nhận EXE có Store marker riêng, exact package identity đã ghim, provenance CMS hợp lệ và release manifest `MicrosoftStorePackageIdentity`; Partner Center chịu trách nhiệm ký gói cuối.
 5. Ký mọi PE/launcher được phát hành trực tiếp và timestamp trong cùng pipeline được bảo vệ; ngoại lệ duy nhất là EXE nằm trong `StoreSubmission` được Store ký ở cấp package.
 6. Hậu kiểm publisher, EKU, thumbprint/SHA-256 chứng thư Authenticode, timestamp và hash artifact trên máy sạch không có chứng thư dev; với Store phải hậu kiểm package identity sau cài đặt.

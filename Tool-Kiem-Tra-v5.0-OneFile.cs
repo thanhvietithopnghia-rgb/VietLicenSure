@@ -1321,7 +1321,10 @@ namespace ThanhViet.ToolKiemTra
                     if (process == null)
                         throw new InvalidOperationException(L("launcher.powerShellStartFailed"));
                     process.WaitForExit();
-                    return process.ExitCode;
+                    int exitCode = process.ExitCode;
+                    if (exitCode != 0 && IsInteractiveMode(mode))
+                        ShowMessage(mode, L("launcher.childProcessFailed", exitCode), MessageBoxIcon.Error);
+                    return exitCode;
                 }
             }
             catch (System.ComponentModel.Win32Exception ex)

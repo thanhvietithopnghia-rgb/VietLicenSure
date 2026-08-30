@@ -10,6 +10,8 @@ Status: `ManagedSigned` self-signed exception — the launcher pins both the sig
 - Accepts only `CERT_E_UNTRUSTEDROOT` for the exact self-signed publisher pinned by both SHA-1 and SHA-256.
 - A changed executable still returns `TRUST_E_BAD_DIGEST`/`HashMismatch`; a different signer, certificate, or trust error remains blocked.
 - Keeps the RFC 3161 timestamp, signed provenance, embedded-payload hash checks, protected UAC bridge, and system-change fail-closed controls.
+- Shows the child-process exit code when PowerShell or a required component prevents the interface from opening, instead of closing without a useful diagnostic.
+- R7 users must download and replace the EXE manually because R7 and R8 share file version `5.0.0.0` and the ManagedSigned channel keeps public self-update disabled.
 - Windows Defender SmartScreen may still require the user to review an `Unknown publisher` warning because no public-CA certificate is used.
 
 Store preparation note (2026-08-29): a separate `StoreSubmission` candidate is under development and is not released. Its inner EXE is unsigned before Partner Center, trust is bound to the exact Store origin/package identity, and every elevated module is re-dispatched by the compiled launcher into an Administrator-only, hash-verified payload directory. Store certification, three-VM evidence, and independent review remain open gates.

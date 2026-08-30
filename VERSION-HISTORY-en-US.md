@@ -15,6 +15,8 @@ Public Stable release page:
 - **Runs on a new PC:** fixes `Authenticode=0x800B0109` when the author's self-signed certificate is not preinstalled.
 - **Tamper checks remain strict:** only `CERT_E_UNTRUSTEDROOT` is accepted after both the signer SHA-1 thumbprint and certificate SHA-256 match the pinned release identity.
 - **Modified files remain blocked:** changed content returns `HashMismatch`/`TRUST_E_BAD_DIGEST`; a different signer, certificate, or trust error is never bypassed.
+- **PowerShell failures are visible:** the launcher shows the child-process exit code when security policy or a missing component prevents the interface from opening.
+- **R7 requires a manual replacement:** R7 and R8 share file version `5.0.0.0`, and ManagedSigned keeps public self-update disabled.
 - **Windows may still warn:** this is a disclosed self-signed exception rather than a public-CA identity, so SmartScreen can show `Unknown publisher` on a new PC.
 
 ## v5.0.0.0 — August 27, 2026 — ManagedSigned prerelease (Preview R6 hotfix)

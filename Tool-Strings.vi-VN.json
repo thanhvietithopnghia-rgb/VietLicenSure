@@ -2661,6 +2661,7 @@
   "launcher.powerShellBlocked": "Windows đã chặn hoặc không thể khởi động PowerShell.\r\n\r\nTool không né UAC, AppLocker, WDAC hoặc phần mềm bảo mật. Hãy nhờ quản trị viên cho phép tệp nếu đây là máy cơ quan.\r\n\r\n{0}",
   "launcher.powerShellMissing": "Không tìm thấy Windows PowerShell native tại:\r\n{0}\r\n\r\nTool không dùng powershell.exe từ PATH vì có thể sai kiến trúc hoặc không đáng tin cậy.",
   "launcher.powerShellStartFailed": "Không thể khởi động Windows PowerShell.",
+  "launcher.childProcessFailed": "Tool không thể mở giao diện hoặc hoàn tất tác vụ (mã lỗi {0}).\r\n\r\nMáy có thể đang chặn Windows PowerShell bằng chính sách bảo mật, AppLocker/WDAC hoặc đang thiếu thành phần hệ thống cần thiết. Hãy gửi mã lỗi này khi yêu cầu hỗ trợ.",
   "launcher.productCaption": "Công cụ kiểm tra cấu hình máy và bản quyền phần mềm v5.0.0.0",
   "launcher.protectedDirectoryReparse": "Từ chối thư mục bảo vệ là junction/symlink: {0}",
   "launcher.singleInstance": "Chức năng này đang chạy. Hãy chờ tiến trình hiện tại hoàn tất.",

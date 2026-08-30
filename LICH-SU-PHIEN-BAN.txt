@@ -15,6 +15,8 @@ https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/late
 - **Chạy được trên máy mới:** sửa lỗi `Authenticode=0x800B0109` khi máy chưa cài sẵn chứng thư tự ký của tác giả.
 - **Không hạ kiểm tra chống sửa đổi:** launcher chỉ chấp nhận đúng lỗi gốc chứng thư chưa được Windows tin cậy sau khi đối chiếu đồng thời SHA-1 và SHA-256 của đúng chứng thư phát hành.
 - **Tệp bị sửa vẫn bị khóa:** sai nội dung trả `HashMismatch`/`TRUST_E_BAD_DIGEST`; sai người ký, sai chứng thư hoặc lỗi chữ ký khác không được bỏ qua.
+- **Không còn thoát im lặng khi PowerShell lỗi:** launcher hiện mã lỗi nếu chính sách bảo mật hoặc thành phần hệ thống ngăn giao diện mở.
+- **R7 phải nâng cấp thủ công:** tải R8 và thay EXE cũ vì hai bản cùng mang số phiên bản `5.0.0.0`; kênh ManagedSigned không tự cập nhật công khai.
 - **Cảnh báo Windows vẫn có thể xuất hiện:** đây là ngoại lệ tự ký, không phải danh tính public-CA; SmartScreen có thể hiện `Unknown publisher` trên máy mới.
 
 ## v5.0.0.0 — 27/08/2026 — ManagedSigned prerelease (Preview R6 hotfix)
