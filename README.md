@@ -1,20 +1,20 @@
-# Tool Kiểm Tra v5.0 — ManagedSigned preview cho môi trường quản trị
+# Tool Kiểm Tra v5.0 — Bản nâng cấp và cải tiến tiếp nối từ v4.9
 
-**Phiên bản mới nhất của nhánh v5:** v5.0.0.0 · Build 2026.08.26 · `ManagedSigned Preview R6`
+**Phiên bản mới nhất của nhánh v5:** v5.0.0.0 · Build 2026.08.26 · `ManagedSigned Stable R8`
 **Tác giả và phát triển:** Thanh Việt
 **Trang v5 ManagedSigned:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0>
 **Stable công khai mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
 
 Tool Kiểm Tra là ứng dụng Windows miễn phí cho cộng đồng, hỗ trợ kiểm kê cấu hình máy, kiểm tra trạng thái Windows/Office/phần mềm, rà soát dấu hiệu KMS/activator/can thiệp và tạo báo cáo. Tool hoạt động Offline theo mặc định, không có telemetry và chỉ dùng mạng sau khi người dùng chủ động bật Online.
 
-v5.0 tăng cường cổng ký phát hành fail-closed, trạng thái độ mới catalog, plugin ký số, ba mức quét, giao diện dark/DPI, xuất fleet và triển khai Intune/MDM. Bản `ManagedSigned` cho phép thao tác đã phê duyệt trên máy được quản trị viên phân phối chứng thư tin cậy, nhưng không phải public-CA Stable và vẫn khóa tự cập nhật công khai. Công cụ cung cấp bằng chứng kỹ thuật hỗ trợ quản trị, không thay thế hóa đơn, hợp đồng, tài khoản hãng hoặc tư vấn pháp lý.
+v5.0 tăng cường kiểm tra nguồn gốc, ba mức quét, giao diện Sáng/Tối, khả năng hiển thị trên màn hình DPI cao, xuất báo cáo và triển khai cho nhiều máy. Bản R8 sửa lỗi `Authenticode=0x800B0109`, vì vậy có thể chạy trên máy mới mà không cần cài sẵn chứng thư của tác giả. Launcher vẫn đối chiếu đúng người ký bằng cả SHA-1 và SHA-256, đồng thời khóa tệp bị sửa hoặc ký bằng chứng thư khác. Đây vẫn là ngoại lệ tự ký, không phải danh tính public-CA, nên Windows có thể hiện `Unknown publisher`/SmartScreen.
 
 `ManagedSigned Preview R6` là bản hotfix của cùng danh tính v5.0.0.0: sửa cầu nối UAC cho repair nguồn quét, báo rõ lỗi tiến trình/tệp kết quả, thêm nút **Sửa nguồn quét** trong danh sách chỉ xem và làm rõ phạm vi Windows/Office/phần mềm khác. Bản này vẫn là Preview; không được gọi là Stable public-CA.
 
 ## Tải và bắt đầu
 
 1. Mở [trang v5.0.0.0 ManagedSigned](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0) hoặc [Stable công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
-2. Với v5 ManagedSigned, dùng `Tool-Kiem-Tra-v5.0.exe`, xác nhận manifest ghi `ManagedSigned` và chỉ chạy trên máy đã nhận chứng thư quản trị hợp lệ.
+2. Với R8, dùng `Tool-Kiem-Tra-v5.0.exe` trực tiếp; không cần cài chứng thư trước. Nếu Windows hiện SmartScreen/`Unknown publisher`, chỉ tiếp tục khi tệp được tải từ trang chính thức và SHA-256 khớp bản phát hành.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.

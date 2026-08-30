@@ -3076,7 +3076,7 @@
   "officialBuild.banner.developmentTitle": "Unsigned development build",
   "officialBuild.banner.developmentBody": "This v5.0 build is for testing only and is not a Stable release. Self-update and all system-changing actions remain blocked until Authenticode, timestamp, and provenance are valid.",
   "officialBuild.banner.managedTitle": "Verified ManagedSigned build",
-  "officialBuild.banner.managedBody": "Authenticode, the RFC 3161 timestamp, and provenance are valid on this managed machine. System-changing actions are enabled; public self-update remains disabled.",
+  "officialBuild.banner.managedBody": "The pinned publisher certificate, RFC 3161 timestamp, and provenance are valid. The Tool can run on a new PC; Windows may still show Unknown publisher because the certificate is self-signed. Public self-update remains disabled.",
   "officialBuild.state.official": "Official",
   "officialBuild.state.managed": "Managed signed",
   "officialBuild.state.store": "Microsoft Store",

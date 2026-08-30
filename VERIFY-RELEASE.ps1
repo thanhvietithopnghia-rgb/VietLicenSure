@@ -31,6 +31,12 @@ function Get-Sha256Hex([string]$Path) {
     } finally { $stream.Dispose() }
 }
 
+function Get-Sha256HexFromBytes([byte[]]$Bytes) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes)) -replace '-', '').ToUpperInvariant() }
+    finally { $sha.Dispose() }
+}
+
 function Test-PinnedDetachedCmsSignature([string]$ContentPath, [string]$SignaturePath, [string]$ExpectedCertificateSha256) {
     try {
         if (-not (Test-Path -LiteralPath $ContentPath -PathType Leaf) -or
@@ -716,11 +722,63 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
         ([string]$signature.SignerCertificate.Subject -eq [string]$signature.SignerCertificate.Issuer -or
          [string]$signature.SignerCertificate.Subject -match '(?i)Self-Signed')) {
         if ($AllowManagedSignedManifest) {
-            $warnings.Add("$targetFileName dùng chứng thư tự ký được máy quản trị tin cậy; đây là ManagedSigned, không phải danh tính public-CA.")
+            $warnings.Add("$targetFileName dùng chứng thư tự ký được launcher ghim SHA-1/SHA-256; Windows vẫn có thể báo Unknown publisher trên máy mới.")
         } elseif (-not $unsignedExecutableManifest) {
             $failures.Add("$targetFileName dùng chứng thư tự ký; public Stable yêu cầu signer CA-issued.")
         } else {
             $warnings.Add("$targetFileName dùng chứng thư tự ký; chỉ phù hợp thử nghiệm có kiểm soát khi chứng thư đã được phân phối qua kênh tin cậy.")
+        }
+    }
+
+    if (-not $AllowStoreManifest -and -not $AllowDevelopmentManifest) {
+        try {
+            if (-not $signature.SignerCertificate) { throw 'Không đọc được chứng thư signer.' }
+            $signerCertificateSha256 = Get-Sha256HexFromBytes -Bytes $signature.SignerCertificate.RawData
+            if ($signerCertificateSha256 -ne 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9') {
+                throw 'SHA-256 chứng thư signer không khớp pin phát hành.'
+            }
+
+            $launcherAssembly = [Reflection.Assembly]::LoadFile($exePath)
+            $programType = $launcherAssembly.GetType('ThanhViet.ToolKiemTra.Program', $true, $false)
+            $bindingFlags = [Reflection.BindingFlags]::Static -bor [Reflection.BindingFlags]::NonPublic
+            $signerSha256Field = $programType.GetField('OfficialSignerCertificateSha256', $bindingFlags)
+            if (-not $signerSha256Field -or
+                [string]$signerSha256Field.GetRawConstantValue() -ne $signerCertificateSha256) {
+                throw 'Launcher không ghim đúng SHA-256 của chứng thư Authenticode.'
+            }
+            $portableTrustMethod = $programType.GetMethod('IsPinnedSelfSignedPublisherAccepted', $bindingFlags)
+            if (-not $portableTrustMethod) { throw 'Launcher thiếu cổng kiểm tra signer tự ký đã ghim.' }
+            $untrustedRoot = [Convert]::ToUInt32('800B0109', 16)
+            $badDigest = [Convert]::ToUInt32('80096010', 16)
+            $untrustedRootAccepted = [bool]$portableTrustMethod.Invoke($null, [object[]]@($untrustedRoot, $true))
+            $badDigestAccepted = [bool]$portableTrustMethod.Invoke($null, [object[]]@($badDigest, $true))
+            $nonSelfSignedAccepted = [bool]$portableTrustMethod.Invoke($null, [object[]]@($untrustedRoot, $false))
+            if ($untrustedRootAccepted -ne [bool]$AllowManagedSignedManifest -or $badDigestAccepted -or $nonSelfSignedAccepted) {
+                throw 'Cổng chữ ký portable không giới hạn đúng ManagedSigned/CERT_E_UNTRUSTEDROOT/self-signed.'
+            }
+
+            $tamperedPath = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Kiem-Tra-v5.0-tampered-' + [Guid]::NewGuid().ToString('N') + '.exe')
+            try {
+                Copy-Item -LiteralPath $exePath -Destination $tamperedPath -Force
+                $tamperedStream = [IO.File]::Open($tamperedPath, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+                try {
+                    $tamperedStream.Position = 512
+                    $originalByte = $tamperedStream.ReadByte()
+                    if ($originalByte -lt 0) { throw 'EXE quá ngắn để chạy kiểm tra chống sửa đổi.' }
+                    $tamperedStream.Position = 512
+                    $tamperedStream.WriteByte([byte]($originalByte -bxor 1))
+                } finally {
+                    $tamperedStream.Dispose()
+                }
+                $tamperedSignature = Get-AuthenticodeSignature -LiteralPath $tamperedPath
+                if ([string]$tamperedSignature.Status -ne 'HashMismatch') {
+                    throw "EXE bị sửa không trả HashMismatch: $($tamperedSignature.Status)"
+                }
+            } finally {
+                if (Test-Path -LiteralPath $tamperedPath -PathType Leaf) { Remove-Item -LiteralPath $tamperedPath -Force }
+            }
+        } catch {
+            $failures.Add("Kiểm tra portability/fail-closed của Authenticode thất bại: $($_.Exception.Message)")
         }
     }
 }

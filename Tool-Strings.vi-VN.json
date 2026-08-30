@@ -3076,7 +3076,7 @@
   "officialBuild.banner.developmentTitle": "Bản phát triển chưa ký số",
   "officialBuild.banner.developmentBody": "Bản v5.0 này chỉ dùng để kiểm thử, không phải bản Stable. Tự cập nhật và mọi thao tác thay đổi hệ thống vẫn bị khóa cho đến khi Authenticode, timestamp và provenance đều hợp lệ.",
   "officialBuild.banner.managedTitle": "Bản ManagedSigned đã xác minh",
-  "officialBuild.banner.managedBody": "Authenticode, RFC 3161 timestamp và provenance đều hợp lệ trên máy quản trị. Thao tác hệ thống được mở; tự cập nhật public vẫn khóa.",
+  "officialBuild.banner.managedBody": "Đúng chứng thư nhà phát hành đã ghim, dấu thời gian RFC 3161 và thông tin nguồn gốc đều hợp lệ. Tool có thể chạy trên máy mới; Windows vẫn có thể báo Unknown publisher vì chứng thư tự ký. Tự cập nhật public vẫn khóa.",
   "officialBuild.state.official": "Chính thức",
   "officialBuild.state.managed": "Đã ký quản trị",
   "officialBuild.state.store": "Microsoft Store",

@@ -2,13 +2,20 @@
 
 This document summarizes the core changes in the main public releases.
 
-Current ManagedSigned preview: **v5.0.0.0 — Preview R6**
+Current ManagedSigned release: **v5.0.0.0 — Stable R8 (self-signed exception)**
 FileVersion: **5.0.0.0** · Build **2026.08.26**
 
 A separate `StoreSubmission` candidate is being prepared for Microsoft Store and has not been released. It binds trust to Store package identity/origin and routes elevation through the compiled launcher so the UAC boundary remains fail-closed.
 
 Public Stable release page:
 <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+
+## v5.0.0.0 — August 30, 2026 — ManagedSigned Stable R8
+
+- **Runs on a new PC:** fixes `Authenticode=0x800B0109` when the author's self-signed certificate is not preinstalled.
+- **Tamper checks remain strict:** only `CERT_E_UNTRUSTEDROOT` is accepted after both the signer SHA-1 thumbprint and certificate SHA-256 match the pinned release identity.
+- **Modified files remain blocked:** changed content returns `HashMismatch`/`TRUST_E_BAD_DIGEST`; a different signer, certificate, or trust error is never bypassed.
+- **Windows may still warn:** this is a disclosed self-signed exception rather than a public-CA identity, so SmartScreen can show `Unknown publisher` on a new PC.
 
 ## v5.0.0.0 — August 27, 2026 — ManagedSigned prerelease (Preview R6 hotfix)
 

@@ -2,13 +2,20 @@
 
 Tài liệu tóm tắt các thay đổi cốt lõi của những phiên bản công khai chính.
 
-Phiên bản ManagedSigned hiện tại: **v5.0.0.0 — Preview R6**
+Phiên bản ManagedSigned hiện tại: **v5.0.0.0 — Stable R8 (ngoại lệ tự ký)**
 FileVersion: **5.0.0.0** · Build **2026.08.26**
 
 Ứng viên `StoreSubmission` đang được chuẩn bị riêng cho Microsoft Store; chưa phải bản đã phát hành. Bản này dùng package identity/origin của Store và broker nâng quyền đã biên dịch để khóa fail-closed qua ranh giới UAC.
 
 Trang Stable công khai mới nhất:
 https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest
+
+## v5.0.0.0 — 30/08/2026 — ManagedSigned Stable R8
+
+- **Chạy được trên máy mới:** sửa lỗi `Authenticode=0x800B0109` khi máy chưa cài sẵn chứng thư tự ký của tác giả.
+- **Không hạ kiểm tra chống sửa đổi:** launcher chỉ chấp nhận đúng lỗi gốc chứng thư chưa được Windows tin cậy sau khi đối chiếu đồng thời SHA-1 và SHA-256 của đúng chứng thư phát hành.
+- **Tệp bị sửa vẫn bị khóa:** sai nội dung trả `HashMismatch`/`TRUST_E_BAD_DIGEST`; sai người ký, sai chứng thư hoặc lỗi chữ ký khác không được bỏ qua.
+- **Cảnh báo Windows vẫn có thể xuất hiện:** đây là ngoại lệ tự ký, không phải danh tính public-CA; SmartScreen có thể hiện `Unknown publisher` trên máy mới.
 
 ## v5.0.0.0 — 27/08/2026 — ManagedSigned prerelease (Preview R6 hotfix)
 

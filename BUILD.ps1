@@ -740,6 +740,19 @@ try {
             $signerConstantPattern,
             ('private const string OfficialSignerThumbprint = "' + $normalizedStableSignerThumbprint + '";'),
             1)
+        $signerCertificateSha256 = ([string]$releaseIdentity.SignerCertificateSha256).Replace(' ', '').ToUpperInvariant()
+        if ($signerCertificateSha256 -notmatch '^[A-F0-9]{64}$') {
+            throw 'Tool-Provenance.ps1 thiếu SHA-256 chứng thư signer hợp lệ.'
+        }
+        $signerCertificateSha256Pattern = 'private const string OfficialSignerCertificateSha256 = "[A-Fa-f0-9]{64}";'
+        if (-not [regex]::IsMatch($compilerSourceText, $signerCertificateSha256Pattern)) {
+            throw 'Không tìm thấy OfficialSignerCertificateSha256 hợp lệ trong launcher source.'
+        }
+        $compilerSourceText = [regex]::Replace(
+            $compilerSourceText,
+            $signerCertificateSha256Pattern,
+            ('private const string OfficialSignerCertificateSha256 = "' + $signerCertificateSha256 + '";'),
+            1)
     }
     $compilerSourcePath = Join-Path $payloadBuildDirectory $sourceName
     [IO.File]::WriteAllText($compilerSourcePath, $compilerSourceText, (New-Object Text.UTF8Encoding($false)))
@@ -1285,7 +1298,7 @@ $applicationUpdateManifest = [ordered]@{
     }
     Changes = [ordered]@{
         'vi-VN' = @(
-            'Preview R6 sửa cầu nối ManagedSigned cho repair nguồn quét, báo rõ mã thoát khi tiến trình lỗi, phân biệt thiếu tệp kết quả và thêm nút Sửa nguồn quét trong danh sách chỉ xem.',
+            'Stable R8 sửa lỗi Authenticode 0x800B0109 trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.',
             'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
             'Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.',
             'Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.',
@@ -1303,7 +1316,7 @@ $applicationUpdateManifest = [ordered]@{
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
-            'Preview R6 fixes the ManagedSigned scan-source repair bridge, reports child-process exit codes, distinguishes missing result files, and adds a Repair scan sources action to the read-only inventory.',
+            'Stable R8 fixes Authenticode 0x800B0109 on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.',
             'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',
             'Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.',
             'Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.',
@@ -1367,7 +1380,7 @@ $authenticodeInfo = if (-not [string]::IsNullOrWhiteSpace([string]$primaryArtifa
     'Authenticode: NotSigned.'
 }
 $authenticodeTrustInfo = if ([string]$primaryArtifact.AuthenticodeStatus -eq 'Valid' -and [string]$primaryArtifact.AuthenticodeSigner -match 'Self-Signed') {
-    'Chu ky Authenticode tu ky duoc may build xac minh Valid sau khi cai chung thu tin cay cho Current User; may la van can cai chung thu hoac co the bao Unknown publisher/SmartScreen.'
+    'Chu ky Authenticode tu ky duoc ghim bang SHA-1 va SHA-256. R8 chay tren may moi ma khong can cai chung thu truoc; Windows van co the bao Unknown publisher/SmartScreen.'
 } elseif ([string]$primaryArtifact.AuthenticodeStatus -eq 'Valid') {
     'Chu ky Authenticode duoc Windows tren may build xac minh Valid; SmartScreen van co the can danh tieng cho tep moi.'
 } elseif (-not [string]::IsNullOrWhiteSpace([string]$primaryArtifact.AuthenticodeThumbprint)) {

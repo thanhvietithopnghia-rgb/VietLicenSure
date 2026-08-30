@@ -46,6 +46,8 @@ namespace ThanhViet.ToolKiemTra
         private const int MaximumSinglePayloadBytes = 8 * 1024 * 1024;
         private const string PayloadBundleFailureCode = "PAYLOAD_BUNDLE_INVALID";
         private const string OfficialSignerThumbprint = "0000000000000000000000000000000000000000";
+        private const string OfficialSignerCertificateSha256 = "0000000000000000000000000000000000000000000000000000000000000000";
+        private const uint CertificateUntrustedRootStatus = 0x800B0109u;
         private const string StorePackageName = "ThanhVit.ToolKimTraBnQuyn";
         private const string StorePackageVersion = "5.0.0.0";
         private const string StorePackagePublisherId = "9tjmpwr25h78w";
@@ -547,6 +549,24 @@ namespace ThanhViet.ToolKiemTra
             }
         }
 
+        private static string GetCertificateSha256(X509Certificate2 certificate)
+        {
+            using (SHA256 algorithm = SHA256.Create())
+                return BitConverter.ToString(algorithm.ComputeHash(certificate.RawData)).Replace("-", String.Empty);
+        }
+
+        private static bool IsPinnedSelfSignedPublisherAccepted(uint trustStatus, bool signerIsSelfSigned)
+        {
+            // A public-CA Stable build must always pass the normal Windows trust
+            // chain.  The explicitly selected ManagedSigned channel may be used
+            // on a clean PC without pre-installing our self-signed certificate,
+            // but only when WinVerifyTrust reports the single expected chain
+            // error. Digest, signer, certificate SHA-256 and every other trust
+            // failure remain fail-closed.
+            return ManagedSignedBuildMarker == "1" && signerIsSelfSigned &&
+                trustStatus == CertificateUntrustedRootStatus;
+        }
+
         private static string EvaluateOfficialBuildState(out string failureCode)
         {
             failureCode = "DevelopmentBuild";
@@ -578,21 +598,28 @@ namespace ThanhViet.ToolKiemTra
                 }
 
                 string signerThumbprint;
+                string signerCertificateSha256;
+                bool signerIsSelfSigned;
                 using (X509Certificate embedded = X509Certificate.CreateFromSignedFile(filePath))
                 using (X509Certificate2 signer = new X509Certificate2(embedded))
+                {
                     signerThumbprint = (signer.Thumbprint ?? String.Empty).Replace(" ", String.Empty).ToUpperInvariant();
-                if (!String.Equals(signerThumbprint, OfficialSignerThumbprint, StringComparison.OrdinalIgnoreCase))
+                    signerCertificateSha256 = GetCertificateSha256(signer);
+                    signerIsSelfSigned = String.Equals(signer.Subject, signer.Issuer, StringComparison.Ordinal);
+                }
+                if (!String.Equals(signerThumbprint, OfficialSignerThumbprint, StringComparison.OrdinalIgnoreCase) ||
+                    !String.Equals(signerCertificateSha256, OfficialSignerCertificateSha256, StringComparison.OrdinalIgnoreCase))
                 {
                     failureCode = "SignerMismatch";
                     return "Modified";
                 }
 
                 uint trustStatus = GetAuthenticodeTrustStatus(filePath);
-                // Signed releases must validate through Windows trust policy.
-                // Public Stable additionally enforces its CA policy in the
-                // release pipeline; ManagedSigned relies on an explicitly
-                // distributed local trust anchor and remains a distinct state.
-                if (trustStatus != 0)
+                // Public Stable still requires the normal Windows trust chain.
+                // ManagedSigned can accept only CERT_E_UNTRUSTEDROOT for the
+                // exact self-signed certificate pinned above; a modified file
+                // returns TRUST_E_BAD_DIGEST and remains blocked.
+                if (trustStatus != 0 && !IsPinnedSelfSignedPublisherAccepted(trustStatus, signerIsSelfSigned))
                 {
                     failureCode = "Authenticode-0x" + trustStatus.ToString("X8", CultureInfo.InvariantCulture);
                     return "Modified";

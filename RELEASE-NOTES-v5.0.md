@@ -1,8 +1,16 @@
-# Tool Kiểm Tra v5.0.0.0 — ManagedSigned Preview R6
+# Tool Kiểm Tra v5.0.0.0 — ManagedSigned Stable R8
 
 Build date: 2026-08-26
-Published revision: 2026-08-27 (R6)
-Status: `ManagedSigned` — Authenticode, RFC 3161 timestamp, and provenance are verified on managed machines; this is not the public-CA Stable channel
+Published revision: 2026-08-30 (R8 portability hotfix)
+Status: `ManagedSigned` self-signed exception — the launcher pins both the signer thumbprint and certificate SHA-256; Windows may still show `Unknown publisher` because this is not a public-CA identity
+
+## R8 portability hotfix
+
+- Fixes `Authenticode=0x800B0109` on a new PC that does not already trust the self-signed certificate.
+- Accepts only `CERT_E_UNTRUSTEDROOT` for the exact self-signed publisher pinned by both SHA-1 and SHA-256.
+- A changed executable still returns `TRUST_E_BAD_DIGEST`/`HashMismatch`; a different signer, certificate, or trust error remains blocked.
+- Keeps the RFC 3161 timestamp, signed provenance, embedded-payload hash checks, protected UAC bridge, and system-change fail-closed controls.
+- Windows Defender SmartScreen may still require the user to review an `Unknown publisher` warning because no public-CA certificate is used.
 
 Store preparation note (2026-08-29): a separate `StoreSubmission` candidate is under development and is not released. Its inner EXE is unsigned before Partner Center, trust is bound to the exact Store origin/package identity, and every elevated module is re-dispatched by the compiled launcher into an Administrator-only, hash-verified payload directory. Store certification, three-VM evidence, and independent review remain open gates.
 
