@@ -793,13 +793,20 @@ if ($script:officialBuildState -eq 'Managed') {
         $description.Text = Get-DashboardText 'officialBuild.banner.developmentTitle'
         $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(120, 53, 15)
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.developmentBody'
+    } elseif ($script:officialBuildState -eq 'Modified') {
+        $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
+        $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
+        $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
+        $description.Text = Get-DashboardText 'officialBuild.banner.modifiedTitle'
+        $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.modifiedBody' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
     } else {
         $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
         $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
         $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
-        $description.Text = Get-DashboardText 'officialBuild.banner.title'
+        $description.Text = Get-DashboardText 'officialBuild.banner.unverifiedTitle'
         $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
-        $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.unverifiedBody' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
     }
 }
 
@@ -2213,9 +2220,12 @@ function Set-DashboardLanguage {
     } elseif ($script:isUnsignedDevelopmentBuild) {
         $description.Text = Get-DashboardText 'officialBuild.banner.developmentTitle'
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.developmentBody'
+    } elseif ($script:officialBuildState -eq 'Modified') {
+        $description.Text = Get-DashboardText 'officialBuild.banner.modifiedTitle'
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.modifiedBody' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
     } else {
-        $description.Text = Get-DashboardText 'officialBuild.banner.title'
-        $introSummary.Text = Get-DashboardText 'officialBuild.banner.body' @($script:officialBuildState, [string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
+        $description.Text = Get-DashboardText 'officialBuild.banner.unverifiedTitle'
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.unverifiedBody' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
     }
     $introAssistantButton.Text = Get-ToolText -Key "app.assistant" -Culture $Culture
     $toolTip.SetToolTip($introAssistantButton, (Get-ToolText -Key "assistant.tooltip" -Culture $Culture))
@@ -4688,13 +4698,9 @@ function Test-GuiThirdPartyDirectRemediationEvidence {
     $manualArtifactQuarantine = [bool](
         $Application.PSObject.Properties['ManualArtifactQuarantineAllowed'] -and [bool]$Application.ManualArtifactQuarantineAllowed -and
         $Application.PSObject.Properties['CleanupManualArtifactQuarantineOnly'] -and [bool]$Application.CleanupManualArtifactQuarantineOnly -and
-        $Application.PSObject.Properties['AssessmentCode'] -and [string]$Application.AssessmentCode -eq 'Suspicious' -and
         $Application.PSObject.Properties['LicenseTechnicalState'] -and [string]$Application.LicenseTechnicalState -eq 'Suspicious'
     )
     if ($manualArtifactQuarantine) {
-        # The candidate builder has already bound this exact file to a path,
-        # SHA-256 and length.  The final picker still asks the user to confirm;
-        # this is not an automatic cleanup permission.
         return [bool]($Application.PSObject.Properties['CleanupArtifactCleanupAllowed'] -and [bool]$Application.CleanupArtifactCleanupAllowed)
     }
     if (-not ($Application.PSObject.Properties['LicenseTechnicalState'] -and [string]$Application.LicenseTechnicalState -eq 'CrackConfirmed')) { return $false }
@@ -4706,12 +4712,8 @@ function Test-GuiThirdPartySelectionAllowed {
     param($Application)
 
     if (Test-GuiThirdPartyDirectRemediationEvidence -Application $Application) { return $true }
-    if (-not (Test-GuiThirdPartyCleanupFinding -Application $Application)) { return $false }
     if (-not ($Application.PSObject.Properties['CleanupCandidateId'] -and
         -not [string]::IsNullOrWhiteSpace([string]$Application.CleanupCandidateId))) { return $false }
-    # Guidance selection is expressly not remediation permission.  The
-    # backend accepts only a Guidance item for it and leaves the application,
-    # licence store, services, tasks and registry untouched.
     return [bool](
         $Application.PSObject.Properties['GuidedRemediationSupported'] -and [bool]$Application.GuidedRemediationSupported -and
         $Application.PSObject.Properties['CleanupGuidanceOnly'] -and [bool]$Application.CleanupGuidanceOnly
@@ -4721,6 +4723,28 @@ function Test-GuiThirdPartySelectionAllowed {
 function Get-GuiThirdPartyCleanupFindings {
     param($Applications)
     return @($Applications | Where-Object { Test-GuiThirdPartyCleanupFinding -Application $_ })
+}
+
+function Get-GuiThirdPartyDisplayStatus {
+    param($Application)
+
+    if (-not $Application) { return Get-DashboardText 'software.results.status.noIssue' }
+    $assessmentCode = [string]$Application.AssessmentCode
+    $licenseModel = if ($Application.PSObject.Properties['LicenseModel']) { [string]$Application.LicenseModel } else { '' }
+    # The main list uses plain, conservative wording.  Detailed evidence is
+    # still available below the list, but uncertainty is never phrased as a
+    # licensing conclusion.
+    if ($licenseModel -in @('Paid','Subscription','Trial') -and
+        $assessmentCode -in @('NonGenuine','Suspicious','IntegrityCompromised')) {
+        return Get-DashboardText 'software.results.status.reviewOnly'
+    }
+    switch ($assessmentCode) {
+        'NonGenuine' { return Get-DashboardText 'software.results.status.clearFinding' }
+        'Suspicious' { return Get-DashboardText 'software.results.status.reviewOnly' }
+        'IntegrityCompromised' { return Get-DashboardText 'software.results.status.reviewOnly' }
+        'Unactivated' { return Get-DashboardText 'software.results.status.notActivated' }
+        default { return Get-DashboardText 'software.results.status.noIssue' }
+    }
 }
 
 function Get-GuiThirdPartyStandaloneCleanupRows {
@@ -4856,6 +4880,12 @@ function Show-ThirdPartyAssessmentResults {
     $systemApplications = @($applications | Where-Object { Test-GuiSystemComponent -Application $_ })
     $actionableCount = @($thirdPartyApplications | Where-Object { Test-GuiThirdPartyDirectRemediationEvidence -Application $_ }).Count
     $selectableCount = @($thirdPartyApplications | Where-Object { Test-GuiThirdPartySelectionAllowed -Application $_ }).Count
+    $confirmedFindingCount = @($allApplications | Where-Object { Test-GuiThirdPartyDirectRemediationEvidence -Application $_ }).Count
+    $reviewFindingCount = @($allApplications | Where-Object {
+        -not (Test-GuiThirdPartyDirectRemediationEvidence -Application $_) -and
+        [string]$_.AssessmentCode -in @('NonGenuine','Suspicious','IntegrityCompromised')
+    }).Count
+    $noIssueCount = [Math]::Max(0, [int]$allApplications.Count - [int]$confirmedFindingCount - [int]$reviewFindingCount)
 
     $dialog = New-Object System.Windows.Forms.Form
     $dialog.Text = Get-DashboardText "software.results.title"
@@ -4903,9 +4933,9 @@ function Show-ThirdPartyAssessmentResults {
         $allApplications.Count,
         $selectableCount,
         $actionableCount,
-        @($allApplications | Where-Object { [string]$_.AssessmentCode -eq 'NonGenuine' }).Count,
-        @($allApplications | Where-Object { [string]$_.AssessmentCode -eq 'Suspicious' }).Count,
-        @($allApplications | Where-Object { [string]$_.AssessmentCode -in @('Unverified','TrialOrUnverified') }).Count)
+        $confirmedFindingCount,
+        $reviewFindingCount,
+        $noIssueCount)
     $summary.Font = $fontBold
     $summary.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
     $summary.AutoSize = $true
@@ -5019,7 +5049,7 @@ function Show-ThirdPartyAssessmentResults {
         $lines.Add((Get-DashboardText 'software.results.column.version') + ': ' + [string]$application.Version)
         $lines.Add((Get-DashboardText 'software.results.column.publisher') + ': ' + [string]$application.Publisher)
         $lines.Add((Get-DashboardText 'software.results.column.model') + ': ' + [string]$metadata.LicenseText)
-        $lines.Add((Get-DashboardText 'software.results.column.status') + ': ' + [string]$application.TechnicalStatus)
+        $lines.Add((Get-DashboardText 'software.results.column.status') + ': ' + [string]$metadata.StatusText)
         $lines.Add((Get-DashboardText 'software.results.column.confidence') + ': ' + [string]$metadata.ConfidenceText)
         if ($metadata.PSObject.Properties['PresenceText'] -and $metadata.PresenceText) {
             $lines.Add((Get-DashboardText 'software.results.detail.presence') + ': ' + [string]$metadata.PresenceText)
@@ -5117,7 +5147,7 @@ function Show-ThirdPartyAssessmentResults {
             $confidenceText = [string]$confidenceLabels[$confidence]
             $presenceState = if ($application.PSObject.Properties['PresenceState'] -and $application.PresenceState) { [string]$application.PresenceState } else { 'UnverifiedPresence' }
             $presenceText = if ($presenceLabels.ContainsKey($presenceState)) { [string]$presenceLabels[$presenceState] } else { [string]$presenceLabels.UnverifiedPresence }
-            $statusText = [string]$application.TechnicalStatus
+            $statusText = Get-GuiThirdPartyDisplayStatus -Application $application
             if ($presenceState -in @('ResidualOrPortableFiles','PortableApplication','LaunchReferenceOnly','RegisteredInstallation','VendorRegisteredProduct')) {
                 $statusText = $presenceText + ' | ' + $statusText
             }
@@ -5130,7 +5160,7 @@ function Show-ThirdPartyAssessmentResults {
             $row.Tag = [pscustomobject]@{
                 Application=$application; CandidateId=$candidateId; Actionable=$actionable; SelectionAllowed=$selectionAllowed
                 GuidanceOnly=$guidanceOnly; IsSystemComponent=$IsSystemView; EvidenceText=$evidenceText; ActionText=$actionText
-                LicenseText=$licenseText; ConfidenceText=$confidenceText; PresenceText=$presenceText
+                LicenseText=$licenseText; ConfidenceText=$confidenceText; PresenceText=$presenceText; StatusText=$statusText
             }
             $row.ToolTipText = "$([string]$application.Name)`r`n$statusText`r`n$evidenceText`r`n$actionText"
             if (-not $selectionAllowed) { $row.ForeColor = [System.Drawing.Color]::FromArgb(105, 112, 125) }

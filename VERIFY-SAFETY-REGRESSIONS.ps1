@@ -80,6 +80,23 @@ $softwareInventory = Read-And-Parse 'Tool-SoftwareInventory.ps1'
 $softwareCatalogUpdater = Read-And-Parse 'software-license-online-update.ps1'
 $runtime = Read-And-Parse 'Tool-Runtime.ps1'
 
+try {
+    $viStrings = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ([string]$viStrings.'officialBuild.banner.managedTitle' -match '(?i)ManagedSigned|xác minh' -or
+        [string]$viStrings.'officialBuild.banner.managedTitle' -ne 'Bản đang chạy bình thường' -or
+        [string]$viStrings.'dashboard.runMode' -ne 'BẢN ĐANG DÙNG') {
+        Fail 'Banner bản đang dùng vẫn lộ thuật ngữ phát hành hoặc chưa dùng câu chữ phổ thông.'
+    }
+    if ([string]$viStrings.'software.results.status.noIssue' -ne 'Không thấy dấu hiệu cần xử lý' -or
+        [string]$viStrings.'software.results.status.reviewOnly' -ne 'Cần xem thêm - Tool chưa kết luận' -or
+        [string]$viStrings.'software.results.hint' -notmatch '(?i)có thể chọn phần mềm trả phí, thuê bao, dùng thử, nghi ngờ hoặc chưa rõ' -or
+        [string]$viStrings.'software.results.noEvidence' -match '(?i)chính hãng|bằng chứng đủ mạnh') {
+        Fail 'Danh sách phần mềm vẫn biến việc chưa có dấu hiệu thành kết luận bản quyền gây hiểu nhầm.'
+    }
+} catch {
+    Fail "Không kiểm tra được câu chữ giao diện mới: $($_.Exception.Message)"
+}
+
 if ($backup -and $backup.Text -notmatch 'Backup-RegistryValues\s+\$windowsPolicyPath.+Windows_SPP_Policy') { Fail 'Backup thường chưa lưu riêng policy NoGenTicket bằng RegistryValues.' }
 if ($cleanup -and ($cleanup.Text -notmatch 'ManagedNoGenTicketPolicy' -or
     $cleanup.Text -notmatch 'InitialRemediationState\s+''BlockedByPolicy''' -or
@@ -882,10 +899,11 @@ No licenses found.
             Fail 'Candidate hướng dẫn-only có thể chuyển thành hành động local không an toàn.'
         }
         $integrityOnlyApp = $guidedOnlyApp.PSObject.Copy()
+        $integrityOnlyApp | Add-Member -NotePropertyName LicenseModel -NotePropertyValue 'Unknown' -Force
         $integrityOnlyApp.AssessmentCode = 'IntegrityCompromised'
         $integrityOnlyApp.RemediationEvidenceCount = 0
-        if (Test-ThirdPartyApplicationGuidedRemediationEligible -Application $integrityOnlyApp) {
-            Fail 'Sai chữ ký/integrity đơn lẻ vẫn bị đưa vào hàng đợi xử lý có hướng dẫn.'
+        if (-not (Test-ThirdPartyApplicationGuidedRemediationEligible -Application $integrityOnlyApp)) {
+            Fail 'Phần mềm chưa rõ không được đưa vào bước kiểm tra hoặc sửa theo hướng dẫn.'
         }
 
         $postVerificationFixture = [pscustomobject]@{ ScanWarningCount=0; ScanWarnings=@() }
@@ -1394,7 +1412,7 @@ if ($gui) {
         if ($gui.Text -notmatch [regex]::Escape($requiredToken)) { Fail "GUI thiếu kết quả phần mềm/Kết nối online/trạng thái ban đầu: $requiredToken" }
     }
     try {
-        foreach ($functionName in @('Test-GuiThirdPartyCleanupFinding','Test-GuiThirdPartyDirectRemediationEvidence','Get-GuiThirdPartyCleanupFindings','Get-GuiThirdPartyStandaloneCleanupRows')) {
+        foreach ($functionName in @('Test-GuiThirdPartyCleanupFinding','Test-GuiThirdPartyDirectRemediationEvidence','Test-GuiThirdPartySelectionAllowed','Get-GuiThirdPartyCleanupFindings','Get-GuiThirdPartyDisplayStatus','Get-GuiThirdPartyStandaloneCleanupRows')) {
             $functionAst = $gui.Ast.Find({
                 param($node)
                 $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $functionName
@@ -1411,23 +1429,50 @@ if ($gui) {
             Fail 'GUI vẫn đưa phần mềm đã sạch bằng chứng quay lại danh sách làm sạch sau quét lại.'
         }
         $confirmedDirectRow = [pscustomobject]@{
-            Name='Confirmed direct'; AssessmentCode='NonGenuine'; CleanupFinding=$true; CleanupCandidateId='candidate-1'; RemediationSupported=$true
+            Name='Confirmed direct'; LicenseModel='Unknown'; AssessmentCode='NonGenuine'; CleanupFinding=$true; CleanupCandidateId='candidate-1'; RemediationSupported=$true
+            LicenseTechnicalState='CrackConfirmed'; ArtifactCleanupAllowed=$true; CleanupArtifactCleanupAllowed=$true
+        }
+        $paidConfirmedRow = [pscustomobject]@{
+            Name='Paid confirmed'; LicenseModel='Paid'; AssessmentCode='NonGenuine'; CleanupFinding=$true; CleanupCandidateId='candidate-paid'; RemediationSupported=$true
             LicenseTechnicalState='CrackConfirmed'; ArtifactCleanupAllowed=$true; CleanupArtifactCleanupAllowed=$true
         }
         $manualSuspiciousRow = [pscustomobject]@{
-            Name='Suspicious exact artifact'; AssessmentCode='Suspicious'; CleanupFinding=$true; CleanupCandidateId='candidate-2'; RemediationSupported=$true
+            Name='Suspicious exact artifact'; LicenseModel='Subscription'; AssessmentCode='Suspicious'; CleanupFinding=$true; CleanupCandidateId='candidate-2'; RemediationSupported=$true
             LicenseTechnicalState='Suspicious'; ArtifactCleanupAllowed=$false; ManualArtifactQuarantineAllowed=$true
             CleanupManualArtifactQuarantineOnly=$true; CleanupArtifactCleanupAllowed=$true
         }
         $unverifiedSuspiciousRow = [pscustomobject]@{
-            Name='Suspicious only'; AssessmentCode='Suspicious'; CleanupFinding=$true; CleanupCandidateId='candidate-3'; RemediationSupported=$true
+            Name='Suspicious only'; LicenseModel='Trial'; AssessmentCode='Suspicious'; CleanupFinding=$true; CleanupCandidateId='candidate-3'; RemediationSupported=$false
             LicenseTechnicalState='Suspicious'; ArtifactCleanupAllowed=$false; ManualArtifactQuarantineAllowed=$false
             CleanupManualArtifactQuarantineOnly=$false; CleanupArtifactCleanupAllowed=$false
+            GuidedRemediationSupported=$true; CleanupGuidanceOnly=$true
+        }
+        $paidNoCandidateRow = [pscustomobject]@{
+            Name='Paid without candidate'; LicenseModel='Paid'; AssessmentCode='Unverified'; CleanupFinding=$false; CleanupCandidateId=''; RemediationSupported=$false
+            LicenseTechnicalState='Unverified'; ArtifactCleanupAllowed=$false; CleanupArtifactCleanupAllowed=$false
+        }
+        $paidGuidanceRow = [pscustomobject]@{
+            Name='Paid with guidance'; LicenseModel='Paid'; AssessmentCode='Unverified'; CleanupFinding=$false; CleanupCandidateId='candidate-paid-guidance'; RemediationSupported=$false
+            LicenseTechnicalState='Unverified'; ArtifactCleanupAllowed=$false; CleanupArtifactCleanupAllowed=$false
+            GuidedRemediationSupported=$true; CleanupGuidanceOnly=$true
         }
         if (-not (Test-GuiThirdPartyDirectRemediationEvidence -Application $confirmedDirectRow) -or
+            -not (Test-GuiThirdPartySelectionAllowed -Application $confirmedDirectRow) -or
             -not (Test-GuiThirdPartyDirectRemediationEvidence -Application $manualSuspiciousRow) -or
-            (Test-GuiThirdPartyDirectRemediationEvidence -Application $unverifiedSuspiciousRow)) {
-            Fail 'GUI không phân biệt được tệp nghi vấn cụ thể đã kiểm chứng với nghi vấn chưa đủ điều kiện.'
+            -not (Test-GuiThirdPartySelectionAllowed -Application $manualSuspiciousRow) -or
+            (Test-GuiThirdPartyDirectRemediationEvidence -Application $unverifiedSuspiciousRow) -or
+            -not (Test-GuiThirdPartySelectionAllowed -Application $unverifiedSuspiciousRow) -or
+            (Test-GuiThirdPartySelectionAllowed -Application $paidNoCandidateRow) -or
+            -not (Test-GuiThirdPartySelectionAllowed -Application $paidGuidanceRow) -or
+            -not (Test-GuiThirdPartyDirectRemediationEvidence -Application $paidConfirmedRow) -or
+            -not (Test-GuiThirdPartySelectionAllowed -Application $paidConfirmedRow)) {
+            Fail 'GUI chưa cho chọn mục trả phí, thuê bao, dùng thử hoặc nghi ngờ khi đã có bước xử lý/hướng dẫn phù hợp.'
+        }
+        if ([string](Get-GuiThirdPartyDisplayStatus -Application $paidNoCandidateRow) -ne 'software.results.status.noIssue' -or
+            [string](Get-GuiThirdPartyDisplayStatus -Application $manualSuspiciousRow) -ne 'software.results.status.reviewOnly' -or
+            [string](Get-GuiThirdPartyDisplayStatus -Application $paidConfirmedRow) -ne 'software.results.status.reviewOnly' -or
+            [string](Get-GuiThirdPartyDisplayStatus -Application $confirmedDirectRow) -ne 'software.results.status.clearFinding') {
+            Fail 'GUI vẫn biến loại phần mềm hoặc kết quả nghi ngờ thành kết luận gây hiểu nhầm.'
         }
         $standaloneRows = @(Get-GuiThirdPartyStandaloneCleanupRows -Candidates @([pscustomobject]@{
             Id='standalone-file'; Name='license-crack.zip'; ApplicationIds=@(); RemediationMode='ArtifactCleanup'
@@ -1440,6 +1485,9 @@ if ($gui) {
         }
         if (-not (Test-GuiThirdPartyDirectRemediationEvidence -Application $standaloneRows[0])) {
             Fail 'GUI khóa nhầm candidate tệp activator độc lập đã qua phạm vi/path allowlist.'
+        }
+        if (-not (Test-GuiThirdPartySelectionAllowed -Application $standaloneRows[0])) {
+            Fail 'GUI khóa nhầm dấu vết tệp độc lập đã gắn đúng tệp và đủ điều kiện xử lý an toàn.'
         }
     } catch {
         Fail "Không chạy được fixture lọc danh sách làm sạch sau quét lại: $($_.Exception.Message)"
@@ -1632,8 +1680,10 @@ if ($softwareInventory) {
         $afterCleanup = @(Get-ToolSoftwareAssessments -Applications @($rescanApp) -Catalog $trustedBundledCatalog -ExternalEvidence @())[0]
         $afterCandidates = @(Get-ThirdPartyLicenseCandidates -Applications @($afterCleanup) -Evidence @())
         $afterVisible = @(Get-GuiThirdPartyCleanupFindings -Applications @($afterCleanup))
-        if ([bool]$afterCleanup.CleanupFinding -or $afterCandidates.Count -ne 0 -or $afterVisible.Count -ne 0) {
-            Fail 'Fixture end-to-end: làm sạch xong quét lại vẫn còn trong hàng đợi phần mềm khác.'
+        if ([bool]$afterCleanup.CleanupFinding -or $afterVisible.Count -ne 0 -or
+            $afterCandidates.Count -ne 1 -or -not [bool]$afterCandidates[0].GuidanceOnly -or
+            @($afterCandidates[0].PlanItems | Where-Object { [string]$_.Type -ne 'Guidance' }).Count -ne 0) {
+            Fail 'Fixture end-to-end: sau làm sạch phải hết dấu vết xử lý trực tiếp nhưng vẫn cho người dùng chọn bước kiểm tra.'
         }
     } catch {
         Fail "Không chạy được fixture end-to-end làm sạch/quét lại phần mềm khác: $($_.Exception.Message)"
@@ -1722,7 +1772,8 @@ if ($softwareInventory) {
         $postCleanupCandidates = @(Get-ThirdPartyLicenseCandidates -Applications @($postCleanupAssessment) -Evidence @())
         if (-not [bool]$postCleanupAssessment.NeedsReview -or [bool]$postCleanupAssessment.CleanupFinding -or
             [bool]$postCleanupAssessment.ManualEligible -or [bool]$postCleanupAssessment.ManualArtifactQuarantineAllowed -or
-            $postCleanupCandidates.Count -ne 0 -or
+            $postCleanupCandidates.Count -ne 1 -or -not [bool]$postCleanupCandidates[0].GuidanceOnly -or
+            @($postCleanupCandidates[0].PlanItems | Where-Object { [string]$_.Type -ne 'Guidance' }).Count -ne 0 -or
             [int]$postCleanupAssessment.RemediationEvidenceCount -ne 0 -or
             @($postCleanupAssessment.Evidence | Where-Object { $_.Code -eq 'SuspiciousArtifactName' }).Count -ne 0) {
             Fail 'Sau khi cách ly artifact, bằng chứng kiểm kê chung vẫn đưa ứng dụng quay lại hàng đợi làm sạch.'
@@ -1848,6 +1899,19 @@ if ($softwareInventory) {
             }
         }
 
+        $camtasiaPortable = New-ToolSoftwareInventoryRecord -Name 'Camtasia 9' -Version '9.0.0.1306' -Publisher '' `
+            -InstallLocation 'C:\Fixture\Portable\Camtasia 9' -SourceKind 'PortableDiscovery' -SourceDetail 'FileScan' `
+            -RepresentativePath 'C:\Fixture\Portable\Camtasia 9\CamtasiaStudio.exe' -SkipSignature -SkipExecutableDiscovery
+        $camtasiaVendor = New-ToolSoftwareInventoryRecord -Name 'Camtasia 9' -Version '9.0.0.1306' -Publisher 'TechSmith Corporation' `
+            -InstallLocation 'C:\Fixture\Vendor\Camtasia 9' -SourceKind 'VendorRegistration' -SourceDetail 'VendorData' `
+            -SkipSignature -SkipExecutableDiscovery
+        $camtasiaMerged = @(Merge-ToolSoftwareInventoryRecords -Records @($camtasiaPortable, $camtasiaVendor))
+        if ($camtasiaMerged.Count -ne 1 -or [int]$camtasiaMerged[0].MergedRecordCount -ne 2 -or
+            [string]$camtasiaMerged[0].Publisher -ne 'TechSmith Corporation' -or
+            [string]$camtasiaMerged[0].PresenceState -ne 'InstalledConfirmed') {
+            Fail 'Cùng một Camtasia từ dữ liệu hãng và bộ tệp vẫn bị hiển thị thành hai phần mềm hoặc làm mất nhà phát hành.'
+        }
+
         $classificationApps = @(
             (New-ToolSoftwareInventoryRecord -Name 'IObit Driver Booster 13 Pro' -Version '13.0' -Publisher 'IObit' -InstallLocation 'C:\Fixture\DriverBooster' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'MathType 7' -Version '7.8' -Publisher 'WIRIS' -InstallLocation 'C:\Fixture\MathType' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
@@ -1967,8 +2031,8 @@ if ($softwareInventory) {
             }
             $registeredWinRarAssessment = @(Get-ToolSoftwareAssessments -Applications @($winRarApp) -Catalog $trustedBundledCatalog)[0]
             if ([bool]$registeredWinRarAssessment.CleanupFinding -or [bool]$registeredWinRarAssessment.ManualEligible -or
-                [bool]$registeredWinRarAssessment.AutoEligible -or [string]$registeredWinRarAssessment.RemediationImpact -ne 'NoChangeProposed') {
-                Fail 'WinRAR có rarreg.key nhưng không có bằng chứng lạm dụng vẫn bị đưa vào khắc phục.'
+            [bool]$registeredWinRarAssessment.AutoEligible -or [string]$registeredWinRarAssessment.RemediationImpact -ne 'GuidedOfficialRepair') {
+                Fail 'WinRAR có giấy phép cục bộ bị mở xử lý tự động thay vì chỉ cho chọn bước kiểm tra.'
             }
             [IO.File]::Delete($rarRegPath)
             $winRarAssessment = @(Get-ToolSoftwareAssessments -Applications @($winRarApp) -Catalog $trustedBundledCatalog)[0]

@@ -456,8 +456,38 @@ function Find-ToolPatternFilesParallel {
     })
     # Internal default discovery may fan out to more than the eight roots a
     # user can explicitly select. The UI/request boundary remains capped at 8.
-    $scanRoots = @(Resolve-ToolLocalScanRoots -Roots $existingRoots -MaximumRoots 64 -ParameterName 'Roots')
-    $safeExcludedRoots = @(Resolve-ToolLocalScanRoots -Roots $existingExcludedRoots -ParameterName 'ExcludedRoots')
+    # Windows keeps compatibility links such as C:\Users\All Users\Desktop.
+    # They point back into locations that are already scanned.  Treating one of
+    # these automatic discovery roots as a fatal input error made the whole
+    # software result read-only even though no user-selected source was unsafe.
+    # Validate roots one by one and silently skip only reparse-point roots; all
+    # other invalid local paths still fail closed.
+    $validatedRoots = New-Object System.Collections.Generic.List[string]
+    foreach ($existingRoot in @($existingRoots)) {
+        try {
+            foreach ($resolvedRoot in @(Resolve-ToolLocalScanRoots -Roots @([string]$existingRoot) -MaximumRoots 64 -ParameterName 'Roots')) {
+                if (-not $validatedRoots.Contains([string]$resolvedRoot)) { [void]$validatedRoots.Add([string]$resolvedRoot) }
+            }
+        } catch [ArgumentException] {
+            if ([string]$_.Exception.Message -match '(?i)junction/symlink/reparse point') { continue }
+            throw
+        }
+    }
+    if ($validatedRoots.Count -gt 64) { throw (New-Object ArgumentException('Roots vượt quá giới hạn 64 thư mục.', 'Roots')) }
+    $scanRoots = @($validatedRoots.ToArray())
+
+    $validatedExcludedRoots = New-Object System.Collections.Generic.List[string]
+    foreach ($existingExcludedRoot in @($existingExcludedRoots)) {
+        try {
+            foreach ($resolvedRoot in @(Resolve-ToolLocalScanRoots -Roots @([string]$existingExcludedRoot) -ParameterName 'ExcludedRoots')) {
+                if (-not $validatedExcludedRoots.Contains([string]$resolvedRoot)) { [void]$validatedExcludedRoots.Add([string]$resolvedRoot) }
+            }
+        } catch [ArgumentException] {
+            if ([string]$_.Exception.Message -match '(?i)junction/symlink/reparse point') { continue }
+            throw
+        }
+    }
+    $safeExcludedRoots = @($validatedExcludedRoots.ToArray())
     $scanRoots = @($scanRoots | Where-Object {
         $candidateRoot = $_
         @($safeExcludedRoots | Where-Object { Test-ToolPathWithinRoot -Path $candidateRoot -Root $_ }).Count -eq 0

@@ -112,6 +112,21 @@ try {
         $reparseRejected = $false
         try { [void](Resolve-ToolLocalScanRoots -Roots @($junctionPath)) } catch { $reparseRejected = $true }
         if (-not $reparseRejected) { Add-Failure 'A junction/reparse scan root was accepted.' }
+
+        # Automatic discovery can encounter Windows compatibility junctions
+        # such as C:\Users\All Users\Desktop. The traversal helper must skip
+        # that root and continue with the remaining real roots instead of
+        # turning the whole software result into read-only mode.
+        $junctionSafeMatches = @()
+        try {
+            $junctionSafeMatches = @(Find-ToolPatternFilesParallel -Roots @($junctionPath, $rootTwo) `
+                -ExcludedRoots @($excludedFolder) -Pattern '(?i)(kms|activator)' -MaximumResults 10 -ThrottleLimit 2)
+        } catch {
+            Add-Failure "Automatic reparse root stopped the remaining scan roots: $($_.Exception.Message)"
+        }
+        if ($junctionSafeMatches.Count -ne 1 -or [IO.Path]::GetFileName([string]$junctionSafeMatches[0]) -ne 'activator-readme.txt') {
+            Add-Failure 'Automatic reparse root was not skipped while the remaining local root continued.'
+        }
     }
 
     $env:TOOL_SCAN_SETTINGS_PATH = Join-Path $tempRoot 'settings\scan-settings.json'

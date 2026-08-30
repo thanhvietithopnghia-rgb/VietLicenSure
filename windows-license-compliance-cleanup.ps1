@@ -2036,6 +2036,8 @@ function Test-ThirdPartyApplicationGuidedRemediationEligible {
     if ($null -eq $Application) { return $false }
     if ([bool]($Application.PSObject.Properties['IsSystemComponent'] -and [bool]$Application.IsSystemComponent)) { return $false }
     if (-not ($Application.PSObject.Properties['GuidedRemediationSupported'] -and [bool]$Application.GuidedRemediationSupported)) { return $false }
+    $licenseModel = if ($Application.PSObject.Properties['LicenseModel']) { [string]$Application.LicenseModel } else { 'Unknown' }
+    if ($licenseModel -in @('Paid','Subscription','Trial','Unknown')) { return $true }
     $assessmentCode = [string]$Application.AssessmentCode
     if ($assessmentCode -in @('NonGenuine','Suspicious')) { return $true }
     # Defense in depth for callers that pass a deserialized assessment rather

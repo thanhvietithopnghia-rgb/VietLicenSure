@@ -1219,9 +1219,11 @@ function Merge-ToolSoftwareInventoryRecords {
                  (($recordRegistryPath -and $headRegistryPath -and $recordRegistryPath -ne $headRegistryPath) -and
                   -not $versionCompatible)))
             if ($parallelRegistryInstances) { continue }
+            $registeredSources = @('Registry','Appx','PackageManager','VendorRegistration')
+            $discoverySources = @('Shortcut','PortableDiscovery')
             $complementarySources = [bool](
-                ($recordSource -eq 'Registry' -and $headSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager','VendorRegistration')) -or
-                ($headSource -eq 'Registry' -and $recordSource -in @('Shortcut','PortableDiscovery','Appx','PackageManager','VendorRegistration'))
+                ($recordSource -in $registeredSources -and $headSource -in $discoverySources) -or
+                ($headSource -in $registeredSources -and $recordSource -in $discoverySources)
             )
             $nameCompatible = [bool]($nameKey -eq $headName)
             $exactProductIdentity = [bool]($nameKey -eq $headName -and $publisherKey -and $headPublisher -and
@@ -3446,12 +3448,16 @@ function Get-ToolSoftwareAssessments {
         # activation/tampering signal supports it.  This prevents an unsigned
         # or independently modified legitimate binary from being presented as
         # a "clean this software" action.
-        $guidedRemediationEligible = [bool](
+        $evidenceGuidedRemediationEligible = [bool](
             -not $isSystemComponent -and
             $remediationEvidenceCount -gt 0 -and
             $statusCode -in @('NonGenuine','Suspicious','IntegrityCompromised')
         )
-        $cleanupFinding = [bool]($recoveryGate.ArtifactCleanupAllowed -or $manualArtifactQuarantineGate.Allowed -or $guidedRemediationEligible)
+        $guidedRemediationEligible = [bool](
+            $evidenceGuidedRemediationEligible -or
+            (-not $isSystemComponent -and $licenseModel -in @('Paid','Subscription','Trial','Unknown'))
+        )
+        $cleanupFinding = [bool]($recoveryGate.ArtifactCleanupAllowed -or $manualArtifactQuarantineGate.Allowed -or $evidenceGuidedRemediationEligible)
         $manualEligible = [bool]($recoveryGate.ArtifactCleanupAllowed -or $manualArtifactQuarantineGate.Allowed)
         if ($manualEligible -and [string]::IsNullOrWhiteSpace($remediationAdapter)) {
             $remediationAdapter = 'Generic'
