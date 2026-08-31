@@ -2480,7 +2480,7 @@ if ($capabilityState.ScheduledTasksModule) {
 Add-Section "Scheduled tasks dang bat" (Add-Table $tasks @("Task","Path","State","Author")) "Software"
 }
 
-# Plugin v4.6 chỉ dùng JSON khai báo và các nguồn đọc đã giới hạn. Không dot-source
+# Plugin chỉ dùng JSON khai báo và các nguồn đọc đã giới hạn. Không dot-source
 # hoặc thực thi mã do plugin cung cấp.
 $pluginAudit = $null
 if ($wantSoftware) {

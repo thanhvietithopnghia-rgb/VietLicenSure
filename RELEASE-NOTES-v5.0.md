@@ -1,8 +1,24 @@
-# Tool Kiểm Tra v5.0.0.0 — ManagedSigned Stable R8
+# Tool Kiểm Tra v5.0.0.0 — Bản cập nhật R11
 
 Build date: 2026-08-26
-Published revision: 2026-08-30 (R8 portability hotfix)
+Published revision: 2026-08-31 (R11 software priority, system filter, and version-label update)
 Status: `ManagedSigned` self-signed exception — the launcher pins both the signer thumbprint and certificate SHA-256; Windows may still show `Unknown publisher` because this is not a public-CA identity
+
+## Cập nhật R11
+
+- Giữ nguyên ProductVersion/FileVersion `5.0.0.0` và tag `v5.0.0.0`.
+- Sắp xếp ứng dụng người dùng theo thứ tự mức cần chú ý: Cao, Trung bình, rồi Thấp; tên ứng dụng chỉ dùng để sắp xếp trong cùng một mức.
+- Phần mềm trả phí, thuê bao hoặc dùng thử chưa được xác minh không còn hiện là “không cần xử lý”; Tool yêu cầu kiểm tra giấy phép nhưng không tự kết luận vi phạm.
+- Windows App Runtime, codec, extension nền, VCLibs/UI.Xaml và thành phần hệ thống tương tự được giữ trong kiểm kê nội bộ nhưng không xuất hiện trong cửa sổ chọn/xử lý.
+- Catalog tích hợp và Online được nâng lên `1.6.2.0` với 94 nhóm sản phẩm.
+- Các tiêu đề giao diện hiện dùng v5.0 động hoặc nội dung trung tính; định danh storage/mutex v4.6 chỉ được giữ cho tương thích dữ liệu cũ.
+- Người đang dùng R10 hoặc bản cũ hơn cần tải lại EXE vì các revision cùng mang số phiên bản `5.0.0.0`.
+
+## Cập nhật R10
+
+- Đồng bộ catalog tích hợp và catalog Online lên `1.6.1.0` với 93 nhóm sản phẩm.
+- Giữ catalog mới hơn khi nguồn Online thấp hơn, không hạ cấp và không làm gián đoạn lượt quét.
+- Bản phát hành dùng trạng thái `ManagedSigned`, không còn bị khóa như build thử nghiệm `DevelopmentUnsigned`.
 
 ## R8 portability hotfix
 

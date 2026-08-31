@@ -1,5 +1,5 @@
 ﻿<#
-    Tool v4.6 enterprise server
+    Tool v5.0 enterprise server
 
     The host is deliberately a small HTTP listener instead of a full web
     framework so it can run on Windows 7 SP1 through Windows 11 with the

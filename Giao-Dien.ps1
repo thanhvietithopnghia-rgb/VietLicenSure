@@ -7702,7 +7702,7 @@ function Show-AssuranceCenter {
     $dialog.Tag = ""
 
     $heading = New-Object System.Windows.Forms.Label
-    $heading.Text = Get-ToolText -Key "assurance.heading" -Culture $script:dashboardCulture
+    $heading.Text = Get-ToolText -Key "assurance.heading" -Culture $script:dashboardCulture -FormatArguments @($toolDisplayVersion)
     $heading.Font = $fontTitle
     $heading.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
     $heading.Location = New-Object System.Drawing.Point(28, 18)

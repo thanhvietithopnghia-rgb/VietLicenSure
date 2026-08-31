@@ -279,7 +279,7 @@ function Initialize-ToolDataLifecycle {
     try {
         try { $lockTaken = $mutex.WaitOne([TimeSpan]::FromSeconds(30)) }
         catch [Threading.AbandonedMutexException] { $lockTaken = $true }
-        if (-not $lockTaken) { throw "Hết thời gian chờ khóa migration dữ liệu v4.6." }
+        if (-not $lockTaken) { throw "Hết thời gian chờ khóa migration của vùng dữ liệu tương thích hiện tại." }
 
         New-ToolDataDirectorySafe -Path $root
         $env:TOOL_DATA_ROOT = $root
@@ -297,7 +297,7 @@ function Initialize-ToolDataLifecycle {
                 throw "StorageGeneration không tương thích: $([string]$state.StorageGeneration)."
             }
             if ([string]$state.MigrationStatus -eq 'Partial') {
-                throw "Migration dữ liệu trước đó chưa hoàn tất; v4.6 từ chối ghi để tránh dùng trạng thái một phần."
+                throw "Migration dữ liệu trước đó chưa hoàn tất; Tool từ chối ghi để tránh dùng trạng thái một phần."
             }
             if (-not $state.PSObject.Properties['ProducerVersion']) {
                 $producerVersion = if ($state.PSObject.Properties['ProductVersion']) { [string]$state.ProductVersion } else { $script:ToolDataToolVersion }
@@ -342,7 +342,7 @@ function Initialize-ToolDataLifecycle {
                 }
             } catch {
                 $migrationError = ([string]$_.Exception.Message).Replace("`r", " ").Replace("`n", " ")
-                throw "Migration dữ liệu v4.6 thất bại; dữ liệu cũ vẫn nguyên vẹn và thay đổi mới đã được hoàn tác: $migrationError"
+                throw "Migration vùng dữ liệu tương thích thất bại; dữ liệu cũ vẫn nguyên vẹn và thay đổi mới đã được hoàn tác: $migrationError"
             } finally {
                 if (Test-Path -LiteralPath $stagingRoot -PathType Container) {
                     [void](Assert-ToolDataPathWithinRoot -Path $stagingRoot -Root $root)
@@ -373,7 +373,7 @@ function Initialize-ToolDataLifecycle {
                 (Join-Path $legacyRoot "backups"),
                 (Join-Path $legacyRoot "logs")
             )
-            ConcurrencyPolicy = "v4.6 uses a separate data root; launcher detects active v4.4/v4.5 mutexes before migration. Do not run versions concurrently."
+            ConcurrencyPolicy = "The compatible data-storage generation uses a separate root; the launcher detects active v4.4/v4.5 mutexes before migration. Do not run versions concurrently."
         }
         Write-ToolDataStateAtomic -State $state
         $script:ToolDataInitializedRoot = $root

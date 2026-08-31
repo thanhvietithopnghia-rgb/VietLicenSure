@@ -1,5 +1,5 @@
 ﻿<#
-    Tool v4.6 workstation agent.
+    Tool v5.0 workstation agent.
     It is intentionally a one-shot process so the GUI or Task Scheduler can
     invoke it without leaving an unmanaged background service behind.
 #>

@@ -943,7 +943,7 @@ No licenses found.
             [string]$node.GetCommandName() -in @('Remove-Item','Move-Item','Copy-Item','Set-Item','Set-ItemProperty','New-ItemProperty','Remove-ItemProperty','Stop-Process','Stop-Service','Set-Service','Start-Process','Checkpoint-Computer','Invoke-WebRequest','Invoke-RestMethod')
         }, $true))
         if ($mutatingCommands.Count -ne 0) { Fail 'Bộ lập kế hoạch Dry Run chứa lệnh thay đổi hệ thống hoặc mạng.' }
-        $script:releaseVersion = '4.6.2.0'
+        $script:releaseVersion = '5.0.0.0'
         $dryRunCandidate = New-CleanupItem -Type 'File' -Kind 'HookFile' -Name 'fixture.dll' -Location 'C:\Fixture\fixture.dll' -Detail 'fixture'
         $dryRunPlan = @(Get-DryRunRemediationPlan -Candidates @($dryRunCandidate) -SelectedIds @([string]$dryRunCandidate.Id))
         if ($dryRunPlan.Count -ne 3 -or

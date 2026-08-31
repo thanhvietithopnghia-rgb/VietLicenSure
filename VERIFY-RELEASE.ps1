@@ -909,7 +909,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             -not [bool]$releaseManifest.ScanLowResourceMode -or
             [string]$releaseManifest.ScanRootPolicy -notmatch 'UNC and reparse-point roots rejected' -or
             @($releaseManifest.EnvironmentWarnings).Count -ne 2 -or
-            @($releaseManifest.ProgressUtilities).Count -ne 2) { throw 'Thiếu metadata cải tiến giao diện v4.6.' }
+            @($releaseManifest.ProgressUtilities).Count -ne 2) { throw 'Thiếu metadata cải tiến giao diện v5.0.' }
         if (@($releaseManifest.ThirdPartyLicenseRemediationAdapters).Count -ne 4 -or
             (@($releaseManifest.ThirdPartyLicenseRemediationAdapters) -join ' ') -notmatch 'WinRAR' -or
             (@($releaseManifest.ThirdPartyLicenseRemediationAdapters) -join ' ') -notmatch 'never automatically reset' -or
@@ -917,14 +917,14 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.ThirdPartyAutomaticResetPolicy -notmatch 'hash/size revalidation' -or
             [string]$releaseManifest.ThirdPartyAutomaticResetPolicy -notmatch 'manual-only' -or
             [string]$releaseManifest.ThirdPartyBackupPolicy -notmatch 'non-restorable') {
-            throw 'Thiếu metadata khắc phục bản quyền phần mềm bên thứ ba v4.6.'
+            throw 'Thiếu metadata khắc phục bản quyền phần mềm bên thứ ba v5.0.'
         }
         if (-not [bool]$releaseManifest.UniversalDeepSoftwareScan -or
             @($releaseManifest.DeepSoftwareScanEvidence).Count -lt 8 -or
             [string]$releaseManifest.DeepSoftwareScanScoring -notmatch 'direct known hash, active activator' -or
             [string]$releaseManifest.DeepSoftwareScanBudgetPolicy -notmatch 'weighted budgeting' -or
             [string]$releaseManifest.DeepSoftwareScanCatalogTrust -notmatch 'pinned-signer') {
-            throw 'Thiếu metadata quét sâu phần mềm phổ quát v4.6.'
+            throw 'Thiếu metadata quét sâu phần mềm phổ quát v5.0.'
         }
         if ([string]$releaseManifest.SoftwareLicenseCatalogVersion -ne '1.6.2.0' -or
             [string]$releaseManifest.SoftwareLicenseCatalogGeneratedAtUtc -ne '2026-08-31T01:11:33Z' -or
@@ -938,7 +938,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.SoftwareLicenseCatalogSignerCertificateSha256 -ne 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9' -or
             [int]$releaseManifest.EngineeringSoftwareCatalogRules -lt 16 -or
             @($releaseManifest.EngineeringSoftwareCategories).Count -lt 8) {
-            throw 'Thiếu metadata mở rộng catalog phần mềm kỹ thuật v4.6.'
+            throw 'Thiếu metadata mở rộng catalog phần mềm kỹ thuật v5.0.'
         }
         if ([string]$releaseManifest.NormalReportActivatorInspection -notmatch 'MAS/PMAS' -or
             [string]$releaseManifest.NormalReportActivatorInspection -notmatch 'Activation Program 1.17' -or
@@ -956,7 +956,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if (-not [bool]$releaseManifest.RemediationDryRun -or
             [string]$releaseManifest.RemediationDryRunPolicy -notmatch 'no system changes' -or
             [string]$releaseManifest.RemediationDryRunPolicy -notmatch 'new item confirmation') {
-            throw 'Thiếu metadata Dry Run fail-safe v4.6.'
+            throw 'Thiếu metadata Dry Run fail-safe v5.0.'
         }
         if ([string]$releaseManifest.OfflinePolicySchemaVersion -ne '1.0' -or
             [string]$releaseManifest.OfflineDefault -ne 'Offline' -or
@@ -1195,7 +1195,7 @@ if (Test-Path -LiteralPath $enterpriseVerifierPath -PathType Leaf) {
 }
 if (Test-Path -LiteralPath $performanceVerifierPath -PathType Leaf) {
     & $performanceVerifierPath -SourceDirectory $sourceDirectoryFull
-    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra tối ưu quét v4.6 thất bại.') }
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra tối ưu quét v5.0 thất bại.') }
 }
 if (Test-Path -LiteralPath $dataLifecycleVerifierPath -PathType Leaf) {
     & $dataLifecycleVerifierPath -SourceDirectory $sourceDirectoryFull

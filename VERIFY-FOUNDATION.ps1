@@ -10,7 +10,7 @@ $originalCorrelationId = [string]$env:TOOL_CORRELATION_ID
 $originalSecureLaunch = [string]$env:TOOL_SECURE_LAUNCH
 $originalModuleId = [string]$env:TOOL_MODULE_ID
 $originalModuleInvocationId = [string]$env:TOOL_MODULE_INVOCATION_ID
-$tempDirectory = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v4.6-foundation-" + [Guid]::NewGuid().ToString("N"))
+$tempDirectory = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v5.0-foundation-" + [Guid]::NewGuid().ToString("N"))
 $tempLogPath = Join-Path $tempDirectory "foundation.jsonl"
 
 try {

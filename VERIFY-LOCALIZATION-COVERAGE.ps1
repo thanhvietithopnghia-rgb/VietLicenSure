@@ -57,6 +57,29 @@ if ($vi -and $en) {
     foreach ($key in @($en.Keys | Sort-Object)) {
         if (-not $vi.ContainsKey($key)) { Add-Failure "vi-VN catalog is missing key: $key" }
     }
+
+    $currentUiKeys = @(
+        'assurance.heading',
+        'report.text.042',
+        'assurance.text.026',
+        'foundation.module.error.notRegisteredCatalog',
+        'launcher.legacyVersionRunning'
+    )
+    foreach ($key in $currentUiKeys) {
+        foreach ($catalogEntry in @(@{ Name='vi-VN'; Values=$vi }, @{ Name='en-US'; Values=$en })) {
+            if ($catalogEntry.Values.ContainsKey($key) -and [string]$catalogEntry.Values[$key] -match '(?i)\bv4\.6\b') {
+                Add-Failure "$($catalogEntry.Name) current UI key still presents v4.6 as the application version: $key"
+            }
+        }
+    }
+    foreach ($catalogEntry in @(@{ Name='vi-VN'; Values=$vi }, @{ Name='en-US'; Values=$en })) {
+        if ($catalogEntry.Values.ContainsKey('assurance.heading')) {
+            $formattedHeading = [string]::Format([Globalization.CultureInfo]::InvariantCulture, [string]$catalogEntry.Values['assurance.heading'], @('v5.0'))
+            if ($formattedHeading -notmatch '(?i)\bv5\.0\b' -or $formattedHeading -match '(?i)\bv4\.6\b') {
+                Add-Failure "$($catalogEntry.Name) assurance heading does not use the supplied current display version."
+            }
+        }
+    }
 }
 
 $sourceNames = @(
@@ -251,6 +274,14 @@ if (Test-Path -LiteralPath $launcherPath -PathType Leaf) {
     if ($launcher -notmatch 'TOOL_UI_CULTURE"\]\s*=\s*GetUiCulture\(\)') { Add-Failure 'Launcher does not propagate the selected culture to PowerShell.' }
     foreach ($historyName in @('LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md')) {
         if ($launcher -notmatch [regex]::Escape('"' + $historyName + '"')) { Add-Failure "Launcher payload is missing $historyName." }
+    }
+}
+
+$dashboardPath = Join-Path $SourceDirectory 'Giao-Dien.ps1'
+if (Test-Path -LiteralPath $dashboardPath -PathType Leaf) {
+    $dashboardText = Read-Utf8 $dashboardPath
+    if ($dashboardText -notmatch 'Get-ToolText\s+-Key\s+"assurance\.heading"\s+-Culture\s+\$script:dashboardCulture\s+-FormatArguments\s+@\(\$toolDisplayVersion\)') {
+        Add-Failure 'Assurance heading is not formatted from the shared current display version.'
     }
 }
 

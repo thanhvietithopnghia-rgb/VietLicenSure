@@ -469,7 +469,7 @@ function Find-CSharpCompiler {
     }
     $selected = @($candidates.ToArray() | Sort-Object { [Version]$_.VersionInfo.FileVersion } -Descending | Select-Object -First 1)
     if ($selected.Count -eq 1) { return $selected[0].FullName }
-    throw 'Không tìm thấy Roslyn csc.exe. Hãy cài Visual Studio Build Tools (MSBuild/Roslyn); v4.6 không dùng compiler legacy vì cần deterministic build.'
+    throw 'Không tìm thấy Roslyn csc.exe. Hãy cài Visual Studio Build Tools (MSBuild/Roslyn); bản hiện tại không dùng compiler legacy vì cần deterministic build.'
 }
 
 function Get-VerificationPowerShell([string]$Architecture) {

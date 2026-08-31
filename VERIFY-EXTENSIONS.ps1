@@ -6,7 +6,7 @@ Set-StrictMode -Version 2.0
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $source = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
-$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v4.6-extensions-" + [Guid]::NewGuid().ToString("N"))
+$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v5.0-extensions-" + [Guid]::NewGuid().ToString("N"))
 $previousSecureLaunch = [string]$env:TOOL_SECURE_LAUNCH
 $previousPluginDir = [string]$env:TOOL_PLUGIN_DIR
 $previousTimelinePath = [string]$env:TOOL_TIMELINE_PATH
@@ -191,7 +191,7 @@ $validation = Test-ToolReportEnvelope -Report $json -ExpectedReportKind "Certifi
         $tempFull = [IO.Path]::GetFullPath($tempRoot)
         $expectedPrefix = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd([char]92) + [char]92
         if ($tempFull.StartsWith($expectedPrefix, [StringComparison]::OrdinalIgnoreCase) -and
-            [IO.Path]::GetFileName($tempFull).StartsWith("Tool-Kiem-Tra-v4.6-extensions-", [StringComparison]::OrdinalIgnoreCase) -and
+            [IO.Path]::GetFileName($tempFull).StartsWith("Tool-Kiem-Tra-v5.0-extensions-", [StringComparison]::OrdinalIgnoreCase) -and
             (Test-Path -LiteralPath $tempFull -PathType Container)) {
             Remove-Item -LiteralPath $tempFull -Recurse -Force -ErrorAction SilentlyContinue
         }

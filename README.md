@@ -1,6 +1,6 @@
 # Tool Kiểm Tra v5.0 — Bản nâng cấp và cải tiến tiếp nối từ v4.9
 
-**Phiên bản mới nhất của nhánh v5:** v5.0.0.0 · Build 2026.08.26 · `ManagedSigned Stable R8`
+**Phiên bản mới nhất của nhánh v5:** v5.0.0.0 · Bản cập nhật danh sách phần mềm R11 ngày 31/08/2026
 **Tác giả và phát triển:** Thanh Việt
 **Trang v5 ManagedSigned:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0>
 **Stable công khai mới nhất:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
@@ -9,12 +9,14 @@ Tiếp nối nền tảng của v4.9, Tool Kiểm Tra v5.0 được nâng cấp 
 
 Quy trình khắc phục cũng an toàn và rõ ràng hơn: người dùng được xem trước nội dung, sao lưu, xác nhận trước khi thực hiện và kiểm tra lại kết quả sau xử lý. v5.0 còn bổ sung báo cáo dễ theo dõi hơn và hỗ trợ quản lý nhiều máy. Tool vẫn hoạt động **Offline theo mặc định, không tự động gửi dữ liệu ra Internet** và chỉ kết nối mạng khi người dùng chủ động cho phép.
 
-R8 sửa lỗi chữ ký `0x800B0109` trên máy mới chưa cài sẵn chứng thư của tác giả. Tool vẫn đối chiếu đúng người ký bằng cả SHA-1 và SHA-256, đồng thời khóa tệp bị sửa hoặc ký bằng chứng thư khác. Nếu Windows PowerShell bị chính sách của máy chặn hoặc thiếu thành phần cần thiết, launcher sẽ hiện mã lỗi thay vì thoát im lặng. Đây vẫn là bản dùng chứng thư tự ký, nên Windows có thể hiện `Unknown publisher` hoặc SmartScreen.
+R11 sắp xếp danh sách phần mềm theo đúng thứ tự **Cao → Trung bình → Thấp**, đánh dấu phần mềm trả phí/thuê bao/dùng thử chưa xác minh là cần kiểm tra giấy phép, và bỏ hoàn toàn thành phần hệ thống/runtime khỏi cửa sổ xử lý. Các tiêu đề hiện dùng phiên bản v5.0 hiện hành; định danh vùng dữ liệu tương thích cũ chỉ được giữ nội bộ để bảo toàn cấu hình.
+
+R10 đồng bộ catalog tích hợp và catalog Online; R11 tiếp tục nâng catalog lên `1.6.2.0` với 94 nhóm, bổ sung bộ lọc Windows App Runtime, codec và extension nền. Tool vẫn dùng chứng thư tự ký được ghim, nên Windows có thể hiện `Unknown publisher` hoặc SmartScreen.
 
 ## Tải và bắt đầu
 
 1. Mở [trang v5.0.0.0 ManagedSigned](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0) hoặc [Stable công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
-2. Nếu đang dùng R7, hãy tải R8 thủ công và thay tệp EXE cũ vì hai bản cùng mang số phiên bản `5.0.0.0` và kênh ManagedSigned không tự cập nhật. R8 không cần cài chứng thư trước.
+2. Nếu đang dùng R10 hoặc bản cũ hơn, hãy tải R11 và thay tệp EXE cũ vì các revision cùng mang số phiên bản `5.0.0.0`.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
