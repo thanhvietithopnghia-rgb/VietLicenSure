@@ -18,25 +18,29 @@ if (-not (Get-Command Get-ToolWindowsReleaseProfile -ErrorAction SilentlyContinu
 
 function Get-ToolExecutionEnvironmentProfile {
     [CmdletBinding()]
-    param()
+    param([switch]$StartupFast)
 
     $manufacturer = ""
     $model = ""
     $biosManufacturer = ""
     $biosVersion = ""
-    try {
-        $computerSystem = if (Test-ToolCommandAvailable "Get-CimInstance") {
-            Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
-        } else {
-            Get-WmiObject -Class Win32_ComputerSystem -ErrorAction Stop
-        }
-        $manufacturer = [string]$computerSystem.Manufacturer
-        $model = [string]$computerSystem.Model
-    } catch {}
+    if (-not $StartupFast) {
+        try {
+            $computerSystem = if (Test-ToolCommandAvailable "Get-CimInstance") {
+                Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
+            } else {
+                Get-WmiObject -Class Win32_ComputerSystem -ErrorAction Stop
+            }
+            $manufacturer = [string]$computerSystem.Manufacturer
+            $model = [string]$computerSystem.Model
+        } catch {}
+    }
     try {
         $bios = Get-ItemProperty -LiteralPath "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -ErrorAction Stop
         $biosManufacturer = [string]$bios.BIOSVendor
         $biosVersion = @([string]$bios.BIOSVersion, [string]$bios.SystemFamily, [string]$bios.SystemProductName) -join " "
+        if ([string]::IsNullOrWhiteSpace($manufacturer)) { $manufacturer = [string]$bios.SystemManufacturer }
+        if ([string]::IsNullOrWhiteSpace($model)) { $model = [string]$bios.SystemProductName }
     } catch {}
 
     $fingerprint = "$manufacturer $model $biosManufacturer $biosVersion"
@@ -77,7 +81,7 @@ function Get-ToolExecutionEnvironmentProfile {
 
 function Get-ToolCapabilityProfile {
     [CmdletBinding()]
-    param()
+    param([switch]$StartupFast)
 
     $osVersion = [Environment]::OSVersion.Version
     $osArchitecture = if ([Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" }
@@ -161,7 +165,24 @@ function Get-ToolCapabilityProfile {
     $schtasksPath = Join-Path $nativeSystemDirectory "schtasks.exe"
     $cscriptPath = Join-Path $nativeSystemDirectory "cscript.exe"
     $dismPath = Join-Path $nativeSystemDirectory "dism.exe"
-    $executionEnvironment = Get-ToolExecutionEnvironmentProfile
+    $executionEnvironment = Get-ToolExecutionEnvironmentProfile -StartupFast:$StartupFast
+    if ($StartupFast) {
+        $cimCmdletsAvailable = [bool]($PSVersionTable.PSVersion.Major -ge 3)
+        $wmiFallbackAvailable = $true
+        $scheduledTasksModuleAvailable = $false
+        $defenderCmdletsAvailable = $false
+        $tpmCmdletsAvailable = $false
+        $bitLockerCmdletsAvailable = $false
+        $secureBootCmdletAvailable = $false
+    } else {
+        $cimCmdletsAvailable = [bool](Test-ToolCommandAvailable "Get-CimInstance")
+        $wmiFallbackAvailable = [bool](Test-ToolCommandAvailable "Get-WmiObject")
+        $scheduledTasksModuleAvailable = [bool](Test-ToolCommandAvailable "Get-ScheduledTask")
+        $defenderCmdletsAvailable = [bool](Test-ToolCommandAvailable "Get-MpPreference")
+        $tpmCmdletsAvailable = [bool](Test-ToolCommandAvailable "Get-Tpm")
+        $bitLockerCmdletsAvailable = [bool](Test-ToolCommandAvailable "Get-BitLockerVolume")
+        $secureBootCmdletAvailable = [bool](Test-ToolCommandAvailable "Confirm-SecureBootUEFI")
+    }
 
     return [pscustomobject][ordered]@{
         SchemaVersion = "1.1"
@@ -187,14 +208,14 @@ function Get-ToolCapabilityProfile {
         OperatingSystemArchitecture = $osArchitecture
         ProcessArchitecture = $processArchitecture
         PowerShellVersion = $PSVersionTable.PSVersion.ToString()
-        CimCmdlets = [bool](Test-ToolCommandAvailable "Get-CimInstance")
-        WmiFallback = [bool](Test-ToolCommandAvailable "Get-WmiObject")
-        ScheduledTasksModule = [bool](Test-ToolCommandAvailable "Get-ScheduledTask")
+        CimCmdlets = $cimCmdletsAvailable
+        WmiFallback = $wmiFallbackAvailable
+        ScheduledTasksModule = $scheduledTasksModuleAvailable
         ScheduledTasksFallback = [bool](Test-Path -LiteralPath $schtasksPath -PathType Leaf)
-        DefenderCmdlets = [bool](Test-ToolCommandAvailable "Get-MpPreference")
-        TpmCmdlets = [bool](Test-ToolCommandAvailable "Get-Tpm")
-        BitLockerCmdlets = [bool](Test-ToolCommandAvailable "Get-BitLockerVolume")
-        SecureBootCmdlet = [bool](Test-ToolCommandAvailable "Confirm-SecureBootUEFI")
+        DefenderCmdlets = $defenderCmdletsAvailable
+        TpmCmdlets = $tpmCmdletsAvailable
+        BitLockerCmdlets = $bitLockerCmdletsAvailable
+        SecureBootCmdlet = $secureBootCmdletAvailable
         NativeCscript = [bool](Test-Path -LiteralPath $cscriptPath -PathType Leaf)
         NativeDism = [bool](Test-Path -LiteralPath $dismPath -PathType Leaf)
         ExecutionEnvironment = $executionEnvironment

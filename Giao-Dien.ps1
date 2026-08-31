@@ -1,6 +1,26 @@
 ﻿param()
 
 $toolVersion = "5.0.0"
+$script:startupTracePath = [string]$env:TOOL_STARTUP_TRACE_PATH
+$script:startupTraceClock = $null
+$script:startupTraceEncoding = $null
+if (-not [string]::IsNullOrWhiteSpace($script:startupTracePath)) {
+    $script:startupTraceClock = [Diagnostics.Stopwatch]::StartNew()
+    $script:startupTraceEncoding = New-Object Text.UTF8Encoding($false)
+}
+function Write-DashboardStartupTrace {
+    param([Parameter(Mandatory = $true)][string]$Stage)
+    if (-not $script:startupTraceClock) { return }
+    try {
+        $traceDirectory = Split-Path -Parent $script:startupTracePath
+        if ($traceDirectory -and -not (Test-Path -LiteralPath $traceDirectory -PathType Container)) {
+            [void](New-Item -ItemType Directory -Path $traceDirectory -Force)
+        }
+        $traceLine = "{0:o}`t{1:N3}`t{2}`r`n" -f [DateTime]::UtcNow, $script:startupTraceClock.Elapsed.TotalSeconds, $Stage
+        [IO.File]::AppendAllText($script:startupTracePath, $traceLine, $script:startupTraceEncoding)
+    } catch {}
+}
+Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0.0.0"
 $releaseBuildDate = "2026.08.26"
@@ -42,6 +62,7 @@ if (Test-Path -LiteralPath $localizationHelper -PathType Leaf) {
     $script:dashboardCulture = Get-ToolCulture
     $env:TOOL_UI_CULTURE = $script:dashboardCulture
 }
+Write-DashboardStartupTrace "Localization.Ready"
 
 function Get-DashboardText {
     param(
@@ -64,30 +85,45 @@ if ($missingFoundationFiles.Count -gt 0) {
 }
 try {
     . $runtimeHelper
+    Write-DashboardStartupTrace "Module.Runtime"
     . $dataLifecycleHelper
     $dataLifecycleState = Initialize-ToolDataLifecycle
+    Write-DashboardStartupTrace "Module.DataLifecycle"
     . $compatibilityHelper
+    Write-DashboardStartupTrace "Module.Compatibility"
     . $capabilityHelper
+    Write-DashboardStartupTrace "Module.Capabilities"
     . $scanOptimizationHelper
+    Write-DashboardStartupTrace "Module.ScanOptimization"
     . $loggingHelper
+    Write-DashboardStartupTrace "Module.Logging"
     . $moduleContractHelper
+    Write-DashboardStartupTrace "Module.Contract"
     . $reportSchemaHelper
+    Write-DashboardStartupTrace "Module.ReportSchema"
     . $reportExportHelper
+    Write-DashboardStartupTrace "Module.ReportExport"
     . $pluginEngineHelper
+    Write-DashboardStartupTrace "Module.PluginEngine"
     . $timelineHelper
+    Write-DashboardStartupTrace "Module.Timeline"
     . $safetyPolicyHelper
+    Write-DashboardStartupTrace "Module.SafetyPolicy"
     . $enterpriseHelper
+    Write-DashboardStartupTrace "Module.Enterprise"
     . $uiThemeHelper
+    Write-DashboardStartupTrace "Module.UiTheme"
     if (-not (Get-Command Get-ToolText -ErrorAction SilentlyContinue)) { . $localizationHelper }
     . $offlinePolicyHelper
+    Write-DashboardStartupTrace "Module.OfflinePolicy"
     . $provenanceHelper
+    Write-DashboardStartupTrace "Module.Provenance"
     . $assistantHelper
+    Write-DashboardStartupTrace "Module.Assistant"
     . $softwareInventoryHelper
+    Write-DashboardStartupTrace "Module.SoftwareInventory"
     $script:softwareCatalogFreshnessState = $null
-    try {
-        $startupSoftwareCatalog = Get-ToolSoftwareLicenseCatalog -PreferCache
-        if ($startupSoftwareCatalog) { $script:softwareCatalogFreshnessState = Get-ToolSoftwareCatalogFreshness -Catalog $startupSoftwareCatalog }
-    } catch {}
+    Write-DashboardStartupTrace "Catalog.Deferred"
     $provenanceState = Get-ToolOfficialBuildState -ManifestPath $provenanceManifest -SignaturePath $provenanceSignature
     $launcherOfficialState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
     $launcherOfficialFailure = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_FAILURE)) { 'NotChecked' } else { [string]$env:TOOL_OFFICIAL_BUILD_FAILURE }
@@ -104,18 +140,29 @@ try {
         $env:TOOL_OFFICIAL_BUILD_FAILURE = if ($script:isUnsignedDevelopmentBuild) { 'DevelopmentBuild' } else { 'Provenance:' + [string]$provenanceState.Code }
         $env:TOOL_SELF_UPDATE_ALLOWED = '0'
     }
+    Write-DashboardStartupTrace "Trust.Ready"
     $architectureState = Assert-ToolNativeArchitecture
+    Write-DashboardStartupTrace "Metadata.Architecture"
     $toolPowerShellPath = Get-ToolNativePowerShellPath
     $nativeCscriptPath = Get-ToolNativeSystemPath "cscript.exe"
-    $capabilityState = Get-ToolCapabilityProfile
+    Write-DashboardStartupTrace "Metadata.NativePaths"
+    $capabilityState = Get-ToolCapabilityProfile -StartupFast
+    Write-DashboardStartupTrace "Metadata.Capabilities"
     if (-not $capabilityState.SupportedOperatingSystem) { throw (Get-DashboardText "startup.unsupportedOs") }
     $moduleContractState = Get-ToolModuleContractMetadata
+    Write-DashboardStartupTrace "Metadata.Contract"
     $reportSchemaState = Get-ToolReportSchemaMetadata
+    Write-DashboardStartupTrace "Metadata.ReportSchema"
     $safetyPolicyState = Get-ToolSafetyPolicyMetadata
+    Write-DashboardStartupTrace "Metadata.SafetyPolicy"
     $enterpriseState = Get-ToolEnterpriseMetadata
+    Write-DashboardStartupTrace "Metadata.Enterprise"
     $compatibilityState = Get-ToolCompatibilityMetadata
+    Write-DashboardStartupTrace "Metadata.Compatibility"
     $localizationState = Get-ToolLocalizationMetadata
+    Write-DashboardStartupTrace "Metadata.Localization"
     $offlinePolicyState = Get-ToolOfflinePolicyMetadata
+    Write-DashboardStartupTrace "Metadata.Ready"
     if ($env:TOOL_SECURE_LAUNCH -eq "1" -and [string]$env:TOOL_CAPABILITY_SCHEMA -ne [string]$capabilityState.SchemaVersion) { throw (Get-DashboardText "startup.schemaMismatch" @("capability")) }
     if ($env:TOOL_SECURE_LAUNCH -eq "1" -and [string]$env:TOOL_MODULE_CONTRACT_SCHEMA -ne [string]$moduleContractState.ContractSchemaVersion) { throw (Get-DashboardText "startup.schemaMismatch" @("module contract")) }
     if ($env:TOOL_SECURE_LAUNCH -eq "1" -and [string]$env:TOOL_REPORT_SCHEMA -ne [string]$reportSchemaState.SchemaVersion) { throw (Get-DashboardText "startup.schemaMismatch" @("report")) }
@@ -128,6 +175,7 @@ try {
     if ($env:TOOL_SECURE_LAUNCH -eq "1" -and [string]$env:TOOL_DATA_SCHEMA_VERSION -ne [string]$dataLifecycleState.DataSchemaVersion) { throw (Get-DashboardText "startup.schemaMismatch" @("data lifecycle")) }
     $loggingState = Initialize-ToolLogging -Component "GUI" -ToolVersion $toolVersion
     $timelineState = Initialize-ToolLicenseTimeline -ToolVersion $toolVersion
+    Write-DashboardStartupTrace "Services.Ready"
     $nativeNotepadPath = Get-ToolNativeSystemPath "notepad.exe"
     $nativeExplorerPath = Get-ToolWindowsPath "explorer.exe"
     if (-not (Test-Path -LiteralPath $nativeExplorerPath -PathType Leaf)) {
@@ -146,6 +194,7 @@ Add-Type -AssemblyName System.Drawing
 $script:dpiAwarenessState = Initialize-ToolDpiAwareness
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 [System.Windows.Forms.Application]::EnableVisualStyles()
+Write-DashboardStartupTrace "WinForms.Ready"
 
 function New-DashboardRoundedPath {
     param(
@@ -523,6 +572,8 @@ $fontSidebarTitle = New-Object System.Drawing.Font($uiTypography.FontFamily, 11.
 $fontSidebar = New-Object System.Drawing.Font($uiTypography.FontFamily, 10.0, [System.Drawing.FontStyle]::Regular)
 
 $form = New-Object System.Windows.Forms.Form
+$script:dashboardStartupLayoutPending = $true
+$form.SuspendLayout()
 $form.Text = "[$releaseDisplayName]"
 $form.StartPosition = "CenterScreen"
 $form.Size = New-Object System.Drawing.Size(1480, 900)
@@ -847,8 +898,6 @@ $introDetailButton.Size = New-Object System.Drawing.Size(154, 32)
 $introDetailButton.Location = New-Object System.Drawing.Point(690, 12)
 $introDetailButton.Add_Click({ Show-ProductIntroduction })
 $introPanel.Controls.Add($introDetailButton)
-$form.PerformLayout()
-
 $dashboardPanel = New-Object System.Windows.Forms.Panel
 $dashboardPanel.Location = New-Object System.Drawing.Point(38, ($introPanel.Bottom + 8))
 $dashboardPanel.Size = New-Object System.Drawing.Size(860, 92)
@@ -1102,6 +1151,7 @@ $script:taskCancellationRequested = $false
 $script:lastReportDirectory = $reportRoot
 $script:lastReportPath = ""
 $script:executionEnvironmentWarningShown = $false
+Write-DashboardStartupTrace "ShellControls.Ready"
 
 function New-ToolReportRunDirectory {
     param([AllowNull()][string]$Category = "BaoCao")
@@ -1360,6 +1410,7 @@ function Get-DashboardWrappedTextHeight {
 }
 
 function Update-MainLayout {
+    if ($script:dashboardStartupLayoutPending) { return }
     if ($script:updatingMainLayout) { return }
     $script:updatingMainLayout = $true
     try {
@@ -2333,7 +2384,10 @@ function Get-DashboardStatusPalette {
 }
 
 function Set-DashboardTheme {
-    param([ValidateSet("Light", "Dark")][string]$Mode)
+    param(
+        [ValidateSet("Light", "Dark")][string]$Mode,
+        [switch]$StartupFast
+    )
     $env:TOOL_UI_THEME = $Mode
     $script:toolUiPalette = Get-ToolUiPalette -Mode $Mode
     $dark = [bool]($Mode -eq "Dark")
@@ -2447,12 +2501,20 @@ function Set-DashboardTheme {
     $neutralDarkArgb = [System.Drawing.Color]::FromArgb(226, 231, 239).ToArgb()
     if ($status.ForeColor.ToArgb() -in @($neutralLightArgb, $neutralDarkArgb)) { $status.ForeColor = $text }
     if ($activityLabel.ForeColor.ToArgb() -in @($neutralLightArgb, $neutralDarkArgb, [System.Drawing.Color]::FromArgb(18, 59, 116).ToArgb(), [System.Drawing.Color]::FromArgb(126, 174, 255).ToArgb())) { $activityLabel.ForeColor = $text }
+    if (-not $StartupFast) { Complete-DashboardThemeInitialization -Mode $Mode }
+    $form.Invalidate($true)
+}
+
+function Complete-DashboardThemeInitialization {
+    param([ValidateSet("Light", "Dark")][string]$Mode)
     foreach ($actionButton in @($introAssistantButton, $introDetailButton, $themeButton, $offlineButton, $openReportFolderButton, $copyLogButton, $stopButton, $closeButton)) {
         Set-ToolUiActionButtonVisual -Button $actionButton -Mode $Mode
     }
+    Write-DashboardStartupTrace "Theme.ControlsStyled"
     Set-ToolUiLiteralText -Root $form
+    Write-DashboardStartupTrace "Theme.TextNormalized"
     Register-ToolUiDynamicContrast -Root $form -Mode $Mode
-    $form.Invalidate($true)
+    Write-DashboardStartupTrace "Theme.ContrastReady"
 }
 
 function Update-DashboardStatus {
@@ -2472,8 +2534,8 @@ function Update-DashboardStatus {
     } else {
         Get-DashboardText "dashboard.compatibility.catalogFresh" @($compatibilityState.ReviewedAtUtc, $catalogAgeDays, $catalogMaximumAgeDays)
     }
-    $softwareCatalogHealth = if ($script:softwareCatalogFreshnessState) { [string]$script:softwareCatalogFreshnessState.Status } else { 'Unavailable' }
-    if ($softwareCatalogHealth -notin @('Fresh','Warning','Stale','Future','Invalid','Unavailable')) {
+    $softwareCatalogHealth = if ($script:softwareCatalogFreshnessState) { [string]$script:softwareCatalogFreshnessState.Status } else { 'Deferred' }
+    if ($softwareCatalogHealth -notin @('Fresh','Warning','Stale','Future','Invalid','Unavailable','Deferred')) {
         $softwareCatalogHealth = 'Unavailable'
     }
     $softwareCatalogStatusKey = $softwareCatalogHealth.ToLowerInvariant()
@@ -2481,10 +2543,10 @@ function Update-DashboardStatus {
         Get-DashboardText ("dashboard.softwareCatalog." + $softwareCatalogStatusKey) @(
             [int]$script:softwareCatalogFreshnessState.AgeDays,
             [int]$script:softwareCatalogFreshnessState.MaximumAgeDays)
-    } else {
-        Get-DashboardText 'dashboard.softwareCatalog.unavailable'
+    } else { $null }
+    if (-not [string]::IsNullOrWhiteSpace([string]$softwareCatalogTooltip)) {
+        $catalogTooltip = $catalogTooltip + "`r`n`r`n" + $softwareCatalogTooltip
     }
-    $catalogTooltip = $catalogTooltip + "`r`n`r`n" + $softwareCatalogTooltip
     $compatibilityValue = if ($catalogHealth -eq "Stale") {
         Get-DashboardText "dashboard.compatibility.valueStale" @($capabilityState.WindowsReleaseName)
     } elseif ($catalogHealth -eq "Warning") {
@@ -3006,46 +3068,59 @@ function Stop-ProgressIfIdle {
     if (-not $script:activeProcess) { Stop-ProgressDisplay $status.Text }
 }
 
-$integrityResult = Test-ToolIntegrity
-[void](Write-ToolLog -Level "INFO" -Event "Application.Start" -Message (Get-DashboardText "log.dashboardStarted") -Data ([ordered]@{
-    DashboardSchemaVersion = $dashboardSchemaVersion
-    ReportSchemaVersion = $reportSchemaState.SchemaVersion
-    SafetyPolicySchemaVersion = $safetyPolicyState.SchemaVersion
-    CompatibilitySchemaVersion = $compatibilityState.SchemaVersion
-    LocalizationSchemaVersion = $localizationState.SchemaVersion
-    OfflinePolicySchemaVersion = $offlinePolicyState.SchemaVersion
-    Culture = $script:dashboardCulture
-    OfflineMode = [bool]$script:offlineMode
-    Capabilities = $capabilityState
-}))
-Update-DashboardStatus -IntegrityResult $integrityResult
-Refresh-DashboardLocalizedActivity
-if (-not $loggingState.Enabled) {
-    Write-ProgressLog (Get-DashboardText "progress.logWarning" @($loggingState.Error))
+function Complete-DashboardStartupValidation {
+    Write-DashboardStartupTrace "Validation.Started"
+    try {
+        $integrityResult = Test-ToolIntegrity
+        [void](Write-ToolLog -Level "INFO" -Event "Application.Start" -Message (Get-DashboardText "log.dashboardStarted") -Data ([ordered]@{
+            DashboardSchemaVersion = $dashboardSchemaVersion
+            ReportSchemaVersion = $reportSchemaState.SchemaVersion
+            SafetyPolicySchemaVersion = $safetyPolicyState.SchemaVersion
+            CompatibilitySchemaVersion = $compatibilityState.SchemaVersion
+            LocalizationSchemaVersion = $localizationState.SchemaVersion
+            OfflinePolicySchemaVersion = $offlinePolicyState.SchemaVersion
+            Culture = $script:dashboardCulture
+            OfflineMode = [bool]$script:offlineMode
+            Capabilities = $capabilityState
+        }))
+        Update-DashboardStatus -IntegrityResult $integrityResult
+        Refresh-DashboardLocalizedActivity
+        if (-not $loggingState.Enabled) {
+            Write-ProgressLog (Get-DashboardText "progress.logWarning" @($loggingState.Error))
+        }
+        if (-not $timelineState.Enabled) {
+            Write-ProgressLog (Get-DashboardText "progress.timelineWarning" @($timelineState.Error))
+        } else {
+            $timelineCheck = Get-ToolLicenseTimeline
+            Write-ProgressLog $(if ($timelineCheck.Valid) {
+                Get-ToolText -Key "progress.timeline.valid" -Culture $script:dashboardCulture -FormatArguments @($timelineCheck.RecordCount, $timelineCheck.ChangeCount)
+            } else {
+                Get-ToolText -Key "progress.timeline.invalid" -Culture $script:dashboardCulture
+            })
+        }
+        if (-not $integrityResult.Valid) {
+            $status.Text = Get-ToolText -Key "progress.integrity.locked" -Culture $script:dashboardCulture
+            $status.ForeColor = [System.Drawing.Color]::DarkOrange
+        }
+        $kmsConfigAtStartup = Get-ApprovedKmsEntries
+        if (-not $kmsConfigAtStartup.Exists -or $kmsConfigAtStartup.Entries.Count -eq 0) {
+            Write-ProgressLog (Get-ToolText -Key "progress.kms.missing" -Culture $script:dashboardCulture)
+        } elseif ($kmsConfigAtStartup.Invalid.Count -gt 0) {
+            Write-ProgressLog (Get-ToolText -Key "progress.kms.invalid" -Culture $script:dashboardCulture -FormatArguments @($kmsConfigAtStartup.Invalid.Count))
+        } else {
+            Write-ProgressLog (Get-ToolText -Key "progress.kms.approved" -Culture $script:dashboardCulture -FormatArguments @($kmsConfigAtStartup.Entries.Count))
+        }
+        Reset-IdleTaskDisplay
+    } catch {
+        $status.Text = $_.Exception.Message
+        $status.ForeColor = [System.Drawing.Color]::DarkRed
+        Write-ProgressLog $_.Exception.Message
+    } finally {
+        try { Complete-DashboardThemeInitialization -Mode $script:dashboardTheme } catch { Write-ProgressLog $_.Exception.Message }
+        Set-ButtonsEnabled $true
+        Write-DashboardStartupTrace "Validation.Ready"
+    }
 }
-if (-not $timelineState.Enabled) {
-    Write-ProgressLog (Get-DashboardText "progress.timelineWarning" @($timelineState.Error))
-} else {
-    $timelineCheck = Get-ToolLicenseTimeline
-    Write-ProgressLog $(if ($timelineCheck.Valid) {
-        Get-ToolText -Key "progress.timeline.valid" -Culture $script:dashboardCulture -FormatArguments @($timelineCheck.RecordCount, $timelineCheck.ChangeCount)
-    } else {
-        Get-ToolText -Key "progress.timeline.invalid" -Culture $script:dashboardCulture
-    })
-}
-if (-not $integrityResult.Valid) {
-    $status.Text = Get-ToolText -Key "progress.integrity.locked" -Culture $script:dashboardCulture
-    $status.ForeColor = [System.Drawing.Color]::DarkOrange
-}
-$kmsConfigAtStartup = Get-ApprovedKmsEntries
-if (-not $kmsConfigAtStartup.Exists -or $kmsConfigAtStartup.Entries.Count -eq 0) {
-    Write-ProgressLog (Get-ToolText -Key "progress.kms.missing" -Culture $script:dashboardCulture)
-} elseif ($kmsConfigAtStartup.Invalid.Count -gt 0) {
-    Write-ProgressLog (Get-ToolText -Key "progress.kms.invalid" -Culture $script:dashboardCulture -FormatArguments @($kmsConfigAtStartup.Invalid.Count))
-} else {
-    Write-ProgressLog (Get-ToolText -Key "progress.kms.approved" -Culture $script:dashboardCulture -FormatArguments @($kmsConfigAtStartup.Entries.Count))
-}
-Reset-IdleTaskDisplay
 
 function Set-ButtonsEnabled([bool]$enabled) {
     foreach ($button in $buttons) { $button.Enabled = $enabled }
@@ -7967,35 +8042,72 @@ function Add-ReportMenuButton([string]$actionId, [string]$titleKey, [string]$des
     $buttonPanel.Controls.Add($button)
 }
 
-Add-MenuButton 1 "menu.1.title" "menu.1.description" 0 { Start-Report "All" (Get-ToolText -Key "menu.1.title" -Culture $script:dashboardCulture) } $false
-Add-MenuButton 2 "menu.2.title" "menu.2.description" 1 { Start-Report "Hardware" (Get-ToolText -Key "menu.2.title" -Culture $script:dashboardCulture) } $false
-Add-MenuButton 3 "menu.3.title" "menu.3.description" 2 { Start-Report "Windows" (Get-ToolText -Key "menu.3.title" -Culture $script:dashboardCulture) } $false
-Add-MenuButton 4 "menu.4.title" "menu.4.description" 3 { Start-Report "Office" (Get-ToolText -Key "menu.4.title" -Culture $script:dashboardCulture) } $false
-Add-MenuButton 5 "menu.5.title" "menu.5.description" 4 { Start-ThirdPartyManualReview } $false
-Add-MenuButton 6 "menu.6.title" "menu.6.description" 5 { Show-CleanupMenu } $true
-Add-MenuButton 11 "menu.11.title" "menu.11.description" 10 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows") } $true
-Add-MenuButton 12 "menu.12.title" "menu.12.description" 11 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office") } $true
-Add-MenuButton 13 "menu.13.title" "menu.13.description" 12 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty") } $true
-Add-MenuButton 7 "menu.7.title" "menu.7.description" 6 { Start-OemInspect } $true
-Add-MenuButton 8 "menu.8.title" "menu.8.description" 7 { Open-LicenseManager } $false
-Add-MenuButton 9 "menu.9.title" "menu.9.description" 8 { Show-AdvancedScanMenu } $false
-Add-MenuButton 10 "menu.10.title" "menu.10.description" 9 { Show-AssuranceCenter } $false
+$script:dashboardMenusInitialized = $false
+function Initialize-DashboardMenus {
+    if ($script:dashboardMenusInitialized) { return }
+    $buttonPanel.SuspendLayout()
+    try {
+        Write-DashboardStartupTrace "MenuBuild.Started"
+        Add-MenuButton 1 "menu.1.title" "menu.1.description" 0 { Start-Report "All" (Get-ToolText -Key "menu.1.title" -Culture $script:dashboardCulture) } $false
+        Add-MenuButton 2 "menu.2.title" "menu.2.description" 1 { Start-Report "Hardware" (Get-ToolText -Key "menu.2.title" -Culture $script:dashboardCulture) } $false
+        Add-MenuButton 3 "menu.3.title" "menu.3.description" 2 { Start-Report "Windows" (Get-ToolText -Key "menu.3.title" -Culture $script:dashboardCulture) } $false
+        Add-MenuButton 4 "menu.4.title" "menu.4.description" 3 { Start-Report "Office" (Get-ToolText -Key "menu.4.title" -Culture $script:dashboardCulture) } $false
+        Add-MenuButton 5 "menu.5.title" "menu.5.description" 4 { Start-ThirdPartyManualReview } $false
+        Add-MenuButton 6 "menu.6.title" "menu.6.description" 5 { Show-CleanupMenu } $true
+        Add-MenuButton 11 "menu.11.title" "menu.11.description" 10 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows") } $true
+        Add-MenuButton 12 "menu.12.title" "menu.12.description" 11 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office") } $true
+        Add-MenuButton 13 "menu.13.title" "menu.13.description" 12 { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty") } $true
+        Add-MenuButton 7 "menu.7.title" "menu.7.description" 6 { Start-OemInspect } $true
+        Add-MenuButton 8 "menu.8.title" "menu.8.description" 7 { Open-LicenseManager } $false
+        Add-MenuButton 9 "menu.9.title" "menu.9.description" 8 { Show-AdvancedScanMenu } $false
+        Add-MenuButton 10 "menu.10.title" "menu.10.description" 9 { Show-AssuranceCenter } $false
+        Write-DashboardStartupTrace "MenuQuick.Ready"
 
-Add-ReportMenuButton "Certificate" "assurance.certificate" "dashboard.report.certificate.description" 0 "Shield"
-Add-ReportMenuButton "PluginAudit" "assurance.pluginAudit" "dashboard.report.pluginAudit.description" 1 "Software"
-Add-ReportMenuButton "Timeline" "assurance.timeline" "dashboard.report.timeline.description" 2 "DeepScan"
-Add-ReportMenuButton "InstallPlugin" "assurance.installPlugin" "dashboard.report.installPlugin.description" 3 "License"
-Add-ReportMenuButton "PluginFolder" "assurance.pluginFolder" "dashboard.report.pluginFolder.description" 4 "Report"
-Add-ReportMenuButton "Guide" "assurance.guide" "dashboard.report.guide.description" 5 "Report"
-Add-ReportMenuButton "History" "assurance.history" "dashboard.report.history.description" 6 "License"
+        Add-ReportMenuButton "Certificate" "assurance.certificate" "dashboard.report.certificate.description" 0 "Shield"
+        Add-ReportMenuButton "PluginAudit" "assurance.pluginAudit" "dashboard.report.pluginAudit.description" 1 "Software"
+        Add-ReportMenuButton "Timeline" "assurance.timeline" "dashboard.report.timeline.description" 2 "DeepScan"
+        Add-ReportMenuButton "InstallPlugin" "assurance.installPlugin" "dashboard.report.installPlugin.description" 3 "License"
+        Add-ReportMenuButton "PluginFolder" "assurance.pluginFolder" "dashboard.report.pluginFolder.description" 4 "Report"
+        Add-ReportMenuButton "Guide" "assurance.guide" "dashboard.report.guide.description" 5 "Report"
+        Add-ReportMenuButton "History" "assurance.history" "dashboard.report.history.description" 6 "License"
+        Write-DashboardStartupTrace "MenuReports.Ready"
+        $script:dashboardMenusInitialized = $true
+    } finally {
+        $buttonPanel.ResumeLayout($false)
+    }
+    Set-DashboardSection -Section $script:dashboardSection
+    Write-DashboardStartupTrace "Menus.Ready"
+}
+$form.ResumeLayout($false)
+Write-DashboardStartupTrace "Layout.Resumed"
 Fit-MainWindowToWorkingArea
+Write-DashboardStartupTrace "Window.Fitted"
 Set-DashboardSection -Section "Overview"
-Set-DashboardTheme -Mode $script:dashboardTheme
+Write-DashboardStartupTrace "Section.Ready"
+Set-DashboardTheme -Mode $script:dashboardTheme -StartupFast
+Write-DashboardStartupTrace "Theme.Ready"
+$script:dashboardStartupLayoutPending = $false
 Update-MainLayout
+Write-DashboardStartupTrace "Layout.Ready"
+$startupValidationTimer = New-Object System.Windows.Forms.Timer
+$startupValidationTimer.Interval = 150
+$script:dashboardStartupPhase = 0
+$startupValidationTimer.Add_Tick({
+    $startupValidationTimer.Stop()
+    if ($script:dashboardStartupPhase -eq 0) {
+        Initialize-DashboardMenus
+        $script:dashboardStartupPhase = 1
+        $startupValidationTimer.Interval = 75
+        $startupValidationTimer.Start()
+        return
+    }
+    Complete-DashboardStartupValidation
+})
+foreach ($button in $buttons) { $button.Enabled = $false }
 $form.Add_Shown({
-    Fit-MainWindowToWorkingArea
-    Update-MainLayout
+    Write-DashboardStartupTrace "Window.Shown"
     [void]$form.BeginInvoke([System.Action]{ Update-MainLayout })
+    $startupValidationTimer.Start()
     Show-ExecutionEnvironmentWarning
     $updateTimer.Start()
     if (-not $script:offlineMode) { Request-ApplicationUpdateCheck }
@@ -8209,6 +8321,10 @@ $form.Add_FormClosing({
 })
 
 $form.Add_FormClosed({
+    if ($startupValidationTimer) {
+        $startupValidationTimer.Stop()
+        $startupValidationTimer.Dispose()
+    }
     if ($updateTimer) {
         $updateTimer.Stop()
         $updateTimer.Dispose()
@@ -8223,6 +8339,7 @@ $form.Add_FormClosed({
     $dashboardIconImages.Clear()
 })
 
+Write-DashboardStartupTrace "ShowDialog.Starting"
 [void]$form.ShowDialog()
 
 

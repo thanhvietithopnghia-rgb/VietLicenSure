@@ -29,6 +29,20 @@ if ([string]$profile.SchemaVersion -ne "1.1" -or [string]$profile.ToolVersion -n
     if (-not $profile.CimCmdlets -and -not $profile.WmiFallback) { throw "Không có cả CIM lẫn WMI fallback." }
     if (-not $profile.ScheduledTasksModule -and -not $profile.ScheduledTasksFallback) { throw "Không có cả ScheduledTasks module lẫn schtasks fallback." }
 
+    $startupProfileWatch = [Diagnostics.Stopwatch]::StartNew()
+    $startupProfile = Get-ToolCapabilityProfile -StartupFast
+    $startupProfileWatch.Stop()
+    if ([string]$startupProfile.SchemaVersion -ne "1.1" -or
+        [string]$startupProfile.ProcessArchitecture -ne $ExpectedArchitecture -or
+        [string]$startupProfile.WindowsReleaseName -ne [string]$profile.WindowsReleaseName -or
+        [string]$startupProfile.FullBuildNumber -ne [string]$profile.FullBuildNumber -or
+        [string]$startupProfile.OfficeSummary -ne [string]$profile.OfficeSummary) {
+        throw "Capability startup-fast không đồng nhất với hồ sơ đầy đủ."
+    }
+    if ($startupProfileWatch.Elapsed.TotalMilliseconds -gt 3000) {
+        throw "Capability startup-fast vượt ngân sách 3000 ms: $([Math]::Round($startupProfileWatch.Elapsed.TotalMilliseconds)) ms."
+    }
+
     $reportMetadata = Get-ToolReportSchemaMetadata
 if ([string]$reportMetadata.SchemaVersion -ne "1.5" -or [string]$reportMetadata.ToolVersion -ne "5.0" -or @($reportMetadata.ReportKinds).Count -ne 9) {
         throw "Report schema foundation không hợp lệ."
