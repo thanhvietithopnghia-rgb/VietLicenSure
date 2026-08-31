@@ -1468,9 +1468,14 @@ if ($gui) {
             -not (Test-GuiThirdPartySelectionAllowed -Application $paidConfirmedRow)) {
             Fail 'GUI chưa cho chọn mục trả phí, thuê bao, dùng thử hoặc nghi ngờ khi đã có bước xử lý/hướng dẫn phù hợp.'
         }
-        if ([string](Get-GuiThirdPartyDisplayStatus -Application $paidNoCandidateRow) -ne 'software.results.status.noIssue' -or
-            [string](Get-GuiThirdPartyDisplayStatus -Application $manualSuspiciousRow) -ne 'software.results.status.reviewOnly' -or
-            [string](Get-GuiThirdPartyDisplayStatus -Application $paidConfirmedRow) -ne 'software.results.status.reviewOnly' -or
+        $unknownReviewRow = [pscustomobject]@{
+            Name='Unknown review'; LicenseModel='Unknown'; AssessmentCode='Unverified'; CleanupFinding=$false; CleanupCandidateId='candidate-unknown'; RemediationSupported=$false
+            LicenseTechnicalState='Unverified'; GuidedRemediationSupported=$true; CleanupGuidanceOnly=$true
+        }
+        if ([string](Get-GuiThirdPartyDisplayStatus -Application $paidNoCandidateRow) -ne 'software.results.status.commercialReview' -or
+            [string](Get-GuiThirdPartyDisplayStatus -Application $unknownReviewRow) -ne 'software.results.status.unknownReview' -or
+            [string](Get-GuiThirdPartyDisplayStatus -Application $manualSuspiciousRow) -ne 'software.results.status.commercialReview' -or
+            [string](Get-GuiThirdPartyDisplayStatus -Application $paidConfirmedRow) -ne 'software.results.status.clearFinding' -or
             [string](Get-GuiThirdPartyDisplayStatus -Application $confirmedDirectRow) -ne 'software.results.status.clearFinding') {
             Fail 'GUI vẫn biến loại phần mềm hoặc kết quả nghi ngờ thành kết luận gây hiểu nhầm.'
         }
@@ -1845,11 +1850,11 @@ if ($softwareInventory) {
         $catalogSignaturePath = $catalogPath + '.p7s'
         $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
-        if ([string]$catalog.CatalogVersion -ne '1.6.1.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-30T15:45:00Z' -or
-            $catalogIds.Count -lt 93 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
-            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.1.0 / ngày bảo trì / 93 quy tắc duy nhất.'
+        if ([string]$catalog.CatalogVersion -ne '1.6.2.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-31T01:11:33Z' -or
+            $catalogIds.Count -lt 94 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
+            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.2.0 / ngày bảo trì / 94 quy tắc duy nhất.'
         }
-        foreach ($requiredCatalogId in @('iobit-driver-booster','canon-lbp-capt-printer-driver','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
+        foreach ($requiredCatalogId in @('iobit-driver-booster','canon-lbp-capt-printer-driver','windows-app-platform-component','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
             if ($catalogIds -notcontains $requiredCatalogId) { Fail "Catalogue phần mềm thiếu quy tắc: $requiredCatalogId" }
         }
         $blankNamePatternCatalog = ($catalog | ConvertTo-Json -Depth 64 | ConvertFrom-Json)
@@ -1864,7 +1869,7 @@ if ($softwareInventory) {
         }
         $trustedBundledCatalog = Import-ToolSoftwareCatalogFile -Path $catalogPath -SignaturePath $catalogSignaturePath -Source 'Bundled' -RequireSignature
         if (-not $trustedBundledCatalog -or -not [bool]$trustedBundledCatalog.CatalogSignatureValid -or
-            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.1.0') {
+            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.2.0') {
             Fail 'Catalogue phần mềm tích hợp chưa mở được bằng chữ ký CMS và signer đã ghim.'
         }
         $forgedCatalog = (Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json)
@@ -1920,6 +1925,11 @@ if ($softwareInventory) {
             (New-ToolSoftwareInventoryRecord -Name 'Zoom Workplace' -Version '6.0' -Publisher 'Zoom Video Communications, Inc.' -InstallLocation 'C:\Fixture\Zoom' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'MATLAB Runtime R2025a' -Version '25.1' -Publisher 'MathWorks' -InstallLocation 'C:\Fixture\MATLABRuntime' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Canon LBP2900 CAPT Printer Driver' -Version '3.30' -Publisher 'Canon Inc.' -InstallLocation 'C:\Fixture\CanonLBP2900' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'WindowsAppRuntime.1.8' -Version '1.8.10' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.WindowsAppRuntime.1.8' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'VP9 Video Extensions' -Version '1.2.20.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.VP9VideoExtensions' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Web Media Extensions' -Version '1.1.38.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.WebMediaExtensions' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Xbox Identity Provider' -Version '12.130.16001.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.XboxIdentityProvider' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'AppUp.IntelGraphicsExperience' -Version '1.100.5688.0' -Publisher 'Intel Corporation' -InstallLocation 'C:\Program Files\WindowsApps\AppUp.IntelGraphicsExperience' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Microsoft Visual Studio Community 2022' -Version '17.0' -Publisher 'Microsoft Corporation' -InstallLocation 'C:\Fixture\VSCommunity' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Microsoft Visual Studio Professional 2022' -Version '17.0' -Publisher 'Microsoft Corporation' -InstallLocation 'C:\Fixture\VSProfessional' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'ABBYY FineReader PDF' -Version '16.0' -Publisher 'ABBYY Development, Inc.' -InstallLocation 'C:\Fixture\FineReader' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
@@ -1938,6 +1948,7 @@ if ($softwareInventory) {
         $zoomResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'communication-freemium' })
         $matlabRuntimeResult = @($classificationResults | Where-Object { $_.Name -eq 'MATLAB Runtime R2025a' })
         $canonLbpResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'canon-lbp-capt-printer-driver' })
+        $windowsPlatformResults = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'windows-app-platform-component' })
         $visualStudioCommunityResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'microsoft-visual-studio-community' })
         $visualStudioPaidResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'microsoft-visual-studio-paid' })
         $abbyyResult = @($classificationResults | Where-Object { $_.Name -eq 'ABBYY FineReader PDF' })
@@ -1965,6 +1976,10 @@ if ($softwareInventory) {
             [bool]$canonLbpResult[0].RemediationSupported) {
             Fail 'Canon LBP2900 chưa được nhận diện là driver máy in và loại khỏi luồng xử lý phần mềm.'
         }
+        if ($windowsPlatformResults.Count -ne 5 -or
+            @($windowsPlatformResults | Where-Object { -not [bool]$_.IsSystemComponent -or [string]$_.AttentionLevel -ne 'System' -or [bool]$_.GuidedRemediationSupported }).Count -ne 0) {
+            Fail 'Windows App Runtime/codec/extension nền chưa được loại hoàn toàn khỏi luồng xem và xử lý phần mềm.'
+        }
         $priorityOrder = @($classificationResults | Where-Object { -not [bool]$_.IsSystemComponent } | Select-Object -ExpandProperty AssessmentSortPriority)
         for ($priorityIndex = 1; $priorityIndex -lt $priorityOrder.Count; $priorityIndex++) {
             if ([int]$priorityOrder[$priorityIndex] -lt [int]$priorityOrder[$priorityIndex - 1]) {
@@ -1988,6 +2003,10 @@ if ($softwareInventory) {
             $lightroomResult.Count -ne 1 -or [string]$lightroomResult[0].CatalogProductId -ne 'adobe-creative-cloud-paid' -or
             $premiereResult.Count -ne 1 -or [string]$premiereResult[0].CatalogProductId -ne 'adobe-creative-cloud-paid') {
             Fail 'Adobe Acrobat, Lightroom hoặc Premiere chưa được nhận diện đúng bằng catalogue.'
+        }
+        if ([string]$acrobatResult[0].AttentionLevel -ne 'High' -or [int]$acrobatResult[0].AssessmentSortPriority -ne 0 -or
+            [string]$pcNvrResult[0].AttentionLevel -ne 'Low' -or [int]$pcNvrResult[0].AssessmentSortPriority -ne 200) {
+            Fail 'Ứng dụng thương mại chưa đứng trước ứng dụng miễn phí theo thứ tự Cao, Trung bình, Thấp.'
         }
         if ($formatFactoryResult.Count -ne 1 -or [string]$formatFactoryResult[0].CatalogProductId -ne 'media-freeware' -or
             [string]$formatFactoryResult[0].LicenseModel -ne 'Free' -or [bool]$formatFactoryResult[0].IsSystemComponent) {
@@ -2045,7 +2064,7 @@ if ($softwareInventory) {
             }
             $registeredWinRarAssessment = @(Get-ToolSoftwareAssessments -Applications @($winRarApp) -Catalog $trustedBundledCatalog)[0]
             if ([bool]$registeredWinRarAssessment.CleanupFinding -or [bool]$registeredWinRarAssessment.ManualEligible -or
-            [bool]$registeredWinRarAssessment.AutoEligible -or [string]$registeredWinRarAssessment.RemediationImpact -ne 'GuidedOfficialRepair') {
+                [bool]$registeredWinRarAssessment.AutoEligible -or [string]$registeredWinRarAssessment.RemediationImpact -ne 'GuidedOfficialRepair') {
                 Fail 'WinRAR có giấy phép cục bộ bị mở xử lý tự động thay vì chỉ cho chọn bước kiểm tra.'
             }
             [IO.File]::Delete($rarRegPath)
@@ -2111,6 +2130,11 @@ if ($softwareInventory) {
         }
         if (-not (Test-ToolSoftwareLikelySystemComponent -Name 'Microsoft.WidgetsPlatformRuntime' -Publisher 'CN=Microsoft Corporation, O=Microsoft Corporation' -SourceKind 'Appx' -InstallLocation '')) {
             Fail 'Bộ lọc chưa đưa ứng dụng mặc định/AppX Microsoft vào phụ lục.'
+        }
+        foreach ($platformComponentName in @('WindowsAppRuntime.1.8','VP9 Video Extensions','Web Media Extensions','Xbox Identity Provider','AppUp.IntelGraphicsExperience')) {
+            if (-not (Test-ToolSoftwareLikelySystemComponent -Name $platformComponentName -Publisher '' -SourceKind 'Registry' -InstallLocation '')) {
+                Fail "Bộ lọc chưa loại thành phần nền Windows khỏi danh sách xử lý: $platformComponentName"
+            }
         }
         $familyFixture = Get-ToolSoftwareFamilyDescriptor -Name 'ABBYY FineReader Language Pack'
         if ([string]$familyFixture.Family -ne 'ABBYY FineReader' -or -not [bool]$familyFixture.IsCompanion -or [string]$familyFixture.Role -ne 'CompanionComponent') {

@@ -4364,7 +4364,7 @@ function Show-DeepCleanupSelection {
     }
 
     $chooser = New-Object System.Windows.Forms.Form
-    $chooser.Text = Get-DashboardText "cleanup.selection.formTitle"
+    $chooser.Text = Get-DashboardText "cleanup.selection.formTitle" @($toolDisplayVersion)
     $chooser.StartPosition = "CenterParent"
     $chooser.FormBorderStyle = "Sizable"
     $chooser.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
@@ -4817,20 +4817,21 @@ function Get-GuiThirdPartyDisplayStatus {
     if (-not $Application) { return Get-DashboardText 'software.results.status.noIssue' }
     $assessmentCode = [string]$Application.AssessmentCode
     $licenseModel = if ($Application.PSObject.Properties['LicenseModel']) { [string]$Application.LicenseModel } else { '' }
-    # The main list uses plain, conservative wording.  Detailed evidence is
-    # still available below the list, but uncertainty is never phrased as a
-    # licensing conclusion.
-    if ($licenseModel -in @('Paid','Subscription','Trial') -and
-        $assessmentCode -in @('NonGenuine','Suspicious','IntegrityCompromised')) {
+    # The main list never treats an unverified commercial entitlement as "no
+    # issue".  It asks for a licence check without claiming that the software
+    # is illegal.  A confirmed direct finding remains a clear finding.
+    if ($assessmentCode -eq 'NonGenuine') { return Get-DashboardText 'software.results.status.clearFinding' }
+    if ($assessmentCode -eq 'Unactivated') { return Get-DashboardText 'software.results.status.notActivated' }
+    if ($licenseModel -in @('Paid','Subscription','Trial') -and $assessmentCode -ne 'GenuineVerified') {
+        return Get-DashboardText 'software.results.status.commercialReview'
+    }
+    if ($assessmentCode -in @('Suspicious','IntegrityCompromised')) {
         return Get-DashboardText 'software.results.status.reviewOnly'
     }
-    switch ($assessmentCode) {
-        'NonGenuine' { return Get-DashboardText 'software.results.status.clearFinding' }
-        'Suspicious' { return Get-DashboardText 'software.results.status.reviewOnly' }
-        'IntegrityCompromised' { return Get-DashboardText 'software.results.status.reviewOnly' }
-        'Unactivated' { return Get-DashboardText 'software.results.status.notActivated' }
-        default { return Get-DashboardText 'software.results.status.noIssue' }
+    if ($licenseModel -eq 'Unknown' -and $assessmentCode -in @('Unverified','TrialOrUnverified','')) {
+        return Get-DashboardText 'software.results.status.unknownReview'
     }
+    return Get-DashboardText 'software.results.status.noIssue'
 }
 
 function Get-GuiThirdPartyStandaloneCleanupRows {
@@ -4964,15 +4965,20 @@ function Show-ThirdPartyAssessmentResults {
     # Do not treat free software as a system component.  The final assessment's
     # IsSystemComponent field is the only source of truth for this split.
     $thirdPartyApplications = @($applications | Where-Object { -not (Test-GuiSystemComponent -Application $_) })
-    $systemApplications = @($applications | Where-Object { Test-GuiSystemComponent -Application $_ })
+    # System components remain available in the internal inventory/report but
+    # are intentionally omitted from this user-action dialog.  They must never
+    # be offered as software to review, select or remediate.
+    $systemComponentCount = @($applications | Where-Object { Test-GuiSystemComponent -Application $_ }).Count
     $actionableCount = @($thirdPartyApplications | Where-Object { Test-GuiThirdPartyDirectRemediationEvidence -Application $_ }).Count
     $selectableCount = @($thirdPartyApplications | Where-Object { Test-GuiThirdPartySelectionAllowed -Application $_ }).Count
-    $confirmedFindingCount = @($allApplications | Where-Object { Test-GuiThirdPartyDirectRemediationEvidence -Application $_ }).Count
-    $reviewFindingCount = @($allApplications | Where-Object {
+    $confirmedFindingCount = @($thirdPartyApplications | Where-Object { Test-GuiThirdPartyDirectRemediationEvidence -Application $_ }).Count
+    $reviewFindingCount = @($thirdPartyApplications | Where-Object {
         -not (Test-GuiThirdPartyDirectRemediationEvidence -Application $_) -and
-        [string]$_.AssessmentCode -in @('NonGenuine','Suspicious','IntegrityCompromised')
+        ((Test-GuiThirdPartySelectionAllowed -Application $_) -or
+            ($_.PSObject.Properties['NeedsReview'] -and [bool]$_.NeedsReview) -or
+            [string]$_.AssessmentCode -in @('NonGenuine','Suspicious','IntegrityCompromised','Unverified','TrialOrUnverified'))
     }).Count
-    $noIssueCount = [Math]::Max(0, [int]$allApplications.Count - [int]$confirmedFindingCount - [int]$reviewFindingCount)
+    $noIssueCount = [Math]::Max(0, [int]$thirdPartyApplications.Count - [int]$confirmedFindingCount - [int]$reviewFindingCount)
 
     $dialog = New-Object System.Windows.Forms.Form
     $dialog.Text = Get-DashboardText "software.results.title"
@@ -5017,12 +5023,13 @@ function Show-ThirdPartyAssessmentResults {
 
     $summary = New-Object System.Windows.Forms.Label
     $summary.Text = Get-DashboardText "software.results.summary" @(
-        $allApplications.Count,
+        $thirdPartyApplications.Count,
         $selectableCount,
         $actionableCount,
         $confirmedFindingCount,
         $reviewFindingCount,
-        $noIssueCount)
+        $noIssueCount,
+        $systemComponentCount)
     $summary.Font = $fontBold
     $summary.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
     $summary.AutoSize = $true
@@ -5035,7 +5042,7 @@ function Show-ThirdPartyAssessmentResults {
     $hint = New-Object System.Windows.Forms.Label
     $hintKey = if ($ReadOnly) {
         "software.results.hint.readOnly"
-    } elseif ($allApplications.Count -eq 0) {
+    } elseif ($thirdPartyApplications.Count -eq 0) {
         "software.results.noApplications"
     } elseif ($selectableCount -eq 0) {
         "software.results.hint.noSelectable"
@@ -5281,16 +5288,10 @@ function Show-ThirdPartyAssessmentResults {
     $tabControl.Multiline = $true
     $thirdPartyPage = New-Object System.Windows.Forms.TabPage
     $thirdPartyPage.Text = Get-DashboardText 'software.results.tab.thirdParty' @($thirdPartyApplications.Count)
-    $systemPage = New-Object System.Windows.Forms.TabPage
-    $systemPage.Text = Get-DashboardText 'software.results.tab.system' @($systemApplications.Count)
     $thirdPartyList = & $newApplicationList -Rows $thirdPartyApplications -IsSystemView $false
-    $systemList = & $newApplicationList -Rows $systemApplications -IsSystemView $true
     $thirdPartyPage.Controls.Add($thirdPartyList)
-    $systemPage.Controls.Add($systemList)
     $thirdPartyPage.Tag = $thirdPartyList
-    $systemPage.Tag = $systemList
     [void]$tabControl.TabPages.Add($thirdPartyPage)
-    [void]$tabControl.TabPages.Add($systemPage)
     $tabControl.Add_SelectedIndexChanged({
         param($sender, $eventArgs)
         $selectedList = if ($sender.SelectedTab -and $sender.SelectedTab.Tag) { $sender.SelectedTab.Tag } else { $null }
@@ -5398,7 +5399,7 @@ function Show-ThirdPartyAssessmentResults {
         $mainLayout.SuspendLayout()
         try {
             & $setTextMaximumWidth
-            foreach ($targetList in @($thirdPartyList, $systemList)) { & $resizeListColumns $targetList }
+            & $resizeListColumns $thirdPartyList
             $footer.AutoScroll = $false
             $footer.PerformLayout()
         } finally {

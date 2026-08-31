@@ -149,7 +149,10 @@ Assert-SourcePattern $text 'Set-ToolUiActionButtonVisual\s+-Button\s+[$]actionBu
 Assert-SourcePattern $text 'function\s+Test-GuiSystemComponent' 'Dashboard chưa dùng cờ IsSystemComponent cuối cùng để tách phần mềm.'
 Assert-SourcePattern $text 'function\s+Show-ThirdPartyAssessmentResults\s*\{' 'Dashboard thiếu hộp kết quả phần mềm responsive.'
 Assert-SourcePattern $text 'software\.results\.tab\.thirdParty' 'Kết quả phần mềm chưa có tab ứng dụng người dùng/bên thứ ba.'
-Assert-SourcePattern $text 'software\.results\.tab\.system' 'Kết quả phần mềm chưa có tab thành phần hệ thống.'
+Assert-SourcePattern $text 'AssessmentSortPriority.+Ascending\s*=\s*\$true' 'Danh sách phần mềm chưa ưu tiên thứ tự Cao, Trung bình, Thấp trước tên ứng dụng.'
+Assert-SourcePattern $text 'systemComponentCount' 'Kết quả phần mềm chưa đếm riêng thành phần hệ thống đã bỏ qua.'
+Assert-SourcePattern $text 'cleanup\.selection\.formTitle"\s+@\(\$toolDisplayVersion\)' 'Tiêu đề chọn xử lý chưa lấy phiên bản v5.0 hiện hành.'
+if ($text -match 'software\.results\.tab\.system') { Add-Failure 'Thành phần hệ thống/driver/runtime vẫn còn được tạo thành tab hiển thị.' }
 Assert-SourcePattern $text '[$]footer\.WrapContents\s*=\s*[$]true' 'Footer kết quả phần mềm chưa tự xuống hàng.'
 Assert-SourcePattern $text '[$]footer\.AutoScroll\s*=\s*[$]false' 'Footer kết quả phần mềm còn có thể mở thanh cuộn ngang.'
 Assert-SourcePattern $text '[$]details\.WordWrap\s*=\s*[$]true' 'Khung chi tiết kết quả chưa xuống dòng.'

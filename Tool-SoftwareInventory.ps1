@@ -1091,6 +1091,12 @@ function Test-ToolSoftwareLikelySystemComponent {
     )
     if ($DeclaredSystemComponent -or $NonRemovable) { return $true }
     if ($ReleaseType -match '(?i)^(?:update|security update|hotfix|driver|language pack)$') { return $true }
+    # Windows Store platform packages are often exposed through more than one
+    # inventory source.  Some of those records have no useful publisher, so
+    # relying only on AppX metadata lets runtimes/codecs leak into the user-app
+    # and remediation views.  These exact platform identities are safe to
+    # classify by name; ordinary Store applications are deliberately excluded.
+    if ($Name -match '(?i)^(?:(?:Microsoft\.)?WindowsAppRuntime(?:\.\d+)*|Windows App Runtime(?:\s+\d+(?:\.\d+)*)?|(?:AV1|HEIF|HEVC|MPEG-2|Raw Image|VP9|Web Media|Webp Image) (?:Video |Image )?Extensions?|Xbox Identity Provider|AppUp\.IntelGraphicsExperience|Microsoft\.(?:VCLibs|UI\.Xaml)(?:\.|$).*)$') { return $true }
     if ($Name -match '(?i)^(?:Update for |Security Update for |Hotfix for |Windows Driver Package|Microsoft Windows Desktop Runtime|Microsoft ASP\.NET Core|Microsoft \.NET Framework|Microsoft Visual C\+\+.*Redistributable|Microsoft Edge(?: Update| WebView2 Runtime)?$|Microsoft OneDrive$|Internet Explorer$|Windows SDK|Windows Software Development Kit|Windows App Certification Kit|Windows PC Health Check|Microsoft(?:®|\s+\(R\))? Windows(?:®|\s+\(R\))? Operating System)') { return $true }
     if ($Publisher -match '(?i)\bMicrosoft(?: Corporation)?\b' -and $Name -match '(?i)\b(?:Setup Support Files|Native Client|System CLR Types|Transact-SQL (?:Compiler Service|ScriptDom)|VSS Writer|Prerequisites|Multi-Targeting Pack|Policies|Meeting Add-in|Help Viewer|Update Health Tools)\b') { return $true }
     if ($Name -match '(?i)^(?:uninstall(?:er)?\b|.*\(remove only\)$)|\b(?:driver|runtime|redistributable|language pack|support component|service components|update service|framework|sdk|hal)\b' -and
@@ -3490,7 +3496,9 @@ function Get-ToolSoftwareAssessments {
         )
         $guidedRemediationEligible = [bool](
             $evidenceGuidedRemediationEligible -or
-            (-not $isSystemComponent -and $licenseModel -in @('Paid','Subscription','Trial','Unknown'))
+            (-not $isSystemComponent -and
+                $licenseModel -in @('Paid','Subscription','Trial','Unknown') -and
+                $statusCode -ne 'GenuineVerified')
         )
         $cleanupFinding = [bool]($recoveryGate.ArtifactCleanupAllowed -or $manualArtifactQuarantineGate.Allowed -or $evidenceGuidedRemediationEligible)
         $manualEligible = [bool]($recoveryGate.ArtifactCleanupAllowed -or $manualArtifactQuarantineGate.Allowed)
@@ -3503,9 +3511,10 @@ function Get-ToolSoftwareAssessments {
         $autoEligible = $false
         $needsReview = [bool]($statusCode -notin @('FreeOrIncluded','GenuineVerified','Unactivated'))
         $attentionLevel = if ($isSystemComponent) { 'System' }
-            elseif ([bool]$directCrackSummary.Confirmed -or $manualEligible -or $statusCode -eq 'NonGenuine') { 'High' }
+            elseif ([bool]$directCrackSummary.Confirmed -or $manualEligible -or $statusCode -eq 'NonGenuine' -or
+                ($licenseModel -in @('Paid','Subscription','Trial') -and $statusCode -ne 'GenuineVerified')) { 'High' }
             elseif ($statusCode -in @('Suspicious','IntegrityCompromised') -or $guidedRemediationEligible -or
-                $licenseModel -in @('Paid','Subscription','Trial','Unknown')) { 'Medium' }
+                $licenseModel -eq 'Unknown') { 'Medium' }
             else { 'Low' }
         $assessmentSortPriority = switch ($attentionLevel) {
             'High' { 0 }
