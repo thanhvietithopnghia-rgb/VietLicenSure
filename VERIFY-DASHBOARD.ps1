@@ -760,10 +760,12 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     }
     if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
         $historyText -notmatch 'ProductVersion/FileVersion kỹ thuật:\s*`5\.0\.0\.0`' -or
-        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s*$' -or
-        $historyText -notmatch 'Catalog tích hợp và Online hiện là `1\.6\.3\.0`' -or
-        $historyText -notmatch 'ManagedSigned') {
-        Add-Failure 'Tài liệu lịch sử chưa mô tả đầy đủ bản v5.0, phiên bản kỹ thuật, catalog và mô hình phát hành.'
+        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+31/08/2026\s*$' -or
+        $historyText -notmatch 'Ba mức quét Quick, Standard và Deep' -or
+        $historyText -notmatch 'Offline theo mặc định' -or
+        $historyText -notmatch 'ManagedSigned' -or
+        $historyText -notmatch 'Chỉ thêm mục lịch sử khi tên hoặc số phiên bản công khai chính thức thay đổi') {
+        Add-Failure 'Tài liệu lịch sử chưa tóm tắt đúng bản v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
     }
     if ($historyText -match '(?m)^##\s+v(?:[1-4](?:\.\d+)*)\b' -or
         $historyText -match '(?i)\bR\d+\b') {
