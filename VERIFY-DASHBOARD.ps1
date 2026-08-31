@@ -751,16 +751,16 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     if ($guideViText -match '(?im)^\s*(Bản|Phiên bản)\s+v?\d' -or $guideEnText -match '(?im)^\s*(Version|Release)\s+v?\d') {
         Add-Failure 'HDSD còn trộn nhật ký cập nhật phiên bản thay vì chỉ hướng dẫn chức năng.'
     }
-    if ($historyText -notmatch 'FileVersion:\s*\*\*5\.0\.0\.0\*\*' -or
-        $historyText -notmatch 'v5\.0\.0\.0' -or
-        $historyText -notmatch 'Nền tảng/công nghệ:' -or
-        $historyText -notmatch 'Trọng tâm:') {
-        Add-Failure 'Tài liệu phiên bản chưa mô tả bản mới, mô hình triển khai và công nghệ/ngôn ngữ.'
+    if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
+        $historyText -notmatch 'ProductVersion/FileVersion kỹ thuật:\s*`5\.0\.0\.0`' -or
+        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s*$' -or
+        $historyText -notmatch 'Catalog tích hợp và Online hiện là `1\.6\.3\.0`' -or
+        $historyText -notmatch 'ManagedSigned') {
+        Add-Failure 'Tài liệu lịch sử chưa mô tả đầy đủ bản v5.0, phiên bản kỹ thuật, catalog và mô hình phát hành.'
     }
-    foreach ($mainVersion in @('1.0','1.1','1.2','1.3','2.4','2.5','2.6','2.7','2.8','2.9','3.0','3.1','3.2','3.3','3.4','3.5','3.6','3.7','3.8','3.9','4.0','4.1','4.2','4.3','4.4','4.6','4.8','4.9','5.0')) {
-        if ($historyText -notmatch "(?m)^##\s+v$([regex]::Escape($mainVersion))\b") {
-            Add-Failure "Tài liệu lịch sử thiếu phiên bản chính v$mainVersion."
-        }
+    if ($historyText -match '(?m)^##\s+v(?:[1-4](?:\.\d+)*)\b' -or
+        $historyText -match '(?i)\bR\d+\b') {
+        Add-Failure 'Tài liệu lịch sử phải dùng một tên v5.0 thống nhất, không tách theo nhãn R hoặc liệt kê phiên bản cũ.'
     }
 }
 Assert-SourcePattern $text 'function\s+Open-ToolReportPresentation' 'Dashboard thiếu bộ chuyển báo cáo TXT/HTML về giao diện HTML/PDF dùng chung.'
