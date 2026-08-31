@@ -1096,15 +1096,17 @@ function Test-ToolSoftwareLikelySystemComponent {
     # relying only on AppX metadata lets runtimes/codecs leak into the user-app
     # and remediation views.  These exact platform identities are safe to
     # classify by name; ordinary Store applications are deliberately excluded.
-    if ($Name -match '(?i)^(?:(?:Microsoft\.)?WindowsAppRuntime(?:\.\d+)*|Windows App Runtime(?:\s+\d+(?:\.\d+)*)?|(?:AV1|HEIF|HEVC|MPEG-2|Raw Image|VP9|Web Media|Webp Image) (?:Video |Image )?Extensions?|Xbox Identity Provider|AppUp\.IntelGraphicsExperience|Microsoft\.(?:VCLibs|UI\.Xaml)(?:\.|$).*)$') { return $true }
+    if ($Name -match '(?i)^(?:(?:Microsoft\.)?WindowsAppRuntime(?:\.\d+)*|Windows App Runtime(?:\s+DDLM)?(?:\s+\d+(?:\.\d+)*)(?:-[A-Za-z0-9]+)?|(?:AV1|HEIF|HEVC|MPEG-2|Raw Image|VP9|Web Media|Webp Image) (?:Video |Image )?Extensions?|Xbox Identity Provider|AppUp\.IntelGraphicsExperience|Microsoft\.(?:VCLibs|UI\.Xaml)(?:\.|$).*|LocalServiceComponents|NVIDIA Control Panel|Microsoft Visual Studio Installer|SharePoint Client Components)$') { return $true }
     if ($Name -match '(?i)^(?:Update for |Security Update for |Hotfix for |Windows Driver Package|Microsoft Windows Desktop Runtime|Microsoft ASP\.NET Core|Microsoft \.NET Framework|Microsoft Visual C\+\+.*Redistributable|Microsoft Edge(?: Update| WebView2 Runtime)?$|Microsoft OneDrive$|Internet Explorer$|Windows SDK|Windows Software Development Kit|Windows App Certification Kit|Windows PC Health Check|Microsoft(?:®|\s+\(R\))? Windows(?:®|\s+\(R\))? Operating System)') { return $true }
-    if ($Publisher -match '(?i)\bMicrosoft(?: Corporation)?\b' -and $Name -match '(?i)\b(?:Setup Support Files|Native Client|System CLR Types|Transact-SQL (?:Compiler Service|ScriptDom)|VSS Writer|Prerequisites|Multi-Targeting Pack|Policies|Meeting Add-in|Help Viewer|Update Health Tools)\b') { return $true }
+    if ($Publisher -match '(?i)\bMicrosoft(?: Corporation)?\b' -and $Name -match '(?i)\b(?:Setup(?: Support Files|\s*\()|Management Objects|Native Client|System CLR Types|Transact-SQL (?:Compiler Service|ScriptDom)|VSS Writer|Prerequisites|Multi-Targeting Pack|Policies|Meeting Add-in|Client Components|Help Viewer|Update Health Tools)\b') { return $true }
     if ($Name -match '(?i)^(?:uninstall(?:er)?\b|.*\(remove only\)$)|\b(?:driver|runtime|redistributable|language pack|support component|service components|update service|framework|sdk|hal)\b' -and
         $Publisher -match '(?i)\b(?:Microsoft|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom|ASUS|ASUSTeK|Canon|Toshiba)\b') { return $true }
     if ($Publisher -match '(?i)\b(?:ASUS|ASUSTeK|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom)\b' -and
         $Name -match '(?i)(?:HAL|Framework|SDK|Service|Driver)(?:32|64)?$') { return $true }
     if ($Publisher -match '(?i)\bCanon\b' -and
         $Name -match '(?i)\b(?:LBP\s*(?:2900|2900B|3010|3018|3050|3100|3108|3150)|CAPT(?:\s+Printer)?|Canon Advanced Printing Technology)\b') { return $true }
+    if ($Publisher -match '(?i)\bCanon\b' -and
+        $Name -match '(?i)(?:trình\s+gỡ.*trình\s+điều\s+khiển.*máy\s+in|printer\s+driver.*uninstall|uninstall.*printer\s+driver)') { return $true }
     if ($Name -match '(?i)\b(?:driver|chipset|runtime|redistributable|language pack|support component|update service)\b' -and
         $Publisher -match '(?i)\b(?:Microsoft|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom)\b') { return $true }
     # AppX do Microsoft phát hành phần lớn là thành phần/hộp thư mặc định của
@@ -1116,6 +1118,28 @@ function Test-ToolSoftwareLikelySystemComponent {
     if ($SourceKind -eq 'Appx' -and $Name -match '(?i)(?:CoreApp|ShellExtension|ImageExtension|VideoExtension|MediaExtension|Runtime|Framework|Utility|Service)$') { return $true }
     if ($InstallLocation -and $InstallLocation -match '(?i)\\Windows\\(?:System32|SysWOW64|WinSxS|SystemApps)(?:\\|$)') { return $true }
     return $false
+}
+
+function Test-ToolSoftwareCatalogUserApplicationOverrideAllowed {
+    param(
+        [AllowNull()][object]$Application,
+        [AllowNull()][string]$CatalogLicenseModel
+    )
+
+    if (-not $Application -or $CatalogLicenseModel -notin @('Free','OpenSource','Freeware','Freemium','Trial','Trialware','Paid','Commercial','Perpetual','Subscription','Mixed')) {
+        return $false
+    }
+    $name = Get-ToolSoftwareOptionalPropertyString -InputObject $Application -Name 'Name'
+    $reason = Get-ToolSoftwareOptionalPropertyString -InputObject $Application -Name 'SystemComponentReason'
+    if ($reason -match '(?i)^(?:ProductFamily:CompanionComponent|Appx:NonRemovable)$') { return $false }
+
+    # A broad product rule (for example "Python 3" or "Microsoft Office")
+    # must not turn an installer, add-in, language/runtime subfeature, or other
+    # support package back into a user entitlement target.  Primary products
+    # such as Camtasia may still override an overly conservative Registry
+    # SystemComponent flag when their identity has no support-component token.
+    $supportIdentityPattern = '(?i)(?:\bMeeting Add-in\b|\bAdd to Path\b|\bCore Interpreter\b|\bDevelopment Libraries\b|\bDocumentation\b|\bExecutables\b|\bpip Bootstrap\b|\bStandard Library\b|\bTcl/Tk Support\b|\bTest Suite\b|\bManagement Objects\b|\bSetup\s*\(|\bClient Components\b|^Microsoft Visual Studio Installer$|^NVIDIA Control Panel$|^LocalServiceComponents$)'
+    return [bool]($name -notmatch $supportIdentityPattern)
 }
 
 function ConvertTo-ToolSoftwarePublisherToken {
@@ -3454,7 +3478,8 @@ function Get-ToolSoftwareAssessments {
         # inventory flag here would expose system entries to remediation.
         $applicationSystemComponent = $application.PSObject.Properties['IsSystemComponent']
         $applicationSystemReason = $application.PSObject.Properties['SystemComponentReason']
-        $catalogIdentifiesUserApplication = [bool]($catalogProduct -and $catalogLicenseModel -notin @('SystemComponent','Driver','Runtime','Unknown'))
+        $catalogIdentifiesUserApplication = Test-ToolSoftwareCatalogUserApplicationOverrideAllowed `
+            -Application $application -CatalogLicenseModel $catalogLicenseModel
         $isSystemComponent = [bool]((($applicationSystemComponent -and [bool]$applicationSystemComponent.Value) -and -not $catalogIdentifiesUserApplication) -or
             $catalogLicenseModel -in @('SystemComponent','Driver','Runtime'))
         $systemComponentReason = if ($applicationSystemReason) { [string]$applicationSystemReason.Value } else { '' }

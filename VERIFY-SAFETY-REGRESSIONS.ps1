@@ -1850,9 +1850,9 @@ if ($softwareInventory) {
         $catalogSignaturePath = $catalogPath + '.p7s'
         $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
-        if ([string]$catalog.CatalogVersion -ne '1.6.2.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-31T01:11:33Z' -or
+        if ([string]$catalog.CatalogVersion -ne '1.6.3.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-31T06:05:00Z' -or
             $catalogIds.Count -lt 94 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
-            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.2.0 / ngày bảo trì / 94 quy tắc duy nhất.'
+            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.3.0 / ngày bảo trì / 94 quy tắc duy nhất.'
         }
         foreach ($requiredCatalogId in @('iobit-driver-booster','canon-lbp-capt-printer-driver','windows-app-platform-component','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
             if ($catalogIds -notcontains $requiredCatalogId) { Fail "Catalogue phần mềm thiếu quy tắc: $requiredCatalogId" }
@@ -1869,7 +1869,7 @@ if ($softwareInventory) {
         }
         $trustedBundledCatalog = Import-ToolSoftwareCatalogFile -Path $catalogPath -SignaturePath $catalogSignaturePath -Source 'Bundled' -RequireSignature
         if (-not $trustedBundledCatalog -or -not [bool]$trustedBundledCatalog.CatalogSignatureValid -or
-            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.2.0') {
+            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.3.0') {
             Fail 'Catalogue phần mềm tích hợp chưa mở được bằng chữ ký CMS và signer đã ghim.'
         }
         $forgedCatalog = (Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json)
@@ -1926,6 +1926,7 @@ if ($softwareInventory) {
             (New-ToolSoftwareInventoryRecord -Name 'MATLAB Runtime R2025a' -Version '25.1' -Publisher 'MathWorks' -InstallLocation 'C:\Fixture\MATLABRuntime' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Canon LBP2900 CAPT Printer Driver' -Version '3.30' -Publisher 'Canon Inc.' -InstallLocation 'C:\Fixture\CanonLBP2900' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'WindowsAppRuntime.1.8' -Version '1.8.10' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.WindowsAppRuntime.1.8' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Windows App Runtime DDLM 4000.1049.117.0-x6' -Version '4000.1049.117.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.WindowsAppRuntime.DDLM' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'VP9 Video Extensions' -Version '1.2.20.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.VP9VideoExtensions' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Web Media Extensions' -Version '1.1.38.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.WebMediaExtensions' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Xbox Identity Provider' -Version '12.130.16001.0' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\Microsoft.XboxIdentityProvider' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
@@ -1938,7 +1939,17 @@ if ($softwareInventory) {
             (New-ToolSoftwareInventoryRecord -Name 'Adobe Lightroom Classic' -Version '14.0' -Publisher 'Adobe Inc.' -InstallLocation 'C:\Fixture\Lightroom' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Adobe Premiere Pro 2025' -Version '25.0' -Publisher 'Adobe Inc.' -InstallLocation 'C:\Fixture\Premiere' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
             (New-ToolSoftwareInventoryRecord -Name 'Format Factory' -Version '5.0' -Publisher '' -InstallLocation 'C:\Fixture\FormatFactory' -SourceKind 'Shortcut' -SourceDetail 'StartMenu' -SkipSignature -SkipExecutableDiscovery),
-            (New-ToolSoftwareInventoryRecord -Name 'PC-NVR' -Version '' -Publisher '' -InstallLocation 'C:\Fixture\SmartPSS\PC-NVR' -SourceKind 'Shortcut' -SourceDetail 'StartMenu' -SkipSignature -SkipExecutableDiscovery)
+            (New-ToolSoftwareInventoryRecord -Name 'PC-NVR' -Version '' -Publisher '' -InstallLocation 'C:\Fixture\SmartPSS\PC-NVR' -SourceKind 'Shortcut' -SourceDetail 'StartMenu' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Camtasia 2025' -Version '25.0' -Publisher 'TechSmith Corporation' -InstallLocation 'C:\Fixture\Camtasia' -SourceKind 'Registry' -SourceDetail 'HKLM' -IsSystemComponent:$true -SystemComponentReason 'Registry:SystemComponent' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Microsoft Teams Meeting Add-in for Microsoft Office' -Version '1.26' -Publisher 'Microsoft' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Python 3.14.6 Core Interpreter (64-bit)' -Version '3.14.6' -Publisher 'Python Software Foundation' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -IsSystemComponent:$true -SystemComponentReason 'Registry:SystemComponent' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Microsoft Visual Studio Installer' -Version '3.14' -Publisher 'Microsoft Corporation' -InstallLocation 'C:\Program Files (x86)\Microsoft Visual Studio\Installer' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Microsoft SQL Server 2008 R2 Management Objects' -Version '10.5' -Publisher 'Microsoft Corporation' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Microsoft SQL Server 2014 Setup (English)' -Version '12.0' -Publisher 'Microsoft Corporation' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'NVIDIA Control Panel' -Version '8.1' -Publisher '' -InstallLocation 'C:\Program Files\WindowsApps\NVIDIACorp.NVIDIAControlPanel' -SourceKind 'Appx' -SourceDetail 'Appx' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'LocalServiceComponents' -Version '1.0' -Publisher '' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'SharePoint Client Components' -Version '16.0' -Publisher 'Microsoft Corporation' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery),
+            (New-ToolSoftwareInventoryRecord -Name 'Trình Gỡ Cài Đặt Trình Điều Khiển Máy In Canon Generic Plus UFR II' -Version '3.0' -Publisher 'Canon Inc.' -InstallLocation '' -SourceKind 'Registry' -SourceDetail 'HKLM' -SkipSignature -SkipExecutableDiscovery)
         )
         $classificationResults = @(Get-ToolSoftwareAssessments -Applications $classificationApps -Catalog $trustedBundledCatalog)
         $iobitResult = @($classificationResults | Where-Object { $_.CatalogProductId -eq 'iobit-driver-booster' })
@@ -1958,6 +1969,18 @@ if ($softwareInventory) {
         $premiereResult = @($classificationResults | Where-Object { $_.Name -eq 'Adobe Premiere Pro 2025' })
         $formatFactoryResult = @($classificationResults | Where-Object { $_.Name -eq 'Format Factory' })
         $pcNvrResult = @($classificationResults | Where-Object { $_.Name -eq 'PC-NVR' })
+        $camtasiaSystemFlagResult = @($classificationResults | Where-Object { $_.Name -eq 'Camtasia 2025' })
+        $supportComponentResults = @($classificationResults | Where-Object { $_.Name -in @(
+            'Microsoft Teams Meeting Add-in for Microsoft Office',
+            'Python 3.14.6 Core Interpreter (64-bit)',
+            'Microsoft Visual Studio Installer',
+            'Microsoft SQL Server 2008 R2 Management Objects',
+            'Microsoft SQL Server 2014 Setup (English)',
+            'NVIDIA Control Panel',
+            'LocalServiceComponents',
+            'SharePoint Client Components',
+            'Trình Gỡ Cài Đặt Trình Điều Khiển Máy In Canon Generic Plus UFR II'
+        ) })
         if ($iobitResult.Count -ne 1 -or [string]$iobitResult[0].LicenseModel -ne 'Freemium' -or [bool]$iobitResult[0].IsSystemComponent) {
             Fail 'IObit Driver Booster vẫn bị bỏ sót hoặc phân loại nhầm thành driver hệ thống.'
         }
@@ -1976,9 +1999,18 @@ if ($softwareInventory) {
             [bool]$canonLbpResult[0].RemediationSupported) {
             Fail 'Canon LBP2900 chưa được nhận diện là driver máy in và loại khỏi luồng xử lý phần mềm.'
         }
-        if ($windowsPlatformResults.Count -ne 5 -or
+        if ($windowsPlatformResults.Count -ne 10 -or
             @($windowsPlatformResults | Where-Object { -not [bool]$_.IsSystemComponent -or [string]$_.AttentionLevel -ne 'System' -or [bool]$_.GuidedRemediationSupported }).Count -ne 0) {
             Fail 'Windows App Runtime/codec/extension nền chưa được loại hoàn toàn khỏi luồng xem và xử lý phần mềm.'
+        }
+        if ($supportComponentResults.Count -ne 9 -or
+            @($supportComponentResults | Where-Object { -not [bool]$_.IsSystemComponent -or [string]$_.AttentionLevel -ne 'System' -or
+                [bool]$_.GuidedRemediationSupported -or [bool]$_.RemediationSupported }).Count -ne 0) {
+            Fail 'Thành phần phụ/installer/runtime đã biết vẫn bị catalog ứng dụng rộng đưa trở lại màn hình xử lý.'
+        }
+        if ($camtasiaSystemFlagResult.Count -ne 1 -or [bool]$camtasiaSystemFlagResult[0].IsSystemComponent -or
+            [string]$camtasiaSystemFlagResult[0].LicenseModel -ne 'Paid' -or [string]$camtasiaSystemFlagResult[0].AttentionLevel -ne 'High') {
+            Fail 'Ứng dụng thương mại chính bị cờ Registry SystemComponent che khuất thay vì dùng danh tính catalog cụ thể.'
         }
         $priorityOrder = @($classificationResults | Where-Object { -not [bool]$_.IsSystemComponent } | Select-Object -ExpandProperty AssessmentSortPriority)
         for ($priorityIndex = 1; $priorityIndex -lt $priorityOrder.Count; $priorityIndex++) {
@@ -2131,7 +2163,7 @@ if ($softwareInventory) {
         if (-not (Test-ToolSoftwareLikelySystemComponent -Name 'Microsoft.WidgetsPlatformRuntime' -Publisher 'CN=Microsoft Corporation, O=Microsoft Corporation' -SourceKind 'Appx' -InstallLocation '')) {
             Fail 'Bộ lọc chưa đưa ứng dụng mặc định/AppX Microsoft vào phụ lục.'
         }
-        foreach ($platformComponentName in @('WindowsAppRuntime.1.8','VP9 Video Extensions','Web Media Extensions','Xbox Identity Provider','AppUp.IntelGraphicsExperience')) {
+        foreach ($platformComponentName in @('WindowsAppRuntime.1.8','Windows App Runtime DDLM 4000.1049.117.0-x6','VP9 Video Extensions','Web Media Extensions','Xbox Identity Provider','AppUp.IntelGraphicsExperience','LocalServiceComponents','NVIDIA Control Panel','Microsoft Visual Studio Installer','SharePoint Client Components')) {
             if (-not (Test-ToolSoftwareLikelySystemComponent -Name $platformComponentName -Publisher '' -SourceKind 'Registry' -InstallLocation '')) {
                 Fail "Bộ lọc chưa loại thành phần nền Windows khỏi danh sách xử lý: $platformComponentName"
             }

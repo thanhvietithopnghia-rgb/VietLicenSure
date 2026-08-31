@@ -658,10 +658,10 @@ if (-not $softwareCatalogMetadata -or -not [bool]$softwareCatalogMetadata.Catalo
 $engineeringCatalogRules = @($softwareCatalogMetadata.Products | Where-Object {
     $_.PSObject.Properties['Category'] -and -not [string]::IsNullOrWhiteSpace([string]$_.Category)
 })
-if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.2.0' -or
-    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-31T01:11:33Z' -or
+if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.3.0' -or
+    [string]$softwareCatalogMetadata.GeneratedAtUtc -ne '2026-08-31T06:05:00Z' -or
     @($softwareCatalogMetadata.Products).Count -lt 94 -or $engineeringCatalogRules.Count -lt 16) {
-    throw 'Catalog phần mềm tích hợp cho v5.0 chưa đạt phiên bản 1.6.2.0 / ngày bảo trì 2026-08-31T01:11:33Z / 94 quy tắc / 16 quy tắc kỹ thuật.'
+    throw 'Catalog phần mềm tích hợp cho v5.0 chưa đạt phiên bản 1.6.3.0 / ngày bảo trì 2026-08-31T06:05:00Z / 94 quy tắc / 16 quy tắc kỹ thuật.'
 }
 
 Write-Host '[1/8] Tạo TOOL-SHA256SUMS.txt...'
@@ -1298,7 +1298,7 @@ $applicationUpdateManifest = [ordered]@{
     }
     Changes = [ordered]@{
         'vi-VN' = @(
-            'R11 sửa danh sách phần mềm: sắp xếp đúng Cao - Trung bình - Thấp, yêu cầu xác minh giấy phép đối với phần mềm trả phí chưa được xác nhận, ẩn hoàn toàn thành phần hệ thống/runtime khỏi màn hình xử lý và đồng bộ tiêu đề lên v5.0.',
+            'R12 tiếp tục siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.',
             'Stable R8 sửa lỗi Authenticode 0x800B0109 trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.',
             'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
             'Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.',
@@ -1306,7 +1306,7 @@ $applicationUpdateManifest = [ordered]@{
             'Giao diện hỗ trợ theme theo hệ thống, dark/light override và PerMonitorV2 DPI.',
             'Bổ sung xuất fleet JSON/CSV/HTML/PDF có redaction, chống CSV injection; CLI headless, script Intune/MDM và ma trận VM Windows 10/11.',
             'Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.',
-            'Catalog online 1.6.2.0 bao phủ 94 nhóm, loại Windows App Runtime/codec/extension nền khỏi danh sách xử lý và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.',
+            'Catalog online 1.6.3.0 bao phủ 94 nhóm, loại thêm gói cài đặt/thành phần hỗ trợ khỏi danh sách xử lý và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.',
             'Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.',
             'Các chế độ Quét/Báo cáo chỉ đọc; Khắc phục gỡ đúng khóa hoặc Activation ID xấu, bảo toàn bản quyền hợp lệ cùng tồn tại và chỉ cho phép gỡ hoàn chỉnh ứng dụng được chọn khi danh tính MSI/AppX gắn với nguồn đã được xác minh.',
             'Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.',
@@ -1317,7 +1317,7 @@ $applicationUpdateManifest = [ordered]@{
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
-            'R11 fixes the software list: strict High - Medium - Low ordering, explicit licence verification for unverified commercial software, complete omission of system/runtime components from the action screen, and a v5.0 selection-window title.',
+            'R12 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.',
             'Stable R8 fixes Authenticode 0x800B0109 on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.',
             'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',
             'Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.',
@@ -1325,7 +1325,7 @@ $applicationUpdateManifest = [ordered]@{
             'The UI follows the system theme, supports dark/light overrides, and declares PerMonitorV2 DPI awareness.',
             'Fleet JSON/CSV/HTML/PDF export adds redaction and CSV-injection guards, with a headless CLI, Intune/MDM scripts, and a Windows 10/11 VM matrix.',
             'Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.',
-            'Online catalog 1.6.2.0 covers 94 families, excludes Windows App Runtime/codecs/platform extensions from the action list, and accepts only signed declarative data with allowlisted fields and profiles.',
+            'Online catalog 1.6.3.0 covers 94 families, excludes additional installers/support components from the action list, and accepts only signed declarative data with allowlisted fields and profiles.',
             'Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.',
             'Scan and report modes are read-only; remediation removes only the selected bad key or Activation ID, preserves coexisting genuine licences, and permits complete removal of an explicitly selected application only through a validated source-bound MSI/AppX identity.',
             'Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.',
@@ -1449,7 +1449,7 @@ $infoLines = @(
     'HTML, PDF va cac bao cao dung chung giu du nam o ket qua tren cung mot hang khi du rong; Muc xac minh/Huong xu ly tach thanh o con va chan trang PDF chia hai hang.',
     'Tro ly dong bo day du vi-VN/en-US cho nut, trang thai dong bo va dien giai bao cao hien tai theo ma ket qua.',
     'Tro ly schema 1.1 / knowledge 1.5.1 co tri thuc cuc bo ky CMS SHA-256, ghim chung thu, chong ha phien ban va khong tai cau hoi/bao cao len mang.',
-    'Catalogue phan mem 1.6.2.0 co it nhat 94 quy tac khai bao ky CMS; Windows App Runtime/codec/extension nen bi loai khoi danh sach xu ly; du lieu online khong duoc mang lenh/script tuy y.',
+    'Catalogue phan mem 1.6.3.0 co it nhat 94 quy tac khai bao ky CMS; runtime/installer/thanh phan ho tro bi loai khoi danh sach xu ly; du lieu online khong duoc mang lenh/script tuy y.',
     'Bao cao Windows/Office thuong van ra kenh KMS khi license o Notification, hien chu ky KMS toi da 180 ngay va ra MAS/PMAS, Activation Program 1.17, lenh erturk-dev.netlify.app/run, TSforge, OHook, KMS toolkit/Microsoft Toolkit con hien huu.',
     'Quet phan mem thuong ra them artifact trong thu muc cai dat thuong mai co gioi han, khong chi du lieu Download; ngay cai duoc chuan hoa yyyy-MM-dd.',
     'Ten man hinh co fallback EDID/DesktopMonitor/PNP; hop chon rieng tu co nut Ban da che, Ban day du noi bo va Huy; timeline tach trang thai hien tai khoi su kien lich su.',
