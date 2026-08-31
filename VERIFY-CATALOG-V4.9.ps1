@@ -114,7 +114,7 @@ Assert-CatalogVerification -Condition ((Get-ToolSoftwareCatalogUpdateDisposition
     -CandidateVersion ([version]'1.6.3.0') -CandidateSha256 ('A' * 64) -TrustedBaseline $baselineFixture) -eq 'AlreadyCurrent') `
     -Message 'An identical online catalog was not recognized as AlreadyCurrent.'
 Assert-CatalogVerification -Condition ((Get-ToolSoftwareCatalogUpdateDisposition `
-    -CandidateVersion ([version]'1.6.3.0') -CandidateSha256 ('B' * 64) -TrustedBaseline $baselineFixture) -eq 'Update') `
+    -CandidateVersion ([version]'1.6.4.0') -CandidateSha256 ('B' * 64) -TrustedBaseline $baselineFixture) -eq 'Update') `
     -Message 'A newer online catalog was not accepted for update.'
 $equalVersionConflictBlocked = $false
 try {
