@@ -899,14 +899,17 @@ if ([string]$viCatalog.'enterprise.client.tab' -ne 'Chức năng máy trạm' -o
 $guideViPath = Join-Path $root 'HUONG-DAN.txt'
 $guideEnPath = Join-Path $root 'USER-GUIDE-en-US.md'
 $historyPath = Join-Path $root 'LICH-SU-PHIEN-BAN.txt'
+$historyEnPath = Join-Path $root 'VERSION-HISTORY-en-US.md'
 if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     -not (Test-Path -LiteralPath $guideEnPath -PathType Leaf) -or
-    -not (Test-Path -LiteralPath $historyPath -PathType Leaf)) {
+    -not (Test-Path -LiteralPath $historyPath -PathType Leaf) -or
+    -not (Test-Path -LiteralPath $historyEnPath -PathType Leaf)) {
     Add-Failure 'Thiếu HDSD vi-VN/en-US hoặc tài liệu lịch sử phiên bản.'
 } else {
     $guideViText = Get-Content -LiteralPath $guideViPath -Raw -Encoding UTF8
     $guideEnText = Get-Content -LiteralPath $guideEnPath -Raw -Encoding UTF8
     $historyText = Get-Content -LiteralPath $historyPath -Raw -Encoding UTF8
+    $historyEnText = Get-Content -LiteralPath $historyEnPath -Raw -Encoding UTF8
     foreach ($functionNumber in @(1,2,3,4,5,7,8,9,10)) {
         $viTaskTitle = [string]$viCatalog.("menu.$functionNumber.title")
         $enTaskTitle = [string]$enCatalog.("menu.$functionNumber.title")
@@ -937,15 +940,71 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
         $historyText -notmatch 'ProductVersion/FileVersion kỹ thuật:\s*`5\.0\.0\.0`' -or
         $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+31/08/2026\s*$' -or
+        $historyText -notmatch 'là bản nâng cấp tiếp theo của v4\.9, tập trung nâng cấp vào các phần cốt lõi' -or
         $historyText -notmatch 'Ba mức quét Quick, Standard và Deep' -or
         $historyText -notmatch 'Offline theo mặc định' -or
         $historyText -notmatch 'ManagedSigned' -or
         $historyText -notmatch 'Chỉ thêm mục lịch sử khi tên hoặc số phiên bản công khai chính thức thay đổi') {
-        Add-Failure 'Tài liệu lịch sử chưa tóm tắt đúng bản v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
+        Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
     }
-    if ($historyText -match '(?m)^##\s+v(?:[1-4](?:\.\d+)*)\b' -or
-        $historyText -match '(?i)\bR\d+\b') {
-        Add-Failure 'Tài liệu lịch sử phải dùng một tên v5.0 thống nhất, không tách theo nhãn R hoặc liệt kê phiên bản cũ.'
+    $requiredHistoryHeadings = @(
+        '## Tool Kiểm Tra v5.0 — 31/08/2026',
+        '## v4.9.0.0 — 22/08/2026',
+        '## v4.8.0.1 — 18/08/2026',
+        '## v4.8.0.0 — 10/08/2026',
+        '## v4.6 — 06/08/2026',
+        '## v4.5 — 06/08/2026',
+        '## v4.4 — 31/07/2026',
+        '## v4.3 — 30–31/07/2026',
+        '## v4.2 — 24–25/07/2026',
+        '## v4.1 — 23/07/2026',
+        '## v4.0 — 23/07/2026',
+        '## v3.9 — 22/07/2026',
+        '## v3.8 — 22/07/2026',
+        '## v3.7 — 22/07/2026',
+        '## v3.6 — 22/07/2026',
+        '## v3.5 — 21/07/2026',
+        '## v3.4 — 21/07/2026',
+        '## v3.3 — 20/07/2026',
+        '## v3.2 — 20/07/2026',
+        '## v3.1 — 20/07/2026',
+        '## v3.0 — 20/07/2026',
+        '## v2.9 — 20/07/2026',
+        '## v2.8 — 20/07/2026',
+        '## v2.7 — 20/07/2026',
+        '## v2.6 — 20/07/2026',
+        '## v2.5 — 18/07/2026',
+        '## v2.4 — 18/07/2026',
+        '## v1.3 — 18/07/2026',
+        '## v1.2 — 18/07/2026',
+        '## v1.1 — 18/07/2026',
+        '## v1.0 — 17/07/2026'
+    )
+    $previousHistoryHeadingIndex = -1
+    foreach ($requiredHistoryHeading in $requiredHistoryHeadings) {
+        $historyHeadingIndex = $historyText.IndexOf($requiredHistoryHeading, [StringComparison]::Ordinal)
+        if ($historyHeadingIndex -lt 0) {
+            Add-Failure "Lịch sử tiếng Việt thiếu phiên bản công khai: $requiredHistoryHeading"
+        } elseif ($historyHeadingIndex -le $previousHistoryHeadingIndex) {
+            Add-Failure "Lịch sử tiếng Việt không sắp xếp phiên bản mới đến cũ tại: $requiredHistoryHeading"
+        }
+        $previousHistoryHeadingIndex = $historyHeadingIndex
+    }
+    foreach ($requiredEnglishHistoryHeading in @(
+        '## Tool Kiểm Tra v5.0 — August 31, 2026',
+        '## v4.9.0.0 — August 22, 2026',
+        '## v4.8.0.1 — August 18, 2026',
+        '## v4.8.0.0 — August 10, 2026',
+        '## v4.6 — August 6, 2026',
+        '## v4.5 — August 6, 2026',
+        '## v1.0 — July 17, 2026'
+    )) {
+        if ($historyEnText.IndexOf($requiredEnglishHistoryHeading, [StringComparison]::Ordinal) -lt 0) {
+            Add-Failure "English version history is missing a public release: $requiredEnglishHistoryHeading"
+        }
+    }
+    if ($historyText -match '(?i)\bR\d+\b' -or $historyEnText -match '(?i)\bR\d+\b') {
+        Add-Failure 'Tài liệu lịch sử không được tách phiên bản v5.0 theo nhãn bản dựng nội bộ R.'
     }
 }
 Assert-SourcePattern $text 'function\s+Open-ToolReportPresentation' 'Dashboard thiếu bộ chuyển báo cáo TXT/HTML về giao diện HTML/PDF dùng chung.'
