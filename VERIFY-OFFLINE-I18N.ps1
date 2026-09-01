@@ -69,7 +69,7 @@ if ($failures.Count -eq 0) {
         foreach ($catalogName in @("Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json")) {
             $catalog = Get-Content -LiteralPath (Join-Path $root $catalogName) -Raw -Encoding UTF8 | ConvertFrom-Json
             $catalogKeys[$catalogName] = @($catalog.PSObject.Properties.Name | Sort-Object)
-            foreach ($key in @("app.title", "app.offline.enabled", "menu.1.title", "menu.10.title", "menu.11.title", "menu.12.title", "menu.13.title", "cleanup.menu.fixedScopeNote", "report.toc", "report.summary.quickViewBody", "report.summary.mainConclusions", "foundation.reportExport.summaryPdfReady", "foundation.reportExport.summaryPdfLink", "enterprise.network.allow", "enterprise.network.disable", "enterprise.client.tab", "localLicense.title", "update.choice.updateNow", "update.choice.remindLater", "update.choice.dismissSession")) {
+            foreach ($key in @("app.title", "app.offline.enabled", "menu.1.title", "menu.10.title", "menu.11.title", "menu.12.title", "menu.13.title", "menu.14.title", "resultCenter.title", "backupCenter.title", "supportBundle.title", "cleanup.menu.fixedScopeNote", "report.toc", "report.summary.quickViewBody", "report.summary.mainConclusions", "foundation.reportExport.summaryPdfReady", "foundation.reportExport.summaryPdfLink", "enterprise.network.allow", "enterprise.network.disable", "enterprise.client.tab", "localLicense.title", "update.choice.updateNow", "update.choice.remindLater", "update.choice.dismissSession")) {
                 if (-not $catalog.PSObject.Properties[$key]) { Fail "$catalogName thiếu key $key." }
             }
         }

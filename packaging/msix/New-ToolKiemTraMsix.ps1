@@ -115,6 +115,7 @@ function Get-LauncherTrustProfile {
     $payloads = @($payloadField.GetValue($null))
     $values['PayloadCount'] = [int]$payloads.Count
     $values['ProvenanceSignatureEmbedded'] = [bool]($payloads -contains 'OFFICIAL-PROVENANCE-v1.json.p7s')
+    $values['ResultCenterEmbedded'] = [bool]($payloads -contains 'Tool-ResultCenter.ps1')
     return [pscustomobject]$values
 }
 
@@ -179,8 +180,9 @@ if ($Mode -eq 'Store') {
         [string]$launcherTrustProfile.StorePackageVersion -cne $version -or
         [string]$launcherTrustProfile.StorePackagePublisherId -cne $storePublisherId -or
         [string]$launcherTrustProfile.StorePackageFamilyName -cne $storeFamilyName -or
-        [int]$launcherTrustProfile.PayloadCount -ne 55 -or
-        -not [bool]$launcherTrustProfile.ProvenanceSignatureEmbedded) {
+        [int]$launcherTrustProfile.PayloadCount -ne 56 -or
+        -not [bool]$launcherTrustProfile.ProvenanceSignatureEmbedded -or
+        -not [bool]$launcherTrustProfile.ResultCenterEmbedded) {
         throw 'Store mode requires a fail-closed StoreSubmission executable with exact Partner Center identity and signed provenance.'
     }
     $exeSignature = Get-AuthenticodeSignature -LiteralPath $exe.FullName

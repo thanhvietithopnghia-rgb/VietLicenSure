@@ -29,6 +29,13 @@ if (-not (Test-Path -LiteralPath $guiPath -PathType Leaf)) {
     }
     $text = Get-Content -LiteralPath $guiPath -Raw -Encoding UTF8
 }
+$resultCenterPath = Join-Path $root 'Tool-ResultCenter.ps1'
+$resultCenterText = if (Test-Path -LiteralPath $resultCenterPath -PathType Leaf) {
+    Get-Content -LiteralPath $resultCenterPath -Raw -Encoding UTF8
+} else {
+    Add-Failure 'Thiếu Tool-ResultCenter.ps1.'
+    ''
+}
 
 # The dashboard re-checks TOOL-SHA256SUMS.txt before every elevated action.
 # Keep its allow-list exactly synchronized with the generated integrity manifest.
@@ -556,7 +563,7 @@ Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]
 Assert-SourcePattern $text 'Start-CleanupBackup\s+-Scope\s+[$]selectedScope' 'Backup chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-CleanupRestore\s+-Scope\s+[$]selectedScope' 'Khôi phục chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-Cleanup\s+-ScanScope\s+[$]selectedScope' 'Quét khắc phục chưa nhận phạm vi người dùng chọn.'
-Assert-SourcePattern $text '"Remediation"\s*\{\s*@\(11,\s*12,\s*13,\s*7,\s*8\)\s*\}' 'Thanh Khắc phục chưa hiển thị đúng năm chức năng Windows, Office, phần mềm khác, OEM và quản lý giấy phép.'
+Assert-SourcePattern $text '"Remediation"\s*\{\s*@\(11,\s*12,\s*13,\s*14,\s*7,\s*8\)\s*\}' 'Thanh Khắc phục chưa hiển thị đúng sáu chức năng Windows, Office, phần mềm khác, sao lưu–khôi phục, OEM và quản lý giấy phép.'
 Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+"Cleanup"\s+-FixedScope\s+"Windows"' 'Chức năng Windows chưa mở thẳng màn hình khắc phục đúng phạm vi.'
 Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+"Cleanup"\s+-FixedScope\s+"Office"' 'Chức năng Office chưa mở thẳng màn hình khắc phục đúng phạm vi.'
 Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+"Cleanup"\s+-FixedScope\s+"ThirdParty"' 'Chức năng phần mềm khác chưa mở thẳng màn hình khắc phục đúng phạm vi.'
@@ -828,21 +835,21 @@ foreach ($schemaVariable in @(
     }
 }
 
-$cardMatches = [regex]::Matches($text, 'Key="(Compatibility|Architecture|SecureLaunch|Integrity)"')
-if (@($cardMatches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique).Count -ne 4) {
-    Add-Failure 'Dashboard phải có bốn thẻ Windows, Office, chế độ chạy và toàn vẹn.'
+$cardMatches = [regex]::Matches($text, 'Key="(Compatibility|Architecture|SecureLaunch|Integrity|ActionCenter)"')
+if (@($cardMatches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique).Count -ne 5) {
+    Add-Failure 'Dashboard phải có năm thẻ Windows, Office, chế độ chạy, toàn vẹn và việc cần xử lý.'
 }
 
 $menuMatches = [regex]::Matches(
     $text,
     '(?m)^\s*Add-MenuButton\s+([0-9]+)\s+"menu\.[0-9]+\.title"\s+"menu\.[0-9]+\.description"\s+([0-9]+)\s+\{'
 )
-if ($menuMatches.Count -ne 13) {
-    Add-Failure "Dashboard phải có 10 tác vụ Tổng quan và 5 chức năng Khắc phục (OEM/giấy phép dùng chung khai báo); tìm thấy $($menuMatches.Count)."
+if ($menuMatches.Count -ne 14) {
+    Add-Failure "Dashboard phải có 10 tác vụ Tổng quan và 6 chức năng Khắc phục (OEM/giấy phép dùng chung khai báo); tìm thấy $($menuMatches.Count)."
 } else {
-    $expectedMenuNumbers = @(1, 2, 3, 4, 5, 6, 11, 12, 13, 7, 8, 9, 10)
-    $expectedMenuIndexes = @(0, 1, 2, 3, 4, 5, 10, 11, 12, 6, 7, 8, 9)
-    for ($index = 0; $index -lt 13; $index++) {
+    $expectedMenuNumbers = @(1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 7, 8, 9, 10)
+    $expectedMenuIndexes = @(0, 1, 2, 3, 4, 5, 10, 11, 12, 13, 6, 7, 8, 9)
+    for ($index = 0; $index -lt 14; $index++) {
         if ([int]$menuMatches[$index].Groups[1].Value -ne $expectedMenuNumbers[$index] -or
             [int]$menuMatches[$index].Groups[2].Value -ne $expectedMenuIndexes[$index]) {
             Add-Failure "Thứ tự menu sai tại vị trí $($index + 1)."
@@ -863,19 +870,39 @@ Assert-SourcePattern $text 'ApprovedKmsServerFile\s+`"[$]approvedKmsFile`"' 'Bá
 Assert-SourcePattern $text '[$]privacyArgument\s*=\s*if\s*\(\s*[$]redactSensitive\s*\)\s*\{\s*" -RedactSensitive"\s*\}\s*else\s*\{\s*" -FullInternal"\s*\}' 'Dashboard chưa yêu cầu lựa chọn rõ ràng trước khi tạo báo cáo nội bộ đầy đủ.'
 Assert-SourcePattern $text '[$]applyButton\.Text\s*=\s*Get-DashboardText\s+"dashboard\.settings\.apply"' 'Cài đặt thiếu nút Áp dụng có nhãn localization.'
 Assert-SourcePattern $text '[$]dialog\.AcceptButton\s*=\s*[$]applyButton' 'Nút Áp dụng chưa là hành động chính trong Cài đặt.'
-Assert-SourcePattern $text 'function\s+Invoke-AssuranceCenterAction' 'Thiếu bộ định tuyến bảy tác vụ Báo cáo.'
+Assert-SourcePattern $text 'function\s+Invoke-AssuranceCenterAction' 'Thiếu bộ định tuyến tám tác vụ Báo cáo.'
 Assert-SourcePattern $text '"Reports"\s*\{\s*@\(\)\s*\}' 'Mục Báo cáo vẫn chỉ hiển thị tile số 10.'
 Assert-SourcePattern $text '[$]menuCaption\.ForeColor\s*=\s*[$]primary' 'Tiêu đề Trung tâm báo cáo chưa dùng màu tiêu đề chung.'
 Assert-SourcePattern $text 'Kind\s*=\s*"ReportAction"' 'Các ô Trung tâm báo cáo chưa có metadata giao diện riêng.'
 Assert-SourcePattern $text '(?s)function\s+Add-ReportMenuButton.+?TitleLabel.+?DescriptionLabel.+?TitleColor.+?DescriptionColor' 'Ô báo cáo chưa tách màu tiêu đề và mô tả như các mục khác.'
-Assert-SourcePattern $text '(?s)[$]script:dashboardSection\s+-eq\s+"Reports".+?[$]visibleButtons\.Count\s*%\s*2\s+-eq\s*1' 'Hàng cuối Trung tâm báo cáo chưa được căn giữa khi có bảy ô.'
+Assert-SourcePattern $text '(?s)[$]script:dashboardSection\s+-eq\s+"Reports".+?[$]visibleButtons\.Count\s*%\s*2\s+-eq\s*1' 'Hàng cuối Trung tâm báo cáo chưa được căn giữa khi số ô là lẻ.'
+
+foreach ($featurePattern in @(
+    'function\s+Show-ResultActionCenter',
+    'function\s+Show-BackupRestoreCenter',
+    'function\s+Show-SupportBundlePreview',
+    'Get-ToolResultCenterState',
+    'Select-ToolResultCenterItems',
+    'Test-ToolBackupCenterItemIntegrity',
+    'New-ToolSupportBundle'
+)) {
+    Assert-SourcePattern $text $featurePattern "Thiếu tích hợp trung tâm kết quả v5.0: $featurePattern"
+}
+foreach ($helperPattern in @(
+    'function\s+Compare-ToolResultCenterItems',
+    'function\s+Select-ToolResultCenterItems',
+    'function\s+Test-ToolBackupCenterItemIntegrity',
+    'function\s+New-ToolSupportBundle'
+)) {
+    Assert-SourcePattern $resultCenterText $helperPattern "Mô-đun trung tâm kết quả thiếu hợp đồng: $helperPattern"
+}
 
 $reportMenuMatches = [regex]::Matches(
     $text,
-    '(?m)^\s*Add-ReportMenuButton\s+"(Certificate|PluginAudit|Timeline|InstallPlugin|PluginFolder|Guide|History)"\s+"assurance\.[^"]+"\s+"dashboard\.report\.[^"]+\.description"'
+    '(?m)^\s*Add-ReportMenuButton\s+"(Certificate|PluginAudit|Timeline|InstallPlugin|PluginFolder|Guide|History|SupportBundle)"\s+"assurance\.[^"]+"\s+"dashboard\.report\.[^"]+\.description"'
 )
-if ($reportMenuMatches.Count -ne 7 -or @($reportMenuMatches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique).Count -ne 7) {
-    Add-Failure "Mục Báo cáo phải hiển thị trực tiếp đúng 7 mục con; tìm thấy $($reportMenuMatches.Count)."
+if ($reportMenuMatches.Count -ne 8 -or @($reportMenuMatches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique).Count -ne 8) {
+    Add-Failure "Mục Báo cáo phải hiển thị trực tiếp đúng 8 mục con; tìm thấy $($reportMenuMatches.Count)."
 }
 foreach ($key in @(
     'dashboard.report.certificate.description',
@@ -884,7 +911,8 @@ foreach ($key in @(
     'dashboard.report.installPlugin.description',
     'dashboard.report.pluginFolder.description',
     'dashboard.report.guide.description',
-    'dashboard.report.history.description'
+    'dashboard.report.history.description',
+    'dashboard.report.supportBundle.description'
 )) {
     if ([string]::IsNullOrWhiteSpace([string]$viCatalog.$key) -or [string]::IsNullOrWhiteSpace([string]$enCatalog.$key)) {
         Add-Failure "Thiếu mô tả song ngữ cho mục Báo cáo: $key"
@@ -926,5 +954,5 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host 'VERIFY-DASHBOARD: PASS (no legacy numbering + shared colored action icons + 7 direct report actions)' -ForegroundColor Green
+Write-Host 'VERIFY-DASHBOARD: PASS (result center + no legacy numbering + shared colored action icons + 8 direct report actions)' -ForegroundColor Green
 exit 0

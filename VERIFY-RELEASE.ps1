@@ -157,6 +157,7 @@ $moduleVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-MODULE-CONTRACT.ps1
 $reportSchemaVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-REPORT-SCHEMA.ps1'
 $safetyVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-SAFETY-REGRESSIONS.ps1'
 $dashboardVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-DASHBOARD.ps1'
+$resultCenterVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-RESULT-CENTER.ps1'
 $extensionsVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-EXTENSIONS.ps1'
 $enterpriseVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-ENTERPRISE.ps1'
 $compatibilityVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-COMPATIBILITY.ps1'
@@ -183,6 +184,7 @@ if (-not (Test-Path -LiteralPath $moduleVerifierPath -PathType Leaf)) { $failure
 if (-not (Test-Path -LiteralPath $reportSchemaVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-REPORT-SCHEMA.ps1.') }
 if (-not (Test-Path -LiteralPath $safetyVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-SAFETY-REGRESSIONS.ps1.') }
 if (-not (Test-Path -LiteralPath $dashboardVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-DASHBOARD.ps1.') }
+if (-not (Test-Path -LiteralPath $resultCenterVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-RESULT-CENTER.ps1.') }
 if (-not (Test-Path -LiteralPath $extensionsVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-EXTENSIONS.ps1.') }
 if (-not (Test-Path -LiteralPath $enterpriseVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-ENTERPRISE.ps1.') }
 if (-not (Test-Path -LiteralPath $compatibilityVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-COMPATIBILITY.ps1.') }
@@ -219,9 +221,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 52 } else { 53 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 120 } else { 121 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 137 } else { 139 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 53 } else { 54 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 122 } else { 123 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 139 } else { 141 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 37 } elseif ($AllowStoreManifest) { 38 } else { 39 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -647,7 +649,7 @@ $payloadFiles = @(
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-Localization.ps1',
     'Tool-Strings.vi-VN.json','Tool-Strings.en-US.json','Tool-OfflinePolicy.ps1','Tool-Assistant.ps1','tool-assistant-knowledge-v1.1.json',
     'Tool-SoftwareInventory.ps1','software-license-catalog-v1.0.json','software-license-catalog-v1.0.json.p7s','software-license-online-update.ps1','Tool-UpdateManager.ps1',
-    'Tool-ReportSchema.ps1','Tool-ReportExport.ps1','Tool-PluginEngine.ps1','Tool-LicenseTimeline.ps1',
+    'Tool-ReportSchema.ps1','Tool-ResultCenter.ps1','Tool-ReportExport.ps1','Tool-PluginEngine.ps1','Tool-LicenseTimeline.ps1',
     'Tool-SafetyPolicy.ps1','Tool-Enterprise.ps1','Tool-EnterpriseCli.ps1','Tool-EnterpriseHost.ps1','Tool-EnterpriseAgent.ps1',
     'enterprise-license-manager.ps1','TOOL-SHA256SUMS.txt','windows-license-backup.ps1',
     'windows-license-compliance-cleanup.ps1','windows-license-restore.ps1','windows-license-deep-scan.ps1',
@@ -874,8 +876,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 54 } else { 55 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 52 } else { 53 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 55 } else { 56 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 53 } else { 54 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
@@ -897,7 +899,12 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.DashboardSchemaVersion -ne '2.0' -or [string]$releaseManifest.DashboardMode -ne 'Modern adaptive WinForms dashboard' -or
             [string]$releaseManifest.StartupTheme -ne 'System' -or [string]$releaseManifest.DarkMode -notmatch 'System-aware Light/Dark' -or
             [string]$releaseManifest.DpiAwareness -notmatch 'PerMonitorV2.*Win7' -or
-            [bool]$releaseManifest.QuickActionNumberLabels -or [int]$releaseManifest.DirectReportActionCount -ne 7 -or
+            [bool]$releaseManifest.QuickActionNumberLabels -or [int]$releaseManifest.DirectReportActionCount -ne 8 -or
+            -not [bool]$releaseManifest.ResultActionCenter -or
+            -not [bool]$releaseManifest.ResultSearchAndFilters -or
+            -not [bool]$releaseManifest.PreviousScanComparison -or
+            -not [bool]$releaseManifest.BackupRestoreCenter -or
+            -not [bool]$releaseManifest.PrivacySafeSupportBundle -or
             -not [bool]$releaseManifest.CleanupActionCenter -or -not [bool]$releaseManifest.AssuranceCenter -or
             [string]$releaseManifest.ElevatedModuleEnvironmentBridge -notmatch 'Encoded allowlisted TOOL_\* contract' -or
             [string]$releaseManifest.ElevatedModuleEnvironmentBridge -notmatch 'child exit-code propagation' -or
@@ -1172,6 +1179,10 @@ if (Test-Path -LiteralPath $safetyVerifierPath -PathType Leaf) {
 if (Test-Path -LiteralPath $dashboardVerifierPath -PathType Leaf) {
     & $dashboardVerifierPath -SourceDirectory $sourceDirectoryFull
     if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra dashboard v4.3 thất bại.') }
+}
+if (Test-Path -LiteralPath $resultCenterVerifierPath -PathType Leaf) {
+    & $resultCenterVerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra trung tâm kết quả v5.0 thất bại.') }
 }
 if (Test-Path -LiteralPath $extensionsVerifierPath -PathType Leaf) {
     & $extensionsVerifierPath -SourceDirectory $sourceDirectoryFull

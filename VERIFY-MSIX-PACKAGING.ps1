@@ -58,7 +58,9 @@ function Test-StoreLauncherTrustProfile {
         $payloadField = $type.GetField('PayloadFiles', $flags)
         if (-not $payloadField) { return $false }
         $payloads = @($payloadField.GetValue($null))
-        return [bool]($payloads.Count -eq 55 -and $payloads -contains 'OFFICIAL-PROVENANCE-v1.json.p7s')
+        return [bool]($payloads.Count -eq 56 -and
+            $payloads -contains 'OFFICIAL-PROVENANCE-v1.json.p7s' -and
+            $payloads -contains 'Tool-ResultCenter.ps1')
     } catch {
         return $false
     }

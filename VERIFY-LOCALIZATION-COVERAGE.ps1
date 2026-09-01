@@ -133,6 +133,8 @@ foreach ($requiredDynamicKey in @(
     'menu.12.description',
     'menu.13.title',
     'menu.13.description',
+    'menu.14.title',
+    'menu.14.description',
     'cleanup.menu.fixedScopeHeading',
     'cleanup.menu.fixedScopeNote'
 )) { [void]$staticKeys.Add($requiredDynamicKey) }

@@ -166,6 +166,7 @@ $payloadFiles = @(
     'software-license-online-update.ps1',
     'Tool-UpdateManager.ps1',
     'Tool-ReportSchema.ps1',
+    'Tool-ResultCenter.ps1',
     'Tool-ReportExport.ps1',
     'Tool-PluginEngine.ps1',
     'Tool-LicenseTimeline.ps1',
@@ -223,6 +224,7 @@ $integrityFiles = @(
     'software-license-online-update.ps1',
     'Tool-UpdateManager.ps1',
     'Tool-ReportSchema.ps1',
+    'Tool-ResultCenter.ps1',
     'Tool-ReportExport.ps1',
     'Tool-PluginEngine.ps1',
     'Tool-LicenseTimeline.ps1',
@@ -296,6 +298,7 @@ $sourceFiles = @(
     'VERIFY-REPORT-SCHEMA.ps1'
     'VERIFY-SAFETY-REGRESSIONS.ps1'
     'VERIFY-DASHBOARD.ps1'
+    'VERIFY-RESULT-CENTER.ps1'
     'VERIFY-EXTENSIONS.ps1'
     'VERIFY-ENTERPRISE.ps1'
     'VERIFY-COMPATIBILITY.ps1'
@@ -523,6 +526,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-REPORT-SCHEMA.ps1',
     'VERIFY-SAFETY-REGRESSIONS.ps1',
     'VERIFY-DASHBOARD.ps1',
+    'VERIFY-RESULT-CENTER.ps1',
     'VERIFY-EXTENSIONS.ps1',
     'VERIFY-ENTERPRISE.ps1',
     'VERIFY-COMPATIBILITY.ps1',
@@ -1064,7 +1068,12 @@ $releaseManifest = [ordered]@{
     DarkMode = 'System-aware Light/Dark preference with persisted explicit override and WCAG-aware palette'
     DpiAwareness = 'PerMonitorV2 -> PerMonitor -> System-aware fallback; Win7 remains supported'
     QuickActionNumberLabels = $false
-    DirectReportActionCount = 7
+    DirectReportActionCount = 8
+    ResultActionCenter = $true
+    ResultSearchAndFilters = $true
+    PreviousScanComparison = $true
+    BackupRestoreCenter = $true
+    PrivacySafeSupportBundle = $true
     OfflinePolicySchemaVersion = [string]$offlinePolicyMetadata.SchemaVersion
     OfflineDefault = [string]$offlinePolicyMetadata.DefaultMode
     OfflineResetOnEveryLaunch = $true
@@ -1507,6 +1516,8 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-SAFETY-REGRESSIONS.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-DASHBOARD.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-DASHBOARD.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+    & (Join-Path $sourceDirectory 'VERIFY-RESULT-CENTER.ps1') -SourceDirectory $sourceDirectory
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-RESULT-CENTER.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-REPORT-SCHEMA.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-REPORT-SCHEMA.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-EXTENSIONS.ps1') -SourceDirectory $sourceDirectory
