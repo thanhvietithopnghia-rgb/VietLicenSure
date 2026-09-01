@@ -586,6 +586,82 @@ $form.Font = $fontNormal
 $form.AutoScroll = $false
 $form.AutoScrollMargin = New-Object System.Drawing.Size(0, 0)
 $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
+$script:dashboardDialogStack = New-Object System.Collections.Stack
+$script:dashboardWorkflowCloseRequested = $false
+
+function Get-DashboardDialogOwner {
+    while ($script:dashboardDialogStack.Count -gt 0) {
+        $candidate = $script:dashboardDialogStack.Peek()
+        if ($candidate -and -not $candidate.IsDisposed -and $candidate.Visible) {
+            return $candidate
+        }
+        [void]$script:dashboardDialogStack.Pop()
+    }
+    return $form
+}
+
+function Show-DashboardModalDialog {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.Forms.Form]$Dialog
+    )
+
+    $owner = Get-DashboardDialogOwner
+    $script:dashboardDialogStack.Push($Dialog)
+    try {
+        return $Dialog.ShowDialog($owner)
+    } finally {
+        if ($script:dashboardDialogStack.Count -gt 0 -and
+            [object]::ReferenceEquals($script:dashboardDialogStack.Peek(), $Dialog)) {
+            [void]$script:dashboardDialogStack.Pop()
+        }
+    }
+}
+
+function Reset-DashboardWorkflowNavigation {
+    $script:dashboardWorkflowCloseRequested = $false
+}
+
+function Test-DashboardWorkflowCloseRequested {
+    return [bool]$script:dashboardWorkflowCloseRequested
+}
+
+function Close-DashboardWorkflowSession {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Windows.Forms.Form]$Dialog
+    )
+
+    # A root dialog is the complete workflow by itself.  A nested dialog is
+    # one step in a workflow, so Close must dismiss every dialog in the stack
+    # and return to the dashboard instead of exposing the parent again.
+    if ($script:dashboardDialogStack.Count -le 1) {
+        $Dialog.Close()
+        return
+    }
+
+    $script:dashboardWorkflowCloseRequested = $true
+    foreach ($openDialog in @($script:dashboardDialogStack.ToArray())) {
+        if ($openDialog -and -not $openDialog.IsDisposed) {
+            $openDialog.Close()
+        }
+    }
+}
+
+function Invoke-DashboardRootAction {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Action
+    )
+
+    Reset-DashboardWorkflowNavigation
+    try {
+        & $Action
+    } finally {
+        Reset-DashboardWorkflowNavigation
+    }
+}
+
 $script:dashboardThemePreference = Get-ToolUiThemePreference
 $script:dashboardTheme = Get-ToolUiTheme
 $script:toolUiPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
@@ -977,10 +1053,10 @@ for ($cardIndex = 0; $cardIndex -lt $cardDefinitions.Count; $cardIndex++) {
         $card.Cursor = [System.Windows.Forms.Cursors]::Hand
         $card.AccessibleName = Get-DashboardText "resultCenter.card.caption"
         $card.AccessibleDescription = Get-DashboardText "resultCenter.card.tooltip"
-        $card.Add_Click({ Show-ResultActionCenter })
+        $card.Add_Click({ Invoke-DashboardRootAction -Action { Show-ResultActionCenter } })
         foreach ($clickableChild in @($card.Controls)) {
             $clickableChild.Cursor = [System.Windows.Forms.Cursors]::Hand
-            $clickableChild.Add_Click({ Show-ResultActionCenter })
+            $clickableChild.Add_Click({ Invoke-DashboardRootAction -Action { Show-ResultActionCenter } })
         }
     }
 }
@@ -1126,6 +1202,7 @@ $cleanupAutoSafeMode = $false
 $cleanupDryRunMode = $false
 $cleanupScanScope = "All"
 $cleanupScanSnapshot = $null
+$cleanupPreviousSession = $null
 $softwareCatalogUpdateResultFile = ""
 $softwareCatalogAutoScan = $false
 $softwareCatalogAutoScanScope = "ThirdParty"
@@ -2009,14 +2086,14 @@ function Show-ProductIntroduction {
     $layout.Controls.Add($buttonBar, 0, 2)
 
     $close = New-Object System.Windows.Forms.Button
-    $close.Text = Get-ToolText -Key "app.close" -Culture $script:dashboardCulture
+    $close.Text = Get-ToolText -Key "common.close" -Culture $script:dashboardCulture
     $close.Font = $fontBold
     $close.Size = New-Object System.Drawing.Size(112, 30)
     $close.BackColor = $primary
     $close.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(18, 26, 38) } else { [System.Drawing.Color]::White }
     $close.FlatStyle = "Flat"
     $close.FlatAppearance.BorderSize = 0
-    $close.Add_Click({ $dialog.Close() })
+    $close.Add_Click({ Close-DashboardWorkflowSession -Dialog $dialog })
     $buttonBar.Controls.Add($close)
 
     $guide = New-Object System.Windows.Forms.Button
@@ -2042,7 +2119,7 @@ function Show-ProductIntroduction {
     $dialog.AcceptButton = $close
     $dialog.CancelButton = $close
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $dialog.Dispose()
     $productHeadingFont.Dispose()
 }
@@ -2220,10 +2297,10 @@ function Show-DashboardPreferences {
     $dialog.Controls.Add($applyButton)
 
     $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Text = Get-DashboardText "app.close"
+    $cancelButton.Text = Get-DashboardText "common.close"
     $cancelButton.Size = New-Object System.Drawing.Size(126, 38)
     $cancelButton.Location = New-Object System.Drawing.Point(364, 248)
-    $cancelButton.Add_Click({ $dialog.Close() })
+    $cancelButton.Add_Click({ Close-DashboardWorkflowSession -Dialog $dialog })
     $dialog.CancelButton = $cancelButton
     $dialog.Controls.Add($cancelButton)
     $dialog.AcceptButton = $applyButton
@@ -2234,7 +2311,7 @@ function Show-DashboardPreferences {
     $settingsPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
     $applyButton.BackColor = $settingsPalette.Primary
     $applyButton.ForeColor = if ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(18, 26, 38) } else { [System.Drawing.Color]::White }
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $dialog.Dispose()
 }
 
@@ -2794,7 +2871,7 @@ function Confirm-KmsApprovalConfiguration {
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
     & $resizeKmsText
     $footer.PerformLayout()
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag; $entriesToSave = @($editor.Lines | ForEach-Object { $_.Trim() } | Where-Object { $_ })
     $dialog.Dispose()
     if ($choice -eq 'Save') {
@@ -3422,7 +3499,7 @@ function Show-ReportPrivacyChooser {
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
     Set-ToolUiPrimaryActionButtonVisual -Button $redactedButton -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()
     return $choice
@@ -3629,7 +3706,7 @@ function Show-ReportScanChooser {
     $dialog.CancelButton = $cancelButton
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
     Set-ToolUiPrimaryActionButtonVisual -Button $okButton -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $result = $dialog.Tag
     $dialog.Dispose()
     return $result
@@ -3765,6 +3842,9 @@ function Start-Cleanup {
         return
     }
     if (-not $ReuseSessionSettings) {
+        # A newly requested scan starts a new navigation session.  Never let a
+        # later Back action reuse candidates from an older machine snapshot.
+        $script:cleanupPreviousSession = $null
         $script:cleanupScanScope = $ScanScope
         $script:cleanupAutoSafeMode = [bool]$AutoSafeMode
         $script:cleanupDryRunMode = [bool]$DryRunMode
@@ -3956,7 +4036,7 @@ function Show-SoftwareCatalogFailureDialog {
     $dialog.CancelButton = $close
     $dialog.AcceptButton = $retry
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()
     return $choice
@@ -4313,7 +4393,7 @@ function Show-ApplicationUpdateDialog {
     }
     $changes.SelectionStart = 0
     $changes.SelectionLength = 0
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()
     return $choice
@@ -4449,14 +4529,15 @@ function Show-DeepCleanupSelection {
     param(
         $CleanupItems,
         [ValidateSet("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")][string]$ScanScope = "All",
-        [string[]]$SuggestedIds = @()
+        [string[]]$SuggestedIds = @(),
+        [switch]$RestoreExactSelection
     )
     $items = @(Get-GuiScopedCleanupItems -CleanupItems $CleanupItems -Scope $ScanScope)
     if ($items.Count -eq 0) {
         [System.Windows.Forms.MessageBox]::Show(
             (Get-DashboardText "cleanup.selection.none"),
             (Get-DashboardText "cleanup.selection.noneTitle"), "OK", "Information") | Out-Null
-        return [pscustomobject]@{ Confirmed=$false; SelectedIds=@(); ScanScope=$ScanScope }
+        return [pscustomobject]@{ Confirmed=$false; SelectedIds=@(); ScanScope=$ScanScope; Navigation="Back" }
     }
 
     $chooser = New-Object System.Windows.Forms.Form
@@ -4471,7 +4552,7 @@ function Show-DeepCleanupSelection {
     $chooser.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $chooser.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $chooser.Font = $fontNormal
-    $chooser.Tag = [pscustomobject]@{ Confirmed=$false; SelectedIds=@(); ScanScope=$ScanScope }
+    $chooser.Tag = [pscustomobject]@{ Confirmed=$false; SelectedIds=@($SuggestedIds); ScanScope=$ScanScope; Navigation="Close" }
 
     $heading = New-Object System.Windows.Forms.Label
     $heading.Text = Get-DashboardText $(if ($ScanScope -eq "ThirdParty") { "cleanup.selection.heading.thirdParty" } elseif ($ScanScope -eq "WindowsOffice") { "cleanup.selection.heading.windowsOffice" } else { "cleanup.selection.heading" })
@@ -4525,7 +4606,11 @@ function Show-DeepCleanupSelection {
         [void]$row.SubItems.Add($locationText)
         $row.Tag = [string]$cleanupItem.Id
         $row.ToolTipText = "$([string]$cleanupItem.Name)`r`n$locationText"
-        $row.Checked = [bool]($cleanupItem.DefaultSelected -or ($SuggestedIds -contains [string]$cleanupItem.Id))
+        $row.Checked = if ($RestoreExactSelection) {
+            [bool]($SuggestedIds -contains [string]$cleanupItem.Id)
+        } else {
+            [bool]($cleanupItem.DefaultSelected -or ($SuggestedIds -contains [string]$cleanupItem.Id))
+        }
         [void]$list.Items.Add($row)
     }
     $chooser.Controls.Add($list)
@@ -4562,12 +4647,34 @@ function Show-DeepCleanupSelection {
     $noneButton.Add_Click({ foreach ($row in $list.Items) { $row.Checked = $false } })
     $leftButtons.Controls.Add($noneButton)
 
-    $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Text = Get-DashboardText "app.close"
-    $cancelButton.Size = New-Object System.Drawing.Size(116, 36)
-    $cancelButton.Add_Click({ $chooser.Close() })
-    $chooser.CancelButton = $cancelButton
-    $rightButtons.Controls.Add($cancelButton)
+    $closeButton = New-Object System.Windows.Forms.Button
+    $closeButton.Text = Get-DashboardText "common.close"
+    $closeButton.Size = New-Object System.Drawing.Size(104, 36)
+    $closeButton.Add_Click({
+        $chooser.Tag = [pscustomobject]@{
+            Confirmed=$false
+            SelectedIds=@($list.CheckedItems | ForEach-Object { [string]$_.Tag })
+            ScanScope=$ScanScope
+            Navigation="Close"
+        }
+        Close-DashboardWorkflowSession -Dialog $chooser
+    })
+    $rightButtons.Controls.Add($closeButton)
+
+    $backButton = New-Object System.Windows.Forms.Button
+    $backButton.Text = Get-DashboardText "common.back"
+    $backButton.Size = New-Object System.Drawing.Size(116, 36)
+    $backButton.Add_Click({
+        $chooser.Tag = [pscustomobject]@{
+            Confirmed=$false
+            SelectedIds=@($list.CheckedItems | ForEach-Object { [string]$_.Tag })
+            ScanScope=$ScanScope
+            Navigation="Back"
+        }
+        $chooser.Close()
+    })
+    $chooser.CancelButton = $backButton
+    $rightButtons.Controls.Add($backButton)
 
     $applyButton = New-Object System.Windows.Forms.Button
     $applyButton.Text = Get-DashboardText "common.continue"
@@ -4600,31 +4707,38 @@ function Show-DeepCleanupSelection {
         $summary = Get-DashboardText "cleanup.selection.summary" @($selectedIds.Count, $list.Items.Count, $licenseWarning)
         $answer = [System.Windows.Forms.MessageBox]::Show($summary, (Get-DashboardText "cleanup.selection.finalTitle"), "YesNo", "Warning")
         if ($answer -eq [System.Windows.Forms.DialogResult]::Yes) {
-            $chooser.Tag = [pscustomobject]@{ Confirmed=$true; SelectedIds=$selectedIds; ScanScope=$ScanScope }
+            $chooser.Tag = [pscustomobject]@{ Confirmed=$true; SelectedIds=$selectedIds; ScanScope=$ScanScope; Navigation="Continue" }
             $chooser.Close()
         }
     })
     $rightButtons.Controls.Add($applyButton)
 
     Set-ToolWindowTheme -Root $chooser -Mode $script:dashboardTheme
-    [void]$chooser.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $chooser)
     $result = $chooser.Tag
     $chooser.Dispose()
     return $result
 }
 
 function Start-CleanupDeep {
-    param($CleanupItems, [switch]$AutomaticSafeMode, [string[]]$SuggestedIds = @())
+    param(
+        $CleanupItems,
+        [switch]$AutomaticSafeMode,
+        [string[]]$SuggestedIds = @(),
+        [switch]$RestoreExactSelection,
+        [switch]$ReturnNavigationResult
+    )
     $scopedCleanupItems = @(Get-GuiScopedCleanupItems -CleanupItems $CleanupItems -Scope $script:cleanupScanScope)
     if (-not (Confirm-IntegrityForElevatedAction (Get-DashboardText "cleanup.deep.integrityAction"))) {
         $script:cleanupAutoSafeMode = $false
         Set-ButtonsEnabled $true
+        if ($ReturnNavigationResult) { return "Blocked" }
         return
     }
     $selection = if ($AutomaticSafeMode) {
         Confirm-AutomaticSafeCleanup -CleanupItems $scopedCleanupItems
     } else {
-        Show-DeepCleanupSelection -CleanupItems $scopedCleanupItems -ScanScope $script:cleanupScanScope -SuggestedIds $SuggestedIds
+        Show-DeepCleanupSelection -CleanupItems $scopedCleanupItems -ScanScope $script:cleanupScanScope -SuggestedIds $SuggestedIds -RestoreExactSelection:$RestoreExactSelection
     }
     if (-not [bool]$selection.Confirmed) {
         $script:cleanupAutoSafeMode = $false
@@ -4633,7 +4747,26 @@ function Start-CleanupDeep {
         $status.Text = if ($AutomaticSafeMode) { Get-DashboardText "cleanup.auto.cancelled" } else { Get-DashboardText "cleanup.deep.cancelled" }
         $status.ForeColor = [System.Drawing.Color]::DarkOrange
         Write-ProgressLog $status.Text
+        if ($ReturnNavigationResult) {
+            if ($selection.PSObject.Properties['Navigation'] -and [string]$selection.Navigation -in @("Back", "Close")) {
+                return [string]$selection.Navigation
+            }
+            return $(if ($AutomaticSafeMode) { "Close" } else { "Back" })
+        }
         return
+    }
+
+    # Retain only the user's workflow choices.  Candidate objects and their
+    # anti-TOCTOU snapshot are deliberately not cached here: after a real
+    # remediation the result's fresh post-verification snapshot is the only
+    # safe source that Back may use.
+    $script:cleanupPreviousSession = [pscustomobject][ordered]@{
+        Kind = "DeepCleanupSelection"
+        ScanScope = [string]$script:cleanupScanScope
+        SelectedIds = @($selection.SelectedIds | ForEach-Object { [string]$_ })
+        DryRunMode = [bool]$script:cleanupDryRunMode
+        AutomaticSafeMode = [bool]$AutomaticSafeMode
+        CreatedAtUtc = [DateTimeOffset]::UtcNow.ToString("o")
     }
     try {
         Start-ProgressDisplay (Get-DashboardText "cleanup.deep.action") (Get-DashboardText "cleanup.deep.preparing") $true
@@ -4680,6 +4813,7 @@ function Start-CleanupDeep {
         $status.ForeColor = [System.Drawing.Color]::DarkOrange
         Set-ButtonsEnabled $false
         $timer.Start()
+        if ($ReturnNavigationResult) { return "Started" }
     } catch {
         $script:cleanupAutoSafeMode = $false
         $script:cleanupDryRunMode = $false
@@ -4692,6 +4826,7 @@ function Start-CleanupDeep {
         $status.ForeColor = [System.Drawing.Color]::DarkRed
         Write-ProgressLog (Get-DashboardText "cleanup.deep.notStarted")
         Stop-ProgressDisplay $status.Text
+        if ($ReturnNavigationResult) { return "Failed" }
     }
 }
 
@@ -4761,12 +4896,12 @@ function Show-ScanWarningRecoveryDialog {
     $close.Location = New-Object System.Drawing.Point(614, 368)
     $close.Size = New-Object System.Drawing.Size(110, 38)
     $close.Anchor = "Bottom,Right"
-    $close.Add_Click({ $dialog.Tag = "Close"; $dialog.Close() })
+    $close.Add_Click({ $dialog.Tag = "Close"; Close-DashboardWorkflowSession -Dialog $dialog })
     $dialog.CancelButton = $close
     $dialog.Controls.Add($close)
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()
     return $choice
@@ -5045,7 +5180,8 @@ function Show-ThirdPartyAssessmentResults {
     param(
         $Scan,
         [switch]$ReadOnly,
-        [string[]]$Warnings = @()
+        [string[]]$Warnings = @(),
+        [string[]]$SelectedCandidateIds = @()
     )
 
     $inventoryApplications = @($Scan.ThirdPartyApplications)
@@ -5089,7 +5225,7 @@ function Show-ThirdPartyAssessmentResults {
     $dialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $dialog.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $dialog.Font = $fontNormal
-    $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@(); RepairSources=$false }
+    $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@($SelectedCandidateIds); RepairSources=$false; Back=$false; Navigation="Close" }
 
     $mainLayout = New-Object System.Windows.Forms.TableLayoutPanel
     $mainLayout.Dock = "Fill"
@@ -5263,6 +5399,13 @@ function Show-ThirdPartyAssessmentResults {
         $lines.Add('')
         $lines.Add((Get-DashboardText 'software.results.detail.action'))
         $lines.Add([string]$metadata.ActionText)
+        $officialNavigation = Get-GuiSoftwareOfficialNavigationTarget -Application $application
+        $lines.Add('')
+        $lines.Add((Get-DashboardText $(if ([string]$officialNavigation.Mode -eq 'VerifiedDirect') {
+            'software.results.officialDirectHint'
+        } else {
+            'software.results.officialSearchHint'
+        })))
         $details.Text = $lines -join "`r`n"
         $details.SelectionStart = 0
         $details.SelectionLength = 0
@@ -5365,6 +5508,7 @@ function Show-ThirdPartyAssessmentResults {
             }
             $row.ToolTipText = "$([string]$application.Name)`r`n$statusText`r`n$evidenceText`r`n$actionText"
             if (-not $selectionAllowed) { $row.ForeColor = [System.Drawing.Color]::FromArgb(105, 112, 125) }
+            $row.Checked = [bool]($selectionAllowed -and $candidateId -and ($SelectedCandidateIds -contains $candidateId))
             [void]$list.Items.Add($row)
         }
         $list.Add_ItemCheck({
@@ -5406,11 +5550,35 @@ function Show-ThirdPartyAssessmentResults {
     $mainLayout.Controls.Add($footer, 0, 5)
 
     $closeButton = New-Object System.Windows.Forms.Button
-    $closeButton.Text = Get-DashboardText "app.close"
-    $closeButton.Size = New-Object System.Drawing.Size(116, 38)
-    $closeButton.Add_Click({ $dialog.Close() })
-    $dialog.CancelButton = $closeButton
+    $closeButton.Text = Get-DashboardText "common.close"
+    $closeButton.Size = New-Object System.Drawing.Size(104, 38)
+    $closeButton.Add_Click({
+        $dialog.Tag = [pscustomobject]@{
+            Proceed=$false
+            SelectedCandidateIds=@($thirdPartyList.CheckedItems | ForEach-Object { [string]$_.Tag.CandidateId } | Where-Object { $_ } | Select-Object -Unique)
+            RepairSources=$false
+            Back=$false
+            Navigation="Close"
+        }
+        Close-DashboardWorkflowSession -Dialog $dialog
+    })
     $footer.Controls.Add($closeButton)
+
+    $backButton = New-Object System.Windows.Forms.Button
+    $backButton.Text = Get-DashboardText "common.back"
+    $backButton.Size = New-Object System.Drawing.Size(116, 38)
+    $backButton.Add_Click({
+        $dialog.Tag = [pscustomobject]@{
+            Proceed=$false
+            SelectedCandidateIds=@($thirdPartyList.CheckedItems | ForEach-Object { [string]$_.Tag.CandidateId } | Where-Object { $_ } | Select-Object -Unique)
+            RepairSources=$false
+            Back=$true
+            Navigation="Back"
+        }
+        $dialog.Close()
+    })
+    $dialog.CancelButton = $backButton
+    $footer.Controls.Add($backButton)
 
     if (-not $ReadOnly -and $selectableCount -gt 0) {
         $continueButton = New-Object System.Windows.Forms.Button
@@ -5430,7 +5598,7 @@ function Show-ThirdPartyAssessmentResults {
                 [System.Windows.Forms.MessageBoxIcon]::Warning,
                 [System.Windows.Forms.MessageBoxDefaultButton]::Button2)
             if ($warning -eq [System.Windows.Forms.DialogResult]::Yes) {
-                $dialog.Tag = [pscustomobject]@{ Proceed=$true; SelectedCandidateIds=$candidateIds; RepairSources=$false }
+                $dialog.Tag = [pscustomobject]@{ Proceed=$true; SelectedCandidateIds=$candidateIds; RepairSources=$false; Back=$false; Navigation="Continue" }
                 $dialog.Close()
             }
         })
@@ -5443,29 +5611,23 @@ function Show-ThirdPartyAssessmentResults {
         $repairSourcesButton.Font = $fontBold
         $repairSourcesButton.Size = New-Object System.Drawing.Size(210, 38)
         $repairSourcesButton.Add_Click({
-            $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@(); RepairSources=$true }
+            $dialog.Tag = [pscustomobject]@{ Proceed=$false; SelectedCandidateIds=@(); RepairSources=$true; Back=$false; Navigation="Repair" }
             $dialog.Close()
         })
         $footer.Controls.Add($repairSourcesButton)
     }
 
     $officialButton = New-Object System.Windows.Forms.Button
-    $officialButton.Text = Get-DashboardText "software.results.openOfficial"
-    $officialButton.Size = New-Object System.Drawing.Size(190, 38)
+    $officialButton.Text = Get-DashboardText "software.results.openOrFindOfficial"
+    $officialButton.Size = New-Object System.Drawing.Size(220, 38)
     $officialButton.Add_Click({
         $selectedList = if ($tabControl.SelectedTab -and $tabControl.SelectedTab.Tag) { $tabControl.SelectedTab.Tag } else { $thirdPartyList }
         if ($selectedList.SelectedItems.Count -eq 0) {
             [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "software.results.selectForOfficial"), (Get-DashboardText "software.results.title"), "OK", "Information") | Out-Null
             return
         }
-        $url = [string]$selectedList.SelectedItems[0].Tag.Application.OfficialReferenceUrl
-        if ([string]::IsNullOrWhiteSpace($url)) {
-            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "software.results.noOfficialLink"), (Get-DashboardText "software.results.title"), "OK", "Information") | Out-Null
-            return
-        }
-        try { Start-Process -FilePath $url } catch {
-            [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "software.results.openOfficialFailed" @($_.Exception.Message)), (Get-DashboardText "common.errorTitle"), "OK", "Error") | Out-Null
-        }
+        $navigation = Get-GuiSoftwareOfficialNavigationTarget -Application $selectedList.SelectedItems[0].Tag.Application
+        [void](Open-GuiExternalHttpsTarget -Target ([string]$navigation.Target))
     })
     $footer.Controls.Add($officialButton)
 
@@ -5506,7 +5668,7 @@ function Show-ThirdPartyAssessmentResults {
     $dialog.Add_Shown({ & $refreshLayout })
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $result = $dialog.Tag
     $dialog.Dispose()
     return $result
@@ -5548,6 +5710,13 @@ function Complete-CleanupScan {
                     Start-ScanSourceRepair
                     return
                 }
+                if ($assessmentChoice.PSObject.Properties['Navigation'] -and [string]$assessmentChoice.Navigation -eq "Close") {
+                    return
+                }
+                if ($assessmentChoice.PSObject.Properties['Back'] -and [bool]$assessmentChoice.Back) {
+                    Open-CleanupEntrySession -ScanScope $script:cleanupScanScope
+                    return
+                }
             }
             $choice = Show-ScanWarningRecoveryDialog -Scan $scan
             if ($choice -eq "Repair") {
@@ -5564,10 +5733,15 @@ function Complete-CleanupScan {
         if ($script:cleanupScanScope -eq "ThirdParty") {
             $script:cleanupAutoSafeMode = $false
             Set-ButtonsEnabled $true
-            $assessmentChoice = Show-ThirdPartyAssessmentResults -Scan $scan
-            if ([bool]$assessmentChoice.Proceed) {
-                Start-CleanupDeep -CleanupItems $scopedCleanupItems -SuggestedIds @($assessmentChoice.SelectedCandidateIds)
-            } else {
+            $assessmentSessionIds = @()
+            while ($true) {
+                $assessmentChoice = Show-ThirdPartyAssessmentResults -Scan $scan -SelectedCandidateIds $assessmentSessionIds
+                $assessmentSessionIds = @($assessmentChoice.SelectedCandidateIds)
+                if ([bool]$assessmentChoice.Proceed) {
+                    $navigationResult = Start-CleanupDeep -CleanupItems $scopedCleanupItems -SuggestedIds $assessmentSessionIds -ReturnNavigationResult
+                    if ([string]$navigationResult -eq "Back") { continue }
+                    return
+                }
                 $remainingThirdPartyCount = if ($scan.PSObject.Properties['ThirdPartyRemediationFindingCount']) {
                     [int]$scan.ThirdPartyRemediationFindingCount
                 } else {
@@ -5578,8 +5752,11 @@ function Complete-CleanupScan {
                     $remainingThirdPartyCount)
                 $status.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
                 Write-ProgressLog (Get-DashboardText "software.results.closedLog")
+                if ($assessmentChoice.PSObject.Properties['Back'] -and [bool]$assessmentChoice.Back) {
+                    Open-CleanupEntrySession -ScanScope $script:cleanupScanScope
+                }
+                return
             }
-            return
         }
 
         if (Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "ThirdParty") {
@@ -5587,11 +5764,25 @@ function Complete-CleanupScan {
             # artifacts one-by-one or all at once.  The choices only preselect
             # IDs for the unified final review; they are never auto-applied.
             if ([bool]$script:cleanupAutoSafeMode) {
-                [void](Show-ThirdPartyAssessmentResults -Scan $scan -ReadOnly)
+                $assessmentChoice = Show-ThirdPartyAssessmentResults -Scan $scan -ReadOnly
+                if ($assessmentChoice.PSObject.Properties['Navigation'] -and [string]$assessmentChoice.Navigation -eq "Close") {
+                    $script:cleanupAutoSafeMode = $false
+                    return
+                }
+                if ($assessmentChoice.PSObject.Properties['Back'] -and [bool]$assessmentChoice.Back) {
+                    $script:cleanupAutoSafeMode = $false
+                    Open-CleanupEntrySession -ScanScope $script:cleanupScanScope
+                    return
+                }
             } else {
                 $assessmentChoice = Show-ThirdPartyAssessmentResults -Scan $scan
                 if ([bool]$assessmentChoice.Proceed) {
                     $thirdPartySuggestedIds = @($assessmentChoice.SelectedCandidateIds)
+                } elseif ($assessmentChoice.PSObject.Properties['Navigation'] -and [string]$assessmentChoice.Navigation -eq "Close") {
+                    return
+                } elseif ($assessmentChoice.PSObject.Properties['Back'] -and [bool]$assessmentChoice.Back) {
+                    Open-CleanupEntrySession -ScanScope $script:cleanupScanScope
+                    return
                 }
             }
         }
@@ -5621,29 +5812,42 @@ function Complete-CleanupScan {
                 return
             }
 
-            $licenseNote = if ((Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "Windows") -and [bool]$scan.ProtectedLicense) {
-                Get-DashboardText "cleanup.scan.protectedNote" @($scan.ProtectedChannel, $scan.ProtectedReason)
-            } elseif (Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "Windows") {
-                Get-DashboardText "cleanup.scan.unprotectedNote"
-            } else {
-                ""
+            while ($true) {
+                $licenseNote = if ((Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "Windows") -and [bool]$scan.ProtectedLicense) {
+                    Get-DashboardText "cleanup.scan.protectedNote" @($scan.ProtectedChannel, $scan.ProtectedReason)
+                } elseif (Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "Windows") {
+                    Get-DashboardText "cleanup.scan.unprotectedNote"
+                } else {
+                    ""
+                }
+                $findingMessage = switch ($script:cleanupScanScope) {
+                    "WindowsOffice" { Get-DashboardText "cleanup.scan.findingSummary.windowsOffice" @($scan.ActivatorFindingCount, $scan.ConfigurationResidueCount, $scan.WindowsKmsCount, $scan.OfficeKmsCount, $scopedCleanupItems.Count) }
+                    "ThirdParty" { Get-DashboardText "cleanup.scan.findingSummary.thirdParty" @($scopedCleanupItems.Count) }
+                    default { Get-DashboardText "cleanup.scan.findingSummary" @($scan.ActivatorFindingCount, $scan.ConfigurationResidueCount, $scan.WindowsKmsCount, $scan.OfficeKmsCount, $scan.HistoryFindingCount, $scan.ThirdPartyCandidateCount) }
+                }
+                $message = $licenseNote + $findingMessage
+                $answer = [System.Windows.Forms.MessageBox]::Show($message, (Get-DashboardText "cleanup.scan.selectionTitle"), "YesNo", "Warning")
+                if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) {
+                    Set-ButtonsEnabled $true
+                    $status.Text = Get-DashboardText "cleanup.scan.cancelledStatus"
+                    Write-ProgressLog (Get-DashboardText "cleanup.scan.cancelledLog")
+                    $status.ForeColor = [System.Drawing.Color]::DarkOrange
+                    return
+                }
+                $navigationResult = Start-CleanupDeep -CleanupItems $scopedCleanupItems -SuggestedIds $thirdPartySuggestedIds -ReturnNavigationResult
+                if ([string]$navigationResult -ne "Back") { return }
+                if (Test-GuiCleanupScopeIncludes -Scope $script:cleanupScanScope -Component "ThirdParty") {
+                    $assessmentChoice = Show-ThirdPartyAssessmentResults -Scan $scan -SelectedCandidateIds $thirdPartySuggestedIds
+                    if ($assessmentChoice.PSObject.Properties['Navigation'] -and [string]$assessmentChoice.Navigation -eq "Close") {
+                        return
+                    }
+                    if ($assessmentChoice.PSObject.Properties['Back'] -and [bool]$assessmentChoice.Back) {
+                        Open-CleanupEntrySession -ScanScope $script:cleanupScanScope
+                        return
+                    }
+                    $thirdPartySuggestedIds = if ([bool]$assessmentChoice.Proceed) { @($assessmentChoice.SelectedCandidateIds) } else { @() }
+                }
             }
-            $findingMessage = switch ($script:cleanupScanScope) {
-                "WindowsOffice" { Get-DashboardText "cleanup.scan.findingSummary.windowsOffice" @($scan.ActivatorFindingCount, $scan.ConfigurationResidueCount, $scan.WindowsKmsCount, $scan.OfficeKmsCount, $scopedCleanupItems.Count) }
-                "ThirdParty" { Get-DashboardText "cleanup.scan.findingSummary.thirdParty" @($scopedCleanupItems.Count) }
-                default { Get-DashboardText "cleanup.scan.findingSummary" @($scan.ActivatorFindingCount, $scan.ConfigurationResidueCount, $scan.WindowsKmsCount, $scan.OfficeKmsCount, $scan.HistoryFindingCount, $scan.ThirdPartyCandidateCount) }
-            }
-            $message = $licenseNote + $findingMessage
-            $answer = [System.Windows.Forms.MessageBox]::Show($message, (Get-DashboardText "cleanup.scan.selectionTitle"), "YesNo", "Warning")
-            if ($answer -ne [System.Windows.Forms.DialogResult]::Yes) {
-                Set-ButtonsEnabled $true
-                $status.Text = Get-DashboardText "cleanup.scan.cancelledStatus"
-                Write-ProgressLog (Get-DashboardText "cleanup.scan.cancelledLog")
-                $status.ForeColor = [System.Drawing.Color]::DarkOrange
-                return
-            }
-            Start-CleanupDeep -CleanupItems $scopedCleanupItems -SuggestedIds $thirdPartySuggestedIds
-            return
         }
 
         $script:cleanupAutoSafeMode = $false
@@ -5680,12 +5884,86 @@ function Test-GuiOfficialHttpsTarget([string]$Target) {
         [string]::IsNullOrWhiteSpace($uri.UserInfo))
 }
 
+function Get-GuiSoftwareOfficialNavigationTarget {
+    param($Application)
+
+    $directTarget = if ($Application -and $Application.PSObject.Properties['OfficialReferenceUrl']) {
+        [string]$Application.OfficialReferenceUrl
+    } else { '' }
+    if (Test-GuiOfficialHttpsTarget $directTarget) {
+        return [pscustomobject][ordered]@{
+            Target = $directTarget
+            Mode = 'VerifiedDirect'
+        }
+    }
+
+    # A missing signed-catalog URL must not be replaced with a guessed domain.
+    # Search only by a small, encoded identity tuple and let the user verify the
+    # vendor domain in the browser.  No paths, versions, licence state or other
+    # machine data are included in the query.
+    $normalizeSearchTerm = {
+        param([AllowNull()][string]$Value, [int]$MaximumLength)
+        $normalized = (($Value -replace '[\u0000-\u001F\u007F]', ' ') -replace '\s+', ' ').Trim()
+        if ($normalized.Length -gt $MaximumLength) { $normalized = $normalized.Substring(0, $MaximumLength).Trim() }
+        return $normalized
+    }
+    $name = & $normalizeSearchTerm $(if ($Application -and $Application.PSObject.Properties['Name']) { [string]$Application.Name } else { '' }) 140
+    $publisher = & $normalizeSearchTerm $(if ($Application -and $Application.PSObject.Properties['Publisher']) { [string]$Application.Publisher } else { '' }) 100
+    if ([string]::IsNullOrWhiteSpace($publisher) -and $Application -and $Application.PSObject.Properties['SignaturePublisher']) {
+        $publisher = & $normalizeSearchTerm ([string]$Application.SignaturePublisher) 100
+    }
+    if ([string]::IsNullOrWhiteSpace($publisher) -and $Application -and $Application.PSObject.Properties['VendorScope']) {
+        $publisher = & $normalizeSearchTerm ([string]$Application.VendorScope) 100
+    }
+    $identity = @($name, $publisher) | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) } | Select-Object -Unique
+    $query = if (@($identity).Count -gt 0) {
+        ((@($identity) + @('official website')) -join ' ').Trim()
+    } else {
+        'software official website'
+    }
+    $searchTarget = 'https://www.bing.com/search?q=' + [Uri]::EscapeDataString($query)
+    return [pscustomobject][ordered]@{
+        Target = $searchTarget
+        Mode = 'SearchFallback'
+    }
+}
+
+function Open-GuiExternalHttpsTarget {
+    param([Parameter(Mandatory = $true)][string]$Target)
+
+    if (-not (Test-GuiOfficialHttpsTarget $Target)) {
+        [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'software.results.invalidOfficialTarget'), (Get-DashboardText 'common.errorTitle'), 'OK', 'Error') | Out-Null
+        return $false
+    }
+    if ($script:offlineMode) {
+        $consent = [System.Windows.Forms.MessageBox]::Show(
+            (Get-DashboardText 'software.results.onlineNavigationConsent'),
+            (Get-DashboardText 'software.results.onlineNavigationTitle'),
+            [System.Windows.Forms.MessageBoxButtons]::YesNo,
+            [System.Windows.Forms.MessageBoxIcon]::Information,
+            [System.Windows.Forms.MessageBoxDefaultButton]::Button2)
+        if ($consent -ne [System.Windows.Forms.DialogResult]::Yes) { return $false }
+        $script:offlineMode = $false
+        [void](Set-ToolOfflineModePreference -OfflineMode $false)
+        $env:TOOL_OFFLINE_MODE = '0'
+        Update-DashboardOfflineUi
+        Set-DashboardTheme -Mode $script:dashboardTheme
+        Refresh-DashboardLocalizedActivity
+        [void](Write-ToolLog -Level 'AUDIT' -Event 'OnlineMode.ExternalNavigationEnabled' -Message (Get-DashboardText 'offline.networkAllowedLog') -Data ([ordered]@{
+            Source='OfficialPageNavigation'; SessionOnly=$true; OpenedTargetHost=([Uri]$Target).Host
+        }))
+    }
+    try {
+        Start-Process -FilePath $Target
+        return $true
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'software.results.openOfficialFailed' @($_.Exception.Message)), (Get-DashboardText 'common.errorTitle'), 'OK', 'Error') | Out-Null
+        return $false
+    }
+}
+
 function Open-GuiVendorLicenseAction {
     param($Action, $Result)
-    if ($script:offlineMode) {
-        [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'app.offline.blocked'), (Get-DashboardText 'app.offline.blockedTitle'), 'OK', 'Information') | Out-Null
-        return
-    }
     $targets = @(if ($Action -and $Action.PSObject.Properties['Target'] -and (Test-GuiOfficialHttpsTarget ([string]$Action.Target))) {
         @($Action)
     } elseif ($Action -and $Action.PSObject.Properties['Targets']) {
@@ -5698,13 +5976,13 @@ function Open-GuiVendorLicenseAction {
     } else { @() })
     if ($targets.Count -eq 0) {
         [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'cleanup.result.vendorTargetMissing'), (Get-DashboardText 'cleanup.result.vendorTitle'), 'OK', 'Information') | Out-Null
-        return
+        return "Unavailable"
     }
     $picker = New-Object System.Windows.Forms.Form
     $picker.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $picker.Text = Get-DashboardText 'cleanup.result.vendorTitle'
     $picker.StartPosition = 'CenterParent'; $picker.FormBorderStyle = 'Sizable'; $picker.MaximizeBox = $false; $picker.MinimizeBox = $false
-    $picker.MinimumSize = New-Object System.Drawing.Size(620, 220); $picker.ClientSize = New-Object System.Drawing.Size(760,190); $picker.Tag = ''
+    $picker.MinimumSize = New-Object System.Drawing.Size(620, 220); $picker.ClientSize = New-Object System.Drawing.Size(760,190); $picker.Tag = 'Close'
     $label = New-Object System.Windows.Forms.Label
     $label.Text = Get-DashboardText 'cleanup.result.vendorHint'; $label.Location = New-Object System.Drawing.Point(16,14); $label.Size = New-Object System.Drawing.Size(728,52); $label.Anchor = 'Top,Left,Right'
     $picker.Controls.Add($label)
@@ -5715,22 +5993,31 @@ function Open-GuiVendorLicenseAction {
     }
     $combo.DisplayMember = 'Label'; if ($combo.Items.Count -gt 0) { $combo.SelectedIndex = 0 }; $picker.Controls.Add($combo)
     $open = New-Object System.Windows.Forms.Button
-    $open.Text = Get-DashboardText 'software.results.openOfficial'; $open.Location = New-Object System.Drawing.Point(452,132); $open.Size = New-Object System.Drawing.Size(190,36); $open.Anchor = 'Bottom,Right'
+    $open.Text = Get-DashboardText 'software.results.openOfficial'; $open.Location = New-Object System.Drawing.Point(340,132); $open.Size = New-Object System.Drawing.Size(190,36); $open.Anchor = 'Bottom,Right'
     $open.Add_Click({ if ($combo.SelectedItem) { $picker.Tag=[string]$combo.SelectedItem.Target; $picker.Close() } }); $picker.Controls.Add($open)
     $cancel = New-Object System.Windows.Forms.Button
-    $cancel.Text = Get-DashboardText 'app.close'; $cancel.Location = New-Object System.Drawing.Point(650,132); $cancel.Size = New-Object System.Drawing.Size(94,36); $cancel.Anchor = 'Bottom,Right'
-    $cancel.Add_Click({ $picker.Close() }); $picker.CancelButton=$cancel; $picker.Controls.Add($cancel)
+    $cancel.Text = Get-DashboardText 'common.back'; $cancel.Location = New-Object System.Drawing.Point(538,132); $cancel.Size = New-Object System.Drawing.Size(104,36); $cancel.Anchor = 'Bottom,Right'
+    $cancel.Add_Click({ $picker.Tag='Back'; $picker.Close() }); $picker.CancelButton=$cancel; $picker.Controls.Add($cancel)
+    $close = New-Object System.Windows.Forms.Button
+    $close.Text = Get-DashboardText 'common.close'; $close.Location = New-Object System.Drawing.Point(650,132); $close.Size = New-Object System.Drawing.Size(104,36); $close.Anchor = 'Bottom,Right'
+    $close.Add_Click({ $picker.Tag='Close'; Close-DashboardWorkflowSession -Dialog $picker }); $picker.Controls.Add($close)
     Set-ToolWindowTheme -Root $picker -Mode $script:dashboardTheme
     $resizeVendorButtons = {
+        $close.Width = [Math]::Max(94, (Get-ToolUiButtonRequiredWidth -Button $close -HorizontalSafety 12))
         $cancel.Width = [Math]::Max(94, (Get-ToolUiButtonRequiredWidth -Button $cancel -HorizontalSafety 12))
         $open.Width = [Math]::Max(180, (Get-ToolUiButtonRequiredWidth -Button $open -HorizontalSafety 12))
-        $cancel.Left = $picker.ClientSize.Width - $cancel.Width - 16
+        $close.Left = $picker.ClientSize.Width - $close.Width - 16
+        $cancel.Left = $close.Left - $cancel.Width - 8
         $open.Left = $cancel.Left - $open.Width - 8
     }
     $picker.Add_SizeChanged($resizeVendorButtons)
     & $resizeVendorButtons
-    [void]$picker.ShowDialog($form); $targetUrl=[string]$picker.Tag; $picker.Dispose()
-    if (Test-GuiOfficialHttpsTarget $targetUrl) { try { Start-Process -FilePath $targetUrl } catch { [System.Windows.Forms.MessageBox]::Show((Get-DashboardText 'software.results.openOfficialFailed' @($_.Exception.Message)), (Get-DashboardText 'common.errorTitle'), 'OK', 'Error') | Out-Null } }
+    [void](Show-DashboardModalDialog -Dialog $picker); $targetUrl=[string]$picker.Tag; $picker.Dispose()
+    if (Test-GuiOfficialHttpsTarget $targetUrl) {
+        [void](Open-GuiExternalHttpsTarget -Target $targetUrl)
+        return "Opened"
+    }
+    return $(if ($targetUrl -eq "Back") { "Back" } else { "Close" })
 }
 
 function Get-GuiPostVerificationDispositionLabel {
@@ -6014,9 +6301,16 @@ function Show-CleanupResultCenter {
     $close.Text = Get-DashboardText "common.close"
     $close.Size = New-Object System.Drawing.Size(92, 34)
     $close.Tag = "Close"
-    $close.Add_Click({ param($sender,$eventArgs) $dialog.Tag = [string]$sender.Tag; $dialog.Close() })
-    $dialog.CancelButton = $close
+    $close.Add_Click({ param($sender,$eventArgs) $dialog.Tag = [string]$sender.Tag; Close-DashboardWorkflowSession -Dialog $dialog })
     $buttonBar.Controls.Add($close)
+
+    $back = New-Object System.Windows.Forms.Button
+    $back.Text = Get-DashboardText "common.back"
+    $back.Size = New-Object System.Drawing.Size(104, 34)
+    $back.Tag = "Back"
+    $back.Add_Click({ param($sender,$eventArgs) $dialog.Tag = [string]$sender.Tag; $dialog.Close() })
+    $dialog.CancelButton = $back
+    $buttonBar.Controls.Add($back)
 
     $reportButton = New-Object System.Windows.Forms.Button
     $reportButton.Text = Get-DashboardText "common.openReport"
@@ -6061,10 +6355,61 @@ function Show-CleanupResultCenter {
         $details.SelectionStart = 0; $details.SelectionLength = 0; $details.ScrollToCaret()
     })
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()
     return $choice
+}
+
+function Open-CleanupEntrySession {
+    param(
+        [ValidateSet("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")]
+        [string]$ScanScope = "All"
+    )
+
+    $fixedScope = if ($ScanScope -in @("Windows", "Office", "ThirdParty")) { $ScanScope } else { "" }
+    [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope $fixedScope)
+}
+
+function Restore-CleanupPreExecutionSession {
+    param($Result)
+
+    $session = $script:cleanupPreviousSession
+    $scope = if ($session -and [string]$session.ScanScope -in @("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")) {
+        [string]$session.ScanScope
+    } elseif ($Result.PSObject.Properties['ScanScope'] -and [string]$Result.ScanScope -in @("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")) {
+        [string]$Result.ScanScope
+    } else {
+        [string]$script:cleanupScanScope
+    }
+    $script:cleanupScanScope = $scope
+    $script:cleanupScanSnapshot = if ($Result.PSObject.Properties['ScanSnapshot']) { $Result.ScanSnapshot } else { $null }
+    $script:cleanupAutoSafeMode = $false
+    $script:cleanupDryRunMode = if ($session -and $session.PSObject.Properties['DryRunMode']) {
+        [bool]$session.DryRunMode
+    } elseif ($Result.PSObject.Properties['SimulationOnly']) {
+        [bool]$Result.SimulationOnly
+    } else { $false }
+
+    # Restore against the fresh post-verification candidates only.  IDs that
+    # were already handled disappear; still-valid choices remain checked.
+    $currentItems = @(Get-GuiScopedCleanupItems -CleanupItems @($Result.CleanupItems) -Scope $scope)
+    if ($currentItems.Count -eq 0) {
+        Open-CleanupEntrySession -ScanScope $scope
+        return
+    }
+    $requestedIds = if ($session -and $session.PSObject.Properties['SelectedIds']) {
+        @($session.SelectedIds | ForEach-Object { [string]$_ })
+    } elseif ($Result.PSObject.Properties['SelectedCleanupIds']) {
+        @($Result.SelectedCleanupIds | ForEach-Object { [string]$_ })
+    } else { @() }
+    $currentIds = @($currentItems | ForEach-Object { [string]$_.Id })
+    $restoredIds = @($requestedIds | Where-Object { $currentIds -contains [string]$_ } | Select-Object -Unique)
+    Set-ButtonsEnabled $true
+    $navigationResult = Start-CleanupDeep -CleanupItems $currentItems -SuggestedIds $restoredIds -RestoreExactSelection -ReturnNavigationResult
+    if ([string]$navigationResult -eq "Back") {
+        Open-CleanupEntrySession -ScanScope $scope
+    }
 }
 
 function Complete-CleanupRemediation([bool]$wasDeepCleanup) {
@@ -6143,45 +6488,58 @@ function Complete-CleanupRemediation([bool]$wasDeepCleanup) {
         if ($wasDeepCleanup -and -not [string]::IsNullOrWhiteSpace([string]$result.BackupDirectory)) {
             Write-ProgressLog (Get-DashboardText "cleanup.remediation.backupLog" @($result.BackupDirectory))
         }
-        $nextChoice = Show-CleanupResultCenter -Result $result -WasDeepCleanup $wasDeepCleanup -SafetyBlocked $wasSafetyBlocked
-        switch ($nextChoice) {
-            "ExecuteDryRunPlan" {
-                $script:cleanupDryRunMode = $false
-                Write-ProgressLog (Get-DashboardText 'cleanup.dryRun.executeLog')
-                Start-CleanupDeep -CleanupItems @($result.CleanupItems) -SuggestedIds @($result.SelectedCleanupIds)
-                return
-            }
-            "RemediateRemaining" {
-                Write-ProgressLog (Get-DashboardText "cleanup.remediation.openRemainingLog")
-                Start-CleanupDeep -CleanupItems @($result.CleanupItems) -SuggestedIds @($postVerificationSuggestedIds)
-                return
-            }
-            "ConfigureApprovedKms" {
-                if (Confirm-KmsApprovalConfiguration) {
-                    Write-ProgressLog (Get-DashboardText "cleanup.remediation.kmsConfirmedLog")
-                    Start-Cleanup -ReuseSessionSettings
-                } else {
+        while ($true) {
+            $nextChoice = Show-CleanupResultCenter -Result $result -WasDeepCleanup $wasDeepCleanup -SafetyBlocked $wasSafetyBlocked
+            switch ($nextChoice) {
+                "Back" {
+                    Restore-CleanupPreExecutionSession -Result $result
+                    return
+                }
+                "ExecuteDryRunPlan" {
+                    $script:cleanupDryRunMode = $false
+                    Write-ProgressLog (Get-DashboardText 'cleanup.dryRun.executeLog')
+                    $navigation = Start-CleanupDeep -CleanupItems @($result.CleanupItems) -SuggestedIds @($result.SelectedCleanupIds) -ReturnNavigationResult
+                    if ([string]$navigation -eq "Back") { continue }
+                    return
+                }
+                "RemediateRemaining" {
+                    Write-ProgressLog (Get-DashboardText "cleanup.remediation.openRemainingLog")
+                    $navigation = Start-CleanupDeep -CleanupItems @($result.CleanupItems) -SuggestedIds @($postVerificationSuggestedIds) -ReturnNavigationResult
+                    if ([string]$navigation -eq "Back") { continue }
+                    return
+                }
+                "ConfigureApprovedKms" {
+                    if (Confirm-KmsApprovalConfiguration) {
+                        Write-ProgressLog (Get-DashboardText "cleanup.remediation.kmsConfirmedLog")
+                        Start-Cleanup -ReuseSessionSettings
+                        return
+                    }
                     $status.Text = Get-DashboardText "cleanup.remediation.kmsUnchangedStatus"
                     $status.ForeColor = [System.Drawing.Color]::DarkOrange
+                    continue
                 }
-                return
-            }
-            "RepairScanSources" { Start-ScanSourceRepair; return }
-            "Recheck" { Start-Cleanup -ReuseSessionSettings; return }
-            "OpenLicenseManager" { Open-LicenseManager; return }
-            { $_ -in @('ReviewVendorActivation','OpenVendorActivation','OpenVendorRepair') } {
-                $vendorAction = @($result.NextActions | Where-Object { [string]$_.Code -eq [string]$nextChoice } | Select-Object -First 1)
-                Open-GuiVendorLicenseAction -Action $(if ($vendorAction.Count -gt 0) { $vendorAction[0] } else { $null }) -Result $result
-                return
-            }
-            "RestoreBackup" {
-                $restoreScope = Show-LicenseScopeChooser -Mode "Restore"
-                if (-not [string]::IsNullOrWhiteSpace($restoreScope)) { Start-CleanupRestore -Scope $restoreScope }
-                return
-            }
-            default {
-                if (-not [bool]$result.ReadyForOfficialActivation) {
-                    Write-ProgressLog (Get-DashboardText "cleanup.remediation.closedLog")
+                "RepairScanSources" { Start-ScanSourceRepair; return }
+                "Recheck" { Start-Cleanup -ReuseSessionSettings; return }
+                "OpenLicenseManager" { Open-LicenseManager; return }
+                { $_ -in @('ReviewVendorActivation','OpenVendorActivation','OpenVendorRepair') } {
+                    $vendorAction = @($result.NextActions | Where-Object { [string]$_.Code -eq [string]$nextChoice } | Select-Object -First 1)
+                    $vendorNavigation = Open-GuiVendorLicenseAction -Action $(if ($vendorAction.Count -gt 0) { $vendorAction[0] } else { $null }) -Result $result
+                    if ([string]$vendorNavigation -eq "Back") { continue }
+                    return
+                }
+                "RestoreBackup" {
+                    $restoreScope = Show-LicenseScopeChooser -Mode "Restore"
+                    if ([string]$restoreScope -eq "__CloseWorkflow") { return }
+                    if ([string]::IsNullOrWhiteSpace([string]$restoreScope)) { continue }
+                    $restoreNavigation = Start-CleanupRestore -Scope $restoreScope -ReturnNavigationResult
+                    if ([string]$restoreNavigation -eq "Back") { continue }
+                    return
+                }
+                default {
+                    if (-not [bool]$result.ReadyForOfficialActivation) {
+                        Write-ProgressLog (Get-DashboardText "cleanup.remediation.closedLog")
+                    }
+                    return
                 }
             }
         }
@@ -6715,6 +7073,7 @@ function Open-Guide {
 }
 
 function Open-VersionHistory {
+    $hasPreviousStep = [bool]($script:dashboardDialogStack.Count -gt 0)
     $selectedHistoryFile = if ($script:dashboardCulture -eq "en-US") { $englishHistoryFile } else { $historyFile }
     if (-not (Test-Path -LiteralPath $selectedHistoryFile -PathType Leaf)) {
         [System.Windows.Forms.MessageBox]::Show(
@@ -6733,6 +7092,7 @@ function Open-VersionHistory {
         $dialog.ClientSize = New-Object System.Drawing.Size(850, 620)
         $dialog.MinimumSize = New-Object System.Drawing.Size(620, 440)
         $dialog.Font = $fontNormal
+        $dialog.Tag = "Close"
 
         $heading = New-Object System.Windows.Forms.Label
         $heading.Text = Get-ToolText -Key "history.eyebrow" -Culture $script:dashboardCulture
@@ -6763,18 +7123,36 @@ function Open-VersionHistory {
         $dialog.Controls.Add($copyButton)
 
         $close = New-Object System.Windows.Forms.Button
-        $close.Text = Get-ToolText -Key "app.close" -Culture $script:dashboardCulture
+        $close.Text = Get-ToolText -Key "common.close" -Culture $script:dashboardCulture
         $close.Size = New-Object System.Drawing.Size(120, 32)
         $close.Location = New-Object System.Drawing.Point(712, 572)
         $close.Anchor = "Bottom,Right"
-        $close.Add_Click({ $dialog.Close() })
+        $close.Add_Click({ $dialog.Tag = "Close"; Close-DashboardWorkflowSession -Dialog $dialog })
         $dialog.Controls.Add($close)
         $dialog.AcceptButton = $close
-        $dialog.CancelButton = $close
+        if ($hasPreviousStep) {
+            $back = New-Object System.Windows.Forms.Button
+            $back.Text = Get-ToolText -Key "common.back" -Culture $script:dashboardCulture
+            $back.Size = New-Object System.Drawing.Size(120, 32)
+            $back.Location = New-Object System.Drawing.Point(584, 572)
+            $back.Anchor = "Bottom,Right"
+            $back.Add_Click({ $dialog.Tag = "Back"; $dialog.Close() })
+            $dialog.Controls.Add($back)
+            $dialog.CancelButton = $back
+        } else {
+            $dialog.CancelButton = $close
+        }
         Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-        [void]$dialog.ShowDialog($form)
+        [void](Show-DashboardModalDialog -Dialog $dialog)
+        $navigation = [string]$dialog.Tag
         $historyBox.Font.Dispose()
         $dialog.Dispose()
+        if ($navigation -eq "Close" -and $hasPreviousStep -and -not (Test-DashboardWorkflowCloseRequested)) {
+            $previousDialog = Get-DashboardDialogOwner
+            if ($previousDialog -and -not [object]::ReferenceEquals($previousDialog, $form)) {
+                Close-DashboardWorkflowSession -Dialog $previousDialog
+            }
+        }
     } catch {
         [System.Windows.Forms.MessageBox]::Show(
             (Get-ToolText -Key "history.openFailed" -Culture $script:dashboardCulture -FormatArguments @($_.Exception.Message)),
@@ -6838,15 +7216,15 @@ function Show-AdvancedScanMenu {
     $chooser.Controls.Add($forensicsButton)
 
     $cancelButton = New-Object System.Windows.Forms.Button
-    $cancelButton.Text = Get-ToolText -Key "app.close" -Culture $script:dashboardCulture
+    $cancelButton.Text = Get-ToolText -Key "common.close" -Culture $script:dashboardCulture
     $cancelButton.Location = New-Object System.Drawing.Point(448, 194)
     $cancelButton.Size = New-Object System.Drawing.Size(108, 32)
-    $cancelButton.Add_Click({ $chooser.Tag = ""; $chooser.Close() })
+    $cancelButton.Add_Click({ $chooser.Tag = ""; Close-DashboardWorkflowSession -Dialog $chooser })
     $chooser.CancelButton = $cancelButton
     $chooser.Controls.Add($cancelButton)
 
     Set-ToolWindowTheme -Root $chooser -Mode $script:dashboardTheme
-    [void]$chooser.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $chooser)
     $choice = [string]$chooser.Tag
     $chooser.Dispose()
     if ($choice -eq "Deep") { Start-DeepLicenseScan; return }
@@ -6948,7 +7326,7 @@ function Show-RestorePreview($manifest, [string]$backupDir, [ValidateSet("All", 
     $dialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $dialog.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $dialog.Font = $fontNormal
-    $dialog.Tag = $false
+    $dialog.Tag = "Close"
 
     $heading = New-Object System.Windows.Forms.Label
     $heading.Text = Get-DashboardText "restore.preview.heading" @($items.Count)
@@ -7005,45 +7383,59 @@ function Show-RestorePreview($manifest, [string]$backupDir, [ValidateSet("All", 
     $note = New-Object System.Windows.Forms.Label
     $note.Text = Get-DashboardText "restore.preview.note"
     $note.Location = New-Object System.Drawing.Point(20, ($dialogHeight - 82))
-    $note.Size = New-Object System.Drawing.Size(($dialogWidth - 350), 64)
+    $note.Size = New-Object System.Drawing.Size(($dialogWidth - 462), 64)
     $note.Anchor = "Bottom,Left,Right"
     $dialog.Controls.Add($note)
 
     $confirm = New-Object System.Windows.Forms.Button
     $confirm.Text = Get-DashboardText "restore.preview.confirm"
     $confirm.Font = $fontBold
-    $confirm.Location = New-Object System.Drawing.Point(($dialogWidth - 316), ($dialogHeight - 58))
+    $confirm.Location = New-Object System.Drawing.Point(($dialogWidth - 428), ($dialogHeight - 58))
     $confirm.Size = New-Object System.Drawing.Size(188, 38)
     $confirm.Anchor = "Bottom,Right"
-    $confirm.Add_Click({ $dialog.Tag = $true; $dialog.Close() })
+    $confirm.Add_Click({ $dialog.Tag = "Confirm"; $dialog.Close() })
     $dialog.Controls.Add($confirm)
 
     $cancel = New-Object System.Windows.Forms.Button
-    $cancel.Text = Get-DashboardText "common.close"
-    $cancel.Location = New-Object System.Drawing.Point(($dialogWidth - 120), ($dialogHeight - 58))
+    $cancel.Text = Get-DashboardText "common.back"
+    $cancel.Location = New-Object System.Drawing.Point(($dialogWidth - 232), ($dialogHeight - 58))
     $cancel.Size = New-Object System.Drawing.Size(104, 38)
     $cancel.Anchor = "Bottom,Right"
-    $cancel.Add_Click({ $dialog.Close() })
+    $cancel.Add_Click({ $dialog.Tag = "Back"; $dialog.Close() })
     $dialog.CancelButton = $cancel
     $dialog.Controls.Add($cancel)
 
+    $close = New-Object System.Windows.Forms.Button
+    $close.Text = Get-DashboardText "common.close"
+    $close.Location = New-Object System.Drawing.Point(($dialogWidth - 120), ($dialogHeight - 58))
+    $close.Size = New-Object System.Drawing.Size(104, 38)
+    $close.Anchor = "Bottom,Right"
+    $close.Add_Click({ $dialog.Tag = "Close"; Close-DashboardWorkflowSession -Dialog $dialog })
+    $dialog.Controls.Add($close)
+
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    [void]$dialog.ShowDialog($form)
-    $confirmed = [bool]$dialog.Tag
+    [void](Show-DashboardModalDialog -Dialog $dialog)
+    $navigation = [string]$dialog.Tag
     $dialog.Dispose()
-    return $confirmed
+    return $navigation
 }
 
 function Start-CleanupRestore {
     param(
         [ValidateSet("All", "Windows", "Office", "ThirdParty")][string]$Scope = "All",
-        [string]$BackupDirectory = ""
+        [string]$BackupDirectory = "",
+        [switch]$ReturnNavigationResult
     )
+    $formatRestoreResult = {
+        param([ValidateSet("Started", "Back", "Close")][string]$Navigation)
+        if ($ReturnNavigationResult) { return $Navigation }
+        return [bool]($Navigation -eq "Started")
+    }
     $script:restoreScope = $Scope
-    if (-not (Confirm-IntegrityForElevatedAction (Get-DashboardText "restore.integrityAction"))) { return }
+    if (-not (Confirm-IntegrityForElevatedAction (Get-DashboardText "restore.integrityAction"))) { return (& $formatRestoreResult "Back") }
     if (-not (Test-Path -LiteralPath $restoreScript -PathType Leaf)) {
         [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "restore.moduleMissing"), (Get-DashboardText "common.errorTitle"), "OK", "Error") | Out-Null
-        return
+        return (& $formatRestoreResult "Back")
     }
     $dataRoot = if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) { [string]$env:TOOL_DATA_ROOT } else { Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6" }
     $secureBackupRoot = Join-Path $dataRoot "backups"
@@ -7054,16 +7446,16 @@ function Start-CleanupRestore {
             if (-not (Test-ToolResultPathWithinRoot -Path $backupDir -Root $secureBackupRoot)) { throw "OutsideProtectedBackupRoot" }
         } catch {
             [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "restore.invalidSelectedBackup" @($_.Exception.Message)), (Get-DashboardText "restore.invalidFolderTitle"), "OK", "Warning") | Out-Null
-            return
+            return (& $formatRestoreResult "Back")
         }
     } else {
         $picker = New-Object System.Windows.Forms.FolderBrowserDialog
         $picker.Description = Get-DashboardText "restore.pickerDescription"
         $picker.ShowNewFolderButton = $false
         if (Test-Path -LiteralPath $secureBackupRoot -PathType Container) { $picker.SelectedPath = $secureBackupRoot }
-        if ($picker.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) {
+        if ($picker.ShowDialog((Get-DashboardDialogOwner)) -ne [System.Windows.Forms.DialogResult]::OK) {
             $picker.Dispose()
-            return
+            return (& $formatRestoreResult "Back")
         }
         $backupDir = $picker.SelectedPath
         $picker.Dispose()
@@ -7071,7 +7463,7 @@ function Start-CleanupRestore {
     $manifestPath = Join-Path $backupDir "RESTORE-MANIFEST.json"
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
         [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "restore.manifestMissing"), (Get-DashboardText "restore.invalidFolderTitle"), "OK", "Warning") | Out-Null
-        return
+        return (& $formatRestoreResult "Back")
     }
     try {
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
@@ -7081,13 +7473,24 @@ function Start-CleanupRestore {
     } catch {
         $manifestError = Get-DashboardText "restore.manifestInvalid" @($_.Exception.Message)
         [System.Windows.Forms.MessageBox]::Show($manifestError, (Get-DashboardText "restore.manifestInvalidTitle"), "OK", "Error") | Out-Null
-        return
+        return (& $formatRestoreResult "Back")
     }
     if ($itemCount -eq 0) {
         [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "restore.noItems"), (Get-DashboardText "restore.noItemsTitle"), "OK", "Information") | Out-Null
-        return
+        return (& $formatRestoreResult "Back")
     }
-    if (-not (Show-RestorePreview -manifest $manifest -backupDir $backupDir -Scope $script:restoreScope)) { return }
+    $previewNavigation = Show-RestorePreview -manifest $manifest -backupDir $backupDir -Scope $script:restoreScope
+    if ([string]$previewNavigation -ne "Confirm") {
+        if ([string]$previewNavigation -eq "Close" -and
+            $script:dashboardDialogStack.Count -gt 0 -and
+            -not (Test-DashboardWorkflowCloseRequested)) {
+            $previousDialog = Get-DashboardDialogOwner
+            if ($previousDialog -and -not [object]::ReferenceEquals($previousDialog, $form)) {
+                Close-DashboardWorkflowSession -Dialog $previousDialog
+            }
+        }
+        return (& $formatRestoreResult $(if ([string]$previewNavigation -eq "Close") { "Close" } else { "Back" }))
+    }
 
     try {
         Start-ProgressDisplay (Get-DashboardText "restore.action") (Get-DashboardText "restore.detail") $true
@@ -7100,11 +7503,13 @@ function Start-CleanupRestore {
         Write-ProgressLog (Get-DashboardText "restore.scopeLog" @((Get-CleanupScopeLabel -Scope $script:restoreScope)))
         Set-ButtonsEnabled $false
         $timer.Start()
+        return (& $formatRestoreResult "Started")
     } catch {
         Set-ButtonsEnabled $true
         $status.Text = Get-DashboardText "restore.cancelled"
         $status.ForeColor = [System.Drawing.Color]::DarkRed
         Stop-ProgressDisplay $status.Text
+        return (& $formatRestoreResult "Back")
     }
 }
 
@@ -7164,7 +7569,7 @@ function Show-CleanupScopeChecklist {
     $scopeDialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $scopeDialog.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $scopeDialog.Font = $fontNormal
-    $scopeDialog.Tag = ""
+    $scopeDialog.Tag = "__CloseWorkflow"
 
     $layout = New-Object System.Windows.Forms.TableLayoutPanel
     $layout.Dock = "Fill"
@@ -7227,11 +7632,21 @@ function Show-CleanupScopeChecklist {
     $footer.Padding = New-Object System.Windows.Forms.Padding(0, 8, 8, 0)
     $layout.Controls.Add($footer, 0, 5)
 
+    $closeButton = New-Object System.Windows.Forms.Button
+    $closeButton.Text = Get-DashboardText "common.close"
+    $closeButton.Font = $fontBold
+    $closeButton.Size = New-Object System.Drawing.Size(104, 38)
+    $closeButton.Add_Click({
+        $scopeDialog.Tag = "__CloseWorkflow"
+        Close-DashboardWorkflowSession -Dialog $scopeDialog
+    })
+    $footer.Controls.Add($closeButton)
+
     $cancelButton = New-Object System.Windows.Forms.Button
     $cancelButton.Text = Get-DashboardText "common.back"
     $cancelButton.Font = $fontBold
     $cancelButton.Size = New-Object System.Drawing.Size(132, 38)
-    $cancelButton.Add_Click({ $scopeDialog.Close() })
+    $cancelButton.Add_Click({ $scopeDialog.Tag = ""; $scopeDialog.Close() })
     $scopeDialog.CancelButton = $cancelButton
     $footer.Controls.Add($cancelButton)
 
@@ -7258,7 +7673,7 @@ function Show-CleanupScopeChecklist {
 
     Set-ToolWindowTheme -Root $scopeDialog -Mode $script:dashboardTheme
     $scopeDialog.Add_Shown({ $scopeChecks['Windows'].Focus() })
-    [void]$scopeDialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $scopeDialog)
     $scope = [string]$scopeDialog.Tag
     $scopeDialog.Dispose()
     return $scope
@@ -7303,7 +7718,7 @@ function Show-LicenseScopeChooser {
     $scopeDialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $scopeDialog.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $scopeDialog.Font = $fontNormal
-    $scopeDialog.Tag = ""
+    $scopeDialog.Tag = "__CloseWorkflow"
 
     $layout = New-Object System.Windows.Forms.TableLayoutPanel
     $layout.Dock = "Fill"
@@ -7360,16 +7775,26 @@ function Show-LicenseScopeChooser {
     $footer.Padding = New-Object System.Windows.Forms.Padding(0, 8, 8, 0)
     $layout.Controls.Add($footer, 0, (2 + $options.Count))
 
+    $closeButton = New-Object System.Windows.Forms.Button
+    $closeButton.Text = Get-DashboardText "common.close"
+    $closeButton.Font = $fontBold
+    $closeButton.Size = New-Object System.Drawing.Size(104, 38)
+    $closeButton.Add_Click({
+        $scopeDialog.Tag = "__CloseWorkflow"
+        Close-DashboardWorkflowSession -Dialog $scopeDialog
+    })
+    $footer.Controls.Add($closeButton)
+
     $cancelButton = New-Object System.Windows.Forms.Button
     $cancelButton.Text = Get-DashboardText "common.back"
     $cancelButton.Font = $fontBold
     $cancelButton.Size = New-Object System.Drawing.Size(132, 38)
-    $cancelButton.Add_Click({ $scopeDialog.Close() })
+    $cancelButton.Add_Click({ $scopeDialog.Tag = ""; $scopeDialog.Close() })
     $scopeDialog.CancelButton = $cancelButton
     $footer.Controls.Add($cancelButton)
 
     Set-ToolWindowTheme -Root $scopeDialog -Mode $script:dashboardTheme
-    [void]$scopeDialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $scopeDialog)
     $scope = [string]$scopeDialog.Tag
     $scopeDialog.Dispose()
     return $scope
@@ -7378,8 +7803,11 @@ function Show-LicenseScopeChooser {
 function Show-CleanupFunctionScreen {
     param(
         [ValidateSet("Backup","Cleanup","Restore","AutoCleanup")][string]$Mode,
-        [ValidateSet("", "Windows", "Office", "ThirdParty")][string]$FixedScope = ""
+        [ValidateSet("", "Windows", "Office", "ThirdParty")][string]$FixedScope = "",
+        [switch]$AllowBack
     )
+
+    $hasPreviousStep = [bool]($AllowBack -or $script:dashboardDialogStack.Count -gt 0)
     $titleKeys = @{
         Backup="cleanup.menu.backupTitle"
         Cleanup="cleanup.menu.cleanupTitle"
@@ -7425,7 +7853,7 @@ function Show-CleanupFunctionScreen {
     $screen.ClientSize = New-Object System.Drawing.Size($screenWidth, $screenHeight)
     $screen.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $screen.Font = $fontNormal
-    $screen.Tag = "Back"
+    $screen.Tag = "Close"
 
     $screenLayout = New-Object System.Windows.Forms.TableLayoutPanel
     $screenLayout.Dock = "Fill"
@@ -7471,20 +7899,79 @@ function Show-CleanupFunctionScreen {
 
     $compactCleanupButtonWidth = 90
 
-    $backButton = New-Object System.Windows.Forms.Button
-    $backButton.Text = Get-DashboardText "common.back"
-    $backButton.Font = $fontTile
-    $backButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 132 }), 40)
-    $backButton.Add_Click({ $screen.Tag = "Back"; $screen.Close() })
-    $screen.CancelButton = $backButton
-    $footer.Controls.Add($backButton)
+    $closeButton = New-Object System.Windows.Forms.Button
+    $closeButton.Text = Get-DashboardText "common.close"
+    $closeButton.Font = $fontTile
+    $closeButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 104 }), 40)
+    $closeButton.Add_Click({
+        $screen.Tag = "Close"
+        Close-DashboardWorkflowSession -Dialog $screen
+    })
+    $footer.Controls.Add($closeButton)
+
+    if ($hasPreviousStep) {
+        $backButton = New-Object System.Windows.Forms.Button
+        $backButton.Text = Get-DashboardText "common.back"
+        $backButton.Font = $fontTile
+        $backButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 132 }), 40)
+        $backButton.Add_Click({ $screen.Tag = "Back"; $screen.Close() })
+        $screen.CancelButton = $backButton
+        $footer.Controls.Add($backButton)
+    } else {
+        $screen.CancelButton = $closeButton
+    }
+
+    $runChoice = {
+        param([ValidateSet("Action", "DryRun", "Online")][string]$Choice)
+
+        if (Test-DashboardWorkflowCloseRequested) { return }
+        if ($Mode -eq "AutoCleanup") {
+            $autoScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) { "All" } else { $FixedScope }
+            Start-Cleanup -AutoSafeMode -ScanScope $autoScope
+            $screen.Tag = "Started"
+            $screen.Close()
+            return
+        }
+
+        $scopeMode = if ($Mode -eq "Cleanup") { "Cleanup" } elseif ($Mode -eq "Backup") { "Backup" } else { "Restore" }
+        $selectedScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) {
+            Show-LicenseScopeChooser -Mode $scopeMode
+        } else {
+            $FixedScope
+        }
+        if (Test-DashboardWorkflowCloseRequested) { return }
+        if ([string]$selectedScope -eq "__CloseWorkflow") {
+            Close-DashboardWorkflowSession -Dialog $screen
+            return
+        }
+        if ([string]::IsNullOrWhiteSpace([string]$selectedScope)) {
+            # Back from scope selection leaves this functional step visible.
+            return
+        }
+
+        $started = $true
+        if ($Mode -eq "Cleanup" -and $Choice -eq "Online") {
+            Start-SoftwareCatalogOnlineUpdate -ScanScope $selectedScope
+        } elseif ($Mode -eq "Backup") {
+            Start-CleanupBackup -Scope $selectedScope
+        } elseif ($Mode -eq "Cleanup") {
+            Start-Cleanup -ScanScope $selectedScope -DryRunMode:([bool]($Choice -eq "DryRun"))
+        } elseif ($Mode -eq "Restore") {
+            $started = [bool](Start-CleanupRestore -Scope $selectedScope)
+        }
+        if (Test-DashboardWorkflowCloseRequested) { return }
+        if ($started) {
+            $screen.Tag = "Started"
+            $screen.Close()
+        }
+    }
 
     $actionButton = New-Object System.Windows.Forms.Button
     $actionButton.Text = Get-DashboardText $actionKeys[$Mode]
     $actionButton.Font = $fontTile
     $actionButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 250 }), 40)
     $actionButton.BackColor = [System.Drawing.Color]::FromArgb(234, 242, 255)
-    $actionButton.Add_Click({ $screen.Tag = "Action"; $screen.Close() })
+    $actionButton.Add_Click({ & $runChoice "Action" })
     $footer.Controls.Add($actionButton)
 
     if ($Mode -eq "Cleanup") {
@@ -7493,7 +7980,7 @@ function Show-CleanupFunctionScreen {
         $dryRunButton.Font = $fontTile
         $dryRunButton.Size = New-Object System.Drawing.Size($compactCleanupButtonWidth, 40)
         $dryRunButton.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 230)
-        $dryRunButton.Add_Click({ $screen.Tag = 'DryRun'; $screen.Close() })
+        $dryRunButton.Add_Click({ & $runChoice "DryRun" })
         $footer.Controls.Add($dryRunButton)
 
         if ($FixedScope -notin @("Windows", "Office")) {
@@ -7502,7 +7989,7 @@ function Show-CleanupFunctionScreen {
             $onlineButton.Font = $fontTile
             $onlineButton.Size = New-Object System.Drawing.Size($compactCleanupButtonWidth, 40)
             $onlineButton.BackColor = [System.Drawing.Color]::FromArgb(232, 247, 240)
-            $onlineButton.Add_Click({ $screen.Tag = "Online"; $screen.Close() })
+            $onlineButton.Add_Click({ & $runChoice "Online" })
             $footer.Controls.Add($onlineButton)
         }
     }
@@ -7515,35 +8002,22 @@ function Show-CleanupFunctionScreen {
             Set-ToolUiFlowButtonSpacing -Panel $sender -PreferredSideMargin 3
         })
     }
-    [void]$screen.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $screen)
     $choice = [string]$screen.Tag
     $screen.Dispose()
-    if ($choice -notin @("Action", "DryRun", "Online")) { return $false }
-
-    if ($Mode -eq "AutoCleanup") {
-        $autoScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) { "All" } else { $FixedScope }
-        Start-Cleanup -AutoSafeMode -ScanScope $autoScope
-        return $true
+    if ($choice -eq "Close" -and $hasPreviousStep -and -not (Test-DashboardWorkflowCloseRequested)) {
+        $previousDialog = Get-DashboardDialogOwner
+        if ($previousDialog -and -not [object]::ReferenceEquals($previousDialog, $form)) {
+            Close-DashboardWorkflowSession -Dialog $previousDialog
+        }
     }
-    $scopeMode = if ($Mode -eq "Cleanup") { "Cleanup" } elseif ($Mode -eq "Backup") { "Backup" } else { "Restore" }
-    $selectedScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) {
-        Show-LicenseScopeChooser -Mode $scopeMode
-    } else {
-        $FixedScope
-    }
-    if ([string]::IsNullOrWhiteSpace($selectedScope)) { return $false }
-    if ($Mode -eq "Cleanup" -and $choice -eq "Online") { Start-SoftwareCatalogOnlineUpdate -ScanScope $selectedScope }
-    elseif ($Mode -eq "Backup") { Start-CleanupBackup -Scope $selectedScope }
-    elseif ($Mode -eq "Cleanup") { Start-Cleanup -ScanScope $selectedScope -DryRunMode:([bool]($choice -eq 'DryRun')) }
-    elseif ($Mode -eq "Restore") { Start-CleanupRestore -Scope $selectedScope }
-    return $true
+    return [bool]($choice -eq "Started")
 }
 
 function Show-CleanupMenu {
     param([ValidateSet("", "Windows", "Office", "ThirdParty")][string]$FixedScope = "")
     $fixedScopeLabel = if ([string]::IsNullOrWhiteSpace($FixedScope)) { "" } else { Get-CleanupScopeLabel -Scope $FixedScope }
-    while ($true) {
-        $chooser = New-Object System.Windows.Forms.Form
+    $chooser = New-Object System.Windows.Forms.Form
         $chooser.Text = Get-DashboardText "cleanup.menu.title"
         $chooser.StartPosition = "CenterParent"
         $chooser.FormBorderStyle = "Sizable"
@@ -7601,8 +8075,11 @@ function Show-CleanupMenu {
             $menuButton.BackColor = $menuOption.Color
             $menuButton.Add_Click({
                 param($sender, $eventArgs)
-                $chooser.Tag = [string]$sender.Tag
-                $chooser.Close()
+                $selectedMode = [string]$sender.Tag
+                if (Show-CleanupFunctionScreen -Mode $selectedMode -FixedScope $FixedScope) {
+                    $chooser.Tag = "Started"
+                    $chooser.Close()
+                }
             })
             $layout.Controls.Add($menuButton, 0, (1 + $menuIndex))
             $menuIndex++
@@ -7616,24 +8093,21 @@ function Show-CleanupMenu {
         $layout.Controls.Add($footer, 0, 5)
 
         $cancelButton = New-Object System.Windows.Forms.Button
-        $cancelButton.Text = Get-DashboardText "common.back"
+        $cancelButton.Text = Get-DashboardText "common.close"
         $cancelButton.Font = $fontBold
         $cancelButton.Size = New-Object System.Drawing.Size(132, 40)
-        $cancelButton.Add_Click({ $chooser.Close() })
+        $cancelButton.Add_Click({ Close-DashboardWorkflowSession -Dialog $chooser })
         $chooser.CancelButton = $cancelButton
         $footer.Controls.Add($cancelButton)
 
         Set-ToolWindowTheme -Root $chooser -Mode $script:dashboardTheme
-        [void]$chooser.ShowDialog($form)
+        [void](Show-DashboardModalDialog -Dialog $chooser)
         $choice = [string]$chooser.Tag
         $chooser.Dispose()
-        if ([string]::IsNullOrWhiteSpace($choice)) {
+        if ([string]$choice -ne "Started" -and -not (Test-DashboardWorkflowCloseRequested)) {
             $status.Text = Get-DashboardText "status.chooseTask"
             $status.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
-            return
         }
-        if (Show-CleanupFunctionScreen -Mode $choice -FixedScope $FixedScope) { return }
-    }
 }
 
 function Start-AssuranceReport {
@@ -7690,7 +8164,7 @@ function Install-PluginFromDialog {
         $picker.Title = Get-DashboardText "plugin.pickerTitle"
         $picker.Filter = Get-DashboardText "plugin.pickerFilter"
         $picker.Multiselect = $false
-        if ($picker.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) { return }
+        if ($picker.ShowDialog((Get-DashboardDialogOwner)) -ne [System.Windows.Forms.DialogResult]::OK) { return }
         $catalogInstall = [bool]$picker.FileName.EndsWith('.plugin-catalog.json', [StringComparison]::OrdinalIgnoreCase)
         $catalogResult = $null
         if ($catalogInstall) {
@@ -7707,7 +8181,7 @@ function Install-PluginFromDialog {
             $packagePicker.Title = Get-DashboardText 'plugin.catalogPackagePickerTitle'
             $packagePicker.Filter = Get-DashboardText 'plugin.catalogPackagePickerFilter'
             $packagePicker.Multiselect = $false
-            if ($packagePicker.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) { return }
+            if ($packagePicker.ShowDialog((Get-DashboardDialogOwner)) -ne [System.Windows.Forms.DialogResult]::OK) { return }
             $package = Read-ToolPluginPackage -Path $packagePicker.FileName -AllowOutsideProtectedDirectory `
                 -TrustedSignerCertificateSha256 @([string]$catalogResult.SignerCertificateSha256) -RequireTrustedSignature
         } else {
@@ -7857,14 +8331,23 @@ function Open-ResultCenterReport {
 
 function Invoke-ResultCenterItemAction {
     param([AllowNull()][object]$Item)
-    if ($null -eq $Item) { return }
+    if ($null -eq $Item) { return $false }
     switch ([string]$Item.ActionCode) {
-        "OpenHardware" { Start-Report "Hardware" (Get-DashboardText "menu.2.title") }
-        "OpenWindows" { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows") }
-        "OpenOffice" { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office") }
-        "OpenSoftwareRemediation" { [void](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty") }
-        "ReviewSoftware" { Start-ThirdPartyManualReview }
-        default { Open-ResultCenterReport -ReportPath ([string]$Item.SourceReportPath) }
+        "OpenHardware" {
+            Start-Report "Hardware" (Get-DashboardText "menu.2.title")
+            return $true
+        }
+        "OpenWindows" { return [bool](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Windows") }
+        "OpenOffice" { return [bool](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "Office") }
+        "OpenSoftwareRemediation" { return [bool](Show-CleanupFunctionScreen -Mode "Cleanup" -FixedScope "ThirdParty") }
+        "ReviewSoftware" {
+            Start-ThirdPartyManualReview
+            return $true
+        }
+        default {
+            Open-ResultCenterReport -ReportPath ([string]$Item.SourceReportPath)
+            return $false
+        }
     }
 }
 
@@ -7921,6 +8404,7 @@ function Update-ResultActionCard {
 }
 
 function Show-ResultActionCenter {
+    $hasPreviousStep = [bool]($script:dashboardDialogStack.Count -gt 0)
     $form.UseWaitCursor = $true
     try { $state = Get-ToolResultCenterState -ReportRoot $reportRoot -MaximumReports 80 }
     catch { $state = [pscustomobject]@{ HasReport=$false; HasBaseline=$false; Latest=$null; Previous=$null; Items=@(); HighCount=0; MediumCount=0; LowCount=0 } }
@@ -7942,6 +8426,7 @@ function Show-ResultActionCenter {
     $dialog.MinimumSize = New-Object System.Drawing.Size([Math]::Min(720, $dialogWidth), [Math]::Min(500, $dialogHeight))
     $dialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $dialog.Font = $fontNormal
+    $dialog.Tag = "Close"
 
     $layout = New-Object System.Windows.Forms.TableLayoutPanel
     $layout.Dock = "Fill"
@@ -8053,9 +8538,18 @@ function Show-ResultActionCenter {
     $closeButtonLocal = New-Object System.Windows.Forms.Button
     $closeButtonLocal.Text = Get-DashboardText "common.close"
     $closeButtonLocal.Size = New-Object System.Drawing.Size(104, 38)
-    $closeButtonLocal.Add_Click({ $dialog.Close() })
-    $dialog.CancelButton = $closeButtonLocal
+    $closeButtonLocal.Add_Click({ $dialog.Tag = "Close"; Close-DashboardWorkflowSession -Dialog $dialog })
     $footer.Controls.Add($closeButtonLocal)
+    if ($hasPreviousStep) {
+        $backButtonLocal = New-Object System.Windows.Forms.Button
+        $backButtonLocal.Text = Get-DashboardText "common.back"
+        $backButtonLocal.Size = New-Object System.Drawing.Size(104, 38)
+        $backButtonLocal.Add_Click({ $dialog.Tag = "Back"; $dialog.Close() })
+        $dialog.CancelButton = $backButtonLocal
+        $footer.Controls.Add($backButtonLocal)
+    } else {
+        $dialog.CancelButton = $closeButtonLocal
+    }
     $directButton = New-Object System.Windows.Forms.Button
     $directButton.Text = Get-DashboardText "resultCenter.openFunction"
     $directButton.Font = $fontBold
@@ -8123,17 +8617,35 @@ function Show-ResultActionCenter {
     $comparisonCombo.Add_SelectedIndexChanged($refreshList)
     $resultList.Add_SelectedIndexChanged($selectionChanged)
     $openReportButton.Add_Click({ if ($resultList.SelectedItems.Count -gt 0) { Open-ResultCenterReport -ReportPath ([string]$resultList.SelectedItems[0].Tag.SourceReportPath) } })
-    $directButton.Add_Click({ if ($resultList.SelectedItems.Count -gt 0) { $selectedItem = $resultList.SelectedItems[0].Tag; $dialog.Close(); Invoke-ResultCenterItemAction -Item $selectedItem } })
-    $resultList.Add_DoubleClick({ if ($resultList.SelectedItems.Count -gt 0 -and [string]$resultList.SelectedItems[0].Tag.ComparisonStatus -ne "Resolved") { $selectedItem = $resultList.SelectedItems[0].Tag; $dialog.Close(); Invoke-ResultCenterItemAction -Item $selectedItem } })
+    $directButton.Add_Click({
+        if ($resultList.SelectedItems.Count -gt 0) {
+            $selectedItem = $resultList.SelectedItems[0].Tag
+            if (Invoke-ResultCenterItemAction -Item $selectedItem) { $dialog.Close() }
+        }
+    })
+    $resultList.Add_DoubleClick({
+        if ($resultList.SelectedItems.Count -gt 0 -and [string]$resultList.SelectedItems[0].Tag.ComparisonStatus -ne "Resolved") {
+            $selectedItem = $resultList.SelectedItems[0].Tag
+            if (Invoke-ResultCenterItemAction -Item $selectedItem) { $dialog.Close() }
+        }
+    })
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
     $heading.ForeColor = $script:baseUiPalette.Primary
     & $refreshList
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
+    $navigation = [string]$dialog.Tag
     $dialog.Dispose()
+    if ($navigation -eq "Close" -and $hasPreviousStep -and -not (Test-DashboardWorkflowCloseRequested)) {
+        $previousDialog = Get-DashboardDialogOwner
+        if ($previousDialog -and -not [object]::ReferenceEquals($previousDialog, $form)) {
+            Close-DashboardWorkflowSession -Dialog $previousDialog
+        }
+    }
 }
 
 function Show-BackupRestoreCenter {
+    $hasPreviousStep = [bool]($script:dashboardDialogStack.Count -gt 0)
     $dataRoot = if (Get-Command Get-ToolDataRoot -ErrorAction SilentlyContinue) { Get-ToolDataRoot } elseif (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) { [string]$env:TOOL_DATA_ROOT } else { Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6" }
     $dialog = New-Object System.Windows.Forms.Form
     $dialog.Text = Get-DashboardText "backupCenter.title"
@@ -8148,6 +8660,7 @@ function Show-BackupRestoreCenter {
     $dialog.MinimumSize = New-Object System.Drawing.Size([Math]::Min(720, $dialogWidth), [Math]::Min(470, $dialogHeight))
     $dialog.ClientSize = New-Object System.Drawing.Size($dialogWidth, $dialogHeight)
     $dialog.Font = $fontNormal
+    $dialog.Tag = "Close"
 
     $layout = New-Object System.Windows.Forms.TableLayoutPanel
     $layout.Dock = "Fill"
@@ -8227,9 +8740,18 @@ function Show-BackupRestoreCenter {
     $closeBackupButton = New-Object System.Windows.Forms.Button
     $closeBackupButton.Text = Get-DashboardText "common.close"
     $closeBackupButton.Size = New-Object System.Drawing.Size(104, 38)
-    $closeBackupButton.Add_Click({ $dialog.Close() })
-    $dialog.CancelButton = $closeBackupButton
+    $closeBackupButton.Add_Click({ $dialog.Tag = "Close"; Close-DashboardWorkflowSession -Dialog $dialog })
     $footer.Controls.Add($closeBackupButton)
+    if ($hasPreviousStep) {
+        $backBackupButton = New-Object System.Windows.Forms.Button
+        $backBackupButton.Text = Get-DashboardText "common.back"
+        $backBackupButton.Size = New-Object System.Drawing.Size(104, 38)
+        $backBackupButton.Add_Click({ $dialog.Tag = "Back"; $dialog.Close() })
+        $dialog.CancelButton = $backBackupButton
+        $footer.Controls.Add($backBackupButton)
+    } else {
+        $dialog.CancelButton = $closeBackupButton
+    }
     $restoreButton = New-Object System.Windows.Forms.Button
     $restoreButton.Text = Get-DashboardText "backupCenter.restore"
     $restoreButton.Font = $fontBold
@@ -8249,7 +8771,9 @@ function Show-BackupRestoreCenter {
     $createButton = New-Object System.Windows.Forms.Button
     $createButton.Text = Get-DashboardText "backupCenter.create"
     $createButton.Size = New-Object System.Drawing.Size(150, 38)
-    $createButton.Add_Click({ $dialog.Close(); [void](Show-CleanupFunctionScreen -Mode "Backup") })
+    $createButton.Add_Click({
+        if (Show-CleanupFunctionScreen -Mode "Backup") { $dialog.Close() }
+    })
     $footer.Controls.Add($createButton)
 
     $refreshBackups = {
@@ -8313,15 +8837,23 @@ function Show-BackupRestoreCenter {
         $backupDirectory = [string]$backupList.SelectedItems[0].Tag.Directory
         $scopeValues = @("All", "Windows", "Office", "ThirdParty")
         $restoreSelectedScope = $scopeValues[[Math]::Max(0, $scopeCombo.SelectedIndex)]
-        $dialog.Close()
-        Start-CleanupRestore -Scope $restoreSelectedScope -BackupDirectory $backupDirectory
+        if (Start-CleanupRestore -Scope $restoreSelectedScope -BackupDirectory $backupDirectory) {
+            $dialog.Close()
+        }
     })
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
     $heading.ForeColor = $script:baseUiPalette.Primary
     & $refreshBackups
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
+    $navigation = [string]$dialog.Tag
     $dialog.Dispose()
+    if ($navigation -eq "Close" -and $hasPreviousStep -and -not (Test-DashboardWorkflowCloseRequested)) {
+        $previousDialog = Get-DashboardDialogOwner
+        if ($previousDialog -and -not [object]::ReferenceEquals($previousDialog, $form)) {
+            Close-DashboardWorkflowSession -Dialog $previousDialog
+        }
+    }
 }
 
 function Show-SupportBundlePreview {
@@ -8351,7 +8883,7 @@ function Show-SupportBundlePreview {
     $saveDialog.OverwritePrompt = $true
     $saveDialog.InitialDirectory = $desktop
     $saveDialog.FileName = "Tool-Kiem-Tra-v5.0-Support-$((Get-Date).ToString('yyyyMMdd_HHmmss')).zip"
-    if ($saveDialog.ShowDialog($form) -ne [System.Windows.Forms.DialogResult]::OK) { $saveDialog.Dispose(); return }
+    if ($saveDialog.ShowDialog((Get-DashboardDialogOwner)) -ne [System.Windows.Forms.DialogResult]::OK) { $saveDialog.Dispose(); return }
     $destination = $saveDialog.FileName
     $saveDialog.Dispose()
     try {
@@ -8389,6 +8921,7 @@ function Invoke-AssuranceCenterAction {
 }
 
 function Show-AssuranceCenter {
+    $hasPreviousStep = [bool]($script:dashboardDialogStack.Count -gt 0)
     $dialog = New-Object System.Windows.Forms.Form
     $dialog.Text = Get-ToolText -Key "assurance.form.title" -Culture $script:dashboardCulture
     $dialog.StartPosition = "CenterParent"
@@ -8435,21 +8968,41 @@ function Show-AssuranceCenter {
         $button.Size = New-Object System.Drawing.Size(620, 40)
         $button.Anchor = "Top,Left,Right"
         $button.BackColor = $choice.Color
-        $button.Add_Click({ param($sender,$eventArgs) $dialog.Tag = [string]$sender.Tag; $dialog.Close() })
+        $button.Add_Click({
+            param($sender,$eventArgs)
+            $selectedChoice = [string]$sender.Tag
+            if ($selectedChoice -in @("Certificate", "PluginAudit", "Timeline")) {
+                $dialog.Tag = $selectedChoice
+                $dialog.Close()
+                return
+            }
+            Invoke-AssuranceCenterAction -Choice $selectedChoice
+        })
         $dialog.Controls.Add($button)
     }
     $close = New-Object System.Windows.Forms.Button
-    $close.Text = Get-ToolText -Key "common.back" -Culture $script:dashboardCulture
+    $close.Text = Get-ToolText -Key "common.close" -Culture $script:dashboardCulture
     $close.Location = New-Object System.Drawing.Point(542, 512)
     $close.Size = New-Object System.Drawing.Size(120, 34)
     $close.Anchor = "Bottom,Right"
-    $close.Add_Click({ $dialog.Tag = ""; $dialog.Close() })
-    $dialog.CancelButton = $close
+    $close.Add_Click({ $dialog.Tag = ""; Close-DashboardWorkflowSession -Dialog $dialog })
     $dialog.Controls.Add($close)
+    if ($hasPreviousStep) {
+        $back = New-Object System.Windows.Forms.Button
+        $back.Text = Get-ToolText -Key "common.back" -Culture $script:dashboardCulture
+        $back.Location = New-Object System.Drawing.Point(414, 512)
+        $back.Size = New-Object System.Drawing.Size(120, 34)
+        $back.Anchor = "Bottom,Right"
+        $back.Add_Click({ $dialog.Tag = ""; $dialog.Close() })
+        $dialog.CancelButton = $back
+        $dialog.Controls.Add($back)
+    } else {
+        $dialog.CancelButton = $close
+    }
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
     $heading.ForeColor = $script:baseUiPalette.Primary
     $descriptionLabel.ForeColor = $script:baseUiPalette.Text
-    [void]$dialog.ShowDialog($form)
+    [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()
     if (-not [string]::IsNullOrWhiteSpace($choice)) { Invoke-AssuranceCenterAction -Choice $choice }
@@ -8539,7 +9092,10 @@ function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey
     $metadata.DescriptionLabel = $descriptionLabel
     $button.AccessibleName = Get-ToolText -Key $titleKey -Culture $script:dashboardCulture
     $button.AccessibleDescription = Get-ToolText -Key $descriptionKey -Culture $script:dashboardCulture
-    $button.Add_Click($action)
+    $rootAction = $action
+    $button.Add_Click({
+        Invoke-DashboardRootAction -Action $rootAction
+    }.GetNewClosure())
     $button.Add_MouseEnter({
         param($sender, $eventArgs)
         $tone = if ($sender.Tag -and $sender.Tag.PSObject.Properties["Tone"]) { [string]$sender.Tag.Tone } else { "Normal" }
@@ -8645,7 +9201,10 @@ function Add-ReportMenuButton([string]$actionId, [string]$titleKey, [string]$des
     $button.Visible = $false
     $button.Add_Click({
         param($sender, $eventArgs)
-        Invoke-AssuranceCenterAction -Choice ([string]$sender.Tag.ActionId)
+        $selectedActionId = [string]$sender.Tag.ActionId
+        Invoke-DashboardRootAction -Action ({
+            Invoke-AssuranceCenterAction -Choice $selectedActionId
+        }.GetNewClosure())
     })
     $button.Add_MouseEnter({
         param($sender, $eventArgs)

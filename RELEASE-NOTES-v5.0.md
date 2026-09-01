@@ -1,7 +1,7 @@
 # Tool Kiểm Tra v5.0
 
-Ngày build kỹ thuật: `2026-08-26`
-Ngày phát hành hiện tại: `2026-08-31`
+Ngày build kỹ thuật: `2026-09-01`
+Ngày phát hành hiện tại: `2026-09-01`
 ProductVersion/FileVersion: `5.0.0.0`
 Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
 
@@ -23,6 +23,8 @@ Tool Kiểm Tra v5.0 hỗ trợ kiểm tra cấu hình máy, trạng thái bản
 - Tìm kiếm, lọc và so sánh với lần quét trước cùng chế độ: Mới xuất hiện, Đã hết hoặc Không đổi.
 - Trung tâm sao lưu–khôi phục kiểm tra HMAC/SHA-256 trước khi cho phép khôi phục.
 - Gói hỗ trợ chỉ nhận báo cáo đã che dữ liệu, tạo bản xem trước và loại thông tin nhạy cảm khỏi log chia sẻ.
+- Điều hướng chức năng tách rõ **Trở về** và **Đóng**: Trở về quay đúng bước trước và giữ lựa chọn còn hợp lệ; Đóng kết thúc toàn bộ phiên chức năng rồi trở về màn hình chính.
+- Mọi phần mềm đều có thể dùng **Mở / tìm trang chính thức**: mở URL HTTPS đã xác minh trong catalog hoặc tìm kiếm an toàn theo tên và nhà phát hành khi chưa có URL trực tiếp.
 
 ## Toàn vẹn và lưu ý khi chạy
 

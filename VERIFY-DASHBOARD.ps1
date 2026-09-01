@@ -179,6 +179,173 @@ if ($text -match 'thirdPartyExecutionResults\s*\|\s*Select-Object\s+-First\s+30'
 }
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.Windows.Forms
+
+if ($guiAst) {
+    $navigationFunctions = @($guiAst.FindAll({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+            $node.Name -in @(
+                'Get-DashboardDialogOwner',
+                'Show-DashboardModalDialog',
+                'Reset-DashboardWorkflowNavigation',
+                'Test-DashboardWorkflowCloseRequested',
+                'Close-DashboardWorkflowSession')
+    }, $true))
+    if ($navigationFunctions.Count -eq 5) {
+        $script:navigationOwnerMatched = $false
+        $script:navigationParentRetained = $false
+        $script:navigationCloseOwnerMatched = $false
+        $script:navigationCloseParentDismissed = $false
+        $script:navigationMainForm = $null
+        $script:navigationParentForm = $null
+        $script:navigationChildForm = $null
+        $script:navigationCloseParentForm = $null
+        $script:navigationCloseChildForm = $null
+        try {
+            foreach ($navigationFunction in $navigationFunctions) {
+                Invoke-Expression ([string]$navigationFunction.Extent.Text)
+            }
+            $form = New-Object Windows.Forms.Form
+            $form.ShowInTaskbar = $false
+            $form.Opacity = 0
+            $form.StartPosition = 'Manual'
+            $form.Location = New-Object Drawing.Point(-32000, -32000)
+            $script:navigationMainForm = $form
+            $script:dashboardDialogStack = New-Object Collections.Stack
+            $script:dashboardWorkflowCloseRequested = $false
+
+            $parentForm = New-Object Windows.Forms.Form
+            $parentForm.ShowInTaskbar = $false
+            $parentForm.Opacity = 0
+            $parentForm.StartPosition = 'Manual'
+            $parentForm.Location = New-Object Drawing.Point(-32000, -32000)
+            $script:navigationParentForm = $parentForm
+
+            $childForm = New-Object Windows.Forms.Form
+            $childForm.ShowInTaskbar = $false
+            $childForm.Opacity = 0
+            $childForm.StartPosition = 'Manual'
+            $childForm.Location = New-Object Drawing.Point(-32000, -32000)
+            $script:navigationChildForm = $childForm
+            $childForm.Add_Shown({
+                $script:navigationOwnerMatched = [object]::ReferenceEquals(
+                    $script:navigationChildForm.Owner,
+                    $script:navigationParentForm)
+                $script:navigationChildForm.Close()
+            })
+            $parentForm.Add_Shown({
+                [void](Show-DashboardModalDialog -Dialog $script:navigationChildForm)
+                $script:navigationParentRetained = [bool](
+                    $script:navigationParentForm.Visible -and
+                    -not $script:navigationParentForm.IsDisposed)
+                $script:navigationParentForm.Close()
+            })
+
+            $form.Show()
+            [Windows.Forms.Application]::DoEvents()
+            [void](Show-DashboardModalDialog -Dialog $parentForm)
+            if (-not $script:navigationOwnerMatched -or -not $script:navigationParentRetained -or
+                $script:dashboardDialogStack.Count -ne 0) {
+                Add-Failure 'Điều hướng modal không giữ đúng cửa sổ cha hoặc không dọn sạch ngăn xếp sau khi Trở về.'
+            }
+
+            $closeParentForm = New-Object Windows.Forms.Form
+            $closeParentForm.ShowInTaskbar = $false
+            $closeParentForm.Opacity = 0
+            $closeParentForm.StartPosition = 'Manual'
+            $closeParentForm.Location = New-Object Drawing.Point(-32000, -32000)
+            $script:navigationCloseParentForm = $closeParentForm
+
+            $closeChildForm = New-Object Windows.Forms.Form
+            $closeChildForm.ShowInTaskbar = $false
+            $closeChildForm.Opacity = 0
+            $closeChildForm.StartPosition = 'Manual'
+            $closeChildForm.Location = New-Object Drawing.Point(-32000, -32000)
+            $script:navigationCloseChildForm = $closeChildForm
+            $closeChildForm.Add_Shown({
+                $script:navigationCloseOwnerMatched = [object]::ReferenceEquals(
+                    $script:navigationCloseChildForm.Owner,
+                    $script:navigationCloseParentForm)
+                Close-DashboardWorkflowSession -Dialog $script:navigationCloseChildForm
+            })
+            $closeParentForm.Add_Shown({
+                [void](Show-DashboardModalDialog -Dialog $script:navigationCloseChildForm)
+                $script:navigationCloseParentDismissed = [bool](-not $script:navigationCloseParentForm.Visible)
+                if ($script:navigationCloseParentForm.Visible) { $script:navigationCloseParentForm.Close() }
+            })
+
+            [void](Show-DashboardModalDialog -Dialog $closeParentForm)
+            $script:navigationCloseParentDismissed = [bool](-not $closeParentForm.Visible)
+            if (-not $script:navigationCloseOwnerMatched -or -not $script:navigationCloseParentDismissed -or
+                -not (Test-DashboardWorkflowCloseRequested) -or -not $form.Visible -or
+                $script:dashboardDialogStack.Count -ne 0) {
+                Add-Failure 'Nút Đóng chưa kết thúc toàn bộ phiên cửa sổ con hoặc đã đóng nhầm dashboard.'
+            }
+            Reset-DashboardWorkflowNavigation
+        } catch {
+            Add-Failure "Không thể kiểm thử động điều hướng Đóng/Trở về: $($_.Exception.Message)"
+        } finally {
+            foreach ($navigationForm in @(
+                $script:navigationCloseChildForm,
+                $script:navigationCloseParentForm,
+                $script:navigationChildForm,
+                $script:navigationParentForm,
+                $script:navigationMainForm)) {
+                if ($navigationForm -and -not $navigationForm.IsDisposed) { $navigationForm.Dispose() }
+            }
+        }
+    } else {
+        Add-Failure 'Không tìm thấy đủ helper điều hướng Đóng/Trở về để kiểm thử động.'
+    }
+}
+
+if ($guiAst) {
+    $officialNavigationFunctions = @($guiAst.FindAll({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+            $node.Name -in @('Test-GuiOfficialHttpsTarget', 'Get-GuiSoftwareOfficialNavigationTarget')
+    }, $true))
+    if ($officialNavigationFunctions.Count -eq 2) {
+        try {
+            foreach ($officialNavigationFunction in $officialNavigationFunctions) {
+                Invoke-Expression ([string]$officialNavigationFunction.Extent.Text)
+            }
+            $direct = Get-GuiSoftwareOfficialNavigationTarget -Application ([pscustomobject]@{
+                Name='Known App'; Publisher='Known Vendor'; OfficialReferenceUrl='https://vendor.example/products/app'
+            })
+            if ([string]$direct.Mode -ne 'VerifiedDirect' -or [string]$direct.Target -ne 'https://vendor.example/products/app') {
+                Add-Failure 'Điều hướng trang hãng không giữ nguyên URL HTTPS đã xác minh.'
+            }
+
+            $fallback = Get-GuiSoftwareOfficialNavigationTarget -Application ([pscustomobject]@{
+                Name='A&B "Suite"'; Publisher='Publisher/Co'; OfficialReferenceUrl='https://user@evil.example/app'
+            })
+            $fallbackUri = [Uri]$fallback.Target
+            if ([string]$fallback.Mode -ne 'SearchFallback' -or $fallbackUri.Scheme -ne 'https' -or
+                $fallbackUri.Host -ne 'www.bing.com' -or $fallbackUri.AbsolutePath -ne '/search' -or
+                [string]$fallback.Target -notmatch '%26' -or [string]$fallback.Target -notmatch '%2F') {
+                Add-Failure 'Fallback tìm trang hãng không cố định host HTTPS hoặc chưa mã hóa an toàn tên/publisher.'
+            }
+
+            $emptyFallback = Get-GuiSoftwareOfficialNavigationTarget -Application ([pscustomobject]@{})
+            $emptyFallbackUri = [Uri]$emptyFallback.Target
+            if ([string]$emptyFallback.Mode -ne 'SearchFallback' -or $emptyFallbackUri.Host -ne 'www.bing.com' -or
+                [string]$emptyFallback.Target -notmatch 'software%20official%20website') {
+                Add-Failure 'Phần mềm thiếu metadata chưa có fallback tìm kiếm an toàn.'
+            }
+            foreach ($blockedTarget in @('http://vendor.example/app','javascript:alert(1)','https://user@vendor.example/app')) {
+                if (Test-GuiOfficialHttpsTarget $blockedTarget) {
+                    Add-Failure "URL trang hãng không an toàn vẫn được chấp nhận: $blockedTarget"
+                }
+            }
+        } catch {
+            Add-Failure "Không thể kiểm thử động điều hướng trang hãng: $($_.Exception.Message)"
+        }
+    } else {
+        Add-Failure 'Không tìm thấy đủ helper điều hướng trang hãng để kiểm thử động.'
+    }
+}
+
 . (Join-Path $root 'Tool-UiTheme.ps1')
 $themeText = Get-Content -LiteralPath (Join-Path $root 'Tool-UiTheme.ps1') -Raw -Encoding UTF8
 foreach ($themePattern in @(
@@ -571,7 +738,7 @@ Assert-SourcePattern $text '[$]titleKeys\["Cleanup"\]\s*=\s*"menu\.11\.title"' '
 Assert-SourcePattern $text '[$]titleKeys\["Cleanup"\]\s*=\s*"menu\.12\.title"' 'Màn hình khắc phục Office chưa dùng tiêu đề riêng.'
 Assert-SourcePattern $text '[$]titleKeys\["Cleanup"\]\s*=\s*"menu\.13\.title"' 'Màn hình khắc phục phần mềm khác chưa dùng tiêu đề riêng.'
 Assert-SourcePattern $text '[$]compatibilityCard\.Value\.Text\s*=\s*[$]compatibilityValue\s*(?:\r?\n)' 'Thẻ tương thích vẫn còn ghép dòng trạng thái catalog phần mềm.'
-Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+[$]choice\s+-FixedScope\s+[$]FixedScope' 'Menu khắc phục chưa truyền phạm vi cố định vào màn hình thao tác.'
+Assert-SourcePattern $text 'Show-CleanupFunctionScreen\s+-Mode\s+[$]selectedMode\s+-FixedScope\s+[$]FixedScope' 'Menu khắc phục chưa truyền phạm vi cố định vào màn hình thao tác.'
 Assert-SourcePattern $text '[$]autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\([$]FixedScope\)\)' 'Tự động làm sạch chưa tôn trọng phạm vi cố định.'
 Assert-SourcePattern $text '[$]selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\([$]FixedScope\)\)' 'Backup/Cleanup/Restore chưa ưu tiên phạm vi cố định.'
 if ([string]$viCatalog.'cleanup.menu.fixedScopeNote' -notmatch '\{0\}' -or
@@ -606,7 +773,9 @@ if ($guiAst) {
         }
     }
     $vendorActionAst = $guiAst.Find({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Open-GuiVendorLicenseAction' }, $true)
-    if (-not $vendorActionAst -or [string]$vendorActionAst.Extent.Text -notmatch '[$]script:offlineMode') {
+    $externalNavigationAst = $guiAst.Find({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Open-GuiExternalHttpsTarget' }, $true)
+    if (-not $vendorActionAst -or [string]$vendorActionAst.Extent.Text -notmatch 'Open-GuiExternalHttpsTarget' -or
+        -not $externalNavigationAst -or [string]$externalNavigationAst.Extent.Text -notmatch '[$]script:offlineMode') {
         Add-Failure 'Mở trang kích hoạt của hãng chưa tôn trọng chế độ Offline.'
     }
 }
@@ -887,6 +1056,64 @@ foreach ($featurePattern in @(
     'New-ToolSupportBundle'
 )) {
     Assert-SourcePattern $text $featurePattern "Thiếu tích hợp trung tâm kết quả v5.0: $featurePattern"
+}
+
+foreach ($navigationPattern in @(
+    'function\s+Get-DashboardDialogOwner',
+    'function\s+Show-DashboardModalDialog',
+    'function\s+Close-DashboardWorkflowSession',
+    'function\s+Invoke-DashboardRootAction',
+    '[$]script:dashboardDialogStack\.Push\([$]Dialog\)',
+    'return\s+[$]Dialog\.ShowDialog\([$]owner\)',
+    '(?s)function\s+Close-DashboardWorkflowSession.+?dashboardWorkflowCloseRequested\s*=\s*[$]true.+?dashboardDialogStack\.ToArray\(\).+?[$]openDialog\.Close\(\)',
+    '(?s)function\s+Show-AssuranceCenter.+?Invoke-AssuranceCenterAction\s+-Choice\s+[$]selectedChoice',
+    '(?s)function\s+Show-BackupRestoreCenter.+?if\s*\(Show-CleanupFunctionScreen\s+-Mode\s+"Backup"\)\s*\{\s*[$]dialog\.Close\(\)\s*\}',
+    '(?s)function\s+Show-RestorePreview.+?Get-DashboardText\s+"common\.back"',
+    '(?s)function\s+Show-RestorePreview.+?Get-DashboardText\s+"common\.close".+?Close-DashboardWorkflowSession',
+    '(?s)function\s+Start-CleanupRestore.+?ReturnNavigationResult.+?Show-RestorePreview.+?previewNavigation.+?formatRestoreResult',
+    '(?s)function\s+Invoke-ResultCenterItemAction.+?return\s+[$]false',
+    '(?s)function\s+Show-CleanupFunctionScreen.+?Get-DashboardText\s+"common\.close".+?Close-DashboardWorkflowSession.+?Get-DashboardText\s+"common\.back"',
+    '(?s)function\s+Show-CleanupFunctionScreen.+?IsNullOrWhiteSpace\(\[string\][$]selectedScope\).+?Back from scope selection leaves this functional step visible.+?return',
+    '(?s)function\s+Show-CleanupMenu.+?Show-CleanupFunctionScreen\s+-Mode\s+[$]selectedMode.+?[$]chooser\.Tag\s*=\s*"Started"',
+    '(?s)function\s+Show-DeepCleanupSelection.+?RestoreExactSelection.+?SuggestedIds\s+-contains\s+\[string\][$]cleanupItem\.Id',
+    '(?s)function\s+Show-DeepCleanupSelection.+?Navigation="Close".+?Navigation="Back".+?Navigation="Continue"',
+    '(?s)function\s+Start-CleanupDeep.+?cleanupPreviousSession.+?SelectedIds.+?DryRunMode',
+    '(?s)function\s+Show-CleanupResultCenter.+?[$]dialog\.Tag\s*=\s*"Close".+?[$]close\.Tag\s*=\s*"Close".+?[$]back\.Tag\s*=\s*"Back"',
+    '(?s)function\s+Restore-CleanupPreExecutionSession.+?[$]Result\.ScanSnapshot.+?[$]Result\.CleanupItems.+?-RestoreExactSelection',
+    '(?s)switch\s*\([$]nextChoice\).+?"Back"\s*\{\s*Restore-CleanupPreExecutionSession',
+    '(?s)function\s+Complete-CleanupRemediation.+?Start-CleanupDeep.+?-ReturnNavigationResult.+?if\s*\(\[string\][$]navigation\s+-eq\s+"Back"\)\s*\{\s*continue\s*\}',
+    '(?s)function\s+Complete-CleanupRemediation.+?Show-LicenseScopeChooser\s+-Mode\s+"Restore".+?__CloseWorkflow.+?Start-CleanupRestore\s+-Scope\s+[$]restoreScope\s+-ReturnNavigationResult',
+    '(?s)function\s+Show-ThirdPartyAssessmentResults.+?Navigation="Close".+?Back=[$]true.+?Navigation="Back"',
+    '(?s)function\s+Complete-CleanupScan.+?assessmentChoice\.Back.+?Open-CleanupEntrySession'
+)) {
+    Assert-SourcePattern $text $navigationPattern "Thiếu hợp đồng điều hướng Trở về giữ nguyên phiên: $navigationPattern"
+}
+foreach ($officialNavigationPattern in @(
+    'function\s+Get-GuiSoftwareOfficialNavigationTarget',
+    'https://www\.bing\.com/search\?q=',
+    '\[Uri\]::EscapeDataString\([$]query\)',
+    'Mode\s*=\s*''VerifiedDirect''',
+    'Mode\s*=\s*''SearchFallback''',
+    'function\s+Open-GuiExternalHttpsTarget',
+    'software\.results\.openOrFindOfficial'
+)) {
+    Assert-SourcePattern $text $officialNavigationPattern "Thiếu hợp đồng mở/tìm trang hãng an toàn: $officialNavigationPattern"
+}
+if ($guiAst) {
+    $assessmentFunction = @($guiAst.FindAll({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Show-ThirdPartyAssessmentResults'
+    }, $true) | Select-Object -First 1)
+    if ($assessmentFunction.Count -eq 1 -and [string]$assessmentFunction[0].Extent.Text -match 'Start-Process\s+-FilePath') {
+        Add-Failure 'Nút trang hãng vẫn mở URL trực tiếp thay vì qua bộ kiểm tra HTTPS/Offline dùng chung.'
+    }
+}
+if ($text -match '(?m)^\s*\[void\][(]?[$](?!form\b)(?:dialog|chooser|screen|scopeDialog|picker)\.ShowDialog\([$]form\)') {
+    Add-Failure 'Cửa sổ con vẫn gắn thẳng vào dashboard, nên nút Trở về có thể làm mất màn hình cha.'
+}
+if ($text -match '[$]dialog\.Close\(\)\s*;\s*Invoke-ResultCenterItemAction' -or
+    $text -match '[$]dialog\.Close\(\)\s*;\s*\[void\]\(Show-CleanupFunctionScreen\s+-Mode\s+"Backup"\)') {
+    Add-Failure 'Luồng con vẫn đóng màn hình trước khi biết người dùng có chọn Trở về hay không.'
 }
 foreach ($helperPattern in @(
     'function\s+Compare-ToolResultCenterItems',
