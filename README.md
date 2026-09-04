@@ -12,7 +12,7 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 - **Báo cáo và hỗ trợ:** báo cáo HTML, PDF, JSON, XML; tạo gói hỗ trợ có che thông tin nhạy cảm và hỗ trợ quản lý nhiều máy.
 - **Riêng tư và toàn vẹn:** hoạt động Offline theo mặc định, không tự gửi dữ liệu ra Internet; kiểm tra chữ ký và SHA-256 trước các thao tác quan trọng.
 
-`Chưa xác minh` chỉ có nghĩa là Tool chưa đủ dữ liệu để kết luận, không đồng nghĩa phần mềm vi phạm bản quyền. Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
+Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
 
 ## Tải và bắt đầu
 

@@ -11,7 +11,6 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 
 ## Cập nhật lịch sử và bài giới thiệu
 
-- Khôi phục lịch sử đầy đủ của các phiên bản công khai từ v1.0 đến v5.0 trong cả tài liệu tiếng Việt và tiếng Anh.
 - Viết lại mục v5.0 theo hướng ngắn gọn, chỉ nêu các nâng cấp cốt lõi và xác định rõ v5.0 là bản nâng cấp tiếp theo của v4.9.
 - Đồng bộ bài giới thiệu GitHub theo cùng nội dung; không tạo phiên bản mới hoặc nhãn bản dựng nội bộ.
 
@@ -19,7 +18,6 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 
 - Ba mức quét Quick, Standard và Deep với ngân sách và phạm vi an toàn.
 - Danh sách phần mềm cần xem xét được sắp xếp **Cao → Trung bình → Thấp**.
-- Phần mềm trả phí, thuê bao hoặc dùng thử chưa xác minh luôn được nhắc kiểm tra giấy phép, không tự kết luận vi phạm.
 - Thành phần hệ thống, runtime, codec, extension nền, trình cài đặt, add-in, gói hỗ trợ và trình gỡ driver chỉ nằm trong kiểm kê/báo cáo, không xuất hiện ở cửa sổ xử lý.
 - Catalog tích hợp và Online `1.6.3.0` có 94 nhóm sản phẩm, được ký CMS, kiểm tra schema và chống hạ phiên bản.
 - Khắc phục tách riêng Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm.
@@ -44,4 +42,3 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 
 - Đây không phải danh tính code-signing public-CA.
 - Ứng viên Microsoft Store được chuẩn bị riêng và chưa thay thế bản ManagedSigned hiện tại.
-- `Chưa xác minh` không đồng nghĩa phần mềm vi phạm; cần kiểm tra giấy phép, tài khoản hoặc chứng từ chính thức.
