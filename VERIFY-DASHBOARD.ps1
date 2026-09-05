@@ -939,24 +939,34 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     }
     if ($guideViText -notmatch 'Trung tâm có tám lựa chọn' -or
         $guideEnText -notmatch 'The center contains eight actions' -or
+        $guideViText -notmatch '(?m)^##\s+Tổng quan\s*$' -or
+        $guideEnText -notmatch '(?m)^##\s+Overview\s*$' -or
         $guideViText -notmatch 'trusted-plugin-publishers-v1\.json' -or
         $guideEnText -notmatch 'trusted-plugin-publishers-v1\.json' -or
         $guideViText -notmatch 'không phải lỗi ứng dụng' -or
         $guideEnText -notmatch 'not an application failure') {
-        Add-Failure 'HDSD chưa mô tả đủ tám tác vụ Báo cáo hoặc chưa giải thích khóa tin cậy plugin.'
+        Add-Failure 'HDSD thiếu Tổng quan, chưa mô tả đủ tám tác vụ Báo cáo hoặc chưa giải thích khóa tin cậy plugin.'
+    }
+    if ($guideViText -match 'Phiên bản ManagedSigned:|Ứng viên Microsoft Store:' -or
+        $guideEnText -match 'ManagedSigned version:|Microsoft Store candidate:') {
+        Add-Failure 'Phần Tổng quan HDSD còn metadata phiên bản hoặc ứng viên phát hành.'
+    }
+    if ($historyText -match '(?m)^Phiên bản hiện tại:' -or
+        $historyText -match 'ProductVersion/FileVersion kỹ thuật:' -or
+        $historyEnText -match '(?m)^Current release:' -or
+        $historyEnText -match 'Technical ProductVersion/FileVersion:') {
+        Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
     if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
-        $historyText -notmatch 'ProductVersion/FileVersion kỹ thuật:\s*`5\.0\.0\.0`' -or
-        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+31/08/2026\s*$' -or
+        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+05/09/2026\s*$' -or
         $historyText -notmatch 'là bản nâng cấp tiếp theo của v4\.9, tập trung nâng cấp vào các phần cốt lõi' -or
         $historyText -notmatch 'Ba mức quét Quick, Standard và Deep' -or
         $historyText -notmatch 'Offline theo mặc định' -or
-        $historyText -notmatch 'ManagedSigned' -or
         $historyText -notmatch 'Chỉ thêm mục lịch sử khi tên hoặc số phiên bản công khai chính thức thay đổi') {
         Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
     }
     $requiredHistoryHeadings = @(
-        '## Tool Kiểm Tra v5.0 — 31/08/2026',
+        '## Tool Kiểm Tra v5.0 — 05/09/2026',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -999,7 +1009,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## Tool Kiểm Tra v5.0 — August 31, 2026',
+        '## Tool Kiểm Tra v5.0 — September 5, 2026',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',
