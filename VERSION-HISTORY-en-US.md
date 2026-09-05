@@ -18,6 +18,8 @@ Tool Kiểm Tra v5.0 is the next upgrade after v4.9, focused on improving the co
 - **Reports and support:** HTML, PDF, JSON, and XML reports; a redacted support bundle and multi-computer management support.
 - **Privacy and integrity:** Offline by default with no automatic Internet upload; signature and SHA-256 checks before important operations.
 
+`Unverified` does not mean that software violates its licence.
+
 ## v4.9.0.0 — August 22, 2026
 
 - **More accurate recognition:** inventories Registry, AppX/MSIX, WinGet, shortcuts, package managers, and bounded portable locations; distinguishes confirmed installations from portable/residual files and merges duplicate records by product family.

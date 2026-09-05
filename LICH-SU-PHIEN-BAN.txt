@@ -18,6 +18,8 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 - **Báo cáo và hỗ trợ:** báo cáo HTML, PDF, JSON, XML; tạo gói hỗ trợ có che thông tin nhạy cảm và hỗ trợ quản lý nhiều máy.
 - **Riêng tư và toàn vẹn:** hoạt động Offline theo mặc định, không tự gửi dữ liệu ra Internet; kiểm tra chữ ký và SHA-256 trước các thao tác quan trọng.
 
+`Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
+
 ## v4.9.0.0 — 22/08/2026
 
 - **Nhận diện chính xác hơn:** kiểm kê Registry, AppX/MSIX, Winget, shortcut, trình quản lý gói và vùng portable; phân biệt cài đặt đã xác nhận, portable và tệp còn sót; gộp bản ghi trùng theo họ sản phẩm.
