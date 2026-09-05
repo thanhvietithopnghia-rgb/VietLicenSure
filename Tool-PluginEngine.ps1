@@ -118,6 +118,14 @@ function Test-ToolPluginDirectory {
             } elseif (Test-Path -LiteralPath $fullPath -PathType Container) {
                 $acl = Get-Acl -LiteralPath $fullPath -ErrorAction Stop
                 $allowedSids = @("S-1-5-32-544", "S-1-5-18")
+                $userScopedData = [string]::Equals([string]$env:TOOL_DATA_SCOPE, 'User', [StringComparison]::OrdinalIgnoreCase)
+                $dataOwnerSid = ([string]$env:TOOL_DATA_OWNER_SID).Trim()
+                $currentUserSid = try { [Security.Principal.WindowsIdentity]::GetCurrent().User.Value } catch { '' }
+                if ($userScopedData -and
+                    -not [string]::IsNullOrWhiteSpace($dataOwnerSid) -and
+                    [string]::Equals($dataOwnerSid, $currentUserSid, [StringComparison]::OrdinalIgnoreCase)) {
+                    $allowedSids += $dataOwnerSid
+                }
                 if (-not $acl.AreAccessRulesProtected) {
                     [void]$errors.Add((Get-ToolTextCurrent "foundation.plugin.directoryAclInherited"))
                 }

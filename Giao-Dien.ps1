@@ -657,6 +657,14 @@ function Invoke-DashboardRootAction {
     Reset-DashboardWorkflowNavigation
     try {
         & $Action
+    } catch {
+        $message = $_.Exception.Message
+        Write-ProgressLog $message
+        [System.Windows.Forms.MessageBox]::Show(
+            $message,
+            (Get-DashboardText 'common.errorTitle'),
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
     } finally {
         Reset-DashboardWorkflowNavigation
     }

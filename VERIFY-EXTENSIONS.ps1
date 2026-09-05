@@ -9,6 +9,9 @@ $failures = New-Object System.Collections.Generic.List[string]
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v5.0-extensions-" + [Guid]::NewGuid().ToString("N"))
 $previousSecureLaunch = [string]$env:TOOL_SECURE_LAUNCH
 $previousPluginDir = [string]$env:TOOL_PLUGIN_DIR
+$previousDataRoot = [string]$env:TOOL_DATA_ROOT
+$previousDataScope = [string]$env:TOOL_DATA_SCOPE
+$previousDataOwnerSid = [string]$env:TOOL_DATA_OWNER_SID
 $previousTimelinePath = [string]$env:TOOL_TIMELINE_PATH
 $previousTimelineKeyPath = [string]$env:TOOL_TIMELINE_KEY_PATH
 $previousSecureRuntimeDir = [string]$env:TOOL_SECURE_RUNTIME_DIR
@@ -36,6 +39,33 @@ try {
     $mockProtectedRuntime = Join-Path $tempRoot "mock-programdata-runtime"
     New-Item -ItemType Directory -Path $mockProtectedRuntime -Force | Out-Null
     $env:TOOL_SECURE_RUNTIME_DIR = $mockProtectedRuntime
+    $currentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+    $inheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+    $pluginAcl = New-Object Security.AccessControl.DirectorySecurity
+    $pluginAcl.SetAccessRuleProtection($true, $false)
+    $pluginAcl.SetOwner($currentUserSid)
+    foreach ($sid in @(
+        (New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')),
+        (New-Object Security.Principal.SecurityIdentifier('S-1-5-18')),
+        $currentUserSid)) {
+        $pluginAcl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($sid, 'FullControl', $inheritance, 'None', 'Allow')))
+    }
+    Set-Acl -LiteralPath $pluginDir -AclObject $pluginAcl -ErrorAction Stop
+    $env:TOOL_SECURE_LAUNCH = '1'
+    $env:TOOL_DATA_ROOT = $tempRoot
+    $env:TOOL_DATA_SCOPE = 'User'
+    $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
+    $userScopePluginDirectory = Test-ToolPluginDirectory -Path $pluginDir
+    if (-not $userScopePluginDirectory.Valid -or -not $userScopePluginDirectory.Protected) {
+        Add-Failure 'Secure GUI user-scope plugin ACL was rejected.'
+    }
+    $env:TOOL_DATA_OWNER_SID = 'S-1-5-18'
+    $mismatchedOwnerPluginDirectory = Test-ToolPluginDirectory -Path $pluginDir
+    if ($mismatchedOwnerPluginDirectory.Valid -or $mismatchedOwnerPluginDirectory.Protected) {
+        Add-Failure 'Secure plugin ACL trusted a data owner SID that did not match the current user.'
+    }
+    $env:TOOL_SECURE_LAUNCH = ''
+
     $pdfProfileState = New-ToolPdfProfileDirectory
     $expectedPdfRoot = Get-ToolPdfProfileRoot
     $profileFull = [IO.Path]::GetFullPath([string]$pdfProfileState.ProfilePath)
@@ -179,6 +209,9 @@ $validation = Test-ToolReportEnvelope -Report $json -ExpectedReportKind "Certifi
 } finally {
     $env:TOOL_SECURE_LAUNCH = $previousSecureLaunch
     $env:TOOL_PLUGIN_DIR = $previousPluginDir
+    $env:TOOL_DATA_ROOT = $previousDataRoot
+    $env:TOOL_DATA_SCOPE = $previousDataScope
+    $env:TOOL_DATA_OWNER_SID = $previousDataOwnerSid
     $env:TOOL_TIMELINE_PATH = $previousTimelinePath
     $env:TOOL_TIMELINE_KEY_PATH = $previousTimelineKeyPath
     $env:TOOL_SECURE_RUNTIME_DIR = $previousSecureRuntimeDir

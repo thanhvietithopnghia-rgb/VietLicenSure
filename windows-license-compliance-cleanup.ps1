@@ -5736,15 +5736,6 @@ if ($script:SelectionAccepted -and $unknownSelectedCleanupIds.Count -gt 0) {
 }
 $changedSelectedCleanupIds = @()
 if ($script:SelectionAccepted) {
-    $currentCandidateSetSha256 = Get-CleanupCandidateSetSha256 -Candidates $cleanupItems
-    if (-not [string]::Equals($currentCandidateSetSha256, [string]$script:SelectedSourceCandidateSetSha256, [StringComparison]::OrdinalIgnoreCase)) {
-        $script:SelectionAccepted = $false
-        $script:SelectionErrorCode = 'SelectionCandidateSetMismatch'
-        $script:SelectionErrorDetail = $currentCandidateSetSha256
-        $selectedCleanupIds = @()
-    }
-}
-if ($script:SelectionAccepted) {
     $changedSelectedCleanupIds = @($selectedCleanupIds | Where-Object {
         $selectedId = [string]$_
         $currentCandidate = @($cleanupItems | Where-Object { [string]::Equals([string]$_.Id, $selectedId, [StringComparison]::OrdinalIgnoreCase) } | Select-Object -First 1)

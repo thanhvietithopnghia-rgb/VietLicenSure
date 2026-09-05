@@ -1122,6 +1122,7 @@ foreach ($navigationPattern in @(
     'function\s+Show-DashboardModalDialog',
     'function\s+Close-DashboardWorkflowSession',
     'function\s+Invoke-DashboardRootAction',
+    '(?s)function\s+Invoke-DashboardRootAction.+?catch\s*\{.+?MessageBox.+?common\.errorTitle',
     '[$]script:dashboardDialogStack\.Push\([$]Dialog\)',
     'return\s+[$]Dialog\.ShowDialog\([$]owner\)',
     '(?s)function\s+Close-DashboardWorkflowSession.+?dashboardWorkflowCloseRequested\s*=\s*[$]true.+?dashboardDialogStack\.ToArray\(\).+?[$]openDialog\.Close\(\)',
