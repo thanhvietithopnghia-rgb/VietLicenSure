@@ -8420,6 +8420,17 @@ function Start-AssuranceReport {
     }
 }
 
+function Show-PluginTrustedPublisherPolicyRequired {
+    param([Parameter(Mandatory = $true)][string]$PolicyPath)
+
+    [System.Windows.Forms.MessageBox]::Show(
+        (Get-DashboardText "plugin.trustedPublisherPolicyMissing" @($PolicyPath)),
+        (Get-DashboardText "plugin.trustedPublisherPolicyMissingTitle"),
+        [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
+    Write-ProgressLog (Get-DashboardText "plugin.trustedPublisherPolicyMissingLog" @($PolicyPath))
+}
+
 function Install-PluginFromDialog {
     $pluginDirectory = Get-ToolPluginDirectory
     try {
@@ -8431,7 +8442,8 @@ function Install-PluginFromDialog {
         $requireTrustedPluginSignature = [bool]($env:TOOL_SECURE_LAUNCH -eq '1')
         $trustedPluginSigners = @(Get-ToolPluginTrustedSignerCertificateSha256 -PluginDirectory $directoryState.Path)
         if ($requireTrustedPluginSignature -and $trustedPluginSigners.Count -eq 0) {
-            throw (Get-DashboardText 'plugin.trustedPublisherPolicyMissing' @((Get-ToolPluginPublisherTrustPath -PluginDirectory $directoryState.Path)))
+            Show-PluginTrustedPublisherPolicyRequired -PolicyPath (Get-ToolPluginPublisherTrustPath -PluginDirectory $directoryState.Path)
+            return
         }
         $picker = New-Object System.Windows.Forms.OpenFileDialog
         $picker.Title = Get-DashboardText "plugin.pickerTitle"
@@ -8442,7 +8454,8 @@ function Install-PluginFromDialog {
         $catalogResult = $null
         if ($catalogInstall) {
             if ($trustedPluginSigners.Count -eq 0) {
-                throw (Get-DashboardText 'plugin.trustedPublisherPolicyMissing' @((Get-ToolPluginPublisherTrustPath -PluginDirectory $directoryState.Path)))
+                Show-PluginTrustedPublisherPolicyRequired -PolicyPath (Get-ToolPluginPublisherTrustPath -PluginDirectory $directoryState.Path)
+                return
             }
             $catalogResult = Read-ToolPluginCatalog -Path $picker.FileName `
                 -TrustedSignerCertificateSha256 $trustedPluginSigners

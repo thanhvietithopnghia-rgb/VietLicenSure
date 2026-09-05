@@ -937,6 +937,14 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
     if ($guideViText -match '(?im)^\s*(Bản|Phiên bản)\s+v?\d' -or $guideEnText -match '(?im)^\s*(Version|Release)\s+v?\d') {
         Add-Failure 'HDSD còn trộn nhật ký cập nhật phiên bản thay vì chỉ hướng dẫn chức năng.'
     }
+    if ($guideViText -notmatch 'Trung tâm có tám lựa chọn' -or
+        $guideEnText -notmatch 'The center contains eight actions' -or
+        $guideViText -notmatch 'trusted-plugin-publishers-v1\.json' -or
+        $guideEnText -notmatch 'trusted-plugin-publishers-v1\.json' -or
+        $guideViText -notmatch 'không phải lỗi ứng dụng' -or
+        $guideEnText -notmatch 'not an application failure') {
+        Add-Failure 'HDSD chưa mô tả đủ tám tác vụ Báo cáo hoặc chưa giải thích khóa tin cậy plugin.'
+    }
     if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
         $historyText -notmatch 'ProductVersion/FileVersion kỹ thuật:\s*`5\.0\.0\.0`' -or
         $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+31/08/2026\s*$' -or
@@ -1099,6 +1107,11 @@ Assert-SourcePattern $text '[$]privacyArgument\s*=\s*if\s*\(\s*[$]redactSensitiv
 Assert-SourcePattern $text '[$]applyButton\.Text\s*=\s*Get-DashboardText\s+"dashboard\.settings\.apply"' 'Cài đặt thiếu nút Áp dụng có nhãn localization.'
 Assert-SourcePattern $text '[$]dialog\.AcceptButton\s*=\s*[$]applyButton' 'Nút Áp dụng chưa là hành động chính trong Cài đặt.'
 Assert-SourcePattern $text 'function\s+Invoke-AssuranceCenterAction' 'Thiếu bộ định tuyến tám tác vụ Báo cáo.'
+Assert-SourcePattern $text '(?s)function\s+Show-PluginTrustedPublisherPolicyRequired.+?plugin\.trustedPublisherPolicyMissing.+?MessageBoxIcon\]::Information.+?plugin\.trustedPublisherPolicyMissingLog' 'Thiếu thông báo thông tin an toàn khi chưa cấu hình nhà phát hành plugin.'
+Assert-SourcePattern $text '(?s)if\s*\([$]requireTrustedPluginSignature\s+-and\s+[$]trustedPluginSigners\.Count\s+-eq\s+0\)\s*\{\s*Show-PluginTrustedPublisherPolicyRequired.+?return\s*\}' 'Luồng cài plugin chưa dừng an toàn bằng hướng dẫn rõ ràng khi thiếu chính sách nhà phát hành.'
+if ($text -match "throw\s+\(Get-DashboardText\s+'plugin\.trustedPublisherPolicyMissing'") {
+    Add-Failure 'Thiếu chính sách nhà phát hành plugin vẫn bị trình bày như lỗi cài đặt.'
+}
 Assert-SourcePattern $text '"Reports"\s*\{\s*@\(\)\s*\}' 'Mục Báo cáo vẫn chỉ hiển thị tile số 10.'
 Assert-SourcePattern $text '[$]menuCaption\.ForeColor\s*=\s*[$]primary' 'Tiêu đề Trung tâm báo cáo chưa dùng màu tiêu đề chung.'
 Assert-SourcePattern $text 'Kind\s*=\s*"ReportAction"' 'Các ô Trung tâm báo cáo chưa có metadata giao diện riêng.'

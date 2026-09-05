@@ -34,10 +34,10 @@ if ($errors.Count -eq 0) {
     if (Test-ToolAssistantKnowledgeSignature -ContentBytes $tamperedBytes -SignatureBytes $signatureBytes) {
         Add-AssistantVerificationError 'Detached signature accepted tampered knowledge bytes.'
     }
-    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.5\.1"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
+    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.5\.2"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
     if (Test-ToolAssistantKnowledge -Knowledge $legacyKnowledge) { Add-AssistantVerificationError 'An obsolete cached knowledge file was not rejected.' }
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
-    $compatibleFutureKnowledge.KnowledgeVersion = '1.5.2'
+    $compatibleFutureKnowledge.KnowledgeVersion = '1.5.3'
     $compatibleFutureKnowledge.UpdatedAtUtc = '2026-08-22T07:01:00Z'
     $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.0'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
@@ -131,6 +131,8 @@ if ($errors.Count -eq 0) {
         @{ Question='pdf không tạo được'; Entry='report-pdf-failure' }
         @{ Question='cách xóa cấu hình máy chủ'; Entry='enterprise-server-management' }
         @{ Question='cách ghép nối máy trạm'; Entry='enterprise-client-management' }
+        @{ Question='tạo gói hỗ trợ đã che định danh'; Entry='support-bundle' }
+        @{ Question='chưa có chính sách nhà phát hành plugin'; Entry='plugin-management' }
         @{ Question='tool không mở được file exe'; Entry='launch-troubleshooting' }
         @{ Question='online không đồng bộ được'; Entry='online-troubleshooting' }
         @{ Question='phần mềm miễn phí mà cũng cần hóa đơn license à'; Entry='license-model-evidence' }
@@ -175,6 +177,8 @@ if ($errors.Count -eq 0) {
         @{ Question='doc bao cao'; Expected='bốn lớp' },
         @{ Question='chua du bang chung'; Expected='kiểm tra thủ công' },
         @{ Question='cach dung chuc nang so 8'; Expected='Doanh nghiệp' },
+        @{ Question='tạo gói hỗ trợ đã che định danh'; Expected='xem trước' },
+        @{ Question='chưa có chính sách nhà phát hành plugin'; Expected='không phải lỗi ứng dụng' },
         @{ Question='tool co sua crack tu dong khong'; Expected='người dùng chủ động' },
         @{ Question='cach nau bun bo hue'; Expected='ngoài phạm vi' }
         @{ Question='báo cáo có khẳng định đk k'; Expected='mô hình' }
@@ -182,7 +186,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0.0.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='26/08/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='05/09/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -240,8 +244,8 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0 on 17 July 2026' -or
-        $releaseDateVi -notmatch 'v5\.0\.0\.0.*26/08/2026' -or
-        $releaseDateEn -notmatch 'v5\.0\.0\.0.*26 August 2026' -or
+        $releaseDateVi -notmatch 'v5\.0\.0\.0.*05/09/2026' -or
+        $releaseDateEn -notmatch 'v5\.0\.0\.0.*5 September 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's written approval" -or

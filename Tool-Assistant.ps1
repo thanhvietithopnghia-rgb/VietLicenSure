@@ -594,8 +594,9 @@ function Get-ToolAssistantPriorityEntryId {
     if ($QueryKey -match '(?:online).*(?:loi|that bai|khong ket noi|khong cap nhat|khong dong bo)|(?:khong ket noi|khong cap nhat|khong dong bo).*(?:online|internet)') { return 'online-troubleshooting' }
     if ($QueryKey -match '(?:may chu|server).*(?:tao cau hinh|xoa cau hinh|khoi dong|dung may chu|ma ghep noi|url acl|firewall)|(?:tao|xoa|khoi dong|dung).*(?:cau hinh may chu|server)') { return 'enterprise-server-management' }
     if ($QueryKey -match '(?:may tram|client|workstation).*(?:ghep noi|gui bao cao|agent|tu tim)|(?:ghep noi|gui bao cao|chay agent).*(?:may tram|client)') { return 'enterprise-client-management' }
+    if ($QueryKey -match '(?:goi ho tro|support bundle).*(?:tao|xem truoc|zip|che|redact|gui|bao mat|privacy)|(?:tao|xem truoc).*(?:goi ho tro|support bundle)') { return 'support-bundle' }
     if ($QueryKey -match '(?:kenh ho tro|lien he tac gia|email ho tro|zalo ho tro|can ho tro tool)') { return 'support-channel' }
-    if ($QueryKey -match '(?:plugin|quy tac mo rong).*(?:cai|kiem tra|danh gia|json|thu muc|an toan)|(?:cai|danh gia).*(?:plugin)') { return 'plugin-management' }
+    if ($QueryKey -match '(?:plugin|quy tac mo rong).*(?:cai|kiem tra|danh gia|json|thu muc|an toan|chinh sach|nha phat hanh|publisher|chu ky|fingerprint|bi chan|khong cai duoc)|(?:cai|danh gia|chinh sach|publisher).*(?:plugin)') { return 'plugin-management' }
     if ($QueryKey -match '(?:chung chi|certificate|authenticode).*(?:windows|office|kiem tra|xac minh)|(?:kiem tra).*(?:chung chi so|certificate)') { return 'certificate-audit' }
     if ($QueryKey -match '(?:(?:mien phi|freeware|nguon mo|open source).*(?:hoa don|chung tu|giay phep|license|ban quyen)|(?:hoa don|chung tu|giay phep|license).*(?:mien phi|freeware|nguon mo|open source)|(?:mo hinh giay phep|license model).*(?:bang chung|dau hieu|evidence|trang thai)|(?:doi chieu).*(?:mo hinh).*(?:trang thai|bang chung).*(?:ban quyen|phan mem))') { return 'license-model-evidence' }
     if ($QueryKey -match '\b(?:winrar|mathtype)\b') { return 'commercial-software-review' }
