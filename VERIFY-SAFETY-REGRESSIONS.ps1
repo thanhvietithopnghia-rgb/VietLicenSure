@@ -545,7 +545,7 @@ No licenses found.
     if ($cleanup.Text -notmatch '/dstatusall' -or $cleanup.Text -notmatch 'selectedOfficeTargetIds' -or $cleanup.Text -notmatch 'Get-AllCleanupCandidates') {
         Fail 'Cleanup Office chưa quét /dstatusall, chọn theo SKU hoặc tái tạo danh sách tồn dư sau hậu kiểm.'
     }
-    foreach ($requiredToken in @('Get-InstalledSoftwareInventory','Get-ThirdPartyStrongEvidence','Get-ThirdPartyLicenseCandidates','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyHostsUpdate','Connect-ThirdPartyApplicationsToCandidates','ThirdPartyLicenseReset','ThirdPartyLicenseState','ThirdPartyUninstallEntry','ThirdPartyHostsEntry','ThirdPartyFirewallBlock','FirewallNotice','RemoveScopedFirewallBlock','ThirdPartyOfficialSource','ThirdPartyGuidedRemediation','ThirdPartyCompleteUninstall','ManualUninstallAllowed','CompleteApplicationUninstall','FileArtifact','CleanupFinding','GuidanceOnly','GuidedActionRequired','PostVerificationItems','PostVerificationOutcome','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome','ThirdPartyRemediationFindingCount','SystemChangeCount','ThirdPartyExecutionResults','SelectionAccepted','SelectionContainsUnknownIds','AllowCurrentUserForUserScope','SelectionSchemaInvalid','SelectedThirdPartyResolvedCount','SelectedThirdPartyRemainingCount','PostCheckStatus','RemediationFailed','PolicyBlocked','Test-CleanupKnownActivatorText','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','ManualArtifactQuarantineOnly','Win32_StartupCommand','erturk-dev\.netlify\.app/run','Get-OfficialLicensePostCheck','OfficiallyLicensed','VendorConfirmed','OpenWindowsActivation','OpenOfficeActivation','OpenVendorActivation','OpenVendorRepair','ReviewVendorActivation')) {
+    foreach ($requiredToken in @('Get-InstalledSoftwareInventory','Get-ThirdPartyStrongEvidence','Get-ThirdPartyLicenseCandidates','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyHostsUpdate','Connect-ThirdPartyApplicationsToCandidates','ThirdPartyLicenseReset','ThirdPartyLicenseState','ThirdPartyUninstallEntry','ThirdPartyHostsEntry','ThirdPartyFirewallBlock','FirewallNotice','RemoveScopedFirewallBlock','ThirdPartyOfficialSource','ThirdPartyGuidedRemediation','ThirdPartyCompleteUninstall','ManualUninstallAllowed','CompleteApplicationUninstall','FileArtifact','CleanupFinding','GuidanceOnly','GuidedActionRequired','PostVerificationItems','PostVerificationOutcome','Get-CleanupPostVerificationItems','Test-CleanupCandidateMatchesSelectedSnapshot','Get-CleanupPostVerificationOutcome','ThirdPartyRemediationFindingCount','SystemChangeCount','ThirdPartyExecutionResults','SelectionAccepted','SelectionContainsUnknownIds','AllowCurrentUserForUserScope','SelectionSchemaInvalid','SelectedThirdPartyResolvedCount','SelectedThirdPartyRemainingCount','PostCheckStatus','RemediationFailed','PolicyBlocked','Test-CleanupKnownActivatorText','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','ManualArtifactQuarantineOnly','Win32_StartupCommand','erturk-dev\.netlify\.app/run','Get-OfficialLicensePostCheck','OfficiallyLicensed','VendorConfirmed','OpenWindowsActivation','OpenOfficeActivation','OpenVendorActivation','OpenVendorRepair','ReviewVendorActivation')) {
         if ($cleanup.Text -notmatch [regex]::Escape($requiredToken)) { Fail "Thiếu thành phần khắc phục phần mềm bên thứ ba: $requiredToken" }
     }
     if ($cleanup.Text -match 'SelectionCandidateSetMismatch' -or
@@ -593,7 +593,7 @@ No licenses found.
             if (-not $inventoryFunctionAst) { throw "Missing function: $inventoryFunctionName" }
             Invoke-Expression ('function script:' + $inventoryFunctionName + ' ' + $inventoryFunctionAst.Body.Extent.Text)
         }
-        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
+        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Test-CleanupCandidateMatchesSelectedSnapshot','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
             Import-CleanupFunctionForFixture $name
         }
         $broadRootFixture = [pscustomobject]@{ InstallLocation=$env:ProgramFiles; RepresentativePath='' }
@@ -970,6 +970,43 @@ No licenses found.
         if ($dryRunFirewallPlan.Count -ne 3 -or
             @($dryRunFirewallPlan | Where-Object { $_.ActionCode -eq 'RemoveScopedFirewallBlock' -and -not [bool]$_.Restorable }).Count -ne 1) {
             Fail 'Dry Run chưa công bố đúng hành động Firewall manual-only, không tự khôi phục.'
+        }
+
+        # A fresh post-check can assign a new ID to the same application row.
+        # Keep only the lineage of the exact action family/application selected
+        # by the user; never pull an unrelated application or a broader action
+        # family into the next remediation step.
+        $selectedLineageSnapshot = [pscustomobject]@{
+            Id='selected-original'; Type='File'; Kind='ThirdPartyUnauthorizedArtifact'; ComponentScope='ThirdParty'
+            Name='Selected app artifact'; Location='C:\Fixture\Selected\patch.dll'; TargetId='selected-target'
+            VendorScope='Example'; ApplicationIds=@('selected-app'); Detail='fixture'
+        }
+        $refreshedSelectedLineage = [pscustomobject]@{
+            Id='selected-refreshed'; Type='File'; Kind='ThirdPartyUnauthorizedArtifact'; ComponentScope='ThirdParty'
+            Name='Selected app artifact refreshed'; Location='C:\Fixture\Selected\patch-new.dll'; TargetId='selected-target-new'
+            VendorScope='Example'; ApplicationIds=@('selected-app'); Detail='fixture refreshed'
+        }
+        $differentActionFamily = [pscustomobject]@{
+            Id='selected-guidance'; Type='Guidance'; Kind='ThirdPartyGuidedRemediation'; ComponentScope='ThirdParty'
+            Name='Selected app guidance'; Location=''; TargetId='selected-target-guidance'
+            VendorScope='Example'; ApplicationIds=@('selected-app'); Detail='fixture guidance'; GuidanceOnly=$true
+        }
+        $unrelatedApplication = [pscustomobject]@{
+            Id='unrelated-refreshed'; Type='File'; Kind='ThirdPartyUnauthorizedArtifact'; ComponentScope='ThirdParty'
+            Name='Unrelated app artifact'; Location='C:\Fixture\Other\patch.dll'; TargetId='other-target'
+            VendorScope='Example'; ApplicationIds=@('other-app'); Detail='unrelated fixture'
+        }
+        if (-not (Test-CleanupCandidateMatchesSelectedSnapshot -Candidate $refreshedSelectedLineage -SelectedCandidateSnapshots @($selectedLineageSnapshot)) -or
+            (Test-CleanupCandidateMatchesSelectedSnapshot -Candidate $differentActionFamily -SelectedCandidateSnapshots @($selectedLineageSnapshot)) -or
+            (Test-CleanupCandidateMatchesSelectedSnapshot -Candidate $unrelatedApplication -SelectedCandidateSnapshots @($selectedLineageSnapshot))) {
+            Fail 'Bộ lọc hậu kiểm không giữ đúng lineage ứng dụng/action family đã chọn.'
+        }
+        $lineagePostItems = @(Get-CleanupPostVerificationItems `
+            -CleanupItems @($refreshedSelectedLineage, $differentActionFamily, $unrelatedApplication) `
+            -SelectedIds @('selected-original') -SelectedCandidateSnapshots @($selectedLineageSnapshot))
+        if ($lineagePostItems.Count -ne 1 -or [string]$lineagePostItems[0].CandidateId -ne 'selected-refreshed' -or
+            -not [bool]$lineagePostItems[0].SuggestedForNextStep) {
+            Fail 'Hậu kiểm lựa chọn thủ công còn kéo mục không liên quan vào danh sách xử lý tiếp.'
         }
 
         $scopeCandidates = @(

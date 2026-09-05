@@ -1241,6 +1241,16 @@ $lastProgressHeartbeat = 0
 $taskStallWarningShown = $false
 $taskProgressPhaseIndex = -1
 $taskProgressTargetSeconds = 120
+$script:processingTimelineForm = $null
+$script:processingTimelineList = $null
+$script:processingTimelineStatus = $null
+$script:processingTimelineProgressBar = $null
+$script:processingTimelineElapsed = $null
+$script:processingTimelineStopButton = $null
+$script:processingTimelineCloseButton = $null
+$script:processingTimelineHeading = $null
+$script:processingTimelineCapturing = $false
+$script:currentTaskProgressEntries = New-Object System.Collections.Generic.List[object]
 $buttons = New-Object System.Collections.ArrayList
 $script:reportPresentationCache = @{}
 $script:updatingMainLayout = $false
@@ -2406,6 +2416,7 @@ function Set-DashboardLanguage {
     $copyLogButton.Text = Get-ToolText -Key "progress.copyAllLog" -Culture $Culture
     $openReportFolderButton.Text = Get-ToolText -Key "report.openFolder" -Culture $Culture
     $progressCaption.Text = Get-ToolText -Key "progress.caption" -Culture $Culture
+    Refresh-ProcessingTimelineLocalization
 
     $dashboardCards["Compatibility"].Caption.Text = Get-ToolText -Key "dashboard.windows" -Culture $Culture
     $dashboardCards["Architecture"].Caption.Text = Get-ToolText -Key "dashboard.office" -Culture $Culture
@@ -2996,12 +3007,199 @@ function Confirm-IntegrityForElevatedAction([string]$actionName) {
     return $false
 }
 
+function Test-ProcessingTimelineWindowOpen {
+    return [bool]($script:processingTimelineForm -and -not $script:processingTimelineForm.IsDisposed)
+}
+
+function Add-ProcessingTimelineEntry {
+    param(
+        [Parameter(Mandatory=$true)][string]$Message,
+        [string]$Timestamp = '',
+        [int]$Percent = -1
+    )
+    if (-not $script:processingTimelineCapturing -or -not (Test-ProcessingTimelineWindowOpen) -or
+        $null -eq $script:processingTimelineList -or $script:processingTimelineList.IsDisposed) { return }
+    if ([string]::IsNullOrWhiteSpace($Timestamp)) { $Timestamp = (Get-Date).ToString('HH:mm:ss') }
+    if ($Percent -lt 0) {
+        $Percent = if ($script:processingTimelineProgressBar) { [int]$script:processingTimelineProgressBar.Value } else { 0 }
+    }
+    $row = New-Object System.Windows.Forms.ListViewItem($Timestamp)
+    [void]$row.SubItems.Add(('{0}%' -f [Math]::Max(0, [Math]::Min(100, $Percent))))
+    [void]$row.SubItems.Add($Message)
+    [void]$script:processingTimelineList.Items.Add($row)
+    while ($script:processingTimelineList.Items.Count -gt 500) { $script:processingTimelineList.Items.RemoveAt(0) }
+    $row.EnsureVisible()
+}
+
+function Update-ProcessingTimelineProgress {
+    param([int]$Percent, [string]$Summary, [string]$ElapsedText = '')
+    if (-not (Test-ProcessingTimelineWindowOpen)) { return }
+    if ($script:processingTimelineProgressBar -and -not $script:processingTimelineProgressBar.IsDisposed) {
+        $script:processingTimelineProgressBar.Value = [Math]::Max(0, [Math]::Min(100, $Percent))
+    }
+    if ($script:processingTimelineStatus -and -not $script:processingTimelineStatus.IsDisposed -and
+        -not [string]::IsNullOrWhiteSpace($Summary)) {
+        $script:processingTimelineStatus.Text = $Summary
+    }
+    if ($script:processingTimelineElapsed -and -not $script:processingTimelineElapsed.IsDisposed) {
+        $script:processingTimelineElapsed.Text = $ElapsedText
+    }
+}
+
+function Refresh-ProcessingTimelineLocalization {
+    if (-not (Test-ProcessingTimelineWindowOpen)) { return }
+    $script:processingTimelineForm.Text = Get-DashboardText 'processingTimeline.title'
+    if ($script:processingTimelineHeading) { $script:processingTimelineHeading.Text = Get-DashboardText 'processingTimeline.heading' }
+    if ($script:processingTimelineList -and $script:processingTimelineList.Columns.Count -ge 3) {
+        $script:processingTimelineList.Columns[0].Text = Get-DashboardText 'processingTimeline.time'
+        $script:processingTimelineList.Columns[1].Text = Get-DashboardText 'processingTimeline.progress'
+        $script:processingTimelineList.Columns[2].Text = Get-DashboardText 'processingTimeline.step'
+    }
+    if ($script:processingTimelineStopButton) { $script:processingTimelineStopButton.Text = Get-DashboardText 'progress.stop' }
+    if ($script:processingTimelineCloseButton) { $script:processingTimelineCloseButton.Text = Get-DashboardText 'common.close' }
+}
+
+function Show-ProcessingTimelineWindow {
+    param([string]$Action)
+
+    if (-not (Test-ProcessingTimelineWindowOpen)) {
+        $timelineForm = New-Object System.Windows.Forms.Form
+        $timelineForm.StartPosition = 'CenterParent'
+        $timelineForm.FormBorderStyle = 'Sizable'
+        $timelineForm.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
+        $timelineForm.MinimumSize = New-Object System.Drawing.Size(720, 440)
+        $timelineForm.ClientSize = New-Object System.Drawing.Size(840, 500)
+        $timelineForm.ShowInTaskbar = $false
+        $timelineForm.Font = $fontNormal
+
+        $timelineHeading = New-Object System.Windows.Forms.Label
+        $timelineHeading.Font = $fontTitle
+        $timelineHeading.Location = New-Object System.Drawing.Point(20, 14)
+        $timelineHeading.Size = New-Object System.Drawing.Size(800, 34)
+        $timelineHeading.Anchor = 'Top,Left,Right'
+        $timelineHeading.TextAlign = 'MiddleLeft'
+        $timelineForm.Controls.Add($timelineHeading)
+
+        $timelineStatus = New-Object System.Windows.Forms.Label
+        $timelineStatus.Location = New-Object System.Drawing.Point(20, 52)
+        $timelineStatus.Size = New-Object System.Drawing.Size(710, 42)
+        $timelineStatus.Anchor = 'Top,Left,Right'
+        $timelineStatus.TextAlign = 'MiddleLeft'
+        $timelineStatus.AutoEllipsis = $true
+        $timelineForm.Controls.Add($timelineStatus)
+
+        $timelineElapsed = New-Object System.Windows.Forms.Label
+        $timelineElapsed.Location = New-Object System.Drawing.Point(735, 52)
+        $timelineElapsed.Size = New-Object System.Drawing.Size(85, 42)
+        $timelineElapsed.Anchor = 'Top,Right'
+        $timelineElapsed.TextAlign = 'MiddleRight'
+        $timelineForm.Controls.Add($timelineElapsed)
+
+        $timelineProgress = New-Object System.Windows.Forms.ProgressBar
+        $timelineProgress.Location = New-Object System.Drawing.Point(20, 98)
+        $timelineProgress.Size = New-Object System.Drawing.Size(800, 18)
+        $timelineProgress.Anchor = 'Top,Left,Right'
+        $timelineProgress.Minimum = 0
+        $timelineProgress.Maximum = 100
+        $timelineProgress.Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
+        $timelineForm.Controls.Add($timelineProgress)
+
+        $timelineList = New-Object System.Windows.Forms.ListView
+        $timelineList.Location = New-Object System.Drawing.Point(20, 128)
+        $timelineList.Size = New-Object System.Drawing.Size(800, 310)
+        $timelineList.Anchor = 'Top,Bottom,Left,Right'
+        $timelineList.View = [System.Windows.Forms.View]::Details
+        $timelineList.FullRowSelect = $true
+        $timelineList.GridLines = $true
+        $timelineList.HideSelection = $false
+        [void]$timelineList.Columns.Add('', 90)
+        [void]$timelineList.Columns.Add('', 82)
+        [void]$timelineList.Columns.Add('', 620)
+        $timelineForm.Controls.Add($timelineList)
+
+        $timelineClose = New-Object System.Windows.Forms.Button
+        $timelineClose.Location = New-Object System.Drawing.Point(700, 452)
+        $timelineClose.Size = New-Object System.Drawing.Size(120, 34)
+        $timelineClose.Anchor = 'Bottom,Right'
+        $timelineClose.Add_Click({
+            if (Test-ProcessingTimelineWindowOpen) { $script:processingTimelineForm.Close() }
+        })
+        $timelineForm.Controls.Add($timelineClose)
+
+        $timelineStop = New-Object System.Windows.Forms.Button
+        $timelineStop.Location = New-Object System.Drawing.Point(568, 452)
+        $timelineStop.Size = New-Object System.Drawing.Size(120, 34)
+        $timelineStop.Anchor = 'Bottom,Right'
+        $timelineStop.Add_Click({ Stop-ActiveTask })
+        $timelineForm.Controls.Add($timelineStop)
+
+        $script:processingTimelineForm = $timelineForm
+        $script:processingTimelineList = $timelineList
+        $script:processingTimelineStatus = $timelineStatus
+        $script:processingTimelineProgressBar = $timelineProgress
+        $script:processingTimelineElapsed = $timelineElapsed
+        $script:processingTimelineStopButton = $timelineStop
+        $script:processingTimelineCloseButton = $timelineClose
+        $script:processingTimelineHeading = $timelineHeading
+
+        $timelineList.Add_SizeChanged({
+            if ($script:processingTimelineList -and -not $script:processingTimelineList.IsDisposed -and
+                $script:processingTimelineList.Columns.Count -ge 3) {
+                $usable = [Math]::Max(360, $script:processingTimelineList.ClientSize.Width - 8)
+                $script:processingTimelineList.Columns[2].Width = [Math]::Max(180, $usable - 172)
+            }
+        })
+        $timelineForm.Add_FormClosed({
+            param($sender, $eventArgs)
+            if ($script:processingTimelineForm -and [object]::ReferenceEquals($sender, $script:processingTimelineForm)) {
+                $script:processingTimelineCapturing = $false
+                $script:processingTimelineForm = $null
+                $script:processingTimelineList = $null
+                $script:processingTimelineStatus = $null
+                $script:processingTimelineProgressBar = $null
+                $script:processingTimelineElapsed = $null
+                $script:processingTimelineStopButton = $null
+                $script:processingTimelineCloseButton = $null
+                $script:processingTimelineHeading = $null
+            }
+        })
+        Set-ToolWindowTheme -Root $timelineForm -Mode $script:dashboardTheme
+    } else {
+        $script:processingTimelineList.Items.Clear()
+    }
+
+    Refresh-ProcessingTimelineLocalization
+    $script:processingTimelineStatus.Text = if ([string]::IsNullOrWhiteSpace($Action)) {
+        Get-DashboardText 'processingTimeline.running'
+    } else {
+        Get-DashboardText 'processingTimeline.runningAction' @($Action)
+    }
+    $script:processingTimelineProgressBar.Value = [Math]::Max(0, [Math]::Min(100, [int]$progressBar.Value))
+    $script:processingTimelineElapsed.Text = [string]$elapsedLabel.Text
+    $script:processingTimelineStopButton.Enabled = [bool]($script:activeProcess -and -not $script:activeProcess.HasExited)
+    $script:processingTimelineCapturing = $true
+    foreach ($entry in @($script:currentTaskProgressEntries.ToArray())) {
+        Add-ProcessingTimelineEntry -Message ([string]$entry.Message) -Timestamp ([string]$entry.Timestamp) -Percent ([int]$entry.Percent)
+    }
+    if (-not $script:processingTimelineForm.Visible) {
+        $script:processingTimelineForm.Show($form)
+    } else {
+        $script:processingTimelineForm.Activate()
+    }
+}
+
 function Write-ProgressLog([string]$message) {
     $stamp = (Get-Date).ToString("HH:mm:ss")
     if ($progressLog.TextLength -gt 0) { [void]$progressLog.AppendText([Environment]::NewLine) }
     [void]$progressLog.AppendText("[$stamp] $message")
     $progressLog.SelectionStart = $progressLog.TextLength
     $progressLog.ScrollToCaret()
+    $entryPercent = [int]$progressBar.Value
+    if ($script:taskStartedAt) {
+        $script:currentTaskProgressEntries.Add([pscustomobject]@{ Timestamp=$stamp; Percent=$entryPercent; Message=$message })
+        while ($script:currentTaskProgressEntries.Count -gt 500) { $script:currentTaskProgressEntries.RemoveAt(0) }
+    }
+    Add-ProcessingTimelineEntry -Message $message -Timestamp $stamp -Percent $entryPercent
     [System.Windows.Forms.Application]::DoEvents()
 }
 
@@ -3064,6 +3262,7 @@ function Update-TaskProgressDisplay([TimeSpan]$Elapsed) {
     $activityLabel.Text = Get-DashboardText 'progress.phase.summary' @($percent, $phaseText, $remainingText)
     $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
     $progressBar.Value = [Math]::Max(0, [Math]::Min(100, $percent))
+    Update-ProcessingTimelineProgress -Percent $percent -Summary $activityLabel.Text -ElapsedText $elapsedLabel.Text
     if ($phaseIndex -ne [int]$script:taskProgressPhaseIndex) {
         $script:taskProgressPhaseIndex = $phaseIndex
         Write-ProgressLog (Get-DashboardText 'progress.phase.log' @($percent, $phaseText))
@@ -3105,6 +3304,8 @@ function Write-LicenseTimelineEventSafe {
 
 function Start-ProgressDisplay([string]$action, [string]$detail, [bool]$preserveLog) {
     if (-not $preserveLog) { $progressLog.Clear() }
+    $script:processingTimelineCapturing = $false
+    $script:currentTaskProgressEntries.Clear()
     $script:hasTaskActivity = $true
     $script:taskCancellationRequested = $false
     $script:taskStartedAt = Get-Date
@@ -3142,6 +3343,17 @@ function Stop-ProgressDisplay([string]$summary) {
     $progressBar.Value = 100
     $activityLabel.Text = $summary
     $activityLabel.ForeColor = $status.ForeColor
+    if (Test-ProcessingTimelineWindowOpen) {
+        $lastTimelineText = if ($script:processingTimelineList.Items.Count -gt 0) {
+            [string]$script:processingTimelineList.Items[$script:processingTimelineList.Items.Count - 1].SubItems[2].Text
+        } else { '' }
+        if ($script:processingTimelineCapturing -and -not [string]::Equals($lastTimelineText, $summary, [StringComparison]::Ordinal)) {
+            Add-ProcessingTimelineEntry -Message $summary -Percent 100
+        }
+        Update-ProcessingTimelineProgress -Percent 100 -Summary $summary -ElapsedText $elapsedLabel.Text
+        $script:processingTimelineStopButton.Enabled = $false
+    }
+    $script:processingTimelineCapturing = $false
     [void](Write-ToolLog -Level "INFO" -Event "Action.DisplayStopped" -Message $summary -DurationMs $durationMs)
 }
 
@@ -3156,6 +3368,8 @@ function Reset-IdleTaskDisplay {
     $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Blocks
     $progressBar.Value = 0
     $progressLog.Clear()
+    $script:processingTimelineCapturing = $false
+    $script:currentTaskProgressEntries.Clear()
     $stopButton.Visible = $false
     $stopButton.Enabled = $false
     Update-MainLayout
@@ -3234,6 +3448,10 @@ function Set-ButtonsEnabled([bool]$enabled) {
     $stopButton.Visible = $canStop
     $stopButton.Enabled = $canStop
     $stopButton.Text = Get-ToolText -Key "progress.stop" -Culture $script:dashboardCulture
+    if ((Test-ProcessingTimelineWindowOpen) -and $script:processingTimelineStopButton) {
+        $script:processingTimelineStopButton.Enabled = $canStop
+        $script:processingTimelineStopButton.Text = Get-ToolText -Key "progress.stop" -Culture $script:dashboardCulture
+    }
     Update-MainLayout
 }
 
@@ -3255,6 +3473,11 @@ function Stop-ActiveTask {
     $stopButton.Enabled = $false
     $stopButton.Text = Get-ToolText -Key "progress.stopping" -Culture $script:dashboardCulture
     $activityLabel.Text = Get-ToolText -Key "progress.stopping" -Culture $script:dashboardCulture
+    if ((Test-ProcessingTimelineWindowOpen) -and $script:processingTimelineStopButton) {
+        $script:processingTimelineStopButton.Enabled = $false
+        $script:processingTimelineStopButton.Text = Get-ToolText -Key "progress.stopping" -Culture $script:dashboardCulture
+        Update-ProcessingTimelineProgress -Percent ([int]$progressBar.Value) -Summary $activityLabel.Text -ElapsedText $elapsedLabel.Text
+    }
     Write-ProgressLog (Get-ToolText -Key "progress.stopRequested" -Culture $script:dashboardCulture)
     [void](Write-ToolLog -Level "WARN" -Event "Action.StopRequested" -Message $script:activeAction -Data ([ordered]@{
         ProcessId = [int]$script:activeProcess.Id
@@ -4743,10 +4966,16 @@ function Start-CleanupDeep {
         if ($ReturnNavigationResult) { return "Blocked" }
         return
     }
+    # A selection made in the software assessment window is already an exact
+    # user decision.  Do not merge it with DefaultSelected rows in the final
+    # review, otherwise choosing one application appears to select the whole
+    # cleanup scope.
+    $useExactSuggestedSelection = [bool]($RestoreExactSelection -or
+        (-not $AutomaticSafeMode -and @($SuggestedIds).Count -gt 0))
     $selection = if ($AutomaticSafeMode) {
         Confirm-AutomaticSafeCleanup -CleanupItems $scopedCleanupItems
     } else {
-        Show-DeepCleanupSelection -CleanupItems $scopedCleanupItems -ScanScope $script:cleanupScanScope -SuggestedIds $SuggestedIds -RestoreExactSelection:$RestoreExactSelection
+        Show-DeepCleanupSelection -CleanupItems $scopedCleanupItems -ScanScope $script:cleanupScanScope -SuggestedIds $SuggestedIds -RestoreExactSelection:$useExactSuggestedSelection
     }
     if (-not [bool]$selection.Confirmed) {
         $script:cleanupAutoSafeMode = $false
@@ -4817,6 +5046,14 @@ function Start-CleanupDeep {
         $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupScript`" -OutputDir `"$output`" -Remediate -DeepClean$dryRunArgument -ApprovedKmsServerFile `"$approvedKmsFile`" -TreatUnapprovedKmsAsNonCompliant -DecisionFile `"$script:cleanupResultFile`" -SelectionFile `"$script:cleanupSelectionFile`" -ScanScope `"$script:cleanupScanScope`" -Culture `"$script:dashboardCulture`"$privacyArgument"
         $actionText = if ($script:cleanupDryRunMode) { Get-DashboardText 'cleanup.dryRun.action' } else { Get-DashboardText "cleanup.deep.action" }
         [void](Start-ToolModuleProcess -ModuleId "cleanup.deep" -Arguments $arguments -Action $actionText -Elevate)
+        # Open a modeless, dedicated table for this run.  The dashboard's
+        # "Recent activity" panel keeps receiving the same entries; the table
+        # is an additional detailed view and does not replace or block it.
+        try {
+            Show-ProcessingTimelineWindow -Action $actionText
+        } catch {
+            Write-ProgressLog (Get-DashboardText 'processingTimeline.openFailed' @($_.Exception.Message))
+        }
         $status.Text = if ($script:cleanupDryRunMode) { Get-DashboardText 'cleanup.dryRun.running' } else { Get-DashboardText "cleanup.deep.running" }
         $status.ForeColor = [System.Drawing.Color]::DarkOrange
         Set-ButtonsEnabled $false
@@ -6070,6 +6307,10 @@ function Show-CleanupResultCenter {
     $officiallyLicensed = [bool]($Result.PSObject.Properties['OfficiallyLicensed'] -and [bool]$Result.OfficiallyLicensed)
     $officialLicenseStateCode = if ($Result.PSObject.Properties['OfficialLicenseStateCode']) { [string]$Result.OfficialLicenseStateCode } else { 'Unknown' }
     $officialPostCheck = if ($Result.PSObject.Properties['OfficialLicensePostCheck']) { $Result.OfficialLicensePostCheck } else { $null }
+    $hasExplicitSelection = [bool]($Result.PSObject.Properties['SelectedCleanupItemCount'] -and [int]$Result.SelectedCleanupItemCount -gt 0)
+    $postVerificationSuggestedIds = if ($Result.PSObject.Properties['PostVerificationSuggestedIds']) {
+        @($Result.PostVerificationSuggestedIds | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+    } else { @() }
     $nextActions = @($Result.NextActions)
     if ($isDryRun) {
         $nextActions = @([pscustomobject]@{
@@ -6079,6 +6320,12 @@ function Show-CleanupResultCenter {
     }
     if ($SafetyBlocked) {
         $nextActions = @($nextActions | Where-Object { [string]$_.Code -in @('Recheck','OpenReport') })
+    }
+    if ($hasExplicitSelection -and $postVerificationSuggestedIds.Count -eq 0) {
+        # Defense in depth for result files produced by older code: without an
+        # exact remaining ID this button could reopen the chooser with defaults
+        # and appear to select/process the whole machine.
+        $nextActions = @($nextActions | Where-Object { [string]$_.Code -ne 'RemediateRemaining' })
     }
 
     $headingText = if ($isDryRun) {
@@ -6111,7 +6358,21 @@ function Show-CleanupResultCenter {
     $body.Add((Get-DashboardText "cleanup.result.residueCount" @($Result.ConfigurationResidueCount)))
     $body.Add((Get-DashboardText "cleanup.result.windowsKmsCount" @($Result.WindowsKmsCount)))
     $body.Add((Get-DashboardText "cleanup.result.officeKmsCount" @($Result.OfficeKmsCount)))
-    $body.Add((Get-DashboardText "cleanup.result.thirdPartyCount" @($Result.ThirdPartyCandidateCount)))
+    if ($hasExplicitSelection) {
+        $targetedThirdPartyCount = if ($Result.PSObject.Properties['TargetedThirdPartyCandidateCount']) {
+            [int]$Result.TargetedThirdPartyCandidateCount
+        } elseif ($Result.PSObject.Properties['SelectedThirdPartyCandidateCount']) {
+            [int]$Result.SelectedThirdPartyCandidateCount
+        } else { 0 }
+        $targetedThirdPartyRemaining = if ($Result.PSObject.Properties['SelectedThirdPartyRemainingCount']) {
+            [int]$Result.SelectedThirdPartyRemainingCount
+        } else {
+            [int]@($postVerificationItems | Where-Object { [string]$_.ComponentScope -eq 'ThirdParty' }).Count
+        }
+        $body.Add((Get-DashboardText 'cleanup.result.targetedThirdPartyCount' @($targetedThirdPartyCount, $targetedThirdPartyRemaining)))
+    } else {
+        $body.Add((Get-DashboardText "cleanup.result.thirdPartyCount" @($Result.ThirdPartyCandidateCount)))
+    }
     if ($Result.PSObject.Properties['SelectedThirdPartyCandidateCount'] -and [int]$Result.SelectedThirdPartyCandidateCount -gt 0) {
         $body.Add((Get-DashboardText 'cleanup.result.selectedThirdPartySummary' @(
             [int]$Result.SelectedThirdPartyResolvedCount,
@@ -6511,8 +6772,12 @@ function Complete-CleanupRemediation([bool]$wasDeepCleanup) {
                     return
                 }
                 "RemediateRemaining" {
+                    if ($postVerificationSuggestedIds.Count -eq 0) {
+                        Write-ProgressLog (Get-DashboardText 'cleanup.remediation.noRemainingSelectedLog')
+                        continue
+                    }
                     Write-ProgressLog (Get-DashboardText "cleanup.remediation.openRemainingLog")
-                    $navigation = Start-CleanupDeep -CleanupItems @($result.CleanupItems) -SuggestedIds @($postVerificationSuggestedIds) -ReturnNavigationResult
+                    $navigation = Start-CleanupDeep -CleanupItems @($result.CleanupItems) -SuggestedIds @($postVerificationSuggestedIds) -RestoreExactSelection -ReturnNavigationResult
                     if ([string]$navigation -eq "Back") { continue }
                     return
                 }
@@ -8639,7 +8904,8 @@ function Show-ResultActionCenter {
     })
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    $heading.ForeColor = $script:baseUiPalette.Primary
+    $dialogPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
+    $heading.ForeColor = $dialogPalette.Primary
     & $refreshList
     [void](Show-DashboardModalDialog -Dialog $dialog)
     $navigation = [string]$dialog.Tag
@@ -8851,7 +9117,8 @@ function Show-BackupRestoreCenter {
     })
 
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    $heading.ForeColor = $script:baseUiPalette.Primary
+    $dialogPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
+    $heading.ForeColor = $dialogPalette.Primary
     & $refreshBackups
     [void](Show-DashboardModalDialog -Dialog $dialog)
     $navigation = [string]$dialog.Tag
@@ -9008,8 +9275,9 @@ function Show-AssuranceCenter {
         $dialog.CancelButton = $close
     }
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
-    $heading.ForeColor = $script:baseUiPalette.Primary
-    $descriptionLabel.ForeColor = $script:baseUiPalette.Text
+    $dialogPalette = Get-ToolUiPalette -Mode $script:dashboardTheme
+    $heading.ForeColor = $dialogPalette.Primary
+    $descriptionLabel.ForeColor = $dialogPalette.Text
     [void](Show-DashboardModalDialog -Dialog $dialog)
     $choice = [string]$dialog.Tag
     $dialog.Dispose()

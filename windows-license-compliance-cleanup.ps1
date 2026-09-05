@@ -1523,7 +1523,11 @@ function Get-ThirdPartyStrongEvidence {
         })
     }
     $addEvidence = {
-        param([string]$Type,[string]$Name,[string]$Location,[string]$RegistryPath,[string]$Detail,[string]$SpecificScope,[bool]$KnownSpecific,[bool]$Active,[bool]$FolderOnly,$Targets)
+        param(
+            [string]$Type,[string]$Name,[string]$Location,[string]$RegistryPath,[string]$Detail,
+            [string]$SpecificScope,[bool]$KnownSpecific,[bool]$Active,[bool]$FolderOnly,$Targets,
+            [int]$ProcessId=0,[string]$ExpectedExecutablePath='',[string]$ExpectedSha256='',[int64]$ExpectedLength=-1
+        )
         $resolvedTargets = @($Targets)
         if ($resolvedTargets.Count -eq 0) {
             $evidence.Add([pscustomobject][ordered]@{
@@ -1531,6 +1535,8 @@ function Get-ThirdPartyStrongEvidence {
                 VendorScope='Uncorrelated'; ApplicationId=''; Strength=$(if ($KnownSpecific) {'Strong'} else {'Moderate'})
                 EvidenceGroup=$(if ($Active) {'ActivatorPersistence'} else {'ActivatorArtifact'}); Decisive=$false; Detail=$Detail
                 CorrelationLevel='Uncorrelated'
+                ProcessId=$ProcessId; ExpectedExecutablePath=$ExpectedExecutablePath
+                ExpectedSha256=$ExpectedSha256; ExpectedLength=$ExpectedLength
             })
             return
         }
@@ -1546,6 +1552,8 @@ function Get-ThirdPartyStrongEvidence {
                 VendorScope=[string]$targetRecord.VendorScope; ApplicationId=[string]$targetRecord.ApplicationId; Strength=$strength
                 EvidenceGroup=$(if ($Active) {'ActivatorPersistence'} else {'ActivatorArtifact'}); Decisive=$decisive; Detail=$Detail
                 CorrelationLevel=$correlationLevel
+                ProcessId=$ProcessId; ExpectedExecutablePath=$ExpectedExecutablePath
+                ExpectedSha256=$ExpectedSha256; ExpectedLength=$ExpectedLength
             })
         }
     }
@@ -1595,8 +1603,16 @@ function Get-ThirdPartyStrongEvidence {
             $knownSpecific = [bool]($specificScope -or (Test-ToolSoftwareKnownActivatorText -Text $text))
             if (-not $knownSpecific -and $text -notmatch $script:ToolSoftwareSuspiciousArtifactPattern) { continue }
             $targets = @(Get-ThirdPartyEvidenceTargets -Text $text -ApplicationRecords $applicationRecords.ToArray() -SpecificVendorScope $specificScope)
+            $processIdentity = $null
+            if ($processPath -and (Test-ThirdPartyArtifactPath -Path $processPath -Applications $Applications -AllowUserArtifactRoots)) {
+                $processIdentity = Get-ThirdPartyArtifactExecutionIdentity -Path $processPath
+            }
             & $addEvidence 'Process' ([string]$process.ProcessName) $processPath '' `
-                (Get-CleanupText "cleanupReport.thirdParty.evidence.process") $specificScope $knownSpecific $true $false $targets
+                (Get-CleanupText "cleanupReport.thirdParty.evidence.process") $specificScope $knownSpecific $true $false $targets `
+                $(if ($processIdentity) { [int]$process.Id } else { 0 }) `
+                $(if ($processIdentity) { [string]$processIdentity.Path } else { '' }) `
+                $(if ($processIdentity) { [string]$processIdentity.Sha256 } else { '' }) `
+                $(if ($processIdentity) { [int64]$processIdentity.Length } else { -1 })
         }
     } catch {}
 
@@ -1694,7 +1710,31 @@ function Get-ThirdPartyRemediationPlan {
             }
             'ScheduledTask' { $plan.Add([pscustomobject][ordered]@{ Type='ScheduledTask'; Kind='ThirdPartyUnauthorizedArtifact'; Name=[string]$item.Name; Location=[string]$item.Location; Detail=[string]$item.Detail; Restorable=$false }) }
             'Service' { $plan.Add([pscustomobject][ordered]@{ Type='Service'; Kind='ThirdPartyUnauthorizedArtifact'; Name=[string]$item.Name; Location=[string]$item.Location; Detail=[string]$item.Detail; Restorable=$false }) }
-            'Process' { $plan.Add([pscustomobject][ordered]@{ Type='Process'; Kind='ThirdPartyUnauthorizedArtifact'; Name=[string]$item.Name; Location=[string]$item.Location; Detail=[string]$item.Detail; Restorable=$false }) }
+            'Process' {
+                $processId = if ($item.PSObject.Properties['ProcessId']) { [int]$item.ProcessId } else { 0 }
+                $expectedPath = if ($item.PSObject.Properties['ExpectedExecutablePath']) { [string]$item.ExpectedExecutablePath } else { '' }
+                $expectedSha256 = if ($item.PSObject.Properties['ExpectedSha256']) { [string]$item.ExpectedSha256 } else { '' }
+                $expectedLength = if ($item.PSObject.Properties['ExpectedLength']) { [int64]$item.ExpectedLength } else { -1 }
+                if ($processId -gt 0 -and $expectedSha256 -match '^[0-9A-F]{64}$' -and $expectedLength -ge 0 -and
+                    [string]::Equals([string]$item.Location, $expectedPath, [StringComparison]::OrdinalIgnoreCase) -and
+                    (Test-ThirdPartyArtifactPath -Path $expectedPath -Applications $Applications -AllowUserArtifactRoots)) {
+                    $currentIdentity = Get-ThirdPartyArtifactExecutionIdentity -Path $expectedPath
+                    if ($currentIdentity -and [string]$currentIdentity.Sha256 -eq $expectedSha256 -and [int64]$currentIdentity.Length -eq $expectedLength) {
+                        # Stop only the exact scanned PID/path/hash, then move
+                        # that same executable into the signed quarantine.
+                        $plan.Add([pscustomobject][ordered]@{
+                            Type='Process'; Kind='ThirdPartyUnauthorizedArtifact'; Name=[string]$item.Name; Location=$expectedPath
+                            Detail=[string]$item.Detail; Restorable=$false; ProcessId=$processId
+                            ExpectedExecutablePath=$expectedPath; ExpectedSha256=$expectedSha256; ExpectedLength=$expectedLength
+                        })
+                        $plan.Add([pscustomobject][ordered]@{
+                            Type='File'; Kind='ThirdPartyUnauthorizedArtifact'; Name=[IO.Path]::GetFileName($expectedPath); Location=$expectedPath
+                            Detail=(Get-CleanupText 'cleanupReport.thirdParty.plan.quarantineArtifact'); Restorable=$false
+                            ExpectedSha256=$expectedSha256; ExpectedLength=$expectedLength
+                        })
+                    }
+                }
+            }
             'Folder' { $plan.Add([pscustomobject][ordered]@{ Type='Folder'; Kind='ThirdPartyUnauthorizedArtifact'; Name=[string]$item.Name; Location=[string]$item.Location; Detail=[string]$item.Detail; Restorable=$false }) }
             'FileArtifact' {
                 if (Test-ThirdPartyArtifactPath -Path ([string]$item.Location) -Applications $Applications -AllowUserArtifactRoots) {
@@ -2304,13 +2344,30 @@ function Connect-ThirdPartyApplicationsToCandidates {
     foreach ($application in @($Applications)) {
         $applicationId = [string]$application.Id
         $matchingCandidates = @($Candidates | Where-Object { @($_.ApplicationIds) -contains $applicationId })
+        $applicationGateAllowed = [bool]($application.PSObject.Properties['ArtifactCleanupAllowed'] -and [bool]$application.ArtifactCleanupAllowed)
+        $manualArtifactQuarantineAllowed = Test-ThirdPartyApplicationManualArtifactQuarantineEligible -Application $application
         $directCandidate = @($matchingCandidates | Where-Object {
             -not ([bool]($_.PSObject.Properties['GuidanceOnly'] -and [bool]$_.GuidanceOnly)) -and
-            @((Get-ThirdPartyCandidateSafePlan -Candidate $_) | Where-Object { [string]$_.Type -ne 'Guidance' }).Count -gt 0
+            [string]$_.Kind -ne 'ThirdPartyCompleteUninstall' -and
+            @((Get-ThirdPartyCandidateSafePlan -Candidate $_) | Where-Object { [string]$_.Type -ne 'Guidance' }).Count -gt 0 -and
+            $_.PSObject.Properties['ArtifactCleanupAllowed'] -and [bool]$_.ArtifactCleanupAllowed -and
+            $(if ($_.PSObject.Properties['ManualArtifactQuarantineOnly'] -and [bool]$_.ManualArtifactQuarantineOnly) {
+                $manualArtifactQuarantineAllowed
+            } else {
+                $applicationGateAllowed
+            })
         } | Select-Object -First 1)
         $guidanceCandidate = @($matchingCandidates | Where-Object {
             [bool]($_.PSObject.Properties['GuidanceOnly'] -and [bool]$_.GuidanceOnly)
         } | Select-Object -First 1)
+        $completeUninstallCandidate = @($matchingCandidates | Where-Object {
+            [string]$_.Kind -eq 'ThirdPartyCompleteUninstall' -and
+            [bool]($_.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$_.ManualUninstallAllowed)
+        } | Select-Object -First 1)
+        # Complete uninstall is an independent, explicit choice in the final
+        # review.  It must not shadow the harmless guidance candidate attached
+        # to a Paid/Subscription/Trial inventory row; doing so made those rows
+        # grey and impossible to select whenever an MSI/Appx identity existed.
         # Keep the selected candidate wrapped as an array.  Without the outer
         # array PowerShell unwraps a single PSCustomObject here, making
         # `.Count` null below and silently disconnecting every otherwise valid
@@ -2322,8 +2379,6 @@ function Connect-ThirdPartyApplicationsToCandidates {
         $application.TechnicalStatus = Get-ThirdPartyAssessmentStatusLabel -StatusCode ([string]$application.AssessmentCode)
         $safePlan = if ($candidate.Count -gt 0) { @(Get-ThirdPartyCandidateSafePlan -Candidate $candidate[0]) } else { @() }
         $hasExecutablePlan = [bool](@($safePlan | Where-Object { [string]$_.Type -ne 'Guidance' }).Count -gt 0)
-        $applicationGateAllowed = [bool]($application.PSObject.Properties['ArtifactCleanupAllowed'] -and [bool]$application.ArtifactCleanupAllowed)
-        $manualArtifactQuarantineAllowed = Test-ThirdPartyApplicationManualArtifactQuarantineEligible -Application $application
         $candidateGateAllowed = [bool]($candidate.Count -gt 0 -and $candidate[0].PSObject.Properties['ArtifactCleanupAllowed'] -and [bool]$candidate[0].ArtifactCleanupAllowed)
         $candidateManualArtifactQuarantineOnly = [bool]($candidate.Count -gt 0 -and $candidate[0].PSObject.Properties['ManualArtifactQuarantineOnly'] -and [bool]$candidate[0].ManualArtifactQuarantineOnly)
         $matchingGate = [bool](($applicationGateAllowed -and -not $candidateManualArtifactQuarantineOnly) -or
@@ -2334,6 +2389,8 @@ function Connect-ThirdPartyApplicationsToCandidates {
         $application | Add-Member -NotePropertyName AssessmentAutoEligible -NotePropertyValue $assessmentAutoEligible -Force
         $application.AutoEligible = [bool]($candidate.Count -gt 0 -and [bool]$candidate[0].AutoEligible)
         $application | Add-Member -NotePropertyName CleanupCandidateId -NotePropertyValue $(if ($candidate.Count -gt 0) { [string]$candidate[0].Id } else { '' }) -Force
+        $application | Add-Member -NotePropertyName CleanupGuidanceCandidateId -NotePropertyValue $(if ($guidanceCandidate.Count -gt 0) { [string]$guidanceCandidate[0].Id } else { '' }) -Force
+        $application | Add-Member -NotePropertyName CleanupCompleteUninstallCandidateId -NotePropertyValue $(if ($completeUninstallCandidate.Count -gt 0) { [string]$completeUninstallCandidate[0].Id } else { '' }) -Force
         $application | Add-Member -NotePropertyName CleanupRemediationMode -NotePropertyValue $(if ($candidate.Count -gt 0) { [string]$candidate[0].RemediationMode } else { '' }) -Force
         $application | Add-Member -NotePropertyName CleanupArtifactCleanupAllowed -NotePropertyValue $candidateGateAllowed -Force
         $application | Add-Member -NotePropertyName CleanupLicenseStateResetAllowed -NotePropertyValue $(if ($candidate.Count -gt 0) {[bool]$candidate[0].LicenseStateResetAllowed} else {$false}) -Force
@@ -2547,6 +2604,7 @@ function Get-CleanupCandidateSnapshotHash {
         'RemediationMode','ComponentScope','ArtifactCleanupAllowed','LicenseStateResetAllowed',
         'RecoveryMode','ManualArtifactQuarantineOnly','GuidanceOnly','GuidanceReason',
         'RecoveryBlockReason','ExpectedSha256','ExpectedLength','Provider','SkuId','Last5','OsppPathInstance',
+        'ProcessId','ExpectedExecutablePath','ExpectedTaskAction','RegistryValueName','ExpectedRegistryValue',
         'ManualUninstallAllowed','UninstallMethod','UninstallIdentity','UninstallCommandPath','UninstallArguments',
         'UninstallRegistryPath','UninstallPackageId','InstallRoot'
     )) {
@@ -2653,10 +2711,26 @@ function Get-ThirdPartyCandidateSafePlan {
         }
         if ($type -eq 'Firewall' -or $kind -notmatch '^ThirdParty') { continue }
         if ($kind -eq 'ThirdPartyLicenseState' -and -not $allowLicenseStateReset) { continue }
+        if ($type -eq 'Process') {
+            $processId = if ($planItem.PSObject.Properties['ProcessId']) { [int]$planItem.ProcessId } else { 0 }
+            $expectedPath = if ($planItem.PSObject.Properties['ExpectedExecutablePath']) { [string]$planItem.ExpectedExecutablePath } else { '' }
+            $expectedSha256 = if ($planItem.PSObject.Properties['ExpectedSha256']) { [string]$planItem.ExpectedSha256 } else { '' }
+            $expectedLength = if ($planItem.PSObject.Properties['ExpectedLength']) { [int64]$planItem.ExpectedLength } else { -1 }
+            $fullExpectedPath = ''
+            try { $fullExpectedPath = [IO.Path]::GetFullPath($expectedPath) } catch {}
+            if ($kind -eq 'ThirdPartyUnauthorizedArtifact' -and $processId -gt 0 -and
+                $fullExpectedPath -and [string]::Equals($fullExpectedPath, [string]$planItem.Location, [StringComparison]::OrdinalIgnoreCase) -and
+                ([IO.Path]::GetExtension($fullExpectedPath)).ToLowerInvariant() -in @('.exe','.com') -and
+                $expectedSha256 -match '^[0-9A-F]{64}$' -and $expectedLength -ge 0) {
+                $safe.Add($planItem)
+            }
+            continue
+        }
         # The elevated executor can revalidate an exact file path or a bounded
         # hosts entry.  Process/service/task/registry/folder operations are
         # vulnerable to target replacement between scan and execution, so they
-        # remain visible as guidance until they gain identity revalidation.
+        # remain visible as guidance.  The process branch above is the narrow
+        # exception: PID, path, length and SHA-256 are all bound and rechecked.
         if ($type -notin @('File','Hosts','Guidance')) { continue }
         if ($type -eq 'File' -and $kind -ne 'ThirdPartyUnauthorizedArtifact') { continue }
         if ($type -eq 'Hosts' -and $kind -ne 'ThirdPartyHostsEntry') { continue }
@@ -3342,10 +3416,65 @@ function Get-CleanupNextActions {
     return @($next.ToArray())
 }
 
+function Test-CleanupCandidateMatchesSelectedSnapshot {
+    param(
+        [AllowNull()][object]$Candidate,
+        [AllowNull()][object[]]$SelectedCandidateSnapshots = @()
+    )
+
+    if ($null -eq $Candidate) { return $false }
+    $snapshots = @($SelectedCandidateSnapshots | Where-Object { $null -ne $_ })
+    if ($snapshots.Count -eq 0) { return $true }
+    $candidateComponent = Get-CleanupRecordComponentScope -Record $Candidate
+    foreach ($snapshot in $snapshots) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$Candidate.Id) -and
+            [string]::Equals([string]$Candidate.Id, [string]$snapshot.Id, [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+        $snapshotComponent = Get-CleanupRecordComponentScope -Record $snapshot
+        if ($candidateComponent -ne $snapshotComponent) { continue }
+        if ($candidateComponent -eq 'ThirdParty') {
+            # Keep the action family exact.  A guidance choice must not turn
+            # into Complete uninstall (or vice versa) merely because both rows
+            # point at the same installed application.
+            if (-not [string]::Equals([string]$Candidate.Kind, [string]$snapshot.Kind, [StringComparison]::OrdinalIgnoreCase)) {
+                continue
+            }
+            $snapshotApplicationIds = @($snapshot.ApplicationIds | ForEach-Object { [string]$_ } | Where-Object { $_ })
+            if ($snapshotApplicationIds.Count -gt 0 -and
+                @($Candidate.ApplicationIds | Where-Object { $snapshotApplicationIds -contains [string]$_ }).Count -gt 0) {
+                return $true
+            }
+            if (-not [string]::IsNullOrWhiteSpace([string]$snapshot.TargetId) -and
+                [string]::Equals([string]$Candidate.TargetId, [string]$snapshot.TargetId, [StringComparison]::OrdinalIgnoreCase)) {
+                return $true
+            }
+            if (-not [string]::IsNullOrWhiteSpace([string]$snapshot.VendorScope) -and
+                -not [string]::IsNullOrWhiteSpace([string]$snapshot.Location) -and
+                [string]::Equals([string]$Candidate.VendorScope, [string]$snapshot.VendorScope, [StringComparison]::OrdinalIgnoreCase) -and
+                [string]::Equals([string]$Candidate.Location, [string]$snapshot.Location, [StringComparison]::OrdinalIgnoreCase)) {
+                return $true
+            }
+            continue
+        }
+        if (-not [string]::IsNullOrWhiteSpace([string]$snapshot.TargetId) -and
+            [string]::Equals([string]$Candidate.TargetId, [string]$snapshot.TargetId, [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+        if ([string]$snapshot.Kind -eq 'OfficeKmsHostOverride' -and [string]$Candidate.Kind -eq 'OfficeKmsHostOverride' -and
+            -not [string]::IsNullOrWhiteSpace([string]$snapshot.Location) -and
+            [string]::Equals([string]$Candidate.Location, [string]$snapshot.Location, [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Get-CleanupPostVerificationItems {
     param(
         $CleanupItems = @(),
         [string[]]$SelectedIds = @(),
+        [AllowNull()][object[]]$SelectedCandidateSnapshots = @(),
         $ThirdPartyExecutionResults = @(),
         $Verification = $null
     )
@@ -3357,6 +3486,12 @@ function Get-CleanupPostVerificationItems {
     $items = New-Object System.Collections.Generic.List[object]
     $seenCandidateIds = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($candidate in @($CleanupItems)) {
+        # After a remediation, report only the lineage of the exact candidates
+        # approved by the user.  A fresh full-machine scan is still retained in
+        # the report, but unrelated candidates must not become suggested work
+        # or look as if they had been selected automatically.
+        if (-not (Test-CleanupCandidateMatchesSelectedSnapshot -Candidate $candidate `
+            -SelectedCandidateSnapshots $SelectedCandidateSnapshots)) { continue }
         $candidateId = [string]$candidate.Id
         if (-not [string]::IsNullOrWhiteSpace($candidateId)) { [void]$seenCandidateIds.Add($candidateId) }
         $wasSelected = [bool]$selectedLookup.Contains($candidateId)
@@ -3371,15 +3506,16 @@ function Get-CleanupPostVerificationItems {
         }
         $execution = @($ThirdPartyExecutionResults | Where-Object {
             [string]::Equals([string]$_.ParentCandidateId, $candidateId, [StringComparison]::OrdinalIgnoreCase)
-        } | Select-Object -First 1)
-        $executionFailed = [bool]($execution.Count -gt 0 -and [string]$execution[0].Status -eq 'Failed')
+        })
+        $failedExecution = @($execution | Where-Object { [string]$_.Status -in @('Failed','PolicyBlocked') } | Select-Object -First 1)
+        $executionFailed = [bool]($failedExecution.Count -gt 0)
         $disposition = if ($executionFailed) { 'ActionFailed' }
             elseif ($guidanceOnly -and $wasSelected) { 'OfficialActionRequired' }
             elseif ($guidanceOnly) { 'OfficialGuidanceAvailable' }
             elseif ($wasSelected) { 'ResidualAfterSelectedAction' }
             elseif ($hasLocalAction) { 'RemainingActionable' }
             else { 'CannotAutoHandle' }
-        $reason = if ($executionFailed -and $execution[0].Message) { [string]$execution[0].Message }
+        $reason = if ($executionFailed -and $failedExecution[0].Message) { [string]$failedExecution[0].Message }
             elseif ($candidate.PSObject.Properties['GuidanceReason'] -and -not [string]::IsNullOrWhiteSpace([string]$candidate.GuidanceReason)) { [string]$candidate.GuidanceReason }
             else { [string]$candidate.Detail }
         $items.Add([pscustomobject][ordered]@{
@@ -3390,21 +3526,22 @@ function Get-CleanupPostVerificationItems {
             GuidanceOnly=$guidanceOnly; LocalActionAvailable=$hasLocalAction
             SelectableForNextStep=[bool]($hasLocalAction -or $guidanceOnly)
             SuggestedForNextStep=[bool]($hasLocalAction -and -not $executionFailed)
-            ExecutionStatus=$(if ($execution.Count -gt 0) { [string]$execution[0].Status } else { '' })
+            ExecutionStatus=$(if ($failedExecution.Count -gt 0) { [string]$failedExecution[0].Status } elseif ($execution.Count -gt 0) { [string]$execution[-1].Status } else { '' })
         })
     }
 
     # A failed third-party child can disappear before the fresh scan.  Keep it
     # visible rather than silently treating a missing post-scan row as success.
-    foreach ($execution in @($ThirdPartyExecutionResults | Where-Object { [string]$_.Status -eq 'Failed' })) {
+    foreach ($execution in @($ThirdPartyExecutionResults | Where-Object { [string]$_.Status -in @('Failed','PolicyBlocked') })) {
         $parentId = [string]$execution.ParentCandidateId
         if ($parentId -and $seenCandidateIds.Contains($parentId)) { continue }
+        $executionStatus = [string]$execution.Status
         $items.Add([pscustomobject][ordered]@{
             CandidateId=$parentId; Type=[string]$execution.Type; Kind=[string]$execution.Kind
             ComponentScope='ThirdParty'; Name=[string]$execution.Name; Location=[string]$execution.Target
             Detail=[string]$execution.Message; Disposition='ActionFailed'; Reason=[string]$execution.Message
             WasSelected=$true; GuidanceOnly=$false; LocalActionAvailable=$false; SelectableForNextStep=$false
-            SuggestedForNextStep=$false; ExecutionStatus='Failed'
+            SuggestedForNextStep=$false; ExecutionStatus=$executionStatus
         })
     }
     if ($null -ne $Verification -and [int]$Verification.ScanWarningCount -gt 0) {
@@ -4668,6 +4805,11 @@ function Invoke-DeepCleanupV35 {
             $child = New-CleanupItem -Type ([string]$planItem.Type) -Kind ([string]$planItem.Kind) `
                 -Name ([string]$planItem.Name) -Location ([string]$planItem.Location) -Detail ([string]$planItem.Detail) `
                 -TargetId ([string]$applicationCandidate.TargetId) -VendorScope ([string]$applicationCandidate.VendorScope) -ComponentScope 'ThirdParty' `
+                -ProcessId $(if ($planItem.PSObject.Properties['ProcessId']) { [int]$planItem.ProcessId } else { 0 }) `
+                -ExpectedExecutablePath $(if ($planItem.PSObject.Properties['ExpectedExecutablePath']) { [string]$planItem.ExpectedExecutablePath } else { '' }) `
+                -ExpectedTaskAction $(if ($planItem.PSObject.Properties['ExpectedTaskAction']) { [string]$planItem.ExpectedTaskAction } else { '' }) `
+                -RegistryValueName $(if ($planItem.PSObject.Properties['RegistryValueName']) { [string]$planItem.RegistryValueName } else { '' }) `
+                -ExpectedRegistryValue $(if ($planItem.PSObject.Properties['ExpectedRegistryValue']) { [string]$planItem.ExpectedRegistryValue } else { '' }) `
                 -ExpectedSha256 $(if ($planItem.PSObject.Properties['ExpectedSha256']) { [string]$planItem.ExpectedSha256 } else { '' }) `
                 -ExpectedLength $(if ($planItem.PSObject.Properties['ExpectedLength']) { [int64]$planItem.ExpectedLength } else { -1 }) `
                 -ManualUninstallAllowed:([bool]($planItem.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$planItem.ManualUninstallAllowed)) `
@@ -4901,6 +5043,13 @@ function Invoke-DeepCleanupV35 {
             $currentPath = [string]$process.Path
             if (-not [string]::Equals([string]$process.ProcessName, [string]$candidate.Name, [StringComparison]::OrdinalIgnoreCase) -or
                 -not [string]::Equals($currentPath, [string]$candidate.ExpectedExecutablePath, [StringComparison]::OrdinalIgnoreCase)) {
+                throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
+            }
+            $currentIdentity = Get-ThirdPartyArtifactExecutionIdentity -Path $currentPath
+            if ($null -eq $currentIdentity -or
+                [string]$candidate.ExpectedSha256 -notmatch '^[0-9A-F]{64}$' -or [int64]$candidate.ExpectedLength -lt 0 -or
+                -not [string]::Equals([string]$currentIdentity.Sha256, [string]$candidate.ExpectedSha256, [StringComparison]::OrdinalIgnoreCase) -or
+                [int64]$currentIdentity.Length -ne [int64]$candidate.ExpectedLength) {
                 throw (Get-CleanupText 'cleanupReport.thirdParty.execution.identityChanged')
             }
             Stop-Process -Id ([int]$candidate.ProcessId) -Force -ErrorAction Stop
@@ -5497,8 +5646,24 @@ function Expand-SelectedCleanupCandidates {
             $child = New-CleanupItem -Type ([string]$planItem.Type) -Kind ([string]$planItem.Kind) `
                 -Name ([string]$planItem.Name) -Location ([string]$planItem.Location) -Detail ([string]$planItem.Detail) `
                 -TargetId ([string]$candidate.TargetId) -VendorScope ([string]$candidate.VendorScope) -ComponentScope 'ThirdParty' `
+                -ProcessId $(if ($planItem.PSObject.Properties['ProcessId']) { [int]$planItem.ProcessId } else { 0 }) `
+                -ExpectedExecutablePath $(if ($planItem.PSObject.Properties['ExpectedExecutablePath']) { [string]$planItem.ExpectedExecutablePath } else { '' }) `
+                -ExpectedTaskAction $(if ($planItem.PSObject.Properties['ExpectedTaskAction']) { [string]$planItem.ExpectedTaskAction } else { '' }) `
+                -RegistryValueName $(if ($planItem.PSObject.Properties['RegistryValueName']) { [string]$planItem.RegistryValueName } else { '' }) `
+                -ExpectedRegistryValue $(if ($planItem.PSObject.Properties['ExpectedRegistryValue']) { [string]$planItem.ExpectedRegistryValue } else { '' }) `
                 -ExpectedSha256 $(if ($planItem.PSObject.Properties['ExpectedSha256']) { [string]$planItem.ExpectedSha256 } else { '' }) `
-                -ExpectedLength $(if ($planItem.PSObject.Properties['ExpectedLength']) { [int64]$planItem.ExpectedLength } else { -1 })
+                -ExpectedLength $(if ($planItem.PSObject.Properties['ExpectedLength']) { [int64]$planItem.ExpectedLength } else { -1 }) `
+                -ManualUninstallAllowed:([bool]($planItem.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$planItem.ManualUninstallAllowed)) `
+                -UninstallMethod $(if ($planItem.PSObject.Properties['UninstallMethod']) { [string]$planItem.UninstallMethod } else { '' }) `
+                -UninstallIdentity $(if ($planItem.PSObject.Properties['UninstallIdentity']) { [string]$planItem.UninstallIdentity } else { '' }) `
+                -UninstallRegistryPath $(if ($planItem.PSObject.Properties['UninstallRegistryPath']) { [string]$planItem.UninstallRegistryPath } else { '' }) `
+                -UninstallPackageId $(if ($planItem.PSObject.Properties['UninstallPackageId']) { [string]$planItem.UninstallPackageId } else { '' }) `
+                -InstallRoot $(if ($planItem.PSObject.Properties['InstallRoot']) { [string]$planItem.InstallRoot } else { '' })
+            foreach ($propertyName in @('ExpectedName','ExpectedVersion','ExpectedPublisher')) {
+                if ($planItem.PSObject.Properties[$propertyName]) {
+                    $child | Add-Member -NotePropertyName $propertyName -NotePropertyValue ([string]$planItem.$propertyName) -Force
+                }
+            }
             $restorable = $true
             if ($planItem.PSObject.Properties['Restorable']) { $restorable = [bool]$planItem.Restorable }
             $child | Add-Member -NotePropertyName Restorable -NotePropertyValue $restorable -Force
@@ -5583,11 +5748,18 @@ function Get-DryRunRemediationPlan {
     return $plan.ToArray()
 }
 $thirdPartyCandidateCount = [int]$thirdPartyCandidates.Count
-if ($thirdPartyCandidateCount -gt 0 -and -not [bool]$decision.ShouldRemediate) {
+$thirdPartyStandaloneFindingCount = [int]@($thirdPartyCandidates | Where-Object {
+    @($_.ApplicationIds).Count -eq 0 -and
+    @($_.PlanItems | Where-Object { [string]$_.Type -eq 'File' -and [string]$_.Kind -eq 'ThirdPartyUnauthorizedArtifact' }).Count -gt 0
+}).Count
+$thirdPartyRemediationFindingCount = [int](@($thirdPartyApplications | Where-Object {
+    $_.PSObject.Properties['CleanupFinding'] -and [bool]$_.CleanupFinding
+}).Count + $thirdPartyStandaloneFindingCount)
+if ($thirdPartyRemediationFindingCount -gt 0 -and -not [bool]$decision.ShouldRemediate) {
     $decision.ShouldRemediate = $true
     $decision.DecisionCode = 'ThirdPartyTechnicalEvidence'
     $decision.Decision = Get-CleanupText "cleanupReport.thirdParty.decision"
-    $decision.Reason = Get-CleanupText "cleanupReport.thirdParty.reason" @($thirdPartyCandidateCount)
+    $decision.Reason = Get-CleanupText "cleanupReport.thirdParty.reason" @($thirdPartyRemediationFindingCount)
 }
 $protectedLicense = if ($includeWindowsScan) { Get-ProtectedLicenseInfo -Products $products } else {
     [pscustomobject]@{ Protected=$false; Channel=(Get-CleanupText 'common.unknown'); Reason=(Get-CleanupText 'cleanupReport.protected.none') }
@@ -5603,9 +5775,8 @@ $unapprovedWindowsKms = [bool]($unapprovedWindowsKmsProducts.Count -gt 0)
 $allCleanupItems = @(Get-AllCleanupCandidates -Products $products -Findings $findings -OfficeEntries $officeKmsEntries -ThirdPartyCandidates $thirdPartyCandidates)
 $cleanupItems = @(Get-ScopedCleanupCandidates -CleanupItems $allCleanupItems -Scope $ScanScope)
 $scanSnapshot = New-CleanupScanSnapshot -Candidates $cleanupItems -Scope $ScanScope
-$thirdPartyRemediationFindingCount = [int]@($thirdPartyApplications | Where-Object { $_.PSObject.Properties['CleanupFinding'] -and [bool]$_.CleanupFinding }).Count
 $windowsOfficeCleanupCount = [int]@($cleanupItems | Where-Object { [string]$_.Type -ne 'Application' }).Count
-$crackDetected = [bool]($windowsOfficeCleanupCount -gt 0 -or $thirdPartyRemediationFindingCount -gt 0 -or $thirdPartyCandidateCount -gt 0)
+$crackDetected = [bool]($windowsOfficeCleanupCount -gt 0 -or $thirdPartyRemediationFindingCount -gt 0)
 $removeWindowsLicense = [bool](@($cleanupItems | Where-Object { [string]$_.Kind -in @('WindowsKmsLicense','WindowsNonGenuineLicense') }).Count -gt 0)
 $unapprovedWindowsConfigResidues = @($configurationResidues | Where-Object {
     $_.Type -eq "KMSConfig" -and $_.Location -match "Windows NT\\CurrentVersion\\SoftwareProtectionPlatform"
@@ -5764,6 +5935,11 @@ $selectedThirdPartyRemainingCount = 0
 $postVerificationItems = @($initialPostVerificationItems)
 $postVerificationSuggestedIds = @($initialPostVerificationSuggestedIds)
 $postVerificationOutcome = [string]$initialPostVerificationOutcome
+$postVerificationTargetCandidateCount = [int]$initialPostVerificationItems.Count
+$targetedThirdPartyCandidateCount = 0
+$unselectedThirdPartyCandidateCount = [int]$verification.ThirdPartyCandidateCount
+$postNextActions = @($decisionData.NextActions)
+$fullScopeCleanupConclusion = [string]$verification.Conclusion
 [int]$systemChangeCount = 0
 $finalDecisionCode = [string]$decision.DecisionCode
 $finalDecisionText = [string]$decision.Decision
@@ -5783,16 +5959,17 @@ if ($Remediate) {
         if (-not [string]::IsNullOrWhiteSpace([string]$script:SelectionErrorCode)) {
             $actions.Add((Get-CleanupText 'cleanupReport.action.selectionRejectedDetail' @([string]$script:SelectionErrorCode)))
         }
-    } elseif ($crackDetected) {
+    } elseif ($crackDetected -or ($script:SelectionAccepted -and $selectedCleanupIds.Count -gt 0)) {
         $selectedCandidates = @($cleanupItems | Where-Object { $selectedCleanupIds -contains ([string]$_.Id).ToLowerInvariant() })
         $remediationStates = @($selectedCandidates | Where-Object { $_.PSObject.Properties['RemediationState'] } | ForEach-Object {
             $_.RemediationState.PSObject.Copy()
         })
         $selectedThirdPartySnapshots = @($selectedCandidates | Where-Object {
-            [string]$_.Type -eq 'Application' -and [string]$_.Kind -in @('ThirdPartyLicenseReset','ThirdPartyCompleteUninstall')
+            [string]$_.Type -eq 'Application' -and (Get-CleanupRecordComponentScope -Record $_) -eq 'ThirdParty'
         } | ForEach-Object {
             [pscustomobject][ordered]@{
-                Id=[string]$_.Id; TargetId=[string]$_.TargetId; VendorScope=[string]$_.VendorScope
+                Id=[string]$_.Id; Type=[string]$_.Type; Kind=[string]$_.Kind; ComponentScope='ThirdParty'
+                TargetId=[string]$_.TargetId; VendorScope=[string]$_.VendorScope
                 Location=[string]$_.Location; Name=[string]$_.Name; ApplicationIds=@($_.ApplicationIds)
             }
         })
@@ -5897,7 +6074,7 @@ if ($Remediate) {
     }
     $postActiveProduct = $products | Where-Object { [int]$_.LicenseStatus -eq 1 } | Select-Object -First 1
     $postActiveChannel = if ($postActiveProduct) { Get-LicenseChannel $postActiveProduct } else { Get-CleanupText "common.unknown" }
-    $postCrackDetected = [bool]([int]$verification.ActiveActivatorFindingCount -gt 0 -or [int]$verification.UnapprovedWindowsKmsCount -gt 0 -or [int]$verification.UnapprovedOfficeKmsCount -gt 0 -or [int]$verification.ThirdPartyRemediationFindingCount -gt 0 -or @($thirdPartyCandidates).Count -gt 0)
+    $postCrackDetected = [bool]([int]$verification.ActiveActivatorFindingCount -gt 0 -or [int]$verification.UnapprovedWindowsKmsCount -gt 0 -or [int]$verification.UnapprovedOfficeKmsCount -gt 0 -or [int]$verification.ThirdPartyRemediationFindingCount -gt 0)
 
     # Resolve every selected item from a fresh scan.  A successful command or
     # removed artifact is not success by itself: VerifiedClean additionally
@@ -5917,7 +6094,10 @@ if ($Remediate) {
             $original = if ($originalCandidate.Count -gt 0) { $originalCandidate[0] } else { $null }
             $originalApplicationIds = if ($original) { @($original.ApplicationIds | ForEach-Object { [string]$_ } | Where-Object { $_ }) } else { @() }
             $remainingDirectCandidates = @($cleanupItems | Where-Object {
-                if ([string]$_.Type -eq 'Guidance' -or (Get-CleanupRecordComponentScope -Record $_) -ne $component) { return $false }
+                if ([string]$_.Type -eq 'Guidance' -or
+                    ($_.PSObject.Properties['GuidanceOnly'] -and [bool]$_.GuidanceOnly) -or
+                    [string]$_.Kind -eq 'ThirdPartyCompleteUninstall' -or
+                    (Get-CleanupRecordComponentScope -Record $_) -ne $component) { return $false }
                 if ($null -eq $original) { return $true }
                 if ($component -eq 'ThirdParty') {
                     return [bool](@($_.ApplicationIds | Where-Object { $originalApplicationIds -contains [string]$_ }).Count -gt 0)
@@ -5986,16 +6166,8 @@ if ($Remediate) {
     $thirdPartyGuidanceOnlyCount = [int]@($thirdPartyExecutionResults | Where-Object { [string]$_.Status -eq 'GuidanceOnly' }).Count
     $remainingSelectedThirdPartyIds = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($snapshot in @($selectedThirdPartySnapshots)) {
-        $snapshotApplicationIds = @($snapshot.ApplicationIds | ForEach-Object { [string]$_ } | Where-Object { $_ })
         $matchedPostCandidate = @($thirdPartyCandidates | Where-Object {
-            $sameId = [string]::Equals([string]$_.Id, [string]$snapshot.Id, [StringComparison]::OrdinalIgnoreCase)
-            $sameTarget = -not [string]::IsNullOrWhiteSpace([string]$snapshot.TargetId) -and
-                [string]::Equals([string]$_.TargetId, [string]$snapshot.TargetId, [StringComparison]::OrdinalIgnoreCase)
-            $applicationOverlap = [bool](@($_.ApplicationIds | Where-Object { $snapshotApplicationIds -contains [string]$_ }).Count -gt 0)
-            $sameScopedLocation = -not [string]::IsNullOrWhiteSpace([string]$snapshot.VendorScope) -and
-                [string]::Equals([string]$_.VendorScope, [string]$snapshot.VendorScope, [StringComparison]::OrdinalIgnoreCase) -and
-                [string]::Equals([string]$_.Location, [string]$snapshot.Location, [StringComparison]::OrdinalIgnoreCase)
-            $sameId -or $sameTarget -or $applicationOverlap -or $sameScopedLocation
+            Test-CleanupCandidateMatchesSelectedSnapshot -Candidate $_ -SelectedCandidateSnapshots @($snapshot)
         } | Select-Object -First 1)
         if ($matchedPostCandidate.Count -gt 0) { [void]$remainingSelectedThirdPartyIds.Add([string]$snapshot.Id) }
     }
@@ -6009,12 +6181,23 @@ if ($Remediate) {
             else { 'Resolved' }
         $execution | Add-Member -NotePropertyName PostCheckStatus -NotePropertyValue $postCheckStatus -Force
     }
-    $postReadyForCurrentScope = [bool]($scopeReadyForOriginalState -and $remediationPostCheckPassed)
+    # With an explicit selection, this result window represents that reviewed
+    # subset.  Unselected findings remain in the full report but cannot make a
+    # successfully verified selected item look like a failed "process all".
+    $postReadyForCurrentScope = if ($selectedCleanupIds.Count -gt 0) {
+        [bool]$remediationPostCheckPassed
+    } else {
+        [bool]($scopeReadyForOriginalState -and $remediationPostCheckPassed)
+    }
     $postVerificationItems = @(Get-CleanupPostVerificationItems -CleanupItems $cleanupItems -SelectedIds $selectedCleanupIds `
+        -SelectedCandidateSnapshots $selectedCandidates `
         -ThirdPartyExecutionResults $thirdPartyExecutionResults -Verification $verification)
     $postVerificationSuggestedIds = @($postVerificationItems | Where-Object {
         [bool]$_.SuggestedForNextStep -and -not [string]::IsNullOrWhiteSpace([string]$_.CandidateId)
     } | ForEach-Object { [string]$_.CandidateId } | Select-Object -Unique)
+    $postVerificationTargetCandidateCount = [int]$postVerificationItems.Count
+    $targetedThirdPartyCandidateCount = [int]@($selectedThirdPartySnapshots).Count
+    $unselectedThirdPartyCandidateCount = [int][Math]::Max(0, [int]$verification.ThirdPartyCandidateCount - $targetedThirdPartyCandidateCount)
     $postVerificationOutcome = Get-CleanupPostVerificationOutcome -PostVerificationItems $postVerificationItems `
         -ScopeReady:$postReadyForCurrentScope -OfficiallyLicensed:([bool]$officialLicensePostCheck.OfficiallyLicensed)
     $postDecisionCode = if (-not $DeepClean -or -not $script:SelectionAccepted) {
@@ -6043,8 +6226,12 @@ if ($Remediate) {
     }
     $postConclusion = switch ($postDecisionCode) {
         'SelectionRejected' { Get-CleanupText 'cleanupReport.action.selectionRejectedDetail' @([string]$script:SelectionErrorCode) }
+        'DryRunCompleted' { Get-CleanupText 'cleanupReport.dryRun.completed' }
         'RemediationFailed' { Get-CleanupText 'cleanupReport.decision.remediationFailedDetail' @($thirdPartyFailedCount) }
-        default { [string]$verification.Conclusion }
+        'GuidedActionRequired' { Get-CleanupText 'cleanupReport.selectedScope.guidance' @($selectedCleanupIds.Count) }
+        'PostCheckPassed' { Get-CleanupText 'cleanupReport.selectedScope.clean' @($selectedCleanupIds.Count) }
+        'CannotAutoHandle' { Get-CleanupText 'cleanupReport.selectedScope.cannotAutoHandle' @($postVerificationItems.Count) }
+        default { Get-CleanupText 'cleanupReport.selectedScope.remaining' @($postVerificationItems.Count) }
     }
     $finalDecisionCode = [string]$postDecisionCode
     $finalDecisionText = [string]$postDecisionText
@@ -6052,6 +6239,25 @@ if ($Remediate) {
     $postExecutionAccepted = [bool]($postDecisionCode -notin @('SelectionRejected','RemediationFailed'))
     $finalReadyForOfficialActivation = [bool]($verification.ReadyForOfficialActivation -and $postExecutionAccepted -and $remediationPostCheckPassed)
     $finalScopeReadyForOriginalState = [bool]($scopeReadyForOriginalState -and $postExecutionAccepted -and $remediationPostCheckPassed)
+    $nextActionCleanupItems = if ($selectedCleanupIds.Count -gt 0) {
+        @($postVerificationItems | Where-Object { [bool]$_.SuggestedForNextStep })
+    } else {
+        @($cleanupItems)
+    }
+    $postNextActions = @(Get-CleanupNextActions -Verification $verification -CleanupItems $nextActionCleanupItems `
+        -ProtectedLicense ([bool]$postProtectedLicense.Protected) -BackupDirectory $backupDirectory `
+        -OfficialLicensePostCheck $officialLicensePostCheck -Scope $ScanScope)
+    if ($selectedCleanupIds.Count -gt 0) {
+        # Never expose a global/default remediation route from the result of a
+        # manual subset.  With no exact target ID, the GUI must not reopen the
+        # chooser and silently fall back to its default selections.
+        $postNextActions = @($postNextActions | Where-Object {
+            [string]$_.Code -ne 'RemediateRemaining' -or $postVerificationSuggestedIds.Count -gt 0
+        })
+        foreach ($nextAction in @($postNextActions | Where-Object { [string]$_.Code -eq 'RemediateRemaining' })) {
+            $nextAction.CandidateCount = [int]$postVerificationSuggestedIds.Count
+        }
+    }
     if (-not $DryRun) { $actions.Add((Get-CleanupText "cleanupReport.action.postCheck" @($verification.Conclusion))) }
     $decisionData = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVersion "5.0" -Data ([ordered]@{
         ScanScope = $ScanScope
@@ -6107,6 +6313,8 @@ if ($Remediate) {
         SelectedThirdPartyCandidateCount = [int]@($selectedThirdPartySnapshots).Count
         SelectedThirdPartyResolvedCount = [int]$selectedThirdPartyResolvedCount
         SelectedThirdPartyRemainingCount = [int]$selectedThirdPartyRemainingCount
+        TargetedThirdPartyCandidateCount = [int]$targetedThirdPartyCandidateCount
+        UnselectedThirdPartyCandidateCount = [int]$unselectedThirdPartyCandidateCount
         ApprovedOfficeKmsCount = [int]($officeKmsEntries.Count - $verification.UnapprovedOfficeKmsCount)
         ApprovedKmsServerFile = [string]$approvedKmsConfig.Path
         ApprovedKmsServerCount = [int]$approvedKmsConfig.Valid.Count
@@ -6147,12 +6355,14 @@ if ($Remediate) {
         SelectedCleanupItemCount = [int]$selectedCleanupIds.Count
         BackupDirectory = [string]$backupDirectory
         CleanupConclusion = [string]$postConclusion
+        FullScopeCleanupConclusion = [string]$fullScopeCleanupConclusion
         PostVerification = [pscustomobject][ordered]@{ FreshScan=$true; PerformedAtUtc=[DateTime]::UtcNow.ToString('o'); Outcome=$postVerificationOutcome; RemainingItemCount=[int]$postVerificationItems.Count; ScanWarningCount=[int]$verification.ScanWarningCount }
         PostVerificationItems = @($postVerificationItems)
         PostVerificationSuggestedIds = @($postVerificationSuggestedIds)
+        PostVerificationTargetCandidateCount = [int]$postVerificationTargetCandidateCount
         PostVerificationOutcome = $postVerificationOutcome
         HandlingGuidance = $verification.HandlingGuidance
-        NextActions = @(Get-CleanupNextActions -Verification $verification -CleanupItems $cleanupItems -ProtectedLicense ([bool]$postProtectedLicense.Protected) -BackupDirectory $backupDirectory -OfficialLicensePostCheck $officialLicensePostCheck -Scope $ScanScope)
+        NextActions = @($postNextActions)
         ScopeNote = [string]$verification.ScopeNote
         ReportPath = [string]$reportPath
         Actions = @($actions)
@@ -6190,6 +6400,8 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     SelectedThirdPartyCandidateCount = [int]@($selectedThirdPartySnapshots).Count
     SelectedThirdPartyResolvedCount = [int]$selectedThirdPartyResolvedCount
     SelectedThirdPartyRemainingCount = [int]$selectedThirdPartyRemainingCount
+    TargetedThirdPartyCandidateCount = [int]$targetedThirdPartyCandidateCount
+    UnselectedThirdPartyCandidateCount = [int]$unselectedThirdPartyCandidateCount
     PlannedActionCount = [int]@($plannedActions).Count
     PlannedActions = @($plannedActions)
     SelectedCleanupIds = @($selectedCleanupIds)
@@ -6206,9 +6418,11 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     OfficialLicenseStateCode = [string]$officialLicensePostCheck.StateCode
     OfficialLicensePostCheck = $officialLicensePostCheck
     CleanupConclusion = [string]$finalCleanupConclusion
+    FullScopeCleanupConclusion = [string]$fullScopeCleanupConclusion
     PostVerification = [pscustomobject][ordered]@{ FreshScan=$true; PerformedAtUtc=[DateTime]::UtcNow.ToString('o'); Outcome=$postVerificationOutcome; RemainingItemCount=[int]$postVerificationItems.Count; ScanWarningCount=[int]$verification.ScanWarningCount }
     PostVerificationItems = @($postVerificationItems)
     PostVerificationSuggestedIds = @($postVerificationSuggestedIds)
+    PostVerificationTargetCandidateCount = [int]$postVerificationTargetCandidateCount
     PostVerificationOutcome = $postVerificationOutcome
     HandlingGuidance = $verification.HandlingGuidance
     ReadinessReviewCount = [int]$verification.ReadinessReviewCount
@@ -6257,7 +6471,7 @@ $cleanupSummary = New-ToolReportEnvelope -ReportKind "CleanupCompliance" -ToolVe
     HistoryFindingCount = [int]$verification.HistoryFindingCount
     CleanupItems = @($cleanupItems)
     ScanSnapshot = $scanSnapshot
-    NextActions = @(Get-CleanupNextActions -Verification $verification -CleanupItems $cleanupItems -ProtectedLicense ([bool]$decisionData.ProtectedLicense) -BackupDirectory $backupDirectory -OfficialLicensePostCheck $officialLicensePostCheck -Scope $ScanScope)
+    NextActions = @($postNextActions)
     ApprovedKmsServerFile = Protect-CleanupReportText ([string]$approvedKmsConfig.Path)
     ApprovedKmsServerCount = [int]$approvedKmsConfig.Valid.Count
     InvalidApprovedKmsCount = [int]$approvedKmsConfig.Invalid.Count
