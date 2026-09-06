@@ -1063,6 +1063,16 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [bool]$assistantManifest.CentralServerRequired -or
             [string]$assistantManifest.KnowledgeStorage -ne 'BundledAndSignedPerUserLocalCache' -or
             [string]$assistantManifest.ReportContextSource -ne 'CurrentDeviceLocalReportOnly' -or
+            [string]$assistantManifest.CoverageMode -ne 'KnowledgePlusBundledDocumentation' -or
+            -not [bool]$assistantManifest.CompleteBundledGuideIndexed -or
+            -not [bool]$assistantManifest.CompleteVersionHistoryIndexed -or
+            -not [bool]$assistantManifest.CurrentTechnicalVersionIndexed -or
+            -not [bool]$assistantManifest.CompleteFeatureGuideCoverage -or
+            [int]$assistantManifest.MainFeatureCount -ne 10 -or
+            [int]$assistantManifest.RemediationWorkflowCount -ne 4 -or
+            [int]$assistantManifest.AssuranceActionCount -ne 8 -or
+            @($assistantManifest.BundledDocumentFiles).Count -ne 4 -or
+            -not [bool]$assistantManifest.VersionComparisonUsesRecordedHistoryOnly -or
             -not [bool]$assistantManifest.KnowledgeCompatibilityEnforced -or
             [string]$assistantManifest.KnowledgeUpdateVerification -ne 'DetachedCmsSha256PinnedCertificate' -or
             -not [bool]$assistantManifest.KnowledgeRollbackProtection -or
@@ -1121,6 +1131,12 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
         if ($null -eq $applicationUpdateManifest.Title.'vi-VN' -or $null -eq $applicationUpdateManifest.Title.'en-US' -or
             @($applicationUpdateManifest.Changes.'vi-VN').Count -lt 3 -or @($applicationUpdateManifest.Changes.'en-US').Count -lt 3) {
             throw 'Manifest cập nhật thiếu nội dung vi-VN/en-US.'
+        }
+        $viUpdateChanges = @($applicationUpdateManifest.Changes.'vi-VN') -join ' '
+        $enUpdateChanges = @($applicationUpdateManifest.Changes.'en-US') -join ' '
+        if ($viUpdateChanges -notmatch 'toàn bộ chức năng.*10 chức năng chính.*tám tác vụ.*không chỉ riêng OEM' -or
+            $enUpdateChanges -notmatch 'every function.*ten main functions.*eight Reports.*not only OEM') {
+            throw 'Manifest cập nhật chưa mô tả độ phủ toàn bộ chức năng thay vì chỉ riêng OEM.'
         }
         $manifestRequiresAuthenticode = [bool]$applicationUpdateManifest.AuthenticodeRequired
         $manifestSignerThumbprints = @($applicationUpdateManifest.SignerThumbprints | ForEach-Object { ([string]$_).Replace(' ', '').ToUpperInvariant() })

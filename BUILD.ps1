@@ -1215,6 +1215,16 @@ $releaseManifest = [ordered]@{
         CentralServerRequired = [bool]$assistantMetadata.CentralServerRequired
         KnowledgeStorage = [string]$assistantMetadata.KnowledgeStorage
         ReportContextSource = [string]$assistantMetadata.ReportContextSource
+        CoverageMode = [string]$assistantMetadata.CoverageMode
+        CompleteBundledGuideIndexed = [bool]$assistantMetadata.CompleteBundledGuideIndexed
+        CompleteVersionHistoryIndexed = [bool]$assistantMetadata.CompleteVersionHistoryIndexed
+        CurrentTechnicalVersionIndexed = [bool]$assistantMetadata.CurrentTechnicalVersionIndexed
+        CompleteFeatureGuideCoverage = [bool]$assistantMetadata.CompleteFeatureGuideCoverage
+        MainFeatureCount = [int]$assistantMetadata.MainFeatureCount
+        RemediationWorkflowCount = [int]$assistantMetadata.RemediationWorkflowCount
+        AssuranceActionCount = [int]$assistantMetadata.AssuranceActionCount
+        BundledDocumentFiles = @($assistantMetadata.BundledDocumentFiles)
+        VersionComparisonUsesRecordedHistoryOnly = [bool]$assistantMetadata.VersionComparisonUsesRecordedHistoryOnly
         KnowledgeCompatibilityEnforced = [bool]$assistantMetadata.KnowledgeCompatibilityEnforced
         KnowledgeUpdateVerification = [string]$assistantMetadata.KnowledgeUpdateVerification
         KnowledgeRollbackProtection = [bool]$assistantMetadata.KnowledgeRollbackProtection
@@ -1309,7 +1319,7 @@ $applicationUpdateManifest = [ordered]@{
         'vi-VN' = @(
             'Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt-Anh theo từng mục, trả đầy đủ thay đổi của một phiên bản và đối chiếu trực tiếp hai phiên bản mà không suy diễn ngoài hồ sơ.',
             'Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.',
-            'Giải thích đầy đủ quy trình OEM hai giai đoạn: kiểm tra OA3 chỉ đọc, che key, xác nhận edition/quyền sử dụng, áp dụng bằng cơ chế Windows chính thức và hậu kiểm.',
+            'Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; không chỉ riêng OEM.',
             'v5.0 siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.',
             'Bản ManagedSigned chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.',
             'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
@@ -1331,7 +1341,7 @@ $applicationUpdateManifest = [ordered]@{
         'en-US' = @(
             'Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version''s full change entry, and compares two versions without inferring undocumented changes.',
             'Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.',
-            'Explains the complete two-stage OEM workflow: read-only OA3 inspection, masked keys, edition/entitlement confirmation, official Windows application, and post-verification.',
+            'Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports & Assurance actions—not only OEM.',
             'v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.',
             'The ManagedSigned build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.',
             'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',
