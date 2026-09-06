@@ -32,7 +32,7 @@
                                   "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
                               ],
                     "en-US":  [
-                                  "Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version's full change entry, and compares two versions without inferring undocumented changes.",
+                                  "Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version\u0027s full change entry, and compares two versions without inferring undocumented changes.",
                                   "Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.",
                                   "Explains the complete two-stage OEM workflow: read-only OA3 inspection, masked keys, edition/entitlement confirmation, official Windows application, and post-verification.",
                                   "v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.",
@@ -56,8 +56,8 @@
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe",
-    "DownloadSha256":  "D66AAD02B7DF0456CA7E6129FE11148375F27A21553F254E07DD2E7FA4C0E07D",
-    "DownloadSize":  780536,
+    "DownloadSha256":  "905DC85834D280F797FCBC3A94B8C5FF401A9703B3A01BCAFA8A146AD98CA9F7",
+    "DownloadSize":  786680,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"
