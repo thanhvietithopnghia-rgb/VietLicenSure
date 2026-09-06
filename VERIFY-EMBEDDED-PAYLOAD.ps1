@@ -53,6 +53,14 @@ try {
     if ($compiledBuildId -cne $expectedBuildId) {
         throw "BuildId trong EXE không khớp nguồn chuẩn: $compiledBuildId / $expectedBuildId"
     }
+    $storeVersionField = $launcherType.GetField('StorePackageVersion', $bindingFlags)
+    if (-not $storeVersionField -or -not $storeVersionField.IsLiteral) {
+        throw 'Không đọc được StorePackageVersion từ launcher đã biên dịch.'
+    }
+    $compiledStoreVersion = [Version]([string]$storeVersionField.GetRawConstantValue())
+    if ($assembly.GetName().Version -ne $compiledStoreVersion) {
+        throw "AssemblyVersion không khớp StorePackageVersion: $($assembly.GetName().Version) / $compiledStoreVersion"
+    }
     $payloadField = $launcherType.GetField("PayloadFiles", $bindingFlags)
     $integrityField = $launcherType.GetField("RequiredIntegrityFiles", $bindingFlags)
     if (-not $payloadField -or -not $integrityField) {

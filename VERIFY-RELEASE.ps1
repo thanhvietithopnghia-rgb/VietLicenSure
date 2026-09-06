@@ -267,6 +267,15 @@ $backupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-
 $restoreText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-restore.ps1') -Raw -Encoding UTF8
 $reportText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
 $launcherText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v5.0-OneFile.cs') -Raw -Encoding UTF8
+$launcherAssemblyVersionMatch = [regex]::Match($launcherText, 'AssemblyVersion\("(?<Version>\d+\.\d+\.\d+\.\d+)"\)')
+$launcherStoreVersionMatch = [regex]::Match($launcherText, 'private const string StorePackageVersion = "(?<Version>\d+\.\d+\.\d+\.\d+)";')
+if (-not $launcherAssemblyVersionMatch.Success -or -not $launcherStoreVersionMatch.Success -or
+    $launcherAssemblyVersionMatch.Groups['Version'].Value -cne $launcherStoreVersionMatch.Groups['Version'].Value) {
+    $failures.Add('Launcher co AssemblyVersion va StorePackageVersion khong dong bo.')
+}
+if ($launcherText -notmatch 'assembly\.GetName\(\)\.Version\s*!=\s*new Version\(StorePackageVersion\)') {
+    $failures.Add('Launcher chua dung StorePackageVersion lam nguon chuan khi tu kiem tra identity runtime.')
+}
 $buildText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'BUILD.ps1') -Raw -Encoding UTF8
 $runtimeText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Runtime.ps1') -Raw -Encoding UTF8
 $capabilityText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Capabilities.ps1') -Raw -Encoding UTF8

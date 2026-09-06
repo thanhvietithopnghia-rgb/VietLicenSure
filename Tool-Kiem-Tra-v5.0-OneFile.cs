@@ -583,7 +583,7 @@ namespace ThanhViet.ToolKiemTra
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 string filePath = assembly.Location;
                 if (String.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath) ||
-                    assembly.GetName().Version != new Version(5, 0, 0, 0))
+                    assembly.GetName().Version != new Version(StorePackageVersion))
                 {
                     failureCode = "IdentityMismatch";
                     return "Modified";
