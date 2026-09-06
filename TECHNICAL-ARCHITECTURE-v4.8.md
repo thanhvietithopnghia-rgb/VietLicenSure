@@ -1,6 +1,6 @@
 # Kiến trúc kỹ thuật — tài liệu nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các ranh giới kiến trúc còn hiệu lực là nền cho VietLicenSure v5.0.0.1. Những số liệu gắn riêng với 4.8.0.1 chỉ mang tính lịch sử.
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các ranh giới kiến trúc còn hiệu lực là nền cho VietLicenSure v5.0. Những số liệu gắn riêng với 4.8.0.1 chỉ mang tính lịch sử.
 
 Tài liệu này mô tả kiến trúc phát hành `4.8.0.1`, dashboard schema `2.0` và các ranh giới an toàn của bản một tệp. Mã nguồn PowerShell tương ứng là nguồn sự thật; tài liệu không thay thế verifier.
 

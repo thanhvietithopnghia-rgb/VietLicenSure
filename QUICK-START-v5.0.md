@@ -35,6 +35,6 @@ Chứng thư hiện tại là chứng thư tự ký được launcher ghim. `Sta
 
 ## 4. Báo cáo và hỗ trợ
 
-Báo cáo được lưu cục bộ trong `Desktop\BaoCao-VietLicenSure`. Bản chia sẻ mặc định che định danh; vẫn cần đọc lại trước khi gửi ra ngoài. Trợ lý tích hợp tra cứu Offline toàn bộ hướng dẫn, lịch sử từ v1.0.0 đến v5.0.0.1 và cách dùng mọi chức năng đã được tài liệu hóa.
+Báo cáo được lưu cục bộ trong `Desktop\BaoCao-VietLicenSure`. Bản chia sẻ mặc định che định danh; vẫn cần đọc lại trước khi gửi ra ngoài. Trợ lý tích hợp tra cứu Offline toàn bộ hướng dẫn, lịch sử từ v1.0.0 đến v5.0 và cách dùng mọi chức năng đã được tài liệu hóa.
 
 Đọc thêm: `HUONG-DAN.txt`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và `LICH-SU-PHIEN-BAN.txt`.

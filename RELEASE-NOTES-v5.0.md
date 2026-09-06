@@ -2,25 +2,26 @@
 
 Ngày build kỹ thuật: `2026-09-06`
 Ngày phát hành: `06/09/2026`
-Trạng thái phát hành: `v5.0 chính thức đổi thương hiệu; phiên bản kỹ thuật 5.0.0.1`
-ProductVersion/FileVersion: `5.0.0.1`
+Phiên bản hiển thị: `v5.0`
+Mã kỹ thuật tương thích Windows/updater: `5.0.0.1`
 Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
 
 ## Giới thiệu
 
-Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. VietLicenSure vẫn là dòng v5.0 và giữ đầy đủ chức năng của bản trước; gói hiện tại dùng phiên bản kỹ thuật `5.0.0.1`.
+Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. VietLicenSure giữ đầy đủ chức năng của bản trước và thống nhất tên phiên bản hiển thị là **v5.0**.
 
 Tên gọi kết hợp **Viet** (do người Việt phát triển), **Licen** (`License` — giấy phép/bản quyền phần mềm) và **Sure** (rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật). Phần mềm tập trung nâng cấp trải nghiệm sử dụng, khả năng kiểm tra–nhận diện, quy trình khắc phục an toàn, báo cáo và bảo vệ dữ liệu. VietLicenSure hoạt động Offline theo mặc định, không tự tải inventory hoặc báo cáo lên Internet và chỉ dùng Online khi người dùng chủ động cho phép.
 
-## Cập nhật kỹ thuật v5.0.0.1 ngày 06/09/2026
+## Cập nhật v5.0 ngày 06/09/2026
 
-- Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ lịch sử phiên bản Việt–Anh theo từng mục, dùng được Offline; phạm vi chức năng bao phủ toàn bộ Tool chứ không chỉ Khôi phục key OEM.
-- Hỏi một phiên bản có hồ sơ sẽ nhận đầy đủ mục thay đổi; hỏi hai phiên bản sẽ nhận đối chiếu trực tiếp, không suy diễn ngoài tài liệu. Các cụm “bản hiện tại” và “mới nhất” được ánh xạ đúng tới v5.0.0.1.
-- Bổ sung mục lịch sử riêng cho bản phát hành kỹ thuật v5.0.0.1 và ma trận kiểm thử mọi mốc ghi nhận từ v1.0.0 đến phiên bản hiện tại.
+- Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử phiên bản Việt–Anh, dùng được Offline và bao phủ mọi chức năng được tài liệu hóa.
+- Hỏi một phiên bản có hồ sơ sẽ nhận đúng mục thay đổi; hỏi hai phiên bản sẽ nhận đối chiếu trực tiếp, không suy diễn ngoài tài liệu; “bản hiện tại” và “mới nhất” được hiểu là v5.0.
+- Đồng bộ tên VietLicenSure và v5.0 trên Dashboard, Trợ lý, Giới thiệu, quản lý doanh nghiệp, tài liệu và trang GitHub.
+- Sửa vùng tiêu đề/mô tả Trợ lý bị cắt và bổ sung kiểm thử UI tự động ở Việt/Anh, Sáng/Tối để chặn lỗi thiếu chữ tái diễn.
 - Mọi mục HDSD có thể được gọi đúng theo tên: 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ của Trung tâm Báo cáo & Bảo đảm.
 - Khôi phục các mốc v1.0.0–v1.0.9 bị lược bỏ và sửa nội dung v1.1.0–v3.3 theo hồ sơ phát hành gốc; xác định rõ không có hồ sơ v2.0–v2.3.
 - Giải thích đầy đủ quy trình OEM: kiểm tra OA3 chỉ đọc, che key, xác nhận quyền/edition, áp dụng bằng cơ chế Windows chính thức và hậu kiểm tối đa ba lần; đây là một phần của độ phủ toàn bộ chức năng.
-- Bổ sung kiểm thử chống nhầm phiên bản Windows/Office/PowerShell/.NET với lịch sử Tool, kiểm thử mọi mục chức năng và kiểm thử toàn vẹn chỉ mục tài liệu.
+- Bổ sung kiểm thử chống nhầm phiên bản Windows/Office/PowerShell/.NET với lịch sử phần mềm, kiểm thử mọi mục chức năng và kiểm thử toàn vẹn chỉ mục tài liệu.
 
 ## Cập nhật kỹ thuật ngày 05/09/2026
 
@@ -60,7 +61,7 @@ Tên gọi kết hợp **Viet** (do người Việt phát triển), **Licen** (`
 - Launcher kiểm tra Authenticode, signer được ghim, BuildId và payload trước khi mở thao tác thay đổi hệ thống.
 - Bản hiện tại có Authenticode hợp lệ và timestamp DigiCert nhưng dùng chứng thư tự ký được ghim; Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
 - Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
-- Người dùng đang giữ EXE v5.0.0.0 có thể tải v5.0.0.1 và thay thế thủ công; dữ liệu cũ được giữ làm nguồn migration chỉ đọc.
+- Người dùng đang giữ bản v5.0 cũ có thể tải lại `VietLicenSure-v5.0.exe` và thay tệp; dữ liệu cũ được giữ làm nguồn migration chỉ đọc.
 
 ## Giới hạn công khai
 

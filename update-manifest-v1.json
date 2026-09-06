@@ -5,8 +5,8 @@
     "MinimumUpdaterVersion":  "4.6.1.0",
     "PublishedAtUtc":  "2026-09-06T00:00:00Z",
     "Title":  {
-                  "vi-VN":  "v5.0.0.1 - Trợ lý đọc đầy đủ HDSD và lịch sử phiên bản",
-                  "en-US":  "v5.0.0.1 - Complete guide and version-history support in Tool Assistant"
+                  "vi-VN":  "v5.0 - Trợ lý VietLicenSure đọc đầy đủ HDSD và lịch sử phiên bản",
+                  "en-US":  "v5.0 - Complete guide and version-history support in VietLicenSure Assistant"
               },
     "Changes":  {
                     "vi-VN":  [
@@ -32,7 +32,7 @@
                                   "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
                               ],
                     "en-US":  [
-                                  "Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version\u0027s full change entry, and compares two versions without inferring undocumented changes.",
+                                  "VietLicenSure Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version\u0027s full change entry, and compares two versions without inferring undocumented changes.",
                                   "Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.",
                                   "Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports \u0026 Assurance actions—not only OEM.",
                                   "v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.",
@@ -56,8 +56,8 @@
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "4B972ABA939BD5DC8E65C11DA294B7B985E4238DBEA466A1A73B491BB0D3314E",
-    "DownloadSize":  794872,
+    "DownloadSha256":  "36DB24C2C0D561AA12082229FF14ED3A7D99A1FF16297625045F1B7CA4941127",
+    "DownloadSize":  794360,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"

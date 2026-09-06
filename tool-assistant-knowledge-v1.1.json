@@ -9,11 +9,11 @@
   "Entries": [
     {
       "Id": "scope",
-      "TitleVi": "Phạm vi của Trợ lý Tool",
-      "TitleEn": "Tool Assistant scope",
+      "TitleVi": "Phạm vi của Trợ lý VietLicenSure",
+      "TitleEn": "VietLicenSure Assistant scope",
       "Keywords": ["tro ly", "chat bot", "chatbot", "hoi gi", "lam duoc gi", "pham vi", "ai", "codex", "api"],
       "AnswerVi": "Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu Tool có: thông tin sản phẩm, toàn bộ chức năng và cách dùng, trạng thái máy, báo cáo, bằng chứng, lỗi, an toàn, cập nhật và Máy chủ–Máy trạm. Trợ lý dùng tri thức cục bộ, tài liệu nhúng và báo cáo hiện có; danh sách này là phạm vi mở theo dữ liệu, không phải một tập câu hỏi mẫu cố định. Nếu thiếu bằng chứng, Trợ lý nói rõ phần chưa xác định; chỉ từ chối khi nội dung thực sự không liên quan đến Tool.",
-      "AnswerEn": "Tool Assistant handles every VietLicenSure-related question supported by available Tool data: product information, all features and workflows, device state, reports, evidence, errors, safety, updates, and server/workstation operation. It uses local knowledge, bundled documentation, and available report context; this is a data-driven scope, not a fixed sample-question list. It states when evidence is insufficient and declines only genuinely unrelated topics."
+      "AnswerEn": "VietLicenSure Assistant handles every product-related question supported by available data: product information, all features and workflows, device state, reports, evidence, errors, safety, updates, and server/workstation operation. It uses local knowledge, bundled documentation, and available report context; this is a data-driven scope, not a fixed sample-question list. It states when evidence is insufficient and declines only genuinely unrelated topics."
     },
     {
       "Id": "brand-name",
@@ -28,8 +28,8 @@
       "TitleVi": "Phiên bản hiện tại",
       "TitleEn": "Current version",
       "Keywords": ["phien ban cua tool", "tool version", "phien ban hien tai", "version hien tai", "dang dung ban nao", "so phien ban", "ban v5.0", "v5.0.0.1", "release v5.0"],
-      "AnswerVi": "Gói Tool hiện tại mang tên VietLicenSure v5.0, phiên bản kỹ thuật v5.0.0.1, kênh ManagedSigned. Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh từ v1.0.0 đến v5.0.0.1 để tra cứu Offline, trả nguyên mục thay đổi, đối chiếu hai phiên bản và giải thích chi tiết toàn bộ chức năng được tài liệu hóa—không chỉ Khôi phục key OEM. Tool có 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm.",
-      "AnswerEn": "This Tool package is VietLicenSure v5.0, technical version v5.0.0.1, on the ManagedSigned channel. The Assistant indexes the complete Vietnamese/English guides and recorded history from v1.0.0 through v5.0.0.1 for Offline lookup, returns full change entries, compares two versions, and explains every documented function—not only OEM key recovery. Coverage includes all ten main functions, four remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions."
+      "AnswerVi": "Phần mềm hiện tại mang tên VietLicenSure v5.0, thuộc kênh ManagedSigned. Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh từ v1.0.0 đến v5.0 để tra cứu Offline, trả nguyên mục thay đổi, đối chiếu hai phiên bản và giải thích chi tiết toàn bộ chức năng được tài liệu hóa—không chỉ Khôi phục key OEM. VietLicenSure có 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm.",
+      "AnswerEn": "The current product is VietLicenSure v5.0 on the ManagedSigned channel. The Assistant indexes the complete Vietnamese/English guides and recorded history from v1.0.0 through v5.0 for Offline lookup, returns full change entries, compares two versions, and explains every documented function—not only OEM key recovery. Coverage includes all ten main functions, four remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions."
     },
     {
       "Id": "tool-author",
@@ -44,24 +44,24 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "Gói VietLicenSure v5.0, phiên bản kỹ thuật v5.0.0.1, có ngày build 06/09/2026. Trạng thái có sẵn công khai cần được đối chiếu trên trang Releases chính thức; ngày build không tự chứng minh gói đã được phát hành. Chữ ký có timestamp nhưng chứng thư hiện tại là tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen.",
-      "AnswerEn": "This VietLicenSure v5.0 package, technical version v5.0.0.1, has a build date of 6 September 2026. Public availability must be checked on the official Releases page; a build date alone does not prove publication. The signature is timestamped, but the current certificate is self-signed and launcher-pinned, so Windows may still show Unknown publisher or SmartScreen."
+      "AnswerVi": "VietLicenSure v5.0 có ngày build và phát hành 06/09/2026. Trạng thái có sẵn công khai cần được đối chiếu trên trang Releases chính thức. Chữ ký có timestamp nhưng chứng thư hiện tại là tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen.",
+      "AnswerEn": "VietLicenSure v5.0 was built and released on 6 September 2026. Public availability should be checked on the official Releases page. The signature is timestamped, but the current certificate is self-signed and launcher-pinned, so Windows may still show Unknown publisher or SmartScreen."
     },
     {
       "Id": "first-release",
       "TitleVi": "Phiên bản công khai đầu tiên",
       "TitleEn": "First public release",
       "Keywords": ["phien ban dau tien cua tool", "v1.0 phat hanh ngay nao", "v1 ngay nao", "ngay ra mat v1.0", "first public version", "first release date", "ban dau tien", "ban dau tien ngay may", "lich su ban v1.0"],
-      "AnswerVi": "Phiên bản công khai đầu tiên của dòng sản phẩm tiền thân là v1.0, phát hành ngày 17/07/2026. Tên VietLicenSure chỉ được dùng chính thức từ v5.0 ngày 06/09/2026; vì vậy không gọi hồi tố v1.0 là VietLicenSure. Đây là mốc đầu tiên trong Lịch sử phiên bản, không phải ngày build của v5.0.0.1 hiện tại.",
-      "AnswerEn": "The predecessor product line first shipped publicly as v1.0 on 17 July 2026. The VietLicenSure name became official only with v5.0 on 6 September 2026, so v1.0 is not retroactively branded VietLicenSure. This is the first milestone in Version history, not the build date of the current v5.0.0.1 release."
+      "AnswerVi": "Phiên bản công khai đầu tiên của dòng sản phẩm tiền thân là v1.0, phát hành ngày 17/07/2026. Tên VietLicenSure chỉ được dùng chính thức từ v5.0 ngày 06/09/2026; vì vậy không gọi hồi tố v1.0 là VietLicenSure.",
+      "AnswerEn": "The predecessor product line first shipped publicly as v1.0 on 17 July 2026. The VietLicenSure name became official only with v5.0 on 6 September 2026, so v1.0 is not retroactively branded VietLicenSure."
     },
     {
       "Id": "tool-pricing",
       "TitleVi": "Tool miễn phí hay trả phí",
       "TitleEn": "Tool pricing",
       "Keywords": ["tool mien phi hay tra phi", "tool co mat phi khong", "co ton tien khong", "gia tool", "free or paid tool", "is it free", "tool pricing", "phi su dung tool", "mien phi"],
-      "AnswerVi": "VietLicenSure v5.0.0.1 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc Tool miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
-      "AnswerEn": "VietLicenSure v5.0.0.1 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use of the Tool does not make its source open source or alter the licence terms of software being scanned."
+      "AnswerVi": "VietLicenSure v5.0 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc phần mềm được dùng miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
+      "AnswerEn": "VietLicenSure v5.0 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use does not make its source open source or alter the licence terms of software being scanned."
     },
     {
       "Id": "source-code-license",
@@ -164,8 +164,8 @@
       "TitleVi": "Chế độ Offline và Online",
       "TitleEn": "Offline and Online modes",
       "Keywords": ["offline", "che do offline", "hoat dong offline", "online", "mang", "internet", "chuyen online", "chuyen offline", "mac dinh", "ket noi"],
-      "AnswerVi": "Mỗi lần mở, công cụ mặc định ở chế độ Offline và không tự truy cập Internet. Khi người dùng chủ động chuyển Online, công cụ mới cho phép kiểm tra cập nhật, đồng bộ danh mục và đồng bộ bộ tri thức của Trợ lý Tool. Đóng rồi mở lại ứng dụng sẽ trở về Offline.",
-      "AnswerEn": "Every launch starts Offline and does not access the Internet automatically. Online mode must be enabled explicitly for update checks, catalog sync and Tool Assistant knowledge sync. Restarting the application returns it to Offline."
+      "AnswerVi": "Mỗi lần mở, VietLicenSure mặc định ở chế độ Offline và không tự truy cập Internet. Khi người dùng chủ động chuyển Online, phần mềm mới cho phép kiểm tra cập nhật, đồng bộ danh mục và đồng bộ bộ tri thức của Trợ lý VietLicenSure. Đóng rồi mở lại ứng dụng sẽ trở về Offline.",
+      "AnswerEn": "Every launch starts Offline and does not access the Internet automatically. Online mode must be enabled explicitly for update checks, catalog sync and VietLicenSure Assistant knowledge sync. Restarting the application returns it to Offline."
     },
     {
       "Id": "privacy",
@@ -532,8 +532,8 @@
       "TitleVi": "Kênh hỗ trợ của Tool",
       "TitleEn": "Tool support channels",
       "Keywords": ["kenh ho tro cua tool", "lien he nguoi phat trien", "email cua tac gia", "zalo cua tac gia", "gui loi cho thanh viet", "can ho tro ky thuat"],
-      "AnswerVi": "Kênh hỗ trợ ghi trong Hướng dẫn sử dụng là Zalo 0978 005 017 và email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0.0.1, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh do Tool tạo; không gửi product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
-      "AnswerEn": "The user guide lists Zalo 0978 005 017 and thanhvietit.hopnghia@gmail.com for support. Include version v5.0.0.1, the feature name, the exact message, and a Tool-created redacted support bundle; never send full product keys, passwords, tokens, or a FullInternal report."
+      "AnswerVi": "Kênh hỗ trợ ghi trong Hướng dẫn sử dụng là Zalo 0978 005 017 và email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh do VietLicenSure tạo; không gửi product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
+      "AnswerEn": "The user guide lists Zalo 0978 005 017 and thanhvietit.hopnghia@gmail.com for support. Include version v5.0, the feature name, the exact message, and a VietLicenSure-created redacted support bundle; never send full product keys, passwords, tokens, or a FullInternal report."
     },
     {
       "Id": "plugin-management",
@@ -564,8 +564,8 @@
       "TitleVi": "Hướng dẫn và lịch sử phiên bản",
       "TitleEn": "User guide and version history",
       "Keywords": ["mo huong dan su dung chi tiet", "xem lich su phien ban", "hdsd html pdf", "tai lieu nhung trong tool", "phien ban va cap nhat o dau", "mo user guide", "open user guide", "where version and updates", "see version and updates"],
-      "AnswerVi": "Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ Lịch sử phiên bản Việt–Anh được nhúng trong đúng bản VietLicenSure, nên có thể tra cứu Offline theo tên của mọi chức năng, quy trình hoặc số phiên bản. Phạm vi lịch sử chạy từ v1.0.0 đến bản phát hành kỹ thuật v5.0.0.1 hiện tại; cụm 'bản hiện tại' hoặc 'mới nhất' được hiểu là v5.0.0.1. Với một phiên bản có hồ sơ, Trợ lý trả đúng toàn bộ mục thay đổi; khi hỏi so sánh hai phiên bản, Trợ lý đặt hai mục cạnh nhau và không suy diễn ngoài tài liệu. Nếu số phiên bản không tồn tại, ví dụ v2.0, Trợ lý nói rõ không có mốc được ghi nhận thay vì tự tạo câu trả lời. Mọi mục chức năng trong HDSD đều có thể được gọi theo tên. Để mở tài liệu gốc, vào Trung tâm báo cáo & bảo đảm (chức năng 10), chọn Mở hướng dẫn sử dụng để xem HDSD HTML/PDF, hoặc chọn Phiên bản và cập nhật để xem thông tin bản đang dùng và cập nhật.",
-      "AnswerEn": "The Assistant indexes the complete Vietnamese/English user guides and Version histories bundled with the exact VietLicenSure build, so every documented function, workflow, and version can be looked up Offline. Recorded history runs from v1.0.0 through the current v5.0.0.1 technical release, and 'current' or 'latest' resolves to v5.0.0.1. For one recorded version it returns the complete entry; for a two-version comparison it places both entries side by side without inferring undocumented changes. If a requested number does not exist—for example v2.0—the Assistant states that no milestone is recorded instead of inventing an answer. Every named guide function is retrievable. To open the original documents, open Reports & Assurance (feature 10), choose Open user guide for the HTML/PDF guide, or choose Version and updates for the installed-version and update view."
+      "AnswerVi": "Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ Lịch sử phiên bản Việt–Anh được nhúng trong đúng bản VietLicenSure, nên có thể tra cứu Offline theo tên của mọi chức năng, quy trình hoặc số phiên bản. Phạm vi lịch sử chạy từ v1.0.0 đến v5.0 hiện tại; cụm 'bản hiện tại' hoặc 'mới nhất' được hiểu là v5.0. Với một phiên bản có hồ sơ, Trợ lý trả đúng toàn bộ mục thay đổi; khi hỏi so sánh hai phiên bản, Trợ lý đặt hai mục cạnh nhau và không suy diễn ngoài tài liệu. Nếu số phiên bản không tồn tại, ví dụ v2.0, Trợ lý nói rõ không có mốc được ghi nhận thay vì tự tạo câu trả lời. Mọi mục chức năng trong HDSD đều có thể được gọi theo tên. Để mở tài liệu gốc, vào Trung tâm báo cáo & bảo đảm (chức năng 10), chọn Mở hướng dẫn sử dụng để xem HDSD HTML/PDF, hoặc chọn Phiên bản và cập nhật để xem thông tin bản đang dùng và cập nhật.",
+      "AnswerEn": "The Assistant indexes the complete Vietnamese/English user guides and Version histories bundled with VietLicenSure, so every documented function, workflow, and version can be looked up Offline. Recorded history runs from v1.0.0 through the current v5.0 release, and 'current' or 'latest' resolves to v5.0. For one recorded version it returns the complete entry; for a two-version comparison it places both entries side by side without inferring undocumented changes. If a requested number does not exist—for example v2.0—the Assistant states that no milestone is recorded instead of inventing an answer. Every named guide function is retrievable. To open the original documents, open Reports & Assurance (feature 10), choose Open user guide for the HTML/PDF guide, or choose Version and updates for the installed-version and update view."
     },
     {
       "Id": "report-formats",

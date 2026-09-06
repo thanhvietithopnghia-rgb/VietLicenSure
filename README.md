@@ -1,10 +1,10 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · ProductVersion/FileVersion `5.0.0.1` · phát hành ngày 06/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành ngày 06/09/2026
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
 
-Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Việc đổi tên không loại bỏ chức năng và vẫn giữ dòng phiên bản v5.0; phiên bản kỹ thuật của gói phát hành này là `5.0.0.1`.
+Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Việc đổi tên không loại bỏ chức năng và giữ nguyên dòng phiên bản v5.0.
 
 ## Ý nghĩa tên VietLicenSure
 

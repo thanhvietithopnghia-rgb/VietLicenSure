@@ -31,7 +31,7 @@ Không được mở rộng ngoại lệ này sang tiêu đề giao diện, báo
 
 ## Tài liệu mang hậu tố cũ
 
-Các tệp `*-v4.8.md` và `SOURCE-POLICY-v4.9.md` giữ tên theo mốc hình thành để truy vết lịch sử. Mỗi tệp có thông báo trạng thái ở đầu trang; nội dung nền vẫn áp dụng cho VietLicenSure v5.0.0.1 trừ khi một mục ghi rõ chỉ dành cho phiên bản cũ. Tài liệu phát hành hiện hành là `README.md`, `QUICK-START-v5.0.md`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và hai tệp lịch sử phiên bản.
+Các tệp `*-v4.8.md` và `SOURCE-POLICY-v4.9.md` giữ tên theo mốc hình thành để truy vết lịch sử. Mỗi tệp có thông báo trạng thái ở đầu trang; nội dung nền vẫn áp dụng cho VietLicenSure v5.0 trừ khi một mục ghi rõ chỉ dành cho phiên bản cũ. Tài liệu phát hành hiện hành là `README.md`, `QUICK-START-v5.0.md`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và hai tệp lịch sử phiên bản.
 
 ## Cổng kiểm tra
 
