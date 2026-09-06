@@ -1323,8 +1323,8 @@ $applicationUpdateManifest = [ordered]@{
     MinimumUpdaterVersion = '4.6.1.0'
     PublishedAtUtc = $publishedAtUtc
     Title = [ordered]@{
-        'vi-VN' = 'v5.0.0.1 - Trợ lý đọc đầy đủ HDSD và lịch sử phiên bản'
-        'en-US' = 'v5.0.0.1 - Complete guide and version-history support in Tool Assistant'
+        'vi-VN' = 'v5.0 - Trợ lý VietLicenSure đọc đầy đủ HDSD và lịch sử phiên bản'
+        'en-US' = 'v5.0 - Complete guide and version-history support in VietLicenSure Assistant'
     }
     Changes = [ordered]@{
         'vi-VN' = @(
@@ -1350,7 +1350,7 @@ $applicationUpdateManifest = [ordered]@{
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
-            'Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version''s full change entry, and compares two versions without inferring undocumented changes.',
+            'VietLicenSure Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version''s full change entry, and compares two versions without inferring undocumented changes.',
             'Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.',
             'Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports & Assurance actions—not only OEM.',
             'v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.',

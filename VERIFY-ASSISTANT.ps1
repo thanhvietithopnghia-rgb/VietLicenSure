@@ -224,7 +224,7 @@ if ($errors.Count -eq 0) {
         @{ Question='mỗi lần quét có tạo thư mục riêng k'; Expected='không tạo thư mục con' }
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
-        @{ Question='phiên bản hiện tại của tool'; Expected='v5.0.0.1' }
+        @{ Question='phiên bản hiện tại của tool'; Expected='v5.0' }
         @{ Question='ngày build hiện tại của tool'; Expected='06/09/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
@@ -296,7 +296,7 @@ if ($errors.Count -eq 0) {
     if ($versionCompareVi -notmatch 'không suy diễn' -or $versionCompareVi -notmatch 'v4\.8\.0\.0' -or $versionCompareVi -notmatch 'v4\.6') {
         Add-AssistantVerificationError 'Two-version comparison does not return both published history entries.'
     }
-    if ($versionListVi -notmatch 'v5\.0\.0\.1' -or $versionListVi -notmatch 'v5\.0' -or $versionListVi -notmatch 'v1\.0' -or
+    if ($versionListVi -notmatch 'v5\.0' -or $versionListVi -notmatch 'v1\.0' -or
         $versionListVi -match '(?:^|, )v2\.0(?:,|\.)') {
         Add-AssistantVerificationError 'Complete version-history listing is incomplete or includes an undocumented v2.0 milestone.'
     }
@@ -338,7 +338,7 @@ if ($errors.Count -eq 0) {
     }
 
     $expectedHistoryVersions = @(
-        '5.0.0.1','5.0','4.9.0.0','4.8.0.1','4.8.0.0','4.6','4.5','4.4','4.3','4.2','4.1','4.0',
+        '5.0','4.9.0.0','4.8.0.1','4.8.0.0','4.6','4.5','4.4','4.3','4.2','4.1','4.0',
         '3.9','3.8','3.7','3.6','3.5','3.4','3.3','3.2','3.1','3.0','2.9','2.8','2.7','2.6','2.5','2.4',
         '1.3.0','1.2.0','1.1.0','1.0.9','1.0.8','1.0.7','1.0.6','1.0.5','1.0.4','1.0.3','1.0.2','1.0.1','1.0.0'
     )
@@ -368,19 +368,19 @@ if ($errors.Count -eq 0) {
     $currentCompareVi = Get-ToolAssistantAnswer -Question 'bản hiện tại so với v4.9' -Culture 'vi-VN' -Knowledge $knowledge
     $currentCompareEn = Get-ToolAssistantAnswer -Question 'compare v4.9 with the current version' -Culture 'en-US' -Knowledge $knowledge
     $futureMissing = Get-ToolAssistantAnswer -Question 'v5.0.0.2 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
-    if ($currentVi -notmatch 'v5\.0\.0\.1.*bản phát hành kỹ thuật' -or $currentVi -notmatch 'toàn bộ chức năng' -or
-        $currentEn -notmatch 'v5\.0\.0\.1.*technical release' -or $currentEn -notmatch 'every documented Tool function' -or
-        $currentAliasVi -notmatch 'v5\.0\.0\.1' -or $currentAliasEn -notmatch 'v5\.0\.0\.1' -or
-        $latestAliasVi -notmatch 'v5\.0\.0\.1' -or $latestAliasEn -notmatch 'v5\.0\.0\.1' -or
-        $bareLatestEn -notmatch 'v5\.0\.0\.1' -or
+    if ($currentVi -notmatch 'v5\.0' -or $currentVi -notmatch 'toàn bộ chức năng' -or
+        $currentEn -notmatch 'v5\.0' -or $currentEn -notmatch 'every documented function' -or
+        $currentAliasVi -notmatch 'v5\.0' -or $currentAliasEn -notmatch 'v5\.0' -or
+        $latestAliasVi -notmatch 'v5\.0' -or $latestAliasEn -notmatch 'v5\.0' -or
+        $bareLatestEn -notmatch 'v5\.0' -or
         $futureMissing -notmatch 'không có mục được ghi nhận cho v5\.0\.0\.2') {
         Add-AssistantVerificationError 'Current technical version lookup/alias or future-version rejection is incomplete.'
     }
-    if ($currentCompareVi.IndexOf('v5.0.0.1 —', [StringComparison]::Ordinal) -lt 0 -or
-        $currentCompareVi.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -le $currentCompareVi.IndexOf('v5.0.0.1 —', [StringComparison]::Ordinal) -or
+    if ($currentCompareVi.IndexOf('v5.0 —', [StringComparison]::Ordinal) -lt 0 -or
+        $currentCompareVi.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -le $currentCompareVi.IndexOf('v5.0 —', [StringComparison]::Ordinal) -or
         $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -lt 0 -or
-        $currentCompareEn.IndexOf('v5.0.0.1 —', [StringComparison]::Ordinal) -le $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal)) {
-        Add-AssistantVerificationError 'Current/latest comparison did not resolve v5.0.0.1 or preserve question order.'
+        $currentCompareEn.IndexOf('v5.0 —', [StringComparison]::Ordinal) -le $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal)) {
+        Add-AssistantVerificationError 'Current/latest comparison did not resolve v5.0 or preserve question order.'
     }
 
     $catalogUpdateEn = Get-ToolAssistantAnswer -Question 'latest catalog update failed' -Culture 'en-US' -Knowledge $knowledge
@@ -500,8 +500,8 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
-        $releaseDateVi -notmatch 'v5\.0\.0\.1.*06/09/2026' -or
-        $releaseDateEn -notmatch 'v5\.0\.0\.1.*6 September 2026' -or
+        $releaseDateVi -notmatch 'v5\.0.*06/09/2026' -or
+        $releaseDateEn -notmatch 'v5\.0.*6 September 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's written approval" -or
@@ -705,7 +705,7 @@ if ($errors.Count -eq 0) {
             $testChat.Controls[0].Tag.Bubble.Left -le $testChat.Controls[1].Tag.Bubble.Left -or
             $testChat.Controls[0].Tag.Bubble.BackColor.ToArgb() -eq $testChat.Controls[1].Tag.Bubble.BackColor.ToArgb() -or
             $testChat.Controls[0].Tag.Bubble.Tag.ToArgb() -eq $testChat.Controls[1].Tag.Bubble.Tag.ToArgb() -or
-            $testState.Transcript.ToString() -notmatch 'Bạn\s+kms là gì\s+Trợ lý Tool') {
+            $testState.Transcript.ToString() -notmatch 'Bạn\s+kms là gì\s+Trợ lý VietLicenSure') {
             Add-AssistantVerificationError 'The shared Send/Enter submission path did not append a question and answer.'
         }
         Set-ToolAssistantInputFrameState -State $testState -Focused $false
@@ -808,10 +808,10 @@ if ($errors.Count -eq 0) {
     if ($assistantSource -match '"Scope"[^\r\n]+(?:paid API|API trả phí|Codex)') {
         Add-AssistantVerificationError 'Assistant scope line still contains API/Codex promotional text.'
     }
-    $expectedScopeVi = 'Hỗ trợ giải đáp các câu hỏi trong phạm vi Tool dựa trên dữ liệu cục bộ sẵn có.'
-    $expectedScopeEn = "Supports questions within the Tool's scope using available local data."
-    $expectedWelcomeVi = 'Trợ lý Tool hỗ trợ tra cứu, giải đáp và hướng dẫn các nội dung thuộc phạm vi VietLicenSure dựa trên kho tri thức, tài liệu hướng dẫn và dữ liệu báo cáo hiện có.'
-    $expectedWelcomeEn = "Tool Assistant supports lookup, answers, and guidance for content within VietLicenSure's scope, based on its knowledge base, user guides, and available report data."
+    $expectedScopeVi = 'Giải đáp về VietLicenSure bằng tri thức cục bộ, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có.'
+    $expectedScopeEn = 'Answers questions about VietLicenSure using local knowledge, guides, version history, and available report data.'
+    $expectedWelcomeVi = 'Trợ lý VietLicenSure hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có.'
+    $expectedWelcomeEn = 'The VietLicenSure Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data.'
     if ((Get-ToolAssistantUiText -Key Scope -Culture 'vi-VN') -ne $expectedScopeVi -or
         (Get-ToolAssistantUiText -Key Scope -Culture 'en-US') -ne $expectedScopeEn -or
         (Get-ToolAssistantUiText -Key Welcome -Culture 'vi-VN') -ne $expectedWelcomeVi -or
@@ -821,6 +821,12 @@ if ($errors.Count -eq 0) {
     if ((Get-ToolAssistantUiText -Key Welcome -Culture 'vi-VN') -match 'Bạn (?:có thể|cứ) (?:đặt câu hỏi|hỏi)' -or
         (Get-ToolAssistantUiText -Key Welcome -Culture 'en-US') -match 'Ask in your own words') {
         Add-AssistantVerificationError 'Assistant welcome still contains the removed invitation-to-ask sentence.'
+    }
+    foreach ($culture in @('vi-VN','en-US')) {
+        foreach ($theme in @('Light','Dark')) {
+            try { Show-ToolAssistantWindow -Culture $culture -Theme $theme -SmokeTest | Out-Null }
+            catch { Add-AssistantVerificationError ('Assistant UI smoke failed for {0}/{1}: {2}' -f $culture,$theme,$_.Exception.Message) }
+        }
     }
     $knowledgePublishedText = [string]::Join("`n", @($knowledge.Entries | ForEach-Object {
         [string]$_.TitleVi; [string]$_.TitleEn; [string]$_.AnswerVi; [string]$_.AnswerEn
@@ -843,7 +849,7 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Product information does not use the approved professional Assistant wording.'
     }
     $englishOfflineSync = Sync-ToolAssistantKnowledge -OnlineMode $false -Culture 'en-US'
-    if ([string]$englishOfflineSync.Message -notmatch '^Tool Assistant is Offline' -or [string]$englishOfflineSync.Message -match 'Trợ lý|tri thức') {
+    if ([string]$englishOfflineSync.Message -notmatch '^VietLicenSure Assistant is Offline' -or [string]$englishOfflineSync.Message -match 'Trợ lý|tri thức') {
         Add-AssistantVerificationError 'Assistant synchronization status is not fully localized in English.'
     }
     if ([string]$vi.'report.license.windows.unverifiableShort' -notlike 'CHƯA XÁC ĐỊNH*') {

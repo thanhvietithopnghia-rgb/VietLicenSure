@@ -252,16 +252,16 @@ function Get-ToolAssistantSyncText {
 
     $english = [bool]($Culture -eq "en-US")
     switch ($Key) {
-        "Offline" { if ($english) { return "Tool Assistant is Offline; local knowledge remains available." }; return "Trợ lý đang Offline; bộ tri thức cục bộ vẫn sẵn sàng." }
+        "Offline" { if ($english) { return "VietLicenSure Assistant is Offline; local knowledge remains available." }; return "Trợ lý đang Offline; bộ tri thức cục bộ vẫn sẵn sàng." }
         "InvalidAddress" { if ($english) { return "The synchronization address is invalid." }; return "Địa chỉ đồng bộ không hợp lệ." }
         "TooLarge" { if ($english) { return "The knowledge file exceeds the safety limit." }; return "Tệp tri thức vượt giới hạn an toàn." }
         "InvalidKnowledge" { if ($english) { return "The knowledge file has an invalid structure or unsafe content." }; return "Tệp tri thức không đúng cấu trúc hoặc chứa nội dung không an toàn." }
         "InvalidSignature" { if ($english) { return "The knowledge package signature is invalid or not from the pinned publisher." }; return "Chữ ký gói tri thức không hợp lệ hoặc không đúng nhà phát hành đã khóa." }
         "Downgrade" { if ($english) { return "An older knowledge package was rejected." }; return "Đã từ chối gói tri thức cũ hơn để chống hạ phiên bản." }
-        "Current" { if ($english) { return "Tool Assistant already has the latest signed compatible knowledge." }; return "Trợ lý đang dùng bộ tri thức tương thích có chữ ký mới nhất." }
+        "Current" { if ($english) { return "VietLicenSure Assistant already has the latest signed compatible knowledge." }; return "Trợ lý đang dùng bộ tri thức tương thích có chữ ký mới nhất." }
         "NoDataFolder" { if ($english) { return "The user data folder could not be determined." }; return "Không xác định được thư mục dữ liệu người dùng." }
-        "Updated" { if ($english) { return "Tool Assistant knowledge has been securely synchronized." }; return "Đã đồng bộ an toàn bộ tri thức Trợ lý Tool." }
-        "Failed" { if ($english) { return "Synchronization failed; Tool Assistant continues with local knowledge." }; return "Không đồng bộ được; Trợ lý tiếp tục dùng bộ tri thức cục bộ." }
+        "Updated" { if ($english) { return "VietLicenSure Assistant knowledge has been securely synchronized." }; return "Đã đồng bộ an toàn bộ tri thức Trợ lý VietLicenSure." }
+        "Failed" { if ($english) { return "Synchronization failed; VietLicenSure Assistant continues with local knowledge." }; return "Không đồng bộ được; Trợ lý tiếp tục dùng bộ tri thức cục bộ." }
         default { return $Key }
     }
 }
@@ -1248,8 +1248,8 @@ function Get-ToolAssistantAnswer {
         return Get-ToolAssistantFallbackAnswer -Kind Unsafe -Question $Question -Culture $Culture
     }
     if ($originalQueryKey -match '^(xin chao|chao|hello|hi|alo|hey)\b') {
-        if ($Culture -eq "en-US") { return "Hello. I am Tool Assistant. Ask me about a button, report result, error code or workflow in VietLicenSure." }
-        return "Xin chào. Đây là Trợ lý Tool. Bạn có thể hỏi về nút chức năng, kết quả báo cáo, mã lỗi hoặc cách dùng VietLicenSure."
+        if ($Culture -eq "en-US") { return "Hello. I am the VietLicenSure Assistant. Ask me about a button, report result, error code or workflow." }
+        return "Xin chào. Đây là Trợ lý VietLicenSure. Bạn có thể hỏi về nút chức năng, kết quả báo cáo, mã lỗi hoặc cách sử dụng phần mềm."
     }
     if ($null -ne $OnlineMode -and $originalQueryKey -match '(?:(?:tool|cong cu|che do|trang thai mang|trang thai).*(?:online|offline).*(?:hien tai|luc nay|bay gio|dang)|(?:trang thai|che do).*(?:online|offline).*(?:hien tai|luc nay|bay gio)|(?:dang|hien tai).*(?:online|offline)|^online hay offline$)') {
         $isOnline = [bool]$OnlineMode
@@ -1330,8 +1330,8 @@ function Get-ToolAssistantUiText {
 
     $english = [bool]($Culture -eq "en-US")
     switch ($Key) {
-        "Title" { if ($english) { return "Tool Assistant" }; return "Trợ lý Tool" }
-        "Scope" { if ($english) { return "Supports questions within the Tool's scope using available local data." }; return "Hỗ trợ giải đáp các câu hỏi trong phạm vi Tool dựa trên dữ liệu cục bộ sẵn có." }
+        "Title" { if ($english) { return "VietLicenSure Assistant" }; return "Trợ lý VietLicenSure" }
+        "Scope" { if ($english) { return "Answers questions about VietLicenSure using local knowledge, guides, version history, and available report data." }; return "Giải đáp về VietLicenSure bằng tri thức cục bộ, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
         "Offline" { if ($english) { return "OFFLINE · local knowledge" }; return "OFFLINE · tri thức cục bộ" }
         "Online" { if ($english) { return "ONLINE · knowledge sync allowed" }; return "ONLINE · cho phép đồng bộ tri thức" }
         "Input" { if ($english) { return "Ask anything related to VietLicenSure..." }; return "Hỏi mọi nội dung liên quan đến VietLicenSure..." }
@@ -1341,15 +1341,15 @@ function Get-ToolAssistantUiText {
         "Sync" { if ($english) { return "Sync knowledge" }; return "Đồng bộ tri thức" }
         "ConnectOnline" { if ($english) { return "Connect Online" }; return "Kết nối Online" }
         "OnlineConnected" { if ($english) { return "Online connected" }; return "Đã Online" }
-        "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so Tool Assistant can synchronize knowledge. Restarting the tool returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại Tool vẫn trở về Offline." }
+        "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so the VietLicenSure Assistant can synchronize knowledge. Restarting the application returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại VietLicenSure vẫn trở về Offline." }
         "OnlineConnectedTip" { if ($english) { return "Online is allowed for this session. Signed Tool knowledge can now be synchronized." }; return "Online đã được cho phép trong phiên này. Tool có thể đồng bộ gói tri thức đã ký." }
         "SyncTip" { if ($english) { return "Downloads only the signed Tool knowledge package; questions, reports and device data are never sent." }; return "Chỉ tải gói tri thức Tool đã ký; không gửi câu hỏi, báo cáo hoặc dữ liệu máy." }
         "OnlineEnabled" { if ($english) { return "Online is now allowed for this session. Signed Tool knowledge will be checked." }; return "Đã cho phép Online trong phiên này. Tool sẽ kiểm tra gói tri thức đã ký." }
-        "OnlineNotEnabled" { if ($english) { return "Online was not enabled. Tool Assistant continues with local knowledge." }; return "Chưa bật Online. Trợ lý tiếp tục dùng tri thức cục bộ." }
+        "OnlineNotEnabled" { if ($english) { return "Online was not enabled. VietLicenSure Assistant continues with local knowledge." }; return "Chưa bật Online. Trợ lý tiếp tục dùng tri thức cục bộ." }
         "Close" { if ($english) { return "Close" }; return "Đóng" }
-        "Welcome" { if ($english) { return "Tool Assistant supports lookup, answers, and guidance for content within VietLicenSure's scope, based on its knowledge base, user guides, and available report data." }; return "Trợ lý Tool hỗ trợ tra cứu, giải đáp và hướng dẫn các nội dung thuộc phạm vi VietLicenSure dựa trên kho tri thức, tài liệu hướng dẫn và dữ liệu báo cáo hiện có." }
+        "Welcome" { if ($english) { return "The VietLicenSure Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data." }; return "Trợ lý VietLicenSure hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
         "You" { if ($english) { return "You" }; return "Bạn" }
-        "Assistant" { if ($english) { return "Tool Assistant" }; return "Trợ lý Tool" }
+        "Assistant" { if ($english) { return "VietLicenSure Assistant" }; return "Trợ lý VietLicenSure" }
         default { return $Key }
     }
 }
@@ -1740,7 +1740,8 @@ function Show-ToolAssistantWindow {
         [bool]$OnlineMode = $false,
         [AllowNull()][string]$CurrentReportPath = "",
         [ValidateSet("Light", "Dark")][string]$Theme = "Light",
-        [AllowNull()][scriptblock]$RequestOnline = $null
+        [AllowNull()][scriptblock]$RequestOnline = $null,
+        [switch]$SmokeTest
     )
 
     Add-Type -AssemblyName System.Windows.Forms
@@ -1780,7 +1781,7 @@ function Show-ToolAssistantWindow {
     $assistantLayout.Margin = New-Object Windows.Forms.Padding(0)
     $assistantLayout.Padding = New-Object Windows.Forms.Padding(0)
     [void]$assistantLayout.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent, 100)))
-    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 72)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 92)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 42)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Percent, 100)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 114)))
@@ -1802,8 +1803,8 @@ function Show-ToolAssistantWindow {
     $scope.Text = Get-ToolAssistantUiText "Scope" $Culture
     $scope.ForeColor = $muted
     $scope.Location = New-Object Drawing.Point(20, 43)
-    $scope.Size = New-Object Drawing.Size(570, 22)
-    $scope.AutoEllipsis = $true
+    $scope.Size = New-Object Drawing.Size(570, 42)
+    $scope.AutoEllipsis = $false
     $header.Controls.Add($scope)
     $mode = New-Object Windows.Forms.Label
     $mode.TextAlign = "MiddleCenter"
@@ -1904,14 +1905,15 @@ function Show-ToolAssistantWindow {
     $close.Size = New-Object Drawing.Size(118, 30)
     $composer.Controls.Add($close)
 
+    $assistantInputControl = $input
     $composerLayout = {
         param($sender, $eventArgs)
         $clientWidth = [int]$sender.ClientSize.Width
         if ($clientWidth -le 0) { return }
         $send.Left = [Math]::Max(228, $clientWidth - $send.Width - 14)
         $inputFrame.Width = [Math]::Max(190, $send.Left - $inputFrame.Left - 10)
-        $input.Width = [Math]::Max(176, [int]$inputFrame.ClientSize.Width - 14)
-        $input.Height = [Math]::Max(36, [int]$inputFrame.ClientSize.Height - 12)
+        $assistantInputControl.Width = [Math]::Max(176, [int]$inputFrame.ClientSize.Width - 14)
+        $assistantInputControl.Height = [Math]::Max(36, [int]$inputFrame.ClientSize.Height - 12)
         $close.Left = [Math]::Max(562, $clientWidth - $close.Width - 14)
     }.GetNewClosure()
     $composer.Add_SizeChanged($composerLayout)
@@ -2057,6 +2059,37 @@ function Show-ToolAssistantWindow {
             [void](Invoke-ToolAssistantKnowledgeSyncUi -State $assistantState)
         }
     }.GetNewClosure())
+    if ($SmokeTest) {
+        [void]$dialog.CreateControl()
+        [void]$assistantLayout.CreateControl()
+        [void]$header.CreateControl()
+        [void]$composer.CreateControl()
+        $assistantLayout.PerformLayout()
+        Set-ToolAssistantHeaderBounds -Header $header -TitleLabel $title -ScopeLabel $scope -ModeLabel $mode
+        & $composerLayout $composer ([EventArgs]::Empty)
+        $header.PerformLayout()
+        $composer.PerformLayout()
+        $singleLineFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+        $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+        [Drawing.Size]$requiredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$title.Text, $title.Font, [Drawing.Size]::Empty, $singleLineFlags)
+        [Drawing.Size]$requiredScope = [Windows.Forms.TextRenderer]::MeasureText([string]$scope.Text, $scope.Font, (New-Object Drawing.Size($scope.Width, 200)), $wrappedFlags)
+        if ($title.Width -lt [int]$requiredTitle.Width -or $title.Height -lt [int]$requiredTitle.Height) { throw "Assistant title is clipped: $($title.Text)" }
+        if ($scope.Height -lt [int]$requiredScope.Height) { throw "Assistant scope is clipped: $($scope.Text)" }
+        foreach ($button in @($send,$copy,$clear,$sync,$online,$close)) {
+            [Drawing.Size]$requiredButton = [Windows.Forms.TextRenderer]::MeasureText([string]$button.Text, $button.Font, [Drawing.Size]::Empty, $singleLineFlags)
+            if ($button.Width -lt ([int]$requiredButton.Width + 18) -or $button.Right -gt ($composer.ClientSize.Width + 1) -or $button.Bottom -gt ($composer.ClientSize.Height + 1)) {
+                throw "Assistant button is clipped: $($button.Text)"
+            }
+        }
+        $renderTimer.Stop()
+        $renderTimer.Dispose()
+        $assistantToolTip.Dispose()
+        $speakerFont.Dispose()
+        $messageFont.Dispose()
+        $dialog.Dispose()
+        Write-Output "Assistant UI smoke passed: $Culture/$Theme"
+        return
+    }
     if ($Owner) { [void]$dialog.ShowDialog($Owner) } else { [void]$dialog.ShowDialog() }
     $renderTimer.Stop()
     $renderTimer.Dispose()

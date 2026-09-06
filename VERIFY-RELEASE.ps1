@@ -311,12 +311,12 @@ if ($guiText -notmatch 'function\s+Show-ProductIntroduction' -or
     $guiText -notmatch '\$sidebarPanel' -or
     $guiText -notmatch '\$activityPanel' -or
     $guiText -notmatch 'function\s+Show-DashboardPreferences') {
-    $failures.Add('Dashboard v5.0.0.1 thiếu overview/nút giới thiệu, shell hiện đại, bo góc hoặc chế độ gọn.')
+    $failures.Add('Dashboard v5.0 thiếu overview/nút giới thiệu, shell hiện đại, bo góc hoặc chế độ gọn.')
 }
 if ($guiText -notmatch 'introAssistantButton' -or $guiText -notmatch 'Show-ToolAssistantWindow' -or
     $guiText -notmatch 'TitleLabel' -or $guiText -notmatch 'DescriptionLabel' -or
     $guiText -notmatch 'Color\]::FromArgb\(0,\s*98,\s*218\)') {
-    $failures.Add('Dashboard v4.8 thiếu nút Trợ lý Tool hoặc tiêu đề xanh thích ứng cho 10 chức năng.')
+    $failures.Add('Dashboard v5.0 thiếu nút Trợ lý VietLicenSure hoặc tiêu đề xanh thích ứng cho 10 chức năng.')
 }
 if ($guiText -notmatch 'TOOL_SECURE_LAUNCH' -or $guiText -notmatch 'Test-ProtectedToolDirectoryAcl') { $failures.Add('Giao diện thiếu khóa secure-launch/ACL.') }
 if ($guiText -notmatch 'New-ToolElevatedBootstrapArguments' -or $guiText -notmatch 'Tool-ElevatedBridge\.ps1' -or
@@ -383,7 +383,7 @@ if ($assistantText -notmatch 'function\s+Show-ToolAssistantWindow' -or
     $assistantText -notmatch 'CentralServerRequired\s*=\s*\$false' -or
     $assistantText -notmatch 'Windows\.Forms\.FlowLayoutPanel' -or
     $assistantText -notmatch 'IsSubmitting') {
-    $failures.Add('Trợ lý Tool v4.8 thiếu máy trả lời cục bộ hoặc ranh giới không API/Codex/upload.')
+    $failures.Add('Trợ lý VietLicenSure v5.0 thiếu máy trả lời cục bộ hoặc ranh giới không API/Codex/upload.')
 }
 if ($guiText -notmatch 'enterprise-license-manager\.ps1' -or
     $guiText -notmatch 'status\.enterprise\.opening' -or
@@ -1092,7 +1092,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$assistantManifest.KnowledgeFileName -ne 'tool-assistant-knowledge-v1.1.json' -or
             [string]$assistantManifest.KnowledgeSignatureFileName -ne 'tool-assistant-knowledge-v1.1.json.p7s' -or
             -not [bool]$assistantManifest.ImmediateResponseRender) {
-            throw 'Thiếu metadata ranh giới an toàn của Trợ lý Tool v4.8.'
+            throw 'Thiếu metadata ranh giới an toàn của Trợ lý VietLicenSure v5.0.'
         }
         if ([string]$releaseManifest.PdfProfileRoot -ne '%LOCALAPPDATA%\Temp\ThanhViet-VietLicenSure\pdf' -or
             [string]$releaseManifest.PdfProfileAcl -ne 'Current user + SYSTEM' -or
@@ -1245,7 +1245,7 @@ if (Test-Path -LiteralPath $applicationUpdateVerifierPath -PathType Leaf) {
 }
 if (Test-Path -LiteralPath $assistantVerifierPath -PathType Leaf) {
     & $assistantVerifierPath -SourceDirectory $sourceDirectoryFull
-    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra Trợ lý Tool cục bộ v5.0 thất bại.') }
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra Trợ lý VietLicenSure cục bộ v5.0 thất bại.') }
 }
 if (Test-Path -LiteralPath $catalogV49VerifierPath -PathType Leaf) {
     & $catalogV49VerifierPath -SourceDirectory $sourceDirectoryFull

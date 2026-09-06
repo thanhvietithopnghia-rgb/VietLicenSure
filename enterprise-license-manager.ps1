@@ -16,7 +16,7 @@ $script:enterpriseReleaseVersion = if ($enterpriseVersionFromLauncher -match '^\
 } else {
     "5.0.0.1"
 }
-$script:enterpriseReleaseDisplayName = "v$($script:enterpriseReleaseVersion)"
+$script:enterpriseReleaseDisplayName = "v5.0"
 $enterpriseReleaseParts = @($script:enterpriseReleaseVersion -split '\.')
 $script:enterpriseInfrastructureVersion = "v$($enterpriseReleaseParts[0]).$($enterpriseReleaseParts[1])"
 . (Join-Path $baseDir "Tool-ReportSchema.ps1")

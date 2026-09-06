@@ -829,8 +829,8 @@ if ([string]$viCatalog.'app.language.vi' -ne 'Tiếng Việt' -or
 }
 if ([string]$viCatalog.'app.title' -ne 'VIETLICENSURE - PHẦN MỀM KIỂM TRA VÀ QUẢN LÝ BẢN QUYỀN HỆ THỐNG' -or
     [string]$viCatalog.'app.developer' -ne 'Hỗ trợ người dùng cá nhân và doanh nghiệp' -or
-    [string]$viCatalog.'dashboard.sidebar.brand' -ne 'TOOL' -or
-    [string]$viCatalog.'dashboard.sidebar.edition' -ne 'KIỂM TRA MÁY TÍNH' -or
+    [string]$viCatalog.'dashboard.sidebar.brand' -ne 'VietLicenSure' -or
+    [string]$viCatalog.'dashboard.sidebar.edition' -ne 'PHẦN MỀM BẢN QUYỀN' -or
     [string]$viCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Việt" -or
     [string]$enCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Viet" -or
     [string]$enCatalog.'app.title' -ne 'VIETLICENSURE - SYSTEM LICENSE INSPECTION AND MANAGEMENT SOFTWARE') {
@@ -957,16 +957,16 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch 'VietLicenSure v5\.0' -or
-        $historyText -notmatch '(?m)^##\s+VietLicenSure v5\.0\s+—\s+06/09/2026\s*$' -or
-        $historyText -notmatch 'là bản nâng cấp tiếp theo của v4\.9, tập trung nâng cấp vào các phần cốt lõi' -or
-        $historyText -notmatch 'Ba mức quét Quick, Standard và Deep' -or
+    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+06/09/2026\s*$' -or
+        $historyText -notmatch 'chính thức đổi tên từ' -or
+        $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
+        $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
         $historyText -notmatch 'Offline theo mặc định' -or
-        $historyText -notmatch 'Chỉ thêm mục lịch sử khi tên hoặc số phiên bản công khai chính thức thay đổi') {
+        $historyText -notmatch 'kiểm thử UI tự động') {
         Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
     }
     $requiredHistoryHeadings = @(
-        '## VietLicenSure v5.0 — 06/09/2026',
+        '## v5.0 — 06/09/2026',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -1018,7 +1018,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## VietLicenSure v5.0 — September 6, 2026',
+        '## v5.0 — September 6, 2026',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',

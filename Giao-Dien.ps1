@@ -25,7 +25,7 @@ $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0.0.1"
 $releaseBuildDate = "2026.09.06"
 $toolDisplayVersion = "v$toolVersion"
-$releaseDisplayName = "v$releaseVersion"
+$releaseDisplayName = "v5.0"
 $script:isUnsignedDevelopmentBuild = $false
 
 if ($PSVersionTable.PSVersion.Major -lt 3) {

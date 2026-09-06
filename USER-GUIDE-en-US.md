@@ -68,15 +68,15 @@ You do not need source access, configuration files, or technical documentation t
 - Open report folder opens the latest report location.
 - Stop should be used only when a task is taking abnormally long. If remediation is interrupted, preserve the backup and rescan before continuing.
 - Offline/Online controls network permission for the current session only. Switching Online does not upload data or automatically start a scan; restarting always returns to Offline.
-- **Tool Assistant** sits left of **About**. Enter a question and click **Send** or press **Enter**; use `Shift+Enter` for a new line. Input and Send are temporarily locked while an answer is processed. **Connect Online** grants network access only for the current session and automatically checks signed Tool knowledge; **Sync knowledge** can check again manually.
+- **VietLicenSure Assistant** sits left of **About**. Enter a question and click **Send** or press **Enter**; use `Shift+Enter` for a new line. Input and Send are temporarily locked while an answer is processed. **Connect Online** grants network access only for the current session and automatically checks signed VietLicenSure knowledge; **Sync knowledge** can check again manually.
 
-## Tool Assistant
+## VietLicenSure Assistant
 
-Tool Assistant understands and answers every VietLicenSure-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0.0.1 technical release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, updates, and Server/Workstation connectivity. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
+VietLicenSure Assistant understands and answers every product-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0 release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, updates, and Server/Workstation connectivity. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
 
 ### Send and Enter
 
-1. Select **Tool Assistant**.
+1. Select **VietLicenSure Assistant**.
 2. Enter a question in the clearly outlined composer; select **Send** or press `Enter`. Use `Shift+Enter` for a new line.
 3. Read questions and answers in separate colored message frames. New content scrolls into view and the answer appears in the current submission turn.
 4. For a specific error or result, include the related error code, status, or evidence line. Follow-ups such as “how do I use it?”, “what about OEM key recovery?”, or “explain further” retain the immediately preceding Tool topic.

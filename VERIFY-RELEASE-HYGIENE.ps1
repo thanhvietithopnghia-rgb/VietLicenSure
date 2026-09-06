@@ -12,6 +12,7 @@ $legacyStoreReservedName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64
 $repositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure'
 $legacyRepositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen'
 $technicalVersion = '5.0.0.1'
+$displayVersion = 'v5.0'
 $releaseDateVi = '06/09/2026'
 $releaseDateIso = '2026-09-06'
 
@@ -80,8 +81,15 @@ foreach ($document in @(
     @{ Name='RELEASE-HYGIENE-v5.0.md'; Text=$hygiene }
 )) {
     Assert-HygieneContains $document.Name $document.Text $brandName
-    Assert-HygieneContains $document.Name $document.Text $technicalVersion
+    Assert-HygieneContains $document.Name $document.Text $displayVersion
     Assert-HygieneContains $document.Name $document.Text $releaseDateVi
+}
+foreach ($document in @(
+    @{ Name='RELEASE-NOTES-v5.0.md'; Text=$releaseNotes },
+    @{ Name='QUICK-START-v5.0.md'; Text=$quickStart },
+    @{ Name='RELEASE-HYGIENE-v5.0.md'; Text=$hygiene }
+)) {
+    Assert-HygieneContains $document.Name $document.Text $technicalVersion
 }
 Assert-HygieneContains 'README.md' $readme $fullName
 Assert-HygieneContains 'README.md' $readme ($repositoryUrl + '/releases/latest')
@@ -113,6 +121,33 @@ foreach ($jsonName in @(
     if ($jsonText.Length -eq 0) { continue }
     try { $null = $jsonText | ConvertFrom-Json }
     catch { $failures.Add("Invalid JSON in $jsonName`: $($_.Exception.Message)") }
+}
+
+$stringsVi = (Read-HygieneText 'Tool-Strings.vi-VN.json') | ConvertFrom-Json
+$stringsEn = (Read-HygieneText 'Tool-Strings.en-US.json') | ConvertFrom-Json
+if ([string]$stringsVi.'app.assistant' -match 'Tool' -or
+    [string]$stringsVi.'dashboard.sidebar.brand' -cne $brandName -or
+    [string]$stringsVi.'dashboard.sidebar.edition' -match 'TOOL' -or
+    [string]$stringsVi.'enterprise.form.title' -notlike 'VietLicenSure*') {
+    $failures.Add('Vietnamese user-facing brand labels are not synchronized.')
+}
+if ([string]$stringsEn.'app.assistant' -cne 'Assistant' -or
+    [string]$stringsEn.'dashboard.sidebar.brand' -cne $brandName -or
+    [string]$stringsEn.'dashboard.sidebar.edition' -cne 'LICENSE SOFTWARE' -or
+    [string]$stringsEn.'enterprise.form.title' -notlike 'VietLicenSure*') {
+    $failures.Add('English user-facing brand labels are not synchronized.')
+}
+$assistantSource = Read-HygieneText 'Tool-Assistant.ps1'
+$enterpriseSource = Read-HygieneText 'enterprise-license-manager.ps1'
+$dashboardSource = Read-HygieneText 'Giao-Dien.ps1'
+if ($assistantSource.Contains('Tool Assistant') -or
+    -not $assistantSource.Contains('RowStyle([Windows.Forms.SizeType]::Absolute, 92)') -or
+    -not $assistantSource.Contains('$scope.Size = New-Object Drawing.Size(570, 42)')) {
+    $failures.Add('Assistant branding or anti-clipping layout contract drifted.')
+}
+if (-not $dashboardSource.Contains('$releaseDisplayName = "v5.0"') -or
+    -not $enterpriseSource.Contains('$script:enterpriseReleaseDisplayName = "v5.0"')) {
+    $failures.Add('User-facing display version is not synchronized to v5.0.')
 }
 
 $storeIdentityText = Read-HygieneText 'packaging\msix\STORE-PRODUCT-IDENTITY.json'
@@ -160,7 +195,7 @@ foreach ($legacyDocument in @(
     'SOURCE-POLICY-v4.9.md'
 )) {
     $legacyText = Read-HygieneText $legacyDocument
-    if ($legacyText -notmatch 'VietLicenSure v5\.0\.0\.1') {
+    if ($legacyText -notmatch 'VietLicenSure v5\.0(?:[^0-9]|$)') {
         $failures.Add("Legacy-suffixed document lacks current applicability notice: $legacyDocument")
     }
 }

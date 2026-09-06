@@ -1,6 +1,6 @@
 # Offline mode, Trợ lý và báo cáo — tài liệu nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các nguyên tắc còn hiệu lực áp dụng cho VietLicenSure v5.0.0.1 trừ khi một mục ghi rõ phiên bản khác.
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các nguyên tắc còn hiệu lực áp dụng cho VietLicenSure v5.0 trừ khi một mục ghi rõ phiên bản khác.
 
 ## Chính sách mặc định
 
@@ -19,7 +19,7 @@ Trong Offline mode, tool chặn:
 - mở URL hỗ trợ/release;
 - mọi telemetry, kiểm tra phiên bản và tải cập nhật ứng dụng.
 
-Khi người dùng chủ động cho phép Online, ba luồng Internet mới có thể chạy: `software.catalog.update` tải catalog sau xác nhận riêng; `application.update.check` chỉ đọc manifest phiên bản GitHub; Trợ lý Tool chỉ tải JSON tri thức và chữ ký CMS rời từ hai URL GitHub cố định. Cả ba fail-closed khi Offline và không tải inventory, đường dẫn, khóa, token, báo cáo hay nội dung trò chuyện lên mạng. Enterprise UI là `LocalOnly`; server và agent khai báo `NetworkScope=Lan` và cần công tắc mạng riêng của Mục 8.
+Khi người dùng chủ động cho phép Online, ba luồng Internet mới có thể chạy: `software.catalog.update` tải catalog sau xác nhận riêng; `application.update.check` chỉ đọc manifest phiên bản GitHub; Trợ lý VietLicenSure chỉ tải JSON tri thức và chữ ký CMS rời từ hai URL GitHub cố định. Cả ba fail-closed khi Offline và không tải inventory, đường dẫn, khóa, token, báo cáo hay nội dung trò chuyện lên mạng. Enterprise UI là `LocalOnly`; server và agent khai báo `NetworkScope=Lan` và cần công tắc mạng riêng của Mục 8.
 
 ## Những gì vẫn hoạt động
 
