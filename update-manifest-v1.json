@@ -54,8 +54,8 @@
                                   "Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate."
                               ]
                 },
-    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1",
-    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe",
+    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1",
+    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe",
     "DownloadSha256":  "86B2904CB2A151E6804ABEDEAF13EEC7B5D78FE86CB59E5FE43FD81BA8695186",
     "DownloadSize":  792312,
     "AuthenticodeRequired":  true,
