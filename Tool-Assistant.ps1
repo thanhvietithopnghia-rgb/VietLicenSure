@@ -32,8 +32,13 @@ function Get-ToolAssistantMetadata {
         CoverageMode = "KnowledgePlusBundledDocumentation"
         CompleteBundledGuideIndexed = $true
         CompleteVersionHistoryIndexed = $true
+        CurrentTechnicalVersionIndexed = $true
+        CompleteFeatureGuideCoverage = $true
+        MainFeatureCount = 10
+        RemediationWorkflowCount = 4
+        AssuranceActionCount = 8
         BundledDocumentFiles = @('HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md')
-        VersionComparisonUsesPublishedHistoryOnly = $true
+        VersionComparisonUsesRecordedHistoryOnly = $true
         ContextAwareFollowUp = $true
         ContextualOutOfScope = $true
         KnowledgeCompatibilityEnforced = $true
@@ -438,7 +443,7 @@ function Test-ToolAssistantRelatedQuery {
     )
 
     if (-not [string]::IsNullOrWhiteSpace((Get-ToolAssistantPriorityEntryId -QueryKey $QueryKey))) { return $true }
-    if ($QueryKey -match '\b(?:tool|cong cu|tro ly|dashboard|bao cao|quet|scan|windows|office|phan mem|software|ung dung|may chu|may tram|server|client|pdf|json|html|xml|docx|kms|activator|crack|crackconfirmed|mas|pmas|kmspico|repack|backup|sao luu|khoi phuc|khac phuc|remediation|cap nhat|loi|uac|administrator|catalog|catalogue|oem|oa3|oa3xoriginalproductkey|firmware|ban quyen|giay phep|license|mien phi|tra phi|gia tool|freeware|free|paid|open source|nguon mo|ma nguon|source code|repository|github|kich hoat|nghi van|suspicious|dau hieu|evidence|tampering|artifact|third party|smartscreen|defender|sha256|hash|chu ky|chung chi|certificate|plugin|timeline|offline|online|dry run|forensic|giao dien|cai dat|chuc nang|nut|muc|tri thuc|kien thuc|hoc hoi|dung luong exe|dung luong file exe|cache tri thuc|goi tri thuc|confidence|tin cay|chua xac dinh|chua xac minh|unknown|undetermined|unverified|v1 0|first version|first release|winrar|mathtype)\b') { return $true }
+    if ($QueryKey -match '\b(?:tool|cong cu|tro ly|dashboard|bao cao|quet|scan|windows|office|phan mem|software|ung dung|may chu|may tram|server|client|pdf|json|html|xml|docx|kms|activator|crack|crackconfirmed|mas|pmas|kmspico|repack|backup|sao luu|khoi phuc|khac phuc|remediation|cap nhat|loi|uac|administrator|catalog|catalogue|oem|oa3|oa3xoriginalproductkey|firmware|ban quyen|giay phep|license|mien phi|tra phi|gia tool|freeware|free|paid|open source|nguon mo|ma nguon|source code|repository|github|kich hoat|nghi van|suspicious|dau hieu|evidence|tampering|artifact|third party|smartscreen|defender|sha256|hash|chu ky|chung chi|certificate|plugin|timeline|offline|online|dry run|forensic|giao dien|cai dat|chuc nang|tinh nang|tac vu|function|functions|feature|features|capability|capabilities|nut|muc|tri thuc|kien thuc|hoc hoi|dung luong exe|dung luong file exe|cache tri thuc|goi tri thuc|confidence|tin cay|chua xac dinh|chua xac minh|unknown|undetermined|unverified|v1 0|first version|first release|winrar|mathtype)\b') { return $true }
     if ($QueryKey -match '^(?:chua du bang chung|thieu bang chung|du bang chung chua)$') { return $true }
     if ($QueryKey -match '^(?:phien ban|version|do ai phat trien|ai phat trien|tac gia|ngay phat hanh|ngay build|tom tat|noi dung chinh|muc dich|nguyen tac|cong nghe|yeu cau he thong|cach chay|cach cai|tai o dau)\b') { return $true }
     if (-not [string]::IsNullOrWhiteSpace([string]$PreviousQuestion) -and (Test-ToolAssistantFollowUpQuery -QueryKey $QueryKey)) {
@@ -530,10 +535,11 @@ function Get-ToolAssistantDocumentSections {
         $path = Join-Path $PSScriptRoot ([string]$definition.FileName)
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
         try { $raw = Get-Content -LiteralPath $path -Raw -Encoding UTF8 -ErrorAction Stop } catch { continue }
-        $matches = [regex]::Matches($raw, '(?ms)^#{1,4}[ \t]+([^\r\n]+)\r?\n(.*?)(?=^#{1,4}[ \t]+|\z)')
+        $matches = [regex]::Matches($raw, '(?ms)^(?<Hashes>#{1,4})[ \t]+(?<Heading>[^\r\n]+)\r?\n(?<Body>.*?)(?=^#{1,4}[ \t]+|\z)')
+        $sectionOrder = 0
         foreach ($match in $matches) {
-            $heading = ConvertTo-ToolAssistantPlainDocumentLine -Line ([string]$match.Groups[1].Value)
-            $body = [string]$match.Groups[2].Value
+            $heading = ConvertTo-ToolAssistantPlainDocumentLine -Line ([string]$match.Groups['Heading'].Value)
+            $body = [string]$match.Groups['Body'].Value
             if ([string]::IsNullOrWhiteSpace($heading) -or [string]::IsNullOrWhiteSpace($body)) { continue }
             $versionRaw = ''
             $versionKey = ''
@@ -550,17 +556,42 @@ function Get-ToolAssistantDocumentSections {
                 SourceFile=[string]$definition.FileName
                 SourceLabel=[string]$definition.Label
                 Heading=$heading
+                HeadingLevel=([string]$match.Groups['Hashes'].Value).Length
+                SectionOrder=$sectionOrder
                 Body=$body
                 HeadingKey=(ConvertTo-ToolAssistantSearchKey -Value $heading)
                 SearchKey=$searchKey
                 VersionRaw=$versionRaw
                 VersionKey=$versionKey
             })
+            $sectionOrder++
         }
     }
     $result = @($sections.ToArray())
     $script:ToolAssistantDocumentCache[$Culture] = $result
     return $result
+}
+
+function Get-ToolAssistantDocumentSectionBody {
+    param(
+        [Parameter(Mandatory = $true)][object]$Section,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN',
+        [int]$MaximumCharacters = 7200,
+        [switch]$IncludeChildren
+    )
+
+    $parts = New-Object System.Collections.Generic.List[string]
+    [void]$parts.Add([string]$Section.Body)
+    if ($IncludeChildren -and $Section.PSObject.Properties['HeadingLevel'] -and $Section.PSObject.Properties['SectionOrder']) {
+        $parentLevel = [int]$Section.HeadingLevel
+        foreach ($candidate in @(Get-ToolAssistantDocumentSections -Culture $Culture | Where-Object {
+            [string]$_.SourceFile -eq [string]$Section.SourceFile -and [int]$_.SectionOrder -gt [int]$Section.SectionOrder
+        } | Sort-Object SectionOrder)) {
+            if ([int]$candidate.HeadingLevel -le $parentLevel) { break }
+            [void]$parts.Add("$([string]$candidate.Heading):`r`n$([string]$candidate.Body)")
+        }
+    }
+    return ConvertTo-ToolAssistantDocumentBody -Body ($parts -join "`r`n`r`n") -MaximumCharacters $MaximumCharacters
 }
 
 function Get-ToolAssistantDocumentAnswer {
@@ -590,7 +621,7 @@ function Get-ToolAssistantDocumentAnswer {
     }
     if ($null -eq $best -or $bestScore -lt 24) { return '' }
 
-    $body = ConvertTo-ToolAssistantDocumentBody -Body ([string]$best.Body)
+    $body = Get-ToolAssistantDocumentSectionBody -Section $best -Culture $Culture -IncludeChildren
     if ([string]::IsNullOrWhiteSpace($body)) { return '' }
     $prefix = if ($Culture -eq 'en-US') {
         "$([string]$best.SourceLabel) — $([string]$best.Heading):"
@@ -598,6 +629,52 @@ function Get-ToolAssistantDocumentAnswer {
         "$([string]$best.SourceLabel) — $([string]$best.Heading):"
     }
     return ($prefix + "`r`n" + $body)
+}
+
+function Get-ToolAssistantNamedGuideAnswer {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN'
+    )
+
+    $helpIntent = $QueryKey -match '(?:hoat dong|cach dung|cach su dung|huong dan|(?:cac )?buoc|quy trinh|lam sao|lam the nao|dung the nao|(?:de )?lam gi|what does|what is|how (?:does|do|to)|steps|workflow|works?|operate|use it|used for)'
+    if (-not $helpIntent) { return '' }
+
+    $queryNameTokens = @($QueryKey -split ' ' | Where-Object { $_ -notin @('va','and','the','cua','of') })
+    if ($queryNameTokens -contains 'quet' -and $queryNameTokens -notcontains 'kiem') {
+        $queryNameTokens += @('kiem','tra')
+    }
+    $queryNameKey = $queryNameTokens -join ' '
+    $matches = New-Object System.Collections.Generic.List[object]
+    foreach ($section in @(Get-ToolAssistantDocumentSections -Culture $Culture)) {
+        if ([string]$section.SourceKind -ne 'Guide') { continue }
+        $headingKey = [string]$section.HeadingKey
+        $headingTokens = @($headingKey -split ' ' | Where-Object { $_ -notin @('va','and','the','cua','of') })
+        if ($headingKey.Length -lt 4) { continue }
+        $headingNameKey = $headingTokens -join ' '
+        $primaryHeading = ([string]$section.Heading -split '\s+[—–-]\s+', 2)[0]
+        $primaryHeadingKey = ConvertTo-ToolAssistantSearchKey -Value $primaryHeading
+        $matchedTokens = @($headingTokens | Where-Object { $queryNameTokens -contains $_ }).Count
+        $coverage = if ($headingTokens.Count -gt 0) { [double]$matchedTokens / [double]$headingTokens.Count } else { 0.0 }
+        $exactPrimaryName = $primaryHeadingKey.Length -ge 4 -and $queryNameKey.Contains($primaryHeadingKey)
+        $exactName = $queryNameKey.Contains($headingNameKey) -or $exactPrimaryName
+        if ($headingTokens.Count -eq 1) {
+            $subjectTokens = @($queryNameTokens | Where-Object { $_ -notin @('how','does','do','to','this','work','works','what','is','hoat','dong','ra','sao','cach','dung','su','the','nao','lam','gi') })
+            if ($subjectTokens.Count -ne 1 -or [string]$subjectTokens[0] -ne $headingNameKey) { continue }
+            $exactName = $true
+        }
+        if (-not $exactName -and ($matchedTokens -lt 2 -or $coverage -le 0.75)) { continue }
+        $matchScore = if ($exactName) { 10000 + $(if ($exactPrimaryName) { $primaryHeadingKey.Length } else { $headingNameKey.Length }) } else { [int]($coverage * 1000) + ($matchedTokens * 10) + $headingNameKey.Length }
+        [void]$matches.Add([pscustomobject]@{ Section=$section; Score=$matchScore })
+    }
+    if ($matches.Count -eq 0) { return '' }
+
+    $best = @($matches | Sort-Object Score -Descending | Select-Object -First 1)
+    if ($best.Count -ne 1) { return '' }
+    $bestSection = $best[0].Section
+    $body = Get-ToolAssistantDocumentSectionBody -Section $bestSection -Culture $Culture -IncludeChildren
+    if ([string]::IsNullOrWhiteSpace($body)) { return '' }
+    return "$([string]$bestSection.SourceLabel) — $([string]$bestSection.Heading):`r`n$body"
 }
 
 function Get-ToolAssistantQuestionVersions {
@@ -614,6 +691,33 @@ function Get-ToolAssistantQuestionVersions {
             $raw = ([string]$match.Groups['Version'].Value) -replace '\s+', ''
             $key = ConvertTo-ToolAssistantVersionKey -Value $raw
             if ([string]::IsNullOrWhiteSpace($key)) { continue }
+            [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$match.Index })
+        }
+    }
+    $currentPatterns = @(
+        '(?i)(?:phi[eê]n\s*b[aả]n|b[aả]n)\s+(?:hi[eệ]n\s*t[aạ]i|m[oớ]i\s*nh[aấ]t)',
+        '(?i)\b(?:current|latest)\s+(?:tool\s+)?(?:version|release)\b'
+    )
+    foreach ($pattern in $currentPatterns) {
+        foreach ($match in [regex]::Matches($text, $pattern)) {
+            $raw = [string]$script:ToolAssistantToolVersion
+            $key = ConvertTo-ToolAssistantVersionKey -Value $raw
+            [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$match.Index })
+        }
+    }
+    $questionKey = ConvertTo-ToolAssistantSearchKey -Value $text
+    $bareCurrentHistoryAlias = $questionKey -match '^(?:(?:moi nhat|hien tai) (?:cap nhat (?:nhung )?gi|thay doi (?:nhung )?gi|cai tien (?:nhung )?gi|co gi moi)|(?:latest|current) (?:changes?|improvements?|new features?))$'
+    if ($candidates.Count -eq 0 -and $bareCurrentHistoryAlias) {
+        $aliasMatch = [regex]::Match($text, '(?i)m[oớ]i\s*nh[aấ]t|hi[eệ]n\s*t[aạ]i|\blatest\b|\bcurrent\b')
+        $raw = [string]$script:ToolAssistantToolVersion
+        $key = ConvertTo-ToolAssistantVersionKey -Value $raw
+        [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$aliasMatch.Index })
+    }
+    $hasNumericVersion = @($candidates | Where-Object { [string]$_.Raw -ne [string]$script:ToolAssistantToolVersion }).Count -gt 0
+    if ($hasNumericVersion -and $questionKey -match '(?:so sanh|doi chieu|khac|versus|\bvs\b|compare|difference|different)') {
+        foreach ($match in [regex]::Matches($text, '(?i)hi[eệ]n\s*t[aạ]i|m[oớ]i\s*nh[aấ]t|\bcurrent\b|\blatest\b')) {
+            $raw = [string]$script:ToolAssistantToolVersion
+            $key = ConvertTo-ToolAssistantVersionKey -Value $raw
             [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$match.Index })
         }
     }
@@ -640,6 +744,15 @@ function Get-ToolAssistantHistorySection {
     if ($exact.Count -eq 1) { return $exact[0] }
     $normalized = @($history | Where-Object { [string]$_.VersionKey -eq [string]$Version.Key } | Select-Object -First 1)
     if ($normalized.Count -eq 1) { return $normalized[0] }
+    $currentKey = ConvertTo-ToolAssistantVersionKey -Value $script:ToolAssistantToolVersion
+    if ([string]$Version.Key -eq $currentKey) {
+        try {
+            $currentVersion = [Version]$script:ToolAssistantToolVersion
+            $familyKey = ConvertTo-ToolAssistantVersionKey -Value ("$($currentVersion.Major).$($currentVersion.Minor)")
+            $family = @($history | Where-Object { [string]$_.VersionKey -eq $familyKey } | Select-Object -First 1)
+            if ($family.Count -eq 1) { return $family[0] }
+        } catch {}
+    }
     return $null
 }
 
@@ -655,11 +768,11 @@ function Get-ToolAssistantMissingVersionGuidance {
     })
     $firstRecorded = @($sameMajor | Sort-Object { try { [Version]([string]$_.VersionRaw) } catch { [Version]'9999.0' } } | Select-Object -First 1)
     if ($Culture -eq 'en-US') {
-        $message = "The bundled Version history has no published entry for $([string]$Version.Display), so the Assistant will not invent its changes or claim a comparison."
+        $message = "The bundled Version history has no recorded entry for $([string]$Version.Display), so the Assistant will not invent its changes or claim a comparison."
         if ($firstRecorded.Count -eq 1) { $message += " The first recorded v$major.x milestone is v$([string]$firstRecorded[0].VersionRaw)." }
         return $message + ' Use a version number that appears in Version history.'
     }
-    $message = "Lịch sử phiên bản nhúng không có mục công khai $([string]$Version.Display), nên Trợ lý không tự suy diễn thay đổi hoặc dựng nội dung so sánh."
+    $message = "Lịch sử phiên bản nhúng không có mục được ghi nhận cho $([string]$Version.Display), nên Trợ lý không tự suy diễn thay đổi hoặc dựng nội dung so sánh."
     if ($firstRecorded.Count -eq 1) { $message += " Mốc v$major.x đầu tiên được ghi là v$([string]$firstRecorded[0].VersionRaw)." }
     return $message + ' Hãy dùng số phiên bản có trong Lịch sử phiên bản.'
 }
@@ -679,12 +792,18 @@ function Get-ToolAssistantHistoryAnswer {
         if ($queryKey -notmatch '(?:(?:toan bo|tat ca|danh sach|complete|full|all|list).*(?:lich su|phien ban|version history|versions)|(?:lich su|phien ban|version history|versions).*(?:toan bo|tat ca|danh sach|complete|full|all|list))') { return '' }
         $labels = @($historySections | ForEach-Object { 'v' + [string]$_.VersionRaw })
         if ($labels.Count -eq 0) { return '' }
-        if ($Culture -eq 'en-US') { return 'Published milestones indexed from the complete bundled Version history: ' + ($labels -join ', ') + '.' }
-        return 'Các mốc công khai đã được lập chỉ mục từ toàn bộ Lịch sử phiên bản nhúng: ' + ($labels -join ', ') + '.'
+        if ($Culture -eq 'en-US') { return 'Recorded milestones indexed from the complete bundled Version history through the current technical version: ' + ($labels -join ', ') + '.' }
+        return 'Các mốc đã ghi nhận được lập chỉ mục từ toàn bộ Lịch sử phiên bản nhúng đến phiên bản kỹ thuật hiện tại: ' + ($labels -join ', ') + '.'
     }
 
     $startsWithVersion = ([string]$Question).Trim() -match '(?i)^v\s*\d'
-    $hasHistoryIntent = $queryKey -match '(?:lich su|phien ban|version|release|relased|phat hanh|ra mat|ngay|date|when|cap nhat|thay doi|cai tien|khac|so sanh|doi chieu|co gi|them gi|tinh nang|what changed|whats new|what is new|change|update|improve|difference|different|compare|versus|\bvs\b|feature|introduced)'
+    $capabilityInventoryIntent = $queryKey -match '(?:(?:tat ca|toan bo|danh sach|liet ke|nhung|cac|what|which|all|list|every|available).*(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities)|(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities).*(?:gi|nao|gom|co|tat ca|toan bo|danh sach|what|which|all|list|have|available))'
+    $changeIntent = $queryKey -match '(?:cap nhat|thay doi|cai tien|khac|so sanh|so voi|doi chieu|co gi moi|them gi|moi them|what changed|what s new|whats new|what is new|changes?|updates?|improv|difference|different|compare|compared to|versus|\bvs\b|introduced|new features?)'
+    if ($capabilityInventoryIntent -and -not $changeIntent) { return '' }
+    $currentKey = ConvertTo-ToolAssistantVersionKey -Value $script:ToolAssistantToolVersion
+    $onlyCurrentReference = $versions.Count -eq 1 -and [string]$versions[0].Key -eq $currentKey
+    if ($onlyCurrentReference -and -not $changeIntent -and $queryKey -notmatch '(?:lich su|history|release notes?|nhat ky phien ban)') { return '' }
+    $hasHistoryIntent = $versions.Count -ge 2 -or $queryKey -match '(?:lich su|phien ban|version|release|relased|phat hanh|ra mat|ngay|date|when|cap nhat|thay doi|cai tien|khac|so sanh|so voi|doi chieu|co gi|co gi moi|them gi|moi them|what changed|what s new|whats new|what is new|change|update|improve|difference|different|compare|compared to|versus|\bvs\b|introduced|new feature)'
     $foreignProductVersion = ($queryKey -match '(?:^|\b)(?:windows|powershell|dotnet|net(?: framework)?|office)\s+v?\d+(?:\s+\d+){0,3}') -or
         ($queryKey -match '(?:^|\b)v?\d+(?:\s+\d+){0,3}\s+(?:windows|powershell|dotnet|net(?: framework)?|office)\b')
     $explicitToolHistory = $queryKey -match '(?:tool|cong cu).*(?:lich su|phien ban|version|release)|(?:lich su|phien ban|version|release).*(?:tool|cong cu)'
@@ -710,9 +829,9 @@ function Get-ToolAssistantHistoryAnswer {
         [void]$blocks.Add("$([string]$section.Heading):`r`n$body")
     }
     if ($Culture -eq 'en-US') {
-        return "Direct comparison from the published Version history (without inferring undocumented changes):`r`n`r`n" + ($blocks -join "`r`n`r`n")
+        return "Direct comparison from the recorded Version history (without inferring undocumented changes):`r`n`r`n" + ($blocks -join "`r`n`r`n")
     }
-    return "Đối chiếu trực tiếp từ Lịch sử phiên bản đã công bố (không suy diễn thay đổi ngoài tài liệu):`r`n`r`n" + ($blocks -join "`r`n`r`n")
+        return "Đối chiếu trực tiếp từ Lịch sử phiên bản đã ghi nhận (không suy diễn thay đổi ngoài tài liệu):`r`n`r`n" + ($blocks -join "`r`n`r`n")
 }
 
 function Get-ToolAssistantEntryScore {
@@ -767,12 +886,16 @@ function Get-ToolAssistantPriorityEntryId {
     }
     $statusTermMatches = [regex]::Matches($QueryKey, '\b(?:chua xac dinh|undetermined|unknown|chua xac minh|unverified|nghi van|suspicious|crack confirmed|crackconfirmed|crack)\b')
     if ($statusTermMatches.Count -ge 2 -and $QueryKey -match '(?:khac|phan biet|nghia|meaning|mean|difference|different|compare|versus|\bvs\b|what do)') { return 'status-terms' }
+    if ($QueryKey -match '(?:(?:tat ca|toan bo|10|tung|danh sach|liet ke|all|every|list|what|which).*(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities)|(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities).*(?:gom nhung gi|co gi|danh sach|tong hop|tom tat|nao|what|which|all|have|available))') { return 'feature-overview' }
+    if ($QueryKey -match '(?:powershell|dotnet|net framework|\.net).*(?:version|phien ban|support|ho tro|require|yeu cau)|(?:version|phien ban).*(?:powershell|dotnet|net framework|\.net)') { return 'system-requirements' }
+    if ($QueryKey -match '(?:windows|office).*(?:version|phien ban).*(?:support|ho tro|require|yeu cau).*(?:tool|cong cu)|(?:tool|cong cu).*(?:support|ho tro|require|yeu cau).*(?:windows|office).*(?:version|phien ban)') { return 'system-requirements' }
+    if ($QueryKey -match '(?:phien ban|version).*(?:windows)|(?:windows).*(?:phien ban|version)') { return 'windows-license' }
+    if ($QueryKey -match '(?:phien ban|version).*(?:office)|(?:office).*(?:phien ban|version)') { return 'office-license' }
     if ($QueryKey -match '(?:tool|cong cu).*(?:phien ban|version)|(?:phien ban|version).*(?:tool|cong cu|hien tai|dang dung|moi nhat|bay gio)|^(?:phien ban|version)(?: hien tai| moi nhat)?$') { return 'tool-version' }
     if ($QueryKey -match '(?:tac gia|author|nguoi phat trien|developer)|(?:do ai|ai).*(?:phat trien|viet|tao ra|lam ra)') { return 'tool-author' }
     if ($QueryKey -match '(?:ngay|thoi diem).*(?:phat hanh|ra mat|build)|(?:phat hanh|ra mat|build).*(?:ngay nao|khi nao|luc nao)|(?:build|release).*(?:date|when)|(?:date|when).*(?:build|release)') { return 'release-date' }
     if ($QueryKey -match '(?:tom tat|noi dung chinh|gioi thieu ngan|tong quan|tool lam gi|cong cu lam gi|muc dich cua tool)') { return 'tool-overview' }
     if ($QueryKey -match '(?:nguyen tac|triet ly|tieu chi).*(?:tool|cong cu|hoat dong|an toan)|^(?:nguyen tac|triet ly|tieu chi)(?: cua tool)?$') { return 'tool-principles' }
-    if ($QueryKey -match '(?:tat ca|toan bo|10|tung).*(?:chuc nang|tinh nang|tac vu)|(?:chuc nang|tinh nang).*(?:gom nhung gi|co gi|danh sach|tong hop|tom tat)') { return 'feature-overview' }
     if ($QueryKey -match '(?:cach chay|khoi dong tool|bat tool|mo tool|bat dau su dung|lan dau su dung|huong dan nhanh|getting started)') { return 'getting-started' }
     if ($QueryKey -match '(?:yeu cau he thong|cau hinh toi thieu|windows nao chay duoc|he dieu hanh ho tro|tuong thich windows|32 bit|64 bit|powershell may|\.net framework|(?:windows|powershell|\.net|net framework) v?\d[^ ]*.*(?:chay|ho tro|support|require|tuong thich).*(?:tool|cong cu)|(?:tool|cong cu).*(?:chay|ho tro|support|require|tuong thich).*(?:windows|powershell|\.net|net framework) v?\d)') { return 'system-requirements' }
     if ($QueryKey -match '(?:cong nghe|ngon ngu lap trinh|viet bang gi|nen tang|winforms|anycpu|kien truc cua tool)') { return 'technology' }
@@ -780,23 +903,28 @@ function Get-ToolAssistantPriorityEntryId {
     if ($QueryKey -match '(?:dung tac vu|huy tac vu|nut dung|quet bi lau|quet bi treo|khac phuc bi dung)') { return 'stop-task' }
     if ($QueryKey -match '(?:(?:khoi phuc|phuc hoi|restore|ap dung|apply).*(?:key )?oem|(?:key )?oem.*(?:hoat dong|cach dung|quy trinh|khoi phuc|phuc hoi|restore|ap dung|apply)|(?:oa3|oa3xoriginalproductkey|firmware key|bios key).*(?:hoat dong|cach dung|khoi phuc|restore|la gi|la sao|nghia|meaning|means)|^(?:oa3|oa3xoriginalproductkey|firmware key|bios key)$)') { return 'oem' }
     if ($QueryKey -match '(?:sao luu|backup|khoi phuc backup|restore backup|phuc hoi backup)') { return 'backup-restore' }
+    if ($QueryKey -match '(?:quan ly giay phep hop le|manage (?:valid|legitimate) licenses?)') { return 'enterprise' }
+    if ($QueryKey -match '(?:kiem tra chuyen sau|advanced inspection|deep inspection|deep scan|forensic scan)') { return 'deep-scan' }
+    if ($QueryKey -match '(?:trung tam bao cao|trung tam bao dam|reports? (?:and|&) assurance|assurance report center)') { return 'report-center' }
+    if ($QueryKey -match '(?:kiem tra.*(?:chung chi|certificate)|(?:certificate|chung chi).*(?:audit|check|kiem tra|xac minh))') { return 'certificate-audit' }
     if ($QueryKey -match '(?:khong mo duoc|khong chay duoc|khong khoi dong duoc).*(?:exe|tool|cong cu)|(?:exe|tool|cong cu).*(?:bi chan|khong mo|khong chay|khong khoi dong)') { return 'launch-troubleshooting' }
     if ($QueryKey -match '(?:khong thay|thieu|bo sot).*(?:phan mem|ung dung)|(?:phan mem|ung dung).*(?:khong hien|khong duoc tim thay|bi thieu)') { return 'software-not-found' }
     if ($QueryKey -match '(?:khong tao duoc|tao that bai|bi loi).*(?:pdf)|(?:pdf).*(?:khong tao|that bai|bi loi)') { return 'report-pdf-failure' }
+    if ($QueryKey -match '(?:catalog|catalogue|danh muc).*(?:update|cap nhat).*(?:fail|failed|error|loi|that bai|khong)|(?:update|cap nhat).*(?:catalog|catalogue|danh muc).*(?:fail|failed|error|loi|that bai|khong)') { return 'online-troubleshooting' }
     if ($QueryKey -match '(?:online).*(?:loi|that bai|khong ket noi|khong cap nhat|khong dong bo)|(?:khong ket noi|khong cap nhat|khong dong bo).*(?:online|internet)') { return 'online-troubleshooting' }
     if ($QueryKey -match '(?:may chu|server).*(?:tao cau hinh|xoa cau hinh|khoi dong|dung may chu|ma ghep noi|url acl|firewall)|(?:tao|xoa|khoi dong|dung).*(?:cau hinh may chu|server)') { return 'enterprise-server-management' }
     if ($QueryKey -match '(?:may tram|client|workstation).*(?:ghep noi|gui bao cao|agent|tu tim)|(?:ghep noi|gui bao cao|chay agent).*(?:may tram|client)') { return 'enterprise-client-management' }
-    if ($QueryKey -match '(?:goi ho tro|support bundle).*(?:tao|xem truoc|zip|che|redact|gui|bao mat|privacy)|(?:tao|xem truoc).*(?:goi ho tro|support bundle)') { return 'support-bundle' }
+    if ($QueryKey -match '(?:goi ho tro|support bundle).*(?:tao|create|generate|xem truoc|preview|zip|che|redact|redacted|gui|send|bao mat|privacy)|(?:tao|create|generate|xem truoc|preview).*(?:goi ho tro|support bundle)') { return 'support-bundle' }
     if ($QueryKey -match '(?:kenh ho tro|lien he tac gia|email ho tro|zalo ho tro|can ho tro tool)') { return 'support-channel' }
-    if ($QueryKey -match '(?:plugin|quy tac mo rong).*(?:cai|kiem tra|danh gia|json|thu muc|an toan|chinh sach|nha phat hanh|publisher|chu ky|fingerprint|bi chan|khong cai duoc)|(?:cai|danh gia|chinh sach|publisher).*(?:plugin)') { return 'plugin-management' }
+    if ($QueryKey -match '(?:plugin|quy tac mo rong).*(?:cai|install|kiem tra|check|danh gia|evaluate|review|json|thu muc|folder|an toan|safe|chinh sach|policy|nha phat hanh|publisher|chu ky|signature|fingerprint|bi chan|blocked|khong cai duoc)|(?:cai|install|danh gia|evaluate|review|chinh sach|policy|publisher|open|mo).*(?:plugin)') { return 'plugin-management' }
     if ($QueryKey -match '(?:chung chi|certificate|authenticode).*(?:windows|office|kiem tra|xac minh)|(?:kiem tra).*(?:chung chi so|certificate)') { return 'certificate-audit' }
     if ($QueryKey -match '(?:(?:mien phi|freeware|nguon mo|open source).*(?:hoa don|chung tu|giay phep|license|ban quyen)|(?:hoa don|chung tu|giay phep|license).*(?:mien phi|freeware|nguon mo|open source)|(?:mo hinh giay phep|license model).*(?:bang chung|dau hieu|evidence|trang thai)|(?:doi chieu).*(?:mo hinh).*(?:trang thai|bang chung).*(?:ban quyen|phan mem))') { return 'license-model-evidence' }
     if ($QueryKey -match '\b(?:winrar|mathtype)\b') { return 'commercial-software-review' }
     if ($QueryKey -match '(?:(?:dieu kien|du dieu kien|chua du dieu kien).*(?:khac phuc|remediation).*(?:phan mem|nghi van|crack|activator)|(?:nghi van|dau hieu).*(?:dieu kien khac phuc|duoc khac phuc|khac phuc duoc)|(?:remediation eligibility|remediation condition).*(?:software|suspicious|finding|artifact)|(?:suspicious software).*(?:remediation|eligible)|(?:khac phuc|remediation).*(?:nghi van|low confidence|tin cay thap|giu ung dung|giu phan mem)|(?:co lap|isolate).*(?:crack|activator|tac vu|dich vu).*(?:giu|ung dung|phan mem))') { return 'software-finding-remediation' }
     if ($QueryKey -match '(?:(?:low|thap|confidence|tin cay).*(?:xoa|go|khac phuc|bloat|phan mem|nghi van)|(?:xoa|go|khac phuc).*(?:low|tin cay thap)|(?:co dau hieu nghi van|trang thai nghi van).*(?:nghia la gi|co phai|xoa|go))') { return 'software-finding-confidence' }
     if ($QueryKey -match '(?:(?:tach|phan biet|khac nhau|rieng|separate|distinguish).*(?:windows).*(?:office).*(?:phan mem|ben thu ba|third party|software)|(?:windows|office).*(?:phan mem ben thu ba|third party).*(?:xu ly|khac phuc|danh gia|pham vi|remediation|review|scope)|(?:windows).*(?:yen|khong co|khong thay|sach).*(?:office).*(?:canh bao|activator|kms|dau hieu|thi sao))') { return 'license-scope-separation' }
-    if ($QueryKey -match '(?:timeline|dong thoi gian|lich su thay doi).*(?:ban quyen|xac minh|xuat)|(?:xac minh|xuat).*(?:timeline)') { return 'license-timeline' }
-    if ($QueryKey -match '(?:huong dan su dung|tai lieu huong dan|lich su phien ban).*(?:mo|xem|o dau|html|pdf)|(?:mo|xem).*(?:huong dan chi tiet|lich su phien ban)') { return 'embedded-documents' }
+    if ($QueryKey -match '(?:timeline|dong thoi gian|lich su thay doi).*(?:ban quyen|license|xac minh|verify|xuat|export)|(?:xac minh|verify|xuat|export).*(?:timeline)') { return 'license-timeline' }
+    if ($QueryKey -match '(?:huong dan su dung|tai lieu huong dan|lich su phien ban|user guide|version(?:s)? and updates?|updates? and versions?).*(?:mo|xem|o dau|html|pdf|open|view|see|find|where)|(?:mo|xem|open|view|see|find|where).*(?:huong dan chi tiet|huong dan su dung|user guide|lich su phien ban|version(?:s)? and updates?|updates? and versions?)') { return 'embedded-documents' }
     if ($QueryKey -match '(?:dinh dang|loai tep|file nao|docx|word).*(?:bao cao|xuat)|(?:bao cao).*(?:json|xml|html|pdf|docx|dinh dang)') { return 'report-formats' }
     $functionRoutes = [ordered]@{
         '10'='report-center'; '9'='deep-scan'; '8'='enterprise'; '7'='oem'; '6'='remediation'
@@ -807,6 +935,7 @@ function Get-ToolAssistantPriorityEntryId {
     }
     if ($QueryKey -match '(?:bo qua|vo hieu|tat|lach).*(?:ban quyen|kich hoat|defender|antivirus)|(?:crack|keygen).*(?:cach lam|huong dan|tai o dau)') { return 'safe-boundary' }
     if ($QueryKey -match '(?:co so du lieu|kho tri thuc|du lieu tro ly).*(?:cap nhat|dong bo|phien ban|tuong thich)|(?:cap nhat|dong bo).*(?:co so du lieu|kho tri thuc|du lieu tro ly)') { return 'assistant-knowledge-update' }
+    if ($QueryKey -match '(?:(?:install|download|check|get|tai|kiem tra|cai).*(?:latest |new |ban )?(?:update|cap nhat)|(?:update|cap nhat).*(?:install|download|check|get|tai|kiem tra|cai))') { return 'update' }
     if ($QueryKey -match '(?:pdf|bao cao).*(?:mat dong|khuyet dong|cat chu|be chu|gian dong|khoang cach dong|chieu cao hang|bang rong|bo cuc)|(?:mat dong|khuyet dong|cat chu).*(?:pdf|bao cao)') { return 'report-pdf' }
     if ($QueryKey -match '(?:phan mem he thong|phan mem mac dinh|system software|system component).*(?:an|hien|show|danh sach|pdf)|(?:an|hien).*(?:phan mem he thong|phan mem mac dinh)') { return 'software-system-filter' }
     if ($QueryKey -match '(?:mot thu muc|thu muc chung|khong tao thu muc con|gom.*bao cao|json.*html.*pdf|html.*pdf.*json)') { return 'report-shared-folder' }
@@ -1132,6 +1261,10 @@ function Get-ToolAssistantAnswer {
     }
     if ($originalQueryKey -match '(bao cao hien tai|bao cao vua|ket qua hien tai|ket qua vua|trang thai hien tai cua may|may nay dang the nao|scan result|current report|current status|explain (?:the )?current report)') {
         return Format-ToolAssistantReportContext -Context $ReportContext -Culture $Culture
+    }
+    $namedGuideAnswer = Get-ToolAssistantNamedGuideAnswer -QueryKey $queryKey -Culture $Culture
+    if (-not [string]::IsNullOrWhiteSpace($namedGuideAnswer)) {
+        return Add-ToolAssistantNaturalLead -Answer $namedGuideAnswer -Question $Question -Culture $Culture
     }
     $historyAnswer = Get-ToolAssistantHistoryAnswer -Question $Question -Culture $Culture
     if (-not [string]::IsNullOrWhiteSpace($historyAnswer)) {

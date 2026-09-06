@@ -34,11 +34,11 @@ if ($errors.Count -eq 0) {
     if (Test-ToolAssistantKnowledgeSignature -ContentBytes $tamperedBytes -SignatureBytes $signatureBytes) {
         Add-AssistantVerificationError 'Detached signature accepted tampered knowledge bytes.'
     }
-    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.6\.0"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
+    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.7\.0"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
     if (Test-ToolAssistantKnowledge -Knowledge $legacyKnowledge) { Add-AssistantVerificationError 'An obsolete cached knowledge file was not rejected.' }
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
-    $compatibleFutureKnowledge.KnowledgeVersion = '1.6.1'
-    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-09-06T07:01:00Z'
+    $compatibleFutureKnowledge.KnowledgeVersion = '1.7.1'
+    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-09-06T05:16:55Z'
     $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.1'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
         Add-AssistantVerificationError 'A newer signed-compatible knowledge version cannot evolve independently of the EXE.'
@@ -68,9 +68,14 @@ if ($errors.Count -eq 0) {
     }
     if (-not [bool]$metadata.CompleteBundledGuideIndexed -or
         -not [bool]$metadata.CompleteVersionHistoryIndexed -or
-        -not [bool]$metadata.VersionComparisonUsesPublishedHistoryOnly -or
+        -not [bool]$metadata.CurrentTechnicalVersionIndexed -or
+        -not [bool]$metadata.CompleteFeatureGuideCoverage -or
+        [int]$metadata.MainFeatureCount -ne 10 -or
+        [int]$metadata.RemediationWorkflowCount -ne 4 -or
+        [int]$metadata.AssuranceActionCount -ne 8 -or
+        -not [bool]$metadata.VersionComparisonUsesRecordedHistoryOnly -or
         @($metadata.BundledDocumentFiles).Count -ne 4) {
-        Add-AssistantVerificationError 'Complete guide/history indexing or evidence-only comparison metadata is invalid.'
+        Add-AssistantVerificationError 'Complete guide/current-history/function indexing or evidence-only comparison metadata is invalid.'
     }
 
     foreach ($culture in @('vi-VN','en-US')) {
@@ -82,6 +87,18 @@ if ($errors.Count -eq 0) {
             $indexedCount = @($documentSections | Where-Object { [string]$_.SourceFile -eq [string]$definition.FileName }).Count
             if ($headingCount -le 0 -or $indexedCount -ne $headingCount) {
                 Add-AssistantVerificationError "Complete document indexing failed for $([string]$definition.FileName): headings=$headingCount indexed=$indexedCount."
+            }
+        }
+        $guideSections = @($documentSections | Where-Object { [string]$_.SourceKind -eq 'Guide' })
+        if ($guideSections.Count -lt 30) {
+            Add-AssistantVerificationError "Complete named-function guide coverage is unexpectedly small for ${culture}: $($guideSections.Count)."
+        }
+        foreach ($section in $guideSections) {
+            $question = if ($culture -eq 'en-US') { "$([string]$section.Heading) — how does this work?" } else { "$([string]$section.Heading) hoạt động ra sao?" }
+            $answer = Get-ToolAssistantAnswer -Question $question -Culture $culture -Knowledge $knowledge
+            $expectedHeading = "$([string]$section.SourceLabel) — $([string]$section.Heading):"
+            if ($answer -notlike ('*' + $expectedHeading + '*')) {
+                Add-AssistantVerificationError "Named guide section did not route end-to-end for '$([string]$section.Heading)' (${culture})."
             }
         }
     }
@@ -264,9 +281,9 @@ if ($errors.Count -eq 0) {
     $oemFlowVi = Get-ToolAssistantAnswer -Question 'chức năng khôi phục OEM hoạt động ra sao' -Culture 'vi-VN' -Knowledge $knowledge
     $missingV20En = Get-ToolAssistantAnswer -Question 'what changed in version v2.0' -Culture 'en-US' -Knowledge $knowledge
     $oemFlowEn = Get-ToolAssistantAnswer -Question 'how does OEM key recovery work' -Culture 'en-US' -Knowledge $knowledge
-    if ($missingV20Vi -notmatch 'không có mục công khai v2\.0' -or $missingV20Vi -notmatch 'v2\.4' -or
+    if ($missingV20Vi -notmatch 'không có mục được ghi nhận cho v2\.0' -or $missingV20Vi -notmatch 'v2\.4' -or
         $missingV20CompareVi -notmatch 'không tự suy diễn.*so sánh' -or
-        $missingV20En -notmatch 'no published entry for v2\.0' -or $missingV20En -notmatch 'v2\.4') {
+        $missingV20En -notmatch 'no recorded entry for v2\.0' -or $missingV20En -notmatch 'v2\.4') {
         Add-AssistantVerificationError 'Missing-version questions were invented or did not identify the first recorded v2.x milestone.'
     }
     if ($v24Vi -notmatch 'Đổi nhãn phiên bản từ v1\.3\.0 thành v2\.4' -or
@@ -276,7 +293,7 @@ if ($errors.Count -eq 0) {
     if ($versionCompareVi -notmatch 'không suy diễn' -or $versionCompareVi -notmatch 'v4\.8\.0\.0' -or $versionCompareVi -notmatch 'v4\.6') {
         Add-AssistantVerificationError 'Two-version comparison does not return both published history entries.'
     }
-    if ($versionListVi -notmatch 'v5\.0' -or $versionListVi -notmatch 'v1\.0' -or
+    if ($versionListVi -notmatch 'v5\.0\.0\.1' -or $versionListVi -notmatch 'v5\.0' -or $versionListVi -notmatch 'v1\.0' -or
         $versionListVi -match '(?:^|, )v2\.0(?:,|\.)') {
         Add-AssistantVerificationError 'Complete version-history listing is incomplete or includes an undocumented v2.0 milestone.'
     }
@@ -315,6 +332,161 @@ if ($errors.Count -eq 0) {
     if ($mixedOrderCompare.IndexOf('v4.6 —', [StringComparison]::Ordinal) -lt 0 -or
         $mixedOrderCompare.IndexOf('v4.8.0.0 —', [StringComparison]::Ordinal) -le $mixedOrderCompare.IndexOf('v4.6 —', [StringComparison]::Ordinal)) {
         Add-AssistantVerificationError 'Mixed version notation did not preserve question order during comparison.'
+    }
+
+    $expectedHistoryVersions = @(
+        '5.0.0.1','5.0','4.9.0.0','4.8.0.1','4.8.0.0','4.6','4.5','4.4','4.3','4.2','4.1','4.0',
+        '3.9','3.8','3.7','3.6','3.5','3.4','3.3','3.2','3.1','3.0','2.9','2.8','2.7','2.6','2.5','2.4',
+        '1.3.0','1.2.0','1.1.0','1.0.9','1.0.8','1.0.7','1.0.6','1.0.5','1.0.4','1.0.3','1.0.2','1.0.1','1.0.0'
+    )
+    foreach ($culture in @('vi-VN','en-US')) {
+        $actualHistoryVersions = @(Get-ToolAssistantDocumentSections -Culture $culture | Where-Object {
+            [string]$_.SourceKind -eq 'History' -and -not [string]::IsNullOrWhiteSpace([string]$_.VersionRaw)
+        } | ForEach-Object { [string]$_.VersionRaw })
+        if (($actualHistoryVersions -join '|') -ne ($expectedHistoryVersions -join '|')) {
+            Add-AssistantVerificationError "Recorded version set/order is incomplete for ${culture}: $($actualHistoryVersions -join ', ')."
+        }
+        foreach ($version in $expectedHistoryVersions) {
+            $question = if ($culture -eq 'en-US') { "what changed in v$version" } else { "v$version cập nhật những gì" }
+            $answer = Get-ToolAssistantHistoryAnswer -Question $question -Culture $culture
+            if ($answer -notlike ('*v' + $version + '*') -or $answer -match 'no recorded entry|không có mục được ghi nhận') {
+                Add-AssistantVerificationError "Recorded history lookup failed for v$version (${culture})."
+            }
+        }
+    }
+
+    $currentVi = Get-ToolAssistantAnswer -Question 'v5.0.0.1 cập nhật những gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $currentEn = Get-ToolAssistantAnswer -Question 'what changed in v5.0.0.1' -Culture 'en-US' -Knowledge $knowledge
+    $currentAliasVi = Get-ToolAssistantAnswer -Question 'phiên bản hiện tại cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $currentAliasEn = Get-ToolAssistantAnswer -Question 'current version changes' -Culture 'en-US' -Knowledge $knowledge
+    $latestAliasVi = Get-ToolAssistantAnswer -Question 'mới nhất cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $latestAliasEn = Get-ToolAssistantAnswer -Question "what's new in the latest version" -Culture 'en-US' -Knowledge $knowledge
+    $bareLatestEn = Get-ToolAssistantAnswer -Question 'latest changes' -Culture 'en-US' -Knowledge $knowledge
+    $currentCompareVi = Get-ToolAssistantAnswer -Question 'bản hiện tại so với v4.9' -Culture 'vi-VN' -Knowledge $knowledge
+    $currentCompareEn = Get-ToolAssistantAnswer -Question 'compare v4.9 with the current version' -Culture 'en-US' -Knowledge $knowledge
+    $futureMissing = Get-ToolAssistantAnswer -Question 'v5.0.0.2 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
+    if ($currentVi -notmatch 'v5\.0\.0\.1.*ứng viên kỹ thuật hiện tại' -or $currentVi -notmatch 'toàn bộ chức năng' -or
+        $currentEn -notmatch 'v5\.0\.0\.1.*current technical candidate' -or $currentEn -notmatch 'every documented Tool function' -or
+        $currentAliasVi -notmatch 'v5\.0\.0\.1' -or $currentAliasEn -notmatch 'v5\.0\.0\.1' -or
+        $latestAliasVi -notmatch 'v5\.0\.0\.1' -or $latestAliasEn -notmatch 'v5\.0\.0\.1' -or
+        $bareLatestEn -notmatch 'v5\.0\.0\.1' -or
+        $futureMissing -notmatch 'không có mục được ghi nhận cho v5\.0\.0\.2') {
+        Add-AssistantVerificationError 'Current technical version lookup/alias or future-version rejection is incomplete.'
+    }
+    if ($currentCompareVi.IndexOf('v5.0.0.1 —', [StringComparison]::Ordinal) -lt 0 -or
+        $currentCompareVi.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -le $currentCompareVi.IndexOf('v5.0.0.1 —', [StringComparison]::Ordinal) -or
+        $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -lt 0 -or
+        $currentCompareEn.IndexOf('v5.0.0.1 —', [StringComparison]::Ordinal) -le $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal)) {
+        Add-AssistantVerificationError 'Current/latest comparison did not resolve v5.0.0.1 or preserve question order.'
+    }
+
+    $catalogUpdateEn = Get-ToolAssistantAnswer -Question 'latest catalog update failed' -Culture 'en-US' -Knowledge $knowledge
+    $catalogUpdateVi = Get-ToolAssistantAnswer -Question 'cập nhật danh mục mới nhất bị lỗi' -Culture 'vi-VN' -Knowledge $knowledge
+    $installUpdateEn = Get-ToolAssistantAnswer -Question 'how do I install the latest update' -Culture 'en-US' -Knowledge $knowledge
+    $downloadUpdateVi = Get-ToolAssistantAnswer -Question 'làm sao tải bản cập nhật mới nhất' -Culture 'vi-VN' -Knowledge $knowledge
+    if ($catalogUpdateEn -notmatch 'remains usable Offline' -or $catalogUpdateVi -notmatch 'vẫn dùng được Offline' -or
+        $installUpdateEn -notmatch 'Update checks work' -or $downloadUpdateVi -notmatch 'Kiểm tra cập nhật' -or
+        $catalogUpdateEn -match 'Version history.*v5\.0\.0\.1' -or $catalogUpdateVi -match 'Lịch sử phiên bản.*v5\.0\.0\.1') {
+        Add-AssistantVerificationError 'Current/latest aliases hijacked catalog or application-update workflows.'
+    }
+
+    $windowsCurrentVersion = Get-ToolAssistantAnswer -Question 'phiên bản Windows hiện tại là gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $powershellSupportedVersion = Get-ToolAssistantAnswer -Question 'what is the latest PowerShell version supported by the Tool' -Culture 'en-US' -Knowledge $knowledge
+    if ($windowsCurrentVersion -notmatch 'Chức năng 3 đọc edition' -or $powershellSupportedVersion -notmatch 'PowerShell 3 or later' -or
+        $windowsCurrentVersion -match 'v5\.0\.0\.1' -or $powershellSupportedVersion -match 'technical version v5\.0\.0\.1') {
+        Add-AssistantVerificationError 'Current/latest foreign-product version wording was confused with Tool version history.'
+    }
+
+    foreach ($capabilityTest in @(
+        @{ Culture='vi-VN'; Question='v5.0.0.1 có tất cả chức năng gì'; Expected='Toàn bộ 10 chức năng chính' },
+        @{ Culture='vi-VN'; Question='tất cả chức năng của phiên bản hiện tại'; Expected='Toàn bộ 10 chức năng chính' },
+        @{ Culture='en-US'; Question='what features does v5.0.0.1 have'; Expected='All ten main functions' },
+        @{ Culture='en-US'; Question='list all functions in the current version'; Expected='All ten main functions' }
+    )) {
+        $capabilityAnswer = Get-ToolAssistantAnswer -Question $capabilityTest.Question -Culture $capabilityTest.Culture -Knowledge $knowledge
+        if ($capabilityAnswer -notlike ('*' + $capabilityTest.Expected + '*') -or $capabilityAnswer -match 'no recorded entry|không có mục được ghi nhận') {
+            Add-AssistantVerificationError "Current-version feature inventory was hijacked by history routing: '$($capabilityTest.Question)'."
+        }
+    }
+
+    $completeFunctionTests = @(
+        @{ Culture='vi-VN'; Question='kiểm tra toàn bộ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kiểm tra toàn bộ:' },
+        @{ Culture='vi-VN'; Question='cấu hình phần cứng hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Cấu hình phần cứng:' },
+        @{ Culture='vi-VN'; Question='bản quyền Windows hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bản quyền Windows:' },
+        @{ Culture='vi-VN'; Question='bản quyền Microsoft Office hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bản quyền Microsoft Office:' },
+        @{ Culture='vi-VN'; Question='phần mềm và dấu hiệu can thiệp hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Phần mềm & dấu hiệu can thiệp:' },
+        @{ Culture='vi-VN'; Question='năm chức năng trong mục khắc phục hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Năm chức năng trong mục Khắc phục:' },
+        @{ Culture='vi-VN'; Question='khôi phục key OEM hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Khôi phục key OEM:' },
+        @{ Culture='vi-VN'; Question='quản lý giấy phép hợp lệ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quản lý giấy phép hợp lệ:' },
+        @{ Culture='vi-VN'; Question='kiểm tra chuyên sâu hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kiểm tra chuyên sâu:' },
+        @{ Culture='vi-VN'; Question='quét chuyên sâu 7 nhóm hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kiểm tra chuyên sâu 7 nhóm:' },
+        @{ Culture='vi-VN'; Question='điều tra 12 nhóm và chấm điểm hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Điều tra 12 nhóm và chấm điểm:' },
+        @{ Culture='vi-VN'; Question='trung tâm báo cáo và bảo đảm hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Trung tâm báo cáo & bảo đảm:' },
+        @{ Culture='vi-VN'; Question='khắc phục Windows hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Khắc phục Windows:' },
+        @{ Culture='vi-VN'; Question='khắc phục Microsoft Office hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Khắc phục Microsoft Office:' },
+        @{ Culture='vi-VN'; Question='khắc phục phần mềm khác hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Khắc phục phần mềm khác:' },
+        @{ Culture='vi-VN'; Question='khắc phục phần mềm khác làm gì'; Expected='Hướng dẫn sử dụng — Khắc phục phần mềm khác:' },
+        @{ Culture='vi-VN'; Question='chạy thử không thay đổi hệ thống hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Chạy thử – không thay đổi hệ thống:' },
+        @{ Culture='vi-VN'; Question='thực hiện thật sau chạy thử hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Thực hiện thật sau Chạy thử:' },
+        @{ Culture='vi-VN'; Question='kiểm tra và đưa về trạng thái gốc hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kiểm tra và đưa về trạng thái gốc:' },
+        @{ Culture='vi-VN'; Question='sửa nhanh nguồn quét hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Sửa nhanh nguồn quét:' },
+        @{ Culture='vi-VN'; Question='xử lý mục còn lại hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Xử lý mục còn lại:' },
+        @{ Culture='vi-VN'; Question='xác nhận KMS nội bộ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Xác nhận KMS nội bộ:' },
+        @{ Culture='vi-VN'; Question='quét lại hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quét lại:' },
+        @{ Culture='vi-VN'; Question='kích hoạt hợp lệ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kích hoạt hợp lệ:' },
+        @{ Culture='vi-VN'; Question='quản lý cục bộ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quản lý cục bộ:' },
+        @{ Culture='vi-VN'; Question='máy chủ và máy trạm doanh nghiệp hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Máy chủ và máy trạm doanh nghiệp:' },
+        @{ Culture='vi-VN'; Question='kiểm tra chứng chỉ số Windows Office hoạt động thế nào'; Expected='chuỗi tin cậy Offline' },
+        @{ Culture='vi-VN'; Question='đánh giá plugin hoạt động thế nào'; Expected='plugin JSON chỉ đọc' },
+        @{ Culture='vi-VN'; Question='xác minh và xuất timeline hoạt động ra sao'; Expected='chuỗi nhật ký' },
+        @{ Culture='vi-VN'; Question='cài plugin đã ký hoạt động ra sao'; Expected='chính sách nhà phát hành' },
+        @{ Culture='vi-VN'; Question='mở thư mục plugin bảo vệ ở đâu'; Expected='trusted-plugin-publishers-v1.json' },
+        @{ Culture='vi-VN'; Question='mở hướng dẫn sử dụng ở đâu'; Expected='HDSD HTML/PDF' },
+        @{ Culture='vi-VN'; Question='xem phiên bản và cập nhật ở đâu'; Expected='Phiên bản và cập nhật' },
+        @{ Culture='vi-VN'; Question='tạo gói hỗ trợ đã che định danh ra sao'; Expected='bản xem trước' },
+        @{ Culture='vi-VN'; Question='kết nối online để cập nhật nhận diện hoạt động ra sao'; Expected='chỉ tải danh mục nhận diện' },
+        @{ Culture='vi-VN'; Question='đồng bộ tri thức hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Đồng bộ tri thức:' },
+        @{ Culture='vi-VN'; Question='nút Gửi và Enter hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Nút Gửi và Enter:' },
+        @{ Culture='vi-VN'; Question='quyền riêng tư báo cáo hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quyền riêng tư báo cáo:' },
+        @{ Culture='vi-VN'; Question='nút Dừng hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Nút Dừng:' },
+        @{ Culture='en-US'; Question='how does Complete audit work'; Expected='User guide — Complete audit:' },
+        @{ Culture='en-US'; Question='how does Hardware configuration work'; Expected='User guide — Hardware configuration:' },
+        @{ Culture='en-US'; Question='how does Windows licensing work'; Expected='User guide — Windows licensing:' },
+        @{ Culture='en-US'; Question='how does Microsoft Office licensing work'; Expected='User guide — Microsoft Office licensing:' },
+        @{ Culture='en-US'; Question='how do Software and tampering indicators work'; Expected='User guide — Software & tampering indicators:' },
+        @{ Culture='en-US'; Question='how does Windows Office and other software remediation work'; Expected='User guide — Windows, Microsoft Office, and other-software remediation:' },
+        @{ Culture='en-US'; Question='how does Dry Run work'; Expected='User guide — Dry Run — no system changes:' },
+        @{ Culture='en-US'; Question='how does Execute for real after Dry Run work'; Expected='User guide — Execute for real after Dry Run:' },
+        @{ Culture='en-US'; Question='how does Inspect and return to original state work'; Expected='User guide — Inspect and return to original state:' },
+        @{ Culture='en-US'; Question='how does Quick repair scan sources work'; Expected='User guide — Quick repair scan sources:' },
+        @{ Culture='en-US'; Question='how does Handle remaining items work'; Expected='User guide — Handle remaining items:' },
+        @{ Culture='en-US'; Question='how does Confirm internal KMS work'; Expected='User guide — Confirm internal KMS:' },
+        @{ Culture='en-US'; Question='how does Recheck work'; Expected='User guide — Recheck:' },
+        @{ Culture='en-US'; Question='how does Activate legitimately work'; Expected='User guide — Activate legitimately:' },
+        @{ Culture='en-US'; Question='how does Restore the OEM key work'; Expected='User guide — Restore the OEM key:' },
+        @{ Culture='en-US'; Question='how does Manage valid licenses work'; Expected='User guide — Manage valid licenses:' },
+        @{ Culture='en-US'; Question='how does local license management work'; Expected='User guide — Local management:' },
+        @{ Culture='en-US'; Question='how does enterprise server and workstation work'; Expected='User guide — Enterprise server and workstation:' },
+        @{ Culture='en-US'; Question='how does Advanced inspection work'; Expected='User guide — Advanced inspection:' },
+        @{ Culture='en-US'; Question='how does seven-group deep scan work'; Expected='User guide — Seven-group deep scan:' },
+        @{ Culture='en-US'; Question='how does twelve-group forensics and scoring work'; Expected='User guide — Twelve-group forensics and scoring:' },
+        @{ Culture='en-US'; Question='how does Reports and assurance center work'; Expected='User guide — Reports & assurance center:' },
+        @{ Culture='en-US'; Question='how does certificate audit work'; Expected='Offline trust chain' },
+        @{ Culture='en-US'; Question='how do I evaluate a plugin'; Expected='read-only JSON plugin' },
+        @{ Culture='en-US'; Question='how does license timeline export work'; Expected='local chained log' },
+        @{ Culture='en-US'; Question='how do I create a redacted support bundle'; Expected='preview' },
+        @{ Culture='en-US'; Question='how do I open the user guide'; Expected='open Reports & Assurance' },
+        @{ Culture='en-US'; Question='where can I see version and updates'; Expected='open Reports & Assurance' },
+        @{ Culture='en-US'; Question='how does Sync knowledge work'; Expected='User guide — Sync knowledge:' },
+        @{ Culture='en-US'; Question='how do Send and Enter work'; Expected='User guide — Send and Enter:' },
+        @{ Culture='en-US'; Question='how does report privacy work'; Expected='User guide — Report privacy:' },
+        @{ Culture='en-US'; Question='how does the Stop task button work'; Expected='User guide — Stop task:' }
+    )
+    foreach ($test in $completeFunctionTests) {
+        $answer = Get-ToolAssistantAnswer -Question $test.Question -Culture $test.Culture -Knowledge $knowledge
+        if ($answer -notlike ('*' + $test.Expected + '*')) {
+            Add-AssistantVerificationError "Complete function coverage failed for '$($test.Question)' ($($test.Culture))."
+        }
     }
 
     $firstReleaseEn = Get-ToolAssistantAnswer -Question 'when was v1 relased' -Culture 'en-US' -Knowledge $knowledge
@@ -684,5 +856,5 @@ if ($errors.Count -gt 0) {
     $errors | ForEach-Object { Write-Host " - $_" -ForegroundColor Red }
     exit 1
 }
-Write-Host 'VERIFY-ASSISTANT: 0 errors (400+ phrasings + signed external knowledge + rollback protection + Tool-only scope + local privacy + context follow-up + immediate bubbles + Send/Enter + live Online state).' -ForegroundColor Green
+Write-Host 'VERIFY-ASSISTANT: 0 errors (complete VI/EN version and function matrices + signed external knowledge + rollback protection + Tool-only scope + local privacy + context follow-up + immediate bubbles + Send/Enter + live Online state).' -ForegroundColor Green
 exit 0

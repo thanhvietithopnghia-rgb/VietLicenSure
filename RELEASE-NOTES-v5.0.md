@@ -11,11 +11,13 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 
 ## Cập nhật kỹ thuật v5.0.0.1 ngày 06/09/2026
 
-- Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ lịch sử phiên bản Việt–Anh theo từng mục, dùng được Offline.
-- Hỏi một phiên bản có hồ sơ sẽ nhận đầy đủ mục thay đổi; hỏi hai phiên bản sẽ nhận đối chiếu trực tiếp, không suy diễn ngoài tài liệu.
+- Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ lịch sử phiên bản Việt–Anh theo từng mục, dùng được Offline; phạm vi chức năng bao phủ toàn bộ Tool chứ không chỉ Khôi phục key OEM.
+- Hỏi một phiên bản có hồ sơ sẽ nhận đầy đủ mục thay đổi; hỏi hai phiên bản sẽ nhận đối chiếu trực tiếp, không suy diễn ngoài tài liệu. Các cụm “bản hiện tại” và “mới nhất” được ánh xạ đúng tới v5.0.0.1.
+- Bổ sung mục lịch sử riêng cho ứng viên kỹ thuật v5.0.0.1 và ma trận kiểm thử mọi mốc ghi nhận từ v1.0.0 đến phiên bản hiện tại.
+- Mọi mục HDSD có thể được gọi đúng theo tên: 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ của Trung tâm Báo cáo & Bảo đảm.
 - Khôi phục các mốc v1.0.0–v1.0.9 bị lược bỏ và sửa nội dung v1.1.0–v3.3 theo hồ sơ phát hành gốc; xác định rõ không có hồ sơ v2.0–v2.3.
-- Giải thích đầy đủ quy trình OEM: kiểm tra OA3 chỉ đọc, che key, xác nhận quyền/edition, áp dụng bằng cơ chế Windows chính thức và hậu kiểm tối đa ba lần.
-- Bổ sung kiểm thử chống nhầm phiên bản Windows/PowerShell/.NET với lịch sử Tool, kiểm thử bốn Lựa chọn khắc phục và kiểm thử toàn vẹn chỉ mục tài liệu.
+- Giải thích đầy đủ quy trình OEM: kiểm tra OA3 chỉ đọc, che key, xác nhận quyền/edition, áp dụng bằng cơ chế Windows chính thức và hậu kiểm tối đa ba lần; đây là một phần của độ phủ toàn bộ chức năng.
+- Bổ sung kiểm thử chống nhầm phiên bản Windows/Office/PowerShell/.NET với lịch sử Tool, kiểm thử mọi mục chức năng và kiểm thử toàn vẹn chỉ mục tài liệu.
 
 ## Cập nhật kỹ thuật ngày 05/09/2026
 

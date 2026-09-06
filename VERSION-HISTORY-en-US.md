@@ -1,9 +1,19 @@
 # Computer Configuration and Software License Check Tool — Version History
 
-This document summarizes the core changes in every main public release, from the first release to the current version.
+This document summarizes the core changes in every recorded version, from the first release through the current technical candidate. Candidate milestones are labelled explicitly so they are not mistaken for a public release.
 
 Stable latest-release page:
 <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+
+## v5.0.0.1 — September 6, 2026 (current technical candidate)
+
+- Tool Assistant indexes every section of the complete Vietnamese/English user guides and version histories for Offline use.
+- It returns the complete recorded entry for one version, compares two versions directly from evidence, and resolves “current” or “latest” to v5.0.0.1 without inventing undocumented milestones.
+- It covers the purpose, workflow, output, and safety notes of every documented Tool function: all ten main functions, remediation/backup workflows, local and enterprise license management, and all eight Reports & Assurance actions—not only OEM key recovery.
+- Restores the previously omitted v1.0.0–v1.0.9 milestones and corrects v1.1.0–v3.3 from original release evidence; explicitly records that no v2.0–v2.3 milestone is available.
+- Adds tests that prevent Windows/Office/PowerShell/.NET versions from being mistaken for Tool history and a version matrix from the first release through v5.0.0.1.
+
+This entry describes the local candidate awaiting approval; it does not claim that v5.0.0.1 has already been released publicly.
 
 ## Tool Kiểm Tra v5.0 — September 6, 2026
 
@@ -14,7 +24,7 @@ Tool Kiểm Tra v5.0 is the next upgrade after v4.9, focused on improving the co
 - **Safe remediation:** separate Windows, Office, and other-software scopes; mandatory preview, Dry Run, backup, confirmation, and post-check; an integrity-checked Backup and Restore Center.
 - **Reports and support:** HTML, PDF, JSON, and XML reports; a redacted support bundle and multi-computer management support.
 - **Privacy and integrity:** Offline by default with no automatic Internet upload; signature and SHA-256 checks before important operations.
-- **Assistant and documentation:** indexes the complete Vietnamese/English guides and histories, returns full change entries, compares two recorded versions, and explains workflows such as OEM recovery in detail.
+- **Assistant and documentation:** indexes the complete Vietnamese/English guides and histories, returns full change entries, compares two versions from recorded evidence, and explains every documented function in detail, including inspection, remediation, license management, advanced inspection, and reports/assurance.
 
 `Unverified` does not mean that software violates its licence.
 
