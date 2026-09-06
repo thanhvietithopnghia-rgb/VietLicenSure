@@ -2,23 +2,17 @@
 
 This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release.
 
-Stable latest-release page:
-<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
+Public product page:
+<https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
 ## v5.0 — September 6, 2026
 
-- The VietLicenSure Assistant indexes every section of the complete Vietnamese/English user guides and version histories for Offline use.
-- It returns recorded version entries and compares two versions directly from evidence without inventing undocumented milestones.
-- It covers the purpose, workflow, output, and safety notes of every documented function: all ten main functions, remediation/backup workflows, local and enterprise license management, and all eight Reports & Assurance actions—not only OEM key recovery.
-- Restores the previously omitted v1.0.0–v1.0.9 milestones and corrects v1.1.0–v3.3 from original release evidence; explicitly records that no v2.0–v2.3 milestone is available.
-- Adds tests that prevent Windows/Office/PowerShell/.NET versions from being mistaken for product history.
-
-This ManagedSigned/Pilot release is not labelled Public Stable because the current certificate is launcher-pinned and self-signed, while complete real-machine evidence gates remain pending.
-
-- v5.0 was officially renamed from **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, while retaining all functions and the v5.0 product line.
-- The name combines **Viet** (Vietnamese-developed), **Licen** (License), and **Sure** (clear, evidence-backed technical verification); it is not a legal certification.
-- Synchronizes the VietLicenSure name and v5.0 display version across the Dashboard, Assistant, About view, enterprise management, documentation, and GitHub introduction.
-- Fixes clipped Assistant title/description text and adds automated Vietnamese/English Light/Dark UI checks.
+- Starting with v5.0, the software is officially renamed from **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**.
+- **User experience:** starts faster, presents a clearer responsive interface, supports Light/Dark modes, and opens the requested function directly.
+- **Inspection and recognition:** offers Quick, Standard, and Deep scans for Windows, Microsoft Office, and other software; prioritizes items and supports search, filters, and previous-scan comparison.
+- **Safe remediation:** separates Windows, Office, and other software; requires preview, Dry Run, backup, confirmation, and post-check; adds an integrity-checked backup and restore center.
+- **Reports and support:** exports HTML, PDF, JSON, and XML; creates privacy-redacted support packages and supports multi-device management.
+- **Privacy and integrity:** remains Offline by default, uploads no data automatically, and checks signatures and SHA-256 before important actions.
 
 `Unverified` does not mean that software violates its licence.
 

@@ -2,25 +2,19 @@
 
 Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại.
 
-Trang tải mới nhất:
-https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest
+Trang công khai:
+https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
 ## v5.0 — 06/09/2026
 
-- Chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**; giữ nguyên toàn bộ chức năng và dòng phiên bản v5.0.
-- Tên **VietLicenSure** ghép từ **Viet** (phần mềm do người Việt phát triển), **Licen** (License — giấy phép/bản quyền) và **Sure** (kết quả rõ ràng, có kiểm chứng); tên gọi không phải chứng nhận pháp lý.
-
+- Từ v5.0, phần mềm chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**.
 - **Trải nghiệm sử dụng:** khởi động nhanh hơn, giao diện rõ ràng và thích ứng tốt hơn, hỗ trợ Light/Dark và mở thẳng đúng chức năng cần dùng.
 - **Kiểm tra và nhận diện:** ba mức quét Quick, Standard và Deep; kiểm tra Windows, Microsoft Office và phần mềm khác; sắp xếp việc cần xem theo mức ưu tiên, hỗ trợ tìm kiếm, lọc và so sánh với lần quét trước.
 - **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, chạy thử, sao lưu, xác nhận và kiểm tra lại; bổ sung trung tâm sao lưu–khôi phục có kiểm tra toàn vẹn.
 - **Báo cáo và hỗ trợ:** báo cáo HTML, PDF, JSON, XML; tạo gói hỗ trợ có che thông tin nhạy cảm và hỗ trợ quản lý nhiều máy.
 - **Riêng tư và toàn vẹn:** hoạt động Offline theo mặc định, không tự gửi dữ liệu ra Internet; kiểm tra chữ ký và SHA-256 trước các thao tác quan trọng.
-- **Trợ lý và tài liệu:** lập chỉ mục toàn bộ HDSD/lịch sử Việt–Anh, đối chiếu các phiên bản theo hồ sơ và giải thích mọi chức năng được tài liệu hóa.
-- **Chất lượng giao diện:** đồng bộ tên VietLicenSure và v5.0 trên các cửa sổ, sửa vùng chữ Trợ lý và bổ sung kiểm thử UI tự động chống cắt/thiếu nhãn quan trọng.
 
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
-
-Đây là bản phát hành `ManagedSigned/Pilot`, chưa mang nhãn `Public Stable` vì chứng thư hiện tại là tự ký được ghim và ma trận bằng chứng máy thật vẫn chưa hoàn tất.
 
 ## v4.9.0.0 — 22/08/2026
 
