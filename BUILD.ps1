@@ -1302,11 +1302,14 @@ $applicationUpdateManifest = [ordered]@{
     MinimumUpdaterVersion = '4.6.1.0'
     PublishedAtUtc = $publishedAtUtc
     Title = [ordered]@{
-        'vi-VN' = 'v5.0 - Nâng độ tin cậy, quản trị doanh nghiệp và quét linh hoạt'
-        'en-US' = 'v5.0 - Trust hardening, enterprise management, and flexible scanning'
+        'vi-VN' = 'v5.0.0.1 - Trợ lý đọc đầy đủ HDSD và lịch sử phiên bản'
+        'en-US' = 'v5.0.0.1 - Complete guide and version-history support in Tool Assistant'
     }
     Changes = [ordered]@{
         'vi-VN' = @(
+            'Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt-Anh theo từng mục, trả đầy đủ thay đổi của một phiên bản và đối chiếu trực tiếp hai phiên bản mà không suy diễn ngoài hồ sơ.',
+            'Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.',
+            'Giải thích đầy đủ quy trình OEM hai giai đoạn: kiểm tra OA3 chỉ đọc, che key, xác nhận edition/quyền sử dụng, áp dụng bằng cơ chế Windows chính thức và hậu kiểm.',
             'v5.0 siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.',
             'Bản ManagedSigned chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.',
             'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
@@ -1326,6 +1329,9 @@ $applicationUpdateManifest = [ordered]@{
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
+            'Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version''s full change entry, and compares two versions without inferring undocumented changes.',
+            'Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.',
+            'Explains the complete two-stage OEM workflow: read-only OA3 inspection, masked keys, edition/entitlement confirmation, official Windows application, and post-verification.',
             'v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.',
             'The ManagedSigned build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.',
             'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',

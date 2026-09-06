@@ -33,7 +33,7 @@ try {
     $nativeScPath = Get-ToolNativeSystemPath "sc.exe"
 } catch { Write-Host $_.Exception.Message; exit 12 }
 $ErrorActionPreference = "Continue"
-$releaseVersion = "5.0.0.0"
+$releaseVersion = "5.0.0.1"
 
 function Is-Admin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()

@@ -24,11 +24,11 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Tool Kiểm Tra",
-    "alternateName": ["Tool Kiểm Tra v5.0 Preview", "Tool Kiem Tra Ban Quyen"],
+    "alternateName": ["Tool Kiểm Tra v5.0 ManagedSigned Candidate", "Tool Kiem Tra Ban Quyen"],
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "Windows",
-    "softwareVersion": "5.0.0.0-development",
-    "datePublished": "2026-08-24",
+    "softwareVersion": "5.0.0.1",
+    "dateModified": "2026-09-06",
     "downloadUrl": "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest",
     "releaseNotes": "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest",
     "author": {"@type":"Person","name":"Thanh Việt"},
@@ -55,9 +55,9 @@
 
   <div id="top" class="wrap hero">
     <div>
-      <div class="eyebrow">v5.0.0.0 · Development Preview · Build 2026.08.24</div>
+      <div class="eyebrow">v5.0.0.1 · ManagedSigned Candidate · Build 2026.09.06</div>
       <h1>Kiểm tra rõ ràng.<br>Xử lý có bằng chứng.</h1>
-      <p class="lead">Tool Kiểm Tra giúp rà soát cấu hình, Windows, Office và phần mềm trên máy Windows. Nhánh v5.0 hiện là bản phát triển chưa ký số, chỉ dùng kiểm thử; bản Stable tiếp tục miễn phí cho cộng đồng, Offline theo mặc định và không có telemetry.</p>
+      <p class="lead">Tool Kiểm Tra giúp rà soát cấu hình, Windows, Office và phần mềm trên máy Windows. Ứng viên v5.0.0.1 được ký theo kênh ManagedSigned để kiểm thử cục bộ, tiếp tục miễn phí cho cộng đồng, Offline theo mặc định và không có telemetry; chỉ trang Releases chính thức xác nhận một bản đã được phát hành công khai.</p>
       <div class="badges"><span class="badge">Offline mặc định</span><span class="badge">Catalog ký số</span><span class="badge">Hậu kiểm bắt buộc</span><span class="badge">Báo cáo che định danh</span></div>
       <div class="actions"><a class="button primary" href="https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest">Tải phiên bản mới nhất</a><a class="button secondary" href="https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen">Kho phát hành chính thức</a></div>
     </div>
@@ -66,14 +66,14 @@
       <p>Tệp kiểm thử: <strong>Tool-Kiem-Tra-v5.0.exe</strong></p>
       <code>Get-FileHash .\Tool-Kiem-Tra-v5.0.exe -Algorithm SHA256</code>
       <code>Get-AuthenticodeSignature .\Tool-Kiem-Tra-v5.0.exe</code>
-      <p>`NotSigned` là trạng thái dự kiến của preview và không được xem là Stable. Bản Stable phải được đối chiếu hash, Build ID, chữ ký và manifest nguồn gốc với <a href="https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest">trang release mới nhất</a>.</p>
+      <p>Ứng viên ManagedSigned dùng chứng thư tự ký được launcher ghim nên Windows có thể hiện `Unknown publisher`. Luôn đối chiếu hash, Build ID, chữ ký và manifest nguồn gốc với <a href="https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest">trang release mới nhất</a>.</p>
     </aside>
   </div>
 
   <main>
     <section id="new" class="wrap">
       <h2>v5.0 thay đổi những gì?</h2>
-      <p class="intro">Nhánh này tập trung vào cổng ký phát hành fail-closed, độ mới catalog, plugin ký số, ba mức quét, giao diện dark/DPI và quản trị doanh nghiệp. Preview chưa ký luôn khóa tự cập nhật cùng thao tác thay đổi hệ thống.</p>
+      <p class="intro">Nhánh này tập trung vào cổng ký phát hành fail-closed, độ mới catalog, plugin ký số, ba mức quét, giao diện dark/DPI, quản trị doanh nghiệp và Trợ lý đọc đầy đủ HDSD/lịch sử. Bản không xác minh được luôn khóa tự cập nhật cùng thao tác thay đổi hệ thống.</p>
       <div class="grid">
         <article class="card"><h3>Nguồn gốc fail-closed</h3><p>Chữ ký, chứng thư ghim, Build ID và manifest được kiểm tra. Bản bị sửa hoặc không xác minh được bị chặn khỏi cập nhật và thao tác thay đổi hệ thống.</p></article>
         <article class="card"><h3>Catalog online ký số</h3><p>Catalog khai báo có chữ ký CMS, allowlist quy tắc, cache dự phòng và mốc phiên bản bền vững để từ chối hạ phiên bản.</p></article>
@@ -88,7 +88,7 @@
       <h2>Tải và sử dụng an toàn</h2>
       <ol class="steps">
         <li>Chỉ dùng <a href="https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest">đường dẫn tải ổn định</a>, đường dẫn này luôn mở phiên bản mới nhất.</li>
-        <li>Với Stable, tải đúng EXE cùng checksum/manifest đi kèm và kiểm tra SHA-256, chữ ký, timestamp. Với preview cục bộ, xác nhận manifest ghi <code>DevelopmentUnsigned</code>.</li>
+        <li>Với bản công khai, tải đúng EXE cùng checksum/manifest đi kèm và kiểm tra SHA-256, chữ ký, timestamp. Ứng viên cục bộ phải ghi đúng kênh <code>ManagedSigned</code> và không được coi là đã phát hành chỉ vì có ngày build.</li>
         <li>Giữ Offline cho kiểm tra cục bộ. Chỉ bật Online khi chủ động cập nhật Tool/catalog hoặc dùng LAN được phép.</li>
         <li>Xem trước, chọn đúng mục, xác nhận và giữ backup trước khi khắc phục; luôn đọc kết quả hậu kiểm.</li>
       </ol>

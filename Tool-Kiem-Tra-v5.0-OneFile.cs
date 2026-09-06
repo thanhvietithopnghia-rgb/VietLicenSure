@@ -22,9 +22,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Thanh Việt")]
 [assembly: AssemblyProduct("Công cụ kiểm tra cấu hình máy và bản quyền phần mềm")]
 [assembly: AssemblyCopyright("Copyright © Thanh Việt 2026")]
-[assembly: AssemblyVersion("5.0.0.0")]
-[assembly: AssemblyFileVersion("5.0.0.0")]
-[assembly: AssemblyInformationalVersion("5.0.0.0")]
+[assembly: AssemblyVersion("5.0.0.1")]
+[assembly: AssemblyFileVersion("5.0.0.1")]
+[assembly: AssemblyInformationalVersion("5.0.0.1")]
 
 namespace ThanhViet.ToolKiemTra
 {
@@ -49,7 +49,7 @@ namespace ThanhViet.ToolKiemTra
         private const string OfficialSignerCertificateSha256 = "0000000000000000000000000000000000000000000000000000000000000000";
         private const uint CertificateUntrustedRootStatus = 0x800B0109u;
         private const string StorePackageName = "ThanhVit.ToolKimTraBnQuyn";
-        private const string StorePackageVersion = "5.0.0.0";
+        private const string StorePackageVersion = "5.0.0.1";
         private const string StorePackagePublisherId = "9tjmpwr25h78w";
         private const string StorePackageFamilyName = "ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w";
         // BUILD.ps1 replaces this exact placeholder from Tool-Provenance.ps1.
@@ -1303,7 +1303,7 @@ namespace ThanhViet.ToolKiemTra
                 startInfo.EnvironmentVariables["TOOL_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
                 startInfo.EnvironmentVariables["TOOL_LAUNCH_MODE"] = mode.ToString();
                 startInfo.EnvironmentVariables["TOOL_AGENT_FORCE"] = mode == LaunchMode.EnterpriseAgentForce ? "1" : "0";
-                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "5.0.0.0";
+                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "5.0.0.1";
                 startInfo.EnvironmentVariables["TOOL_UI_CULTURE"] = GetUiCulture();
                 startInfo.EnvironmentVariables["TOOL_CORRELATION_ID"] = correlationId;
                 startInfo.EnvironmentVariables["TOOL_CAPABILITY_SCHEMA"] = "1.1";

@@ -39,7 +39,7 @@ foreach ($name in $required) {
 
 $enterpriseUiText = Get-Content -LiteralPath (Join-Path $SourceDirectory 'enterprise-license-manager.ps1') -Raw -Encoding UTF8
 Assert-Enterprise ($enterpriseUiText -match '[$]enterpriseVersionFromLauncher\s*=\s*\[string\][$]env:TOOL_TOOL_VERSION') 'Enterprise UI chưa nhận phiên bản từ launcher.'
-Assert-Enterprise ($enterpriseUiText -match '"5\.0\.0\.0"') 'Enterprise UI thiếu fallback v5.0.0.0.'
+Assert-Enterprise ($enterpriseUiText -match '"5\.0\.0\.1"') 'Enterprise UI thiếu fallback v5.0.0.1.'
 Assert-Enterprise ($enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Server' -and
     $enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Agent') 'Tên Firewall/Task mới chưa theo phiên bản hiện hành.'
 foreach ($legacyInfrastructureName in @('ThanhViet Tool v4.8 Enterprise Server','ThanhViet Tool v4.6 Enterprise Server','ThanhViet Tool v4.8 Enterprise Agent','ThanhViet Tool v4.6 Enterprise Agent')) {
@@ -68,7 +68,7 @@ try {
     . (Join-Path $SourceDirectory "Tool-Enterprise.ps1")
 
     $metadata = Get-ToolEnterpriseMetadata
-    Assert-Enterprise ([string]$metadata.ToolVersion -eq "5.0.0.0") "Enterprise ToolVersion không phải 5.0.0.0."
+    Assert-Enterprise ([string]$metadata.ToolVersion -eq "5.0.0.1") "Enterprise ToolVersion không phải 5.0.0.1."
     Assert-Enterprise ([string]$metadata.ProtocolVersion -eq "1.0") "Enterprise protocol không phải 1.0."
     Assert-Enterprise (-not [bool]$metadata.FullProductKeysInReports) "Metadata không được cho phép full product key trong báo cáo."
 
@@ -104,7 +104,7 @@ try {
     $queuedReportPath = Add-ToolEnterpriseOutboxReport -Report $report
     Assert-Enterprise (Test-Path -LiteralPath $queuedReportPath -PathType Leaf) "Mất kết nối không tạo được hàng đợi báo cáo."
     Assert-Enterprise ((Get-Content -LiteralPath $queuedReportPath -Raw) -notmatch 'EnterpriseInventory') "Hàng đợi báo cáo lưu dữ liệu rõ thay vì bảo vệ bằng DPAPI."
-    $validation = Test-ToolReportEnvelope -Report $report -ExpectedReportKind "EnterpriseInventory" -ExpectedToolVersion "5.0.0.0"
+    $validation = Test-ToolReportEnvelope -Report $report -ExpectedReportKind "EnterpriseInventory" -ExpectedToolVersion "5.0.0.1"
     Assert-Enterprise ([bool]$validation.Valid) "Báo cáo EnterpriseInventory không đạt schema: $($validation.Errors -join '; ')"
     Assert-Enterprise (-not [bool]$report.Privacy.FullProductKeyIncluded) "Báo cáo khai báo chứa full product key."
     $reportJson = $report | ConvertTo-Json -Depth 14
@@ -169,7 +169,7 @@ try {
     $clientSecret = New-ToolEnterpriseRandomBytes -Length 32
     Set-ToolEnterpriseServerClientSecret -ClientId $client.ClientId -Secret $clientSecret
     $record = [pscustomobject][ordered]@{
-    SchemaVersion="1.0"; ToolVersion="5.0.0.0"; ClientId=$client.ClientId; ComputerName="VERIFY-CLIENT"
+    SchemaVersion="1.0"; ToolVersion="5.0.0.1"; ClientId=$client.ClientId; ComputerName="VERIFY-CLIENT"
         RemoteAddress="127.0.0.1"; NetworkAddresses=@("127.0.0.1"); LastSeenUtc=[DateTime]::UtcNow.ToString("o")
         FirstSeenUtc=[DateTime]::UtcNow.ToString("o"); AllowRemoteLicenseChanges=$true
         WindowsStatus="NotReported"; WindowsChannel=""; WindowsLast5=""

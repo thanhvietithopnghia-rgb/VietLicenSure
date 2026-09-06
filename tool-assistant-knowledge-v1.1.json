@@ -1,10 +1,10 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.5.2",
-  "UpdatedAtUtc": "2026-09-05T00:00:00Z",
-  "ToolVersionMin": "5.0.0.0",
+  "KnowledgeVersion": "1.6.0",
+  "UpdatedAtUtc": "2026-09-06T00:00:00Z",
+  "ToolVersionMin": "5.0.0.1",
   "ToolVersionMax": "5.0.65535.65535",
-  "ReleasedWithToolVersion": "5.0.0.0",
+  "ReleasedWithToolVersion": "5.0.0.1",
   "Scope": "Tool-Kiem-Tra",
   "Entries": [
     {
@@ -19,9 +19,9 @@
       "Id": "tool-version",
       "TitleVi": "Phiên bản hiện tại",
       "TitleEn": "Current version",
-      "Keywords": ["phien ban cua tool", "tool version", "phien ban hien tai", "version hien tai", "dang dung ban nao", "so phien ban", "ban v5.0", "v5.0.0.0", "release v5.0"],
-      "AnswerVi": "Phiên bản công khai hiện tại là Tool Kiểm Tra v5.0, phiên bản kỹ thuật v5.0.0.0, kênh ManagedSigned. Bản cập nhật kỹ thuật hiện tại bổ sung timeline xử lý riêng, giữ đồng bộ Hoạt động gần đây, cho chọn đúng phần mềm Paid/Subscription/Trial và khóa xử lý cùng hậu kiểm theo chính mục đã chọn. Tool vẫn có ba mức quét, giao diện Sáng/Tối theo DPI, báo cáo cục bộ và năm chức năng Khắc phục chính.",
-      "AnswerEn": "The current public release is Tool Kiem Tra v5.0, technical version v5.0.0.0, on the ManagedSigned channel. The current technical update adds a dedicated remediation timeline while keeping Recent activity synchronized, permits exact Paid/Subscription/Trial selection, and constrains remediation and post-verification to the selected item. The Tool retains three scan levels, DPI-aware Light/Dark UI, local reports, and five primary Remediation functions."
+      "Keywords": ["phien ban cua tool", "tool version", "phien ban hien tai", "version hien tai", "dang dung ban nao", "so phien ban", "ban v5.0", "v5.0.0.1", "release v5.0"],
+      "AnswerVi": "Gói Tool hiện tại mang tên Tool Kiểm Tra v5.0, phiên bản kỹ thuật v5.0.0.1, kênh ManagedSigned. Bản này lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh để tra cứu Offline, trả nguyên mục thay đổi của từng phiên bản, đối chiếu hai phiên bản theo tài liệu và giải thích chi tiết các quy trình như khôi phục OEM. Tool vẫn có ba mức quét, giao diện Sáng/Tối theo DPI, báo cáo cục bộ và năm chức năng Khắc phục chính.",
+      "AnswerEn": "This Tool package is Tool Kiem Tra v5.0, technical version v5.0.0.1, on the ManagedSigned channel. It indexes the complete Vietnamese/English guides and histories for Offline lookup, returns each recorded version's full change section, compares two versions from the documentation, and explains workflows such as OEM recovery in detail. The Tool retains three scan levels, DPI-aware Light/Dark UI, local reports, and five primary Remediation functions."
     },
     {
       "Id": "tool-author",
@@ -36,24 +36,24 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "Bản phát hành Tool Kiểm Tra v5.0, phiên bản kỹ thuật v5.0.0.0, hiện được cập nhật và phát hành ngày 05/09/2026. Các thay đổi kỹ thuật trong cùng phiên bản được ghi ở release notes, không tạo nhãn bản dựng công khai riêng. Chữ ký có timestamp nhưng chứng thư hiện tại là tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen.",
-      "AnswerEn": "The current Tool Kiem Tra v5.0 release, technical version v5.0.0.0, was updated and published on 5 September 2026. Technical changes within the same version are recorded in release notes without a separate public build label. The signature is timestamped, but the current certificate is self-signed and launcher-pinned, so Windows may still show Unknown publisher or SmartScreen."
+      "AnswerVi": "Gói Tool Kiểm Tra v5.0, phiên bản kỹ thuật v5.0.0.1, có ngày build 06/09/2026. Trạng thái có sẵn công khai cần được đối chiếu trên trang Releases chính thức; ngày build không tự chứng minh gói đã được phát hành. Chữ ký có timestamp nhưng chứng thư hiện tại là tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen.",
+      "AnswerEn": "This Tool Kiem Tra v5.0 package, technical version v5.0.0.1, has a build date of 6 September 2026. Public availability must be checked on the official Releases page; a build date alone does not prove publication. The signature is timestamped, but the current certificate is self-signed and launcher-pinned, so Windows may still show Unknown publisher or SmartScreen."
     },
     {
       "Id": "first-release",
       "TitleVi": "Phiên bản công khai đầu tiên",
       "TitleEn": "First public release",
       "Keywords": ["phien ban dau tien cua tool", "v1.0 phat hanh ngay nao", "v1 ngay nao", "ngay ra mat v1.0", "first public version", "first release date", "ban dau tien", "ban dau tien ngay may", "lich su ban v1.0"],
-      "AnswerVi": "Phiên bản công khai đầu tiên là Tool Kiểm Tra v1.0, phát hành ngày 17/07/2026. Đây là mốc đầu tiên trong Lịch sử phiên bản, không phải ngày build của phiên bản v5.0.0.0 hiện tại.",
-      "AnswerEn": "The first public release was Tool Kiem Tra v1.0 on 17 July 2026. This is the first milestone in Version history, not the build date of the current v5.0.0.0 build."
+      "AnswerVi": "Phiên bản công khai đầu tiên là Tool Kiểm Tra v1.0, phát hành ngày 17/07/2026. Đây là mốc đầu tiên trong Lịch sử phiên bản, không phải ngày build của phiên bản v5.0.0.1 hiện tại.",
+      "AnswerEn": "The first public release was Tool Kiem Tra v1.0 on 17 July 2026. This is the first milestone in Version history, not the build date of the current v5.0.0.1 build."
     },
     {
       "Id": "tool-pricing",
       "TitleVi": "Tool miễn phí hay trả phí",
       "TitleEn": "Tool pricing",
       "Keywords": ["tool mien phi hay tra phi", "tool co mat phi khong", "co ton tien khong", "gia tool", "free or paid tool", "is it free", "tool pricing", "phi su dung tool", "mien phi"],
-      "AnswerVi": "Tool Kiểm Tra v5.0.0.0 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc Tool miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
-      "AnswerEn": "Tool Kiem Tra v5.0.0.0 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use of the Tool does not make its source open source or alter the licence terms of software being scanned."
+      "AnswerVi": "Tool Kiểm Tra v5.0.0.1 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc Tool miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
+      "AnswerEn": "Tool Kiem Tra v5.0.0.1 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use of the Tool does not make its source open source or alter the licence terms of software being scanned."
     },
     {
       "Id": "source-code-license",
@@ -324,8 +324,8 @@
       "TitleVi": "Khóa OEM trong BIOS",
       "TitleEn": "OEM key in firmware",
       "Keywords": ["oem", "oa3", "bios key", "key bios", "key nhung", "firmware", "product key", "chuc nang 7", "chuc nang so 7", "muc 7", "nut 7"],
-      "AnswerVi": "Chức năng 7 là Khôi phục key OEM trong firmware. Cách dùng: chọn Khôi phục key OEM → để Tool đọc OA3/firmware và so edition → kiểm tra thông tin key đã che/năm ký tự cuối → chỉ xác nhận áp dụng khi edition phù hợp và bạn có quyền sử dụng → quét lại Windows. Không có bằng chứng OA3 thì Tool không tự gán máy là OEM chính hãng; vẫn phải đối chiếu chứng từ mua máy.",
-      "AnswerEn": "Feature 7 is OEM firmware key recovery. Select OEM key recovery, let the Tool read OA3/firmware and compare Windows edition, review the masked key/last five characters, apply only when edition and entitlement are appropriate, then rescan Windows. Without OA3 evidence the Tool does not label the machine genuine OEM; purchase records still require review."
+      "AnswerVi": "Chức năng 7 – Khôi phục key OEM hoạt động theo hai giai đoạn tách biệt. Giai đoạn kiểm tra chỉ đọc OA3xOriginalProductKey từ dịch vụ cấp phép/firmware, edition Windows hiện tại, trạng thái kích hoạt, kênh và năm ký tự cuối; key đầy đủ luôn bị che và Tool tạo báo cáo HTML/PDF. Nếu không tìm thấy OA3 thì dừng, không đổi hệ thống. Khi người dùng đã xác nhận đúng máy, đúng edition và quyền sử dụng, giai đoạn áp dụng mới yêu cầu Administrator, giữ nguyên key hiện tại trước khi thử, gọi công cụ Windows chính thức để cài key OEM rồi xác minh đúng năm ký tự cuối. Chỉ sau đó Tool mới yêu cầu Windows kích hoạt và quét lại tối đa ba lần. Kết quả được tách rõ: Windows từ chối key/không khớp edition; đã nhận key nhưng kích hoạt còn chờ; hoặc đã nhận và xác nhận Licensed. Tool không dùng key máy khác, không ép đổi edition, không ghi key đầy đủ và không coi việc có OA3 tự động là bằng chứng đầy đủ về quyền sử dụng.",
+      "AnswerEn": "Feature 7 – OEM key recovery has two separate stages. The inspection stage only reads OA3xOriginalProductKey from Windows licensing/firmware together with the current edition, activation state, channel, and last five characters; the full key stays masked and the Tool creates an HTML/PDF report. If no OA3 key exists, it stops without changing the system. Only after the user confirms the device, edition, and entitlement does Apply request Administrator rights, preserve the current key before the attempt, use the official Windows mechanism to install the OEM key, and verify its last five characters. It then asks Windows to activate and rechecks up to three times. Results distinguish a rejected/edition-mismatched key, an accepted key with activation still pending, and an accepted key confirmed as Licensed. The Tool does not use another device's key, force an edition change, record the full key, or treat OA3 presence alone as complete proof of entitlement."
     },
     {
       "Id": "error-codes",
@@ -524,8 +524,8 @@
       "TitleVi": "Kênh hỗ trợ của Tool",
       "TitleEn": "Tool support channels",
       "Keywords": ["kenh ho tro cua tool", "lien he nguoi phat trien", "email cua tac gia", "zalo cua tac gia", "gui loi cho thanh viet", "can ho tro ky thuat"],
-      "AnswerVi": "Kênh hỗ trợ ghi trong Hướng dẫn sử dụng là Zalo 0978 005 017 và email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0.0.0, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh do Tool tạo; không gửi product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
-      "AnswerEn": "The user guide lists Zalo 0978 005 017 and thanhvietit.hopnghia@gmail.com for support. Include version v5.0.0.0, the feature name, the exact message, and a Tool-created redacted support bundle; never send full product keys, passwords, tokens, or a FullInternal report."
+      "AnswerVi": "Kênh hỗ trợ ghi trong Hướng dẫn sử dụng là Zalo 0978 005 017 và email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0.0.1, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh do Tool tạo; không gửi product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
+      "AnswerEn": "The user guide lists Zalo 0978 005 017 and thanhvietit.hopnghia@gmail.com for support. Include version v5.0.0.1, the feature name, the exact message, and a Tool-created redacted support bundle; never send full product keys, passwords, tokens, or a FullInternal report."
     },
     {
       "Id": "plugin-management",
@@ -556,8 +556,8 @@
       "TitleVi": "Hướng dẫn và lịch sử phiên bản",
       "TitleEn": "User guide and version history",
       "Keywords": ["mo huong dan su dung chi tiet", "xem lich su phien ban", "hdsd html pdf", "tai lieu nhung trong tool", "phien ban va cap nhat o dau", "mo user guide"],
-      "AnswerVi": "Trong chức năng 10, chọn Mở hướng dẫn sử dụng chi tiết để tạo/mở HDSD HTML/PDF; chọn Phiên bản và cập nhật để xem lịch sử Việt/Anh cùng trạng thái cập nhật. Tài liệu được nhúng theo đúng bản Tool nên dùng được Offline. HDSD tập trung thao tác; lịch sử chỉ thêm mục khi phiên bản công khai chính thức thay đổi, còn cập nhật kỹ thuật trong cùng phiên bản nằm ở release notes.",
-      "AnswerEn": "In feature 10, open the detailed user guide to generate/view its HTML/PDF, or open Version and updates for bilingual history and update status. Documentation is bundled with the matching Tool release and works Offline. The guide focuses on operation; Version history adds an entry only for an official public version change, while technical updates within that version belong in release notes."
+      "AnswerVi": "Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ Lịch sử phiên bản Việt–Anh được nhúng trong đúng bản Tool, nên có thể tra cứu Offline theo tên chức năng, quy trình hoặc số phiên bản. Với một phiên bản có trong lịch sử, Trợ lý trả đúng toàn bộ mục thay đổi; khi hỏi so sánh hai phiên bản, Trợ lý đặt hai mục lịch sử cạnh nhau và không suy diễn ngoài tài liệu. Nếu số phiên bản không tồn tại, ví dụ v2.0 trong hồ sơ hiện có, Trợ lý nói rõ không có mốc công khai thay vì tự tạo câu trả lời. Trong chức năng 10, vẫn có thể mở HDSD HTML/PDF hoặc mục Phiên bản và cập nhật để đọc tài liệu gốc.",
+      "AnswerEn": "The Assistant indexes the complete Vietnamese/English user guides and Version histories bundled with the exact Tool build, so feature, workflow, and version lookups work Offline. For a recorded version it returns the complete published section; for a two-version comparison it places both history sections side by side without inferring undocumented changes. If a requested number does not exist—for example v2.0 in the current record—the Assistant states that no public milestone is recorded instead of inventing an answer. Feature 10 can still open the original guide as HTML/PDF or the Version and updates view."
     },
     {
       "Id": "report-formats",

@@ -1,13 +1,21 @@
 # Tool Kiểm Tra v5.0
 
-Ngày build kỹ thuật: `2026-09-05`
-Ngày phát hành hiện tại: `2026-09-05`
-ProductVersion/FileVersion: `5.0.0.0`
+Ngày build kỹ thuật: `2026-09-06`
+Trạng thái phát hành: `Ứng viên cục bộ v5.0.0.1; chờ duyệt trước khi tạo tag/release công khai`
+ProductVersion/FileVersion: `5.0.0.1`
 Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
 
 ## Giới thiệu
 
 Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp trải nghiệm sử dụng, khả năng kiểm tra–nhận diện, quy trình khắc phục an toàn, báo cáo và bảo vệ dữ liệu. Tool hoạt động Offline theo mặc định, không tự tải inventory hoặc báo cáo lên Internet và chỉ dùng Online khi người dùng chủ động cho phép.
+
+## Cập nhật kỹ thuật v5.0.0.1 ngày 06/09/2026
+
+- Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ lịch sử phiên bản Việt–Anh theo từng mục, dùng được Offline.
+- Hỏi một phiên bản có hồ sơ sẽ nhận đầy đủ mục thay đổi; hỏi hai phiên bản sẽ nhận đối chiếu trực tiếp, không suy diễn ngoài tài liệu.
+- Khôi phục các mốc v1.0.0–v1.0.9 bị lược bỏ và sửa nội dung v1.1.0–v3.3 theo hồ sơ phát hành gốc; xác định rõ không có hồ sơ v2.0–v2.3.
+- Giải thích đầy đủ quy trình OEM: kiểm tra OA3 chỉ đọc, che key, xác nhận quyền/edition, áp dụng bằng cơ chế Windows chính thức và hậu kiểm tối đa ba lần.
+- Bổ sung kiểm thử chống nhầm phiên bản Windows/PowerShell/.NET với lịch sử Tool, kiểm thử bốn Lựa chọn khắc phục và kiểm thử toàn vẹn chỉ mục tài liệu.
 
 ## Cập nhật kỹ thuật ngày 05/09/2026
 
@@ -47,7 +55,7 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 - Launcher kiểm tra Authenticode, signer được ghim, BuildId và payload trước khi mở thao tác thay đổi hệ thống.
 - Bản hiện tại có Authenticode hợp lệ và timestamp DigiCert nhưng dùng chứng thư tự ký được ghim; Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
 - Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
-- Người dùng đang giữ EXE v5.0 cũ nên tải lại tệp mới nhất và thay thế thủ công vì ProductVersion/FileVersion vẫn là `5.0.0.0`.
+- Sau khi v5.0.0.1 được phát hành, người dùng đang giữ EXE v5.0.0.0 có thể tải tệp mới và thay thế thủ công.
 
 ## Giới hạn công khai
 

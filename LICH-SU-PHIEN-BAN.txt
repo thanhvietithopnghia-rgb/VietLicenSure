@@ -5,7 +5,7 @@ Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản
 Trang tải mới nhất:
 https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest
 
-## Tool Kiểm Tra v5.0 — 05/09/2026
+## Tool Kiểm Tra v5.0 — 06/09/2026
 
 Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
 
@@ -14,6 +14,7 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 - **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, chạy thử, sao lưu, xác nhận và kiểm tra lại; bổ sung trung tâm sao lưu–khôi phục có kiểm tra toàn vẹn.
 - **Báo cáo và hỗ trợ:** báo cáo HTML, PDF, JSON, XML; tạo gói hỗ trợ có che thông tin nhạy cảm và hỗ trợ quản lý nhiều máy.
 - **Riêng tư và toàn vẹn:** hoạt động Offline theo mặc định, không tự gửi dữ liệu ra Internet; kiểm tra chữ ký và SHA-256 trước các thao tác quan trọng.
+- **Trợ lý và tài liệu:** lập chỉ mục toàn bộ HDSD/lịch sử Việt–Anh, trả nguyên mục thay đổi, đối chiếu hai phiên bản theo hồ sơ và giải thích chi tiết quy trình như khôi phục OEM.
 
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
 
@@ -120,75 +121,114 @@ Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung n
 
 ## v3.3 — 20/07/2026
 
-- Mở rộng kiểm kê phần mềm, tiến trình, dịch vụ và tác vụ liên quan đến kích hoạt.
-- Bổ sung xuất báo cáo và thông báo kết quả rõ ràng hơn.
+- Xác thực `approved-kms-servers.txt`, cảnh báo khi danh sách trống hoặc có dòng sai định dạng, và hiển thị KMS phát hiện để quản trị viên xác nhận.
+- Cho phép sửa/lưu danh sách sau xác nhận; bản một-file lưu cấu hình cạnh EXE và báo cáo đường dẫn, số dòng hợp lệ cùng cảnh báo.
 
 ## v3.2 — 20/07/2026
 
-- Thêm kiểm tra Office song song với Windows và phân biệt nhiều kiểu cấp phép.
-- Cải thiện xử lý lỗi khi công cụ hệ thống không có hoặc trả về dữ liệu thiếu.
+- Nâng khung tiến trình với tên tác vụ, hoạt động không xác định phần trăm, thời gian đã chạy và nhật ký trực tiếp.
+- Thêm nhịp trạng thái mỗi 10 giây và trạng thái hoàn tất, cảnh báo hoặc lỗi rõ ràng theo kết quả mô-đun.
 
 ## v3.1 — 20/07/2026
 
-- Bổ sung kiểm tra cấu hình máy, kiến trúc hệ điều hành và thông tin phần cứng chính.
-- Tổ chức lại nhật ký và kết luận theo từng nhóm chức năng.
+- Thêm kiểm tra SHA-256 lúc khởi động ở chế độ cảnh báo, không tự chặn hoặc sửa; cấu hình KMS tùy chỉnh được giữ ngoài manifest.
+- Báo cáo tổng hợp có thêm JSON và hash; bổ sung chẩn đoán chỉ đọc về dịch vụ cấp phép, thời gian, chữ ký và trạng thái cần khởi động lại.
 
 ## v3.0 — 20/07/2026
 
-- Hợp nhất kiểm tra cấu hình và bản quyền vào một quy trình dùng chung.
-- Thêm giao diện lựa chọn chức năng và báo cáo tổng hợp.
+- Thêm xác nhận trước xử lý cơ bản; nếu hậu kiểm còn tồn dư, người dùng chọn gỡ sâu hoặc giữ nguyên để xem báo cáo.
+- Gỡ sâu có backup/cách ly và chỉ xử lý đích danh KMS, IFEO hoặc ngoại lệ Defender liên quan; dùng SFC khi cần rồi quét lần cuối.
 
 ## v2.9 — 20/07/2026
 
-- Cải thiện phát hiện KMS/Activator và giảm kết luận dựa trên một dấu hiệu yếu.
-- Bổ sung hướng dẫn xử lý thủ công khi chưa đủ bằng chứng.
+- Truy xuất dấu vết kích hoạt tối đa 180 ngày và tách lịch sử cũ khỏi dấu hiệu đang hoạt động để tránh xử lý nhầm.
+- Tự quét lại sau xử lý; đồng bộ phần tóm tắt và HDSD theo đúng thứ tự 10 chức năng.
 
 ## v2.8 — 20/07/2026
 
-- Mở rộng truy vấn trạng thái kích hoạt Windows và Office từ nhiều nguồn hệ thống.
-- Chuẩn hóa mã lỗi và thông tin chẩn đoán.
+- Chuyển Hướng dẫn sử dụng xuống Mục 10 và đưa kiểm tra chuyên sâu lên Mục 9.
+- Giữ hộp lựa chọn giữa quét 7 nhóm và điều tra 12 nhóm/chấm điểm rủi ro.
 
 ## v2.7 — 20/07/2026
 
-- Thêm kiểm tra dịch vụ, tác vụ hẹn giờ và cấu hình mạng có liên quan đến kích hoạt.
-- Bổ sung xác nhận trước các thao tác có thể thay đổi hệ thống.
+- Gộp điều tra 12 nhóm vào cùng cửa sổ với quét 7 nhóm để menu gọn hơn.
+- Giữ nguyên UAC, chế độ chỉ đọc, báo cáo SHA-256 và các ranh giới an toàn của v2.6.
 
 ## v2.6 — 20/07/2026
 
-- Cải thiện tương thích Windows PowerShell/.NET Framework và Windows x86/x64.
-- Bổ sung xử lý ngoại lệ để quá trình quét tiếp tục khi một hạng mục thất bại.
+- Thêm điều tra chỉ đọc theo 12 nhóm, điểm rủi ro 0–100, Authenticode/SHA-256 cùng kiểm tra nhật ký và trạng thái bảo mật.
+- Xuất HTML/JSON/CSV kèm checksum, tạo baseline và so sánh lần quét trước; không gửi dữ liệu hoặc thay đổi hệ thống.
 
 ## v2.5 — 18/07/2026
 
-- Thêm kiểm tra Microsoft Office và hiển thị phiên bản/kênh cấp phép.
-- Cải thiện báo cáo văn bản và khả năng sao chép kết quả.
+- Thêm đổi edition/product key Windows hợp lệ bằng `changepk.exe` và DISM; cài key Office hợp lệ bằng `OSPP.VBS`.
+- Mở các trang Microsoft chính thức; không lưu key đầy đủ, không cung cấp key/KMS công cộng và không tự gỡ key Office cũ.
 
 ## v2.4 — 18/07/2026
 
-- Mở rộng thông tin cấu hình máy và trạng thái Windows.
-- Tối ưu giao diện và cách sắp xếp các tác vụ kiểm tra.
+- Đổi nhãn phiên bản từ v1.3.0 thành v2.4 theo yêu cầu phát hành.
+- Đưa nút Đóng lên cùng hàng trạng thái cho màn hình thấp/DPI cao; giữ nguyên chức năng, UAC/quét chuyên sâu và giới hạn an toàn của v1.3.0.
 
-## v1.3 — 18/07/2026
+## v1.3.0 — 18/07/2026
 
-- Bổ sung kiểm tra khóa OEM/BIOS và thông tin kích hoạt cơ bản.
-- Cải thiện thông báo lỗi và hướng dẫn người dùng.
+- Quét sâu yêu cầu Administrator qua UAC để đọc đủ WMI/license, service, process, task, Registry policy, hosts và chữ ký/tệp hệ thống.
+- Nếu người dùng từ chối UAC, tác vụ dừng an toàn; quyền nâng cao vẫn chỉ dùng để kiểm tra, không đọc tài liệu cá nhân và không tải/chạy mã từ xa.
 
-## v1.2 — 18/07/2026
+## v1.2.0 — 18/07/2026
 
-- Thêm xuất kết quả và các bước kiểm tra Office ban đầu.
-- Hoàn thiện xử lý Unicode tiếng Việt.
+- Thêm quét bản quyền Windows theo 7 nhóm với mức bằng chứng; kiểm tra KMS được phê duyệt, activator/MAS/HWID, KMS38, key chung, thư mục, task, Registry và hosts ở chế độ chỉ đọc.
+- Trạng thái Notification hoặc chưa kích hoạt không còn tự dẫn đến gỡ key; không lưu lịch sử PowerShell hoặc product key đầy đủ.
 
-## v1.1 — 18/07/2026
+## v1.1.0 — 18/07/2026
 
-- Bổ sung giao diện lựa chọn và thông tin cấu hình cơ bản.
-- Cải thiện khả năng chạy trên nhiều phiên bản Windows.
+- Tích hợp chọn lọc chức năng an toàn; thêm kiểm tra OEM OA3 dạng che, khôi phục OEM có xác nhận/UAC mà không gỡ key hiện tại trước khi Windows chấp nhận key OEM.
+- Thêm nút mở giao diện nhập key Windows chính thức và loại bỏ các thao tác rủi ro như key crack/generic, xóa lịch sử diện rộng hoặc sửa firewall/hosts toàn máy.
 
-## v1.0 — 17/07/2026
+## v1.0.9 — 17/07/2026
 
-- Phát hành phiên bản đầu tiên để kiểm tra cấu hình máy và trạng thái kích hoạt Windows.
-- Cung cấp nhật ký kết quả cục bộ, không tự động kết nối Internet.
+- Đóng gói thành một EXE duy nhất để chép sang máy khác và chạy trực tiếp.
+- EXE tự giải nén mô-đun vào thư mục tạm, chờ giao diện đóng rồi tự dọn dẹp.
+
+## v1.0.8 — 17/07/2026
+
+- Bổ sung biểu tượng nhận diện `00-Tool-Kiem-Tra.ico` và đóng gói đầy đủ HDSD/lịch sử.
+
+## v1.0.7 — 17/07/2026
+
+- Thu gọn giao diện để tiêu đề, ghi chú, menu, tiến trình và nút Đóng cùng hiển thị trên màn hình thông thường.
+
+## v1.0.6 — 17/07/2026
+
+- Tối ưu màn hình thấp/DPI bằng khoảng cách gọn hơn, vùng nhật ký nhỏ hơn, chiều cao động và thanh cuộn dự phòng.
+
+## v1.0.5 — 17/07/2026
+
+- Đổi tên hiển thị thành “Tool kiểm tra cấu hình máy và bản quyền”; thêm vùng Quá trình thực hiện và trạng thái hoàn tất/lỗi rõ ràng.
+
+## v1.0.4 — 17/07/2026
+
+- Sửa ghi chú tự xuống dòng, bố cục tự giãn và cuộn khi màn hình thấp.
+
+## v1.0.3 — 17/07/2026
+
+- Xác nhận PowerShell 3.0 trở lên và làm rõ chính sách không trích xuất mật khẩu/product key đầy đủ.
+
+## v1.0.2 — 17/07/2026
+
+- Mục 6 kiểm tra trước khi xử lý, yêu cầu xác nhận, bảo vệ OEM/Retail/MAK và KMS nội bộ được phê duyệt.
+- Chỉ xử lý KMS/crack không hợp lệ; không gỡ product key chỉ vì một dấu activator đơn lẻ.
+
+## v1.0.1 — 17/07/2026
+
+- Sửa tiêu đề/phông chữ, cập nhật thông tin hỗ trợ, xác nhận Windows 7 SP1 trở lên và quy ước tăng phiên bản mỗi lần phát hành.
+
+## v1.0.0 — 17/07/2026
+
+- Phiên bản giao diện Windows đầu tiên để kiểm tra cấu hình và bản quyền.
 
 ---
+
+Hồ sơ phát hành đi kèm và kho lưu trữ hiện có không ghi nhận v2.0–v2.3. v2.4 là bản 2.x đầu tiên được ghi nhận và tiếp nối trực tiếp v1.3.0; Trợ lý không suy đoán thay đổi cho phiên bản không có hồ sơ.
 
 Không có phiên bản v4.7 công khai; v4.8 là bản công khai tiếp nối trực tiếp từ v4.6.
 

@@ -1,8 +1,10 @@
 # Tool Kiểm Tra v5.0 — Bản nâng cấp tiếp theo của v4.9
 
-- **Phiên bản hiện tại:** Tool Kiểm Tra v5.0 · ProductVersion/FileVersion `5.0.0.0` · phát hành ngày 31/08/2026
+- **Ứng viên hiện tại:** Tool Kiểm Tra v5.0 · ProductVersion/FileVersion `5.0.0.1` · build ngày 06/09/2026
 - **Tác giả và phát triển:** Thanh Việt
-- **Trang phát hành:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0>
+- **Trang phát hành công khai:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+
+Ứng viên v5.0.0.1 đang được kiểm thử và đóng gói cục bộ; chưa được xem là đã phát hành cho tới khi có tag/release tương ứng trên kho chính thức.
 
 Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
 
@@ -16,8 +18,8 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 
 ## Tải và bắt đầu
 
-1. Mở [trang v5.0.0.0 ManagedSigned](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0) hoặc [Stable công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest).
-2. Nếu đang dùng một tệp v5.0 cũ, hãy tải EXE v5.0 mới nhất và thay tệp cũ vì ProductVersion/FileVersion vẫn là `5.0.0.0`.
+1. Chỉ tải từ [trang phát hành công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest). Liên kết dự kiến của v5.0.0.1 chỉ có hiệu lực sau khi bản này được duyệt và phát hành.
+2. Khi v5.0.0.1 đã xuất hiện trên trang Releases, người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải EXE mới và thay tệp cũ.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.

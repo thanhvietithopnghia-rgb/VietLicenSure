@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $script:ToolUpdateSchemaVersion = '1.0'
-$script:ToolUpdateToolVersion = '5.0.0.0'
+$script:ToolUpdateToolVersion = '5.0.0.1'
 $script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
 $script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
 $script:ToolUpdateManifestHost = 'raw.githubusercontent.com'

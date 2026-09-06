@@ -88,8 +88,8 @@ if ($guiAst) {
 }
 
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
-Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.0"' 'Dashboard chưa dùng release 5.0.0.0.'
-Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.08\.26"' 'Dashboard chưa dùng ngày build 2026.08.26.'
+Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.1"' 'Dashboard chưa dùng release 5.0.0.1.'
+Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.09\.06"' 'Dashboard chưa dùng ngày build 2026.09.06.'
 Assert-SourcePattern $text '[$]scanOptimizationHelper\s*=\s*Join-Path\s+[$]PSScriptRoot\s+"Tool-ScanOptimization\.ps1"' 'Dashboard chưa khai báo helper tối ưu phạm vi quét.'
 Assert-SourcePattern $text '(?s)[$]missingFoundationFiles\s*=\s*@\(.+?[$]scanOptimizationHelper.+?\)\s*\|\s*Where-Object' 'Dashboard chưa fail-closed khi thiếu Tool-ScanOptimization.ps1.'
 Assert-SourcePattern $text '(?s)try\s*\{.+?\.\s+[$]capabilityHelper.+?\.\s+[$]scanOptimizationHelper.+?\.\s+[$]loggingHelper' 'Dashboard chưa nạp Tool-ScanOptimization.ps1 trước khi mở hộp phạm vi quét.'
@@ -958,7 +958,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
     if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
-        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+05/09/2026\s*$' -or
+        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+06/09/2026\s*$' -or
         $historyText -notmatch 'là bản nâng cấp tiếp theo của v4\.9, tập trung nâng cấp vào các phần cốt lõi' -or
         $historyText -notmatch 'Ba mức quét Quick, Standard và Deep' -or
         $historyText -notmatch 'Offline theo mặc định' -or
@@ -966,7 +966,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
     }
     $requiredHistoryHeadings = @(
-        '## Tool Kiểm Tra v5.0 — 05/09/2026',
+        '## Tool Kiểm Tra v5.0 — 06/09/2026',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -993,10 +993,19 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         '## v2.6 — 20/07/2026',
         '## v2.5 — 18/07/2026',
         '## v2.4 — 18/07/2026',
-        '## v1.3 — 18/07/2026',
-        '## v1.2 — 18/07/2026',
-        '## v1.1 — 18/07/2026',
-        '## v1.0 — 17/07/2026'
+        '## v1.3.0 — 18/07/2026',
+        '## v1.2.0 — 18/07/2026',
+        '## v1.1.0 — 18/07/2026',
+        '## v1.0.9 — 17/07/2026',
+        '## v1.0.8 — 17/07/2026',
+        '## v1.0.7 — 17/07/2026',
+        '## v1.0.6 — 17/07/2026',
+        '## v1.0.5 — 17/07/2026',
+        '## v1.0.4 — 17/07/2026',
+        '## v1.0.3 — 17/07/2026',
+        '## v1.0.2 — 17/07/2026',
+        '## v1.0.1 — 17/07/2026',
+        '## v1.0.0 — 17/07/2026'
     )
     $previousHistoryHeadingIndex = -1
     foreach ($requiredHistoryHeading in $requiredHistoryHeadings) {
@@ -1009,13 +1018,14 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## Tool Kiểm Tra v5.0 — September 5, 2026',
+        '## Tool Kiểm Tra v5.0 — September 6, 2026',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',
         '## v4.6 — August 6, 2026',
         '## v4.5 — August 6, 2026',
-        '## v1.0 — July 17, 2026'
+        '## v1.0.9 — July 17, 2026',
+        '## v1.0.0 — July 17, 2026'
     )) {
         if ($historyEnText.IndexOf($requiredEnglishHistoryHeading, [StringComparison]::Ordinal) -lt 0) {
             Add-Failure "English version history is missing a public release: $requiredEnglishHistoryHeading"

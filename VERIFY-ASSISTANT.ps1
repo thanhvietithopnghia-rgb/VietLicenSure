@@ -9,7 +9,7 @@ function Add-AssistantVerificationError([string]$Message) {
     $script:errors.Add($Message)
 }
 
-foreach ($name in @('Tool-Assistant.ps1','tool-assistant-knowledge-v1.1.json','tool-assistant-knowledge-v1.1.json.p7s','SIGN-ASSISTANT-KNOWLEDGE.ps1','Tool-OfflinePolicy.ps1','Giao-Dien.ps1','Tool-Strings.vi-VN.json','Tool-Strings.en-US.json')) {
+foreach ($name in @('Tool-Assistant.ps1','tool-assistant-knowledge-v1.1.json','tool-assistant-knowledge-v1.1.json.p7s','SIGN-ASSISTANT-KNOWLEDGE.ps1','Tool-OfflinePolicy.ps1','Giao-Dien.ps1','Tool-Strings.vi-VN.json','Tool-Strings.en-US.json','HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md')) {
     if (-not (Test-Path -LiteralPath (Join-Path $SourceDirectory $name) -PathType Leaf)) {
         Add-AssistantVerificationError "Missing required assistant file: $name"
     }
@@ -34,12 +34,12 @@ if ($errors.Count -eq 0) {
     if (Test-ToolAssistantKnowledgeSignature -ContentBytes $tamperedBytes -SignatureBytes $signatureBytes) {
         Add-AssistantVerificationError 'Detached signature accepted tampered knowledge bytes.'
     }
-    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.5\.2"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
+    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.6\.0"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
     if (Test-ToolAssistantKnowledge -Knowledge $legacyKnowledge) { Add-AssistantVerificationError 'An obsolete cached knowledge file was not rejected.' }
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
-    $compatibleFutureKnowledge.KnowledgeVersion = '1.5.3'
-    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-08-22T07:01:00Z'
-    $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.0'
+    $compatibleFutureKnowledge.KnowledgeVersion = '1.6.1'
+    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-09-06T07:01:00Z'
+    $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.1'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
         Add-AssistantVerificationError 'A newer signed-compatible knowledge version cannot evolve independently of the EXE.'
     }
@@ -65,6 +65,25 @@ if ($errors.Count -eq 0) {
     if ([string]$metadata.CoverageMode -ne 'KnowledgePlusBundledDocumentation' -or
         -not [bool]$metadata.ContextAwareFollowUp -or -not [bool]$metadata.ContextualOutOfScope) {
         Add-AssistantVerificationError 'Assistant broad coverage, follow-up context, or contextual boundary metadata is invalid.'
+    }
+    if (-not [bool]$metadata.CompleteBundledGuideIndexed -or
+        -not [bool]$metadata.CompleteVersionHistoryIndexed -or
+        -not [bool]$metadata.VersionComparisonUsesPublishedHistoryOnly -or
+        @($metadata.BundledDocumentFiles).Count -ne 4) {
+        Add-AssistantVerificationError 'Complete guide/history indexing or evidence-only comparison metadata is invalid.'
+    }
+
+    foreach ($culture in @('vi-VN','en-US')) {
+        $documentSections = @(Get-ToolAssistantDocumentSections -Culture $culture)
+        foreach ($definition in @(Get-ToolAssistantDocumentDefinitions -Culture $culture)) {
+            $documentPath = Join-Path $SourceDirectory ([string]$definition.FileName)
+            $documentRaw = Get-Content -LiteralPath $documentPath -Raw -Encoding UTF8
+            $headingCount = [regex]::Matches($documentRaw, '(?m)^#{1,4}[ \t]+[^\r\n]+').Count
+            $indexedCount = @($documentSections | Where-Object { [string]$_.SourceFile -eq [string]$definition.FileName }).Count
+            if ($headingCount -le 0 -or $indexedCount -ne $headingCount) {
+                Add-AssistantVerificationError "Complete document indexing failed for $([string]$definition.FileName): headings=$headingCount indexed=$indexedCount."
+            }
+        }
     }
 
     $keywordOwners = @{}
@@ -185,10 +204,10 @@ if ($errors.Count -eq 0) {
         @{ Question='mỗi lần quét có tạo thư mục riêng k'; Expected='không tạo thư mục con' }
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
-        @{ Question='phiên bản hiện tại của tool'; Expected='v5.0.0.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='05/09/2026' }
+        @{ Question='phiên bản hiện tại của tool'; Expected='v5.0.0.1' }
+        @{ Question='ngày build hiện tại của tool'; Expected='06/09/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
-        @{ Question='v1 ngày nào'; Expected='v1.0, phát hành ngày 17/07/2026' }
+        @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='tool mien phi hay tra phi'; Expected='cung cấp miễn phí' }
         @{ Question='có tốn tiền ko'; Expected='cung cấp miễn phí' }
@@ -236,6 +255,68 @@ if ($errors.Count -eq 0) {
         }
     }
 
+    $missingV20Vi = Get-ToolAssistantAnswer -Question 'v2.0 cập nhật những gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $missingV20CompareVi = Get-ToolAssistantAnswer -Question 'v2.0 cải tiến gì so với v1' -Culture 'vi-VN' -Knowledge $knowledge
+    $v24Vi = Get-ToolAssistantAnswer -Question 'phiên bản v2.4 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $versionCompareVi = Get-ToolAssistantAnswer -Question 'v4.8 khác v4.6 như thế nào' -Culture 'vi-VN' -Knowledge $knowledge
+    $versionListVi = Get-ToolAssistantAnswer -Question 'liệt kê toàn bộ lịch sử phiên bản' -Culture 'vi-VN' -Knowledge $knowledge
+    $manualGuideVi = Get-ToolAssistantAnswer -Question 'lựa chọn 2 kiểm tra và khắc phục thủ công gồm những bước gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $oemFlowVi = Get-ToolAssistantAnswer -Question 'chức năng khôi phục OEM hoạt động ra sao' -Culture 'vi-VN' -Knowledge $knowledge
+    $missingV20En = Get-ToolAssistantAnswer -Question 'what changed in version v2.0' -Culture 'en-US' -Knowledge $knowledge
+    $oemFlowEn = Get-ToolAssistantAnswer -Question 'how does OEM key recovery work' -Culture 'en-US' -Knowledge $knowledge
+    if ($missingV20Vi -notmatch 'không có mục công khai v2\.0' -or $missingV20Vi -notmatch 'v2\.4' -or
+        $missingV20CompareVi -notmatch 'không tự suy diễn.*so sánh' -or
+        $missingV20En -notmatch 'no published entry for v2\.0' -or $missingV20En -notmatch 'v2\.4') {
+        Add-AssistantVerificationError 'Missing-version questions were invented or did not identify the first recorded v2.x milestone.'
+    }
+    if ($v24Vi -notmatch 'Đổi nhãn phiên bản từ v1\.3\.0 thành v2\.4' -or
+        $v24Vi -notmatch 'Giữ nguyên chức năng.*UAC/quét chuyên sâu') {
+        Add-AssistantVerificationError 'The v2.4 answer does not preserve the evidenced v1.3.0 relabel history.'
+    }
+    if ($versionCompareVi -notmatch 'không suy diễn' -or $versionCompareVi -notmatch 'v4\.8\.0\.0' -or $versionCompareVi -notmatch 'v4\.6') {
+        Add-AssistantVerificationError 'Two-version comparison does not return both published history entries.'
+    }
+    if ($versionListVi -notmatch 'v5\.0' -or $versionListVi -notmatch 'v1\.0' -or
+        $versionListVi -match '(?:^|, )v2\.0(?:,|\.)') {
+        Add-AssistantVerificationError 'Complete version-history listing is incomplete or includes an undocumented v2.0 milestone.'
+    }
+    if ($manualGuideVi -notmatch 'Lựa chọn 2.*Kiểm tra và khắc phục thủ công' -or
+        $manualGuideVi -notmatch 'Xử lý mục còn lại') {
+        Add-AssistantVerificationError 'A long bundled-guide section was not retrieved through its final documented actions.'
+    }
+    if ($oemFlowVi -notmatch 'hai giai đoạn' -or $oemFlowVi -notmatch 'OA3xOriginalProductKey' -or
+        $oemFlowVi -notmatch 'giữ nguyên key hiện tại' -or $oemFlowVi -notmatch 'tối đa ba lần' -or
+        $oemFlowEn -notmatch 'two separate stages' -or $oemFlowEn -notmatch 'OA3xOriginalProductKey' -or
+        $oemFlowEn -notmatch 'preserve the current key') {
+        Add-AssistantVerificationError 'OEM recovery explanation is incomplete or does not preserve the safe two-stage workflow.'
+    }
+    foreach ($choiceTest in @(
+        @{ Culture='vi-VN'; Question='làm sao dùng lựa chọn 1'; Expected='Lựa chọn 1 – Backup trước khi thực hiện' },
+        @{ Culture='vi-VN'; Question='làm sao dùng lựa chọn 2'; Expected='Lựa chọn 2 – Kiểm tra và khắc phục thủ công' },
+        @{ Culture='vi-VN'; Question='làm sao dùng lựa chọn 3'; Expected='Lựa chọn 3 – Khôi phục từ backup' },
+        @{ Culture='vi-VN'; Question='làm sao dùng lựa chọn 4'; Expected='Lựa chọn 4 – Tự động làm sạch an toàn' },
+        @{ Culture='en-US'; Question='how do I use choice 1'; Expected='Choice 1 – Backup' },
+        @{ Culture='en-US'; Question='how do I use choice 2'; Expected='Choice 2 – Manual inspection and remediation' },
+        @{ Culture='en-US'; Question='how do I use choice 3'; Expected='Choice 3 – Restore from backup' },
+        @{ Culture='en-US'; Question='how do I use choice 4'; Expected='Choice 4 – Automatic safe cleanup' }
+    )) {
+        $choiceAnswer = Get-ToolAssistantAnswer -Question $choiceTest.Question -Culture $choiceTest.Culture -Knowledge $knowledge
+        if ($choiceAnswer -notlike ('*' + $choiceTest.Expected + '*')) {
+            Add-AssistantVerificationError "Bundled-guide choice routing failed for '$($choiceTest.Question)'."
+        }
+    }
+    foreach ($foreignVersionQuestion in @('.NET v4.8 khác v4.7 thế nào','v4.8 .NET framework có đủ không','PowerShell v5.1 có được Tool hỗ trợ không','Windows v11 có chạy được Tool không')) {
+        $foreignVersionAnswer = Get-ToolAssistantAnswer -Question $foreignVersionQuestion -Culture 'vi-VN' -Knowledge $knowledge
+        if ($foreignVersionAnswer -match 'Lịch sử phiên bản|Đối chiếu trực tiếp|v4\.8\.0\.0 —') {
+            Add-AssistantVerificationError "A non-Tool product version was hijacked by release-history routing: '$foreignVersionQuestion'."
+        }
+    }
+    $mixedOrderCompare = Get-ToolAssistantAnswer -Question 'compare version 4.6 with v4.8' -Culture 'en-US' -Knowledge $knowledge
+    if ($mixedOrderCompare.IndexOf('v4.6 —', [StringComparison]::Ordinal) -lt 0 -or
+        $mixedOrderCompare.IndexOf('v4.8.0.0 —', [StringComparison]::Ordinal) -le $mixedOrderCompare.IndexOf('v4.6 —', [StringComparison]::Ordinal)) {
+        Add-AssistantVerificationError 'Mixed version notation did not preserve question order during comparison.'
+    }
+
     $firstReleaseEn = Get-ToolAssistantAnswer -Question 'when was v1 relased' -Culture 'en-US' -Knowledge $knowledge
     $releaseDateVi = Get-ToolAssistantAnswer -Question 'ngày build hiện tại của tool' -Culture 'vi-VN' -Knowledge $knowledge
     $releaseDateEn = Get-ToolAssistantAnswer -Question 'current in-place build date' -Culture 'en-US' -Knowledge $knowledge
@@ -243,9 +324,9 @@ if ($errors.Count -eq 0) {
     $sourceEn = Get-ToolAssistantAnswer -Question 'where is the public srouce code' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
-    if ($firstReleaseEn -notmatch 'v1\.0 on 17 July 2026' -or
-        $releaseDateVi -notmatch 'v5\.0\.0\.0.*05/09/2026' -or
-        $releaseDateEn -notmatch 'v5\.0\.0\.0.*5 September 2026' -or
+    if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
+        $releaseDateVi -notmatch 'v5\.0\.0\.1.*06/09/2026' -or
+        $releaseDateEn -notmatch 'v5\.0\.0\.1.*6 September 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's written approval" -or
@@ -543,7 +624,7 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Dashboard does not pass the current-session Online callback to Tool Assistant.'
     }
     $assistantSource = Get-Content -LiteralPath (Join-Path $SourceDirectory 'Tool-Assistant.ps1') -Raw -Encoding UTF8
-    foreach ($requiredToken in @('$send.Tag = $assistantState','Queue-ToolAssistantQuestion -State $sender.Tag','$eventArgs.Handled = $true','BeginInvoke','SubmissionQueued','ConnectOnline','ConnectOnlineTip','Update-ToolAssistantConnectionUi','Update-ToolAssistantConversationUi','Complete-ToolAssistantConversationLayout','Set-ToolAssistantHeaderBounds','Set-ToolAssistantInputFrameState','InputIdleBorderColor','UserBubbleBorderColor','AssistantBubbleBorderColor','RenderTimer','PendingRevealControl','RevealQueued','[Windows.Forms.Application]::DoEvents()','Windows.Forms.FlowLayoutPanel','Windows.Forms.TableLayoutPanel','Role User','Role Assistant','IsSubmitting','SendButton.Enabled','Expand-ToolAssistantContextQuery','Test-ToolAssistantRelatedQuery','Get-ToolAssistantDocumentAnswer','LastQuestionText','KnowledgePlusBundledDocumentation','Test-ToolAssistantKnowledgeSignature','DetachedCmsSha256PinnedCertificate','Save-ToolAssistantSignedKnowledgeCache','remoteVersion -lt $currentVersion','Invoke-ToolAssistantKnowledgeSyncUi')) {
+    foreach ($requiredToken in @('$send.Tag = $assistantState','Queue-ToolAssistantQuestion -State $sender.Tag','$eventArgs.Handled = $true','BeginInvoke','SubmissionQueued','ConnectOnline','ConnectOnlineTip','Update-ToolAssistantConnectionUi','Update-ToolAssistantConversationUi','Complete-ToolAssistantConversationLayout','Set-ToolAssistantHeaderBounds','Set-ToolAssistantInputFrameState','InputIdleBorderColor','UserBubbleBorderColor','AssistantBubbleBorderColor','RenderTimer','PendingRevealControl','RevealQueued','[Windows.Forms.Application]::DoEvents()','Windows.Forms.FlowLayoutPanel','Windows.Forms.TableLayoutPanel','Role User','Role Assistant','IsSubmitting','SendButton.Enabled','Expand-ToolAssistantContextQuery','Test-ToolAssistantRelatedQuery','Get-ToolAssistantDocumentAnswer','Get-ToolAssistantHistoryAnswer','CompleteBundledGuideIndexed','CompleteVersionHistoryIndexed','LastQuestionText','KnowledgePlusBundledDocumentation','Test-ToolAssistantKnowledgeSignature','DetachedCmsSha256PinnedCertificate','Save-ToolAssistantSignedKnowledgeCache','remoteVersion -lt $currentVersion','Invoke-ToolAssistantKnowledgeSyncUi')) {
         if (-not $assistantSource.Contains($requiredToken)) { Add-AssistantVerificationError "Assistant UI interaction token missing: $requiredToken" }
     }
     if ($assistantSource.Contains('New-Object Windows.Forms.RichTextBox')) {

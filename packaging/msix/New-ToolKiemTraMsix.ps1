@@ -16,7 +16,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
-$version = '5.0.0.0'
+$version = '5.0.0.1'
 $sdkBin = 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64'
 $makeAppx = Join-Path $sdkBin 'makeappx.exe'
 $signTool = Join-Path $sdkBin 'signtool.exe'

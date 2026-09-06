@@ -107,7 +107,7 @@ try {
     if ($ExpectedTrustMode -eq 'StoreSubmission') {
         $storeConstants = [ordered]@{
             StorePackageName = 'ThanhVit.ToolKimTraBnQuyn'
-            StorePackageVersion = '5.0.0.0'
+            StorePackageVersion = '5.0.0.1'
             StorePackagePublisherId = '9tjmpwr25h78w'
             StorePackageFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
         }
@@ -121,10 +121,10 @@ try {
         if (-not $identityValidator) { throw 'Launcher thiếu Store package identity validator.' }
         $trustValidator = $launcherType.GetMethod('IsExpectedStorePackageTrust', $bindingFlags)
         if (-not $trustValidator) { throw 'Launcher thiếu Store package origin validator.' }
-        $validFullName = 'ThanhVit.ToolKimTraBnQuyn_5.0.0.0_x64__9tjmpwr25h78w'
+        $validFullName = 'ThanhVit.ToolKimTraBnQuyn_5.0.0.1_x64__9tjmpwr25h78w'
         $validFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
         if (-not [bool]$identityValidator.Invoke($null, @($validFullName, $validFamilyName)) -or
-            [bool]$identityValidator.Invoke($null, @($validFullName.Replace('5.0.0.0','5.0.0.1'), $validFamilyName)) -or
+            [bool]$identityValidator.Invoke($null, @($validFullName.Replace('5.0.0.1','5.0.0.2'), $validFamilyName)) -or
             [bool]$identityValidator.Invoke($null, @($validFullName, $validFamilyName.Replace('9tjmpwr25h78w','8wekyb3d8bbwe'))) -or
             [bool]$identityValidator.Invoke($null, @($validFullName.Replace('ThanhVit.ToolKimTraBnQuyn','Other.Product'), $validFamilyName))) {
             throw 'Store package identity validator không fail-closed với name/version/publisher sai.'

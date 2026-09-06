@@ -25,13 +25,13 @@ $script:ToolProvenanceExpectedValues = [ordered]@{
     ProductName = 'Tool Kiem Tra'
     Author = 'Thanh Viet'
     OfficialRepository = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen'
-    ReleaseVersion = '5.0.0.0'
+    ReleaseVersion = '5.0.0.1'
     # Canonical release identity. BUILD.ps1 injects this BuildId into the
     # compiled launcher and the elevated bridge reads it at runtime. Keep the
     # release identity here so a date cannot drift independently in source,
     # payload, provenance, or the final executable.
-    BuildId = '5.0.0.0-production-20260826'
-    BuildTime = '2026-08-26'
+    BuildId = '5.0.0.1-production-20260906'
+    BuildTime = '2026-09-06'
     SourcePolicyId = 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9'
     VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build'
     SignerCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
