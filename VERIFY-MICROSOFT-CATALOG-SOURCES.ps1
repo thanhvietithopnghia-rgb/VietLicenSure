@@ -87,7 +87,7 @@ foreach ($source in @($catalog.Sources.PSObject.Properties)) {
     $lastModified = ""
     if (-not $SkipNetwork) {
         try {
-            $response = Invoke-WebRequest -Uri $uri.AbsoluteUri -UseBasicParsing -MaximumRedirection 5 -TimeoutSec 45 -Headers @{ "Accept-Language"="en-US"; "User-Agent"="ThanhViet-Tool-Kiem-Tra-Catalog-Review/1.0" }
+            $response = Invoke-WebRequest -Uri $uri.AbsoluteUri -UseBasicParsing -MaximumRedirection 5 -TimeoutSec 45 -Headers @{ "Accept-Language"="en-US"; "User-Agent"="ThanhViet-VietLicenSure-Catalog-Review/1.0" }
             $statusCode = [int]$response.StatusCode
             if ($statusCode -lt 200 -or $statusCode -ge 400) { throw "HTTP $statusCode" }
             $content = [string]$response.Content

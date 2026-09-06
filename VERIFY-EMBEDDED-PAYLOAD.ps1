@@ -37,7 +37,7 @@ try {
     }
 
     $assembly = [Reflection.Assembly]::LoadFile([IO.Path]::GetFullPath($ExePath))
-    $launcherType = $assembly.GetType("ThanhViet.ToolKiemTra.Program", $true)
+    $launcherType = $assembly.GetType("ThanhViet.VietLicenSure.Program", $true)
     $bindingFlags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
     $provenanceHelperPath = Join-Path $SourceDirectory 'Tool-Provenance.ps1'
     if (-not (Test-Path -LiteralPath $provenanceHelperPath -PathType Leaf)) {

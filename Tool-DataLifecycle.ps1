@@ -1,7 +1,7 @@
 ﻿$script:ToolDataStateSchemaVersion = "1.0"
 $script:ToolDataSchemaVersion = "2.0"
 $script:ToolDataStorageGeneration = "v4.6"
-$script:ToolDataLegacyStorageGeneration = "v4.4"
+$script:ToolDataLegacyStorageGeneration = "v4.6"
 $script:ToolDataToolVersion = "5.0.0.1"
 $script:ToolDataMigrationMutexName = "Global\ThanhViet.ToolKiemTra.DataMigration.v4.6"
 $script:ToolDataInitializedRoot = ""
@@ -14,7 +14,7 @@ function Get-ToolDataRoot {
     }
     $commonData = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonApplicationData)
     if ([string]::IsNullOrWhiteSpace($commonData)) { throw "Không xác định được ProgramData." }
-    return (Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\$($script:ToolDataStorageGeneration)")
+    return (Join-Path $commonData "ThanhViet-VietLicenSure\$($script:ToolDataStorageGeneration)")
 }
 
 function Get-ToolLegacyDataRoot {

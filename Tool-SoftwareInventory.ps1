@@ -2,8 +2,8 @@
 $script:ToolSoftwareCatalogSchemaVersion = '1.0'
 $script:ToolSoftwareCatalogFileName = 'software-license-catalog-v1.0.json'
 $script:ToolSoftwareCatalogSignatureFileName = 'software-license-catalog-v1.0.json.p7s'
-$script:ToolSoftwareCatalogDefaultUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/software-license-catalog-v1.0.json'
-$script:ToolSoftwareCatalogSignatureDefaultUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/software-license-catalog-v1.0.json.p7s'
+$script:ToolSoftwareCatalogDefaultUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/software-license-catalog-v1.0.json'
+$script:ToolSoftwareCatalogSignatureDefaultUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/software-license-catalog-v1.0.json.p7s'
 $script:ToolSoftwareCatalogAllowedHosts = @('raw.githubusercontent.com')
 $script:ToolSoftwareCatalogAllowedUris = @($script:ToolSoftwareCatalogDefaultUrl, $script:ToolSoftwareCatalogSignatureDefaultUrl)
 $script:ToolSoftwareCatalogAllowedRemediationAdapters = @('Adobe','Autodesk','WinRAR')
@@ -133,7 +133,7 @@ function Get-ToolSoftwareCatalogDataRoot {
     $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
     if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [string]$env:LOCALAPPDATA }
     if ([string]::IsNullOrWhiteSpace($localAppData)) { return '' }
-    return Join-Path $localAppData 'ThanhViet-Tool-Kiem-Tra'
+    return Join-Path $localAppData 'ThanhViet-VietLicenSure'
 }
 
 function Get-ToolSoftwareCatalogCachePath {
@@ -713,7 +713,7 @@ function Invoke-ToolSoftwareCatalogHttpGetBytes {
     $request.Timeout = $TimeoutMilliseconds
     $request.ReadWriteTimeout = $TimeoutMilliseconds
     $request.AllowAutoRedirect = $false
-    $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/4.8 software-catalog'
+    $request.UserAgent = 'ThanhViet-VietLicenSure/4.8 software-catalog'
     $response = $null
     $stream = $null
     $memory = $null

@@ -110,7 +110,7 @@ function Test-ToolPluginDirectory {
             $dataRoot = if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) {
                 [IO.Path]::GetFullPath([string]$env:TOOL_DATA_ROOT)
             } else {
-                Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6"
+                Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-VietLicenSure\v4.6"
             }
             $expected = Join-Path $dataRoot "plugins"
             if (-not $fullPath.Equals([IO.Path]::GetFullPath($expected), [StringComparison]::OrdinalIgnoreCase)) {

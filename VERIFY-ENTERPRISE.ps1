@@ -25,7 +25,7 @@ $required = @(
     "Tool-UiTheme.ps1",
     "Tool-ReportSchema.ps1",
     "Tool-ModuleContract.ps1",
-    "Tool-Kiem-Tra-v5.0-OneFile.cs"
+    "VietLicenSure-v5.0-OneFile.cs"
 )
 foreach ($name in $required) {
     $path = Join-Path $SourceDirectory $name
@@ -249,7 +249,7 @@ try {
     }
     $managerContract = @($catalog | Where-Object ModuleId -eq "license.manager")[0]
     Assert-Enterprise ([string]$managerContract.NetworkScope -eq "LocalOnly") "Mở Mục 8 phải hoạt động Offline; chỉ tiến trình server/agent mới dùng LAN."
-    $launcherText = Get-Content -LiteralPath (Join-Path $SourceDirectory "Tool-Kiem-Tra-v5.0-OneFile.cs") -Raw
+    $launcherText = Get-Content -LiteralPath (Join-Path $SourceDirectory "VietLicenSure-v5.0-OneFile.cs") -Raw
     foreach ($mode in @("--enterprise-ui","--enterprise-server","--enterprise-agent","--enterprise-agent-force","--local-license-manager")) {
         Assert-Enterprise ($launcherText.Contains($mode)) "Launcher thiếu mode $mode."
     }

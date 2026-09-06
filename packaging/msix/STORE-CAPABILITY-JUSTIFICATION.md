@@ -2,7 +2,7 @@
 
 ## Application
 
-- Product: Tool Kiểm Tra Bản Quyền v5.0
+- Product: VietLicenSure Bản Quyền v5.0
 - Partner Center product ID: `9NHGPJG831ZH`
 - Package identity name: `ThanhVit.ToolKimTraBnQuyn`
 - Publisher: `CN=3EB43154-43D8-4A10-BD13-AB0D250530BE`

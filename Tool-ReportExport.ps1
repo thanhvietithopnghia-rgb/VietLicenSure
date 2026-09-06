@@ -33,7 +33,7 @@ function Get-ToolReportExportMetadata {
         ToolVersion = $script:ToolReportExportToolVersion
         Formats = @("HTML", "PDF", "JSON", "XML")
         PdfEngines = @("Microsoft Edge", "Google Chrome", "Microsoft Word")
-        PdfProfileRoot = "%LOCALAPPDATA%\Temp\ThanhViet-Tool-Kiem-Tra\pdf"
+        PdfProfileRoot = "%LOCALAPPDATA%\Temp\ThanhViet-VietLicenSure\pdf"
         PdfProfileAcl = "Current user + SYSTEM"
         PdfProfileCleanup = "Bounded retry after every browser export"
         XmlFormat = "Native integration XML"
@@ -743,7 +743,7 @@ function Get-ToolPdfProfileRoot {
         throw (Get-ToolReportExportText "foundation.reportExport.tempOutsideLocalAppData")
     }
 
-    return [IO.Path]::GetFullPath((Join-Path $localTempFull "ThanhViet-Tool-Kiem-Tra\pdf"))
+    return [IO.Path]::GetFullPath((Join-Path $localTempFull "ThanhViet-VietLicenSure\pdf"))
 }
 
 function New-ToolPdfProfileAcl {

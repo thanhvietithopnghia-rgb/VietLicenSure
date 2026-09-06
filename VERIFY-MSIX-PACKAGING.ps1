@@ -10,11 +10,12 @@ Set-StrictMode -Version 2.0
 
 $failures = New-Object System.Collections.Generic.List[string]
 $sourceRoot = [IO.Path]::GetFullPath($SourceDirectory)
-$packagingScript = Join-Path $sourceRoot 'packaging\msix\New-ToolKiemTraMsix.ps1'
+$packagingScript = Join-Path $sourceRoot 'packaging\msix\New-VietLicenSureMsix.ps1'
+$legacyStoreReservedName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VG9vbCBLaeG7g20gVHJhIELhuqNuIFF1eeG7gW4='))
 $packagingReadme = Join-Path $sourceRoot 'packaging\msix\README.md'
 $capabilityJustification = Join-Path $sourceRoot 'packaging\msix\STORE-CAPABILITY-JUSTIFICATION.md'
 $storeIdentityPath = Join-Path $sourceRoot 'packaging\msix\STORE-PRODUCT-IDENTITY.json'
-$applicationManifest = Join-Path $sourceRoot 'Tool-Kiem-Tra-v5.0-OneFile.manifest'
+$applicationManifest = Join-Path $sourceRoot 'VietLicenSure-v5.0-OneFile.manifest'
 
 function Read-RequiredText {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -40,7 +41,7 @@ function Test-StoreLauncherTrustProfile {
 
     try {
         $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes($Path))
-        $type = $assembly.GetType('ThanhViet.ToolKiemTra.Program', $true)
+        $type = $assembly.GetType('ThanhViet.VietLicenSure.Program', $true)
         $flags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
         $expected = [ordered]@{
             SignedStableBuildMarker = '0'
@@ -109,8 +110,8 @@ function Test-Package {
         Assert-Contains $manifestText '<rescap:Capability\s+Name="allowElevation"\s*/>' "$Mode package does not declare allowElevation."
         $identity = $manifestXml.Package.Identity
         $properties = $manifestXml.Package.Properties
-        if ([string]$properties.DisplayName -cne [string]$storeIdentity.ReservedName) {
-            $failures.Add("$Mode package DisplayName does not match the reserved Store name.")
+        if ([string]$properties.DisplayName -cne [string]$storeIdentity.BrandDisplayName) {
+            $failures.Add("$Mode package DisplayName does not match the VietLicenSure brand.")
         }
         if ([string]$properties.PublisherDisplayName -cne [string]$storeIdentity.PublisherDisplayName) {
             $failures.Add("$Mode package PublisherDisplayName does not match Partner Center.")
@@ -126,9 +127,9 @@ function Test-Package {
                 $failures.Add('Store package identity Publisher does not match Partner Center.')
             }
         }
-        $packagedExe = Join-Path $tempRoot 'Tool-Kiem-Tra-v5.0.exe'
+        $packagedExe = Join-Path $tempRoot 'VietLicenSure-v5.0.exe'
         if (-not (Test-Path -LiteralPath $packagedExe -PathType Leaf)) {
-            $failures.Add("$Mode package is missing Tool-Kiem-Tra-v5.0.exe.")
+            $failures.Add("$Mode package is missing VietLicenSure-v5.0.exe.")
         } elseif ($Mode -eq 'Store' -and -not (Test-StoreLauncherTrustProfile -Path $packagedExe)) {
             $failures.Add('Store package contains a DevelopmentUnsigned or mismatched launcher instead of the exact StoreSubmission trust profile.')
         }
@@ -163,11 +164,15 @@ if ($null -ne $storeIdentity) {
         [string]$storeIdentity.PackageFamilyName -ne 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w') {
         $failures.Add('Store PackagePublisherId/PackageFamilyName is invalid.')
     }
-    foreach ($name in @('ReservedName','PublisherDisplayName','Description','ApplicationDescription')) {
+    foreach ($name in @('ReservedName','BrandDisplayName','PublisherDisplayName','Description','ApplicationDescription')) {
         $property = $storeIdentity.PSObject.Properties[$name]
         if ($null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)) {
             $failures.Add("Store identity property is missing: $name")
         }
+    }
+    if ([string]$storeIdentity.ReservedName -cne $legacyStoreReservedName -or
+        [string]$storeIdentity.BrandDisplayName -cne 'VietLicenSure') {
+        $failures.Add('Store compatibility identity or current VietLicenSure display name is invalid.')
     }
 }
 

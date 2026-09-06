@@ -1,4 +1,4 @@
-# MSIX packaging for Tool Kiểm Tra Bản Quyền v5.0
+# MSIX packaging for VietLicenSure v5.0
 
 This directory creates two deliberately separate package types:
 
@@ -11,8 +11,8 @@ The main executable remains `asInvoker`. The package declares `runFullTrust` and
 
 Run from the repository root:
 
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\packaging\msix\New-ToolKiemTraMsix.ps1 `
-      -ExecutablePath .\dist-v5-evidence-final-20260828\Tool-Kiem-Tra-v5.0.exe `
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\packaging\msix\New-VietLicenSureMsix.ps1 `
+      -ExecutablePath .\dist-v5-evidence-final-20260828\VietLicenSure-v5.0.exe `
       -OutputDirectory .\dist-msix-development `
       -Mode Development `
       -SigningCertificateThumbprint '<development certificate thumbprint>'
@@ -20,11 +20,11 @@ Run from the repository root:
 Install only on an isolated test machine. Open an elevated PowerShell window, trust the exported public certificate for package testing, then install the package:
 
     Import-Certificate `
-      -FilePath .\dist-msix-development\Tool-Kiem-Tra-v5.0-development.cer `
+      -FilePath .\dist-msix-development\VietLicenSure-v5.0-development.cer `
       -CertStoreLocation Cert:\LocalMachine\TrustedPeople
 
     Add-AppxPackage `
-      -Path .\dist-msix-development\Tool-Kiem-Tra-v5.0-development.msix
+      -Path .\dist-msix-development\VietLicenSure-v5.0-development.msix
 
 After the test, uninstall the development package and remove only the imported development certificate from LocalMachine TrustedPeople. Never distribute or call this certificate publicly trusted.
 
@@ -33,7 +33,8 @@ After the test, uninstall the development package and remove only the imported d
 The Partner Center identity assigned on 2026-08-28 is stored in `STORE-PRODUCT-IDENTITY.json`:
 
 - Product ID: `9NHGPJG831ZH`
-- Reserved name: `Tool Kiểm Tra Bản Quyền`
+- Current display name: `VietLicenSure`
+- Legacy Partner Center reserved name: `Tool Kiểm Tra Bản Quyền` (retained only because Microsoft Store identity values cannot be renamed locally)
 - Package/Identity/Name: `ThanhVit.ToolKimTraBnQuyn`
 - Package/Identity/Publisher: `CN=3EB43154-43D8-4A10-BD13-AB0D250530BE`
 - Package family name: `ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w`
@@ -51,8 +52,8 @@ package origin as Microsoft Store:
 
 Then generate the Store candidate with the tracked identity file:
 
-    powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\packaging\msix\New-ToolKiemTraMsix.ps1 `
-      -ExecutablePath .\dist-v5-store\Tool-Kiem-Tra-v5.0.exe `
+    powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\packaging\msix\New-VietLicenSureMsix.ps1 `
+      -ExecutablePath .\dist-v5-store\VietLicenSure-v5.0.exe `
       -OutputDirectory .\dist-msix-store `
       -Mode Store `
       -StoreIdentityPath .\packaging\msix\STORE-PRODUCT-IDENTITY.json

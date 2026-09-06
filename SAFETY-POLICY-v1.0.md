@@ -31,7 +31,7 @@ Danh sách xử lý mặc định không chọn. `cleanup.remediate`/`cleanup.de
 
 ## Backup và restore
 
-- Root cố định `%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.3\backups`.
+- Root cố định `%ProgramData%\ThanhViet-VietLicenSure\v4.3\backups`.
 - Từ chối path ra ngoài root hoặc qua reparse point.
 - Manifest schema 2.0, ToolVersion 4.3.
 - SHA-256 cho nội dung; HMAC/DPAPI LocalMachine cho dữ liệu ràng buộc máy.

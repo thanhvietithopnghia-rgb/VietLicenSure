@@ -1,23 +1,27 @@
-# Computer Configuration and Software License Check Tool — Version History
+# VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current technical candidate. Candidate milestones are labelled explicitly so they are not mistaken for a public release.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release.
 
 Stable latest-release page:
-<https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
 
-## v5.0.0.1 — September 6, 2026 (current technical candidate)
+## v5.0.0.1 — September 6, 2026 (current technical release)
 
 - Tool Assistant indexes every section of the complete Vietnamese/English user guides and version histories for Offline use.
 - It returns the complete recorded entry for one version, compares two versions directly from evidence, and resolves “current” or “latest” to v5.0.0.1 without inventing undocumented milestones.
 - It covers the purpose, workflow, output, and safety notes of every documented Tool function: all ten main functions, remediation/backup workflows, local and enterprise license management, and all eight Reports & Assurance actions—not only OEM key recovery.
 - Restores the previously omitted v1.0.0–v1.0.9 milestones and corrects v1.1.0–v3.3 from original release evidence; explicitly records that no v2.0–v2.3 milestone is available.
-- Adds tests that prevent Windows/Office/PowerShell/.NET versions from being mistaken for Tool history and a version matrix from the first release through v5.0.0.1.
+- Adds tests that prevent Windows/Office/PowerShell/.NET versions from being mistaken for product history and a version matrix from the first release through v5.0.0.1.
 
-This entry describes the local candidate awaiting approval; it does not claim that v5.0.0.1 has already been released publicly.
+This entry records the public v5.0.0.1 ManagedSigned/Pilot release used for the official VietLicenSure branding update. It is not labelled Public Stable because the current certificate is launcher-pinned and self-signed, while the complete real-machine evidence gates remain pending.
 
-## Tool Kiểm Tra v5.0 — September 6, 2026
+## VietLicenSure v5.0 — September 6, 2026
 
-Tool Kiểm Tra v5.0 is the next upgrade after v4.9, focused on improving the core areas:
+On September 6, 2026, v5.0 was officially renamed from **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**. The rename keeps the v5.0 product line and all existing functions; this release uses technical version `5.0.0.1`.
+
+The name combines **Viet** (developed by a Vietnamese author), **Licen** (short for `License`), and **Sure** (clear, evidence-backed technical verification). It does not represent a legal certification of licence entitlement.
+
+VietLicenSure v5.0 is the next upgrade after v4.9, focused on improving the core areas:
 
 - **User experience:** faster startup, a clearer and more responsive interface, Light/Dark support, and direct navigation to the selected function.
 - **Inspection and recognition:** Quick, Standard, and Deep levels; Windows, Microsoft Office, and other-software inspection; prioritized actions, search, filters, and comparison with the previous scan.

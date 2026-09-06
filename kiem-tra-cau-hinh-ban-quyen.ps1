@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra"),
+    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-VietLicenSure"),
     [ValidateSet("All", "Hardware", "Windows", "Office", "Software")]
     [string]$Mode = "All",
     [ValidateSet("vi-VN", "en-US")]

@@ -1,23 +1,27 @@
-# Lịch sử phát triển Công cụ kiểm tra cấu hình máy và bản quyền phần mềm
+# Lịch sử phát triển VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến ứng viên kỹ thuật hiện tại. Mốc ứng viên được ghi rõ để không bị hiểu nhầm là đã phát hành công khai.
+Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại.
 
 Trang tải mới nhất:
-https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest
+https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest
 
-## v5.0.0.1 — 06/09/2026 (ứng viên kỹ thuật hiện tại)
+## v5.0.0.1 — 06/09/2026 (bản phát hành kỹ thuật hiện tại)
 
 - Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ lịch sử phiên bản Việt–Anh theo từng mục, dùng được khi Offline.
 - Trả đầy đủ mục thay đổi của một phiên bản, đối chiếu hai phiên bản theo đúng hồ sơ và hiểu các cụm “bản hiện tại”, “mới nhất” là v5.0.0.1; không tự dựng dữ liệu cho mốc không tồn tại.
 - Bao phủ cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng trong HDSD: 10 chức năng chính, các luồng khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ của Trung tâm Báo cáo & Bảo đảm; không giới hạn ở Khôi phục key OEM.
 - Khôi phục các mốc v1.0.0–v1.0.9 từng bị lược bỏ và sửa nội dung v1.1.0–v3.3 theo hồ sơ phát hành gốc; xác định rõ không có hồ sơ v2.0–v2.3.
-- Bổ sung kiểm thử chống nhầm phiên bản Windows/Office/PowerShell/.NET với lịch sử Tool và ma trận kiểm thử từ phiên bản đầu tiên đến v5.0.0.1.
+- Bổ sung kiểm thử chống nhầm phiên bản Windows/Office/PowerShell/.NET với lịch sử sản phẩm và ma trận kiểm thử từ phiên bản đầu tiên đến v5.0.0.1.
 
-Mục này mô tả ứng viên cục bộ đang chờ duyệt; không khẳng định v5.0.0.1 đã được phát hành công khai.
+Đây là bản phát hành công khai theo kênh `ManagedSigned/Pilot`, không mang nhãn `Public Stable` vì chứng thư hiện tại là tự ký được ghim và ma trận bằng chứng máy thật vẫn chưa hoàn tất các cổng Stable.
 
-## Tool Kiểm Tra v5.0 — 06/09/2026
+## VietLicenSure v5.0 — 06/09/2026
 
-Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
+Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Việc đổi tên giữ nguyên dòng phiên bản v5.0 và toàn bộ chức năng; gói phát hành hiện tại mang phiên bản kỹ thuật `5.0.0.1`.
+
+Ý nghĩa tên gọi: **Viet** thể hiện phần mềm do người Việt phát triển; **Licen** rút gọn từ `License`, đại diện cho giấy phép/bản quyền phần mềm; **Sure** thể hiện mục tiêu cung cấp kết quả rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật. Tên gọi không mang ý nghĩa chứng nhận pháp lý.
+
+VietLicenSure v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
 
 - **Trải nghiệm sử dụng:** khởi động nhanh hơn, giao diện rõ ràng và thích ứng tốt hơn, hỗ trợ Light/Dark và mở thẳng đúng chức năng cần dùng.
 - **Kiểm tra và nhận diện:** ba mức quét Quick, Standard và Deep; kiểm tra Windows, Microsoft Office và phần mềm khác; sắp xếp việc cần xem theo mức ưu tiên, hỗ trợ tìm kiếm, lọc và so sánh với lần quét trước.

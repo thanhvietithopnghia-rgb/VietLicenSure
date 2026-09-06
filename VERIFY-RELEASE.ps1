@@ -175,6 +175,7 @@ $codeSigningReadinessVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-CODE-
 $remediationV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-REMEDIATION-V4.9.ps1'
 $softwareDetectionV49VerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-SOFTWARE-DETECTION-V4.9.ps1'
 $provenanceVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-PROVENANCE.ps1'
+$releaseHygieneVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-RELEASE-HYGIENE.ps1'
 $stableReadinessVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-STABLE-READINESS.ps1'
 if (-not (Test-Path -LiteralPath $peHelperPath -PathType Leaf)) { $failures.Add('Thiếu PE-HARDENING.ps1.') }
 else { . $peHelperPath }
@@ -202,6 +203,7 @@ if (-not (Test-Path -LiteralPath $codeSigningReadinessVerifierPath -PathType Lea
 if (-not (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-REMEDIATION-V4.9.ps1.') }
 if (-not (Test-Path -LiteralPath $softwareDetectionV49VerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-SOFTWARE-DETECTION-V4.9.ps1.') }
 if (-not (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-PROVENANCE.ps1.') }
+if (-not (Test-Path -LiteralPath $releaseHygieneVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-RELEASE-HYGIENE.ps1.') }
 if (-not (Test-Path -LiteralPath $stableReadinessVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-STABLE-READINESS.ps1.') }
 
 foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.ps1' -File) {
@@ -222,9 +224,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 53 } else { 54 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 122 } else { 123 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 139 } else { 141 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 37 } elseif ($AllowStoreManifest) { 38 } else { 39 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 126 } else { 127 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 143 } else { 145 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 40 } elseif ($AllowStoreManifest) { 41 } else { 42 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -233,7 +235,7 @@ Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt
 Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull $expectedReleaseHashCount
 Test-DistributionClosedSet (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull
 
-$manifestPath = Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v5.0-OneFile.manifest'
+$manifestPath = Join-Path $sourceDirectoryFull 'VietLicenSure-v5.0-OneFile.manifest'
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
     $failures.Add('Thiếu application manifest v5.0.')
 } else {
@@ -249,9 +251,9 @@ $versionChecks = @(
     @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.09\.06"' },
     @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-forensics.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0"' },
-    @{ File='Tool-Kiem-Tra-v5.0-OneFile.cs'; Pattern='AssemblyVersion\("5\.0\.0\.1"\)' },
-    @{ File='Tool-Kiem-Tra-v5.0-OneFile.cs'; Pattern='AssemblyFileVersion\("5\.0\.0\.1"\)' },
-    @{ File='Tool-Kiem-Tra-v5.0-OneFile.cs'; Pattern='AssemblyInformationalVersion\("5\.0\.0\.1"\)' }
+    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyVersion\("5\.0\.0\.1"\)' },
+    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyFileVersion\("5\.0\.0\.1"\)' },
+    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyInformationalVersion\("5\.0\.0\.1"\)' }
 )
 foreach ($check in $versionChecks) {
     $path = Join-Path $sourceDirectoryFull $check.File
@@ -266,7 +268,7 @@ $cleanupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows
 $backupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-backup.ps1') -Raw -Encoding UTF8
 $restoreText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-restore.ps1') -Raw -Encoding UTF8
 $reportText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
-$launcherText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Kiem-Tra-v5.0-OneFile.cs') -Raw -Encoding UTF8
+$launcherText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
 $launcherAssemblyVersionMatch = [regex]::Match($launcherText, 'AssemblyVersion\("(?<Version>\d+\.\d+\.\d+\.\d+)"\)')
 $launcherStoreVersionMatch = [regex]::Match($launcherText, 'private const string StorePackageVersion = "(?<Version>\d+\.\d+\.\d+\.\d+)";')
 if (-not $launcherAssemblyVersionMatch.Success -or -not $launcherStoreVersionMatch.Success -or
@@ -444,7 +446,7 @@ if ($capabilityText -notmatch 'ToolVersion\s*=\s*"5\.0"' -or
 }
 if ($loggingText -notmatch 'TOOL_LOG_PATH' -or $loggingText -notmatch 'TOOL_CORRELATION_ID' -or
     $loggingText -notmatch 'TOOL_MODULE_ID' -or $loggingText -notmatch 'TOOL_MODULE_INVOCATION_ID' -or
-    $loggingText -notmatch 'ThanhViet-Tool-Kiem-Tra\\v4\.6' -or
+    $loggingText -notmatch 'ThanhViet-VietLicenSure\\v4\.6' -or
     $loggingText -notmatch 'Join-Path\s+\$dataRoot\s+"logs"' -or $loggingText -notmatch 'ReparsePoint' -or
     $loggingText -notmatch 'ConvertTo-Json.+-Compress' -or $loggingText -notmatch '32768') {
     $failures.Add('Tool-Logging.ps1 thiếu JSONL schema, vùng log bảo vệ hoặc giới hạn bản ghi.')
@@ -652,7 +654,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt','SOURCE-POLICY-v4.9.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
-    'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','Tool-Kiem-Tra-icon.svg','Tool-Kiem-Tra.cmd',
+    'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-Localization.ps1',
@@ -667,7 +669,7 @@ $payloadFiles = @(
 )
 if ($AllowDevelopmentManifest) { $payloadFiles = @($payloadFiles | Where-Object { $_ -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' }) }
 $payloadListArgument = $payloadFiles -join '|'
-$targetFileName = 'Tool-Kiem-Tra-v5.0.exe'
+$targetFileName = 'VietLicenSure-v5.0.exe'
 $exePath = Join-Path $distributionDirectoryFull $targetFileName
 $profile = $null
 if (-not (Test-Path -LiteralPath $exePath -PathType Leaf)) {
@@ -751,7 +753,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
             }
 
             $launcherAssembly = [Reflection.Assembly]::LoadFile($exePath)
-            $programType = $launcherAssembly.GetType('ThanhViet.ToolKiemTra.Program', $true, $false)
+            $programType = $launcherAssembly.GetType('ThanhViet.VietLicenSure.Program', $true, $false)
             $bindingFlags = [Reflection.BindingFlags]::Static -bor [Reflection.BindingFlags]::NonPublic
             $signerSha256Field = $programType.GetField('OfficialSignerCertificateSha256', $bindingFlags)
             if (-not $signerSha256Field -or
@@ -769,7 +771,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
                 throw 'Cổng chữ ký portable không giới hạn đúng ManagedSigned/CERT_E_UNTRUSTEDROOT/self-signed.'
             }
 
-            $tamperedPath = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Kiem-Tra-v5.0-tampered-' + [Guid]::NewGuid().ToString('N') + '.exe')
+            $tamperedPath = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-v5.0-tampered-' + [Guid]::NewGuid().ToString('N') + '.exe')
             try {
                 Copy-Item -LiteralPath $exePath -Destination $tamperedPath -Force
                 $tamperedStream = [IO.File]::Open($tamperedPath, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
@@ -823,7 +825,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         $sbomBuildId = @($sbomRoot.properties | Where-Object { [string]$_.name -eq 'tool:buildId' } | Select-Object -First 1)
         $sbomSourceCommit = @($sbomRoot.properties | Where-Object { [string]$_.name -eq 'tool:sourceSnapshotCommit' } | Select-Object -First 1)
         $expectedSourceCommit = [string](Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'OFFICIAL-PROVENANCE-v1.json') -Raw -Encoding UTF8 | ConvertFrom-Json).SourceSnapshotCommit
-        if ([string]$sbomRoot.name -ne 'Tool Kiem Tra' -or [string]$sbomRoot.version -ne $expectedReleaseVersion -or
+        if ([string]$sbomRoot.name -ne 'VietLicenSure' -or [string]$sbomRoot.version -ne $expectedReleaseVersion -or
             $sbomRootHash.Count -ne 1 -or [string]$sbomRootHash[0].content -ne (Get-Sha256Hex $exePath) -or
             $sbomBuildId.Count -ne 1 -or [string]$sbomBuildId[0].value -ne $expectedOfficialBuildId -or
             $sbomSourceCommit.Count -ne 1 -or [string]$sbomSourceCommit[0].value -ne $expectedSourceCommit) {
@@ -868,7 +870,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.OfficialBuildProvenance.BuildId -ne $expectedOfficialBuildId -or
             [string]$releaseManifest.OfficialBuildProvenance.ManifestFile -ne 'OFFICIAL-PROVENANCE-v1.json' -or
             [string]$releaseManifest.OfficialBuildProvenance.SignatureFile -ne 'OFFICIAL-PROVENANCE-v1.json.p7s' -or
-            [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9' -or
+            [string]$releaseManifest.OfficialBuildProvenance.SourcePolicyId -ne 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0' -or
             [string]$releaseManifest.OfficialBuildProvenance.SourceDistribution -ne 'CommunityControlledSource' -or
             [string]$releaseManifest.OfficialBuildProvenance.RuntimeSystemChangePolicy -notmatch '(?:Official launcher|Microsoft Store package identity).+pinned provenance') {
             throw 'Metadata provenance v5.0 không đúng trạng thái hoặc chính sách fail-closed.'
@@ -985,7 +987,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [bool]$releaseManifest.ApplicationSelfUpdateAllowed -ne $expectedApplicationSelfUpdateAllowed -or
             [string]$releaseManifest.ApplicationUpdateAuthority -ne $expectedApplicationUpdateAuthority -or
             [string]$releaseManifest.BundledUpdateManifestChannel -ne $expectedBundledUpdateManifestChannel -or
-            [string]$releaseManifest.ApplicationUpdateManifestSignatureUrl -ne 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s' -or
+            [string]$releaseManifest.ApplicationUpdateManifestSignatureUrl -ne 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s' -or
             [string]$releaseManifest.ApplicationUpdateVerification -notmatch 'Pinned detached-CMS manifest' -or
             -not [bool]$releaseManifest.OfflineResetOnEveryLaunch -or
             @($releaseManifest.ApplicationUpdateChoices).Count -ne 3) { throw 'Thiếu metadata Offline mặc định/cập nhật theo quyền Online.' }
@@ -1000,8 +1002,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.DataMigrationPolicy -ne 'Verified staging copy + transactional commit + rollback' -or
             [string]$releaseManifest.StartupExecutionLevel -ne 'asInvoker' -or
             [string]$releaseManifest.ElevationPolicy -notmatch '^On demand' -or
-            [string]$releaseManifest.DefaultDataRoot -ne '%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\v4.6' -or
-            [string]$releaseManifest.ElevatedDataRoot -ne '%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6' -or
+            [string]$releaseManifest.DefaultDataRoot -ne '%LOCALAPPDATA%\ThanhViet-VietLicenSure\v4.6' -or
+            [string]$releaseManifest.ElevatedDataRoot -ne '%ProgramData%\ThanhViet-VietLicenSure\v4.6' -or
             [string]$releaseManifest.PersistentLogRoot -notmatch '^%LOCALAPPDATA%.*standard UI.*%ProgramData%.*elevated modes' -or
             [string]$releaseManifest.PersistentEnterpriseRoot -notmatch '\\v4\.6\\enterprise$') {
             throw 'Thiếu metadata data lifecycle/migration hoặc least-privilege riêng của v4.8.'
@@ -1039,7 +1041,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.ReportPdfTheme -ne 'v4.8-classic-a4' -or
             [string]$releaseManifest.ReportContentSplit -notmatch '^HTML summary' -or
             [string]$releaseManifest.DefaultReportOpenFormat -ne 'HTML' -or
-            [string]$releaseManifest.ReportOutputRoot -ne '%USERPROFILE%\Desktop\BaoCao-Tool-Kiem-Tra' -or
+            [string]$releaseManifest.ReportOutputRoot -ne '%USERPROFILE%\Desktop\BaoCao-VietLicenSure' -or
             [string]$releaseManifest.ReportPackageLayout -notmatch '^One shared Desktop report folder' -or
             [string]$releaseManifest.ReportAutoOpenPolicy -ne 'Open HTML only after a completed export' -or
             [string]$releaseManifest.OptionalReportViewerPolicy -notmatch 'WebView2 is not mandatory or bundled' -or
@@ -1060,7 +1062,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             -not [bool]$releaseManifest.CapabilityFunctionMapping) { throw 'Thiếu metadata report/plugin/timeline/safety schema v5.' }
         $assistantManifest = $releaseManifest.ToolAssistant
         if ([string]$assistantManifest.SchemaVersion -ne '1.1' -or
-            [string]$assistantManifest.Scope -ne 'Tool-Kiem-Tra' -or
+            [string]$assistantManifest.Scope -ne 'VietLicenSure' -or
             [string]$assistantManifest.Engine -ne 'LocalKnowledge' -or
             [bool]$assistantManifest.PaidApiRequired -or
             [bool]$assistantManifest.CodexRequired -or
@@ -1092,7 +1094,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             -not [bool]$assistantManifest.ImmediateResponseRender) {
             throw 'Thiếu metadata ranh giới an toàn của Trợ lý Tool v4.8.'
         }
-        if ([string]$releaseManifest.PdfProfileRoot -ne '%LOCALAPPDATA%\Temp\ThanhViet-Tool-Kiem-Tra\pdf' -or
+        if ([string]$releaseManifest.PdfProfileRoot -ne '%LOCALAPPDATA%\Temp\ThanhViet-VietLicenSure\pdf' -or
             [string]$releaseManifest.PdfProfileAcl -ne 'Current user + SYSTEM' -or
             [string]$releaseManifest.PdfProfileCleanup -notmatch 'Bounded retry') {
             throw 'Thiếu metadata profile PDF v4.3.'
@@ -1129,8 +1131,8 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
             [string]$applicationUpdateManifest.PublishedAtUtc -ne $expectedPublishedAtUtc) {
             throw 'Sai schema/channel/version cập nhật.'
         }
-        if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1' -or
-            [string]$applicationUpdateManifest.DownloadUrl -ne 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe') {
+        if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1' -or
+            [string]$applicationUpdateManifest.DownloadUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe') {
             throw 'URL phát hành/cập nhật không đúng allowlist ổn định.'
         }
         if ([string]$applicationUpdateManifest.DownloadSha256 -ne (Get-Sha256Hex $exePath) -or
@@ -1276,6 +1278,10 @@ if (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf) {
         & $provenanceVerifierPath -SourceDirectory $sourceDirectoryFull
     }
     if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra provenance v5.0 thất bại.') }
+}
+if (Test-Path -LiteralPath $releaseHygieneVerifierPath -PathType Leaf) {
+    & $releaseHygieneVerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra vệ sinh thương hiệu/phát hành/tài liệu v5.0 thất bại.') }
 }
 foreach ($warning in $warnings) { Write-Warning $warning }
 if ($failures.Count -gt 0) {

@@ -1,6 +1,6 @@
 ﻿$script:ToolTimelineSchemaVersion = "1.0"
 $script:ToolTimelineToolVersion = "5.0"
-$script:ToolTimelineCompatibilityBindingPrefix = "Tool-Kiem-Tra-v4.4"
+$script:ToolTimelineCompatibilityBindingPrefix = "VietLicenSure-v4.4"
 $script:ToolTimelineCompatibilityEntropy = "ThanhViet.ToolKiemTra.v4.4.Timeline"
 $script:ToolTimelineCompatibilityMutex = "ThanhViet.ToolKiemTra.v4.4.Timeline"
 # The v4.4 labels above are cryptographic compatibility identifiers, not data
@@ -106,7 +106,7 @@ function Test-ToolTimelinePath {
         $dataRoot = if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) {
             [IO.Path]::GetFullPath([string]$env:TOOL_DATA_ROOT)
         } else {
-            Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6"
+            Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-VietLicenSure\v4.6"
         }
         $expectedRoot = Join-Path $dataRoot "timeline"
         $expectedPrefix = [IO.Path]::GetFullPath($expectedRoot).TrimEnd([char]92) + [char]92

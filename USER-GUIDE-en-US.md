@@ -1,10 +1,10 @@
-# User guide for Machine Configuration and Software Licensing Tool
+# User guide for VietLicenSure - System License Inspection and Management Software
 
 Developed by Thanh Viet
 
 ## Overview
 
-Tool Kiem Tra is a Windows application for reviewing computer configuration, Windows and Microsoft Office licensing state, installed software, and intervention indicators that may require attention. It presents technical evidence by scope so users can distinguish normal findings, insufficient evidence, and items that need action.
+VietLicenSure is a Windows application for reviewing computer configuration, Windows and Microsoft Office licensing state, installed software, and intervention indicators that may require attention. It presents technical evidence by scope so users can distinguish normal findings, insufficient evidence, and items that need action.
 
 The workflow has four steps: select an inspection scope, review results and evidence, preview a remediation plan when needed, then confirm and perform post-verification. Inspection and reporting are read-only by default; system-changing actions always provide a preview, backup, confirmation, and an appropriate privilege request.
 
@@ -28,7 +28,7 @@ The Tool is Offline by default and does not automatically upload inventory or re
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
 6. Keep Offline enabled unless you intentionally need a catalog update or authorized LAN management.
 
-A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download Stable builds only from <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
+A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download Stable builds only from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
 
 ## How to run the Tool
 
@@ -72,7 +72,7 @@ You do not need source access, configuration files, or technical documentation t
 
 ## Tool Assistant
 
-Tool Assistant understands and answers every Tool-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0.0.1 technical candidate; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, updates, and Server/Workstation connectivity. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
+Tool Assistant understands and answers every VietLicenSure-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0.0.1 technical release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, updates, and Server/Workstation connectivity. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
 
 ### Send and Enter
 
@@ -85,7 +85,7 @@ The Assistant combines structured knowledge, bundled documentation, and availabl
 
 ### Sync knowledge
 
-The Assistant remains available Offline on every device through bundled baseline knowledge and that device's own local report context. After explicit Online consent, the Tool downloads only `tool-assistant-knowledge-v1.1.json` and its detached CMS signature from two pinned GitHub paths. It verifies the publisher signature, SHA-256, schema, Tool-only scope, size, compatibility range, and downgrade protection before replacing a backed-up cache. Questions, reports, inventory, paths, keys, and tokens are never uploaded. Growing knowledge is stored under `%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\assistant`, outside the EXE; only this bounded 2 MiB local cache can grow.
+The Assistant remains available Offline on every device through bundled baseline knowledge and that device's own local report context. After explicit Online consent, the Tool downloads only `tool-assistant-knowledge-v1.1.json` and its detached CMS signature from two pinned GitHub paths. It verifies the publisher signature, SHA-256, schema, Tool-only scope, size, compatibility range, and downgrade protection before replacing a backed-up cache. Questions, reports, inventory, paths, keys, and tokens are never uploaded. Growing knowledge is stored under `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, outside the EXE; only this bounded 2 MiB local cache can grow.
 
 ## Recommended workflow
 
@@ -389,7 +389,7 @@ This action downloads recognition rules only. It does not upload software invent
 
 ## Reports and saved files
 
-- The only output directory is `Desktop\BaoCao-Tool-Kiem-Tra`; exports do not create per-scan subfolders.
+- The only output directory is `Desktop\BaoCao-VietLicenSure`; exports do not create per-scan subfolders.
 - Related HTML, PDF, JSON/XML, and SHA-256 files share one base name with a millisecond timestamp and sit next to each other.
 - The summary HTML, detailed PDF, JSON/XML, and SHA-256 files stay together in that shared folder.
 - Only the summary HTML opens after completion. Select **Open detailed PDF** in the HTML to review all tables and evidence; PDF/JSON/XML do not open automatically.

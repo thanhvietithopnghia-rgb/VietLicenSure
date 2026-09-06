@@ -1,7 +1,7 @@
 ﻿param(
     [ValidateSet("Inspect", "Apply")]
     [string]$Mode = "Inspect",
-    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra"),
+    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-VietLicenSure"),
     [string]$DecisionFile = "",
     [ValidateSet("vi-VN", "en-US")]
     [string]$Culture = "vi-VN"

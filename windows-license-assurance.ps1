@@ -4,7 +4,7 @@ param(
     [string]$Operation = "CertificateAudit",
     [ValidateSet("vi-VN", "en-US")]
     [string]$Culture = "vi-VN",
-    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra"),
+    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-VietLicenSure"),
     [switch]$Pdf,
     [switch]$RedactSensitive,
     [switch]$NoOpen

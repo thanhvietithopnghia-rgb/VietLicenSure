@@ -56,7 +56,7 @@ $assistantHelper = Join-Path $PSScriptRoot "Tool-Assistant.ps1"
 $softwareInventoryHelper = Join-Path $PSScriptRoot "Tool-SoftwareInventory.ps1"
 $softwareCatalogUpdateScript = Join-Path $PSScriptRoot "software-license-online-update.ps1"
 $applicationUpdateScript = Join-Path $PSScriptRoot "Tool-UpdateManager.ps1"
-$applicationUpdateManifestUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json"
+$applicationUpdateManifestUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json"
 $script:dashboardCulture = "vi-VN"
 if (Test-Path -LiteralPath $localizationHelper -PathType Leaf) {
     . $localizationHelper
@@ -510,8 +510,8 @@ $integrityManifest = Join-Path $baseDir "TOOL-SHA256SUMS.txt"
 $requiredIntegrityFiles = @(
     "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md", "LICENSE-NOTICE.txt",
     "SOURCE-POLICY-v4.9.md", "Tool-Provenance.ps1", "OFFICIAL-PROVENANCE-v1.json",
-    "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "Tool-Kiem-Tra-icon.svg",
-    "Tool-Kiem-Tra.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
+    "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "VietLicenSure-icon.svg",
+    "VietLicenSure.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
     "Tool-ReportSchema.ps1", "Tool-ResultCenter.ps1", "Tool-ReportExport.ps1", "Tool-PluginEngine.ps1", "Tool-LicenseTimeline.ps1", "Tool-SafetyPolicy.ps1",
     "Tool-Enterprise.ps1", "Tool-EnterpriseCli.ps1", "Tool-EnterpriseHost.ps1", "Tool-EnterpriseAgent.ps1", "enterprise-license-manager.ps1",
     "windows-license-compliance-cleanup.ps1", "windows-license-restore.ps1",
@@ -555,7 +555,7 @@ if (-not (Test-ProtectedToolDirectoryAcl $runtimeDir)) {
 $approvedKmsFile = if (-not [string]::IsNullOrWhiteSpace($env:TOOL_APPROVED_KMS_FILE)) { $env:TOOL_APPROVED_KMS_FILE } else { Join-Path $baseDir "approved-kms-servers.txt" }
 $bundledApprovedKmsFile = Join-Path $baseDir "approved-kms-servers.txt"
 $desktop = [Environment]::GetFolderPath("Desktop")
-$reportRoot = Join-Path $desktop "BaoCao-Tool-Kiem-Tra"
+$reportRoot = Join-Path $desktop "BaoCao-VietLicenSure"
 $uiTypography = Get-ToolUiTypography
 $fontNormal = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTypography.NormalSize, [System.Drawing.FontStyle]::Regular)
 $fontSmall = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTypography.SmallSize, [System.Drawing.FontStyle]::Regular)
@@ -1931,7 +1931,7 @@ function Show-ProductIntroduction {
     $overviewPage.Padding = New-Object System.Windows.Forms.Padding(4)
     [void]$detailTabs.TabPages.Add($overviewPage)
 
-    $officialReleaseUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases"
+    $officialReleaseUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases"
     $aboutBox = New-Object System.Windows.Forms.RichTextBox
     $aboutBox.Dock = "Fill"
     $aboutBox.ReadOnly = $true
@@ -7339,7 +7339,7 @@ section p{margin:6px 0}section li{margin:4px 0}section ul,section ol{padding-lef
 function Open-Guide {
     $selectedGuideFile = if ($script:dashboardCulture -eq "en-US") { $englishGuideFile } else { $guideFile }
     Open-ToolEmbeddedDocument `
-        -SourceFile $selectedGuideFile -FilePrefix "HUONG-DAN-Tool-Kiem-Tra" `
+        -SourceFile $selectedGuideFile -FilePrefix "HUONG-DAN-VietLicenSure" `
         -TitleKey "guide.title" -SubtitleKey "guide.subtitle" -EyebrowKey "guide.eyebrow" -FooterKey "guide.footer" `
         -MissingKey "guide.missing" -ExportingKey "guide.exporting" -ExportingDetailKey "guide.exportingDetail" `
         -ExportedKey "guide.exported" -ExportFailedKey "guide.exportFailed"
@@ -7710,7 +7710,7 @@ function Start-CleanupRestore {
         [System.Windows.Forms.MessageBox]::Show((Get-DashboardText "restore.moduleMissing"), (Get-DashboardText "common.errorTitle"), "OK", "Error") | Out-Null
         return (& $formatRestoreResult "Back")
     }
-    $dataRoot = if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) { [string]$env:TOOL_DATA_ROOT } else { Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6" }
+    $dataRoot = if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) { [string]$env:TOOL_DATA_ROOT } else { Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-VietLicenSure\v4.6" }
     $secureBackupRoot = Join-Path $dataRoot "backups"
     $backupDir = ""
     if (-not [string]::IsNullOrWhiteSpace($BackupDirectory)) {
@@ -8933,7 +8933,7 @@ function Show-ResultActionCenter {
 
 function Show-BackupRestoreCenter {
     $hasPreviousStep = [bool]($script:dashboardDialogStack.Count -gt 0)
-    $dataRoot = if (Get-Command Get-ToolDataRoot -ErrorAction SilentlyContinue) { Get-ToolDataRoot } elseif (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) { [string]$env:TOOL_DATA_ROOT } else { Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6" }
+    $dataRoot = if (Get-Command Get-ToolDataRoot -ErrorAction SilentlyContinue) { Get-ToolDataRoot } elseif (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) { [string]$env:TOOL_DATA_ROOT } else { Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-VietLicenSure\v4.6" }
     $dialog = New-Object System.Windows.Forms.Form
     $dialog.Text = Get-DashboardText "backupCenter.title"
     $dialog.StartPosition = "CenterParent"
@@ -9170,7 +9170,7 @@ function Show-SupportBundlePreview {
     $saveDialog.AddExtension = $true
     $saveDialog.OverwritePrompt = $true
     $saveDialog.InitialDirectory = $desktop
-    $saveDialog.FileName = "Tool-Kiem-Tra-v5.0-Support-$((Get-Date).ToString('yyyyMMdd_HHmmss')).zip"
+    $saveDialog.FileName = "VietLicenSure-v5.0-Support-$((Get-Date).ToString('yyyyMMdd_HHmmss')).zip"
     if ($saveDialog.ShowDialog((Get-DashboardDialogOwner)) -ne [System.Windows.Forms.DialogResult]::OK) { $saveDialog.Dispose(); return }
     $destination = $saveDialog.FileName
     $saveDialog.Dispose()

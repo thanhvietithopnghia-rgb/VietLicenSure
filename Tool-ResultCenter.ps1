@@ -653,8 +653,8 @@ function New-ToolSupportBundle {
     if (-not $destinationDirectoryItem.PSIsContainer -or ($destinationDirectoryItem.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'SupportBundleDestinationUnsafe' }
     if ((Test-Path -LiteralPath $destinationFull) -and -not $AllowOverwrite) { throw 'SupportBundleAlreadyExists' }
 
-    $stage = Join-Path ([IO.Path]::GetTempPath()) ('ToolKiemTra-Support-' + [Guid]::NewGuid().ToString('N'))
-    $temporaryZip = Join-Path ([IO.Path]::GetTempPath()) ('ToolKiemTra-Support-' + [Guid]::NewGuid().ToString('N') + '.zip')
+    $stage = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-Support-' + [Guid]::NewGuid().ToString('N'))
+    $temporaryZip = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-Support-' + [Guid]::NewGuid().ToString('N') + '.zip')
     New-Item -ItemType Directory -Path $stage -ErrorAction Stop | Out-Null
     try {
         $manifestFiles = New-Object System.Collections.Generic.List[object]
@@ -671,7 +671,7 @@ function New-ToolSupportBundle {
             })
         }
         $identityLines = @(
-            'Tool Kiem Tra v5.0',
+            'VietLicenSure v5.0',
             ('Executable SHA-256: ' + $(if ($plan.ExecutableSha256) { $plan.ExecutableSha256 } else { 'Not available' })),
             ('Authenticode status: ' + $plan.SignatureStatus)
         )
@@ -680,11 +680,11 @@ function New-ToolSupportBundle {
             Name='BUILD-IDENTITY.txt'; Kind='BuildIdentity'; Sha256=(Get-ToolResultFileSha256 -Path (Join-Path $stage 'BUILD-IDENTITY.txt')); Length=[int64](Get-Item -LiteralPath (Join-Path $stage 'BUILD-IDENTITY.txt')).Length
         })
         $readme = @(
-            'GOI HO TRO TOOL KIEM TRA v5.0',
+            'GOI HO TRO VIETLICENSURE v5.0',
             'Goi nay chi chua bao cao da duoc danh dau che dinh danh va nhat ky WARN/ERROR da loc lai.',
             'Khong chua truong Data, ma tuong quan, ten may/nguoi dung, duong dan day du, IP, MAC, email hoac khoa san pham nhan dien duoc.',
             '',
-            'TOOL KIEM TRA v5.0 SUPPORT BUNDLE',
+            'VIETLICENSURE v5.0 SUPPORT BUNDLE',
             'This bundle contains only an already-redacted report and a newly sanitized WARN/ERROR log.',
             'Raw Data fields and recognizable identifiers are excluded.'
         )

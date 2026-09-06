@@ -110,7 +110,7 @@ function Write-ToolEnterpriseAgentResultFile {
 }
 
 $created = $false
-$mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.ToolKiemTra.v4.6.EnterpriseAgent", [ref]$created)
+$mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.VietLicenSure.v5.0.EnterpriseAgent", [ref]$created)
 if (-not $created) {
     $mutex.Dispose()
     [Console]::Error.WriteLine((Get-ToolEnterpriseText "enterpriseAgent.error.alreadyRunning"))

@@ -25,7 +25,7 @@ $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ('tool-v500-update-verify-
 try {
     foreach ($name in @(
         'Tool-UpdateManager.ps1', 'Giao-Dien.ps1', 'Tool-OfflinePolicy.ps1', 'Tool-ModuleContract.ps1',
-        'Tool-Kiem-Tra-v5.0-OneFile.cs', 'BUILD.ps1', 'Tool-Strings.vi-VN.json', 'Tool-Strings.en-US.json',
+        'VietLicenSure-v5.0-OneFile.cs', 'BUILD.ps1', 'Tool-Strings.vi-VN.json', 'Tool-Strings.en-US.json',
         'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s'
     )) {
         Assert-UpdateTest (Test-Path -LiteralPath (Join-Path $root $name) -PathType Leaf) "Missing update component: $name"
@@ -37,8 +37,8 @@ try {
     $updateManagerPath = Join-Path $root 'Tool-UpdateManager.ps1'
     . $updateManagerPath -Mode Library -Culture 'vi-VN'
     Assert-UpdateTest ($script:ToolUpdateToolVersion -eq '5.0.0.1') 'Updater foundation version is invalid.'
-    Assert-UpdateTest ($script:ToolUpdateDefaultManifestUrl -eq 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json') 'Stable manifest URL is invalid.'
-    Assert-UpdateTest ($script:ToolUpdateDefaultManifestSignatureUrl -eq 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s') 'Stable manifest signature URL is invalid.'
+    Assert-UpdateTest ($script:ToolUpdateDefaultManifestUrl -eq 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json') 'Stable manifest URL is invalid.'
+    Assert-UpdateTest ($script:ToolUpdateDefaultManifestSignatureUrl -eq 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s') 'Stable manifest signature URL is invalid.'
     $signedFixtureBytes = [IO.File]::ReadAllBytes((Join-Path $root 'software-license-catalog-v1.0.json'))
     $signedFixtureSignature = [IO.File]::ReadAllBytes((Join-Path $root 'software-license-catalog-v1.0.json.p7s'))
     Assert-UpdateTest (Test-ToolUpdateManifestSignature -ContentBytes $signedFixtureBytes -SignatureBytes $signedFixtureSignature) 'Pinned detached-CMS verification rejected a valid signed fixture.'
@@ -55,8 +55,8 @@ try {
         PublishedAtUtc = '2026-08-21T00:00:00Z'
         Title = [pscustomobject]@{ 'vi-VN'='Test release VI'; 'en-US'='Test release' }
         Changes = [pscustomobject]@{ 'vi-VN'=@('Faster scans VI'); 'en-US'=@('Faster scans') }
-        ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1'
-        DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe'
+        ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1'
+        DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe'
         DownloadSha256 = ('A' * 64)
         DownloadSize = 65536
         AuthenticodeRequired = $true
@@ -71,8 +71,8 @@ try {
     $currentManifest = $manifest.PSObject.Copy()
     $currentManifest.LatestVersion = '5.0.0.1'
     $currentManifest.MinimumUpdaterVersion = '4.6.1.0'
-    $currentManifest.ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1'
-    $currentManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe'
+    $currentManifest.ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1'
+    $currentManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe'
     $current = ConvertFrom-ToolUpdateManifest -Manifest $currentManifest -InstalledVersion '5.0.0.1' -SelectedCulture 'en-US'
     Assert-UpdateTest (-not [bool]$current.UpdateAvailable -and -not [bool]$current.SameVersionReplacement) 'The current version without a verified local hash was incorrectly marked as outdated.'
     $sameBuild = ConvertFrom-ToolUpdateManifest -Manifest $currentManifest -InstalledVersion '5.0.0.1' -InstalledSha256 ('A' * 64) -SelectedCulture 'en-US'
@@ -84,16 +84,16 @@ try {
     $olderManifest = $manifest.PSObject.Copy()
     $olderManifest.LatestVersion = '4.6.2.0'
     $olderManifest.MinimumUpdaterVersion = '4.6.1.0'
-    $olderManifest.ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v4.6.2.0'
-    $olderManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v4.6.2.0/Tool-Kiem-Tra-v4.6.exe'
+    $olderManifest.ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v4.6.2.0'
+    $olderManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v4.6.2.0/VietLicenSure-v4.6.exe'
     $older = ConvertFrom-ToolUpdateManifest -Manifest $olderManifest -InstalledVersion '5.0.0.1' -InstalledSha256 ('B' * 64) -SelectedCulture 'vi-VN'
     Assert-UpdateTest (-not [bool]$older.UpdateAvailable) 'An older release was incorrectly offered as a downgrade.'
 
     $upgradeManifest = $manifest.PSObject.Copy()
     $upgradeManifest.LatestVersion = '5.0.0.1'
     $upgradeManifest.MinimumUpdaterVersion = '4.6.2.0'
-    $upgradeManifest.ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1'
-    $upgradeManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe'
+    $upgradeManifest.ReleasePageUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1'
+    $upgradeManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe'
     $upgradeCandidate = ConvertFrom-ToolUpdateManifest -Manifest $upgradeManifest -InstalledVersion '4.6.2.0' -SelectedCulture 'vi-VN'
     Assert-UpdateTest ([bool]$upgradeCandidate.UpdateAvailable -and [bool]$upgradeCandidate.CanSelfUpdate) 'v4.6.2 cannot self-update to v5.0.0.1.'
 
@@ -103,13 +103,13 @@ try {
     Assert-UpdateTest ([bool]$foundationGate.UpdateAvailable -and -not [bool]$foundationGate.CanSelfUpdate) 'MinimumUpdaterVersion did not block an unsupported updater foundation.'
 
     $badManifest = $manifest.PSObject.Copy()
-    $badManifest.DownloadUrl = 'https://example.com/releases/download/v5.0.0.1/Tool-Kiem-Tra-v5.0.exe'
+    $badManifest.DownloadUrl = 'https://example.com/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe'
     Assert-UpdateThrows { ConvertFrom-ToolUpdateManifest -Manifest $badManifest -InstalledVersion '4.8.0.1' | Out-Null } 'A download host outside the allowlist was accepted.'
     $badAssetManifest = $manifest.PSObject.Copy()
-    $badAssetManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.1/Other-Tool.exe'
+    $badAssetManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/Other-Tool.exe'
     Assert-UpdateThrows { ConvertFrom-ToolUpdateManifest -Manifest $badAssetManifest -InstalledVersion '4.8.0.1' | Out-Null } 'A release asset with the wrong executable name was accepted.'
     $badTagManifest = $manifest.PSObject.Copy()
-    $badTagManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v4.8.0.1/Tool-Kiem-Tra-v5.0.exe'
+    $badTagManifest.DownloadUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v4.8.0.1/VietLicenSure-v5.0.exe'
     Assert-UpdateThrows { ConvertFrom-ToolUpdateManifest -Manifest $badTagManifest -InstalledVersion '4.8.0.1' | Out-Null } 'A download URL with the wrong release tag was accepted.'
     $badHashManifest = $manifest.PSObject.Copy()
     $badHashManifest.DownloadSha256 = '1234'
@@ -132,7 +132,7 @@ try {
     Assert-UpdateThrows { ConvertFrom-ToolUpdateManifest -Manifest $unsignedStableManifest -InstalledVersion '4.8.0.1' | Out-Null } 'An unsigned stable update manifest was accepted.'
     Assert-UpdateThrows { Assert-ToolUpdateManifestUri ([uri]($script:ToolUpdateDefaultManifestUrl + '?redirect=1')) | Out-Null } 'A manifest URL with a query was accepted.'
     Assert-UpdateThrows { Assert-ToolUpdateManifestSignatureUri ([uri]($script:ToolUpdateDefaultManifestSignatureUrl + '?redirect=1')) | Out-Null } 'A manifest signature URL with a query was accepted.'
-    Assert-UpdateThrows { Assert-ToolUpdateReleaseUri ([uri]'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.1?x=1') | Out-Null } 'A release URL with a query was accepted.'
+    Assert-UpdateThrows { Assert-ToolUpdateReleaseUri ([uri]'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1?x=1') | Out-Null } 'A release URL with a query was accepted.'
     $badBooleanManifest = $manifest.PSObject.Copy()
     $badBooleanManifest.AuthenticodeRequired = 'false'
     Assert-UpdateThrows { ConvertFrom-ToolUpdateManifest -Manifest $badBooleanManifest -InstalledVersion '4.8.0.1' | Out-Null } 'A string AuthenticodeRequired value was accepted.'
@@ -162,7 +162,7 @@ try {
     $env:TOOL_OFFLINE_MODE = '1'
 
     $stagedPath = Join-Path $temporaryRoot 'staged.exe'
-    $targetPath = Join-Path $temporaryRoot 'Tool-Kiem-Tra-v5.0.exe'
+    $targetPath = Join-Path $temporaryRoot 'VietLicenSure-v5.0.exe'
     $cacheDirectory = Join-Path $temporaryRoot 'install-cache'
     New-Item -ItemType Directory -Path $cacheDirectory | Out-Null
     $newBytes = New-Object byte[] 65536
@@ -216,7 +216,7 @@ try {
     $elevatedBridgeText = Get-Content -LiteralPath (Join-Path $root 'Tool-ElevatedBridge.ps1') -Raw -Encoding UTF8
     Assert-UpdateTest ($elevatedBridgeText.Contains("'application.update.apply' = 'Tool-UpdateManager.ps1'")) 'The elevated bridge does not bind the update apply module to the updater script.'
     Assert-UpdateTest ($elevatedBridgeText.Contains("'TOOL_SELF_UPDATE_ALLOWED'")) 'The elevated bridge does not preserve the self-update build gate.'
-    $launcherText = Get-Content -LiteralPath (Join-Path $root 'Tool-Kiem-Tra-v5.0-OneFile.cs') -Raw -Encoding UTF8
+    $launcherText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
     Assert-UpdateTest ($launcherText.Contains('"Tool-UpdateManager.ps1"') -and $launcherText.Contains('TOOL_LAUNCHER_PID') -and $launcherText.Contains('TOOL_TOOL_VERSION"] = "5.0.0.1"') -and $launcherText.Contains('TOOL_SIGNED_STABLE_BUILD') -and $launcherText.Contains('TOOL_MANAGED_SIGNED_BUILD') -and $launcherText.Contains('TOOL_STORE_BUILD') -and $launcherText.Contains('TOOL_SELF_UPDATE_ALLOWED')) 'Launcher does not embed or pin the v5.0.0.1 update foundation.'
     $buildText = Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8
     Assert-UpdateTest ($buildText.Contains("'Tool-UpdateManager.ps1'") -and $buildText.Contains("'VERIFY-APPLICATION-UPDATE.ps1'") -and $buildText.Contains("'/define:TOOL_SIGNED_STABLE_BUILD'") -and $buildText.Contains("'/define:TOOL_MANAGED_SIGNED_BUILD'") -and $buildText.Contains("'/define:TOOL_STORE_BUILD'")) 'Build does not package or verify the updater.'

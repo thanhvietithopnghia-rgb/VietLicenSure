@@ -17,16 +17,16 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: AssemblyTitle("Công cụ kiểm tra cấu hình máy và bản quyền phần mềm")]
+[assembly: AssemblyTitle("VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống")]
 [assembly: AssemblyDescription("Hỗ trợ người dùng cá nhân và doanh nghiệp - Tác giả phát triển Thanh Việt")]
 [assembly: AssemblyCompany("Thanh Việt")]
-[assembly: AssemblyProduct("Công cụ kiểm tra cấu hình máy và bản quyền phần mềm")]
+[assembly: AssemblyProduct("VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống")]
 [assembly: AssemblyCopyright("Copyright © Thanh Việt 2026")]
 [assembly: AssemblyVersion("5.0.0.1")]
 [assembly: AssemblyFileVersion("5.0.0.1")]
 [assembly: AssemblyInformationalVersion("5.0.0.1")]
 
-namespace ThanhViet.ToolKiemTra
+namespace ThanhViet.VietLicenSure
 {
     internal static class Program
     {
@@ -55,7 +55,7 @@ namespace ThanhViet.ToolKiemTra
         // BUILD.ps1 replaces this exact placeholder from Tool-Provenance.ps1.
         // The repository source deliberately contains no duplicated BuildId.
         private const string OfficialBuildId = "REPLACE_AT_BUILD_FROM_TOOL_PROVENANCE";
-        private const string OfficialVerificationUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest";
+        private const string OfficialVerificationUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest";
 #if TOOL_SIGNED_STABLE_BUILD
         // Only a build that is required to pass Authenticode verification may
         // hand control to the self-updater.  Development artefacts must stay
@@ -108,8 +108,8 @@ namespace ThanhViet.ToolKiemTra
 #endif
             "Giao-Dien.ps1",
             "kiem-tra-cau-hinh-ban-quyen.ps1",
-            "Tool-Kiem-Tra-icon.svg",
-            "Tool-Kiem-Tra.cmd",
+            "VietLicenSure-icon.svg",
+            "VietLicenSure.cmd",
             "Tool-Runtime.ps1",
             "Tool-ElevatedBridge.ps1",
             "Tool-DataLifecycle.ps1",
@@ -169,8 +169,8 @@ namespace ThanhViet.ToolKiemTra
 #endif
             "Giao-Dien.ps1",
             "kiem-tra-cau-hinh-ban-quyen.ps1",
-            "Tool-Kiem-Tra-icon.svg",
-            "Tool-Kiem-Tra.cmd",
+            "VietLicenSure-icon.svg",
+            "VietLicenSure.cmd",
             "Tool-Runtime.ps1",
             "Tool-ElevatedBridge.ps1",
             "Tool-DataLifecycle.ps1",
@@ -593,7 +593,7 @@ namespace ThanhViet.ToolKiemTra
                 AssemblyProductAttribute product = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
                 if (company == null || product == null ||
                     !String.Equals(company.Company, "Thanh Việt", StringComparison.Ordinal) ||
-                    !String.Equals(product.Product, "Công cụ kiểm tra cấu hình máy và bản quyền phần mềm", StringComparison.Ordinal))
+                    !String.Equals(product.Product, "VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống", StringComparison.Ordinal))
                 {
                     failureCode = "ProductMetadataMismatch";
                     return "Modified";
@@ -746,7 +746,7 @@ namespace ThanhViet.ToolKiemTra
         {
             if (!IsExpectedUserDataBase(dataBase, userSid))
                 throw new SecurityException(L("launcher.userDataRepairTargetInvalid"));
-            string productRoot = Path.Combine(dataBase, "ThanhViet-Tool-Kiem-Tra");
+            string productRoot = Path.Combine(dataBase, "ThanhViet-VietLicenSure");
             string protectedRoot = Path.Combine(productRoot, "v4.6");
             CreateProtectedDirectory(productRoot, false, userSid);
             CreateProtectedDirectory(protectedRoot, false, userSid);
@@ -825,13 +825,13 @@ namespace ThanhViet.ToolKiemTra
         {
             switch (mode)
             {
-                case LaunchMode.EnterpriseServer: return "Global\\ThanhViet.ToolKiemTra.v4.6.ServerLauncher";
+                case LaunchMode.EnterpriseServer: return "Global\\ThanhViet.VietLicenSure.v5.0.ServerLauncher";
                 case LaunchMode.EnterpriseAgent:
-                case LaunchMode.EnterpriseAgentForce: return "Global\\ThanhViet.ToolKiemTra.v4.6.AgentLauncher";
-                case LaunchMode.EnterpriseUi: return "Local\\ThanhViet.ToolKiemTra.v4.6.EnterpriseUi";
-                case LaunchMode.LocalLicenseManager: return "Local\\ThanhViet.ToolKiemTra.v4.6.LocalLicenseManager";
-                case LaunchMode.ElevatedModuleBroker: return "Local\\ThanhViet.ToolKiemTra.v5.0.ElevatedModuleBroker";
-                default: return "Local\\ThanhViet.ToolKiemTra.v4.6.Gui";
+                case LaunchMode.EnterpriseAgentForce: return "Global\\ThanhViet.VietLicenSure.v5.0.AgentLauncher";
+                case LaunchMode.EnterpriseUi: return "Local\\ThanhViet.VietLicenSure.v5.0.EnterpriseUi";
+                case LaunchMode.LocalLicenseManager: return "Local\\ThanhViet.VietLicenSure.v5.0.LocalLicenseManager";
+                case LaunchMode.ElevatedModuleBroker: return "Local\\ThanhViet.VietLicenSure.v5.0.ElevatedModuleBroker";
+                default: return "Local\\ThanhViet.VietLicenSure.v5.0.Gui";
             }
         }
 
@@ -844,7 +844,13 @@ namespace ThanhViet.ToolKiemTra
                 "Local\\ThanhViet.ToolKiemTra.v4.4.EnterpriseUi",
                 "Local\\ThanhViet.ToolKiemTra.v4.4.LocalLicenseManager",
                 "Local\\ThanhViet.ToolKiemTra.v4.4.Gui",
-                "Global\\ThanhViet.ToolKiemTra.v4.4.EnterpriseServer"
+                "Global\\ThanhViet.ToolKiemTra.v4.4.EnterpriseServer",
+                "Global\\ThanhViet.ToolKiemTra.v4.6.ServerLauncher",
+                "Global\\ThanhViet.ToolKiemTra.v4.6.AgentLauncher",
+                "Local\\ThanhViet.ToolKiemTra.v4.6.EnterpriseUi",
+                "Local\\ThanhViet.ToolKiemTra.v4.6.LocalLicenseManager",
+                "Local\\ThanhViet.ToolKiemTra.v4.6.Gui",
+                "Local\\ThanhViet.ToolKiemTra.v5.0.ElevatedModuleBroker"
             };
             foreach (string name in legacyMutexNames)
             {
@@ -929,7 +935,7 @@ namespace ThanhViet.ToolKiemTra
                 {
                     string settingsPath = Path.Combine(
                         commonData,
-                        "ThanhViet-Tool-Kiem-Tra",
+                        "ThanhViet-VietLicenSure",
                         "v4.6",
                         "enterprise-network-settings.json");
                     if (File.Exists(settingsPath))
@@ -965,7 +971,7 @@ namespace ThanhViet.ToolKiemTra
                 {
                     string settingsPath = Path.Combine(
                         localAppData,
-                        "ThanhViet-Tool-Kiem-Tra",
+                        "ThanhViet-VietLicenSure",
                         "localization-settings.json");
                     if (File.Exists(settingsPath))
                     {
@@ -1216,9 +1222,9 @@ namespace ThanhViet.ToolKiemTra
                 : Environment.SpecialFolder.LocalApplicationData);
             if (String.IsNullOrWhiteSpace(dataBase))
                 dataBase = Path.GetTempPath();
-            string productRoot = Path.Combine(dataBase, "ThanhViet-Tool-Kiem-Tra");
+            string productRoot = Path.Combine(dataBase, "ThanhViet-VietLicenSure");
             string protectedRoot = Path.Combine(productRoot, "v4.6");
-            string legacyRoot = Path.Combine(productRoot, "v4.4");
+            string legacyRoot = Path.Combine(dataBase, "ThanhViet-Tool-Kiem-Tra", "v4.6");
             string approvedKmsPath = Path.Combine(protectedRoot, "approved-kms-servers.txt");
             string logsDirectory = Path.Combine(protectedRoot, "logs");
             string pluginsDirectory = Path.Combine(protectedRoot, "plugins");

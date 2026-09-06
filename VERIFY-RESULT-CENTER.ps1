@@ -29,7 +29,7 @@ New-Item -ItemType Directory -Path $reportRoot,$backupDirectory,$extractRoot -Fo
 try {
     $previousReport = [pscustomobject][ordered]@{
         SchemaVersion='1.5'; ReportSchemaVersion='1.5'; ReportKind='InventoryAndLicense'; ToolVersion='5.0'
-        ToolName='Tool Kiem Tra'; CreatedAt='2026-08-31T10:00:00+07:00'; Mode='All'; Redacted=$true
+        ToolName='VietLicenSure'; CreatedAt='2026-08-31T10:00:00+07:00'; Mode='All'; Redacted=$true
         WindowsConclusionCode='ActivatedEntitlementUnverified'; WindowsConclusion='Activated; entitlement not verified.'
         OfficeConclusionCode='NotDetected'; OfficeConclusion='Office not detected.'
         DetailedInventory=[pscustomobject][ordered]@{
@@ -44,7 +44,7 @@ try {
     }
     $latestReport = [pscustomobject][ordered]@{
         SchemaVersion='1.5'; ReportSchemaVersion='1.5'; ReportKind='InventoryAndLicense'; ToolVersion='5.0'
-        ToolName='Tool Kiem Tra'; CreatedAt='2026-09-01T10:00:00+07:00'; Mode='All'; Redacted=$true
+        ToolName='VietLicenSure'; CreatedAt='2026-09-01T10:00:00+07:00'; Mode='All'; Redacted=$true
         WindowsConclusionCode='NotLicensed'; WindowsConclusion='Windows is not licensed.'
         OfficeConclusionCode='NotDetected'; OfficeConclusion='Office not detected.'
         DetailedInventory=[pscustomobject][ordered]@{

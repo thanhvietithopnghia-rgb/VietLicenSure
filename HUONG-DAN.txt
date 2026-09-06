@@ -1,10 +1,10 @@
-# Hướng dẫn sử dụng Công cụ kiểm tra cấu hình máy và bản quyền phần mềm
+# Hướng dẫn sử dụng VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
 Phát triển bởi Thanh Việt
 
 ## Tổng quan
 
-Tool Kiểm Tra là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, trạng thái cấp phép Windows và Microsoft Office, phần mềm đã cài cùng các dấu hiệu can thiệp cần xem xét. Tool trình bày bằng chứng kỹ thuật theo từng phạm vi để người dùng phân biệt nội dung bình thường, nội dung chưa đủ dữ liệu và nội dung cần xử lý.
+VietLicenSure là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, trạng thái cấp phép Windows và Microsoft Office, phần mềm đã cài cùng các dấu hiệu can thiệp cần xem xét. Tool trình bày bằng chứng kỹ thuật theo từng phạm vi để người dùng phân biệt nội dung bình thường, nội dung chưa đủ dữ liệu và nội dung cần xử lý.
 
 Quy trình sử dụng gồm bốn bước: chọn phạm vi kiểm tra, đọc kết quả và bằng chứng, chạy thử kế hoạch nếu cần khắc phục, sau đó xác nhận và hậu kiểm. Kiểm tra và báo cáo mặc định chỉ đọc; thao tác thay đổi hệ thống luôn có xem trước, backup, xác nhận và yêu cầu quyền phù hợp.
 
@@ -28,7 +28,7 @@ Tool hoạt động Offline theo mặc định, không tự gửi inventory ho�
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
 
-Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản Stable từ trang chính thức `https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
+Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản Stable từ trang chính thức `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
 
 ## Cách chạy Tool
 
@@ -72,7 +72,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 
 ## Trợ lý Tool
 
-Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến Tool trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm và toàn bộ lịch sử được ghi nhận từ v1.0.0 đến ứng viên kỹ thuật v5.0.0.1 hiện tại; mục đích, cách dùng, kết quả và lưu ý của cả 10 chức năng chính, các lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, catalogue, cập nhật và kết nối Máy chủ/Máy trạm. Toàn bộ Hướng dẫn sử dụng và toàn bộ Lịch sử phiên bản tiếng Việt/Anh đi kèm đều được lập chỉ mục theo từng mục, không chỉ một vài đoạn mẫu hay riêng chức năng OEM.
+Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm và toàn bộ lịch sử được ghi nhận từ v1.0.0 đến bản phát hành kỹ thuật v5.0.0.1 hiện tại; mục đích, cách dùng, kết quả và lưu ý của cả 10 chức năng chính, các lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, catalogue, cập nhật và kết nối Máy chủ/Máy trạm. Toàn bộ Hướng dẫn sử dụng và toàn bộ Lịch sử phiên bản tiếng Việt/Anh đi kèm đều được lập chỉ mục theo từng mục, không chỉ một vài đoạn mẫu hay riêng chức năng OEM.
 
 ### Nút Gửi và Enter
 
@@ -85,7 +85,7 @@ Trợ lý kết hợp kho tri thức có cấu trúc, tài liệu HDSD nhúng v�
 
 ### Đồng bộ tri thức
 
-Trợ lý vẫn dùng được khi Offline trên mọi máy bằng bộ tri thức nền và dữ liệu báo cáo cục bộ của chính máy đó. Sau khi người dùng chủ động cấp quyền Online, Tool chỉ tải `tool-assistant-knowledge-v1.1.json` cùng chữ ký CMS rời từ hai đường dẫn GitHub đã khóa. Tool kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, đúng phạm vi Tool, kích thước, dải phiên bản và chống hạ phiên bản trước khi thay cache; bản hợp lệ trước đó được giữ để khôi phục. Câu hỏi, báo cáo, inventory, đường dẫn, khóa và token không được gửi đi. Phần tri thức cập nhật nằm trong `%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\assistant`, không được nhúng thêm vào EXE; chỉ thư mục cache cục bộ tăng theo giới hạn 2 MiB.
+Trợ lý vẫn dùng được khi Offline trên mọi máy bằng bộ tri thức nền và dữ liệu báo cáo cục bộ của chính máy đó. Sau khi người dùng chủ động cấp quyền Online, Tool chỉ tải `tool-assistant-knowledge-v1.1.json` cùng chữ ký CMS rời từ hai đường dẫn GitHub đã khóa. Tool kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, đúng phạm vi Tool, kích thước, dải phiên bản và chống hạ phiên bản trước khi thay cache; bản hợp lệ trước đó được giữ để khôi phục. Câu hỏi, báo cáo, inventory, đường dẫn, khóa và token không được gửi đi. Phần tri thức cập nhật nằm trong `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, không được nhúng thêm vào EXE; chỉ thư mục cache cục bộ tăng theo giới hạn 2 MiB.
 
 ## Quy trình sử dụng được khuyến nghị
 
@@ -456,7 +456,7 @@ Kết nối này chỉ tải danh mục nhận diện. Công cụ không gửi d
 
 ## Báo cáo và vị trí lưu
 
-- Thư mục duy nhất là `Desktop\BaoCao-Tool-Kiem-Tra`; Tool không tạo thư mục con cho từng lần xuất.
+- Thư mục duy nhất là `Desktop\BaoCao-VietLicenSure`; Tool không tạo thư mục con cho từng lần xuất.
 - HTML tổng quan, PDF chi tiết, JSON/XML và tệp SHA-256 của cùng lần xuất nằm cạnh nhau, dùng cùng tên gốc và dấu thời gian đến mili-giây.
 - Sau khi hoàn tất, công cụ chỉ tự mở HTML tổng quan bằng trình duyệt mặc định. Muốn xem đủ bảng và bằng chứng, chọn **Mở PDF chi tiết** ngay trong HTML; PDF/JSON/XML không tự bật.
 - JSON, XML hoặc CSV dùng cho tích hợp, kiểm toán và phân tích có cấu trúc.

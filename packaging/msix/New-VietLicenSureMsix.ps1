@@ -72,7 +72,7 @@ function New-LogoPng {
         try {
             $format.Alignment = [Drawing.StringAlignment]::Center
             $format.LineAlignment = [Drawing.StringAlignment]::Center
-            $graphics.DrawString('TK', $font, $brush, (New-Object Drawing.RectangleF(0, 0, $Width, $Height)), $format)
+            $graphics.DrawString('VL', $font, $brush, (New-Object Drawing.RectangleF(0, 0, $Width, $Height)), $format)
         } finally {
             $format.Dispose()
             $brush.Dispose()
@@ -102,7 +102,7 @@ function Get-LauncherTrustProfile {
     param([Parameter(Mandatory = $true)][string]$Path)
 
     $assembly = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Path)))
-    $type = $assembly.GetType('ThanhViet.ToolKiemTra.Program', $true)
+    $type = $assembly.GetType('ThanhViet.VietLicenSure.Program', $true)
     $flags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
     $values = [ordered]@{}
     foreach ($name in @('SignedStableBuildMarker','ManagedSignedBuildMarker','StoreBuildMarker','StorePackageName','StorePackageVersion','StorePackagePublisherId','StorePackageFamilyName')) {
@@ -136,6 +136,7 @@ if ([int]$storeIdentity.SchemaVersion -ne 1) { throw 'Unsupported Store identity
 
 $storeProductId = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ProductId'
 $storeReservedName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'ReservedName'
+$storeBrandDisplayName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'BrandDisplayName'
 $storePackageName = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageIdentityName'
 $storePublisher = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackageIdentityPublisher'
 $storePublisherId = Get-RequiredJsonProperty -InputObject $storeIdentity -Name 'PackagePublisherId'
@@ -165,7 +166,7 @@ if ($Mode -eq 'Store') {
     $Publisher = $storePublisher
     $PublisherDisplayName = $storePublisherDisplayName
 } else {
-    if ([string]::IsNullOrWhiteSpace($PackageName)) { $PackageName = 'ThanhViet.ToolKiemTra.Development' }
+    if ([string]::IsNullOrWhiteSpace($PackageName)) { $PackageName = 'ThanhViet.VietLicenSure.Development' }
     if ([string]::IsNullOrWhiteSpace($PublisherDisplayName)) { $PublisherDisplayName = $storePublisherDisplayName }
 }
 if ($PackageName -notmatch '^[A-Za-z0-9.-]{3,50}$') { throw 'PackageName is not valid for an MSIX identity.' }
@@ -230,7 +231,7 @@ if ($Mode -eq 'Development') {
 $staging = Join-Path $output 'staging'
 $assets = Join-Path $staging 'Assets'
 New-Item -ItemType Directory -Path $assets -Force | Out-Null
-Copy-Item -LiteralPath $exe.FullName -Destination (Join-Path $staging 'Tool-Kiem-Tra-v5.0.exe')
+Copy-Item -LiteralPath $exe.FullName -Destination (Join-Path $staging 'VietLicenSure-v5.0.exe')
 
 New-LogoPng -Path (Join-Path $assets 'StoreLogo.png') -Width 50 -Height 50
 New-LogoPng -Path (Join-Path $assets 'Square44x44Logo.png') -Width 44 -Height 44
@@ -240,7 +241,7 @@ New-LogoPng -Path (Join-Path $assets 'Wide310x150Logo.png') -Width 310 -Height 1
 $escapedPackageName = [Security.SecurityElement]::Escape($PackageName)
 $escapedPublisher = [Security.SecurityElement]::Escape($Publisher)
 $escapedPublisherDisplayName = [Security.SecurityElement]::Escape($PublisherDisplayName)
-$escapedProductDisplayName = [Security.SecurityElement]::Escape($storeReservedName)
+$escapedProductDisplayName = [Security.SecurityElement]::Escape($storeBrandDisplayName)
 $escapedDescription = [Security.SecurityElement]::Escape($storeDescription)
 $escapedApplicationDescription = [Security.SecurityElement]::Escape($storeApplicationDescription)
 $elevationCapability = if ($IncludeAllowElevation) { '    <rescap:Capability Name="allowElevation" />' } else { '' }
@@ -266,7 +267,7 @@ $manifest = @"
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26200.0" />
   </Dependencies>
   <Applications>
-    <Application Id="ToolKiemTra" Executable="Tool-Kiem-Tra-v5.0.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="VietLicenSure" Executable="VietLicenSure-v5.0.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="$escapedProductDisplayName"
         Description="$escapedApplicationDescription"
@@ -286,7 +287,7 @@ $elevationCapability
 $manifestPath = Join-Path $staging 'AppxManifest.xml'
 [IO.File]::WriteAllText($manifestPath, $manifest, (New-Object Text.UTF8Encoding($false)))
 
-$packageFileName = if ($Mode -eq 'Development') { 'Tool-Kiem-Tra-v5.0-development.msix' } else { 'Tool-Kiem-Tra-v5.0-store-unsigned.msix' }
+$packageFileName = if ($Mode -eq 'Development') { 'VietLicenSure-v5.0-development.msix' } else { 'VietLicenSure-v5.0-store-unsigned.msix' }
 $packagePath = Join-Path $output $packageFileName
 & $makeAppx pack /d $staging /p $packagePath /o
 if ($LASTEXITCODE -ne 0) { throw "MakeAppx pack failed with exit code $LASTEXITCODE." }
@@ -299,7 +300,7 @@ if ($Mode -eq 'Development') {
     & $signTool verify /pa /v $packagePath
     if ($LASTEXITCODE -ne 0) { throw "SignTool verify failed with exit code $LASTEXITCODE." }
     $signed = $true
-    $developmentCertificatePath = Join-Path $output 'Tool-Kiem-Tra-v5.0-development.cer'
+    $developmentCertificatePath = Join-Path $output 'VietLicenSure-v5.0-development.cer'
     Export-Certificate -Cert $certificate -FilePath $developmentCertificatePath -Type CERT -Force | Out-Null
 }
 
@@ -313,10 +314,10 @@ $unpackedIdentity = $unpackedManifest.Package.Identity
 $unpackedProperties = $unpackedManifest.Package.Properties
 if ([string]$unpackedIdentity.Name -cne $PackageName) { throw 'Packaged identity Name does not match the requested identity.' }
 if ([string]$unpackedIdentity.Publisher -cne $Publisher) { throw 'Packaged identity Publisher does not match the requested identity.' }
-if ([string]$unpackedProperties.DisplayName -cne $storeReservedName) { throw 'Packaged DisplayName does not match the reserved Store name.' }
+if ([string]$unpackedProperties.DisplayName -cne $storeBrandDisplayName) { throw 'Packaged DisplayName does not match the VietLicenSure brand.' }
 if ([string]$unpackedProperties.PublisherDisplayName -cne $PublisherDisplayName) { throw 'Packaged PublisherDisplayName does not match the requested value.' }
 if ([string]$unpackedProperties.Description -cne $storeDescription) { throw 'Packaged Description is not valid UTF-8 Store text.' }
-$packagedExe = Join-Path $unpack 'Tool-Kiem-Tra-v5.0.exe'
+$packagedExe = Join-Path $unpack 'VietLicenSure-v5.0.exe'
 $sourceExeHash = (Get-FileHash -LiteralPath $exe.FullName -Algorithm SHA256).Hash
 $packagedExeHash = (Get-FileHash -LiteralPath $packagedExe -Algorithm SHA256).Hash
 if ($sourceExeHash -cne $packagedExeHash) { throw 'Packaged executable hash does not match source executable.' }
@@ -327,7 +328,8 @@ $report = [ordered]@{
     Mode = $Mode
     StoreProductId = $storeProductId
     StoreIdentityPath = [IO.Path]::GetFullPath($StoreIdentityPath)
-    ProductDisplayName = $storeReservedName
+    ProductDisplayName = $storeBrandDisplayName
+    StoreReservedName = $storeReservedName
     PackageName = $PackageName
     Publisher = $Publisher
     PackagePublisherId = $storePublisherId

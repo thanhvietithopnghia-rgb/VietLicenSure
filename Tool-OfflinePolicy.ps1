@@ -15,7 +15,7 @@ function Get-ToolOfflineSettingsPath {
     $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
     if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [string]$env:LOCALAPPDATA }
     if ([string]::IsNullOrWhiteSpace($localAppData)) { return "" }
-    return Join-Path $localAppData "ThanhViet-Tool-Kiem-Tra\offline-settings.json"
+    return Join-Path $localAppData "ThanhViet-VietLicenSure\offline-settings.json"
 }
 
 function Get-ToolEnterpriseNetworkSettingsPath {
@@ -27,7 +27,7 @@ function Get-ToolEnterpriseNetworkSettingsPath {
         $commonData = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonApplicationData)
         if ([string]::IsNullOrWhiteSpace($commonData)) { $commonData = [string]$env:ProgramData }
         if ([string]::IsNullOrWhiteSpace($commonData)) { return "" }
-        $dataRoot = Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\v4.6"
+        $dataRoot = Join-Path $commonData "ThanhViet-VietLicenSure\v4.6"
     }
     return Join-Path ([IO.Path]::GetFullPath($dataRoot)) "enterprise-network-settings.json"
 }

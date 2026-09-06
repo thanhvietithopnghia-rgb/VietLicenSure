@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
-$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("Tool-Kiem-Tra-v5.0-performance-" + [Guid]::NewGuid().ToString('N'))
+$tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("VietLicenSure-v5.0-performance-" + [Guid]::NewGuid().ToString('N'))
 $previousScanSettingsPath = [string]$env:TOOL_SCAN_SETTINGS_PATH
 
 function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
@@ -238,7 +238,7 @@ try {
         $resolvedTemp = [IO.Path]::GetFullPath($tempRoot)
         $systemTemp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
         if ($resolvedTemp.StartsWith($systemTemp, [StringComparison]::OrdinalIgnoreCase) -and
-            [IO.Path]::GetFileName($resolvedTemp).StartsWith('Tool-Kiem-Tra-v5.0-performance-', [StringComparison]::OrdinalIgnoreCase)) {
+            [IO.Path]::GetFileName($resolvedTemp).StartsWith('VietLicenSure-v5.0-performance-', [StringComparison]::OrdinalIgnoreCase)) {
             Remove-Item -LiteralPath $resolvedTemp -Recurse -Force
         }
     }

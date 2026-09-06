@@ -65,8 +65,8 @@ $maximumInPlaceExecutableBytes = 911024
 $sourceDirectory = $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = Join-Path $sourceDirectory 'dist' }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
-$sourceName = "Tool-Kiem-Tra-v$productVersion-OneFile.cs"
-$applicationManifestName = "Tool-Kiem-Tra-v$productVersion-OneFile.manifest"
+$sourceName = "VietLicenSure-v$productVersion-OneFile.cs"
+$applicationManifestName = "VietLicenSure-v$productVersion-OneFile.manifest"
 $embeddedVerifierName = 'VERIFY-EMBEDDED-PAYLOAD.ps1'
 $peHardeningName = 'PE-HARDENING.ps1'
 
@@ -142,8 +142,8 @@ $payloadFiles = @(
     'OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1',
     'kiem-tra-cau-hinh-ban-quyen.ps1',
-    'Tool-Kiem-Tra-icon.svg',
-    'Tool-Kiem-Tra.cmd',
+    'VietLicenSure-icon.svg',
+    'VietLicenSure.cmd',
     'Tool-Runtime.ps1',
     'Tool-ElevatedBridge.ps1',
     'Tool-DataLifecycle.ps1',
@@ -200,8 +200,8 @@ $integrityFiles = @(
     'OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1',
     'kiem-tra-cau-hinh-ban-quyen.ps1',
-    'Tool-Kiem-Tra-icon.svg',
-    'Tool-Kiem-Tra.cmd',
+    'VietLicenSure-icon.svg',
+    'VietLicenSure.cmd',
     'Tool-Runtime.ps1',
     'Tool-ElevatedBridge.ps1',
     'Tool-DataLifecycle.ps1',
@@ -261,7 +261,7 @@ $sourceFiles = @(
     $payloadFiles
     '.gitattributes'
     '.gitignore'
-    '00-Tool-Kiem-Tra.ico'
+    '00-VietLicenSure.ico'
     'AUDIT-SCOPE-v1.md'
     'BUILD.ps1'
     'CODE-SIGNING-POLICY-v1.md'
@@ -271,6 +271,9 @@ $sourceFiles = @(
     'RELEASE-NOTES-v4.9.md'
     'RELEASE-NOTES-v5.0.md'
     'README.md'
+    'QUICK-START-v5.0.md'
+    'KNOWN-LIMITATIONS-v5.0.md'
+    'RELEASE-HYGIENE-v5.0.md'
     'README-MA-NGUON.md'
     'MODULE-CONTRACT-v1.0.md'
     'REPORT-SCHEMA-v1.5.md'
@@ -327,6 +330,7 @@ $sourceFiles = @(
     'VERIFY-AUTHENTICODE.ps1'
     $peHardeningName
     'VERIFY-RELEASE.ps1'
+    'VERIFY-RELEASE-HYGIENE.ps1'
     'VERIFY-STABLE-READINESS.ps1'
 ) | Select-Object -Unique
 
@@ -489,7 +493,7 @@ function Get-VerificationPowerShell([string]$Architecture) {
 $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }) + @(
     '.gitignore',
     '.github\workflows\client-vm-matrix.yml',
-    '00-Tool-Kiem-Tra.ico',
+    '00-VietLicenSure.ico',
     'AUDIT-SCOPE-v1.md',
     'BUILD.ps1',
     'CODE-SIGNING-POLICY-v1.md',
@@ -499,6 +503,9 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'RELEASE-NOTES-v4.9.md',
     'RELEASE-NOTES-v5.0.md',
     'README.md',
+    'QUICK-START-v5.0.md',
+    'KNOWN-LIMITATIONS-v5.0.md',
+    'RELEASE-HYGIENE-v5.0.md',
     'README-MA-NGUON.md',
     'MODULE-CONTRACT-v1.0.md',
     'REPORT-SCHEMA-v1.5.md',
@@ -554,6 +561,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-AUTHENTICODE.ps1',
     $peHardeningName,
     'VERIFY-RELEASE.ps1',
+    'VERIFY-RELEASE-HYGIENE.ps1',
     'VERIFY-STABLE-READINESS.ps1'
 )
 foreach ($name in ($requiredFiles | Select-Object -Unique)) {
@@ -576,6 +584,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 
 & (Join-Path $sourceDirectory 'VERIFY-NO-SIGNING-SECRETS.ps1') -SourceDirectory $sourceDirectory
 if ($LASTEXITCODE -ne 0) { throw "Phát hiện hoặc không thể loại trừ bí mật code-signing trong cây nguồn, mã thoát: $LASTEXITCODE" }
+
+& (Join-Path $sourceDirectory 'VERIFY-RELEASE-HYGIENE.ps1') -SourceDirectory $sourceDirectory
+if ($LASTEXITCODE -ne 0) { throw "Vệ sinh thương hiệu/phát hành/tài liệu không đạt, mã thoát: $LASTEXITCODE" }
 
 if ($RequireAuthenticode) {
     if ([string]::IsNullOrWhiteSpace($ClientVmSummaryPath) -or [string]::IsNullOrWhiteSpace($IndependentSecurityReviewPath)) {
@@ -670,7 +681,7 @@ if ([string]$softwareCatalogMetadata.CatalogVersion -ne '1.6.3.0' -or
 
 Write-Host '[1/8] Tạo TOOL-SHA256SUMS.txt...'
 $toolManifestLines = @(
-    "# Manifest kiem tra toan ven bo Tool-Kiem-Tra v$productVersion.",
+    "# Manifest kiem tra toan ven bo VietLicenSure v$productVersion.",
     '# approved-kms-servers.txt duoc loai tru vi la tep cau hinh duoc phep tuy chinh.'
 )
 foreach ($name in $integrityFiles) {
@@ -684,7 +695,7 @@ foreach ($name in $integrityFiles) {
 
 Write-Host '[2/8] Tạo SOURCE-SHA256SUMS.txt...'
 $sourceManifestLines = @(
-    "# SHA-256 cua goi ma nguon Tool-Kiem-Tra v$productVersion.",
+    "# SHA-256 cua goi ma nguon VietLicenSure v$productVersion.",
     '# SOURCE-SHA256SUMS.txt va tep build dau ra khong tu liet ke de tranh tham chieu vong.'
 )
 foreach ($name in $sourceFiles) {
@@ -709,13 +720,13 @@ $compiler = Find-CSharpCompiler
 $compilerVersion = (Get-Item -LiteralPath $compiler).VersionInfo.FileVersion
 $payloadListArgument = $payloadFiles -join '|'
 $targets = @(
-    [pscustomobject]@{ Architecture='AnyCPU'; Platform='anycpu'; OutputName="Tool-Kiem-Tra-v$productVersion.exe"; HighEntropy=$true }
+    [pscustomobject]@{ Architecture='AnyCPU'; Platform='anycpu'; OutputName="VietLicenSure-v$productVersion.exe"; HighEntropy=$true }
 )
 $artifactResults = New-Object System.Collections.Generic.List[object]
 $embeddedPayloadResources = New-Object System.Collections.Generic.List[object]
 $payloadCompressionStats = $null
 
-foreach ($staleName in @("Tool-Kiem-Tra-v$productVersion-x64.exe", "Tool-Kiem-Tra-v$productVersion-x86.exe")) {
+foreach ($staleName in @("VietLicenSure-v$productVersion-x64.exe", "VietLicenSure-v$productVersion-x86.exe")) {
     $stalePath = Join-Path $OutputDirectory $staleName
     if (Test-Path -LiteralPath $stalePath -PathType Leaf) { Remove-Item -LiteralPath $stalePath -Force }
 }
@@ -801,7 +812,7 @@ try {
         '/target:winexe',
         "/platform:$($target.Platform)",
         '/deterministic+',
-        "/pathmap:$sourceDirectory=C:\_src\Tool-Kiem-Tra-v5.0",
+        "/pathmap:$sourceDirectory=C:\_src\VietLicenSure-v5.0",
         '/langversion:5',
         '/debug-',
         '/optimize+',
@@ -810,7 +821,7 @@ try {
         '/reference:System.dll',
         '/reference:System.Windows.Forms.dll',
         '/reference:System.Drawing.dll',
-        "/win32icon:$(Join-Path $sourceDirectory '00-Tool-Kiem-Tra.ico')",
+        "/win32icon:$(Join-Path $sourceDirectory '00-VietLicenSure.ico')",
         "/win32manifest:$(Join-Path $sourceDirectory $applicationManifestName)",
         "/out:$outputPath"
     )
@@ -910,7 +921,7 @@ try {
 Write-Host '[5/8] Tạo metadata phát hành...'
 $releaseSidecars = @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
@@ -1004,7 +1015,7 @@ $sbomDocument = [ordered]@{
         tools = @([ordered]@{ vendor = 'Thanh Viet'; name = 'BUILD.ps1'; version = $releaseVersion })
         component = [ordered]@{
             type = 'application'; 'bom-ref' = 'application:tool-kiem-tra'
-            name = 'Tool Kiem Tra'; version = $releaseVersion
+            name = 'VietLicenSure'; version = $releaseVersion
             hashes = @([ordered]@{ alg = 'SHA-256'; content = [string]$primaryArtifact.Sha256 })
             licenses = @([ordered]@{ license = [ordered]@{ name = 'Proprietary' } })
             properties = @(
@@ -1026,7 +1037,7 @@ $releaseManifest = [ordered]@{
     ReleaseBuildDate = $releaseBuildDate
     ReleaseLabel = $releaseLabel
     ReleaseStatus = $releaseStatus
-    PrimaryFileName = "Tool-Kiem-Tra-v$productVersion.exe"
+    PrimaryFileName = "VietLicenSure-v$productVersion.exe"
     RuntimeArchitecture = 'Auto: x64 on Windows 64-bit; x86 on Windows 32-bit'
     Artifacts = $manifestArtifacts
     Sbom = [ordered]@{
@@ -1062,8 +1073,8 @@ $releaseManifest = [ordered]@{
     DashboardMode = 'Modern adaptive WinForms dashboard'
     StartupExecutionLevel = 'asInvoker'
     ElevationPolicy = 'On demand for system changes, application update and enterprise administration'
-    DefaultDataRoot = '%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\v4.6'
-    ElevatedDataRoot = '%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6'
+    DefaultDataRoot = '%LOCALAPPDATA%\ThanhViet-VietLicenSure\v4.6'
+    ElevatedDataRoot = '%ProgramData%\ThanhViet-VietLicenSure\v4.6'
     StartupTheme = 'System'
     DarkMode = 'System-aware Light/Dark preference with persisted explicit override and WCAG-aware palette'
     DpiAwareness = 'PerMonitorV2 -> PerMonitor -> System-aware fallback; Win7 remains supported'
@@ -1087,8 +1098,8 @@ $releaseManifest = [ordered]@{
     ApplicationSelfUpdateAllowed = $applicationSelfUpdateAllowed
     ApplicationUpdateAuthority = $applicationUpdateAuthority
     BundledUpdateManifestChannel = $bundledUpdateManifestChannel
-    ApplicationUpdateManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
-    ApplicationUpdateManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
+    ApplicationUpdateManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json'
+    ApplicationUpdateManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s'
     ApplicationUpdateChoices = @('UpdateNow','Later','DismissForSession')
     ApplicationUpdateDeferral = 'After next completed task or 2 hours; next launch rechecks only when Online is allowed'
     ApplicationUpdateVerification = 'Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback'
@@ -1097,8 +1108,8 @@ $releaseManifest = [ordered]@{
         BuildId = $officialBuildId
         ManifestFile = 'OFFICIAL-PROVENANCE-v1.json'
         SignatureFile = 'OFFICIAL-PROVENANCE-v1.json.p7s'
-        VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build'
-        SourcePolicyId = 'ThanhViet.ToolKiemTra.CommunityControlledSource.v4.9'
+        VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'
+        SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'
         SourceDistribution = 'CommunityControlledSource'
         RuntimeSystemChangePolicy = $(if ($AllowStoreBuild) { 'Microsoft Store package identity and pinned provenance must both verify before system-change actions' } else { 'Official launcher and pinned provenance must both verify before system-change actions' })
     }
@@ -1196,7 +1207,7 @@ $releaseManifest = [ordered]@{
     ProgressUtilities = @('CopyAllLog','OpenReportFolder')
     VersionHistoryPresentation = 'InToolModal'
     ReportFormats = @('HTML','PDF','JSON','XML')
-    ReportOutputRoot = '%USERPROFILE%\Desktop\BaoCao-Tool-Kiem-Tra'
+    ReportOutputRoot = '%USERPROFILE%\Desktop\BaoCao-VietLicenSure'
     ReportPackageLayout = 'One shared Desktop report folder; unique timestamped files stay together without per-scan subfolders'
     ReportAutoOpenPolicy = 'Open HTML only after a completed export'
     LicenseConclusionPolicy = 'Activation is separated from entitlement; KMS and intervention conclusions require direct evidence'
@@ -1275,14 +1286,14 @@ $releaseManifest = [ordered]@{
     DataSchemaVersion = '2.0'
     DataProducerVersion = $releaseVersion
     DataStorageGeneration = 'v4.6'
-    LegacyDataStorageGeneration = 'v4.4'
+    LegacyDataStorageGeneration = 'v4.6'
     DataMigrationPolicy = 'Verified staging copy + transactional commit + rollback'
-    DataConcurrencyPolicy = 'Separate v4.6 write root; launcher blocks detected v4.4/v4.5 mutexes before migration'
-    LegacyReadOnlyRoots = @('%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.4\logs','%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.4\backups')
-    PersistentLogRoot = '%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\v4.6\logs (standard UI); %ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6\logs (elevated modes)'
-    PersistentPluginRoot = '%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6\plugins'
-    PersistentTimelineRoot = '%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6\timeline'
-    PersistentEnterpriseRoot = '%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6\enterprise'
+    DataConcurrencyPolicy = 'Separate VietLicenSure v4.6 write root; launcher blocks detected legacy-brand v4.4/v4.6 mutexes before migration'
+    LegacyReadOnlyRoots = @('%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6\logs','%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6\backups')
+    PersistentLogRoot = '%LOCALAPPDATA%\ThanhViet-VietLicenSure\v4.6\logs (standard UI); %ProgramData%\ThanhViet-VietLicenSure\v4.6\logs (elevated modes)'
+    PersistentPluginRoot = '%ProgramData%\ThanhViet-VietLicenSure\v4.6\plugins'
+    PersistentTimelineRoot = '%ProgramData%\ThanhViet-VietLicenSure\v4.6\timeline'
+    PersistentEnterpriseRoot = '%ProgramData%\ThanhViet-VietLicenSure\v4.6\enterprise'
     CompilerFileVersion = [string]$compilerVersion
     DeterministicManagedBuild = $true
     DeterministicScope = 'Unsigned managed image; Authenticode intentionally changes final bytes when enabled.'
@@ -1361,8 +1372,8 @@ $applicationUpdateManifest = [ordered]@{
             'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
     }
-    ReleasePageUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v$releaseVersion"
-    DownloadUrl = "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v$releaseVersion/$($primaryArtifact.FileName)"
+    ReleasePageUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v$releaseVersion"
+    DownloadUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v$releaseVersion/$($primaryArtifact.FileName)"
     DownloadSha256 = [string]$primaryArtifact.Sha256
     DownloadSize = [int64](Get-Item -LiteralPath $primaryArtifactPath).Length
     AuthenticodeRequired = $updateAuthenticodeRequired
@@ -1421,7 +1432,7 @@ $infoLines = @(
     "Release build date: $releaseBuildDate",
     "Release label: $releaseLabel",
     "Release status: $releaseStatus.",
-    "Tep chay duy nhat: Tool-Kiem-Tra-v$productVersion.exe",
+    "Tep chay duy nhat: VietLicenSure-v$productVersion.exe",
     "SHA-256: $($primaryArtifact.Sha256)",
     'AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.',
     'Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.',
@@ -1483,7 +1494,7 @@ $infoLines = @(
     'Sau hau kiem, hang doi phan mem khac chi con bang chung activator/can thiep; Unverified don thuan khong quay lai, tep activator doc lap co candidate cach ly thu cong va kho backup bi loai tru.',
     'HashMismatch duoc tach thanh IntegrityCompromised: tep bi sua/hong nhung khong tu ket luan quyen su dung khong chinh hang.',
     'Phan mem he thong/mac dinh an khoi bang chinh, co link mo phu luc trong HTML va hien day du trong PDF/JSON chi tiet.',
-    'Moi bao cao nam truc tiep trong Desktop\BaoCao-Tool-Kiem-Tra, khong tao thu muc con; ten tep co mili-giay va HTML link dung PDF.',
+    'Moi bao cao nam truc tiep trong Desktop\BaoCao-VietLicenSure, khong tao thu muc con; ten tep co mili-giay va HTML link dung PDF.',
     'PDF tach bang rong thanh tong quan/bang chung, mo chi tiet khi in, lap header va tranh cat dong/hang qua trang.',
     'Enterprise nhan IP:port, tu do khi de trong, chan doan endpoint/TCP/service/protocol/version va quet Neighbor-ARP/ICMP/TCP.',
     'Enterprise server cau hinh va hau kiem URLACL/Firewall qua UAC; chi bao da khoi dong sau heartbeat/diagnostic, agent chi bao da gui sau tep ket qua xac nhan.',
@@ -1506,7 +1517,7 @@ $infoLines = @(
 
 $releaseHashFiles = @($targets.OutputName) + @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
@@ -1520,7 +1531,7 @@ if (Test-Path -LiteralPath (Join-Path $OutputDirectory $provenanceSignatureName)
 if (Test-Path -LiteralPath $outputUpdateSignaturePath -PathType Leaf) {
     $releaseHashFiles += 'update-manifest-v1.json.p7s'
 }
-$releaseHashLines = @("# SHA-256 goi phat hanh Tool-Kiem-Tra v$productVersion.")
+$releaseHashLines = @("# SHA-256 goi phat hanh VietLicenSure v$productVersion.")
 foreach ($name in $releaseHashFiles) {
     $releaseHashLines += "$(Get-Sha256Hex (Join-Path $OutputDirectory $name))  $name"
 }
@@ -1561,12 +1572,12 @@ if (-not $SkipVerification) {
         -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowManagedSignedManifest:$AllowManagedSignedBuild -AllowStoreManifest:$AllowStoreBuild
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-RELEASE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     if ($requiresSignedArtifact) {
-        & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "Tool-Kiem-Tra-v$productVersion.exe") -RequireTimestamp
+        & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "VietLicenSure-v$productVersion.exe") -RequireTimestamp
         if ($LASTEXITCODE -ne 0) { throw "VERIFY-AUTHENTICODE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
         & (Join-Path $sourceDirectory 'VERIFY-CODE-SIGNING-READINESS.ps1') `
             -CertificateThumbprint $normalizedStableSignerThumbprint `
             -StoreLocation $SigningCertificateStore `
-            -ArtifactPath (Join-Path $OutputDirectory "Tool-Kiem-Tra-v$productVersion.exe") `
+            -ArtifactPath (Join-Path $OutputDirectory "VietLicenSure-v$productVersion.exe") `
             -AllowManagedSelfSigned:$AllowManagedSignedBuild
         if ($LASTEXITCODE -ne 0) { throw "VERIFY-CODE-SIGNING-READINESS.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     }

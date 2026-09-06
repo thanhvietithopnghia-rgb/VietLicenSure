@@ -34,11 +34,12 @@ if ($errors.Count -eq 0) {
     if (Test-ToolAssistantKnowledgeSignature -ContentBytes $tamperedBytes -SignatureBytes $signatureBytes) {
         Add-AssistantVerificationError 'Detached signature accepted tampered knowledge bytes.'
     }
-    $legacyKnowledge = ((Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) -replace '"KnowledgeVersion"\s*:\s*"1\.7\.0"', '"KnowledgeVersion": "1.3.2"') | ConvertFrom-Json
+    $legacyKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
+    $legacyKnowledge.KnowledgeVersion = '1.3.2'
     if (Test-ToolAssistantKnowledge -Knowledge $legacyKnowledge) { Add-AssistantVerificationError 'An obsolete cached knowledge file was not rejected.' }
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
-    $compatibleFutureKnowledge.KnowledgeVersion = '1.7.1'
-    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-09-06T05:16:55Z'
+    $compatibleFutureKnowledge.KnowledgeVersion = '1.9.1'
+    $compatibleFutureKnowledge.UpdatedAtUtc = '2026-09-06T11:14:26Z'
     $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.1'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
         Add-AssistantVerificationError 'A newer signed-compatible knowledge version cannot evolve independently of the EXE.'
@@ -133,6 +134,8 @@ if ($errors.Count -eq 0) {
         @{ Question='ẩn pm hệ thống trong pdf'; Entry='software-system-filter' }
         @{ Question='tự tìm máy chủ khi ô ip trống'; Entry='enterprise-discovery' }
         @{ Question='hash mismatch có phải bản quyền lậu không'; Entry='integrity-compromised' }
+        @{ Question='ý nghĩa tên VietLicenSure là gì'; Entry='brand-name' }
+        @{ Question='why is it named VietLicenSure'; Entry='brand-name' }
         @{ Question='phiên bản hiện tại của tool'; Entry='tool-version' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Entry='first-release' }
         @{ Question='phien ban dau tien ngay may tool'; Entry='first-release' }
@@ -209,7 +212,7 @@ if ($errors.Count -eq 0) {
         @{ Question='khong the xac minh ban quyen la gi'; Expected='CHƯA XÁC ĐỊNH' },
         @{ Question='che do ofline hoat dong sao'; Expected='Offline' },
         @{ Question='tool co can api codex khong'; Expected='tri thức cục bộ' },
-        @{ Question='bao cao luu o dau'; Expected='BaoCao-Tool-Kiem-Tra' },
+        @{ Question='bao cao luu o dau'; Expected='BaoCao-VietLicenSure' },
         @{ Question='doc bao cao'; Expected='bốn lớp' },
         @{ Question='chua du bang chung'; Expected='kiểm tra thủ công' },
         @{ Question='cach dung chuc nang so 8'; Expected='Doanh nghiệp' },
@@ -365,8 +368,8 @@ if ($errors.Count -eq 0) {
     $currentCompareVi = Get-ToolAssistantAnswer -Question 'bản hiện tại so với v4.9' -Culture 'vi-VN' -Knowledge $knowledge
     $currentCompareEn = Get-ToolAssistantAnswer -Question 'compare v4.9 with the current version' -Culture 'en-US' -Knowledge $knowledge
     $futureMissing = Get-ToolAssistantAnswer -Question 'v5.0.0.2 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
-    if ($currentVi -notmatch 'v5\.0\.0\.1.*ứng viên kỹ thuật hiện tại' -or $currentVi -notmatch 'toàn bộ chức năng' -or
-        $currentEn -notmatch 'v5\.0\.0\.1.*current technical candidate' -or $currentEn -notmatch 'every documented Tool function' -or
+    if ($currentVi -notmatch 'v5\.0\.0\.1.*bản phát hành kỹ thuật' -or $currentVi -notmatch 'toàn bộ chức năng' -or
+        $currentEn -notmatch 'v5\.0\.0\.1.*technical release' -or $currentEn -notmatch 'every documented Tool function' -or
         $currentAliasVi -notmatch 'v5\.0\.0\.1' -or $currentAliasEn -notmatch 'v5\.0\.0\.1' -or
         $latestAliasVi -notmatch 'v5\.0\.0\.1' -or $latestAliasEn -notmatch 'v5\.0\.0\.1' -or
         $bareLatestEn -notmatch 'v5\.0\.0\.1' -or
@@ -585,13 +588,13 @@ if ($errors.Count -eq 0) {
     if ($cookingOutside -notmatch 'nấu ăn.*ngoài phạm vi' -or $weatherOutside -notmatch 'Thời tiết.*ngoài phạm vi' -or $cookingOutside -eq $weatherOutside) {
         Add-AssistantVerificationError 'Out-of-scope replies are not adapted to their question context.'
     }
-    if ($relatedUnknown -match 'không liên quan đến Tool|không thuộc Tool Kiểm Tra|ngoài phạm vi Tool') {
+    if ($relatedUnknown -match 'không liên quan đến Tool|không thuộc VietLicenSure|ngoài phạm vi Tool') {
         Add-AssistantVerificationError 'A Tool-related question was incorrectly rejected as out of scope.'
     }
     $scopeInjectionKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
     $scopeInjectionKnowledge.Entries[0].Keywords = @($scopeInjectionKnowledge.Entries[0].Keywords) + @('cach nau bun bo hue')
     $scopeGuardedAnswer = Get-ToolAssistantAnswer -Question 'cách nấu bún bò huế' -Culture 'vi-VN' -Knowledge $scopeInjectionKnowledge
-    if ($scopeGuardedAnswer -notmatch 'ngoài phạm vi Tool') {
+    if ($scopeGuardedAnswer -notmatch 'ngoài phạm vi VietLicenSure') {
         Add-AssistantVerificationError 'A high-scoring injected keyword bypassed the Tool-only scope gate.'
     }
 
@@ -807,8 +810,8 @@ if ($errors.Count -eq 0) {
     }
     $expectedScopeVi = 'Hỗ trợ giải đáp các câu hỏi trong phạm vi Tool dựa trên dữ liệu cục bộ sẵn có.'
     $expectedScopeEn = "Supports questions within the Tool's scope using available local data."
-    $expectedWelcomeVi = 'Trợ lý Tool hỗ trợ tra cứu, giải đáp và hướng dẫn các nội dung thuộc phạm vi Tool Kiểm Tra dựa trên kho tri thức, tài liệu hướng dẫn và dữ liệu báo cáo hiện có.'
-    $expectedWelcomeEn = "Tool Assistant supports lookup, answers, and guidance for content within Tool Kiem Tra's scope, based on its knowledge base, user guides, and available report data."
+    $expectedWelcomeVi = 'Trợ lý Tool hỗ trợ tra cứu, giải đáp và hướng dẫn các nội dung thuộc phạm vi VietLicenSure dựa trên kho tri thức, tài liệu hướng dẫn và dữ liệu báo cáo hiện có.'
+    $expectedWelcomeEn = "Tool Assistant supports lookup, answers, and guidance for content within VietLicenSure's scope, based on its knowledge base, user guides, and available report data."
     if ((Get-ToolAssistantUiText -Key Scope -Culture 'vi-VN') -ne $expectedScopeVi -or
         (Get-ToolAssistantUiText -Key Scope -Culture 'en-US') -ne $expectedScopeEn -or
         (Get-ToolAssistantUiText -Key Welcome -Culture 'vi-VN') -ne $expectedWelcomeVi -or

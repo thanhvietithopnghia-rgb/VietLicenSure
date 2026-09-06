@@ -12,7 +12,7 @@ function Get-ToolScanSettingsPath {
     }
     $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
     if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [IO.Path]::GetTempPath() }
-    return (Join-Path (Join-Path $localAppData "ThanhViet-Tool-Kiem-Tra") "scan-settings.json")
+    return (Join-Path (Join-Path $localAppData "ThanhViet-VietLicenSure") "scan-settings.json")
 }
 
 function Test-ToolPathWithinRoot {

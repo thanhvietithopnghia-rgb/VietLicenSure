@@ -29,7 +29,7 @@ try {
 } catch { Write-Host $_.Exception.Message; exit 12 }
 $ErrorActionPreference = "Continue"
 $releaseVersion = "5.0.0.1"
-if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra" }
+if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-VietLicenSure" }
 $strictPattern = "(?i)(kmspico|kmsauto(?:s|[\s._-]*(?:net|lite|portable|plus|\+\+))?|auto[\s._-]*kms|autokms|kms[\s._-]*(?:38|vl(?:[\s._-]*all)?)|kms-r|aact(?:[\s._-]*(?:network|portable))?|sppextcomobj(?:patcher|hook)|spp[\s._-]*(?:hook|patcher)|microsoft[\s_-]+toolkit|hwidgen|\bmassgrave\b|mas[\s._-]*aio|tsforge|ohook)"
 $includeWindows = [bool]($Scope -in @("All", "Windows"))
 $includeOffice = [bool]($Scope -in @("All", "Office"))
@@ -118,7 +118,7 @@ function Get-SecureBackupRoot {
     if ([string]::IsNullOrWhiteSpace($versionRoot)) {
         $commonData = [Environment]::GetFolderPath("CommonApplicationData")
         if ([string]::IsNullOrWhiteSpace($commonData)) { throw (Get-BackupText "backupReport.programDataUnknown") }
-        $versionRoot = Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\v4.6"
+        $versionRoot = Join-Path $commonData "ThanhViet-VietLicenSure\v4.6"
     }
     $versionRoot = [IO.Path]::GetFullPath($versionRoot)
     $productRoot = Split-Path -Parent $versionRoot

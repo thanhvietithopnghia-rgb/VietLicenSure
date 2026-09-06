@@ -71,7 +71,7 @@ try {
 
 $ErrorActionPreference = "Continue"
 $releaseVersion = "5.0.0.1"
-if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra" }
+if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-VietLicenSure" }
 if ([string]::IsNullOrWhiteSpace($ApprovedKmsServerFile)) { $ApprovedKmsServerFile = Join-Path $PSScriptRoot "approved-kms-servers.txt" }
 $script:StrictActivatorPattern = "(?i)(\bkmspico\b|\bkmsauto(?:s|[\s._-]*(?:net|lite|portable|plus|\+\+))?\b|\bauto[\s._-]*kms\b|\bautokms\b|\bkms[\s._-]*38\b|\bkms[\s._-]*vl(?:[\s._-]*all)?\b|\bkms-r\b|\baact(?:[\s._-]*(?:network|portable))?\b|\bsppextcomobj(?:patcher|hook)\b|\bspp[\s._-]*(?:hook|patcher)\b|\bmicrosoft[\s_-]+toolkit\b|\bhwidgen\b|\bmassgrave\b|\bmas[\s._-]*(?:aio|all[\s._-]*in[\s._-]*one|activat(?:ion|or)|hwid|kms|ohook|tsforge)\b|\bpmas(?:[\s._-]*(?:aio|all[\s._-]*in[\s._-]*one|activat(?:ion|or)|hwid|kms|ohook|tsforge))?\b|\bmicrosoft[\s._-]*activation[\s._-]*scripts?\b|\bactivation[\s._-]*program[\s._-]*(?:v(?:ersion)?[\s._-]*)?1(?:\.|\s+|[_-])17\b|\btsforge\b|\bohook\b)"
 $script:StrictActivationCommandPattern = '(?i)(?<![a-z0-9.-])(?:https?://)?erturk-dev\.netlify\.app/run(?:[/?#][^\s''"|]*)?(?![a-z0-9._-])'
@@ -209,7 +209,7 @@ function Get-SecureBackupRoot {
     if ([string]::IsNullOrWhiteSpace($versionRoot)) {
         $commonData = [Environment]::GetFolderPath("CommonApplicationData")
         if ([string]::IsNullOrWhiteSpace($commonData)) { throw (Get-CleanupText "backupReport.programDataUnknown") }
-        $versionRoot = Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\v4.6"
+        $versionRoot = Join-Path $commonData "ThanhViet-VietLicenSure\v4.6"
     }
     $versionRoot = [IO.Path]::GetFullPath($versionRoot)
     $productRoot = Split-Path -Parent $versionRoot
@@ -1813,7 +1813,7 @@ function Test-ThirdPartyArtifactPath {
         Join-Path ([string]$env:TOOL_DATA_ROOT) 'backups'
     } else {
         $commonData = [Environment]::GetFolderPath('CommonApplicationData')
-        if ($commonData) { Join-Path $commonData 'ThanhViet-Tool-Kiem-Tra\v4.6\backups' } else { '' }
+        if ($commonData) { Join-Path $commonData 'ThanhViet-VietLicenSure\v4.6\backups' } else { '' }
     }
     if ($backupRoot) {
         try {
@@ -5693,7 +5693,7 @@ function Get-DryRunRemediationPlan {
     if ($expanded.Count -gt 0) {
         $plannedDataRoot = [string]$env:TOOL_DATA_ROOT
         if ([string]::IsNullOrWhiteSpace($plannedDataRoot)) {
-            $plannedDataRoot = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'ThanhViet-Tool-Kiem-Tra\v4.6'
+            $plannedDataRoot = Join-Path ([Environment]::GetFolderPath('CommonApplicationData')) 'ThanhViet-VietLicenSure\v4.6'
         }
         $order++
         $plan.Add([pscustomobject][ordered]@{

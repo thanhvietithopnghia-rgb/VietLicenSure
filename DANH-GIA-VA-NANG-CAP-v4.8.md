@@ -1,4 +1,6 @@
-# Đánh giá và nâng cấp đến v4.8
+# Đánh giá và nâng cấp — mốc v4.8
+
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các bài học còn hiệu lực được duy trì làm đầu vào cải tiến cho VietLicenSure v5.0.0.1, không phải báo cáo nghiệm thu bản hiện tại.
 
 ## Kết quả
 

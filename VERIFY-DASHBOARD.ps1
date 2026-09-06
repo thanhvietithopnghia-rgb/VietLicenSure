@@ -101,8 +101,8 @@ if ($text -match '[$]startupSoftwareCatalog\s*=\s*Get-ToolSoftwareLicenseCatalog
     Add-Failure 'Dashboard vẫn xác minh toàn bộ catalog trước khi hiện cửa sổ.'
 }
 Assert-SourcePattern $text 'Resolve-ToolScanPlan\s+-Profile\s+[$]profile' 'Hộp phạm vi quét không còn xác thực lựa chọn bằng Resolve-ToolScanPlan.'
-Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases"' 'Nút Giới thiệu chưa dùng trang Releases cố định, nơi luôn hiển thị bản mới nhất ở đầu.'
-if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/(?:latest|tag/)') {
+Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/VietLicenSure/releases"' 'Nút Giới thiệu chưa dùng trang Releases cố định, nơi luôn hiển thị bản mới nhất ở đầu.'
+if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/VietLicenSure/releases/(?:latest|tag/)') {
     Add-Failure 'Nút Giới thiệu đang trỏ tới alias/tag riêng thay vì trang Releases cố định.'
 }
 Assert-SourcePattern $text 'System\.Windows\.Forms' 'Dashboard không còn nền WinForms.'
@@ -372,7 +372,7 @@ foreach ($themePattern in @(
 )) {
     if ($themeText -notmatch $themePattern) { Add-Failure "Theme dùng chung thiếu action style/icon: $themePattern" }
 }
-$manifestText = Get-Content -LiteralPath (Join-Path $root 'Tool-Kiem-Tra-v5.0-OneFile.manifest') -Raw -Encoding UTF8
+$manifestText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.manifest') -Raw -Encoding UTF8
 if ($manifestText -notmatch '<dpiAware[^>]*>true/pm</dpiAware>' -or
     $manifestText -notmatch '<dpiAwareness[^>]*>PerMonitorV2,PerMonitor,System</dpiAwareness>') {
     Add-Failure 'Manifest thiếu DPI awareness tương thích Windows 7 và PerMonitorV2 trên Windows mới.'
@@ -388,7 +388,7 @@ foreach ($dpiPattern in @(
 
 $previousTheme = [string]$env:TOOL_UI_THEME
 $previousThemeSettingsPath = [string]$env:TOOL_UI_THEME_SETTINGS_PATH
-$themeSettingsFixture = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Kiem-Tra-theme-' + [Guid]::NewGuid().ToString('N') + '.json')
+$themeSettingsFixture = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-theme-' + [Guid]::NewGuid().ToString('N') + '.json')
 try {
     $env:TOOL_UI_THEME_SETTINGS_PATH = $themeSettingsFixture
     Remove-Item Env:TOOL_UI_THEME -ErrorAction SilentlyContinue
@@ -827,13 +827,13 @@ if ([string]$viCatalog.'app.language.vi' -ne 'Tiếng Việt' -or
     [string]$enCatalog.'app.language.en' -ne 'English') {
     Add-Failure 'Catalog thiếu hai lựa chọn ngôn ngữ Tiếng Việt/English.'
 }
-if ([string]$viCatalog.'app.title' -ne 'CÔNG CỤ KIỂM TRA CẤU HÌNH MÁY VÀ BẢN QUYỀN PHẦN MỀM' -or
+if ([string]$viCatalog.'app.title' -ne 'VIETLICENSURE - PHẦN MỀM KIỂM TRA VÀ QUẢN LÝ BẢN QUYỀN HỆ THỐNG' -or
     [string]$viCatalog.'app.developer' -ne 'Hỗ trợ người dùng cá nhân và doanh nghiệp' -or
     [string]$viCatalog.'dashboard.sidebar.brand' -ne 'TOOL' -or
     [string]$viCatalog.'dashboard.sidebar.edition' -ne 'KIỂM TRA MÁY TÍNH' -or
     [string]$viCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Việt" -or
     [string]$enCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Viet" -or
-    [string]$enCatalog.'app.title' -ne 'COMPUTER CONFIGURATION AND SOFTWARE LICENSE CHECK TOOL') {
+    [string]$enCatalog.'app.title' -ne 'VIETLICENSURE - SYSTEM LICENSE INSPECTION AND MANAGEMENT SOFTWARE') {
     Add-Failure 'Tên sản phẩm chưa đúng phạm vi hỗ trợ cá nhân và doanh nghiệp.'
 }
 Assert-SourcePattern $text 'function\s+Toggle-DashboardOfflineMode' 'Dashboard thiếu điều khiển Offline.'
@@ -957,8 +957,8 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch 'Tool Kiểm Tra v5\.0' -or
-        $historyText -notmatch '(?m)^##\s+Tool Kiểm Tra v5\.0\s+—\s+06/09/2026\s*$' -or
+    if ($historyText -notmatch 'VietLicenSure v5\.0' -or
+        $historyText -notmatch '(?m)^##\s+VietLicenSure v5\.0\s+—\s+06/09/2026\s*$' -or
         $historyText -notmatch 'là bản nâng cấp tiếp theo của v4\.9, tập trung nâng cấp vào các phần cốt lõi' -or
         $historyText -notmatch 'Ba mức quét Quick, Standard và Deep' -or
         $historyText -notmatch 'Offline theo mặc định' -or
@@ -966,7 +966,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
     }
     $requiredHistoryHeadings = @(
-        '## Tool Kiểm Tra v5.0 — 06/09/2026',
+        '## VietLicenSure v5.0 — 06/09/2026',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -1018,7 +1018,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## Tool Kiểm Tra v5.0 — September 6, 2026',
+        '## VietLicenSure v5.0 — September 6, 2026',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',

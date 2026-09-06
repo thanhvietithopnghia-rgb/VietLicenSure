@@ -10,7 +10,7 @@ function Fail([string]$Message) { [void]$failures.Add($Message) }
 $offlinePath = Join-Path $root "Tool-OfflinePolicy.ps1"
 $localizationPath = Join-Path $root "Tool-Localization.ps1"
 $reportExportPath = Join-Path $root "Tool-ReportExport.ps1"
-foreach ($name in @("Tool-OfflinePolicy.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-ReportExport.ps1", "Giao-Dien.ps1", "enterprise-license-manager.ps1", "windows-office-license-manager.ps1", "Tool-Kiem-Tra-v5.0-OneFile.cs")) {
+foreach ($name in @("Tool-OfflinePolicy.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-ReportExport.ps1", "Giao-Dien.ps1", "enterprise-license-manager.ps1", "windows-office-license-manager.ps1", "VietLicenSure-v5.0-OneFile.cs")) {
     if (-not (Test-Path -LiteralPath (Join-Path $root $name) -PathType Leaf)) { Fail "Thiếu $name." }
 }
 
@@ -56,7 +56,7 @@ if ($failures.Count -eq 0) {
         }
 
         if ((Get-ToolCulture) -ne "vi-VN") { Fail "Ngôn ngữ mặc định không phải vi-VN." }
-        if ((Get-ToolText -Key "app.title" -Culture "en-US") -ne "COMPUTER CONFIGURATION AND SOFTWARE LICENSE CHECK TOOL") { Fail "Catalog en-US không hoạt động." }
+        if ((Get-ToolText -Key "app.title" -Culture "en-US") -ne "VIETLICENSURE - SYSTEM LICENSE INSPECTION AND MANAGEMENT SOFTWARE") { Fail "Catalog en-US không hoạt động." }
         if (-not (Set-ToolCulturePreference -Culture "en-US") -or (Get-ToolCulture) -ne "en-US") { Fail "Không lưu được en-US." }
         $missing = Get-ToolText -Key "key.does.not.exist" -Culture "en-US"
         if ($missing -ne "[key.does.not.exist]") { Fail "Fallback key ngôn ngữ không xác định sai." }
@@ -92,7 +92,7 @@ if ($failures.Count -eq 0) {
         if ($enterpriseUiText -match 'Mục 8 vẫn giữ nguyên đủ 3 chức năng.+v4\.2\.0\.8') {
             Fail "Enterprise UI vẫn còn câu cảnh báo Mục 8 mà người dùng yêu cầu bỏ."
         }
-        $launcherText = Get-Content -LiteralPath (Join-Path $root "Tool-Kiem-Tra-v5.0-OneFile.cs") -Raw -Encoding UTF8
+        $launcherText = Get-Content -LiteralPath (Join-Path $root "VietLicenSure-v5.0-OneFile.cs") -Raw -Encoding UTF8
         if ($launcherText -match 'mode\s*==\s*LaunchMode\.EnterpriseUi\s*\|\|\s*mode\s*==\s*LaunchMode\.EnterpriseServer' -or
             $launcherText -notmatch 'ResolveEnterpriseNetworkAllowed' -or
             $launcherText -notmatch 'TOOL_ENTERPRISE_NETWORK_ALLOWED') {

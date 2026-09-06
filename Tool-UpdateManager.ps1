@@ -18,11 +18,11 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $script:ToolUpdateSchemaVersion = '1.0'
 $script:ToolUpdateToolVersion = '5.0.0.1'
-$script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json'
-$script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/update-manifest-v1.json.p7s'
+$script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json'
+$script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s'
 $script:ToolUpdateManifestHost = 'raw.githubusercontent.com'
 $script:ToolUpdateDownloadHosts = @('github.com','release-assets.githubusercontent.com','objects.githubusercontent.com')
-$script:ToolUpdateRepositoryPath = '/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/'
+$script:ToolUpdateRepositoryPath = '/thanhvietithopnghia-rgb/VietLicenSure/'
 $script:ToolUpdateMaximumManifestBytes = 131072
 $script:ToolUpdateMaximumSignatureBytes = 65536
 $script:ToolUpdateMaximumExecutableBytes = 104857600
@@ -276,7 +276,7 @@ function ConvertFrom-ToolUpdateManifest {
     $releaseUri = Assert-ToolUpdateReleaseUri ([uri]([string](Get-ToolUpdateProperty $Manifest 'ReleasePageUrl' -Required)))
     $expectedDownloadTag = '/releases/download/v' + $latestText + '/'
     $expectedReleaseTag = '/releases/tag/v' + $latestText
-    $expectedAssetName = 'Tool-Kiem-Tra-v' + $latest.Major + '.' + $latest.Minor + '.exe'
+    $expectedAssetName = 'VietLicenSure-v' + $latest.Major + '.' + $latest.Minor + '.exe'
     $actualAssetName = [Uri]::UnescapeDataString([IO.Path]::GetFileName($downloadUri.AbsolutePath))
     if ($downloadUri.AbsolutePath.IndexOf($expectedDownloadTag, [StringComparison]::OrdinalIgnoreCase) -lt 0 -or
         -not $releaseUri.AbsolutePath.Equals(($script:ToolUpdateRepositoryPath.TrimEnd('/') + $expectedReleaseTag), [StringComparison]::OrdinalIgnoreCase) -or
@@ -380,7 +380,7 @@ function Invoke-ToolUpdateFixedBytesDownload {
     $request.Timeout = $TimeoutMilliseconds
     $request.ReadWriteTimeout = $TimeoutMilliseconds
     $request.AllowAutoRedirect = $false
-    $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/5.0.0 update-check'
+    $request.UserAgent = 'ThanhViet-VietLicenSure/5.0.0 update-check'
     $response = $null
     $stream = $null
     $memory = $null
@@ -436,7 +436,7 @@ function Get-ToolUpdateCacheRoot {
         $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
         if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [string]$env:LOCALAPPDATA }
         if ([string]::IsNullOrWhiteSpace($localAppData)) { throw 'Per-user update cache is unavailable.' }
-        $root = Join-Path $localAppData 'ThanhViet-Tool-Kiem-Tra\updates'
+        $root = Join-Path $localAppData 'ThanhViet-VietLicenSure\updates'
     }
     $full = [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($root))
     if (-not (Test-Path -LiteralPath $full -PathType Container)) {
@@ -467,7 +467,7 @@ function Invoke-ToolUpdateExecutableDownload {
         $request.Timeout = 30000
         $request.ReadWriteTimeout = 30000
         $request.AllowAutoRedirect = $false
-        $request.UserAgent = 'ThanhViet-Tool-Kiem-Tra/4.8.0 update-download'
+        $request.UserAgent = 'ThanhViet-VietLicenSure/4.8.0 update-download'
         $response = $null
         try {
             $response = [Net.HttpWebResponse]$request.GetResponse()
@@ -660,7 +660,7 @@ function Install-ToolUpdateExecutable {
         throw 'Current Tool launcher path is unsafe.'
     }
     $targetDirectory = Split-Path -Parent $targetFull
-    $backupPath = Join-Path $CacheDirectory ("Tool-Kiem-Tra-$InstalledVersion-backup.exe")
+    $backupPath = Join-Path $CacheDirectory ("VietLicenSure-$InstalledVersion-backup.exe")
     Copy-Item -LiteralPath $targetFull -Destination $backupPath -Force
 
     $swapNew = Join-Path $targetDirectory ('.tool-update-new-' + [Guid]::NewGuid().ToString('N') + '.exe')

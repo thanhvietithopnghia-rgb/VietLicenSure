@@ -132,7 +132,7 @@ function Assert-ManagedDeploymentTarget {
     $programData = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonApplicationData)
     $allowedRoots = @(
         (Join-Path $programFiles "ThanhViet"),
-        (Join-Path $programData "ThanhViet-Tool-Kiem-Tra\managed")
+        (Join-Path $programData "ThanhViet-VietLicenSure\managed")
     )
     foreach ($root in $allowedRoots) {
         if (Test-ManagedDeploymentSubPath -Path $Path -Root $root) { return [IO.Path]::GetFullPath($Path) }
@@ -209,7 +209,7 @@ function Test-ManagedDeploymentMatchesSource {
 }
 
 if ([string]::IsNullOrWhiteSpace($TargetDirectory)) {
-    $TargetDirectory = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFiles)) "ThanhViet\Tool-Kiem-Tra\Enterprise"
+    $TargetDirectory = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::ProgramFiles)) "ThanhViet\VietLicenSure\Enterprise"
 }
 $target = Assert-ManagedDeploymentTarget -Path $TargetDirectory
 Assert-ManagedDeploymentNoReparseAncestor -Path $target

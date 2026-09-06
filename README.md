@@ -1,12 +1,20 @@
-# Tool Kiểm Tra v5.0 — Bản nâng cấp tiếp theo của v4.9
+# VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Ứng viên hiện tại:** Tool Kiểm Tra v5.0 · ProductVersion/FileVersion `5.0.0.1` · build ngày 06/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · ProductVersion/FileVersion `5.0.0.1` · phát hành ngày 06/09/2026
 - **Tác giả và phát triển:** Thanh Việt
-- **Trang phát hành công khai:** <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+- **Trang phát hành công khai:** <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
 
-Ứng viên v5.0.0.1 đang được kiểm thử và đóng gói cục bộ; chưa được xem là đã phát hành cho tới khi có tag/release tương ứng trên kho chính thức.
+Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Việc đổi tên không loại bỏ chức năng và vẫn giữ dòng phiên bản v5.0; phiên bản kỹ thuật của gói phát hành này là `5.0.0.1`.
 
-Tool Kiểm Tra v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
+## Ý nghĩa tên VietLicenSure
+
+- **Viet:** phần mềm do người Việt phát triển và được thiết kế phù hợp với người dùng Việt Nam.
+- **Licen:** rút gọn từ `License`, đại diện cho giấy phép và bản quyền phần mềm.
+- **Sure:** rõ ràng, có kiểm chứng và đáng tin cậy trong phạm vi bằng chứng kỹ thuật.
+
+Tên VietLicenSure thể hiện mục tiêu giúp người dùng kiểm tra, xác minh, quản lý và khắc phục tình trạng bản quyền hệ thống theo quy trình an toàn. Phần mềm cung cấp bằng chứng kỹ thuật, không thay thế chứng nhận hoặc kết luận pháp lý về quyền sử dụng.
+
+VietLicenSure v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
 
 - **Trải nghiệm sử dụng:** khởi động nhanh hơn, giao diện rõ ràng và thích ứng tốt hơn, hỗ trợ Light/Dark và mở thẳng đúng chức năng cần dùng.
 - **Kiểm tra và nhận diện:** ba mức quét Quick, Standard và Deep; kiểm tra Windows, Microsoft Office và phần mềm khác; sắp xếp việc cần xem theo mức ưu tiên, hỗ trợ tìm kiếm, lọc và so sánh với lần quét trước.
@@ -18,15 +26,15 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 
 ## Tải và bắt đầu
 
-1. Chỉ tải từ [trang phát hành công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest). Liên kết dự kiến của v5.0.0.1 chỉ có hiệu lực sau khi bản này được duyệt và phát hành.
-2. Khi v5.0.0.1 đã xuất hiện trên trang Releases, người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải EXE mới và thay tệp cũ.
+1. Chỉ tải từ [trang phát hành công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest).
+2. Người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải `VietLicenSure-v5.0.exe` và thay tệp cũ; dữ liệu cũ được giữ làm nguồn tương thích/migration.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
 
 ```powershell
-Get-FileHash .\Tool-Kiem-Tra-v5.0.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\Tool-Kiem-Tra-v5.0.exe |
+Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\VietLicenSure-v5.0.exe |
   Format-List Status,StatusMessage,SignerCertificate
 ```
 
@@ -70,6 +78,9 @@ Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật
 
 ## Tài liệu
 
+- [Bắt đầu nhanh v5.0](QUICK-START-v5.0.md)
+- [Giới hạn đã biết v5.0](KNOWN-LIMITATIONS-v5.0.md)
+- [Vệ sinh phát hành và tài liệu v5.0](RELEASE-HYGIENE-v5.0.md)
 - [Hướng dẫn sử dụng tiếng Việt](HUONG-DAN.txt)
 - [English user guide](USER-GUIDE-en-US.md)
 - [Lịch sử phiên bản](LICH-SU-PHIEN-BAN.txt)
@@ -87,8 +98,8 @@ Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật
 
 ## Nguồn chính thức và hỗ trợ
 
-- Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen>
-- Bản mới nhất: <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+- Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure>
+- Bản mới nhất: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
 - Zalo: `0978 005 017`
 - Email: `thanhvietit.hopnghia@gmail.com`
 

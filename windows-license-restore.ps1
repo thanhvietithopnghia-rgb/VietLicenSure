@@ -185,9 +185,9 @@ try { $script:backupRoot = ([IO.Path]::GetFullPath($BackupDir)).TrimEnd('\') } c
 if (-not (Test-Path -LiteralPath $script:backupRoot -PathType Container)) { Fail-Restore 21 (Get-RestoreText "restoreReport.directoryMissing") }
 $commonData = [Environment]::GetFolderPath("CommonApplicationData")
 $currentDataRoot = [string]$env:TOOL_DATA_ROOT
-if ([string]::IsNullOrWhiteSpace($currentDataRoot)) { $currentDataRoot = Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\v4.6" }
+if ([string]::IsNullOrWhiteSpace($currentDataRoot)) { $currentDataRoot = Join-Path $commonData "ThanhViet-VietLicenSure\v4.6" }
 $legacyDataRoot = [string]$env:TOOL_LEGACY_DATA_ROOT
-if ([string]::IsNullOrWhiteSpace($legacyDataRoot)) { $legacyDataRoot = Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\v4.4" }
+if ([string]::IsNullOrWhiteSpace($legacyDataRoot)) { $legacyDataRoot = Join-Path $commonData "ThanhViet-VietLicenSure\v4.4" }
 $allowedBackupRoots = @($currentDataRoot, $legacyDataRoot) | ForEach-Object {
     try { ([IO.Path]::GetFullPath((Join-Path $_ "backups"))).TrimEnd('\') } catch { $null }
 } | Where-Object { $_ } | Select-Object -Unique

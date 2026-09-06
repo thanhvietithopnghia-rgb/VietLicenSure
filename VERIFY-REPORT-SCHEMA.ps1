@@ -516,7 +516,7 @@ if ($guiText -notmatch 'function\s+New-ToolReportRunDirectory' -or
     $guiText -match '(?s)function\s+New-ToolReportRunDirectory.+?Join-Path\s+\$reportRoot\s+\$runName') {
     Add-Failure 'Dashboard chưa gom mọi lần quét vào một thư mục báo cáo dùng chung.'
 }
-if ($inventoryText -notmatch 'Desktop"\)\)\s+"BaoCao-Tool-Kiem-Tra"' -or
+if ($inventoryText -notmatch 'Desktop"\)\)\s+"BaoCao-VietLicenSure"' -or
     $inventoryText -notmatch 'yyyyMMdd_HHmmss_fff') {
     Add-Failure 'Báo cáo trực tiếp chưa dùng thư mục chung hoặc tên tệp mili-giây chống ghi đè.'
 }

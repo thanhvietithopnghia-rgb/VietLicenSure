@@ -1,4 +1,4 @@
-# Module Contract schema 1.0 — Tool-Kiem-Tra v4.8
+# Module Contract schema 1.0 — VietLicenSure v4.8
 
 `Tool-ModuleContract.ps1` là nguồn chuẩn. Catalog có 27 descriptor: 24 entry point và ba nguồn inventory nội bộ.
 

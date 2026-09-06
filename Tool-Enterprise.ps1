@@ -100,7 +100,7 @@ function Get-ToolEnterpriseRoot {
         return (Join-Path (Get-ToolDataRoot) "enterprise")
     }
     $commonData = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonApplicationData)
-    return (Join-Path $commonData "ThanhViet-Tool-Kiem-Tra\v4.6\enterprise")
+    return (Join-Path $commonData "ThanhViet-VietLicenSure\v4.6\enterprise")
 }
 
 function Get-ToolEnterprisePaths {
@@ -294,7 +294,7 @@ function ConvertFrom-ToolEnterpriseBase64Url {
 function Get-ToolEnterpriseDpapiEntropy {
     # Stable compatibility identifier: migrated v4.4/v4.5 DPAPI material must
     # remain decryptable after moving into the isolated v4.6 data root.
-    return (Get-ToolEnterpriseSha256Bytes -Bytes ([Text.Encoding]::UTF8.GetBytes("ThanhViet-Tool-Kiem-Tra-v4.4-enterprise")))
+    return (Get-ToolEnterpriseSha256Bytes -Bytes ([Text.Encoding]::UTF8.GetBytes("ThanhViet-VietLicenSure-v4.4-enterprise")))
 }
 
 function Protect-ToolEnterpriseBytes {
@@ -525,7 +525,7 @@ function Write-ToolEnterpriseAudit {
     }
     $line = ($record | ConvertTo-Json -Depth 10 -Compress) + [Environment]::NewLine
     $created = $false
-    $mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.ToolKiemTra.v4.6.EnterpriseAudit", [ref]$created)
+    $mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.VietLicenSure.v5.0.EnterpriseAudit", [ref]$created)
     try {
         if (-not $mutex.WaitOne(5000)) { throw (Get-ToolEnterpriseText "enterpriseCore.error.auditLock") }
         try { [IO.File]::AppendAllText($path, $line, (New-Object Text.UTF8Encoding($false))) }
@@ -1212,7 +1212,7 @@ function Invoke-ToolEnterpriseHttpRequest {
     $request.ReadWriteTimeout = $TimeoutMs
     $request.AllowAutoRedirect = $false
     $request.Proxy = $null
-    $request.UserAgent = "ThanhViet-Tool-Kiem-Tra/$($script:ToolEnterpriseToolVersion)"
+    $request.UserAgent = "ThanhViet-VietLicenSure/$($script:ToolEnterpriseToolVersion)"
     foreach ($name in $Headers.Keys) { $request.Headers[[string]$name] = [string]$Headers[$name] }
     $response = $null
     try {

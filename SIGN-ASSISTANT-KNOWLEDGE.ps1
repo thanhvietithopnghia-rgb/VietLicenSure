@@ -89,7 +89,7 @@ elseif (-not [IO.Path]::IsPathRooted($SignaturePath)) { $SignaturePath = Join-Pa
 $fullSignaturePath = [IO.Path]::GetFullPath($SignaturePath)
 $canonicalKnowledge = ConvertTo-CanonicalKnowledgeJson -Path $fullKnowledgePath
 $knowledge = $canonicalKnowledge.Text | ConvertFrom-Json -ErrorAction Stop
-if ([string]$knowledge.SchemaVersion -ne '1.1' -or [string]$knowledge.Scope -ne 'Tool-Kiem-Tra' -or
+if ([string]$knowledge.SchemaVersion -ne '1.1' -or [string]$knowledge.Scope -ne 'VietLicenSure' -or
     [Version]([string]$knowledge.KnowledgeVersion) -lt [Version]'1.3.0' -or @($knowledge.Entries).Count -lt 20) {
     throw 'Tep tri thuc khong dung schema, pham vi hoac phien ban toi thieu.'
 }

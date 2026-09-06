@@ -1,5 +1,5 @@
 ﻿<#
-    Bộ theme WinForms dùng chung cho Tool Kiểm Tra.
+    Bộ theme WinForms dùng chung cho VietLicenSure.
     Chỉ lưu lựa chọn theme (System/Light/Dark), không lưu dữ liệu máy hoặc thông tin license.
     Các API và control đều có trên Windows 7 SP1 / Windows PowerShell 3+.
 #>
@@ -26,7 +26,7 @@ function Get-ToolUiThemeSettingsPath {
     if ([string]::IsNullOrWhiteSpace($localAppData)) {
         $localAppData = [IO.Path]::GetTempPath()
     }
-    return (Join-Path (Join-Path $localAppData "ThanhViet-Tool-Kiem-Tra") "ui-settings.json")
+    return (Join-Path (Join-Path $localAppData "ThanhViet-VietLicenSure") "ui-settings.json")
 }
 
 function Get-ToolUiSystemTheme {
@@ -146,11 +146,11 @@ function Initialize-ToolDpiAwareness {
     }
 
     try {
-        if (-not ('ToolKiemTra.UiDpiNativeMethods' -as [type])) {
+        if (-not ('VietLicenSure.UiDpiNativeMethods' -as [type])) {
             Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-namespace ToolKiemTra {
+namespace VietLicenSure {
     public static class UiDpiNativeMethods {
         [DllImport("user32.dll", SetLastError=true)]
         public static extern bool SetProcessDpiAwarenessContext(IntPtr value);
@@ -168,7 +168,7 @@ namespace ToolKiemTra {
         $applied = $false
         try {
             # PER_MONITOR_AWARE_V2; absent on Windows 7 and therefore guarded.
-            if ([ToolKiemTra.UiDpiNativeMethods]::SetProcessDpiAwarenessContext([IntPtr](-4))) {
+            if ([VietLicenSure.UiDpiNativeMethods]::SetProcessDpiAwarenessContext([IntPtr](-4))) {
                 $method = 'SetProcessDpiAwarenessContext'
                 $status = 'Applied'
                 $applied = $true
@@ -180,7 +180,7 @@ namespace ToolKiemTra {
         if (-not $applied) {
             try {
                 # PROCESS_PER_MONITOR_DPI_AWARE. shcore.dll starts at Windows 8.1.
-                $hresult = [ToolKiemTra.UiDpiNativeMethods]::SetProcessDpiAwareness(2)
+                $hresult = [VietLicenSure.UiDpiNativeMethods]::SetProcessDpiAwareness(2)
                 if ($hresult -eq 0) {
                     $method = 'SetProcessDpiAwareness'
                     $status = 'Applied'
@@ -201,7 +201,7 @@ namespace ToolKiemTra {
             try {
                 # Vista/Windows 7 fallback. The manifest remains the preferred
                 # path; this call only supplies system-DPI awareness.
-                if ([ToolKiemTra.UiDpiNativeMethods]::SetProcessDPIAware()) {
+                if ([VietLicenSure.UiDpiNativeMethods]::SetProcessDPIAware()) {
                     $method = 'SetProcessDPIAware'
                     $status = 'AppliedLegacy'
                     $applied = $true

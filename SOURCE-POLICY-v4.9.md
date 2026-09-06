@@ -1,10 +1,12 @@
 # Chính sách phát triển cộng đồng và mã nguồn có kiểm soát từ v4.9
 
+> **Trạng thái tài liệu:** Chính sách bắt đầu từ v4.9 và tiếp tục áp dụng cho VietLicenSure v5.0.0.1; hậu tố tệp được giữ để truy vết thời điểm chính sách có hiệu lực.
+
 Copyright © 2026 Thanh Việt. Mọi quyền được bảo lưu.
 
 ## 1. Mục tiêu
 
-Tool Kiểm Tra được phát triển và cung cấp miễn phí để phục vụ cộng đồng. Dự án
+VietLicenSure được phát triển và cung cấp miễn phí để phục vụ cộng đồng. Dự án
 khuyến khích người dùng báo lỗi, đề xuất tính năng, cải thiện tài liệu, bản dịch,
 kiểm thử và đóng góp kỹ thuật theo quy trình do tác giả công bố.
 
@@ -101,10 +103,10 @@ mã nguồn mở nếu không có giấy phép cấp quyền mã nguồn mở.
 ## 7. Xác minh bản chính thức
 
 Nguồn phát hành chính thức:
-<https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure>
 
 Trang xác minh:
-<https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build>
+<https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build>
 
 Hãy đối chiếu phiên bản, Build ID, SHA-256, manifest nguồn gốc và chữ ký trước
 khi sử dụng. Cơ chế xác minh giúp phát hiện bản bị sửa nhưng không thể ngăn tuyệt
@@ -122,7 +124,7 @@ thể thay đổi hệ thống.
 
 Copyright © 2026 Thanh Viet. All rights reserved.
 
-Tool Kiem Tra is developed and provided free of charge for the community. Bug
+VietLicenSure is developed and provided free of charge for the community. Bug
 reports, feature proposals, documentation, translations, testing, and technical
 contributions are welcome through processes published by the author.
 
@@ -163,10 +165,10 @@ not retroactively changed. Public visibility alone did not make an earlier
 version open source without a licence granting open-source rights.
 
 Official repository:
-<https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure>
 
 Verification page:
-<https://thanhvietithopnghia-rgb.github.io/Tool-Kiem-Tra-Ban-Quyen/#verify-official-build>
+<https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build>
 
 The software is provided “as is”, without warranty. Provenance checks help
 identify modified builds but cannot absolutely prevent copying, screenshots, or

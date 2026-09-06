@@ -56,7 +56,7 @@ function Initialize-ToolLogging {
             $dataRoot = if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_DATA_ROOT)) {
                 [IO.Path]::GetFullPath([string]$env:TOOL_DATA_ROOT)
             } else {
-                Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-Tool-Kiem-Tra\v4.6"
+                Join-Path ([Environment]::GetFolderPath("CommonApplicationData")) "ThanhViet-VietLicenSure\v4.6"
             }
             $expectedRoot = Join-Path $dataRoot "logs"
             $expectedFull = [IO.Path]::GetFullPath($expectedRoot).TrimEnd([char]92) + [char]92

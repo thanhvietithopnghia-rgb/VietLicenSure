@@ -147,7 +147,7 @@ function Start-ToolEnterpriseHost {
     }
 
     $created = $false
-    $mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.ToolKiemTra.v4.6.EnterpriseServer", [ref]$created)
+    $mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.VietLicenSure.v5.0.EnterpriseServer", [ref]$created)
     if (-not $created) {
         $mutex.Dispose()
         throw (Get-ToolEnterpriseText "enterpriseHost.error.alreadyRunning")

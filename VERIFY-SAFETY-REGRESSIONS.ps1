@@ -1252,7 +1252,7 @@ if ($gui) {
         if ([regex]::Matches($gui.Text, '\$startParameters\.FilePath\s*=\s*\[IO\.Path\]::GetFullPath\(\[string\]\$env:TOOL_LAUNCHER_PATH\)').Count -lt 2) {
             Fail 'Luồng nâng quyền chưa chuyển dispatch sang launcher đã biên dịch.'
         }
-        $launcherText = Get-Content -LiteralPath (Join-Path $root 'Tool-Kiem-Tra-v5.0-OneFile.cs') -Raw -Encoding UTF8
+        $launcherText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
         if ($launcherText -notmatch 'ElevatedModuleBroker' -or $launcherText -notmatch '--elevated-module-broker' -or
             $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or $launcherText -notmatch 'case LaunchMode\.ElevatedModuleBroker: return "Tool-ElevatedBridge\.ps1"') {
             Fail 'Launcher chưa triển khai broker nâng quyền từ payload nhúng.'
@@ -1292,7 +1292,7 @@ if ($gui) {
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
             . (Join-Path $root 'Tool-Provenance.ps1')
             $env:TOOL_OFFICIAL_BUILD_ID = [string](Get-ToolProvenanceExpectedValues).BuildId
-            $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest'
+            $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
             $bridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -BridgeEnvironmentProbe"
@@ -2302,7 +2302,7 @@ $env:TOOL_OFFLINE_MODE='1'
 $updateBlocked = $false
 $httpBlocked = $false
 try { $updateResult = Update-ToolSoftwareLicenseCatalog -ConsentGranted; $updateBlocked = (-not [bool]$updateResult.Success -and [string]$updateResult.Error -match '(?i)offline') } catch { $updateBlocked = ([string]$_.Exception.Message -match '(?i)offline') }
-try { [void](Invoke-ToolSoftwareCatalogHttpGetBytes -Uri ([uri]'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/software-license-catalog-v1.0.json')) } catch { $httpBlocked = ([string]$_.Exception.Message -match '(?i)offline') }
+try { [void](Invoke-ToolSoftwareCatalogHttpGetBytes -Uri ([uri]'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/software-license-catalog-v1.0.json')) } catch { $httpBlocked = ([string]$_.Exception.Message -match '(?i)offline') }
 if ($updateBlocked -and $httpBlocked) { exit 0 }
 exit 91
 '@.Replace('__INVENTORY_PATH__', $escapedInventoryPath)

@@ -34,7 +34,7 @@ try {
     switch ($Action) {
         "FleetExport" {
             if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
-                $OutputDirectory = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::CommonApplicationData)) "ThanhViet-Tool-Kiem-Tra\enterprise-exports"
+                $OutputDirectory = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::CommonApplicationData)) "ThanhViet-VietLicenSure\enterprise-exports"
             }
             $result = Export-ToolEnterpriseFleetReport `
                 -DestinationDirectory $OutputDirectory `

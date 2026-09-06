@@ -1,5 +1,5 @@
 ﻿param(
-    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-Tool-Kiem-Tra"),
+    [string]$OutputDir = (Join-Path ([Environment]::GetFolderPath("Desktop")) "BaoCao-VietLicenSure"),
     [string]$ApprovedKmsServerFile = "",
     [string]$DecisionFile = "",
     [ValidateSet("vi-VN", "en-US")]

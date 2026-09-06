@@ -11,7 +11,7 @@ function Get-ToolLocalizationSettingsPath {
     $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
     if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [string]$env:LOCALAPPDATA }
     if ([string]::IsNullOrWhiteSpace($localAppData)) { return "" }
-    return Join-Path $localAppData "ThanhViet-Tool-Kiem-Tra\localization-settings.json"
+    return Join-Path $localAppData "ThanhViet-VietLicenSure\localization-settings.json"
 }
 
 function Test-ToolSupportedCulture {

@@ -695,7 +695,7 @@ function Invoke-ServerScan {
 
 function Invoke-ServerExport {
     try {
-        $reportDirectory = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)) 'BaoCao-Tool-Kiem-Tra'
+        $reportDirectory = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)) 'BaoCao-VietLicenSure'
         if (-not (Test-Path -LiteralPath $reportDirectory -PathType Container)) { New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null }
         $result = Export-ToolEnterpriseFleetReport -DestinationDirectory $reportDirectory -IncludePdf
         Start-Process -FilePath $result.HtmlPath | Out-Null
