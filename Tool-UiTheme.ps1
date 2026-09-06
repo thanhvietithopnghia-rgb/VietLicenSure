@@ -682,7 +682,8 @@ function Set-ToolUiActionButtonVisual {
         $Button.FlatAppearance.MouseDownBackColor = $visual.Hover
     }
 
-    if ($Button.Width -ge 90 -and $Button.Height -ge 26 -and -not [string]::IsNullOrWhiteSpace([string]$Button.Text)) {
+    $compactTextOnly = [bool]([string]$Button.Tag -eq 'ToolUiCompactTextOnly')
+    if (-not $compactTextOnly -and $Button.Width -ge 90 -and $Button.Height -ge 26 -and -not [string]::IsNullOrWhiteSpace([string]$Button.Text)) {
         $iconSize = if ($Button.Height -le 28) { 16 } elseif ($Button.Height -ge 40) { 22 } else { 18 }
         $marker = "ToolUiIcon:{0}:{1}:{2}" -f $role, $Mode, $iconSize
         $managedImage = ([string]$Button.AccessibleDescription).StartsWith("ToolUiIcon:", [StringComparison]::Ordinal)
@@ -698,7 +699,8 @@ function Set-ToolUiActionButtonVisual {
     # FlowLayoutPanel có thể mở rộng nút an toàn mà không làm chồng các control.
     # Sau khi thêm icon, tăng chiều rộng theo kích thước ưu tiên để chữ không bị
     # cắt ở DPI cao hoặc với nhãn dài hơn trong vi-VN/en-US.
-    if ($Button.Parent -is [Windows.Forms.FlowLayoutPanel] -and
+    if (-not $compactTextOnly -and
+        $Button.Parent -is [Windows.Forms.FlowLayoutPanel] -and
         $Button.Dock -eq [Windows.Forms.DockStyle]::None -and
         -not [string]::IsNullOrWhiteSpace([string]$Button.Text)) {
         $safeWidth = Get-ToolUiButtonRequiredWidth -Button $Button

@@ -246,11 +246,19 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
 }
 
 $versionChecks = @(
-    @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0\.0"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0"' },
     @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0\.0\.1"' },
     @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.09\.06"' },
     @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"5\.0"' },
+    @{ File='windows-license-assurance.ps1'; Pattern='\$ReleaseVersion\s*=\s*"5\.0"' },
+    @{ File='windows-license-backup.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
+    @{ File='windows-license-compliance-cleanup.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
+    @{ File='windows-license-deep-scan.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-forensics.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0"' },
+    @{ File='windows-license-forensics.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
+    @{ File='windows-license-restore.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
+    @{ File='windows-oem-license-assistant.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
+    @{ File='enterprise-license-manager.ps1'; Pattern='\$script:enterpriseReleaseDisplayName\s*=\s*"v5\.0"' },
     @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyVersion\("5\.0\.0\.1"\)' },
     @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyFileVersion\("5\.0\.0\.1"\)' },
     @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyInformationalVersion\("5\.0\.0\.1"\)' }

@@ -28,7 +28,7 @@ try {
 } catch { Write-Host $_.Exception.Message; exit 12 }
 
 $ErrorActionPreference = "Continue"
-$releaseVersion = "5.0.0.1"
+$releaseVersion = "5.0"
 
 function Safe-Cim {
     param([string]$ClassName, [string]$Namespace = "root/cimv2")

@@ -368,8 +368,8 @@ if ($errors.Count -eq 0) {
     $currentCompareVi = Get-ToolAssistantAnswer -Question 'bản hiện tại so với v4.9' -Culture 'vi-VN' -Knowledge $knowledge
     $currentCompareEn = Get-ToolAssistantAnswer -Question 'compare v4.9 with the current version' -Culture 'en-US' -Knowledge $knowledge
     $futureMissing = Get-ToolAssistantAnswer -Question 'v5.0.0.2 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
-    if ($currentVi -notmatch 'v5\.0' -or $currentVi -notmatch 'toàn bộ chức năng' -or
-        $currentEn -notmatch 'v5\.0' -or $currentEn -notmatch 'every documented function' -or
+    if ($currentVi -notmatch 'v5\.0' -or $currentVi -notmatch 'Trải nghiệm sử dụng' -or $currentVi -notmatch 'Riêng tư và toàn vẹn' -or
+        $currentEn -notmatch 'v5\.0' -or $currentEn -notmatch 'User experience' -or $currentEn -notmatch 'Privacy and integrity' -or
         $currentAliasVi -notmatch 'v5\.0' -or $currentAliasEn -notmatch 'v5\.0' -or
         $latestAliasVi -notmatch 'v5\.0' -or $latestAliasEn -notmatch 'v5\.0' -or
         $bareLatestEn -notmatch 'v5\.0' -or
@@ -716,19 +716,39 @@ if ($errors.Count -eq 0) {
             Add-AssistantVerificationError 'The chat input frame does not expose a distinct focus border.'
         }
 
-        $testHeader = New-Object Windows.Forms.Panel
-        $testHeader.Size = New-Object Drawing.Size(660, 72)
-        $testHeaderTitle = New-Object Windows.Forms.Label
-        $testHeaderTitle.Location = New-Object Drawing.Point(18, 10)
-        $testHeaderScope = New-Object Windows.Forms.Label
-        $testHeaderScope.Location = New-Object Drawing.Point(20, 43)
-        $testHeaderMode = New-Object Windows.Forms.Label
-        Set-ToolAssistantHeaderBounds -Header $testHeader -TitleLabel $testHeaderTitle -ScopeLabel $testHeaderScope -ModeLabel $testHeaderMode
-        if ($testHeaderMode.Right -gt ($testHeader.ClientSize.Width - 16) -or
-            $testHeaderMode.Left -le $testHeaderScope.Right -or $testHeaderMode.Width -lt 220) {
-            Add-AssistantVerificationError 'The Offline/local-knowledge badge is clipped or crowds the header text.'
+        foreach ($headerCulture in @('vi-VN','en-US')) {
+            foreach ($dpiScale in @(1.0, 1.25, 1.5)) {
+                $testHeader = New-Object Windows.Forms.Panel
+                $testHeader.Size = New-Object Drawing.Size([int](660 * $dpiScale), [int](112 * $dpiScale))
+                $testHeaderTitleFont = New-Object Drawing.Font('Segoe UI Semibold', ([single](17 * $dpiScale)))
+                $testHeaderScopeFont = New-Object Drawing.Font('Segoe UI', ([single](9 * $dpiScale)))
+                $testHeaderTitle = New-Object Windows.Forms.Label
+                $testHeaderTitle.Text = Get-ToolAssistantUiText 'Title' $headerCulture
+                $testHeaderTitle.Font = $testHeaderTitleFont
+                $testHeaderTitle.Location = New-Object Drawing.Point([int](18 * $dpiScale), [int](10 * $dpiScale))
+                $testHeaderScope = New-Object Windows.Forms.Label
+                $testHeaderScope.Text = Get-ToolAssistantUiText 'Scope' $headerCulture
+                $testHeaderScope.Font = $testHeaderScopeFont
+                $testHeaderMode = New-Object Windows.Forms.Label
+                $testHeaderMode.Text = Get-ToolAssistantUiText 'Offline' $headerCulture
+                $testHeader.Controls.Add($testHeaderTitle)
+                $testHeader.Controls.Add($testHeaderScope)
+                $testHeader.Controls.Add($testHeaderMode)
+                Set-ToolAssistantHeaderBounds -Header $testHeader -TitleLabel $testHeaderTitle -ScopeLabel $testHeaderScope -ModeLabel $testHeaderMode -DpiScale $dpiScale
+                $singleLineFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
+                $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
+                $requiredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$testHeaderTitle.Text, $testHeaderTitle.Font, [Drawing.Size]::Empty, $singleLineFlags)
+                $requiredScope = [Windows.Forms.TextRenderer]::MeasureText([string]$testHeaderScope.Text, $testHeaderScope.Font, (New-Object Drawing.Size($testHeaderScope.Width, 500)), $wrappedFlags)
+                if ($testHeaderMode.Right -gt ($testHeader.ClientSize.Width - [int](16 * $dpiScale)) -or
+                    $testHeaderTitle.Right -ge $testHeaderMode.Left -or
+                    $testHeaderScope.Top -lt $testHeaderTitle.Bottom -or
+                    $testHeaderTitle.Width -lt $requiredTitle.Width -or $testHeaderTitle.Height -lt $requiredTitle.Height -or
+                    $testHeaderScope.Height -lt $requiredScope.Height) {
+                    Add-AssistantVerificationError "Assistant header is clipped for $headerCulture at $([int]($dpiScale * 100))% DPI."
+                }
+                $testHeader.Dispose(); $testHeaderTitleFont.Dispose(); $testHeaderScopeFont.Dispose()
+            }
         }
-        $testHeaderMode.Dispose(); $testHeaderScope.Dispose(); $testHeaderTitle.Dispose(); $testHeader.Dispose()
         $controlCountBeforeDuplicate = $testChat.Controls.Count
         $testInput.Text = 'office là gì'
         $testState.IsSubmitting = $true

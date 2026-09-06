@@ -1,6 +1,6 @@
 ﻿param()
 
-$toolVersion = "5.0.0"
+$toolVersion = "5.0"
 $script:startupTracePath = [string]$env:TOOL_STARTUP_TRACE_PATH
 $script:startupTraceClock = $null
 $script:startupTraceEncoding = $null
@@ -572,6 +572,7 @@ $fontCardValue = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTyp
 $fontIntroTitle = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTypography.IntroTitleSize, [System.Drawing.FontStyle]::Bold)
 $fontTile = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTypography.TileSize, [System.Drawing.FontStyle]::Regular)
 $fontSidebarTitle = New-Object System.Drawing.Font($uiTypography.FontFamily, 11.5, [System.Drawing.FontStyle]::Bold)
+$fontSidebarTitleCompact = New-Object System.Drawing.Font($uiTypography.FontFamily, 10.0, [System.Drawing.FontStyle]::Bold)
 $fontSidebar = New-Object System.Drawing.Font($uiTypography.FontFamily, 10.0, [System.Drawing.FontStyle]::Regular)
 
 $form = New-Object System.Windows.Forms.Form
@@ -693,25 +694,27 @@ $sidebarPanel.Location = New-Object System.Drawing.Point(0, 0)
 $sidebarPanel.Size = New-Object System.Drawing.Size(196, $form.ClientSize.Height)
 $form.Controls.Add($sidebarPanel)
 
+$sidebarBrandIcon = New-Object System.Windows.Forms.PictureBox
+$sidebarBrandIcon.BackColor = [System.Drawing.Color]::Transparent
+$sidebarBrandIcon.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
+$sidebarBrandIcon.Location = New-Object System.Drawing.Point(18, 20)
+$sidebarBrandIcon.Size = New-Object System.Drawing.Size(42, 48)
+$sidebarBrandImage = New-DashboardIconBitmap -Kind "Shield" -Size 42
+[void]$dashboardIconImages.Add($sidebarBrandImage)
+$sidebarBrandIcon.Image = $sidebarBrandImage
+$sidebarPanel.Controls.Add($sidebarBrandIcon)
+
 $sidebarBrand = New-Object System.Windows.Forms.Label
 $sidebarBrand.Text = Get-DashboardText "dashboard.sidebar.brand"
 $sidebarBrand.Font = $fontSidebarTitle
 $sidebarBrand.ForeColor = [System.Drawing.Color]::White
 $sidebarBrand.TextAlign = "MiddleLeft"
 $sidebarBrand.UseCompatibleTextRendering = $false
-$sidebarBrand.Location = New-Object System.Drawing.Point(20, 24)
-$sidebarBrand.Size = New-Object System.Drawing.Size(160, 30)
+$sidebarBrand.UseMnemonic = $false
+$sidebarBrand.AutoEllipsis = $false
+$sidebarBrand.Location = New-Object System.Drawing.Point(68, 24)
+$sidebarBrand.Size = New-Object System.Drawing.Size(116, 38)
 $sidebarPanel.Controls.Add($sidebarBrand)
-
-$sidebarEdition = New-Object System.Windows.Forms.Label
-$sidebarEdition.Text = Get-DashboardText "dashboard.sidebar.edition"
-$sidebarEdition.Font = $fontSmall
-$sidebarEdition.ForeColor = [System.Drawing.Color]::FromArgb(182, 214, 248)
-$sidebarEdition.TextAlign = "MiddleLeft"
-$sidebarEdition.UseCompatibleTextRendering = $false
-$sidebarEdition.Location = New-Object System.Drawing.Point(20, 54)
-$sidebarEdition.Size = New-Object System.Drawing.Size(160, 22)
-$sidebarPanel.Controls.Add($sidebarEdition)
 
 $sidebarNavButtons = New-Object System.Collections.ArrayList
 $sidebarNavDefinitions = @(
@@ -1477,6 +1480,16 @@ function Set-DashboardHeaderTitleFont {
     $title.Font = $selectedFont
 }
 
+function Set-DashboardSidebarBrandFont {
+    $availableWidth = [Math]::Max(1, $sidebarBrand.ClientSize.Width - 2)
+    $requiredWidth = [System.Windows.Forms.TextRenderer]::MeasureText(
+        [string]$sidebarBrand.Text,
+        $fontSidebarTitle,
+        [System.Drawing.Size]::Empty,
+        ([System.Windows.Forms.TextFormatFlags]::NoPadding -bor [System.Windows.Forms.TextFormatFlags]::SingleLine -bor [System.Windows.Forms.TextFormatFlags]::NoPrefix)).Width
+    $sidebarBrand.Font = if ($requiredWidth -le $availableWidth) { $fontSidebarTitle } else { $fontSidebarTitleCompact }
+}
+
 function Get-DashboardComboRequiredWidth {
     param(
         [Parameter(Mandatory = $true)][System.Windows.Forms.ComboBox]$ComboBox,
@@ -1543,8 +1556,13 @@ function Update-MainLayout {
             $sidebarPanel.Top = 0
             $sidebarPanel.Width = $sidebarWidth
             $sidebarPanel.Height = $clientHeight
-            $sidebarBrand.Width = $sidebarWidth - 36
-            $sidebarEdition.Width = $sidebarWidth - 36
+            $sidebarBrandIcon.Left = 18
+            $sidebarBrandIcon.Top = 20
+            $sidebarBrand.Left = 68
+            $sidebarBrand.Top = 24
+            $sidebarBrand.Width = [Math]::Max(92, $sidebarWidth - $sidebarBrand.Left - 12)
+            $sidebarBrand.Height = 38
+            Set-DashboardSidebarBrandFont
             for ($navIndex = 0; $navIndex -lt $sidebarNavButtons.Count; $navIndex++) {
                 $navButton = $sidebarNavButtons[$navIndex]
                 $navButton.Left = 10
@@ -1622,11 +1640,15 @@ function Update-MainLayout {
         $introAccent.Top = 0
         $introAccent.Width = 4
         $introAccent.Height = $introPanel.ClientSize.Height
-        $introDetailButton.Width = if ($ultraCompactHeight) { 142 } else { 154 }
+        $introDetailButton.Width = [Math]::Max(
+            $(if ($ultraCompactHeight) { 142 } else { 154 }),
+            (Get-ToolUiButtonRequiredWidth -Button $introDetailButton -HorizontalSafety 12))
         $introDetailButton.Height = 30
         $introDetailButton.Left = $introPanel.ClientSize.Width - $introDetailButton.Width - 10
         $introDetailButton.Top = [Math]::Max(4, [Math]::Floor(($introPanel.ClientSize.Height - $introDetailButton.Height) / 2))
-        $introAssistantButton.Width = if ($ultraCompactHeight) { 142 } else { 154 }
+        $introAssistantButton.Width = [Math]::Max(
+            $(if ($ultraCompactHeight) { 176 } else { 188 }),
+            (Get-ToolUiButtonRequiredWidth -Button $introAssistantButton -HorizontalSafety 12))
         $introAssistantButton.Height = 30
         $introAssistantButton.Left = $introDetailButton.Left - $introAssistantButton.Width - 8
         $introAssistantButton.Top = $introDetailButton.Top
@@ -1875,7 +1897,7 @@ function Show-ProductIntroduction {
     $layout.ColumnCount = 1
     $layout.RowCount = 3
     [void]$layout.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 84)))
+    [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 112)))
     [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
     [void]$layout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 52)))
     $dialog.Controls.Add($layout)
@@ -1898,20 +1920,43 @@ function Show-ProductIntroduction {
     $heading.Font = $productHeadingFont
     $heading.ForeColor = $primary
     $heading.Location = New-Object System.Drawing.Point(20, 8)
-    $heading.Size = New-Object System.Drawing.Size(730, 34)
+    $heading.Size = New-Object System.Drawing.Size(730, 56)
     $heading.Anchor = "Top, Left, Right"
     $heading.UseMnemonic = $false
-    $heading.AutoEllipsis = $true
+    $heading.UseCompatibleTextRendering = $false
+    $heading.AutoEllipsis = $false
+    $heading.TextAlign = "TopLeft"
     $header.Controls.Add($heading)
 
     $tagline = New-Object System.Windows.Forms.Label
     $tagline.Text = Get-ToolText -Key "about.byline" -Culture $script:dashboardCulture -FormatArguments @($releaseDisplayName, $releaseBuildDate)
     $tagline.Font = $fontBold
     $tagline.ForeColor = $text
-    $tagline.Location = New-Object System.Drawing.Point(20, 45)
-    $tagline.Size = New-Object System.Drawing.Size(730, 24)
+    $tagline.Location = New-Object System.Drawing.Point(20, 72)
+    $tagline.Size = New-Object System.Drawing.Size(730, 30)
     $tagline.Anchor = "Top, Left, Right"
+    $tagline.UseMnemonic = $false
+    $tagline.UseCompatibleTextRendering = $false
     $header.Controls.Add($tagline)
+
+    $aboutHeaderLayout = {
+        param($sender, $eventArgs)
+        $dpiScale = try { [Math]::Max(1.0, ([double]$sender.DeviceDpi / 96.0)) } catch { 1.0 }
+        $sideMargin = [int][Math]::Round(20 * $dpiScale)
+        $topMargin = [int][Math]::Round(8 * $dpiScale)
+        $contentGap = [int][Math]::Round(3 * $dpiScale)
+        $bottomMargin = [int][Math]::Round(5 * $dpiScale)
+        $contentWidth = [Math]::Max([int][Math]::Round(220 * $dpiScale), [int]$sender.ClientSize.Width - (2 * $sideMargin))
+        $heading.Left = $sideMargin
+        $heading.Top = $topMargin
+        $heading.Width = $contentWidth
+        $heading.Height = Get-DashboardWrappedTextHeight -Text ([string]$heading.Text) -Font $heading.Font -Width $contentWidth -MinimumHeight ([int][Math]::Round(34 * $dpiScale)) -MaximumHeight ([int][Math]::Round(58 * $dpiScale))
+        $tagline.Left = $sideMargin
+        $tagline.Top = [int]$heading.Bottom + $contentGap
+        $tagline.Width = $contentWidth
+        $tagline.Height = [Math]::Max([int][Math]::Round(24 * $dpiScale), [int]$sender.ClientSize.Height - $tagline.Top - $bottomMargin)
+    }.GetNewClosure()
+    $header.Add_SizeChanged($aboutHeaderLayout)
 
     $detailTabs = New-Object System.Windows.Forms.TabControl
     $detailTabs.Dock = "Fill"
@@ -1931,7 +1976,7 @@ function Show-ProductIntroduction {
     $overviewPage.Padding = New-Object System.Windows.Forms.Padding(4)
     [void]$detailTabs.TabPages.Add($overviewPage)
 
-    $officialReleaseUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases"
+    $officialReleaseUrl = "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/"
     $aboutBox = New-Object System.Windows.Forms.RichTextBox
     $aboutBox.Dock = "Fill"
     $aboutBox.ReadOnly = $true
@@ -2137,6 +2182,7 @@ function Show-ProductIntroduction {
     $dialog.AcceptButton = $close
     $dialog.CancelButton = $close
     Set-ToolWindowTheme -Root $dialog -Mode $script:dashboardTheme
+    & $aboutHeaderLayout $header ([EventArgs]::Empty)
     [void](Show-DashboardModalDialog -Dialog $dialog)
     $dialog.Dispose()
     $productHeadingFont.Dispose()
@@ -2396,7 +2442,7 @@ function Set-DashboardLanguage {
     $introDetailButton.Text = Get-ToolText -Key "app.about" -Culture $Culture
     $activityPanelCaption.Text = Get-ToolText -Key "dashboard.activity" -Culture $Culture
     $sidebarBrand.Text = Get-ToolText -Key "dashboard.sidebar.brand" -Culture $Culture
-    $sidebarEdition.Text = Get-ToolText -Key "dashboard.sidebar.edition" -Culture $Culture
+    Set-DashboardSidebarBrandFont
     foreach ($navButton in $sidebarNavButtons) {
         $navButton.Text = Get-ToolText -Key ([string]$navButton.Tag.TextKey) -Culture $Culture
     }
@@ -2518,7 +2564,6 @@ function Set-DashboardTheme {
     $headerPanel.BackColor = $surface
     $sidebarPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(7, 31, 61) } else { [System.Drawing.Color]::FromArgb(6, 61, 125) }
     $sidebarBrand.ForeColor = [System.Drawing.Color]::White
-    $sidebarEdition.ForeColor = [System.Drawing.Color]::FromArgb(182, 214, 248)
     $sidebarFooter.ForeColor = [System.Drawing.Color]::FromArgb(182, 214, 248)
     $title.ForeColor = $primary
     $developer.ForeColor = $primary
@@ -8121,8 +8166,8 @@ function Show-CleanupFunctionScreen {
     $screen.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
     $workArea = [System.Windows.Forms.Screen]::FromControl($form).WorkingArea
     $screenWidth = [Math]::Max(680, [Math]::Min(780, $workArea.Width - 70))
-    $screenHeight = [Math]::Max(320, [Math]::Min(380, $workArea.Height - 70))
-    $screen.MinimumSize = New-Object System.Drawing.Size([Math]::Min(680, $screenWidth), [Math]::Min(320, $screenHeight))
+    $screenHeight = [Math]::Max(360, [Math]::Min($(if ($Mode -eq "Cleanup") { 410 } else { 380 }), $workArea.Height - 70))
+    $screen.MinimumSize = New-Object System.Drawing.Size([Math]::Min(680, $screenWidth), [Math]::Min(360, $screenHeight))
     $screen.ClientSize = New-Object System.Drawing.Size($screenWidth, $screenHeight)
     $screen.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
     $screen.Font = $fontNormal
@@ -8136,7 +8181,7 @@ function Show-CleanupFunctionScreen {
     [void]$screenLayout.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, 100)))
     [void]$screenLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 62)))
     [void]$screenLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
-    [void]$screenLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, 58)))
+    [void]$screenLayout.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Absolute, $(if ($Mode -eq "Cleanup") { 74 } else { 58 }))))
     $screen.Controls.Add($screenLayout)
 
     $heading = New-Object System.Windows.Forms.Label
@@ -8158,38 +8203,43 @@ function Show-CleanupFunctionScreen {
     $descriptionLabel.Padding = New-Object System.Windows.Forms.Padding(18, 8, 18, 8)
     $screenLayout.Controls.Add($descriptionLabel, 0, 1)
 
-    $footer = New-Object System.Windows.Forms.FlowLayoutPanel
-    $footer.Dock = "Fill"
-    $footer.FlowDirection = "RightToLeft"
-    $footer.WrapContents = $false
-    $footer.AutoScroll = $true
-    $footer.Padding = if ($Mode -eq "Cleanup") {
-        New-Object System.Windows.Forms.Padding(0, 7, 0, 0)
+    $footer = if ($Mode -eq "Cleanup") {
+        $cleanupFooter = New-Object System.Windows.Forms.TableLayoutPanel
+        $cleanupFooter.ColumnCount = 1
+        $cleanupFooter.RowCount = 1
+        $cleanupFooter.GrowStyle = [System.Windows.Forms.TableLayoutPanelGrowStyle]::FixedSize
+        [void]$cleanupFooter.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
+        $cleanupFooter
     } else {
-        New-Object System.Windows.Forms.Padding(0, 7, 6, 0)
+        $standardFooter = New-Object System.Windows.Forms.FlowLayoutPanel
+        $standardFooter.FlowDirection = "RightToLeft"
+        $standardFooter.WrapContents = $false
+        $standardFooter.AutoScroll = $false
+        $standardFooter
     }
+    $footer.Dock = "Fill"
+    $footer.Padding = New-Object System.Windows.Forms.Padding(0, 7, 0, 0)
     $screenLayout.Controls.Add($footer, 0, 2)
-
-    $compactCleanupButtonWidth = 90
+    $footerButtons = New-Object System.Collections.ArrayList
 
     $closeButton = New-Object System.Windows.Forms.Button
     $closeButton.Text = Get-DashboardText "common.close"
     $closeButton.Font = $fontTile
-    $closeButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 104 }), 40)
+    $closeButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { 96 } else { 104 }), 44)
     $closeButton.Add_Click({
         $screen.Tag = "Close"
         Close-DashboardWorkflowSession -Dialog $screen
     })
-    $footer.Controls.Add($closeButton)
+    [void]$footerButtons.Add($closeButton)
 
     if ($hasPreviousStep) {
         $backButton = New-Object System.Windows.Forms.Button
         $backButton.Text = Get-DashboardText "common.back"
         $backButton.Font = $fontTile
-        $backButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 132 }), 40)
+        $backButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { 104 } else { 132 }), 44)
         $backButton.Add_Click({ $screen.Tag = "Back"; $screen.Close() })
         $screen.CancelButton = $backButton
-        $footer.Controls.Add($backButton)
+        [void]$footerButtons.Add($backButton)
     } else {
         $screen.CancelButton = $closeButton
     }
@@ -8240,41 +8290,51 @@ function Show-CleanupFunctionScreen {
     }
 
     $actionButton = New-Object System.Windows.Forms.Button
-    $actionButton.Text = Get-DashboardText $actionKeys[$Mode]
+    $actionButton.Text = if ($Mode -eq "Cleanup") { Get-DashboardText 'cleanup.menu.cleanupActionCompact' } else { Get-DashboardText $actionKeys[$Mode] }
     $actionButton.Font = $fontTile
-    $actionButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { $compactCleanupButtonWidth } else { 250 }), 40)
+    $actionButton.Size = New-Object System.Drawing.Size($(if ($Mode -eq "Cleanup") { 148 } else { 250 }), 44)
     $actionButton.BackColor = [System.Drawing.Color]::FromArgb(234, 242, 255)
     $actionButton.Add_Click({ & $runChoice "Action" })
-    $footer.Controls.Add($actionButton)
+    [void]$footerButtons.Add($actionButton)
 
     if ($Mode -eq "Cleanup") {
         $dryRunButton = New-Object System.Windows.Forms.Button
-        $dryRunButton.Text = Get-DashboardText 'cleanup.dryRun.button'
+        $dryRunButton.Text = Get-DashboardText 'cleanup.dryRun.buttonCompact'
         $dryRunButton.Font = $fontTile
-        $dryRunButton.Size = New-Object System.Drawing.Size($compactCleanupButtonWidth, 40)
+        $dryRunButton.Size = New-Object System.Drawing.Size(118, 44)
         $dryRunButton.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 230)
         $dryRunButton.Add_Click({ & $runChoice "DryRun" })
-        $footer.Controls.Add($dryRunButton)
+        [void]$footerButtons.Add($dryRunButton)
 
         if ($FixedScope -notin @("Windows", "Office")) {
             $onlineButton = New-Object System.Windows.Forms.Button
-            $onlineButton.Text = Get-DashboardText "software.online.button"
+            $onlineButton.Text = Get-DashboardText "software.online.buttonCompact"
             $onlineButton.Font = $fontTile
-            $onlineButton.Size = New-Object System.Drawing.Size($compactCleanupButtonWidth, 40)
+            $onlineButton.Size = New-Object System.Drawing.Size(144, 44)
             $onlineButton.BackColor = [System.Drawing.Color]::FromArgb(232, 247, 240)
             $onlineButton.Add_Click({ & $runChoice "Online" })
-            $footer.Controls.Add($onlineButton)
+            [void]$footerButtons.Add($onlineButton)
         }
     }
 
-    Set-ToolWindowTheme -Root $screen -Mode $script:dashboardTheme
     if ($Mode -eq "Cleanup") {
-        Set-ToolUiFlowButtonSpacing -Panel $footer -PreferredSideMargin 3
-        $footer.Add_SizeChanged({
-            param($sender, $eventArgs)
-            Set-ToolUiFlowButtonSpacing -Panel $sender -PreferredSideMargin 3
-        })
+        $footer.ColumnCount = [Math]::Max(1, $footerButtons.Count)
+        $footer.ColumnStyles.Clear()
+        $columnPercent = [single](100.0 / [Math]::Max(1, $footerButtons.Count))
+        for ($buttonIndex = $footerButtons.Count - 1; $buttonIndex -ge 0; $buttonIndex--) {
+            [void]$footer.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle([System.Windows.Forms.SizeType]::Percent, $columnPercent)))
+            $footerButton = $footerButtons[$buttonIndex]
+            $footerButton.Dock = "Fill"
+            $footerButton.Margin = New-Object System.Windows.Forms.Padding(3)
+            $footerButton.TextAlign = "MiddleCenter"
+            $footerButton.Tag = 'ToolUiCompactTextOnly'
+            $footer.Controls.Add($footerButton, (($footerButtons.Count - 1) - $buttonIndex), 0)
+        }
+    } else {
+        foreach ($footerButton in $footerButtons) { $footer.Controls.Add($footerButton) }
     }
+
+    Set-ToolWindowTheme -Root $screen -Mode $script:dashboardTheme
     [void](Show-DashboardModalDialog -Dialog $screen)
     $choice = [string]$screen.Tag
     $screen.Dispose()

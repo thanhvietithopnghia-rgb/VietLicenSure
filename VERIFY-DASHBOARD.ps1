@@ -88,6 +88,7 @@ if ($guiAst) {
 }
 
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
+Assert-SourcePattern $text '[$]toolVersion\s*=\s*"5\.0"' 'Phiên bản hiển thị của Dashboard chưa được khóa ở v5.0.'
 Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.1"' 'Dashboard chưa dùng release 5.0.0.1.'
 Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.09\.06"' 'Dashboard chưa dùng ngày build 2026.09.06.'
 Assert-SourcePattern $text '[$]scanOptimizationHelper\s*=\s*Join-Path\s+[$]PSScriptRoot\s+"Tool-ScanOptimization\.ps1"' 'Dashboard chưa khai báo helper tối ưu phạm vi quét.'
@@ -101,9 +102,9 @@ if ($text -match '[$]startupSoftwareCatalog\s*=\s*Get-ToolSoftwareLicenseCatalog
     Add-Failure 'Dashboard vẫn xác minh toàn bộ catalog trước khi hiện cửa sổ.'
 }
 Assert-SourcePattern $text 'Resolve-ToolScanPlan\s+-Profile\s+[$]profile' 'Hộp phạm vi quét không còn xác thực lựa chọn bằng Resolve-ToolScanPlan.'
-Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/VietLicenSure/releases"' 'Nút Giới thiệu chưa dùng trang Releases cố định, nơi luôn hiển thị bản mới nhất ở đầu.'
-if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/thanhvietithopnghia-rgb/VietLicenSure/releases/(?:latest|tag/)') {
-    Add-Failure 'Nút Giới thiệu đang trỏ tới alias/tag riêng thay vì trang Releases cố định.'
+Assert-SourcePattern $text '[$]officialReleaseUrl\s*=\s*"https://thanhvietithopnghia-rgb\.github\.io/VietLicenSure/"' 'Nút Giới thiệu chưa dùng trang công khai không yêu cầu đăng nhập GitHub.'
+if ($text -match '[$]officialReleaseUrl\s*=\s*"https://github\.com/') {
+    Add-Failure 'Nút Giới thiệu vẫn mở trực tiếp github.com và có thể bị chặn bởi yêu cầu 2FA của tài khoản đang đăng nhập.'
 }
 Assert-SourcePattern $text 'System\.Windows\.Forms' 'Dashboard không còn nền WinForms.'
 Assert-SourcePattern $text 'System\.Drawing' 'Dashboard thiếu System.Drawing.'
@@ -123,6 +124,8 @@ Assert-SourcePattern $text 'ClientSize\.Height\s*-lt\s*640' 'Dashboard thiếu l
 # Modern WinForms shell: typography, cards, rounded tiles, hover states and responsive two-column layout.
 Assert-SourcePattern $text 'Get-ToolUiTypography' 'Dashboard chưa dùng typography Segoe UI dùng chung.'
 Assert-SourcePattern $text '[$]sidebarPanel' 'Dashboard thiếu thanh điều hướng bên trái.'
+Assert-SourcePattern $text '[$]sidebarBrandIcon\s*=\s*New-Object\s+System\.Windows\.Forms\.PictureBox' 'Sidebar chưa thay dòng phụ bị cắt bằng logo VietLicenSure.'
+if ($text -match '[$]sidebarEdition\s*=\s*New-Object') { Add-Failure 'Sidebar vẫn còn dòng PHẦN MỀM BẢN QUYỀN dễ bị cắt.' }
 Assert-SourcePattern $text '[$]headerPanel' 'Dashboard thiếu thanh công cụ trên cùng.'
 Assert-SourcePattern $text '[$]activityPanel' 'Dashboard thiếu bảng Hoạt động riêng.'
 Assert-SourcePattern $text 'function\s+Set-DashboardSection' 'Điều hướng dashboard chưa lọc được nhóm chức năng.'
@@ -130,14 +133,18 @@ Assert-SourcePattern $text 'function\s+Show-DashboardPreferences' 'Dashboard thi
 Assert-SourcePattern $text 'SetCompatibleTextRenderingDefault\([$]false\)' 'Dashboard chưa đồng bộ GDI+ text rendering.'
 Assert-SourcePattern $text 'UseCompatibleTextRendering\s*=\s*[$]false' 'Dashboard còn control dùng text rendering cũ.'
 Assert-SourcePattern $text 'function\s+Set-DashboardHeaderTitleFont' 'Tiêu đề dài chưa có cơ chế tự co chữ để tránh bị cắt.'
+Assert-SourcePattern $text 'function\s+Set-DashboardSidebarBrandFont' 'Tên VietLicenSure ở sidebar chưa tự co theo vùng hiển thị.'
 Assert-SourcePattern $text '[$]fontTitleMicro\s*=.*9\.0' 'Tiêu đề thiếu cỡ chữ dự phòng cho cửa sổ hẹp hoặc DPI cao.'
 Assert-SourcePattern $text '[$]fontTitleMinimum\s*=.*8\.0' 'Tiêu đề thiếu cỡ chữ tối thiểu để luôn hiện đủ nội dung.'
 Assert-SourcePattern $text 'function\s+Get-DashboardComboRequiredWidth' 'Thanh công cụ hẹp chưa co hộp chọn ngôn ngữ theo nội dung.'
 Assert-SourcePattern $text 'Get-ToolUiButtonRequiredWidth\s+-Button\s+[$]themeButton' 'Nút giao diện chưa co theo nội dung khi cửa sổ hẹp.'
 Assert-SourcePattern $text 'Get-ToolUiButtonRequiredWidth\s+-Button\s+[$]offlineButton' 'Nút mạng chưa co theo nội dung khi cửa sổ hẹp.'
-Assert-SourcePattern $text '[$]compactCleanupButtonWidth\s*=\s*90' 'Hàng nút Khắc phục chưa khởi tạo từ chiều rộng gọn theo nội dung.'
-Assert-SourcePattern $text 'Set-ToolUiFlowButtonSpacing\s+-Panel\s+[$]footer' 'Hàng nút Khắc phục chưa tự căn để giữ nút Kết nối online trong vùng hiển thị.'
-Assert-SourcePattern $text '[$]footer\.Add_SizeChanged' 'Hàng nút Khắc phục chưa căn lại khi cửa sổ đổi kích thước/DPI.'
+Assert-SourcePattern $text '[$]cleanupFooter\s*=\s*New-Object\s+System\.Windows\.Forms\.TableLayoutPanel' 'Hàng nút Khắc phục chưa dùng lưới co giãn không cuộn.'
+Assert-SourcePattern $text 'cleanup\.menu\.cleanupActionCompact' 'Nút chọn phạm vi chưa có nhãn hai dòng.'
+Assert-SourcePattern $text 'software\.online\.buttonCompact' 'Nút Online chưa có nhãn hai dòng.'
+Assert-SourcePattern $text "[$]footerButton\.Tag\s*=\s*'ToolUiCompactTextOnly'" 'Nút Khắc phục chưa ưu tiên đủ vùng chữ ở DPI cao.'
+Assert-SourcePattern $text '[$]heading\.AutoEllipsis\s*=\s*[$]false' 'Tiêu đề Giới thiệu vẫn có thể bị rút gọn bằng dấu ba chấm.'
+Assert-SourcePattern $text 'Get-DashboardWrappedTextHeight\s+-Text\s+\(\[string\][$]heading\.Text\)' 'Tiêu đề Giới thiệu chưa đo chiều cao xuống dòng.'
 Assert-SourcePattern $text 'function\s+Set-ModernRoundedRegion' 'Dashboard thiếu bo góc cho card/tile.'
 Assert-SourcePattern $text 'FlatAppearance\.BorderSize\s*=\s*0' 'Tile hiện đại chưa dùng nút phẳng.'
 Assert-SourcePattern $text 'Add_MouseEnter' 'Tile chưa có hover state.'
@@ -363,6 +370,7 @@ foreach ($themePattern in @(
     'function\s+Set-ToolUiPrimaryActionButtonVisual',
     'function\s+Get-ToolUiButtonRequiredWidth',
     'function\s+Set-ToolUiFlowButtonSpacing',
+    'ToolUiCompactTextOnly',
     '[$]Button\.UseMnemonic\s*=\s*[$]false',
     '[$]Button\.Parent\s+-is\s+\[Windows\.Forms\.FlowLayoutPanel\]',
     'TextRenderer\]::MeasureText',
@@ -430,6 +438,33 @@ foreach ($buttonMode in @('Light','Dark')) {
 }
 $fitViCatalog = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $fitEnCatalog = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.en-US.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+if ([string]$fitViCatalog.'app.assistant' -ne 'Trợ lý VietLicenSure' -or
+    [string]$fitEnCatalog.'app.assistant' -ne 'VietLicenSure Assistant') {
+    Add-Failure 'Nút Trợ lý chưa hiển thị đầy đủ tên VietLicenSure ở cả hai ngôn ngữ.'
+}
+foreach ($aboutCase in @(@('vi-VN', $fitViCatalog), @('en-US', $fitEnCatalog))) {
+    foreach ($dpiScale in @(1.0, 1.25, 1.5)) {
+        $aboutHeadingFont = New-Object Drawing.Font('Segoe UI', ([single](14 * $dpiScale)), [Drawing.FontStyle]::Bold)
+        $aboutTaglineFont = New-Object Drawing.Font('Segoe UI', ([single](9.6 * $dpiScale)), [Drawing.FontStyle]::Bold)
+        try {
+            $headerWidth = [int](590 * $dpiScale)
+            $headerHeight = [int](112 * $dpiScale)
+            $sideMargin = [int](20 * $dpiScale)
+            $contentWidth = $headerWidth - (2 * $sideMargin)
+            $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
+            $headingSize = [Windows.Forms.TextRenderer]::MeasureText([string]$aboutCase[1].'about.heading', $aboutHeadingFont, (New-Object Drawing.Size($contentWidth, 500)), $wrappedFlags)
+            $taglineText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, [string]$aboutCase[1].'about.byline', @('v5.0','2026.09.06'))
+            $taglineSize = [Windows.Forms.TextRenderer]::MeasureText($taglineText, $aboutTaglineFont, (New-Object Drawing.Size($contentWidth, 500)), $wrappedFlags)
+            $requiredHeaderHeight = [int](8 * $dpiScale) + $headingSize.Height + [int](3 * $dpiScale) + $taglineSize.Height + [int](5 * $dpiScale)
+            if ($headingSize.Width -gt $contentWidth -or $taglineSize.Width -gt $contentWidth -or $requiredHeaderHeight -gt $headerHeight) {
+                Add-Failure "Tiêu đề Giới thiệu $($aboutCase[0]) bị cắt ở DPI $([int]($dpiScale * 100))%."
+            }
+        } finally {
+            $aboutHeadingFont.Dispose()
+            $aboutTaglineFont.Dispose()
+        }
+    }
+}
 $fitPanel = New-Object Windows.Forms.FlowLayoutPanel
 $fitPanel.Size = New-Object Drawing.Size(700, 54)
 $fitFont = New-Object Drawing.Font('Segoe UI', 9.6, [Drawing.FontStyle]::Bold)
@@ -511,53 +546,64 @@ try {
     $privacyBoldFont.Dispose()
     $privacyFont.Dispose()
 }
-$cleanupFooterFont = New-Object Drawing.Font('Segoe UI', 8.5, [Drawing.FontStyle]::Regular)
-try {
-    foreach ($cleanupFitCase in @(
-        @('Light', $fitViCatalog),
-        @('Dark', $fitViCatalog),
-        @('Light', $fitEnCatalog),
-        @('Dark', $fitEnCatalog)
-    )) {
-        $cleanupFooter = New-Object Windows.Forms.FlowLayoutPanel
-        $cleanupFooter.Size = New-Object Drawing.Size(636, 58)
-        $cleanupFooter.FlowDirection = [Windows.Forms.FlowDirection]::RightToLeft
-        $cleanupFooter.WrapContents = $false
-        $cleanupFooter.AutoScroll = $true
-        $cleanupFooter.Padding = New-Object Windows.Forms.Padding(0, 7, 0, 0)
-        $cleanupButtons = @()
-        foreach ($cleanupKey in @('common.back', 'cleanup.menu.cleanupAction', 'cleanup.dryRun.button', 'software.online.button')) {
-            $cleanupButton = New-Object Windows.Forms.Button
-            $cleanupButton.Text = [string]$cleanupFitCase[1].PSObject.Properties[$cleanupKey].Value
-            $cleanupButton.Font = $cleanupFooterFont
-            $cleanupButton.Size = New-Object Drawing.Size(90, 40)
-            $cleanupFooter.Controls.Add($cleanupButton)
-            $cleanupButtons += $cleanupButton
-        }
-        Set-ToolWindowTheme -Root $cleanupFooter -Mode ([string]$cleanupFitCase[0])
-        Set-ToolUiFlowButtonSpacing -Panel $cleanupFooter -PreferredSideMargin 3
-        $cleanupFooter.PerformLayout()
-
-        $cleanupUsedWidth = $cleanupFooter.Padding.Horizontal
-        $cleanupClipped = $false
-        foreach ($cleanupButton in $cleanupButtons) {
-            $cleanupUsedWidth += $cleanupButton.Width + $cleanupButton.Margin.Horizontal
-            $cleanupRequiredWidth = Get-ToolUiButtonRequiredWidth -Button $cleanupButton
-            if ($cleanupButton.Width -lt $cleanupRequiredWidth -or
-                $cleanupButton.Left -lt 0 -or
-                $cleanupButton.Right -gt $cleanupFooter.ClientSize.Width) {
-                $cleanupClipped = $true
+foreach ($cleanupFitCase in @(
+    @('Light', $fitViCatalog),
+    @('Dark', $fitViCatalog),
+    @('Light', $fitEnCatalog),
+    @('Dark', $fitEnCatalog)
+)) {
+    foreach ($dpiScale in @(1.0, 1.25, 1.5)) {
+        $cleanupFooterFont = New-Object Drawing.Font('Segoe UI', ([single](8.5 * $dpiScale)), [Drawing.FontStyle]::Regular)
+        $cleanupFooter = New-Object Windows.Forms.TableLayoutPanel
+        try {
+            $cleanupFooter.Size = New-Object Drawing.Size([int](636 * $dpiScale), [int](74 * $dpiScale))
+            $cleanupFooter.ColumnCount = 5
+            $cleanupFooter.RowCount = 1
+            $cleanupFooter.GrowStyle = [Windows.Forms.TableLayoutPanelGrowStyle]::FixedSize
+            $cleanupFooter.Padding = New-Object Windows.Forms.Padding(0, [int](7 * $dpiScale), 0, 0)
+            [void]$cleanupFooter.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Percent, 100)))
+            for ($columnIndex = 0; $columnIndex -lt 5; $columnIndex++) {
+                [void]$cleanupFooter.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent, 20)))
             }
+            $cleanupButtons = @()
+            $cleanupKeys = @('software.online.buttonCompact', 'cleanup.dryRun.buttonCompact', 'cleanup.menu.cleanupActionCompact', 'common.back', 'common.close')
+            for ($buttonIndex = 0; $buttonIndex -lt $cleanupKeys.Count; $buttonIndex++) {
+                $cleanupButton = New-Object Windows.Forms.Button
+                $cleanupButton.Text = [string]$cleanupFitCase[1].PSObject.Properties[$cleanupKeys[$buttonIndex]].Value
+                $cleanupButton.Font = $cleanupFooterFont
+                $cleanupButton.Dock = [Windows.Forms.DockStyle]::Fill
+                $cleanupButton.Margin = New-Object Windows.Forms.Padding([int](3 * $dpiScale))
+                $cleanupButton.Tag = 'ToolUiCompactTextOnly'
+                $cleanupButton.TextAlign = [Drawing.ContentAlignment]::MiddleCenter
+                $cleanupFooter.Controls.Add($cleanupButton, $buttonIndex, 0)
+                $cleanupButtons += $cleanupButton
+            }
+            [void]$cleanupFooter.CreateControl()
+            $cleanupFooter.PerformLayout()
+            Set-ToolWindowTheme -Root $cleanupFooter -Mode ([string]$cleanupFitCase[0])
+            $cleanupFooter.PerformLayout()
+
+            if ($cleanupFooter.AutoScroll -or $cleanupFooter.HorizontalScroll.Visible) {
+                Add-Failure "Lưới nút Khắc phục $([string]$cleanupFitCase[0]) tạo cuộn ngang ở DPI $([int]($dpiScale * 100))%."
+            }
+            foreach ($cleanupButton in $cleanupButtons) {
+                if ($cleanupButton.Image -or $cleanupButton.Left -lt 0 -or $cleanupButton.Right -gt $cleanupFooter.ClientSize.Width -or
+                    $cleanupButton.Top -lt 0 -or $cleanupButton.Bottom -gt $cleanupFooter.ClientSize.Height) {
+                    Add-Failure "Nút Khắc phục '$($cleanupButton.Text -replace "`r?`n", ' / ')' vượt lưới ở DPI $([int]($dpiScale * 100))%."
+                    continue
+                }
+                $textFlags = [Windows.Forms.TextFormatFlags]::NoPadding -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::WordBreak
+                $textArea = New-Object Drawing.Size([Math]::Max(1, $cleanupButton.ClientSize.Width - 12), [Math]::Max(1, $cleanupButton.ClientSize.Height - 6))
+                $requiredText = [Windows.Forms.TextRenderer]::MeasureText([string]$cleanupButton.Text, $cleanupButton.Font, $textArea, $textFlags)
+                if ($requiredText.Width -gt $textArea.Width -or $requiredText.Height -gt $textArea.Height) {
+                    Add-Failure "Nút Khắc phục '$($cleanupButton.Text -replace "`r?`n", ' / ')' bị cắt ở DPI $([int]($dpiScale * 100))%."
+                }
+            }
+        } finally {
+            $cleanupFooter.Dispose()
+            $cleanupFooterFont.Dispose()
         }
-        if ($cleanupUsedWidth -gt $cleanupFooter.ClientSize.Width -or
-            $cleanupFooter.HorizontalScroll.Visible -or
-            $cleanupClipped) {
-            Add-Failure "Hàng nút Khắc phục $([string]$cleanupFitCase[0]) vẫn có thể cắt nhãn Kết nối online ở chiều rộng tối thiểu."
-        }
-        $cleanupFooter.Dispose()
     }
-} finally {
-    $cleanupFooterFont.Dispose()
 }
 $responsiveFooterFont = New-Object Drawing.Font('Segoe UI', 8.5, [Drawing.FontStyle]::Regular)
 try {
@@ -961,9 +1007,13 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyText -notmatch 'chính thức đổi tên từ' -or
         $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
         $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
-        $historyText -notmatch 'Offline theo mặc định' -or
-        $historyText -notmatch 'kiểm thử UI tự động') {
+        $historyText -notmatch 'Offline theo mặc định') {
         Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
+    }
+    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+06/09/2026\s*$.*?(?=^##\s+v4\.9)').Value
+    if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 6 -or
+        $v5HistorySection -match 'Tên\s+\*\*VietLicenSure\*\*\s+ghép từ|kiểm thử UI tự động') {
+        Add-Failure 'Mục lịch sử v5.0 chưa được rút gọn về một dòng đổi tên và năm nhóm nâng cấp cốt lõi.'
     }
     $requiredHistoryHeadings = @(
         '## v5.0 — 06/09/2026',

@@ -131,7 +131,7 @@ if ([string]$stringsVi.'app.assistant' -match 'Tool' -or
     [string]$stringsVi.'enterprise.form.title' -notlike 'VietLicenSure*') {
     $failures.Add('Vietnamese user-facing brand labels are not synchronized.')
 }
-if ([string]$stringsEn.'app.assistant' -cne 'Assistant' -or
+if ([string]$stringsEn.'app.assistant' -cne 'VietLicenSure Assistant' -or
     [string]$stringsEn.'dashboard.sidebar.brand' -cne $brandName -or
     [string]$stringsEn.'dashboard.sidebar.edition' -cne 'LICENSE SOFTWARE' -or
     [string]$stringsEn.'enterprise.form.title' -notlike 'VietLicenSure*') {
@@ -141,8 +141,9 @@ $assistantSource = Read-HygieneText 'Tool-Assistant.ps1'
 $enterpriseSource = Read-HygieneText 'enterprise-license-manager.ps1'
 $dashboardSource = Read-HygieneText 'Giao-Dien.ps1'
 if ($assistantSource.Contains('Tool Assistant') -or
-    -not $assistantSource.Contains('RowStyle([Windows.Forms.SizeType]::Absolute, 92)') -or
-    -not $assistantSource.Contains('$scope.Size = New-Object Drawing.Size(570, 42)')) {
+    -not $assistantSource.Contains('RowStyle([Windows.Forms.SizeType]::Absolute, 112)') -or
+    -not $assistantSource.Contains('$scope.Size = New-Object Drawing.Size(570, 54)') -or
+    -not $assistantSource.Contains('Set-ToolAssistantHeaderBounds')) {
     $failures.Add('Assistant branding or anti-clipping layout contract drifted.')
 }
 if (-not $dashboardSource.Contains('$releaseDisplayName = "v5.0"') -or

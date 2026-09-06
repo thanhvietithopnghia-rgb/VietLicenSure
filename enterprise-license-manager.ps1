@@ -1129,7 +1129,7 @@ function Update-EnterpriseLayout {
             $clientWidth = [Math]::Max(680, $clientTab.ClientSize.Width)
             $clientMargin = 18
             $clientContentWidth = $clientWidth - (2 * $clientMargin)
-            $clientDescription = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.description" @($script:enterpriseReleaseVersion))
+            $clientDescription = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.description" @($script:enterpriseReleaseDisplayName))
             $clientAddressLabel = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.address")
             $clientPortLabel = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.port")
             $clientPairingLabel = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.pairingCode")
@@ -1319,7 +1319,7 @@ $tabs.TabPages.Add($serverTab) | Out-Null
 $clientTab = New-Object Windows.Forms.TabPage
 $clientTab.Text = Get-EnterpriseText "enterprise.client.tab"
 $clientTab.BackColor = $script:enterprisePalette.ClientSurface
-$clientTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.client.description" @($script:enterpriseReleaseVersion)) 20 18 920 30))
+$clientTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.client.description" @($script:enterpriseReleaseDisplayName)) 20 18 920 30))
 $clientTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.client.address") 20 65 210))
 $script:clientAddressBox = New-EnterpriseTextBox 180 62 260
 $clientTab.Controls.Add($script:clientAddressBox)

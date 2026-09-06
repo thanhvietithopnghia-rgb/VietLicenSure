@@ -1671,18 +1671,34 @@ function Set-ToolAssistantHeaderBounds {
         [Parameter(Mandatory = $true)][object]$Header,
         [Parameter(Mandatory = $true)][object]$TitleLabel,
         [Parameter(Mandatory = $true)][object]$ScopeLabel,
-        [Parameter(Mandatory = $true)][object]$ModeLabel
+        [Parameter(Mandatory = $true)][object]$ModeLabel,
+        [ValidateRange(0.0, 4.0)][double]$DpiScale = 0.0
     )
 
     $clientWidth = [int]$Header.ClientSize.Width
     if ($clientWidth -le 0) { return }
-    $rightMargin = 18
-    $modeWidth = [Math]::Min(272, [Math]::Max(220, [int]($clientWidth * 0.36)))
-    $ModeLabel.Size = New-Object Drawing.Size($modeWidth, 32)
-    $ModeLabel.Location = New-Object Drawing.Point([Math]::Max(390, $clientWidth - $modeWidth - $rightMargin), 14)
-    $leftContentRight = [Math]::Max(250, [int]$ModeLabel.Left - 14)
-    $TitleLabel.Width = [Math]::Max(220, $leftContentRight - [int]$TitleLabel.Left)
-    $ScopeLabel.Width = [Math]::Max(220, $leftContentRight - [int]$ScopeLabel.Left)
+    if ($DpiScale -le 0.0) {
+        $DpiScale = try { [Math]::Max(1.0, ([double]$Header.DeviceDpi / 96.0)) } catch { 1.0 }
+    }
+    $rightMargin = [int][Math]::Round(18 * $DpiScale)
+    $modeMinimumWidth = [int][Math]::Round(220 * $DpiScale)
+    $modeMaximumWidth = [int][Math]::Round(272 * $DpiScale)
+    $modeHeight = [int][Math]::Round(32 * $DpiScale)
+    $modeTop = [int][Math]::Round(14 * $DpiScale)
+    $titleMinimumWidth = [int][Math]::Round(220 * $DpiScale)
+    $titleHeight = [int][Math]::Round(34 * $DpiScale)
+    $scopeLeft = [int][Math]::Round(20 * $DpiScale)
+    $scopeTop = [int][Math]::Round(50 * $DpiScale)
+    $scopeBottomMargin = [int][Math]::Round(6 * $DpiScale)
+    $modeWidth = [Math]::Min($modeMaximumWidth, [Math]::Max($modeMinimumWidth, [int]($clientWidth * 0.36)))
+    $ModeLabel.Size = New-Object Drawing.Size($modeWidth, $modeHeight)
+    $ModeLabel.Location = New-Object Drawing.Point([Math]::Max([int][Math]::Round(390 * $DpiScale), $clientWidth - $modeWidth - $rightMargin), $modeTop)
+    $leftContentRight = [Math]::Max([int][Math]::Round(250 * $DpiScale), [int]$ModeLabel.Left - [int][Math]::Round(14 * $DpiScale))
+    $TitleLabel.Size = New-Object Drawing.Size([Math]::Max($titleMinimumWidth, $leftContentRight - [int]$TitleLabel.Left), $titleHeight)
+    $ScopeLabel.Location = New-Object Drawing.Point($scopeLeft, $scopeTop)
+    $ScopeLabel.Size = New-Object Drawing.Size(
+        [Math]::Max($titleMinimumWidth, $clientWidth - (2 * $scopeLeft)),
+        [Math]::Max([int][Math]::Round(42 * $DpiScale), [int]$Header.ClientSize.Height - $scopeTop - $scopeBottomMargin))
 }
 
 function Set-ToolAssistantInputFrameState {
@@ -1781,7 +1797,7 @@ function Show-ToolAssistantWindow {
     $assistantLayout.Margin = New-Object Windows.Forms.Padding(0)
     $assistantLayout.Padding = New-Object Windows.Forms.Padding(0)
     [void]$assistantLayout.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent, 100)))
-    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 92)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 112)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 42)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Percent, 100)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 114)))
@@ -1802,8 +1818,8 @@ function Show-ToolAssistantWindow {
     $scope = New-Object Windows.Forms.Label
     $scope.Text = Get-ToolAssistantUiText "Scope" $Culture
     $scope.ForeColor = $muted
-    $scope.Location = New-Object Drawing.Point(20, 43)
-    $scope.Size = New-Object Drawing.Size(570, 42)
+    $scope.Location = New-Object Drawing.Point(20, 50)
+    $scope.Size = New-Object Drawing.Size(570, 54)
     $scope.AutoEllipsis = $false
     $header.Controls.Add($scope)
     $mode = New-Object Windows.Forms.Label
