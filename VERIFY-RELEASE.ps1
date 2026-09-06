@@ -998,7 +998,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         }
         if ([string]$releaseManifest.DataSchemaVersion -ne '2.0' -or
             [string]$releaseManifest.DataStorageGeneration -ne 'v4.6' -or
-            [string]$releaseManifest.LegacyDataStorageGeneration -ne 'v4.4' -or
+            [string]$releaseManifest.LegacyDataStorageGeneration -ne 'v4.6' -or
             [string]$releaseManifest.DataMigrationPolicy -ne 'Verified staging copy + transactional commit + rollback' -or
             [string]$releaseManifest.StartupExecutionLevel -ne 'asInvoker' -or
             [string]$releaseManifest.ElevationPolicy -notmatch '^On demand' -or
