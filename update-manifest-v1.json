@@ -1,15 +1,18 @@
 {
     "SchemaVersion":  "1.0",
     "Channel":  "stable",
-    "LatestVersion":  "5.0.0.0",
+    "LatestVersion":  "5.0.0.1",
     "MinimumUpdaterVersion":  "4.6.1.0",
-    "PublishedAtUtc":  "2026-08-26T00:00:00Z",
+    "PublishedAtUtc":  "2026-09-06T00:00:00Z",
     "Title":  {
-                  "vi-VN":  "v5.0 - Nâng độ tin cậy, quản trị doanh nghiệp và quét linh hoạt",
-                  "en-US":  "v5.0 - Trust hardening, enterprise management, and flexible scanning"
+                  "vi-VN":  "v5.0.0.1 - Trợ lý đọc đầy đủ HDSD và lịch sử phiên bản",
+                  "en-US":  "v5.0.0.1 - Complete guide and version-history support in Tool Assistant"
               },
     "Changes":  {
                     "vi-VN":  [
+                                  "Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt-Anh theo từng mục, trả đầy đủ thay đổi của một phiên bản và đối chiếu trực tiếp hai phiên bản mà không suy diễn ngoài hồ sơ.",
+                                  "Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.",
+                                  "Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo \u0026 Bảo đảm; không chỉ riêng OEM.",
                                   "v5.0 siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.",
                                   "Bản ManagedSigned chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.",
                                   "Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.",
@@ -29,6 +32,9 @@
                                   "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
                               ],
                     "en-US":  [
+                                  "Tool Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version\u0027s full change entry, and compares two versions without inferring undocumented changes.",
+                                  "Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.",
+                                  "Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports \u0026 Assurance actions—not only OEM.",
                                   "v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.",
                                   "The ManagedSigned build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.",
                                   "Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.",
@@ -48,10 +54,10 @@
                                   "Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate."
                               ]
                 },
-    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/tag/v5.0.0.0",
-    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/download/v5.0.0.0/Tool-Kiem-Tra-v5.0.exe",
-    "DownloadSha256":  "D66AAD02B7DF0456CA7E6129FE11148375F27A21553F254E07DD2E7FA4C0E07D",
-    "DownloadSize":  780536,
+    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1",
+    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe",
+    "DownloadSha256":  "4B972ABA939BD5DC8E65C11DA294B7B985E4238DBEA466A1A73B491BB0D3314E",
+    "DownloadSize":  794872,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"

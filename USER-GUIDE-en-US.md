@@ -1,10 +1,10 @@
-# User guide for Machine Configuration and Software Licensing Tool
+# User guide for VietLicenSure - System License Inspection and Management Software
 
 Developed by Thanh Viet
 
 ## Overview
 
-Tool Kiem Tra is a Windows application for reviewing computer configuration, Windows and Microsoft Office licensing state, installed software, and intervention indicators that may require attention. It presents technical evidence by scope so users can distinguish normal findings, insufficient evidence, and items that need action.
+VietLicenSure is a Windows application for reviewing computer configuration, Windows and Microsoft Office licensing state, installed software, and intervention indicators that may require attention. It presents technical evidence by scope so users can distinguish normal findings, insufficient evidence, and items that need action.
 
 The workflow has four steps: select an inspection scope, review results and evidence, preview a remediation plan when needed, then confirm and perform post-verification. Inspection and reporting are read-only by default; system-changing actions always provide a preview, backup, confirmation, and an appropriate privilege request.
 
@@ -28,7 +28,7 @@ The Tool is Offline by default and does not automatically upload inventory or re
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
 6. Keep Offline enabled unless you intentionally need a catalog update or authorized LAN management.
 
-A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download Stable builds only from <https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
+A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download Stable builds only from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
 
 ## How to run the Tool
 
@@ -72,16 +72,20 @@ You do not need source access, configuration files, or technical documentation t
 
 ## Tool Assistant
 
-Tool Assistant understands and answers every Tool-related question supported by available data; it is not limited to a fixed sample-question list. This includes product version, developer, build date, overview and principles; the purpose, use, output and safety notes of every feature; Windows/Office/software status; evidence, errors, reports, catalogs, updates, and Server/Workstation connectivity.
+Tool Assistant understands and answers every VietLicenSure-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0.0.1 technical release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, updates, and Server/Workstation connectivity. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
+
+### Send and Enter
 
 1. Select **Tool Assistant**.
 2. Enter a question in the clearly outlined composer; select **Send** or press `Enter`. Use `Shift+Enter` for a new line.
 3. Read questions and answers in separate colored message frames. New content scrolls into view and the answer appears in the current submission turn.
 4. For a specific error or result, include the related error code, status, or evidence line. Follow-ups such as “how do I use it?”, “what about OEM key recovery?”, or “explain further” retain the immediately preceding Tool topic.
 
-The Assistant combines structured knowledge, the bundled guide, and available report context. Routing prioritizes exact feature names, error codes, and specific phrases before general keywords; it handles natural wording, accent-free text, abbreviations, typing errors, and multi-part questions. A related question with insufficient data is identified as such; only genuinely unrelated content is marked out of scope, using wording adapted to the context instead of one repeated canned reply.
+The Assistant combines structured knowledge, bundled documentation, and available report context. Routing prioritizes exact feature names, error codes, and specific phrases before general keywords. Ask about one recorded version to read its complete change entry, or name two versions for a direct section-by-section comparison. If the history has no entry for a requested version — for example v2.0 — the Assistant states that no entry is recorded and does not invent changes. It also handles natural wording, accent-free text, abbreviations, typing errors, and multi-part questions. A related question with insufficient data is identified as such; only genuinely unrelated content is marked out of scope, using wording adapted to the context instead of one repeated canned reply.
 
-The Assistant remains available Offline on every device through bundled baseline knowledge and that device's own local report context. After explicit Online consent, the Tool downloads only `tool-assistant-knowledge-v1.1.json` and its detached CMS signature from two pinned GitHub paths. It verifies the publisher signature, SHA-256, schema, Tool-only scope, size, compatibility range, and downgrade protection before replacing a backed-up cache. Questions, reports, inventory, paths, keys, and tokens are never uploaded. Growing knowledge is stored under `%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\assistant`, outside the EXE; only this bounded 2 MiB local cache can grow.
+### Sync knowledge
+
+The Assistant remains available Offline on every device through bundled baseline knowledge and that device's own local report context. After explicit Online consent, the Tool downloads only `tool-assistant-knowledge-v1.1.json` and its detached CMS signature from two pinned GitHub paths. It verifies the publisher signature, SHA-256, schema, Tool-only scope, size, compatibility range, and downgrade protection before replacing a backed-up cache. Questions, reports, inventory, paths, keys, and tokens are never uploaded. Growing knowledge is stored under `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, outside the EXE; only this bounded 2 MiB local cache can grow.
 
 ## Recommended workflow
 
@@ -205,9 +209,21 @@ The backup does not store complete keys or tokens and cannot be used to restore 
 
 Each dedicated remediation screen offers only the actions applicable to its locked scope and never widens into another group; only the combined Overview tile opens the Windows, Office, and Other software checkboxes:
 
-- **Online:** after explicit consent, the Tool downloads the allowed comparison catalog and scans only the selected scopes; it does not upload the software inventory or machine data.
-- **Dry Run — no system changes:** choose the scope and individual items normally, then review the exact file/Registry/service/task targets, intended actions, reasons, backup plan, and restorability. It scans and writes a report only; it does not create a restore point or backup, stop a process/service, delete a file, or edit system state.
-- **Inspect and return to original state:** follows the real workflow below. Choosing **Execute for real** after a Dry Run always reopens item selection and requires confirmation again; a simulated plan is never executed automatically.
+#### Online in Remediation
+
+After explicit consent, the Tool downloads the allowed comparison catalog and scans only the selected scopes; it does not upload the software inventory or machine data.
+
+#### Dry Run — no system changes
+
+Choose the scope and individual items normally, then review the exact file/Registry/service/task targets, intended actions, reasons, backup plan, and restorability. It scans and writes a report only; it does not create a restore point or backup, stop a process/service, delete a file, or edit system state.
+
+#### Inspect and return to original state
+
+This action follows the real workflow below. Choosing **Execute for real** after a Dry Run always reopens item selection and requires confirmation again; a simulated plan is never executed automatically.
+
+#### Execute for real after Dry Run
+
+The Tool always reopens the scanned-item list, requires the user to select the intended items again, and asks for a second confirmation before UAC. A Dry Run plan is preview-only and never becomes a real action automatically.
 
 1. Select Inspect and return to original state.
 2. Confirm the locked scope, or from the combined Overview tile select one or more scopes—Windows, Office, and Other software—then choose Continue.
@@ -220,6 +236,10 @@ Each dedicated remediation screen offers only the actions applicable to its lock
 9. The tool creates and verifies a backup before processing only the checked rows.
 10. Wait for post-check and use the next actions in Action Center.
 
+#### Quick repair scan sources
+
+Use this only when the Tool reports incomplete WMI/CIM, licensing-service, or Task Scheduler sources. The Tool repairs the required scan sources within the selected scope and asks you to scan again; it does not replace evidence review or automatically remediate detected items.
+
 “Ready for activation” means that no crack or unapproved-KMS evidence remains in the scanned scope; it does not mean licensed. After key entry, Windows returns `ActivationConfirmed = TRUE` only when the post-check reports `LicenseStatus=1` for that key, and Office only when the matching SKU/key reports `LICENSED`. Otherwise the result remains FALSE and the Tool opens the official Activation or sign-in/redeem path. For other software, use the vendor-source button; modified binaries may require an official Repair/reinstall first. The Tool preserves a currently valid genuine license and never simulates the “Activate Windows” watermark.
 
 On an unfamiliar computer or when impact is uncertain, run Dry Run first, retain its report, and review it before authorizing real execution.
@@ -227,6 +247,32 @@ On an unfamiliar computer or when impact is uncertain, run Dry Run first, retain
 Depending on evidence, a third-party plan can quarantine an exact confirmed artifact or restore an exact blocked hosts entry. It never resets vendor licensing stores, runs MSI Repair, uninstalls an application, or automatically changes Firewall rules, processes, services, tasks, folders, or Registry entries. All other findings are preserved for manual review and may direct the user to an official repair or reinstall.
 
 After post-verification or Recheck, the remediation list shows only current activator/tampering evidence. An application that is merely Unverified remains in the inventory report for manual review but is not treated as failed cleanup. A standalone activator file in Downloads, Desktop, or TEMP is quarantined only after its exact row is selected and confirmed; protected backup/quarantine paths are excluded from rescans.
+
+The Action Center provides these follow-up actions:
+
+#### Handle remaining items
+
+Reopen the post-check list so the user can review evidence and select only remaining eligible items.
+
+#### Confirm internal KMS
+
+Use this only after an administrator verifies the organization's legitimate KMS host; it must not be used to approve an unknown KMS host or activator.
+
+#### Recheck
+
+Scan the current state and evidence again without changing the computer.
+
+#### Activate legitimately
+
+Move to Manage valid licenses after the system is ready; the user still needs a legitimate key, entitled account, or authorized activation right.
+
+#### Restore backup from Action Center
+
+Restore safe data from a suitable backup after the Tool verifies its integrity and machine binding.
+
+#### Open report from Action Center
+
+Open the report to review complete evidence, the plan, and actions already performed.
 
 ### Choice 3 – Restore from backup
 
@@ -261,9 +307,9 @@ Do not use an OEM key from another computer or force an unsupported edition chan
 
 ## Manage valid licenses
 
-This function includes Local Windows/Office management, Server, and Workstation.
+This function includes Local Windows/Office management, Server, and Workstation. In local mode, select the exact Windows or Office action, enter a legitimate key when required, and review confirmation before installing a key, changing edition, or activating. In enterprise mode, an administrator explicitly enables LAN access, creates a Server, pairs Workstations with temporary codes, and receives reports under policy; remote license-changing actions remain disabled by default. The Tool does not generate keys, replace entitlement records, or upload data to a public cloud service.
 
-For local management:
+### Local management
 
 1. Select Manage legitimate licenses.
 2. Open Local Windows/Office management.
@@ -272,14 +318,23 @@ For local management:
 5. Read the confirmation before installing a key, changing edition, or activating.
 6. For Microsoft 365, prefer signing in with an entitled account in Office.
 
-For enterprise management, network access starts disabled. Enable Online only for authorized LAN use. The server creates enrollment data and receives approved workstation reports; a workstation enrolls with a temporary code. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
+### Enterprise server and workstation
+
+Network access starts disabled. Enable Online only for authorized LAN use. The server creates enrollment data and receives approved workstation reports; a workstation enrolls with a temporary code. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
 
 ## Advanced inspection
 
-Two read-only Administrator modes are available:
+Two read-only Administrator modes are available.
 
-- Seven-group deep scan: Windows licensing, KMS, activators, keys, folders, tasks, and Registry/hosts.
-- Twelve-group forensics and scoring: also reviews signatures, licensing logs, Office, Defender/Firewall, Secure Boot, TPM, BitLocker, and change comparison.
+### Seven-group deep scan
+
+Reviews Windows licensing, KMS, activators, keys, folders, tasks, and Registry/hosts.
+
+### Twelve-group forensics and scoring
+
+Also reviews signatures, licensing logs, Office, Defender/Firewall, Secure Boot, TPM, BitLocker, and change comparison.
+
+### How to run advanced inspection
 
 1. Select Advanced scan.
 2. Choose the required mode.
@@ -334,7 +389,7 @@ This action downloads recognition rules only. It does not upload software invent
 
 ## Reports and saved files
 
-- The only output directory is `Desktop\BaoCao-Tool-Kiem-Tra`; exports do not create per-scan subfolders.
+- The only output directory is `Desktop\BaoCao-VietLicenSure`; exports do not create per-scan subfolders.
 - Related HTML, PDF, JSON/XML, and SHA-256 files share one base name with a millisecond timestamp and sit next to each other.
 - The summary HTML, detailed PDF, JSON/XML, and SHA-256 files stay together in that shared folder.
 - Only the summary HTML opens after completion. Select **Open detailed PDF** in the HTML to review all tables and evidence; PDF/JSON/XML do not open automatically.
@@ -343,11 +398,17 @@ This action downloads recognition rules only. It does not upload software invent
 - A full report can contain computer name, user name, IP addresses, paths, and a KMS host, but not a complete product key.
 - If the report is not visible, select Open report folder or read the path in Recent activity.
 
+### Report privacy
+
+Use a redacted report for external sharing. Keep a full report internal because it can contain the computer name, user name, IP addresses, paths, and a KMS host; the Tool does not write a complete product key into reports.
+
 ## Long-running tasks and Stop
 
 Software inventory, signature checks, Office queries, WMI, and PDF generation can take time. Recent activity shows whether work is continuing. A slow-task warning does not itself indicate failure.
 
-Use Stop only when necessary. If remediation was already running, some actions may have completed. Preserve the backup, reopen the tool, and run a read-only scan before continuing.
+### Stop task
+
+Use Stop only when necessary. If remediation was already running, some actions may have completed. Preserve the backup, reopen the Tool, and run a read-only scan before continuing.
 
 ## Common problems
 

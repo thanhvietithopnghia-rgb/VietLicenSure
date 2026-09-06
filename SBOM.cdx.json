@@ -3,23 +3,23 @@
     "specVersion":  "1.5",
     "version":  1,
     "metadata":  {
-                     "timestamp":  "2026-08-26T00:00:00Z",
+                     "timestamp":  "2026-09-06T00:00:00Z",
                      "tools":  [
                                    {
                                        "vendor":  "Thanh Viet",
                                        "name":  "BUILD.ps1",
-                                       "version":  "5.0.0.0"
+                                       "version":  "5.0.0.1"
                                    }
                                ],
                      "component":  {
                                        "type":  "application",
                                        "bom-ref":  "application:tool-kiem-tra",
-                                       "name":  "Tool Kiem Tra",
-                                       "version":  "5.0.0.0",
+                                       "name":  "VietLicenSure",
+                                       "version":  "5.0.0.1",
                                        "hashes":  [
                                                       {
                                                           "alg":  "SHA-256",
-                                                          "content":  "D66AAD02B7DF0456CA7E6129FE11148375F27A21553F254E07DD2E7FA4C0E07D"
+                                                          "content":  "4B972ABA939BD5DC8E65C11DA294B7B985E4238DBEA466A1A73B491BB0D3314E"
                                                       }
                                                   ],
                                        "licenses":  [
@@ -32,11 +32,11 @@
                                        "properties":  [
                                                           {
                                                               "name":  "tool:buildId",
-                                                              "value":  "5.0.0.0-production-20260826"
+                                                              "value":  "5.0.0.1-production-20260906"
                                                           },
                                                           {
                                                               "name":  "tool:sourceSnapshotCommit",
-                                                              "value":  "f104076deb2253ded9f4b90b089abdc0f40aead2"
+                                                              "value":  "054ad46b825271f530fb034bdc166c5d4f900742"
                                                           },
                                                           {
                                                               "name":  "tool:releaseStatus",

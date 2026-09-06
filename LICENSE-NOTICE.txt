@@ -2,7 +2,7 @@ THÔNG BÁO BẢN QUYỀN VÀ ĐIỀU KHOẢN SỬ DỤNG — ÁP DỤNG TỪ v4
 
 Copyright (c) 2026 Thanh Việt. Mọi quyền được bảo lưu.
 
-Tool Kiểm Tra là phần mềm miễn phí do tác giả phát triển vì cộng đồng và tiếp
+VietLicenSure là phần mềm miễn phí do tác giả phát triển vì cộng đồng và tiếp
 nhận phản hồi, đề xuất, tài liệu, bản dịch hoặc đóng góp kỹ thuật của cộng đồng
 theo quy trình do tác giả công bố. “Miễn phí” và “phát triển cùng cộng đồng”
 không đồng nghĩa “mã nguồn mở”, không chuyển giao quyền sở hữu trí tuệ và không
@@ -40,7 +40,7 @@ COPYRIGHT AND TERMS OF USE — EFFECTIVE FROM v4.9
 
 Copyright (c) 2026 Thanh Viet. All rights reserved.
 
-Tool Kiem Tra is free software developed for the community. Community feedback,
+VietLicenSure is free software developed for the community. Community feedback,
 proposals, documentation, translations, and technical contributions are welcome
 through processes published by the author. “Free” and “community-developed” do
 not mean “open source”, transfer intellectual-property ownership, or grant any

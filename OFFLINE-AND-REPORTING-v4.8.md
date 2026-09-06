@@ -1,4 +1,6 @@
-# Offline mode, Trợ lý Tool và báo cáo v4.8
+# Offline mode, Trợ lý và báo cáo — tài liệu nền v4.8
+
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các nguyên tắc còn hiệu lực áp dụng cho VietLicenSure v5.0.0.1 trừ khi một mục ghi rõ phiên bản khác.
 
 ## Chính sách mặc định
 
@@ -73,9 +75,9 @@ HTML được tạo tự chứa:
 
 `Test-ToolHtmlOfflineSafe` chỉ cho phép thẻ điều hướng HTTPS do renderer tạo cho nguồn chính thức; thẻ này không tự tải dữ liệu khi in PDF. Mọi tài nguyên hoặc đích gửi từ xa (`src`, `srcset`, `poster`, CSS, SVG, form), liên kết không tin cậy, protocol-relative URL, `@import`, script và iframe vẫn bị từ chối trước khi PDF/package được coi là hợp lệ. Trình duyệt headless đồng thời tắt background networking và ánh xạ DNS ra địa chỉ vô hiệu.
 
-Từ export schema 1.4, HTML và PDF dùng cùng dữ liệu nhưng khác mức trình bày. HTML là tổng quan, giữ cấu hình chính, kết luận, cảnh báo, ứng dụng chính và nút mở đúng PDF. PDF là bản chi tiết có toàn bộ bảng/bằng chứng cùng phụ lục phần mềm hệ thống; bảng rộng được tách, nội dung dài mở đầy đủ khi in và ngắt trang A4 an toàn. Mọi lượt xuất dùng chung `Desktop\BaoCao-Tool-Kiem-Tra`, không tạo thư mục con; tên tệp có timestamp mili-giây và sau khi hoàn tất chỉ HTML tổng quan được mở.
+Từ export schema 1.4, HTML và PDF dùng cùng dữ liệu nhưng khác mức trình bày. HTML là tổng quan, giữ cấu hình chính, kết luận, cảnh báo, ứng dụng chính và nút mở đúng PDF. PDF là bản chi tiết có toàn bộ bảng/bằng chứng cùng phụ lục phần mềm hệ thống; bảng rộng được tách, nội dung dài mở đầy đủ khi in và ngắt trang A4 an toàn. Mọi lượt xuất dùng chung `Desktop\BaoCao-VietLicenSure`, không tạo thư mục con; tên tệp có timestamp mili-giây và sau khi hoàn tất chỉ HTML tổng quan được mở.
 
-Kho Trợ lý schema `1.1`, knowledge `1.3.1` tách dữ liệu tăng thêm khỏi EXE. Cache chỉ được nhận khi JSON khớp chữ ký CMS SHA-256 của chứng thư nhà phát hành đã ghim, đúng `Scope=Tool-Kiem-Tra`, kích thước tối đa 2 MiB và tương thích theo `ToolVersionMin`/`ToolVersionMax`; phiên bản bằng hoặc thấp hơn không thay cache hiện có. Bản cache hợp lệ trước được giữ làm dự phòng, còn cache hỏng/sai chữ ký bị bỏ qua để dùng bản nhúng. Mỗi máy kết hợp tri thức chuẩn với HDSD, ngữ cảnh lượt trước và báo cáo cục bộ của chính máy; hàng rào phạm vi chạy trước định tuyến nên ngay cả từ khóa điểm cao cũng không mở chủ đề ngoài Tool.
+Kho Trợ lý schema `1.1`, knowledge `1.3.1` tách dữ liệu tăng thêm khỏi EXE. Cache chỉ được nhận khi JSON khớp chữ ký CMS SHA-256 của chứng thư nhà phát hành đã ghim, đúng `Scope=VietLicenSure`, kích thước tối đa 2 MiB và tương thích theo `ToolVersionMin`/`ToolVersionMax`; phiên bản bằng hoặc thấp hơn không thay cache hiện có. Bản cache hợp lệ trước được giữ làm dự phòng, còn cache hỏng/sai chữ ký bị bỏ qua để dùng bản nhúng. Mỗi máy kết hợp tri thức chuẩn với HDSD, ngữ cảnh lượt trước và báo cáo cục bộ của chính máy; hàng rào phạm vi chạy trước định tuyến nên ngay cả từ khóa điểm cao cũng không mở chủ đề ngoài Tool.
 
 HTML cân năm thẻ kết quả nhanh trên màn hình rộng và đặt Mức xác minh/Hướng xử lý trong các ô con riêng. Chân PDF được chia thành hai hàng để giữ đủ tên công cụ và thông tin tác giả/hỗ trợ trên khổ A4.
 
@@ -87,7 +89,7 @@ Tool thử lần lượt:
 2. Google Chrome headless;
 3. Microsoft Word automation, chỉ cho presentation cơ bản không mang theme PDF.
 
-Edge/Chrome nhận cờ tắt background networking, sync, domain reliability và metrics; DNS resolver được map về `0.0.0.0`. Profile tạm nằm dưới `%LOCALAPPDATA%\Temp\ThanhViet-Tool-Kiem-Tra\pdf`, chỉ user hiện tại/SYSTEM truy cập và được dọn bằng retry có giới hạn. HTML nguồn và PDF trung gian cũng được staging trong profile này, nên Chromium sau khi tự hạ quyền vẫn đọc/ghi được; tiến trình Tool chỉ chép PDF đã tạo hợp lệ về đích cuối. Tool thử từng trình duyệt tìm thấy theo thứ tự Edge rồi Chrome. Nếu cả hai lỗi, presentation `v4.8-classic-a4` fail closed và không chuyển sang Word, vì Word không giữ được CSS/grid/ngắt trang của giao diện này.
+Edge/Chrome nhận cờ tắt background networking, sync, domain reliability và metrics; DNS resolver được map về `0.0.0.0`. Profile tạm nằm dưới `%LOCALAPPDATA%\Temp\ThanhViet-VietLicenSure\pdf`, chỉ user hiện tại/SYSTEM truy cập và được dọn bằng retry có giới hạn. HTML nguồn và PDF trung gian cũng được staging trong profile này, nên Chromium sau khi tự hạ quyền vẫn đọc/ghi được; tiến trình Tool chỉ chép PDF đã tạo hợp lệ về đích cuối. Tool thử từng trình duyệt tìm thấy theo thứ tự Edge rồi Chrome. Nếu cả hai lỗi, presentation `v4.8-classic-a4` fail closed và không chuyển sang Word, vì Word không giữ được CSS/grid/ngắt trang của giao diện này.
 
 Nếu không có engine, tool báo rõ lỗi PDF nhưng vẫn giữ HTML/JSON/XML và SHA-256 manifest.
 
@@ -116,4 +118,4 @@ Tất cả định dạng dùng cùng dữ liệu nguồn. Consumer phải xác 
 
 ## Phạm vi bảo đảm Offline
 
-Offline mode bảo đảm code của Tool-Kiem-Tra không chủ động tạo kết nối mạng. Nó không thay firewall và không thể kiểm soát một dịch vụ Windows, Office, antivirus hoặc PDF engine đã chạy độc lập ngoài tiến trình tool. Với môi trường yêu cầu cách ly tuyệt đối, vẫn nên ngắt adapter mạng hoặc áp policy firewall/WDAC của tổ chức.
+Offline mode bảo đảm code của VietLicenSure không chủ động tạo kết nối mạng. Nó không thay firewall và không thể kiểm soát một dịch vụ Windows, Office, antivirus hoặc PDF engine đã chạy độc lập ngoài tiến trình tool. Với môi trường yêu cầu cách ly tuyệt đối, vẫn nên ngắt adapter mạng hoặc áp policy firewall/WDAC của tổ chức.

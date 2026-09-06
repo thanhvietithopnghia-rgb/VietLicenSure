@@ -1,10 +1,10 @@
-# Hướng dẫn sử dụng Công cụ kiểm tra cấu hình máy và bản quyền phần mềm
+# Hướng dẫn sử dụng VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
 Phát triển bởi Thanh Việt
 
 ## Tổng quan
 
-Tool Kiểm Tra là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, trạng thái cấp phép Windows và Microsoft Office, phần mềm đã cài cùng các dấu hiệu can thiệp cần xem xét. Tool trình bày bằng chứng kỹ thuật theo từng phạm vi để người dùng phân biệt nội dung bình thường, nội dung chưa đủ dữ liệu và nội dung cần xử lý.
+VietLicenSure là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, trạng thái cấp phép Windows và Microsoft Office, phần mềm đã cài cùng các dấu hiệu can thiệp cần xem xét. Tool trình bày bằng chứng kỹ thuật theo từng phạm vi để người dùng phân biệt nội dung bình thường, nội dung chưa đủ dữ liệu và nội dung cần xử lý.
 
 Quy trình sử dụng gồm bốn bước: chọn phạm vi kiểm tra, đọc kết quả và bằng chứng, chạy thử kế hoạch nếu cần khắc phục, sau đó xác nhận và hậu kiểm. Kiểm tra và báo cáo mặc định chỉ đọc; thao tác thay đổi hệ thống luôn có xem trước, backup, xác nhận và yêu cầu quyền phù hợp.
 
@@ -28,7 +28,7 @@ Tool hoạt động Offline theo mặc định, không tự gửi inventory ho�
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
 
-Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản Stable từ trang chính thức `https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
+Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản Stable từ trang chính thức `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
 
 ## Cách chạy Tool
 
@@ -72,16 +72,20 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 
 ## Trợ lý Tool
 
-Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến Tool trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm như phiên bản, tác giả, ngày build, tóm tắt và nguyên tắc; mục đích/cách dùng/kết quả/lưu ý của mọi chức năng; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, báo cáo, catalogue, cập nhật và kết nối Máy chủ/Máy trạm.
+Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm và toàn bộ lịch sử được ghi nhận từ v1.0.0 đến bản phát hành kỹ thuật v5.0.0.1 hiện tại; mục đích, cách dùng, kết quả và lưu ý của cả 10 chức năng chính, các lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, catalogue, cập nhật và kết nối Máy chủ/Máy trạm. Toàn bộ Hướng dẫn sử dụng và toàn bộ Lịch sử phiên bản tiếng Việt/Anh đi kèm đều được lập chỉ mục theo từng mục, không chỉ một vài đoạn mẫu hay riêng chức năng OEM.
+
+### Nút Gửi và Enter
 
 1. Bấm **Trợ lý Tool**.
 2. Nhập câu hỏi vào khung soạn rõ viền; bấm **Gửi** hoặc nhấn `Enter`. Dùng `Shift+Enter` để xuống dòng.
 3. Đọc câu hỏi và câu trả lời trong các khung màu riêng. Nội dung mới tự cuộn tới đúng vị trí và câu trả lời xuất hiện ngay trong lượt hỏi hiện tại.
 4. Nếu cần giải thích một lỗi hoặc kết quả cụ thể, hãy gửi kèm mã lỗi, trạng thái hoặc dòng bằng chứng liên quan. Có thể hỏi tiếp bằng các cụm như “cách dùng nó”, “còn Khôi phục key OEM” hoặc “giải thích thêm”; Trợ lý giữ chủ đề của lượt ngay trước để hiểu ngữ cảnh.
 
-Trợ lý kết hợp kho tri thức có cấu trúc, tài liệu HDSD nhúng và dữ liệu báo cáo hiện có; bộ định tuyến ưu tiên tên chức năng, mã lỗi và cụm từ cụ thể trước từ khóa chung. Trợ lý xử lý cách diễn đạt tự nhiên, câu không dấu, viết tắt, lỗi gõ và câu nhiều ý. Câu có liên quan đến Tool nhưng thiếu dữ liệu sẽ được nói rõ là chưa đủ thông tin; chỉ nội dung thật sự không liên quan mới được báo ngoài phạm vi, với cách diễn đạt phù hợp từng ngữ cảnh thay vì lặp một câu cố định.
+Trợ lý kết hợp kho tri thức có cấu trúc, tài liệu HDSD nhúng và dữ liệu báo cáo hiện có; bộ định tuyến ưu tiên tên chức năng, mã lỗi và cụm từ cụ thể trước từ khóa chung. Có thể hỏi một phiên bản đã ghi trong lịch sử để đọc đầy đủ mục thay đổi, hoặc nêu hai phiên bản để đối chiếu trực tiếp từng mục. Nếu lịch sử không có phiên bản được hỏi — ví dụ v2.0 — Trợ lý nói rõ không có mục được ghi nhận và không tự dựng thay đổi. Trợ lý xử lý cách diễn đạt tự nhiên, câu không dấu, viết tắt, lỗi gõ và câu nhiều ý. Câu có liên quan đến Tool nhưng thiếu dữ liệu sẽ được nói rõ là chưa đủ thông tin; chỉ nội dung thật sự không liên quan mới được báo ngoài phạm vi, với cách diễn đạt phù hợp từng ngữ cảnh thay vì lặp một câu cố định.
 
-Trợ lý vẫn dùng được khi Offline trên mọi máy bằng bộ tri thức nền và dữ liệu báo cáo cục bộ của chính máy đó. Sau khi người dùng chủ động cấp quyền Online, Tool chỉ tải `tool-assistant-knowledge-v1.1.json` cùng chữ ký CMS rời từ hai đường dẫn GitHub đã khóa. Tool kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, đúng phạm vi Tool, kích thước, dải phiên bản và chống hạ phiên bản trước khi thay cache; bản hợp lệ trước đó được giữ để khôi phục. Câu hỏi, báo cáo, inventory, đường dẫn, khóa và token không được gửi đi. Phần tri thức cập nhật nằm trong `%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\assistant`, không được nhúng thêm vào EXE; chỉ thư mục cache cục bộ tăng theo giới hạn 2 MiB.
+### Đồng bộ tri thức
+
+Trợ lý vẫn dùng được khi Offline trên mọi máy bằng bộ tri thức nền và dữ liệu báo cáo cục bộ của chính máy đó. Sau khi người dùng chủ động cấp quyền Online, Tool chỉ tải `tool-assistant-knowledge-v1.1.json` cùng chữ ký CMS rời từ hai đường dẫn GitHub đã khóa. Tool kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, đúng phạm vi Tool, kích thước, dải phiên bản và chống hạ phiên bản trước khi thay cache; bản hợp lệ trước đó được giữ để khôi phục. Câu hỏi, báo cáo, inventory, đường dẫn, khóa và token không được gửi đi. Phần tri thức cập nhật nằm trong `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, không được nhúng thêm vào EXE; chỉ thư mục cache cục bộ tăng theo giới hạn 2 MiB.
 
 ## Quy trình sử dụng được khuyến nghị
 
@@ -253,9 +257,21 @@ Backup không lưu product key/token đầy đủ và không được dùng đ�
 
 Trên màn hình riêng của từng chức năng khắc phục có các cách tiếp tục phù hợp với phạm vi đó. Tool dùng ngay phạm vi đã khóa và không mở rộng sang nhóm khác; chỉ ô tổng hợp ở Tổng quan mới hiển thị ba ô tích Windows, Office và Phần mềm khác:
 
-- **Kết nối online:** sau khi người dùng đồng ý, Tool tải danh mục đối chiếu được phép rồi chỉ quét các phạm vi đã tích; không tải danh sách phần mềm hoặc dữ liệu máy lên mạng.
-- **Chạy thử – không thay đổi hệ thống:** chọn phạm vi và từng mục như bình thường, sau đó xem kế hoạch gồm tệp/Registry/service/task sẽ xử lý, hành động dự kiến, lý do, backup và khả năng hoàn tác. Chế độ này chỉ quét và tạo báo cáo; không tạo restore point, không tạo backup, không dừng tiến trình/dịch vụ, không xóa hay sửa dữ liệu.
-- **Kiểm tra và đưa về trạng thái gốc:** thực hiện luồng thật bên dưới. Nếu chọn **Thực hiện thật** sau Dry Run, công cụ luôn mở lại danh sách và yêu cầu xác nhận lần nữa; kế hoạch mô phỏng không tự động được thi hành.
+#### Kết nối online trong Khắc phục
+
+Sau khi người dùng đồng ý, Tool tải danh mục đối chiếu được phép rồi chỉ quét các phạm vi đã tích; không tải danh sách phần mềm hoặc dữ liệu máy lên mạng.
+
+#### Chạy thử – không thay đổi hệ thống
+
+Chọn phạm vi và từng mục như bình thường, sau đó xem kế hoạch gồm tệp/Registry/service/task sẽ xử lý, hành động dự kiến, lý do, backup và khả năng hoàn tác. Chế độ này chỉ quét và tạo báo cáo; không tạo restore point, không tạo backup, không dừng tiến trình/dịch vụ, không xóa hay sửa dữ liệu.
+
+#### Kiểm tra và đưa về trạng thái gốc
+
+Thao tác này thực hiện luồng thật bên dưới. Nếu chọn **Thực hiện thật** sau Dry Run, công cụ luôn mở lại danh sách và yêu cầu xác nhận lần nữa; kế hoạch mô phỏng không tự động được thi hành.
+
+#### Thực hiện thật sau Chạy thử
+
+Tool luôn mở lại danh sách mục đã quét, yêu cầu người dùng chọn lại và xác nhận lần nữa trước khi xin UAC. Kế hoạch Chạy thử chỉ để xem trước và không bao giờ tự chuyển thành thao tác thật.
 
 1. Chọn Kiểm tra và đưa về trạng thái gốc.
 2. Xác nhận phạm vi đã khóa; hoặc nếu mở từ ô tổng hợp, tích một hay nhiều mục Windows, Office, Phần mềm khác rồi chọn Tiếp tục.
@@ -268,6 +284,10 @@ Trên màn hình riêng của từng chức năng khắc phục có các cách t
 9. Công cụ tạo backup trước, kiểm tra backup rồi mới xử lý đúng các dòng đã chọn.
 10. Chờ hậu kiểm và đọc bước tiếp theo trong Trung tâm xử lý.
 
+#### Sửa nhanh nguồn quét
+
+Chỉ dùng khi Tool báo nguồn WMI/CIM, dịch vụ cấp phép hoặc Task Scheduler chưa đầy đủ. Tool sửa các nguồn quét cần thiết trong đúng phạm vi rồi yêu cầu quét lại; thao tác này không thay thế việc xem bằng chứng và không tự xử lý các mục phát hiện.
+
 “Sẵn sàng kích hoạt” chỉ xác nhận không còn bằng chứng crack/KMS chưa được phê duyệt trong phạm vi đã quét; không đồng nghĩa đã có giấy phép. Khi nhập key, Windows chỉ hiện `ActivationConfirmed = TRUE` sau khi hậu kiểm `LicenseStatus=1` và đúng key; Office chỉ TRUE khi đúng SKU/key báo `LICENSED`. Nếu chưa đạt, kết quả vẫn là FALSE và Tool mở trang Activation hoặc hướng dẫn đăng nhập/redeem chính thức. Với phần mềm khác, dùng nút nguồn hãng; ứng dụng bị sửa tệp phải Repair/cài lại chính thức trước. Tool giữ nguyên giấy phép chính hãng đang hợp lệ và không giả lập dòng “Activate Windows”.
 
 Với máy lạ hoặc khi chưa chắc phạm vi tác động, nên chạy Dry Run trước, lưu báo cáo rồi mới quyết định có thực hiện thật hay không.
@@ -278,12 +298,29 @@ Sau hậu kiểm hoặc khi bấm Quét lại, danh sách xử lý chỉ hiện 
 
 Trong Trung tâm xử lý có thể dùng:
 
-- Xử lý mục còn lại: mở danh sách sau hậu kiểm để chọn tiếp.
-- Xác nhận KMS nội bộ: chỉ dùng khi quản trị viên xác minh máy chủ KMS hợp pháp của đơn vị.
-- Quét lại: kiểm tra lại mà không thay đổi máy.
-- Kích hoạt hợp lệ: chuyển sang Quản lý giấy phép hợp lệ khi máy đã sẵn sàng.
-- Khôi phục backup: phục hồi dữ liệu an toàn từ bản sao lưu phù hợp.
-- Mở báo cáo: xem đầy đủ bằng chứng và hành động đã thực hiện.
+#### Xử lý mục còn lại
+
+Mở danh sách sau hậu kiểm để người dùng xem bằng chứng và chọn tiếp đúng những mục còn đủ điều kiện.
+
+#### Xác nhận KMS nội bộ
+
+Chỉ dùng khi quản trị viên đã xác minh máy chủ KMS hợp pháp của đơn vị; không dùng để hợp thức hóa KMS lạ hoặc activator.
+
+#### Quét lại
+
+Kiểm tra lại trạng thái và bằng chứng hiện tại mà không thay đổi máy.
+
+#### Kích hoạt hợp lệ
+
+Chuyển sang Quản lý giấy phép hợp lệ khi máy đã sẵn sàng; người dùng vẫn phải có key, tài khoản hoặc quyền kích hoạt hợp pháp.
+
+#### Khôi phục backup trong Trung tâm xử lý
+
+Phục hồi dữ liệu an toàn từ bản sao lưu phù hợp sau khi Tool xác minh tính toàn vẹn và đúng máy.
+
+#### Mở báo cáo trong Trung tâm xử lý
+
+Mở báo cáo để xem đầy đủ bằng chứng, kế hoạch và hành động đã thực hiện.
 
 ### Lựa chọn 3 – Khôi phục từ backup
 
@@ -326,7 +363,7 @@ Nếu key không khớp edition, Windows có thể từ chối. Không dùng key
 
 ## Quản lý giấy phép hợp lệ
 
-Chức năng này gồm Quản lý cục bộ Windows/Office, Máy chủ và Máy trạm.
+Chức năng này gồm Quản lý cục bộ Windows/Office, Máy chủ và Máy trạm. Ở chế độ cục bộ, người dùng chọn đúng thao tác Windows hoặc Office, nhập key hợp lệ khi cần, đọc xác nhận rồi mới cho phép cài key, đổi edition hoặc kích hoạt. Ở chế độ doanh nghiệp, quản trị viên chủ động bật LAN, tạo Máy chủ, ghép Máy trạm bằng mã tạm thời và nhận báo cáo theo chính sách; lệnh thay đổi giấy phép từ xa mặc định bị tắt. Tool không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
 
 ### Quản lý cục bộ
 
@@ -349,12 +386,17 @@ Chỉ quản trị viên có thẩm quyền nên cấu hình máy chủ, firewal
 
 ## Kiểm tra chuyên sâu
 
-Có hai chế độ chỉ đọc và đều cần quyền Administrator:
+Có hai chế độ chỉ đọc và đều cần quyền Administrator.
 
-- Kiểm tra chuyên sâu 7 nhóm: tập trung vào Windows, KMS, activator, key, thư mục, task và Registry/hosts.
-- Điều tra 12 nhóm và chấm điểm: bổ sung chữ ký tệp, nhật ký cấp phép, Office, Defender/Firewall, Secure Boot, TPM, BitLocker và so sánh lần quét trước.
+### Kiểm tra chuyên sâu 7 nhóm
 
-Cách thực hiện:
+Tập trung vào Windows, KMS, activator, key, thư mục, task và Registry/hosts.
+
+### Điều tra 12 nhóm và chấm điểm
+
+Bổ sung chữ ký tệp, nhật ký cấp phép, Office, Defender/Firewall, Secure Boot, TPM, BitLocker và so sánh lần quét trước.
+
+### Cách chạy kiểm tra chuyên sâu
 
 1. Chọn Kiểm tra chuyên sâu.
 2. Chọn chế độ phù hợp.
@@ -414,7 +456,7 @@ Kết nối này chỉ tải danh mục nhận diện. Công cụ không gửi d
 
 ## Báo cáo và vị trí lưu
 
-- Thư mục duy nhất là `Desktop\BaoCao-Tool-Kiem-Tra`; Tool không tạo thư mục con cho từng lần xuất.
+- Thư mục duy nhất là `Desktop\BaoCao-VietLicenSure`; Tool không tạo thư mục con cho từng lần xuất.
 - HTML tổng quan, PDF chi tiết, JSON/XML và tệp SHA-256 của cùng lần xuất nằm cạnh nhau, dùng cùng tên gốc và dấu thời gian đến mili-giây.
 - Sau khi hoàn tất, công cụ chỉ tự mở HTML tổng quan bằng trình duyệt mặc định. Muốn xem đủ bảng và bằng chứng, chọn **Mở PDF chi tiết** ngay trong HTML; PDF/JSON/XML không tự bật.
 - JSON, XML hoặc CSV dùng cho tích hợp, kiểm toán và phân tích có cấu trúc.
@@ -422,13 +464,18 @@ Kết nối này chỉ tải danh mục nhận diện. Công cụ không gửi d
 - Báo cáo đầy đủ có thể chứa tên máy, tên người dùng, IP, đường dẫn và KMS server, nhưng không chứa product key đầy đủ.
 - Nếu không thấy báo cáo, bấm Mở thư mục báo cáo hoặc xem đường dẫn trong Hoạt động gần đây.
 
+### Quyền riêng tư báo cáo
+
+Dùng báo cáo đã che khi chia sẻ ra ngoài. Báo cáo đầy đủ chỉ lưu và xử lý nội bộ vì có thể chứa tên máy, tên người dùng, IP, đường dẫn và KMS server; Tool không ghi product key đầy đủ vào báo cáo.
+
 ## Tác vụ chạy lâu và nút Dừng
 
 - Kiểm kê nhiều phần mềm, kiểm tra chữ ký, Office, WMI hoặc tạo PDF có thể cần thời gian.
 - Dòng Hoạt động và trạng thái đang chạy cho biết tiến trình vẫn phản hồi.
 - Cảnh báo chậm không đồng nghĩa tác vụ đã lỗi.
-- Chỉ bấm Dừng khi cần thiết. Nếu đã bắt đầu khắc phục, một phần thao tác có thể đã hoàn tất.
-- Sau khi dừng tác vụ khắc phục, giữ nguyên backup, mở lại công cụ và chạy quét chỉ đọc trước khi tiếp tục.
+### Nút Dừng
+
+Chỉ bấm Dừng khi cần thiết. Nếu đã bắt đầu khắc phục, một phần thao tác có thể đã hoàn tất. Sau khi dừng tác vụ khắc phục, giữ nguyên backup, mở lại công cụ và chạy quét chỉ đọc trước khi tiếp tục.
 
 ## Xử lý lỗi thường gặp
 

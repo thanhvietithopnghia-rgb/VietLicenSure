@@ -7,7 +7,7 @@
   "UpdatePolicy": "Offline bundled snapshot; newer detached-CMS-signed catalog is downloaded only after explicit user consent.",
   "SignatureAsset": "software-license-catalog-v1.0.json.p7s",
   "CatalogScope": ["General", "Design", "CAD", "CAM", "CAE", "BIM", "GIS", "Simulation", "Engineering"],
-  "UpdateUrl": "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/main/software-license-catalog-v1.0.json",
+  "UpdateUrl": "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/software-license-catalog-v1.0.json",
   "Privacy": {
     "DownloadOnly": true,
     "UploadsInstalledInventory": false,

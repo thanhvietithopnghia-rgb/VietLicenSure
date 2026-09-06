@@ -38,7 +38,7 @@ Nhờ vậy thiếu một bản dịch không làm dashboard dừng chạy và v
 
 Culture được lưu theo user trong:
 
-`%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\localization-settings.json`
+`%LOCALAPPDATA%\ThanhViet-VietLicenSure\localization-settings.json`
 
 Environment `TOOL_UI_CULTURE` có ưu tiên cao hơn và được truyền sang tiến trình con. Tệp lỗi không được thực thi và không ảnh hưởng integrity payload.
 

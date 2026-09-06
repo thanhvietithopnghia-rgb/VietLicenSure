@@ -1,14 +1,14 @@
 # Hướng dẫn tham gia và tiếp cận mã nguồn có kiểm soát từ v4.9
 
-Áp dụng cho Tool Kiểm Tra v4.9.0.0, build 2026.08.22 và các phiên bản mới hơn.
+Áp dụng cho VietLicenSure v4.9.0.0, build 2026.08.22 và các phiên bản mới hơn.
 
 ## Mô hình phát triển
 
-Tool Kiểm Tra được cung cấp miễn phí và phát triển cùng cộng đồng thông qua báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được tác giả Thanh Việt quản lý theo cơ chế truy cập có kiểm soát. Bản thực thi chính thức tiếp tục được cung cấp miễn phí tại:
+VietLicenSure được cung cấp miễn phí và phát triển cùng cộng đồng thông qua báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được tác giả Thanh Việt quản lý theo cơ chế truy cập có kiểm soát. Bản thực thi chính thức tiếp tục được cung cấp miễn phí tại:
 
-<https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
 
-Tệp thực thi của nhánh phát triển hiện tại là `Tool-Kiem-Tra-v5.0.exe`. Chỉ artifact có Authenticode, timestamp và provenance hợp lệ mới được công bố là Stable.
+Tệp thực thi của nhánh phát triển hiện tại là `VietLicenSure-v5.0.exe`. Chỉ artifact có Authenticode, timestamp và provenance hợp lệ mới được công bố là Stable.
 
 Việc kiểm soát truy cập nhằm bảo vệ nguồn gốc và công sức phát triển sau khi tác giả ghi nhận nội dung, giao diện, mô tả và thành quả của Tool bị sao chép gần như nguyên trạng, đổi tên hoặc đổi thương hiệu thành sản phẩm cá nhân mà không xin phép hay ghi nhận tác giả. Tuyên bố này không khẳng định mã nguồn/backend đã bị lấy khi chưa có bằng chứng kỹ thuật xác nhận.
 
@@ -77,7 +77,7 @@ Chính sách này chỉ áp dụng cho mã nguồn từ v4.9 trở đi. Phiên b
 
 - [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md)
 - [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt)
-- [Trang tải bản mới nhất](https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest)
+- [Trang tải bản mới nhất](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest)
 
 Nếu nội dung tóm tắt này khác với văn bản chấp thuận riêng hoặc chính sách đầy đủ, văn bản chấp thuận và `SOURCE-POLICY-v4.9.md` được ưu tiên áp dụng.
 

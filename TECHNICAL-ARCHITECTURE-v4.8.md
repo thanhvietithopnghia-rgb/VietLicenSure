@@ -1,4 +1,6 @@
-# Kiến trúc kỹ thuật Tool-Kiem-Tra v4.8
+# Kiến trúc kỹ thuật — tài liệu nền v4.8
+
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các ranh giới kiến trúc còn hiệu lực là nền cho VietLicenSure v5.0.0.1. Những số liệu gắn riêng với 4.8.0.1 chỉ mang tính lịch sử.
 
 Tài liệu này mô tả kiến trúc phát hành `4.8.0.1`, dashboard schema `2.0` và các ranh giới an toàn của bản một tệp. Mã nguồn PowerShell tương ứng là nguồn sự thật; tài liệu không thay thế verifier.
 
@@ -14,7 +16,7 @@ Tài liệu này mô tả kiến trúc phát hành `4.8.0.1`, dashboard schema `
 ## Sơ đồ thành phần
 
 ```text
-Tool-Kiem-Tra-v4.8.exe
+VietLicenSure-v4.8.exe
   ├─ kiểm tra OS/kiến trúc, chọn quyền chạy theo mode, mutex và Offline mặc định
   ├─ giải nén 49 payload vào session được bảo vệ
   ├─ đối chiếu TOOL-SHA256SUMS.txt
@@ -42,12 +44,12 @@ Tool-Kiem-Tra-v4.8.exe
 
 ## Lớp launcher
 
-`Tool-Kiem-Tra-v4.8-OneFile.cs`:
+`VietLicenSure-v4.8-OneFile.cs`:
 
 1. chạy `asInvoker` cho dashboard; mode không-GUI cần quyền cao tự relaunch bằng `runas` và GUI chỉ nâng quyền cho từng hành động cần thiết;
 2. từ chối Windows cũ hơn Windows 7 SP1;
 3. dùng `Environment.SpecialFolder.System` để lấy PowerShell native, không tìm `powershell.exe` qua `PATH`;
-4. dùng `%LOCALAPPDATA%\ThanhViet-Tool-Kiem-Tra\v4.6` cho dashboard và `%ProgramData%\ThanhViet-Tool-Kiem-Tra\v4.6` cho mode nâng quyền; vùng v4.4/v4.5 chỉ là nguồn migration hoặc tham chiếu log/backup đọc;
+4. dùng `%LOCALAPPDATA%\ThanhViet-VietLicenSure\v4.6` cho dashboard và `%ProgramData%\ThanhViet-VietLicenSure\v4.6` cho mode nâng quyền; vùng v4.4/v4.5 chỉ là nguồn migration hoặc tham chiếu log/backup đọc;
 5. từ chối reparse point; ACL LocalAppData chỉ cho user hiện tại/Administrators/SYSTEM, ACL ProgramData chỉ cho Administrators/SYSTEM;
 6. giải nén payload, tính SHA-256 và so với manifest nhúng;
 7. truyền phiên bản schema, correlation ID, đường dẫn log/plugin/timeline và trạng thái Offline qua environment;
@@ -172,7 +174,7 @@ module data
   → SHA-256 manifest
 ```
 
-HTML có CSP `default-src 'none'`, CSS nhúng, layout responsive, dark-mode preview và stylesheet A4. Bảng dùng profile độ rộng theo ngữ nghĩa; bảng đánh giá rộng tách thành tổng quan/bằng chứng tối đa sáu cột, `<details>` tự mở khi in, header lặp và hàng tránh bị cắt. Mọi lần xuất đặt HTML/PDF/JSON/XML/SHA-256 trực tiếp trong một `Desktop\BaoCao-Tool-Kiem-Tra`, dùng timestamp mili-giây; HTML liên kết tương đối tới PDF và là tệp duy nhất tự mở. Edge/Chrome chạy với background networking tắt và host resolver map về `0.0.0.0`. Nếu không có PDF engine, các định dạng còn lại vẫn hợp lệ.
+HTML có CSP `default-src 'none'`, CSS nhúng, layout responsive, dark-mode preview và stylesheet A4. Bảng dùng profile độ rộng theo ngữ nghĩa; bảng đánh giá rộng tách thành tổng quan/bằng chứng tối đa sáu cột, `<details>` tự mở khi in, header lặp và hàng tránh bị cắt. Mọi lần xuất đặt HTML/PDF/JSON/XML/SHA-256 trực tiếp trong một `Desktop\BaoCao-VietLicenSure`, dùng timestamp mili-giây; HTML liên kết tương đối tới PDF và là tệp duy nhất tự mở. Edge/Chrome chạy với background networking tắt và host resolver map về `0.0.0.0`. Nếu không có PDF engine, các định dạng còn lại vẫn hợp lệ.
 
 ## Dữ liệu và ranh giới tin cậy
 
@@ -186,7 +188,7 @@ HTML có CSP `default-src 'none'`, CSS nhúng, layout responsive, dark-mode prev
 | `timeline` | JSONL + HMAC/hash chain | Administrators/SYSTEM |
 | `enterprise` | config, secret DPAPI, queue, report | Administrators/SYSTEM |
 | `%LOCALAPPDATA%\Temp\...\pdf` | profile browser tạm | người dùng hiện tại/SYSTEM |
-| `Desktop\BaoCao-Tool-Kiem-Tra` | package report theo từng lượt | người dùng hiện tại |
+| `Desktop\BaoCao-VietLicenSure` | package report theo từng lượt | người dùng hiện tại |
 
 Product key đầy đủ không được ghi vào log, timeline hoặc báo cáo. Enterprise chỉ mang key trong envelope mã hóa; audit chỉ giữ last-5.
 

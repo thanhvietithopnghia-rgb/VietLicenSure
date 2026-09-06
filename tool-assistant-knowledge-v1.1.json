@@ -1,59 +1,67 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.5.2",
-  "UpdatedAtUtc": "2026-09-05T00:00:00Z",
-  "ToolVersionMin": "5.0.0.0",
+  "KnowledgeVersion": "1.9.0",
+  "UpdatedAtUtc": "2026-09-06T11:13:26Z",
+  "ToolVersionMin": "5.0.0.1",
   "ToolVersionMax": "5.0.65535.65535",
-  "ReleasedWithToolVersion": "5.0.0.0",
-  "Scope": "Tool-Kiem-Tra",
+  "ReleasedWithToolVersion": "5.0.0.1",
+  "Scope": "VietLicenSure",
   "Entries": [
     {
       "Id": "scope",
       "TitleVi": "Phạm vi của Trợ lý Tool",
       "TitleEn": "Tool Assistant scope",
       "Keywords": ["tro ly", "chat bot", "chatbot", "hoi gi", "lam duoc gi", "pham vi", "ai", "codex", "api"],
-      "AnswerVi": "Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến Tool Kiểm Tra trong phạm vi dữ liệu Tool có: thông tin sản phẩm, toàn bộ chức năng và cách dùng, trạng thái máy, báo cáo, bằng chứng, lỗi, an toàn, cập nhật và Máy chủ–Máy trạm. Trợ lý dùng tri thức cục bộ, tài liệu nhúng và báo cáo hiện có; danh sách này là phạm vi mở theo dữ liệu, không phải một tập câu hỏi mẫu cố định. Nếu thiếu bằng chứng, Trợ lý nói rõ phần chưa xác định; chỉ từ chối khi nội dung thực sự không liên quan đến Tool.",
-      "AnswerEn": "Tool Assistant handles every Tool Kiem Tra-related question supported by available Tool data: product information, all features and workflows, device state, reports, evidence, errors, safety, updates, and server/workstation operation. It uses local knowledge, bundled documentation, and available report context; this is a data-driven scope, not a fixed sample-question list. It states when evidence is insufficient and declines only genuinely unrelated topics."
+      "AnswerVi": "Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu Tool có: thông tin sản phẩm, toàn bộ chức năng và cách dùng, trạng thái máy, báo cáo, bằng chứng, lỗi, an toàn, cập nhật và Máy chủ–Máy trạm. Trợ lý dùng tri thức cục bộ, tài liệu nhúng và báo cáo hiện có; danh sách này là phạm vi mở theo dữ liệu, không phải một tập câu hỏi mẫu cố định. Nếu thiếu bằng chứng, Trợ lý nói rõ phần chưa xác định; chỉ từ chối khi nội dung thực sự không liên quan đến Tool.",
+      "AnswerEn": "Tool Assistant handles every VietLicenSure-related question supported by available Tool data: product information, all features and workflows, device state, reports, evidence, errors, safety, updates, and server/workstation operation. It uses local knowledge, bundled documentation, and available report context; this is a data-driven scope, not a fixed sample-question list. It states when evidence is insufficient and declines only genuinely unrelated topics."
+    },
+    {
+      "Id": "brand-name",
+      "TitleVi": "Tên VietLicenSure và lần đổi tên chính thức",
+      "TitleEn": "VietLicenSure name and official rebranding",
+      "Keywords": ["vietlicensure nghia la gi", "y nghia ten vietlicensure", "ten vietlicensure", "doi ten v5.0", "ten cu cua vietlicensure", "why vietlicensure", "vietlicensure meaning", "official rebrand"],
+      "AnswerVi": "Ngày 06/09/2026, dòng v5.0 chính thức đổi tên từ Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm thành VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống. Viet thể hiện phần mềm do người Việt phát triển; Licen rút gọn từ License, đại diện cho giấy phép/bản quyền phần mềm; Sure thể hiện mục tiêu đưa ra kết quả rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật. Việc đổi tên giữ nguyên dòng v5.0 và toàn bộ chức năng; tên gọi không phải chứng nhận pháp lý về quyền sử dụng.",
+      "AnswerEn": "On 6 September 2026, the v5.0 product line was officially renamed from Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool to VietLicenSure — System License Inspection and Management Software. Viet identifies its Vietnamese authorship, Licen is shortened from License, and Sure represents clear, evidence-backed technical verification. The rename preserves the v5.0 line and all features; the name is not a legal certification of entitlement."
     },
     {
       "Id": "tool-version",
       "TitleVi": "Phiên bản hiện tại",
       "TitleEn": "Current version",
-      "Keywords": ["phien ban cua tool", "tool version", "phien ban hien tai", "version hien tai", "dang dung ban nao", "so phien ban", "ban v5.0", "v5.0.0.0", "release v5.0"],
-      "AnswerVi": "Phiên bản công khai hiện tại là Tool Kiểm Tra v5.0, phiên bản kỹ thuật v5.0.0.0, kênh ManagedSigned. Bản cập nhật kỹ thuật hiện tại bổ sung timeline xử lý riêng, giữ đồng bộ Hoạt động gần đây, cho chọn đúng phần mềm Paid/Subscription/Trial và khóa xử lý cùng hậu kiểm theo chính mục đã chọn. Tool vẫn có ba mức quét, giao diện Sáng/Tối theo DPI, báo cáo cục bộ và năm chức năng Khắc phục chính.",
-      "AnswerEn": "The current public release is Tool Kiem Tra v5.0, technical version v5.0.0.0, on the ManagedSigned channel. The current technical update adds a dedicated remediation timeline while keeping Recent activity synchronized, permits exact Paid/Subscription/Trial selection, and constrains remediation and post-verification to the selected item. The Tool retains three scan levels, DPI-aware Light/Dark UI, local reports, and five primary Remediation functions."
+      "Keywords": ["phien ban cua tool", "tool version", "phien ban hien tai", "version hien tai", "dang dung ban nao", "so phien ban", "ban v5.0", "v5.0.0.1", "release v5.0"],
+      "AnswerVi": "Gói Tool hiện tại mang tên VietLicenSure v5.0, phiên bản kỹ thuật v5.0.0.1, kênh ManagedSigned. Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh từ v1.0.0 đến v5.0.0.1 để tra cứu Offline, trả nguyên mục thay đổi, đối chiếu hai phiên bản và giải thích chi tiết toàn bộ chức năng được tài liệu hóa—không chỉ Khôi phục key OEM. Tool có 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm.",
+      "AnswerEn": "This Tool package is VietLicenSure v5.0, technical version v5.0.0.1, on the ManagedSigned channel. The Assistant indexes the complete Vietnamese/English guides and recorded history from v1.0.0 through v5.0.0.1 for Offline lookup, returns full change entries, compares two versions, and explains every documented function—not only OEM key recovery. Coverage includes all ten main functions, four remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions."
     },
     {
       "Id": "tool-author",
       "TitleVi": "Tác giả phát triển",
       "TitleEn": "Developer",
       "Keywords": ["tac gia cua tool", "do ai phat trien", "ai phat trien tool", "nguoi viet tool", "developer cua tool", "ai tao ra cong cu", "thanh viet la ai"],
-      "AnswerVi": "Tool Kiểm Tra do Thanh Việt phát triển. Thông tin này được ghi trong mục Giới thiệu, Hướng dẫn sử dụng và phần chân giao diện của bản phát hành.",
-      "AnswerEn": "Tool Kiem Tra is developed by Thanh Viet. This attribution appears in About, the user guide, and the release interface footer."
+      "AnswerVi": "VietLicenSure do Thanh Việt phát triển. Thông tin này được ghi trong mục Giới thiệu, Hướng dẫn sử dụng và phần chân giao diện của bản phát hành.",
+      "AnswerEn": "VietLicenSure is developed by Thanh Viet. This attribution appears in About, the user guide, and the release interface footer."
     },
     {
       "Id": "release-date",
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "Bản phát hành Tool Kiểm Tra v5.0, phiên bản kỹ thuật v5.0.0.0, hiện được cập nhật và phát hành ngày 05/09/2026. Các thay đổi kỹ thuật trong cùng phiên bản được ghi ở release notes, không tạo nhãn bản dựng công khai riêng. Chữ ký có timestamp nhưng chứng thư hiện tại là tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen.",
-      "AnswerEn": "The current Tool Kiem Tra v5.0 release, technical version v5.0.0.0, was updated and published on 5 September 2026. Technical changes within the same version are recorded in release notes without a separate public build label. The signature is timestamped, but the current certificate is self-signed and launcher-pinned, so Windows may still show Unknown publisher or SmartScreen."
+      "AnswerVi": "Gói VietLicenSure v5.0, phiên bản kỹ thuật v5.0.0.1, có ngày build 06/09/2026. Trạng thái có sẵn công khai cần được đối chiếu trên trang Releases chính thức; ngày build không tự chứng minh gói đã được phát hành. Chữ ký có timestamp nhưng chứng thư hiện tại là tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen.",
+      "AnswerEn": "This VietLicenSure v5.0 package, technical version v5.0.0.1, has a build date of 6 September 2026. Public availability must be checked on the official Releases page; a build date alone does not prove publication. The signature is timestamped, but the current certificate is self-signed and launcher-pinned, so Windows may still show Unknown publisher or SmartScreen."
     },
     {
       "Id": "first-release",
       "TitleVi": "Phiên bản công khai đầu tiên",
       "TitleEn": "First public release",
       "Keywords": ["phien ban dau tien cua tool", "v1.0 phat hanh ngay nao", "v1 ngay nao", "ngay ra mat v1.0", "first public version", "first release date", "ban dau tien", "ban dau tien ngay may", "lich su ban v1.0"],
-      "AnswerVi": "Phiên bản công khai đầu tiên là Tool Kiểm Tra v1.0, phát hành ngày 17/07/2026. Đây là mốc đầu tiên trong Lịch sử phiên bản, không phải ngày build của phiên bản v5.0.0.0 hiện tại.",
-      "AnswerEn": "The first public release was Tool Kiem Tra v1.0 on 17 July 2026. This is the first milestone in Version history, not the build date of the current v5.0.0.0 build."
+      "AnswerVi": "Phiên bản công khai đầu tiên của dòng sản phẩm tiền thân là v1.0, phát hành ngày 17/07/2026. Tên VietLicenSure chỉ được dùng chính thức từ v5.0 ngày 06/09/2026; vì vậy không gọi hồi tố v1.0 là VietLicenSure. Đây là mốc đầu tiên trong Lịch sử phiên bản, không phải ngày build của v5.0.0.1 hiện tại.",
+      "AnswerEn": "The predecessor product line first shipped publicly as v1.0 on 17 July 2026. The VietLicenSure name became official only with v5.0 on 6 September 2026, so v1.0 is not retroactively branded VietLicenSure. This is the first milestone in Version history, not the build date of the current v5.0.0.1 release."
     },
     {
       "Id": "tool-pricing",
       "TitleVi": "Tool miễn phí hay trả phí",
       "TitleEn": "Tool pricing",
       "Keywords": ["tool mien phi hay tra phi", "tool co mat phi khong", "co ton tien khong", "gia tool", "free or paid tool", "is it free", "tool pricing", "phi su dung tool", "mien phi"],
-      "AnswerVi": "Tool Kiểm Tra v5.0.0.0 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc Tool miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
-      "AnswerEn": "Tool Kiem Tra v5.0.0.0 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use of the Tool does not make its source open source or alter the licence terms of software being scanned."
+      "AnswerVi": "VietLicenSure v5.0.0.1 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc Tool miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
+      "AnswerEn": "VietLicenSure v5.0.0.1 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use of the Tool does not make its source open source or alter the licence terms of software being scanned."
     },
     {
       "Id": "source-code-license",
@@ -89,11 +97,11 @@
     },
     {
       "Id": "tool-overview",
-      "TitleVi": "Tóm tắt Tool Kiểm Tra",
-      "TitleEn": "Tool Kiem Tra overview",
+      "TitleVi": "Tóm tắt VietLicenSure",
+      "TitleEn": "VietLicenSure overview",
       "Keywords": ["tom tat tool", "noi dung chinh cua tool", "gioi thieu tool", "tool lam duoc nhung gi", "cong cu dung de lam gi", "muc dich cua cong cu", "tong quan san pham", "mo ta ngan gon"],
-      "AnswerVi": "Tool Kiểm Tra là công cụ Windows một-EXE dùng để kiểm kê cấu hình, kiểm tra trạng thái Windows/Office, rà soát phần mềm và dấu hiệu can thiệp, tạo báo cáo có thể đối chiếu, sao lưu/khôi phục và khắc phục có kiểm soát. Tool mặc định Offline, ưu tiên quét chỉ đọc; mọi thay đổi hệ thống phải qua chọn phạm vi, xem trước, xác nhận, backup và hậu kiểm.",
-      "AnswerEn": "Tool Kiem Tra is a one-EXE Windows utility for hardware inventory, Windows/Office status, software and tampering review, verifiable reports, backup/restore, and controlled remediation. It starts Offline and prioritizes read-only scans; system changes require scope selection, preview, confirmation, backup, and post-check."
+      "AnswerVi": "VietLicenSure là công cụ Windows một-EXE dùng để kiểm kê cấu hình, kiểm tra trạng thái Windows/Office, rà soát phần mềm và dấu hiệu can thiệp, tạo báo cáo có thể đối chiếu, sao lưu/khôi phục và khắc phục có kiểm soát. Tool mặc định Offline, ưu tiên quét chỉ đọc; mọi thay đổi hệ thống phải qua chọn phạm vi, xem trước, xác nhận, backup và hậu kiểm.",
+      "AnswerEn": "VietLicenSure is a one-EXE Windows utility for hardware inventory, Windows/Office status, software and tampering review, verifiable reports, backup/restore, and controlled remediation. It starts Offline and prioritizes read-only scans; system changes require scope selection, preview, confirmation, backup, and post-check."
     },
     {
       "Id": "tool-principles",
@@ -107,9 +115,9 @@
       "Id": "feature-overview",
       "TitleVi": "Mười chức năng chính",
       "TitleEn": "Ten main features",
-      "Keywords": ["tat ca chuc nang", "10 chuc nang chinh", "tung chuc nang cua tool", "danh sach tinh nang", "tong hop chuc nang", "tool co bao nhieu chuc nang", "chuc nang gom nhung gi", "tom tat cac tac vu"],
-      "AnswerVi": "Tool có 10 chức năng chính: 1) Kiểm tra toàn bộ; 2) Cấu hình phần cứng; 3) Bản quyền Windows; 4) Bản quyền Microsoft Office; 5) Phần mềm & dấu hiệu can thiệp; 6) Khắc phục KMS/Activator Win, Office & phần mềm; 7) Khôi phục key OEM; 8) Quản lý giấy phép hợp lệ, gồm cục bộ/Máy chủ/Máy trạm; 9) Kiểm tra chuyên sâu; 10) Trung tâm báo cáo & bảo đảm. Có thể hỏi tiếp tên hoặc số bất kỳ để nhận mục đích, cách dùng, kết quả và lưu ý an toàn của chức năng đó.",
-      "AnswerEn": "The Tool has ten main features: 1) Full inspection; 2) Hardware configuration; 3) Windows licensing; 4) Microsoft Office licensing; 5) Software and tampering signals; 6) Windows/Office/software KMS-Activator remediation; 7) OEM key recovery; 8) Valid-license management with local/server/workstation modes; 9) Deep inspection; and 10) Assurance Report Center. Ask by any name or number for purpose, steps, output, and safety notes."
+      "Keywords": ["tat ca chuc nang", "10 chuc nang chinh", "tung chuc nang cua tool", "danh sach tinh nang", "tong hop chuc nang", "tool co bao nhieu chuc nang", "chuc nang gom nhung gi", "tom tat cac tac vu", "all tool features", "all functions", "what features does the tool have", "current version features", "v5.0.0.1 features"],
+      "AnswerVi": "Toàn bộ 10 chức năng chính hoạt động như sau: 1) Kiểm tra toàn bộ tạo ảnh chụp chỉ đọc về phần cứng, Windows, Office và phần mềm; 2) Cấu hình phần cứng kiểm kê CPU/RAM/bo mạch/firmware/ổ đĩa/thiết bị; 3) Bản quyền Windows đọc edition, kích hoạt, kênh, năm ký tự cuối và KMS; 4) Bản quyền Office kiểm tra từng Office/Visio/Project và SKU; 5) Phần mềm & dấu hiệu can thiệp kiểm kê ứng dụng, chữ ký, hash, dịch vụ, task, hosts/firewall và độ tin cậy; 6) Khắc phục mở đúng phạm vi Windows/Office/phần mềm, bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm; 7) Khôi phục key OEM kiểm tra OA3 chỉ đọc trước khi người dùng cho phép áp dụng; 8) Quản lý giấy phép hợp lệ thực hiện tác vụ Windows/Office cục bộ hoặc Máy chủ–Máy trạm trong LAN có ghép nối; 9) Kiểm tra chuyên sâu chạy chế độ 7 nhóm hoặc điều tra 12 nhóm/chấm điểm; 10) Trung tâm Báo cáo & Bảo đảm kiểm tra chứng chỉ, plugin, timeline, mở tài liệu/cập nhật và tạo gói hỗ trợ đã che định danh. Ô Khắc phục tổng hợp còn có bốn lựa chọn: Backup, kiểm tra/khắc phục thủ công, khôi phục backup và tự động làm sạch an toàn. Mọi lượt kiểm tra ưu tiên chỉ đọc; thao tác thay đổi cần đúng phạm vi, bằng chứng, xác nhận và quyền Administrator khi cần.",
+      "AnswerEn": "All ten main functions work as follows: 1) Full inspection creates a read-only snapshot of hardware, Windows, Office, and software; 2) Hardware configuration inventories CPU, memory, board, firmware, storage, and devices; 3) Windows licensing reads edition, activation, channel, last five key characters, and KMS; 4) Office licensing checks each Office/Visio/Project product and SKU; 5) Software & tampering indicators inventories apps, signatures, hashes, services, tasks, hosts/firewall evidence, and confidence; 6) Remediation locks the Windows/Office/software scope and requires preview, Dry Run, backup, confirmation, and post-check; 7) OEM recovery performs read-only OA3 inspection before any user-approved apply stage; 8) Valid-license management handles local Windows/Office actions or paired Server–Workstation operation on an authorized LAN; 9) Advanced inspection runs the seven-group scan or twelve-group scored investigation; 10) Reports & Assurance audits certificates, plugins, and timeline, opens documentation/updates, and creates a redacted support bundle. The combined remediation tile also offers four choices: Backup, manual inspection/remediation, restore from backup, and automatic safe cleanup. Inspections remain read-only; changes require exact scope, evidence, confirmation, and elevation when necessary."
     },
     {
       "Id": "getting-started",
@@ -172,8 +180,8 @@
       "TitleVi": "Kiểm tra toàn bộ",
       "TitleEn": "Full inspection",
       "Keywords": ["kiem tra toan bo", "quet toan bo", "full scan", "quet tat ca", "chuc nang 1", "chuc nang so 1", "muc 1", "nut 1"],
-      "AnswerVi": "Chức năng 1 thu thập cấu hình, Windows, Office, phần mềm và dấu hiệu kỹ thuật trong một lượt chỉ đọc. Cách dùng: chọn Kiểm tra toàn bộ → chọn mức riêng tư → chờ hoàn tất → đọc thẻ tổng quan trong HTML rồi mở PDF để xem chi tiết. JSON/HTML/PDF/checksum được đặt chung trong BaoCao-Tool-Kiem-Tra với tên riêng theo máy và thời điểm; chức năng này không tự khắc phục.",
-      "AnswerEn": "Feature 1 collects hardware, Windows, Office, software, and technical signals in one read-only run. Use it by selecting Full inspection, choosing report privacy, waiting for completion, reading the HTML overview, then opening the PDF for detail. JSON/HTML/PDF/checksum files share BaoCao-Tool-Kiem-Tra with unique machine/time names; this feature does not remediate."
+      "AnswerVi": "Chức năng 1 thu thập cấu hình, Windows, Office, phần mềm và dấu hiệu kỹ thuật trong một lượt chỉ đọc. Cách dùng: chọn Kiểm tra toàn bộ → chọn mức riêng tư → chờ hoàn tất → đọc thẻ tổng quan trong HTML rồi mở PDF để xem chi tiết. JSON/HTML/PDF/checksum được đặt chung trong BaoCao-VietLicenSure với tên riêng theo máy và thời điểm; chức năng này không tự khắc phục.",
+      "AnswerEn": "Feature 1 collects hardware, Windows, Office, software, and technical signals in one read-only run. Use it by selecting Full inspection, choosing report privacy, waiting for completion, reading the HTML overview, then opening the PDF for detail. JSON/HTML/PDF/checksum files share BaoCao-VietLicenSure with unique machine/time names; this feature does not remediate."
     },
     {
       "Id": "hardware",
@@ -209,8 +217,8 @@
     },
     {
       "Id": "software",
-      "TitleVi": "Phần mềm đã cài đặt",
-      "TitleEn": "Installed software",
+      "TitleVi": "Phần mềm và dấu hiệu can thiệp",
+      "TitleEn": "Software and tampering indicators",
       "Keywords": ["phan mem", "ung dung", "da cai", "installed", "publisher", "phien ban ung dung", "ngay cai", "chuc nang 5", "chuc nang so 5", "muc 5", "nut 5"],
       "AnswerVi": "Chức năng 5 kiểm kê phần mềm và quét dấu hiệu can thiệp theo bằng chứng. Khi đọc một dòng, tách bốn ý: Mô hình giấy phép cho biết miễn phí/nguồn mở/dùng thử/thương mại; Trạng thái cho biết Tool quan sát thấy gì; Tin cậy cho biết độ mạnh của phép đối chiếu; Điều kiện khắc phục cho biết có đủ bằng chứng kỹ thuật để lập kế hoạch hay chưa. Nghi vấn, Chưa xác minh hoặc Tin cậy Low chỉ yêu cầu rà soát, không cho phép gỡ ứng dụng và không phải kết luận pháp lý.",
       "AnswerEn": "Feature 5 inventories software and scans evidence-based tampering signals. Read each row as four separate fields: License model says free/open-source/trial/commercial; Status says what the Tool observed; Confidence says how strong the match is; Remediation eligibility says whether technical evidence is sufficient to build a plan. Suspicious, Unverified, or Low confidence requires review; it does not authorize app removal or establish a legal conclusion."
@@ -300,8 +308,8 @@
       "TitleVi": "Báo cáo và bảo đảm",
       "TitleEn": "Reports and assurance",
       "Keywords": ["bao cao", "html", "json", "xml", "pdf", "thu muc bao cao", "lich su", "chuc nang 10", "chuc nang so 10", "muc 10", "nut 10"],
-      "AnswerVi": "Chức năng 10 mở Trung tâm Báo cáo & Bảo đảm với tám tác vụ: kiểm tra chứng chỉ, đánh giá plugin, xuất timeline, cài plugin đã ký, mở thư mục plugin, mở hướng dẫn, xem phiên bản/cập nhật và tạo gói hỗ trợ đã che định danh. Chọn chức năng con cần xem; dùng Mở thư mục báo cáo để tới BaoCao-Tool-Kiem-Tra trên Desktop. Mỗi bộ JSON/XML/HTML/PDF/checksum dùng cùng tên gốc để không ghi đè.",
-      "AnswerEn": "Feature 10 opens Reports & Assurance with eight actions: certificate audit, plugin evaluation, timeline export, signed-plugin installation, protected plugin folder, user guide, versions/updates, and a redacted support bundle. Choose the required subfeature or use Open report folder for the Desktop BaoCao-Tool-Kiem-Tra directory. Each JSON/XML/HTML/PDF/checksum set shares one unique base name to prevent overwrites."
+      "AnswerVi": "Chức năng 10 mở Trung tâm Báo cáo & Bảo đảm với tám tác vụ: kiểm tra chứng chỉ, đánh giá plugin, xuất timeline, cài plugin đã ký, mở thư mục plugin, mở hướng dẫn, xem phiên bản/cập nhật và tạo gói hỗ trợ đã che định danh. Chọn chức năng con cần xem; dùng Mở thư mục báo cáo để tới BaoCao-VietLicenSure trên Desktop. Mỗi bộ JSON/XML/HTML/PDF/checksum dùng cùng tên gốc để không ghi đè.",
+      "AnswerEn": "Feature 10 opens Reports & Assurance with eight actions: certificate audit, plugin evaluation, timeline export, signed-plugin installation, protected plugin folder, user guide, versions/updates, and a redacted support bundle. Choose the required subfeature or use Open report folder for the Desktop BaoCao-VietLicenSure directory. Each JSON/XML/HTML/PDF/checksum set shares one unique base name to prevent overwrites."
     },
     {
       "Id": "administrator",
@@ -324,8 +332,8 @@
       "TitleVi": "Khóa OEM trong BIOS",
       "TitleEn": "OEM key in firmware",
       "Keywords": ["oem", "oa3", "bios key", "key bios", "key nhung", "firmware", "product key", "chuc nang 7", "chuc nang so 7", "muc 7", "nut 7"],
-      "AnswerVi": "Chức năng 7 là Khôi phục key OEM trong firmware. Cách dùng: chọn Khôi phục key OEM → để Tool đọc OA3/firmware và so edition → kiểm tra thông tin key đã che/năm ký tự cuối → chỉ xác nhận áp dụng khi edition phù hợp và bạn có quyền sử dụng → quét lại Windows. Không có bằng chứng OA3 thì Tool không tự gán máy là OEM chính hãng; vẫn phải đối chiếu chứng từ mua máy.",
-      "AnswerEn": "Feature 7 is OEM firmware key recovery. Select OEM key recovery, let the Tool read OA3/firmware and compare Windows edition, review the masked key/last five characters, apply only when edition and entitlement are appropriate, then rescan Windows. Without OA3 evidence the Tool does not label the machine genuine OEM; purchase records still require review."
+      "AnswerVi": "Chức năng 7 – Khôi phục key OEM hoạt động theo hai giai đoạn tách biệt. Giai đoạn kiểm tra chỉ đọc OA3xOriginalProductKey từ dịch vụ cấp phép/firmware, edition Windows hiện tại, trạng thái kích hoạt, kênh và năm ký tự cuối; key đầy đủ luôn bị che và Tool tạo báo cáo HTML/PDF. Nếu không tìm thấy OA3 thì dừng, không đổi hệ thống. Khi người dùng đã xác nhận đúng máy, đúng edition và quyền sử dụng, giai đoạn áp dụng mới yêu cầu Administrator, giữ nguyên key hiện tại trước khi thử, gọi công cụ Windows chính thức để cài key OEM rồi xác minh đúng năm ký tự cuối. Chỉ sau đó Tool mới yêu cầu Windows kích hoạt và quét lại tối đa ba lần. Kết quả được tách rõ: Windows từ chối key/không khớp edition; đã nhận key nhưng kích hoạt còn chờ; hoặc đã nhận và xác nhận Licensed. Tool không dùng key máy khác, không ép đổi edition, không ghi key đầy đủ và không coi việc có OA3 tự động là bằng chứng đầy đủ về quyền sử dụng.",
+      "AnswerEn": "Feature 7 – OEM key recovery has two separate stages. The inspection stage only reads OA3xOriginalProductKey from Windows licensing/firmware together with the current edition, activation state, channel, and last five characters; the full key stays masked and the Tool creates an HTML/PDF report. If no OA3 key exists, it stops without changing the system. Only after the user confirms the device, edition, and entitlement does Apply request Administrator rights, preserve the current key before the attempt, use the official Windows mechanism to install the OEM key, and verify its last five characters. It then asks Windows to activate and rechecks up to three times. Results distinguish a rejected/edition-mismatched key, an accepted key with activation still pending, and an accepted key confirmed as Licensed. The Tool does not use another device's key, force an edition change, record the full key, or treat OA3 presence alone as complete proof of entitlement."
     },
     {
       "Id": "error-codes",
@@ -404,8 +412,8 @@
       "TitleVi": "Một thư mục Báo cáo chung",
       "TitleEn": "One shared report folder",
       "Keywords": ["mot thu muc bao cao chung", "khong tao thu muc moi moi lan quet", "gom json html pdf", "bao cao khong co thu muc con", "ten tep bao cao duy nhat", "shared report folder"],
-      "AnswerVi": "Mọi lượt quét ghi trực tiếp vào một thư mục BaoCao-Tool-Kiem-Tra trên Desktop, không tạo thư mục con cho từng lượt. Tên tệp chứa loại báo cáo, tên máy và thời gian đến mili giây để không ghi đè; JSON, HTML, PDF và checksum của cùng lượt có chung tên gốc.",
-      "AnswerEn": "Every scan writes directly to one BaoCao-Tool-Kiem-Tra folder on the Desktop, without per-run subfolders. Filenames include report type, computer, and millisecond timestamp to avoid overwrites; JSON, HTML, PDF, and checksum files from one run share the same base name."
+      "AnswerVi": "Mọi lượt quét ghi trực tiếp vào một thư mục BaoCao-VietLicenSure trên Desktop, không tạo thư mục con cho từng lượt. Tên tệp chứa loại báo cáo, tên máy và thời gian đến mili giây để không ghi đè; JSON, HTML, PDF và checksum của cùng lượt có chung tên gốc.",
+      "AnswerEn": "Every scan writes directly to one BaoCao-VietLicenSure folder on the Desktop, without per-run subfolders. Filenames include report type, computer, and millisecond timestamp to avoid overwrites; JSON, HTML, PDF, and checksum files from one run share the same base name."
     },
     {
       "Id": "software-catalog",
@@ -524,8 +532,8 @@
       "TitleVi": "Kênh hỗ trợ của Tool",
       "TitleEn": "Tool support channels",
       "Keywords": ["kenh ho tro cua tool", "lien he nguoi phat trien", "email cua tac gia", "zalo cua tac gia", "gui loi cho thanh viet", "can ho tro ky thuat"],
-      "AnswerVi": "Kênh hỗ trợ ghi trong Hướng dẫn sử dụng là Zalo 0978 005 017 và email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0.0.0, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh do Tool tạo; không gửi product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
-      "AnswerEn": "The user guide lists Zalo 0978 005 017 and thanhvietit.hopnghia@gmail.com for support. Include version v5.0.0.0, the feature name, the exact message, and a Tool-created redacted support bundle; never send full product keys, passwords, tokens, or a FullInternal report."
+      "AnswerVi": "Kênh hỗ trợ ghi trong Hướng dẫn sử dụng là Zalo 0978 005 017 và email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0.0.1, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh do Tool tạo; không gửi product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
+      "AnswerEn": "The user guide lists Zalo 0978 005 017 and thanhvietit.hopnghia@gmail.com for support. Include version v5.0.0.1, the feature name, the exact message, and a Tool-created redacted support bundle; never send full product keys, passwords, tokens, or a FullInternal report."
     },
     {
       "Id": "plugin-management",
@@ -555,9 +563,9 @@
       "Id": "embedded-documents",
       "TitleVi": "Hướng dẫn và lịch sử phiên bản",
       "TitleEn": "User guide and version history",
-      "Keywords": ["mo huong dan su dung chi tiet", "xem lich su phien ban", "hdsd html pdf", "tai lieu nhung trong tool", "phien ban va cap nhat o dau", "mo user guide"],
-      "AnswerVi": "Trong chức năng 10, chọn Mở hướng dẫn sử dụng chi tiết để tạo/mở HDSD HTML/PDF; chọn Phiên bản và cập nhật để xem lịch sử Việt/Anh cùng trạng thái cập nhật. Tài liệu được nhúng theo đúng bản Tool nên dùng được Offline. HDSD tập trung thao tác; lịch sử chỉ thêm mục khi phiên bản công khai chính thức thay đổi, còn cập nhật kỹ thuật trong cùng phiên bản nằm ở release notes.",
-      "AnswerEn": "In feature 10, open the detailed user guide to generate/view its HTML/PDF, or open Version and updates for bilingual history and update status. Documentation is bundled with the matching Tool release and works Offline. The guide focuses on operation; Version history adds an entry only for an official public version change, while technical updates within that version belong in release notes."
+      "Keywords": ["mo huong dan su dung chi tiet", "xem lich su phien ban", "hdsd html pdf", "tai lieu nhung trong tool", "phien ban va cap nhat o dau", "mo user guide", "open user guide", "where version and updates", "see version and updates"],
+      "AnswerVi": "Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ Lịch sử phiên bản Việt–Anh được nhúng trong đúng bản VietLicenSure, nên có thể tra cứu Offline theo tên của mọi chức năng, quy trình hoặc số phiên bản. Phạm vi lịch sử chạy từ v1.0.0 đến bản phát hành kỹ thuật v5.0.0.1 hiện tại; cụm 'bản hiện tại' hoặc 'mới nhất' được hiểu là v5.0.0.1. Với một phiên bản có hồ sơ, Trợ lý trả đúng toàn bộ mục thay đổi; khi hỏi so sánh hai phiên bản, Trợ lý đặt hai mục cạnh nhau và không suy diễn ngoài tài liệu. Nếu số phiên bản không tồn tại, ví dụ v2.0, Trợ lý nói rõ không có mốc được ghi nhận thay vì tự tạo câu trả lời. Mọi mục chức năng trong HDSD đều có thể được gọi theo tên. Để mở tài liệu gốc, vào Trung tâm báo cáo & bảo đảm (chức năng 10), chọn Mở hướng dẫn sử dụng để xem HDSD HTML/PDF, hoặc chọn Phiên bản và cập nhật để xem thông tin bản đang dùng và cập nhật.",
+      "AnswerEn": "The Assistant indexes the complete Vietnamese/English user guides and Version histories bundled with the exact VietLicenSure build, so every documented function, workflow, and version can be looked up Offline. Recorded history runs from v1.0.0 through the current v5.0.0.1 technical release, and 'current' or 'latest' resolves to v5.0.0.1. For one recorded version it returns the complete entry; for a two-version comparison it places both entries side by side without inferring undocumented changes. If a requested number does not exist—for example v2.0—the Assistant states that no milestone is recorded instead of inventing an answer. Every named guide function is retrievable. To open the original documents, open Reports & Assurance (feature 10), choose Open user guide for the HTML/PDF guide, or choose Version and updates for the installed-version and update view."
     },
     {
       "Id": "report-formats",

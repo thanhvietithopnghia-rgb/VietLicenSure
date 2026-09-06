@@ -1,16 +1,16 @@
-PHAN MEM KIEM TRA BAN QUYEN v5.0.0.0 - HO TRO CA NHAN VA DOANH NGHIEP
-Release version: 5.0.0.0
-Release build date: 2026.08.26
-Release label: 5.0.0.0-managed-signed-20260826
+PHAN MEM KIEM TRA BAN QUYEN v5.0.0.1 - HO TRO CA NHAN VA DOANH NGHIEP
+Release version: 5.0.0.1
+Release build date: 2026.09.06
+Release label: 5.0.0.1-managed-signed-20260906
 Release status: ManagedSigned.
-Tep chay duy nhat: Tool-Kiem-Tra-v5.0.exe
-SHA-256: D66AAD02B7DF0456CA7E6129FE11148375F27A21553F254E07DD2E7FA4C0E07D
+Tep chay duy nhat: VietLicenSure-v5.0.exe
+SHA-256: 4B972ABA939BD5DC8E65C11DA294B7B985E4238DBEA466A1A73B491BB0D3314E
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
 Dashboard mo bang quyen nguoi dung hien tai; UAC chi duoc yeu cau theo nhu cau khi thay doi he thong, cap nhat ung dung hoac quan tri doanh nghiep.
 Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.
-Payload nhung duoc toi uu SolidDeflateBundle-v1: 56 tep trong mot resource Deflate co header fail-closed; giam 78.84% va van doi chieu SHA-256 tung tep sau giai nen.
+Payload nhung duoc toi uu SolidDeflateBundle-v1: 56 tep trong mot resource Deflate co header fail-closed; giam 78.74% va van doi chieu SHA-256 tung tep sau giai nen.
 Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.
 Dashboard schema 2.0: WinForms hien dai, theo Light/Dark cua he thong, cho phep ghi nho tuy chon va co fallback DPI tu PerMonitorV2 den Win7.
 Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.
@@ -65,7 +65,7 @@ Khac phuc phan mem ben thu ba ghi ket qua tung hanh dong va chi bao thanh cong k
 Sau hau kiem, hang doi phan mem khac chi con bang chung activator/can thiep; Unverified don thuan khong quay lai, tep activator doc lap co candidate cach ly thu cong va kho backup bi loai tru.
 HashMismatch duoc tach thanh IntegrityCompromised: tep bi sua/hong nhung khong tu ket luan quyen su dung khong chinh hang.
 Phan mem he thong/mac dinh an khoi bang chinh, co link mo phu luc trong HTML va hien day du trong PDF/JSON chi tiet.
-Moi bao cao nam truc tiep trong Desktop\BaoCao-Tool-Kiem-Tra, khong tao thu muc con; ten tep co mili-giay va HTML link dung PDF.
+Moi bao cao nam truc tiep trong Desktop\BaoCao-VietLicenSure, khong tao thu muc con; ten tep co mili-giay va HTML link dung PDF.
 PDF tach bang rong thanh tong quan/bang chung, mo chi tiet khi in, lap header va tranh cat dong/hang qua trang.
 Enterprise nhan IP:port, tu do khi de trong, chan doan endpoint/TCP/service/protocol/version va quet Neighbor-ARP/ICMP/TCP.
 Enterprise server cau hinh va hau kiem URLACL/Firewall qua UAC; chi bao da khoi dong sau heartbeat/diagnostic, agent chi bao da gui sau tep ket qua xac nhan.

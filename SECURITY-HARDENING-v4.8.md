@@ -1,10 +1,12 @@
-# Security hardening baseline — Tool-Kiem-Tra v4.8
+# Security hardening baseline — tài liệu nền v4.8
+
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; baseline còn hiệu lực là tài liệu nền cho VietLicenSure v5.0.0.1 và không thay thế kiểm thử của đúng artifact phát hành.
 
 ## Artefact và build
 
 | Thuộc tính | Giá trị |
 | --- | --- |
-| EXE | `Tool-Kiem-Tra-v4.8.exe` |
+| EXE | `VietLicenSure-v4.8.exe` |
 | Runtime | .NET Framework 4 / CLR v4 |
 | Kiến trúc | AnyCPU, không Prefer 32-bit |
 | PowerShell | native x64/x86, `RemoteSigned` |
@@ -36,7 +38,7 @@ Offline toàn ứng dụng mặc định khi preference thiếu/lỗi. Launcher 
 
 Catalog phần mềm dùng đúng hai HTTPS GET tới host/path allowlist, không redirect, timeout và giới hạn 2 MiB; schema được xác minh trước khi ghi cache. GUI, worker và HTTP boundary trong module đều tự nạp/kiểm tra Offline policy, nên lời gọi trực tiếp không thể bypass Offline. Luồng này không có POST/PUT/PATCH và không gửi inventory, đường dẫn, product key, token hoặc bằng chứng cục bộ. Không truyền consent hoặc truyền `false` trả mã `2` trước khi nạp updater hay gọi mạng; wrapper chuyển đúng giá trị caller thay vì gán `true`.
 
-Kho tri thức Trợ lý dùng hai HTTPS GET cố định cho JSON và chữ ký detached CMS. Chữ ký phải dùng SHA-256, đúng một signer RSA và khớp fingerprint SHA-256 của chứng thư nhà phát hành được ghim trong lõi; sau đó JSON còn phải qua giới hạn 2 MiB, UTF-8 nghiêm ngặt, schema, `Scope=Tool-Kiem-Tra`, dải Tool tương thích, kiểm tra nội dung an toàn và chống hạ `KnowledgeVersion`. Cache và chữ ký luôn đi theo cặp, giữ một cặp hợp lệ trước đó để rollback; cache không ký/sai chữ ký bị bỏ qua. Tệp `.p7s` không nhúng vào payload EXE và private key không nằm trong repository.
+Kho tri thức Trợ lý dùng hai HTTPS GET cố định cho JSON và chữ ký detached CMS. Chữ ký phải dùng SHA-256, đúng một signer RSA và khớp fingerprint SHA-256 của chứng thư nhà phát hành được ghim trong lõi; sau đó JSON còn phải qua giới hạn 2 MiB, UTF-8 nghiêm ngặt, schema, `Scope=VietLicenSure`, dải Tool tương thích, kiểm tra nội dung an toàn và chống hạ `KnowledgeVersion`. Cache và chữ ký luôn đi theo cặp, giữ một cặp hợp lệ trước đó để rollback; cache không ký/sai chữ ký bị bỏ qua. Tệp `.p7s` không nhúng vào payload EXE và private key không nằm trong repository.
 
 Trình cập nhật ứng dụng chỉ đọc manifest từ URL GitHub HTTPS cố định sau khi Online đã được cho phép. URL release/download phải thuộc đúng repository/tag; redirect asset chỉ tới host GitHub allowlist. EXE bị giới hạn 100 MiB và phải khớp kích thước/SHA-256, PE `MZ`, cùng signer Authenticode đã ghim nếu manifest yêu cầu. Apply xác minh launcher path/PID/hash, backup bản cũ, thay thế cùng thư mục và rollback nếu bản mới thoát sớm. Manifest không chứa lệnh hoặc script và không có cơ chế chạy nền.
 
@@ -115,7 +117,7 @@ HTTP transport không tự cung cấp TLS; bảo mật nội dung dựa trên en
 - PDF browser flags tắt background networking/DNS;
 - profile browser nằm ở LocalAppData, ACL user/SYSTEM và được dọn;
 - SHA-256 manifest cho package.
-- mọi package dùng chung `Desktop\BaoCao-Tool-Kiem-Tra`, tên tệp có timestamp mili-giây chống ghi đè và chỉ HTML được tự mở;
+- mọi package dùng chung `Desktop\BaoCao-VietLicenSure`, tên tệp có timestamp mili-giây chống ghi đè và chỉ HTML được tự mở;
 - HTML dùng liên kết tương đối tới PDF cùng tên và chỉ cho phép anchor HTTPS do renderer tạo để người dùng chủ động mở nguồn chính thức; anchor không tự tải nội dung khi in, còn remote image/CSS/SVG/form và href không tin cậy vẫn bị chặn. Phần mềm hệ thống nằm trong phụ lục, không bị loại khỏi JSON/PDF chi tiết;
 - bảng rộng dùng overflow ngang trên màn hình, profile cột theo ngữ nghĩa và quy tắc co riêng khi in, tránh ép mất dữ liệu.
 
@@ -136,8 +138,8 @@ Build stable bắt buộc `-RequireAuthenticode`, ghim thumbprint signer vào ma
 ```powershell
 .\BUILD.ps1 -OutputDirectory .\dist-development -AllowUnsignedDevelopmentBuild
 .\VERIFY-RELEASE.ps1 -SourceDirectory . -DistributionDirectory .\dist
-Get-FileHash .\dist\Tool-Kiem-Tra-v4.8.exe -Algorithm SHA256
-Get-AuthenticodeSignature .\dist\Tool-Kiem-Tra-v4.8.exe
+Get-FileHash .\dist\VietLicenSure-v4.8.exe -Algorithm SHA256
+Get-AuthenticodeSignature .\dist\VietLicenSure-v4.8.exe
 ```
 
 ## Giới hạn

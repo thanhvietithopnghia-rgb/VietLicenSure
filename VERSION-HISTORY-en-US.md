@@ -1,19 +1,34 @@
-# Computer Configuration and Software License Check Tool — Version History
+# VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every main public release, from the first release to the current version.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release.
 
 Stable latest-release page:
-<https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen/releases/latest>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
 
-## Tool Kiểm Tra v5.0 — September 5, 2026
+## v5.0.0.1 — September 6, 2026 (current technical release)
 
-Tool Kiểm Tra v5.0 is the next upgrade after v4.9, focused on improving the core areas:
+- Tool Assistant indexes every section of the complete Vietnamese/English user guides and version histories for Offline use.
+- It returns the complete recorded entry for one version, compares two versions directly from evidence, and resolves “current” or “latest” to v5.0.0.1 without inventing undocumented milestones.
+- It covers the purpose, workflow, output, and safety notes of every documented Tool function: all ten main functions, remediation/backup workflows, local and enterprise license management, and all eight Reports & Assurance actions—not only OEM key recovery.
+- Restores the previously omitted v1.0.0–v1.0.9 milestones and corrects v1.1.0–v3.3 from original release evidence; explicitly records that no v2.0–v2.3 milestone is available.
+- Adds tests that prevent Windows/Office/PowerShell/.NET versions from being mistaken for product history and a version matrix from the first release through v5.0.0.1.
+
+This entry records the public v5.0.0.1 ManagedSigned/Pilot release used for the official VietLicenSure branding update. It is not labelled Public Stable because the current certificate is launcher-pinned and self-signed, while the complete real-machine evidence gates remain pending.
+
+## VietLicenSure v5.0 — September 6, 2026
+
+On September 6, 2026, v5.0 was officially renamed from **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**. The rename keeps the v5.0 product line and all existing functions; this release uses technical version `5.0.0.1`.
+
+The name combines **Viet** (developed by a Vietnamese author), **Licen** (short for `License`), and **Sure** (clear, evidence-backed technical verification). It does not represent a legal certification of licence entitlement.
+
+VietLicenSure v5.0 is the next upgrade after v4.9, focused on improving the core areas:
 
 - **User experience:** faster startup, a clearer and more responsive interface, Light/Dark support, and direct navigation to the selected function.
 - **Inspection and recognition:** Quick, Standard, and Deep levels; Windows, Microsoft Office, and other-software inspection; prioritized actions, search, filters, and comparison with the previous scan.
 - **Safe remediation:** separate Windows, Office, and other-software scopes; mandatory preview, Dry Run, backup, confirmation, and post-check; an integrity-checked Backup and Restore Center.
 - **Reports and support:** HTML, PDF, JSON, and XML reports; a redacted support bundle and multi-computer management support.
 - **Privacy and integrity:** Offline by default with no automatic Internet upload; signature and SHA-256 checks before important operations.
+- **Assistant and documentation:** indexes the complete Vietnamese/English guides and histories, returns full change entries, compares two versions from recorded evidence, and explains every documented function in detail, including inspection, remediation, license management, advanced inspection, and reports/assurance.
 
 `Unverified` does not mean that software violates its licence.
 
@@ -120,75 +135,114 @@ Tool Kiểm Tra v5.0 is the next upgrade after v4.9, focused on improving the co
 
 ## v3.3 — July 20, 2026
 
-- Expanded software, process, service, and scheduled-task inventory related to activation.
-- Improved report export and result messages.
+- Validated `approved-kms-servers.txt`, warned on empty or malformed entries, and displayed detected KMS hosts for administrator confirmation.
+- Allowed confirmed edits/saves; the one-file build stored its configuration beside the EXE and reported its path, valid-line count, and warnings.
 
 ## v3.2 — July 20, 2026
 
-- Added Office inspection alongside Windows and distinguished multiple licensing types.
-- Improved error handling when system tools are unavailable or return incomplete data.
+- Upgraded progress display with task name, indeterminate activity, elapsed time, and live logs.
+- Added 10-second status heartbeats and clear completed, warning, or error final states from module results.
 
 ## v3.1 — July 20, 2026
 
-- Added computer configuration, operating-system architecture, and core hardware inspection.
-- Reorganized logs and conclusions by function group.
+- Added startup SHA-256 verification as a warning-only check; mutable KMS configuration remained outside the manifest.
+- Added JSON plus hashes to the combined report and read-only licensing-service, time, signature, and reboot diagnostics.
 
 ## v3.0 — July 20, 2026
 
-- Unified configuration and licensing inspection into one workflow.
-- Added function selection and a combined report.
+- Added confirmation before basic handling; when residues remained after verification, the user could choose advanced cleanup or retain the state for reporting.
+- Advanced cleanup backed up/quarantined data and targeted exact KMS, IFEO, or Defender-exclusion artifacts; it used SFC where needed and then ran a final scan.
 
 ## v2.9 — July 20, 2026
 
-- Improved KMS/Activator detection and avoided conclusions based on one weak indicator.
-- Added manual guidance when evidence is insufficient.
+- Added up to 180 days of activation traces and separated historical records from active indicators to avoid incorrect handling.
+- Added automatic post-action rescanning and synchronized the summary and guide with the ten-feature order.
 
 ## v2.8 — July 20, 2026
 
-- Expanded Windows/Office activation queries across multiple system sources.
-- Standardized error codes and diagnostic details.
+- Moved the user guide to feature 10 and deep inspection to feature 9.
+- Retained the chooser between the seven-group scan and 12-group investigation/risk scoring.
 
 ## v2.7 — July 20, 2026
 
-- Added service, scheduled-task, and network-configuration checks related to activation.
-- Added confirmation before potentially state-changing actions.
+- Merged the 12-group investigation into the same chooser as the seven-group scan to simplify the menu.
+- Preserved v2.6 UAC, read-only operation, SHA-256 reporting, and safety boundaries.
 
 ## v2.6 — July 20, 2026
 
-- Improved Windows PowerShell/.NET Framework and x86/x64 compatibility.
-- Added exception handling so scans continue when an individual source fails.
+- Added read-only 12-group forensics, a 0–100 risk score, Authenticode/SHA-256, and security/log-state inspection.
+- Exported HTML/JSON/CSV plus checksums with baseline comparison; no data upload or system change.
 
 ## v2.5 — July 18, 2026
 
-- Added Microsoft Office inspection with version and licensing-channel details.
-- Improved text reports and result-copying support.
+- Added valid Windows edition/product-key changes through `changepk.exe` and DISM, plus valid Office-key installation through `OSPP.VBS`.
+- Opened official Microsoft pages; stored no full keys, supplied no public keys/KMS, and never removed old Office keys automatically.
 
 ## v2.4 — July 18, 2026
 
-- Expanded computer configuration and Windows status information.
-- Improved the interface and task organization.
+- Relabeled v1.3.0 as v2.4 for the requested release naming.
+- Moved Close onto the status row for short/high-DPI displays while retaining the v1.3.0 feature set, UAC/deep-scan behavior, and safety boundaries.
 
-## v1.3 — July 18, 2026
+## v1.3.0 — July 18, 2026
 
-- Added OEM/firmware-key and basic activation checks.
-- Improved error messages and user guidance.
+- Required Administrator/UAC for complete WMI/licensing, service, process, task, Registry-policy, hosts, and signature/system-file sources.
+- Declining UAC stopped safely; elevated scanning remained read-only, avoided personal documents, and downloaded/executed no remote code.
 
-## v1.2 — July 18, 2026
+## v1.2.0 — July 18, 2026
 
-- Added result export and the first Office checks.
-- Improved Vietnamese Unicode handling.
+- Added a seven-group Windows licensing scan with evidence levels and read-only checks of approved KMS, activator/MAS/HWID, KMS38, generic keys, folders, tasks, Registry, and hosts.
+- Notification or unactivated state no longer led automatically to key removal; PowerShell history and full product keys were not stored.
 
-## v1.1 — July 18, 2026
+## v1.1.0 — July 18, 2026
 
-- Added a selection interface and basic computer details.
-- Improved compatibility across Windows versions.
+- Integrated selected safe checks; added masked OEM OA3 inspection and confirmed/UAC-gated OEM restore without first removing the current key.
+- Added the official Windows key-entry UI and excluded risky public/generic keys, broad history deletion, and machine-wide firewall/hosts edits.
 
-## v1.0 — July 17, 2026
+## v1.0.9 — July 17, 2026
 
-- Initial release for computer configuration and Windows activation inspection.
-- Stored results locally and never connected to the Internet automatically.
+- Introduced a single portable EXE for direct use on another computer.
+- The EXE extracted modules to a temporary directory, waited for the UI to close, and then cleaned up.
+
+## v1.0.8 — July 17, 2026
+
+- Added the `00-Tool-Kiem-Tra.ico` identity icon and bundled the complete guide/history.
+
+## v1.0.7 — July 17, 2026
+
+- Compacted the UI so the title, notes, menu, progress area, and Close button fit together on normal displays.
+
+## v1.0.6 — July 17, 2026
+
+- Improved short-screen/high-DPI layout with tighter spacing, a smaller log, dynamic height, and fallback scrolling.
+
+## v1.0.5 — July 17, 2026
+
+- Renamed the displayed product to “Computer configuration and software license check tool” and added execution-progress plus clear completion/error states.
+
+## v1.0.4 — July 17, 2026
+
+- Fixed note wrapping, dynamic layout, and scrolling on short displays.
+
+## v1.0.3 — July 17, 2026
+
+- Confirmed PowerShell 3.0+ support and clarified that passwords and full product keys are never extracted.
+
+## v1.0.2 — July 17, 2026
+
+- Made feature 6 inspect and confirm first while protecting OEM/Retail/MAK and approved internal KMS.
+- Limited handling to unapproved KMS/crack evidence; an activator trace alone never caused product-key removal.
+
+## v1.0.1 — July 17, 2026
+
+- Fixed title/font presentation, updated support details, confirmed Windows 7 SP1+, and established version increments for each release.
+
+## v1.0.0 — July 17, 2026
+
+- First Windows GUI release for configuration and software-licensing inspection.
 
 ---
+
+The bundled release records and available archive contain no v2.0–v2.3 entry. v2.4 is the first recorded 2.x release and directly follows v1.3.0; the Assistant does not invent changes for an undocumented version.
 
 There was no public v4.7 release; v4.8 was the direct public successor to v4.6.
 

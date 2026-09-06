@@ -1,4 +1,4 @@
-# Lộ trình Tool Kiểm Tra v5.0
+# Lộ trình VietLicenSure v5.0
 
 Trạng thái cập nhật cho v5.0: các hạng mục dưới đây được tích hợp trên nhánh tính năng `feature/v5.0-trust-enterprise`. Có mã nguồn hoặc workflow không đồng nghĩa đã có bằng chứng phát hành. Bản ManagedSigned được phát hành có kiểm soát nhưng chưa phải danh tính Public Stable dùng chứng thư public-CA; mọi build không ký vẫn phải mang `ReleaseStatus=DevelopmentUnsigned` và nhãn development.
 
