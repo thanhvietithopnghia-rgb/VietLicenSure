@@ -6,7 +6,7 @@
 
 VietLicenSure được cung cấp miễn phí và phát triển cùng cộng đồng thông qua báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được tác giả Thanh Việt quản lý theo cơ chế truy cập có kiểm soát. Bản thực thi chính thức tiếp tục được cung cấp miễn phí tại:
 
-<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>
 
 Tệp thực thi của nhánh phát triển hiện tại là `VietLicenSure-v5.0.exe`. Chỉ artifact có Authenticode, timestamp và provenance hợp lệ mới được công bố là Stable.
 
@@ -77,7 +77,7 @@ Chính sách này chỉ áp dụng cho mã nguồn từ v4.9 trở đi. Phiên b
 
 - [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md)
 - [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt)
-- [Trang tải bản mới nhất](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest)
+- [Tải trực tiếp VietLicenSure v5.0.0.1](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe)
 
 Nếu nội dung tóm tắt này khác với văn bản chấp thuận riêng hoặc chính sách đầy đủ, văn bản chấp thuận và `SOURCE-POLICY-v4.9.md` được ưu tiên áp dụng.
 

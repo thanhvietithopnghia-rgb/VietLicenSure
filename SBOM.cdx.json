@@ -19,7 +19,7 @@
                                        "hashes":  [
                                                       {
                                                           "alg":  "SHA-256",
-                                                          "content":  "1C043971C27B6D0A21D1D7F320CBFC60106E4164FBD7DD1D0CDFED48A9200070"
+                                                          "content":  "32075C03F0BA7CA732C0AA6E2389B4327641AFFD6E3C3CE8D616E3B06C1791C0"
                                                       }
                                                   ],
                                        "licenses":  [
@@ -36,7 +36,7 @@
                                                           },
                                                           {
                                                               "name":  "tool:sourceSnapshotCommit",
-                                                              "value":  "efcc425026039ce8c838bb67e859a2d13ba381eb"
+                                                              "value":  "426aa89e4ca773b6870d0b9fbde8f6578ddb1b6b"
                                                           },
                                                           {
                                                               "name":  "tool:releaseStatus",
