@@ -5,6 +5,7 @@ $script:ToolAssistantKnowledgeFileName = "tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeSignatureFileName = "tool-assistant-knowledge-v1.1.json.p7s"
 $script:ToolAssistantKnowledgeSignatureUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json.p7s"
+$script:ToolAssistantReleaseHistoryUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases"
 $script:ToolAssistantSignerCertificateSha256 = "A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9"
 $script:ToolAssistantMaxKnowledgeBytes = 2097152
 $script:ToolAssistantMaxSignatureBytes = 65536
@@ -1340,6 +1341,9 @@ function Get-ToolAssistantUiText {
         "Clear" { if ($english) { return "Clear" }; return "Xóa hội thoại" }
         "Sync" { if ($english) { return "Sync knowledge" }; return "Đồng bộ tri thức" }
         "ConnectOnline" { if ($english) { return "Connect Online" }; return "Kết nối Online" }
+        "OtherVersions" { if ($english) { return "Other versions" }; return "Các phiên bản khác" }
+        "OtherVersionsTip" { if ($english) { return "Open the official GitHub Releases page to view and download other VietLicenSure versions." }; return "Mở trang GitHub Releases chính thức để xem và tải các phiên bản VietLicenSure khác." }
+        "OpenLinkFailed" { if ($english) { return "The GitHub Releases page could not be opened. Please check your default browser." }; return "Không mở được trang GitHub Releases. Hãy kiểm tra trình duyệt mặc định." }
         "OnlineConnected" { if ($english) { return "Online connected" }; return "Đã Online" }
         "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so the Assistant can synchronize knowledge. Restarting the application returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại VietLicenSure vẫn trở về Offline." }
         "OnlineConnectedTip" { if ($english) { return "Online is allowed for this session. Signed Tool knowledge can now be synchronized." }; return "Online đã được cho phép trong phiên này. Tool có thể đồng bộ gói tri thức đã ký." }
@@ -1686,9 +1690,11 @@ function Set-ToolAssistantHeaderBounds {
     $modeHeight = [int][Math]::Round(32 * $DpiScale)
     $modeTop = [int][Math]::Round(14 * $DpiScale)
     $titleMinimumWidth = [int][Math]::Round(220 * $DpiScale)
-    $titleHeight = [int][Math]::Round(34 * $DpiScale)
+    $titleFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+    [Drawing.Size]$measuredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$TitleLabel.Text, $TitleLabel.Font, [Drawing.Size]::Empty, $titleFlags)
+    $titleHeight = [Math]::Max([int][Math]::Round(44 * $DpiScale), [int]$measuredTitle.Height + [int][Math]::Round(10 * $DpiScale))
     $scopeLeft = [int][Math]::Round(20 * $DpiScale)
-    $scopeTop = [int][Math]::Round(50 * $DpiScale)
+    $scopeTop = [int]$TitleLabel.Top + $titleHeight + [int][Math]::Round(6 * $DpiScale)
     $scopeBottomMargin = [int][Math]::Round(6 * $DpiScale)
     $modeWidth = [Math]::Min($modeMaximumWidth, [Math]::Max($modeMinimumWidth, [int]($clientWidth * 0.36)))
     $ModeLabel.Size = New-Object Drawing.Size($modeWidth, $modeHeight)
@@ -1800,7 +1806,7 @@ function Show-ToolAssistantWindow {
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 112)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 42)))
     [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Percent, 100)))
-    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 114)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 150)))
     $dialog.Controls.Add($assistantLayout)
 
     $header = New-Object Windows.Forms.Panel
@@ -1812,8 +1818,10 @@ function Show-ToolAssistantWindow {
     $title.Text = Get-ToolAssistantUiText "Title" $Culture
     $title.Font = New-Object Drawing.Font("Segoe UI Semibold", 17)
     $title.ForeColor = $primary
-    $title.Location = New-Object Drawing.Point(18, 10)
-    $title.Size = New-Object Drawing.Size(460, 32)
+    $title.Location = New-Object Drawing.Point(18, 6)
+    $title.Size = New-Object Drawing.Size(460, 44)
+    $title.AutoEllipsis = $false
+    $title.UseCompatibleTextRendering = $true
     $header.Controls.Add($title)
     $scope = New-Object Windows.Forms.Label
     $scope.Text = Get-ToolAssistantUiText "Scope" $Culture
@@ -1891,35 +1899,55 @@ function Show-ToolAssistantWindow {
     $send.FlatStyle = "Flat"
     $send.FlatAppearance.BorderSize = 0
     $composer.Controls.Add($send)
+    $actions = New-Object Windows.Forms.FlowLayoutPanel
+    $actions.Anchor = 'Top,Left,Right,Bottom'
+    $actions.Location = New-Object Drawing.Point(14, 72)
+    $actions.Size = New-Object Drawing.Size(788, 70)
+    $actions.Margin = New-Object Windows.Forms.Padding(0)
+    $actions.Padding = New-Object Windows.Forms.Padding(0)
+    $actions.WrapContents = $true
+    $actions.AutoScroll = $false
+    $actions.FlowDirection = [Windows.Forms.FlowDirection]::LeftToRight
+    $actions.BackColor = $surface
+    $composer.Controls.Add($actions)
     $copy = New-Object Windows.Forms.Button
     $copy.Text = Get-ToolAssistantUiText "Copy" $Culture
-    $copy.Location = New-Object Drawing.Point(14, 72)
-    $copy.Size = New-Object Drawing.Size(112, 30)
-    $composer.Controls.Add($copy)
+    $copy.Size = New-Object Drawing.Size(100, 30)
+    $copy.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $actions.Controls.Add($copy)
     $clear = New-Object Windows.Forms.Button
     $clear.Text = Get-ToolAssistantUiText "Clear" $Culture
-    $clear.Location = New-Object Drawing.Point(134, 72)
-    $clear.Size = New-Object Drawing.Size(134, 30)
-    $composer.Controls.Add($clear)
+    $clear.Size = New-Object Drawing.Size(126, 30)
+    $clear.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $actions.Controls.Add($clear)
     $sync = New-Object Windows.Forms.Button
     $sync.Text = Get-ToolAssistantUiText "Sync" $Culture
-    $sync.Location = New-Object Drawing.Point(276, 72)
-    $sync.Size = New-Object Drawing.Size(142, 30)
-    $composer.Controls.Add($sync)
+    $sync.Size = New-Object Drawing.Size(134, 30)
+    $sync.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $actions.Controls.Add($sync)
     $online = New-Object Windows.Forms.Button
-    $online.Location = New-Object Drawing.Point(426, 72)
-    $online.Size = New-Object Drawing.Size(128, 30)
+    $online.Size = New-Object Drawing.Size(126, 30)
+    $online.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
     $online.FlatStyle = "Flat"
     $online.FlatAppearance.BorderSize = 1
     $online.ForeColor = $primary
     $online.BackColor = $surface
-    $composer.Controls.Add($online)
+    $actions.Controls.Add($online)
+    $versions = New-Object Windows.Forms.Button
+    $versions.Text = Get-ToolAssistantUiText "OtherVersions" $Culture
+    $versions.Size = New-Object Drawing.Size(142, 30)
+    $versions.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $versions.FlatStyle = "Flat"
+    $versions.FlatAppearance.BorderSize = 1
+    $versions.ForeColor = $primary
+    $versions.BackColor = $surface
+    $assistantToolTip.SetToolTip($versions, (Get-ToolAssistantUiText "OtherVersionsTip" $Culture))
+    $actions.Controls.Add($versions)
     $close = New-Object Windows.Forms.Button
     $close.Text = Get-ToolAssistantUiText "Close" $Culture
-    $close.Anchor = "Bottom,Right"
-    $close.Location = New-Object Drawing.Point(684, 72)
-    $close.Size = New-Object Drawing.Size(118, 30)
-    $composer.Controls.Add($close)
+    $close.Size = New-Object Drawing.Size(104, 30)
+    $close.Margin = New-Object Windows.Forms.Padding(0, 0, 0, 6)
+    $actions.Controls.Add($close)
 
     $assistantInputControl = $input
     $composerLayout = {
@@ -1930,7 +1958,8 @@ function Show-ToolAssistantWindow {
         $inputFrame.Width = [Math]::Max(190, $send.Left - $inputFrame.Left - 10)
         $assistantInputControl.Width = [Math]::Max(176, [int]$inputFrame.ClientSize.Width - 14)
         $assistantInputControl.Height = [Math]::Max(36, [int]$inputFrame.ClientSize.Height - 12)
-        $close.Left = [Math]::Max(562, $clientWidth - $close.Width - 14)
+        $actions.Width = [Math]::Max(190, $clientWidth - 28)
+        $actions.Height = [Math]::Max(64, [int]$sender.ClientSize.Height - $actions.Top - 6)
     }.GetNewClosure()
     $composer.Add_SizeChanged($composerLayout)
 
@@ -2036,6 +2065,21 @@ function Show-ToolAssistantWindow {
         param($sender, $eventArgs)
         [void](Enable-ToolAssistantOnline -State $sender.Tag)
     })
+    $versions.Add_Click({
+        try {
+            $startInfo = New-Object Diagnostics.ProcessStartInfo
+            $startInfo.FileName = [string]$script:ToolAssistantReleaseHistoryUrl
+            $startInfo.UseShellExecute = $true
+            [void][Diagnostics.Process]::Start($startInfo)
+        } catch {
+            [void][Windows.Forms.MessageBox]::Show(
+                (Get-ToolAssistantUiText "OpenLinkFailed" $Culture),
+                (Get-ToolAssistantUiText "Title" $Culture),
+                [Windows.Forms.MessageBoxButtons]::OK,
+                [Windows.Forms.MessageBoxIcon]::Warning
+            )
+        }
+    }.GetNewClosure())
     $close.Tag = $dialog
     $close.Add_Click({ param($sender, $eventArgs); $sender.Tag.Close() })
     $dialog.CancelButton = $close
@@ -2085,15 +2129,17 @@ function Show-ToolAssistantWindow {
         & $composerLayout $composer ([EventArgs]::Empty)
         $header.PerformLayout()
         $composer.PerformLayout()
+        $actions.PerformLayout()
         $singleLineFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
         $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix
         [Drawing.Size]$requiredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$title.Text, $title.Font, [Drawing.Size]::Empty, $singleLineFlags)
         [Drawing.Size]$requiredScope = [Windows.Forms.TextRenderer]::MeasureText([string]$scope.Text, $scope.Font, (New-Object Drawing.Size($scope.Width, 200)), $wrappedFlags)
         if ($title.Width -lt [int]$requiredTitle.Width -or $title.Height -lt [int]$requiredTitle.Height) { throw "Assistant title is clipped: $($title.Text)" }
         if ($scope.Height -lt [int]$requiredScope.Height) { throw "Assistant scope is clipped: $($scope.Text)" }
-        foreach ($button in @($send,$copy,$clear,$sync,$online,$close)) {
+        foreach ($button in @($send,$copy,$clear,$sync,$online,$versions,$close)) {
             [Drawing.Size]$requiredButton = [Windows.Forms.TextRenderer]::MeasureText([string]$button.Text, $button.Font, [Drawing.Size]::Empty, $singleLineFlags)
-            if ($button.Width -lt ([int]$requiredButton.Width + 18) -or $button.Right -gt ($composer.ClientSize.Width + 1) -or $button.Bottom -gt ($composer.ClientSize.Height + 1)) {
+            $buttonHost = if ($button.Parent -eq $actions) { $actions } else { $composer }
+            if ($button.Width -lt ([int]$requiredButton.Width + 18) -or $button.Right -gt ($buttonHost.ClientSize.Width + 1) -or $button.Bottom -gt ($buttonHost.ClientSize.Height + 1)) {
                 throw "Assistant button is clipped: $($button.Text)"
             }
         }

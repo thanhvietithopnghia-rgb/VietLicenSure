@@ -79,6 +79,9 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Complete guide/current-history/function indexing or evidence-only comparison metadata is invalid.'
     }
 
+    if ([string]$script:ToolAssistantReleaseHistoryUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases') {
+        Add-AssistantVerificationError 'Assistant other-versions button does not target the official GitHub Releases page.'
+    }
     foreach ($culture in @('vi-VN','en-US')) {
         $documentSections = @(Get-ToolAssistantDocumentSections -Culture $culture)
         foreach ($definition in @(Get-ToolAssistantDocumentDefinitions -Culture $culture)) {
@@ -819,7 +822,7 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Dashboard does not pass the current-session Online callback to Tool Assistant.'
     }
     $assistantSource = Get-Content -LiteralPath (Join-Path $SourceDirectory 'Tool-Assistant.ps1') -Raw -Encoding UTF8
-    foreach ($requiredToken in @('$send.Tag = $assistantState','Queue-ToolAssistantQuestion -State $sender.Tag','$eventArgs.Handled = $true','BeginInvoke','SubmissionQueued','ConnectOnline','ConnectOnlineTip','Update-ToolAssistantConnectionUi','Update-ToolAssistantConversationUi','Complete-ToolAssistantConversationLayout','Set-ToolAssistantHeaderBounds','Set-ToolAssistantInputFrameState','InputIdleBorderColor','UserBubbleBorderColor','AssistantBubbleBorderColor','RenderTimer','PendingRevealControl','RevealQueued','[Windows.Forms.Application]::DoEvents()','Windows.Forms.FlowLayoutPanel','Windows.Forms.TableLayoutPanel','Role User','Role Assistant','IsSubmitting','SendButton.Enabled','Expand-ToolAssistantContextQuery','Test-ToolAssistantRelatedQuery','Get-ToolAssistantDocumentAnswer','Get-ToolAssistantHistoryAnswer','CompleteBundledGuideIndexed','CompleteVersionHistoryIndexed','LastQuestionText','KnowledgePlusBundledDocumentation','Test-ToolAssistantKnowledgeSignature','DetachedCmsSha256PinnedCertificate','Save-ToolAssistantSignedKnowledgeCache','remoteVersion -lt $currentVersion','Invoke-ToolAssistantKnowledgeSyncUi')) {
+    foreach ($requiredToken in @('$send.Tag = $assistantState','Queue-ToolAssistantQuestion -State $sender.Tag','$eventArgs.Handled = $true','BeginInvoke','SubmissionQueued','ConnectOnline','ConnectOnlineTip','OtherVersions','OtherVersionsTip','ToolAssistantReleaseHistoryUrl','UseShellExecute = $true','Update-ToolAssistantConnectionUi','Update-ToolAssistantConversationUi','Complete-ToolAssistantConversationLayout','Set-ToolAssistantHeaderBounds','Set-ToolAssistantInputFrameState','InputIdleBorderColor','UserBubbleBorderColor','AssistantBubbleBorderColor','RenderTimer','PendingRevealControl','RevealQueued','[Windows.Forms.Application]::DoEvents()','Windows.Forms.FlowLayoutPanel','Windows.Forms.TableLayoutPanel','Role User','Role Assistant','IsSubmitting','SendButton.Enabled','Expand-ToolAssistantContextQuery','Test-ToolAssistantRelatedQuery','Get-ToolAssistantDocumentAnswer','Get-ToolAssistantHistoryAnswer','CompleteBundledGuideIndexed','CompleteVersionHistoryIndexed','LastQuestionText','KnowledgePlusBundledDocumentation','Test-ToolAssistantKnowledgeSignature','DetachedCmsSha256PinnedCertificate','Save-ToolAssistantSignedKnowledgeCache','remoteVersion -lt $currentVersion','Invoke-ToolAssistantKnowledgeSyncUi')) {
         if (-not $assistantSource.Contains($requiredToken)) { Add-AssistantVerificationError "Assistant UI interaction token missing: $requiredToken" }
     }
     if ($assistantSource.Contains('New-Object Windows.Forms.RichTextBox')) {
@@ -843,12 +846,12 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Assistant welcome still contains the removed invitation-to-ask sentence.'
     }
     $assistantUiVi = [string]::Join("`n", (@(
-        'Title','Scope','Offline','Online','Input','Send','Copy','Clear','Sync','ConnectOnline','OnlineConnected',
-        'ConnectOnlineTip','OnlineConnectedTip','SyncTip','OnlineEnabled','OnlineNotEnabled','Close','Welcome','You','Assistant'
+        'Title','Scope','Offline','Online','Input','Send','Copy','Clear','Sync','ConnectOnline','OtherVersions','OnlineConnected',
+        'ConnectOnlineTip','OtherVersionsTip','OpenLinkFailed','OnlineConnectedTip','SyncTip','OnlineEnabled','OnlineNotEnabled','Close','Welcome','You','Assistant'
     ) | ForEach-Object { Get-ToolAssistantUiText -Key $_ -Culture 'vi-VN' }))
     $assistantUiEn = [string]::Join("`n", (@(
-        'Title','Scope','Offline','Online','Input','Send','Copy','Clear','Sync','ConnectOnline','OnlineConnected',
-        'ConnectOnlineTip','OnlineConnectedTip','SyncTip','OnlineEnabled','OnlineNotEnabled','Close','Welcome','You','Assistant'
+        'Title','Scope','Offline','Online','Input','Send','Copy','Clear','Sync','ConnectOnline','OtherVersions','OnlineConnected',
+        'ConnectOnlineTip','OtherVersionsTip','OpenLinkFailed','OnlineConnectedTip','SyncTip','OnlineEnabled','OnlineNotEnabled','Close','Welcome','You','Assistant'
     ) | ForEach-Object { Get-ToolAssistantUiText -Key $_ -Culture 'en-US' }))
     $assistantSyncVi = [string]::Join("`n", (@('Offline','InvalidAddress','TooLarge','InvalidKnowledge','InvalidSignature','Downgrade','Current','NoDataFolder','Updated','Failed') | ForEach-Object { Get-ToolAssistantSyncText -Key $_ -Culture 'vi-VN' }))
     $assistantSyncEn = [string]::Join("`n", (@('Offline','InvalidAddress','TooLarge','InvalidKnowledge','InvalidSignature','Downgrade','Current','NoDataFolder','Updated','Failed') | ForEach-Object { Get-ToolAssistantSyncText -Key $_ -Culture 'en-US' }))
