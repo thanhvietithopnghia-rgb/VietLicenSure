@@ -21,7 +21,8 @@ VietLicenSure-v4.8.exe
   ├─ giải nén 49 payload vào session được bảo vệ
   ├─ đối chiếu TOOL-SHA256SUMS.txt
   └─ chạy Windows PowerShell native với schema/environment cố định
-       ├─ Giao-Dien.ps1                    dashboard schema 2.0
+       ├─ Giao-Dien.ps1                    dashboard schema 2.0, điều phối shell và workflow
+       ├─ Tool-DashboardPresentation.ps1   primitive bố cục, co phông chữ và bo góc
        ├─ Tool-ElevatedBridge.ps1          cầu nối UAC khóa module/script/runtime và allowlist TOOL_*
        ├─ Tool-DataLifecycle.ps1           data schema 2.0 + migration transaction
        ├─ Tool-Capabilities.ps1            capability schema 1.1
@@ -90,6 +91,7 @@ v4.3 chọn **Modern WinForms** thay vì WPF/WebView2 để không kéo thêm ru
 - biểu tượng Windows/Office/bảo mật/tác vụ được vẽ vector bằng `System.Drawing` ngay trong tiến trình, không phụ thuộc asset mạng;
 - layout hai cột tự co theo DPI/WorkingArea, có AutoScroll cho màn hình thấp;
 - dark mode dùng palette chung trong `Tool-UiTheme.ps1` và được truyền sang cửa sổ con;
+- primitive đo bố cục và trình bày dùng chung nằm trong `Tool-DashboardPresentation.ps1`, giảm liên kết và kích thước của monolith `Giao-Dien.ps1`;
 - thẻ trạng thái Windows release, Office family/channel, chế độ chạy và integrity;
 - chọn `vi-VN`/`en-US` trực tiếp, lưu theo người dùng và truyền sang Mục 8 cùng trình quản lý cục bộ;
 - nút Offline/Online toàn ứng dụng luôn hiện rõ trạng thái hiện tại và tooltip mô tả trạng thái đích;

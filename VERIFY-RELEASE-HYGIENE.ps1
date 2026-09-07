@@ -9,6 +9,7 @@ $failures = New-Object System.Collections.Generic.List[string]
 $brandName = 'VietLicenSure'
 $fullName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VmlldExpY2VuU3VyZSDigJQgUGjhuqduIG3hu4FtIEtp4buDbSB0cmEgdsOgIFF14bqjbiBsw70gQuG6o24gcXV54buBbiBI4buHIHRo4buRbmc='))
 $assistantNameVi = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VHLhu6MgbMO9'))
+$otherVersionsVi = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('Q8OhYyBwaGnDqm4gYuG6o24ga2jDoWM='))
 $legacyStoreReservedName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VG9vbCBLaeG7g20gVHJhIELhuqNuIFF1eeG7gW4='))
 $repositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure'
 $legacyRepositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen'
@@ -106,6 +107,7 @@ Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Public Stable'
 Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top">VIETLICENSURE'
 Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned / Pilot'
 Assert-HygieneContains 'docs\index.html' $website $directDownloadUrl
+Assert-HygieneContains 'docs\index.html' $website ('href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases">' + $otherVersionsVi + '</a>')
 Assert-HygieneContains 'VietLicenSure-v5.0-OneFile.cs' $launcher 'namespace ThanhViet.VietLicenSure'
 Assert-HygieneContains 'Tool-Provenance.ps1' $provenanceHelper "SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'"
 Assert-HygieneContains 'BUILD.ps1' $buildScript 'VietLicenSure-v$productVersion.exe'

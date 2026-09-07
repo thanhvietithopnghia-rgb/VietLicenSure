@@ -47,6 +47,7 @@ $timelineHelper = Join-Path $PSScriptRoot "Tool-LicenseTimeline.ps1"
 $safetyPolicyHelper = Join-Path $PSScriptRoot "Tool-SafetyPolicy.ps1"
 $enterpriseHelper = Join-Path $PSScriptRoot "Tool-Enterprise.ps1"
 $uiThemeHelper = Join-Path $PSScriptRoot "Tool-UiTheme.ps1"
+$dashboardPresentationHelper = Join-Path $PSScriptRoot "Tool-DashboardPresentation.ps1"
 $localizationHelper = Join-Path $PSScriptRoot "Tool-Localization.ps1"
 $offlinePolicyHelper = Join-Path $PSScriptRoot "Tool-OfflinePolicy.ps1"
 $provenanceHelper = Join-Path $PSScriptRoot "Tool-Provenance.ps1"
@@ -76,7 +77,7 @@ function Get-DashboardText {
     return "[$Key]"
 }
 
-$missingFoundationFiles = @($runtimeHelper, $dataLifecycleHelper, $compatibilityHelper, $capabilityHelper, $scanOptimizationHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $resultCenterHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $safetyPolicyHelper, $enterpriseHelper, $uiThemeHelper, $localizationHelper, $offlinePolicyHelper, $provenanceHelper, $provenanceManifest, $assistantHelper, $softwareInventoryHelper, $softwareCatalogUpdateScript, $applicationUpdateScript) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+$missingFoundationFiles = @($runtimeHelper, $dataLifecycleHelper, $compatibilityHelper, $capabilityHelper, $scanOptimizationHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $resultCenterHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $safetyPolicyHelper, $enterpriseHelper, $uiThemeHelper, $dashboardPresentationHelper, $localizationHelper, $offlinePolicyHelper, $provenanceHelper, $provenanceManifest, $assistantHelper, $softwareInventoryHelper, $softwareCatalogUpdateScript, $applicationUpdateScript) | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
 if ($missingFoundationFiles.Count -gt 0) {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Windows.Forms.MessageBox]::Show(
@@ -194,6 +195,8 @@ try {
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+. $dashboardPresentationHelper
+Write-DashboardStartupTrace "Module.DashboardPresentation"
 $script:dpiAwarenessState = Initialize-ToolDpiAwareness
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 [System.Windows.Forms.Application]::EnableVisualStyles()
@@ -511,7 +514,7 @@ $requiredIntegrityFiles = @(
     "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md", "LICENSE-NOTICE.txt",
     "SOURCE-POLICY-v4.9.md", "Tool-Provenance.ps1", "OFFICIAL-PROVENANCE-v1.json",
     "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "VietLicenSure-icon.svg",
-    "VietLicenSure.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
+    "VietLicenSure.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-DashboardPresentation.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
     "Tool-ReportSchema.ps1", "Tool-ResultCenter.ps1", "Tool-ReportExport.ps1", "Tool-PluginEngine.ps1", "Tool-LicenseTimeline.ps1", "Tool-SafetyPolicy.ps1",
     "Tool-Enterprise.ps1", "Tool-EnterpriseCli.ps1", "Tool-EnterpriseHost.ps1", "Tool-EnterpriseAgent.ps1", "enterprise-license-manager.ps1",
     "windows-license-compliance-cleanup.ps1", "windows-license-restore.ps1",
@@ -1438,111 +1441,10 @@ function Open-ToolReportPresentation {
     return $package
 }
 
-function Set-ModernRoundedRegion {
-    param(
-        [Parameter(Mandatory = $true)][System.Windows.Forms.Control]$Control,
-        [int]$Radius = 12
-    )
-    if ($Control.Width -le 2 -or $Control.Height -le 2) { return }
-    $diameter = [Math]::Max(2, [Math]::Min($Radius * 2, [Math]::Min($Control.Width - 1, $Control.Height - 1)))
-    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
-    try {
-        $path.AddArc(0, 0, $diameter, $diameter, 180, 90)
-        $path.AddArc($Control.Width - $diameter - 1, 0, $diameter, $diameter, 270, 90)
-        $path.AddArc($Control.Width - $diameter - 1, $Control.Height - $diameter - 1, $diameter, $diameter, 0, 90)
-        $path.AddArc(0, $Control.Height - $diameter - 1, $diameter, $diameter, 90, 90)
-        $path.CloseFigure()
-        $newRegion = New-Object System.Drawing.Region($path)
-        $oldRegion = $Control.Region
-        $Control.Region = $newRegion
-        if ($oldRegion) { $oldRegion.Dispose() }
-    } finally {
-        $path.Dispose()
-    }
-}
 
-function Set-DashboardHeaderTitleFont {
-    param([bool]$PreferLarge = $true)
 
-    $candidateFonts = if ($PreferLarge) {
-        @($fontTitle, $fontTitleCompact, $fontTitleMedium, $fontTitleSmall, $fontTitleTiny, $fontTitleMicro, $fontTitleMinimum)
-    } else {
-        @($fontTitleCompact, $fontTitleMedium, $fontTitleSmall, $fontTitleTiny, $fontTitleMicro, $fontTitleMinimum)
-    }
-    $availableWidth = [Math]::Max(1, $title.ClientSize.Width - 4)
-    $selectedFont = $candidateFonts[$candidateFonts.Count - 1]
-    foreach ($candidateFont in $candidateFonts) {
-        $measuredWidth = [System.Windows.Forms.TextRenderer]::MeasureText([string]$title.Text, $candidateFont).Width
-        if ($measuredWidth -le $availableWidth) {
-            $selectedFont = $candidateFont
-            break
-        }
-    }
-    $title.Font = $selectedFont
-}
 
-function Set-DashboardSidebarBrandFont {
-    $availableWidth = [Math]::Max(1, $sidebarBrand.ClientSize.Width - 4)
-    $textFlags = [System.Windows.Forms.TextFormatFlags]::NoPadding -bor
-        [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
-        [System.Windows.Forms.TextFormatFlags]::NoPrefix
-    $candidateFonts = @($fontSidebarTitle, $fontSidebarTitleCompact, $fontSidebarTitleMinimum)
-    $selectedFont = $candidateFonts[$candidateFonts.Count - 1]
-    foreach ($candidateFont in $candidateFonts) {
-        $requiredWidth = [System.Windows.Forms.TextRenderer]::MeasureText(
-            [string]$sidebarBrand.Text,
-            $candidateFont,
-            [System.Drawing.Size]::Empty,
-            $textFlags).Width + 6
-        if ($requiredWidth -le $availableWidth) {
-            $selectedFont = $candidateFont
-            break
-        }
-    }
-    $sidebarBrand.Font = $selectedFont
-}
 
-function Get-DashboardComboRequiredWidth {
-    param(
-        [Parameter(Mandatory = $true)][System.Windows.Forms.ComboBox]$ComboBox,
-        [ValidateRange(4, 40)][int]$HorizontalSafety = 18
-    )
-
-    $textFlags = [System.Windows.Forms.TextFormatFlags]::NoPadding -bor
-        [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
-        [System.Windows.Forms.TextFormatFlags]::NoPrefix
-    $maximumTextWidth = 0
-    foreach ($item in $ComboBox.Items) {
-        $itemWidth = [System.Windows.Forms.TextRenderer]::MeasureText(
-            [string]$item,
-            $ComboBox.Font,
-            [System.Drawing.Size]::Empty,
-            $textFlags).Width
-        if ($itemWidth -gt $maximumTextWidth) { $maximumTextWidth = $itemWidth }
-    }
-    return [int]($maximumTextWidth + [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + $HorizontalSafety)
-}
-
-function Get-DashboardWrappedTextHeight {
-    param(
-        [AllowEmptyString()][string]$Text,
-        [Parameter(Mandatory = $true)][System.Drawing.Font]$Font,
-        [ValidateRange(1, 4096)][int]$Width,
-        [ValidateRange(1, 512)][int]$MinimumHeight = 18,
-        [ValidateRange(1, 512)][int]$MaximumHeight = 72
-    )
-    if ([string]::IsNullOrWhiteSpace($Text)) { return $MinimumHeight }
-    $flags = [System.Windows.Forms.TextFormatFlags]::WordBreak -bor
-        [System.Windows.Forms.TextFormatFlags]::NoPrefix -bor
-        [System.Windows.Forms.TextFormatFlags]::NoPadding -bor
-        [System.Windows.Forms.TextFormatFlags]::TextBoxControl
-    $measured = [System.Windows.Forms.TextRenderer]::MeasureText(
-        $Text,
-        $Font,
-        (New-Object System.Drawing.Size([Math]::Max(1, $Width), 1024)),
-        $flags)
-    return [int][Math]::Max($MinimumHeight, [Math]::Min($MaximumHeight, ($measured.Height + 2)))
-}
 
 function Update-MainLayout {
     if ($script:dashboardStartupLayoutPending) { return }

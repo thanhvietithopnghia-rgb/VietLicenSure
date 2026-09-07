@@ -223,9 +223,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 53 } else { 54 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 126 } else { 127 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 143 } else { 145 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 54 } else { 55 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 127 } else { 128 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 144 } else { 146 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 40 } elseif ($AllowStoreManifest) { 41 } else { 42 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -306,6 +306,7 @@ $compatibilityText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'T
 $localizationText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Localization.ps1') -Raw -Encoding UTF8
 $offlinePolicyText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-OfflinePolicy.ps1') -Raw -Encoding UTF8
 $assistantText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-Assistant.ps1') -Raw -Encoding UTF8
+$dashboardPresentationText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-DashboardPresentation.ps1') -Raw -Encoding UTF8
 
 if ($guiText -notmatch '\$dashboardSchemaVersion\s*=\s*"2\.0"' -or
     $guiText -notmatch 'WindowsReleaseName' -or $guiText -notmatch 'OfficeSummary') {
@@ -314,7 +315,7 @@ if ($guiText -notmatch '\$dashboardSchemaVersion\s*=\s*"2\.0"' -or
 if ($guiText -notmatch 'function\s+Show-ProductIntroduction' -or
     $guiText -notmatch 'introDetailButton' -or
     $guiText -notmatch 'dashboard\.overview\.title' -or
-    $guiText -notmatch 'function\s+Set-ModernRoundedRegion' -or
+    $dashboardPresentationText -notmatch 'function\s+Set-ModernRoundedRegion' -or
     $guiText -notmatch '\$ultraCompactHeight' -or
     $guiText -notmatch '\$sidebarPanel' -or
     $guiText -notmatch '\$activityPanel' -or
@@ -665,7 +666,7 @@ $payloadFiles = @(
     'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
-    'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-Localization.ps1',
+    'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-DashboardPresentation.ps1','Tool-Localization.ps1',
     'Tool-Strings.vi-VN.json','Tool-Strings.en-US.json','Tool-OfflinePolicy.ps1','Tool-Assistant.ps1','tool-assistant-knowledge-v1.1.json',
     'Tool-SoftwareInventory.ps1','software-license-catalog-v1.0.json','software-license-catalog-v1.0.json.p7s','software-license-online-update.ps1','Tool-UpdateManager.ps1',
     'Tool-ReportSchema.ps1','Tool-ResultCenter.ps1','Tool-ReportExport.ps1','Tool-PluginEngine.ps1','Tool-LicenseTimeline.ps1',

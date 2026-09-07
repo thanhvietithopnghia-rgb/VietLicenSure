@@ -29,6 +29,18 @@ if (-not (Test-Path -LiteralPath $guiPath -PathType Leaf)) {
     }
     $text = Get-Content -LiteralPath $guiPath -Raw -Encoding UTF8
 }
+$presentationPath = Join-Path $root 'Tool-DashboardPresentation.ps1'
+if (Test-Path -LiteralPath $presentationPath -PathType Leaf) {
+    $presentationTokens = $null
+    $presentationParseErrors = $null
+    [void][Management.Automation.Language.Parser]::ParseFile($presentationPath, [ref]$presentationTokens, [ref]$presentationParseErrors)
+    foreach ($parseError in @($presentationParseErrors)) {
+        Add-Failure "Lỗi cú pháp Tool-DashboardPresentation.ps1: $($parseError.Message)"
+    }
+    $text += [Environment]::NewLine + (Get-Content -LiteralPath $presentationPath -Raw -Encoding UTF8)
+} else {
+    Add-Failure 'Thiếu Tool-DashboardPresentation.ps1.'
+}
 $resultCenterPath = Join-Path $root 'Tool-ResultCenter.ps1'
 $resultCenterText = if (Test-Path -LiteralPath $resultCenterPath -PathType Leaf) {
     Get-Content -LiteralPath $resultCenterPath -Raw -Encoding UTF8
