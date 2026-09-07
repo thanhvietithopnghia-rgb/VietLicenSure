@@ -4,7 +4,7 @@ Release build date: 2026.09.06
 Release label: 5.0.0.1-managed-signed-20260906
 Release status: ManagedSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 74A32E5FB657FF029D608B3194B0BC3CB27B19F7EB9CC0F020D4CAFE4DC4B726
+SHA-256: 4739B33AFF59994702371CAEA4A6422F5B5949552696EE19AD48221740DDF082
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
