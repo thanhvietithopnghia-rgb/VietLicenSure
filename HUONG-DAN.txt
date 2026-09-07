@@ -68,7 +68,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Nút Mở thư mục báo cáo mở nơi chứa kết quả mới nhất.
 - Nút Dừng chỉ dùng khi tác vụ kéo dài bất thường. Nếu dừng giữa lúc khắc phục, hãy giữ backup và quét lại trước khi làm tiếp.
 - Công tắc Offline/Online chỉ cấp quyền dùng mạng trong phiên hiện tại; bật Online không tự gửi dữ liệu và không tự chạy quét. Mở lại Tool luôn trở về Offline.
-- Nút **Trợ lý** nằm bên trái **Giới thiệu**. Nhập câu hỏi rồi bấm **Gửi** hoặc nhấn **Enter**; dùng `Shift+Enter` nếu cần xuống dòng. Khi đang xử lý, phần mềm tạm khóa ô nhập và nút Gửi để tránh gửi trùng. Nút **Kết nối Online** chỉ cấp quyền mạng cho phiên hiện tại và tự kiểm tra gói tri thức mới; **Đồng bộ tri thức** cho phép kiểm tra lại thủ công.
+- Nút **Trợ lý** nằm bên trái **Giới thiệu**. Nhập câu hỏi rồi bấm **Gửi** hoặc nhấn **Enter**; dùng `Shift+Enter` nếu cần xuống dòng. Khi đang xử lý, phần mềm tạm khóa ô nhập và nút Gửi để tránh gửi trùng. Nút **Kết nối Online** chỉ cấp quyền mạng cho phiên hiện tại và tự kiểm tra gói tri thức mới; **Đồng bộ tri thức** cho phép kiểm tra lại thủ công; **Các phiên bản khác** mở trang GitHub Releases chính thức để xem hoặc tải các bản phát hành trước.
 
 ## Trợ lý
 

@@ -68,7 +68,7 @@ You do not need source access, configuration files, or technical documentation t
 - Open report folder opens the latest report location.
 - Stop should be used only when a task is taking abnormally long. If remediation is interrupted, preserve the backup and rescan before continuing.
 - Offline/Online controls network permission for the current session only. Switching Online does not upload data or automatically start a scan; restarting always returns to Offline.
-- **Assistant** sits left of **About**. Enter a question and click **Send** or press **Enter**; use `Shift+Enter` for a new line. Input and Send are temporarily locked while an answer is processed. **Connect Online** grants network access only for the current session and automatically checks signed VietLicenSure knowledge; **Sync knowledge** can check again manually.
+- **Assistant** sits left of **About**. Enter a question and click **Send** or press **Enter**; use `Shift+Enter` for a new line. Input and Send are temporarily locked while an answer is processed. **Connect Online** grants network access only for the current session and automatically checks signed VietLicenSure knowledge; **Sync knowledge** can check again manually; **Other versions** opens the official GitHub Releases page for earlier downloads.
 
 ## Assistant
 
