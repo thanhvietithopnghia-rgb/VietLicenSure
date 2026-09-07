@@ -51,6 +51,14 @@ Sau khi bản bắc cầu đã được phân phối và theo dõi đủ, manife
 
 Khi nghi ngờ lộ khóa: dừng phát hành, vô hiệu hóa job ký, liên hệ CA để thu hồi, bảo toàn audit log, phát hành chỉ dẫn xác minh hash và chuyển sang chứng thư mới qua quy trình rollover. Không xóa lịch sử để che sự cố.
 
+## Ưu tiên chứng thư CA công cộng và EV
+
+Bản Public Stable chỉ được phát hành khi executable có chữ ký Authenticode SHA-256 từ chứng thư code-signing do CA công cộng cấp, chuỗi tin cậy Windows hợp lệ và có RFC 3161 timestamp. Chứng thư EV được ưu tiên khi phù hợp với pháp nhân, ngân sách và quy trình giữ khóa. EV là thuộc tính do CA thẩm định; mã nguồn và pipeline không được tự suy đoán hoặc tự gắn nhãn EV.
+
+Private key phải nằm trong token phần cứng, HSM hoặc dịch vụ ký từ xa được CA hỗ trợ. Không đưa private key vào repo, CI secret dạng tệp hoặc gói bàn giao. Lệnh `BUILD.ps1 -RequireAuthenticode` chỉ nhận thumbprint của khóa trong certificate store/HSM, từ chối PFX dạng tệp và kiểm tra EKU Code Signing, thời hạn, chuỗi Windows, signer artifact cùng RFC 3161 timestamp.
+
+Tại ngày 2026-09-07, máy build chưa có chứng thư code-signing CA công cộng còn hiệu lực kèm private key. Do đó chưa được công bố artifact là Public Stable hoặc EV cho đến khi chủ sở hữu mua, hoàn tất thẩm định và cài khóa CA/EV thật.
+
 ## SmartScreen
 
 Không hứa “không còn cảnh báo”. Cách giảm cảnh báo hợp lệ là chữ ký công cộng ổn định, artifact không đổi sau ký, HTTPS/kênh chính thức, ít false positive, lịch sử phiên bản sạch và hướng dẫn người dùng kiểm tra Publisher/SHA-256. Không khuyến khích người dùng tắt SmartScreen.
