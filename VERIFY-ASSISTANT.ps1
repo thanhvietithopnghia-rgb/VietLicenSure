@@ -82,6 +82,25 @@ if ($errors.Count -eq 0) {
     if ([string]$script:ToolAssistantReleaseHistoryUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases') {
         Add-AssistantVerificationError 'Assistant other-versions button does not target the official GitHub Releases page.'
     }
+    if (-not (Test-ToolAssistantFixedOnlineAddress -Kind Knowledge) -or
+        -not (Test-ToolAssistantFixedOnlineAddress -Kind Signature)) {
+        Add-AssistantVerificationError 'Assistant published knowledge URLs do not match the fixed download allowlist.'
+    }
+    if ((Test-ToolAssistantFixedOnlineAddress -Kind Knowledge -Address 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure-Ban-Quyen/main/tool-assistant-knowledge-v1.1.json') -or
+        (Test-ToolAssistantFixedOnlineAddress -Kind Knowledge -Address 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json?unsafe=1')) {
+        Add-AssistantVerificationError 'Assistant knowledge URL validation accepted an obsolete or modified address.'
+    }
+    if (-not (Test-ToolAssistantReleaseHistoryAddress) -or
+        (Test-ToolAssistantReleaseHistoryAddress -Address 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases?unsafe=1')) {
+        Add-AssistantVerificationError 'Assistant release-history URL validation is not fail-closed.'
+    }
+    $openedReleaseAddress = ''
+    $releaseFallbackResult = Open-ToolAssistantReleaseHistory `
+        -PrimaryLauncher { throw 'simulated primary browser failure' } `
+        -FallbackLauncher { param($address) $script:openedReleaseAddress = [string]$address; return $true }
+    if (-not $releaseFallbackResult -or $openedReleaseAddress -ne [string]$script:ToolAssistantReleaseHistoryUrl) {
+        Add-AssistantVerificationError 'Assistant release-history fallback launcher did not receive the fixed official URL.'
+    }
     foreach ($culture in @('vi-VN','en-US')) {
         $documentSections = @(Get-ToolAssistantDocumentSections -Culture $culture)
         foreach ($definition in @(Get-ToolAssistantDocumentDefinitions -Culture $culture)) {
@@ -732,8 +751,11 @@ if ($errors.Count -eq 0) {
                 $testHeaderScope = New-Object Windows.Forms.Label
                 $testHeaderScope.Text = Get-ToolAssistantUiText 'Scope' $headerCulture
                 $testHeaderScope.Font = $testHeaderScopeFont
+                $testHeaderModeFont = New-Object Drawing.Font('Segoe UI Semibold', ([single](9 * $dpiScale)))
                 $testHeaderMode = New-Object Windows.Forms.Label
-                $testHeaderMode.Text = Get-ToolAssistantUiText 'Offline' $headerCulture
+                $testHeaderMode.Text = Get-ToolAssistantUiText 'Online' $headerCulture
+                $testHeaderMode.Font = $testHeaderModeFont
+                $testHeaderMode.Padding = New-Object Windows.Forms.Padding([int](10 * $dpiScale), 0, [int](10 * $dpiScale), 0)
                 $testHeader.Controls.Add($testHeaderTitle)
                 $testHeader.Controls.Add($testHeaderScope)
                 $testHeader.Controls.Add($testHeaderMode)
@@ -742,14 +764,16 @@ if ($errors.Count -eq 0) {
                 $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
                 $requiredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$testHeaderTitle.Text, $testHeaderTitle.Font, [Drawing.Size]::Empty, $singleLineFlags)
                 $requiredScope = [Windows.Forms.TextRenderer]::MeasureText([string]$testHeaderScope.Text, $testHeaderScope.Font, (New-Object Drawing.Size($testHeaderScope.Width, 500)), $wrappedFlags)
+                $requiredMode = [Windows.Forms.TextRenderer]::MeasureText([string]$testHeaderMode.Text, $testHeaderMode.Font, [Drawing.Size]::Empty, $singleLineFlags)
                 if ($testHeaderMode.Right -gt ($testHeader.ClientSize.Width - [int](16 * $dpiScale)) -or
                     $testHeaderTitle.Right -ge $testHeaderMode.Left -or
                     $testHeaderScope.Top -lt $testHeaderTitle.Bottom -or
                     $testHeaderTitle.Width -lt $requiredTitle.Width -or $testHeaderTitle.Height -lt $requiredTitle.Height -or
-                    $testHeaderScope.Height -lt $requiredScope.Height) {
+                    $testHeaderScope.Height -lt $requiredScope.Height -or
+                    $testHeaderMode.Width -lt ($requiredMode.Width + $testHeaderMode.Padding.Horizontal + [int](8 * $dpiScale))) {
                     Add-AssistantVerificationError "Assistant header is clipped for $headerCulture at $([int]($dpiScale * 100))% DPI."
                 }
-                $testHeader.Dispose(); $testHeaderTitleFont.Dispose(); $testHeaderScopeFont.Dispose()
+                $testHeader.Dispose(); $testHeaderTitleFont.Dispose(); $testHeaderScopeFont.Dispose(); $testHeaderModeFont.Dispose()
             }
         }
         $controlCountBeforeDuplicate = $testChat.Controls.Count
@@ -822,7 +846,7 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Dashboard does not pass the current-session Online callback to Tool Assistant.'
     }
     $assistantSource = Get-Content -LiteralPath (Join-Path $SourceDirectory 'Tool-Assistant.ps1') -Raw -Encoding UTF8
-    foreach ($requiredToken in @('$send.Tag = $assistantState','Queue-ToolAssistantQuestion -State $sender.Tag','$eventArgs.Handled = $true','BeginInvoke','SubmissionQueued','ConnectOnline','ConnectOnlineTip','OtherVersions','OtherVersionsTip','ToolAssistantReleaseHistoryUrl','UseShellExecute = $true','Update-ToolAssistantConnectionUi','Update-ToolAssistantConversationUi','Complete-ToolAssistantConversationLayout','Set-ToolAssistantHeaderBounds','Set-ToolAssistantInputFrameState','InputIdleBorderColor','UserBubbleBorderColor','AssistantBubbleBorderColor','RenderTimer','PendingRevealControl','RevealQueued','[Windows.Forms.Application]::DoEvents()','Windows.Forms.FlowLayoutPanel','Windows.Forms.TableLayoutPanel','Role User','Role Assistant','IsSubmitting','SendButton.Enabled','Expand-ToolAssistantContextQuery','Test-ToolAssistantRelatedQuery','Get-ToolAssistantDocumentAnswer','Get-ToolAssistantHistoryAnswer','CompleteBundledGuideIndexed','CompleteVersionHistoryIndexed','LastQuestionText','KnowledgePlusBundledDocumentation','Test-ToolAssistantKnowledgeSignature','DetachedCmsSha256PinnedCertificate','Save-ToolAssistantSignedKnowledgeCache','remoteVersion -lt $currentVersion','Invoke-ToolAssistantKnowledgeSyncUi')) {
+    foreach ($requiredToken in @('$send.Tag = $assistantState','Queue-ToolAssistantQuestion -State $sender.Tag','$eventArgs.Handled = $true','BeginInvoke','SubmissionQueued','ConnectOnline','ConnectOnlineTip','OtherVersions','OtherVersionsTip','ToolAssistantReleaseHistoryUrl','Test-ToolAssistantReleaseHistoryAddress','Open-ToolAssistantReleaseHistory','UseShellExecute = $true','explorer.exe','Test-ToolAssistantFixedOnlineAddress','Update-ToolAssistantConnectionUi','Update-ToolAssistantConversationUi','Complete-ToolAssistantConversationLayout','Set-ToolAssistantHeaderBounds','Header = $header','TitleLabel = $title','ScopeLabel = $scope','Set-ToolAssistantInputFrameState','InputIdleBorderColor','UserBubbleBorderColor','AssistantBubbleBorderColor','RenderTimer','PendingRevealControl','RevealQueued','[Windows.Forms.Application]::DoEvents()','Windows.Forms.FlowLayoutPanel','Windows.Forms.TableLayoutPanel','Role User','Role Assistant','IsSubmitting','SendButton.Enabled','Expand-ToolAssistantContextQuery','Test-ToolAssistantRelatedQuery','Get-ToolAssistantDocumentAnswer','Get-ToolAssistantHistoryAnswer','CompleteBundledGuideIndexed','CompleteVersionHistoryIndexed','LastQuestionText','KnowledgePlusBundledDocumentation','Test-ToolAssistantKnowledgeSignature','DetachedCmsSha256PinnedCertificate','Save-ToolAssistantSignedKnowledgeCache','remoteVersion -lt $currentVersion','Invoke-ToolAssistantKnowledgeSyncUi')) {
         if (-not $assistantSource.Contains($requiredToken)) { Add-AssistantVerificationError "Assistant UI interaction token missing: $requiredToken" }
     }
     if ($assistantSource.Contains('New-Object Windows.Forms.RichTextBox')) {

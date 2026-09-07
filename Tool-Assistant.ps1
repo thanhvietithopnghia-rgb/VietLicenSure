@@ -267,6 +267,31 @@ function Get-ToolAssistantSyncText {
     }
 }
 
+function Test-ToolAssistantFixedOnlineAddress {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('Knowledge','Signature')][string]$Kind,
+        [AllowNull()][string]$Address = ''
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Address)) {
+        $Address = if ($Kind -eq 'Knowledge') { $script:ToolAssistantKnowledgeUrl } else { $script:ToolAssistantKnowledgeSignatureUrl }
+    }
+    $expectedPath = if ($Kind -eq 'Knowledge') {
+        '/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json'
+    } else {
+        '/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json.p7s'
+    }
+    try { $uri = New-Object Uri($Address) } catch { return $false }
+    return [bool](
+        $uri.IsAbsoluteUri -and $uri.Scheme -ceq 'https' -and
+        $uri.DnsSafeHost -ceq 'raw.githubusercontent.com' -and
+        $uri.AbsolutePath -ceq $expectedPath -and $uri.IsDefaultPort -and
+        [string]::IsNullOrWhiteSpace($uri.UserInfo) -and
+        [string]::IsNullOrWhiteSpace($uri.Query) -and
+        [string]::IsNullOrWhiteSpace($uri.Fragment)
+    )
+}
+
 function Read-ToolAssistantFixedOnlineBytes {
     param(
         [Parameter(Mandatory = $true)][ValidateSet('Knowledge','Signature')][string]$Kind,
@@ -274,19 +299,8 @@ function Read-ToolAssistantFixedOnlineBytes {
     )
 
     $address = if ($Kind -eq 'Knowledge') { $script:ToolAssistantKnowledgeUrl } else { $script:ToolAssistantKnowledgeSignatureUrl }
-    $expectedPath = if ($Kind -eq 'Knowledge') {
-        '/thanhvietithopnghia-rgb/VietLicenSure-Ban-Quyen/main/tool-assistant-knowledge-v1.1.json'
-    } else {
-        '/thanhvietithopnghia-rgb/VietLicenSure-Ban-Quyen/main/tool-assistant-knowledge-v1.1.json.p7s'
-    }
+    if (-not (Test-ToolAssistantFixedOnlineAddress -Kind $Kind -Address $address)) { throw 'InvalidAddress' }
     $uri = New-Object Uri($address)
-    if ($uri.Scheme -ne 'https' -or $uri.DnsSafeHost -ne 'raw.githubusercontent.com' -or
-        $uri.AbsolutePath -ne $expectedPath -or -not $uri.IsDefaultPort -or
-        -not [string]::IsNullOrWhiteSpace($uri.UserInfo) -or
-        -not [string]::IsNullOrWhiteSpace($uri.Query) -or
-        -not [string]::IsNullOrWhiteSpace($uri.Fragment)) {
-        throw 'InvalidAddress'
-    }
     $request = [Net.HttpWebRequest]::Create($uri)
     $request.Method = 'GET'
     $request.Timeout = 8000
@@ -1358,6 +1372,58 @@ function Get-ToolAssistantUiText {
     }
 }
 
+function Test-ToolAssistantReleaseHistoryAddress {
+    param([AllowNull()][string]$Address = '')
+
+    if ([string]::IsNullOrWhiteSpace($Address)) { $Address = [string]$script:ToolAssistantReleaseHistoryUrl }
+    try { $uri = New-Object Uri($Address) } catch { return $false }
+    return [bool](
+        $uri.IsAbsoluteUri -and $uri.Scheme -ceq 'https' -and
+        $uri.DnsSafeHost -ceq 'github.com' -and
+        $uri.AbsolutePath.TrimEnd('/') -ceq '/thanhvietithopnghia-rgb/VietLicenSure/releases' -and
+        $uri.IsDefaultPort -and [string]::IsNullOrWhiteSpace($uri.UserInfo) -and
+        [string]::IsNullOrWhiteSpace($uri.Query) -and [string]::IsNullOrWhiteSpace($uri.Fragment)
+    )
+}
+
+function Open-ToolAssistantReleaseHistory {
+    param(
+        [AllowNull()][scriptblock]$PrimaryLauncher = $null,
+        [AllowNull()][scriptblock]$FallbackLauncher = $null
+    )
+
+    $address = [string]$script:ToolAssistantReleaseHistoryUrl
+    if (-not (Test-ToolAssistantReleaseHistoryAddress -Address $address)) { return $false }
+    if ($null -eq $PrimaryLauncher) {
+        $PrimaryLauncher = {
+            param([string]$TargetAddress)
+            $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $startInfo.FileName = $TargetAddress
+            $startInfo.Verb = 'open'
+            $startInfo.UseShellExecute = $true
+            [void][System.Diagnostics.Process]::Start($startInfo)
+            return $true
+        }
+    }
+    try {
+        if ((& $PrimaryLauncher $address) -ne $false) { return $true }
+    } catch { }
+
+    if ($null -eq $FallbackLauncher) {
+        $FallbackLauncher = {
+            param([string]$TargetAddress)
+            $explorerPath = if ([string]::IsNullOrWhiteSpace([string]$env:WINDIR)) { 'explorer.exe' } else { Join-Path ([string]$env:WINDIR) 'explorer.exe' }
+            $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $startInfo.FileName = $explorerPath
+            $startInfo.Arguments = '"' + $TargetAddress + '"'
+            $startInfo.UseShellExecute = $false
+            [void][System.Diagnostics.Process]::Start($startInfo)
+            return $true
+        }
+    }
+    try { return [bool]((& $FallbackLauncher $address) -ne $false) } catch { return $false }
+}
+
 function Set-ToolAssistantMessageBubbleBounds {
     param(
         [Parameter(Mandatory = $true)][object]$State,
@@ -1659,6 +1725,9 @@ function Update-ToolAssistantConnectionUi {
     if ($State.PSObject.Properties['OnlineBadgeBackColor'] -and $State.PSObject.Properties['OfflineBadgeBackColor']) {
         $State.ModeLabel.BackColor = if ($online) { $State.OnlineBadgeBackColor } else { $State.OfflineBadgeBackColor }
     }
+    if ($State.PSObject.Properties['Header'] -and $State.PSObject.Properties['TitleLabel'] -and $State.PSObject.Properties['ScopeLabel']) {
+        Set-ToolAssistantHeaderBounds -Header $State.Header -TitleLabel $State.TitleLabel -ScopeLabel $State.ScopeLabel -ModeLabel $State.ModeLabel
+    }
     $State.OnlineButton.Text = Get-ToolAssistantUiText $(if ($online) { "OnlineConnected" } else { "ConnectOnline" }) $State.Culture
     if ($State.PSObject.Properties['ToolTip'] -and $null -ne $State.ToolTip) {
         $State.ToolTip.SetToolTip($State.ModeLabel, [string]$State.ModeLabel.Text)
@@ -1686,7 +1755,7 @@ function Set-ToolAssistantHeaderBounds {
     }
     $rightMargin = [int][Math]::Round(18 * $DpiScale)
     $modeMinimumWidth = [int][Math]::Round(220 * $DpiScale)
-    $modeMaximumWidth = [int][Math]::Round(272 * $DpiScale)
+    $modeMaximumWidth = [int][Math]::Round(380 * $DpiScale)
     $modeHeight = [int][Math]::Round(32 * $DpiScale)
     $modeTop = [int][Math]::Round(14 * $DpiScale)
     $titleMinimumWidth = [int][Math]::Round(220 * $DpiScale)
@@ -1696,7 +1765,10 @@ function Set-ToolAssistantHeaderBounds {
     $scopeLeft = [int][Math]::Round(20 * $DpiScale)
     $scopeTop = [int]$TitleLabel.Top + $titleHeight + [int][Math]::Round(6 * $DpiScale)
     $scopeBottomMargin = [int][Math]::Round(6 * $DpiScale)
-    $modeWidth = [Math]::Min($modeMaximumWidth, [Math]::Max($modeMinimumWidth, [int]($clientWidth * 0.36)))
+    $modeFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
+    [Drawing.Size]$measuredMode = [Windows.Forms.TextRenderer]::MeasureText([string]$ModeLabel.Text, $ModeLabel.Font, [Drawing.Size]::Empty, $modeFlags)
+    $modeTextWidth = [int]$measuredMode.Width + [int]$ModeLabel.Padding.Horizontal + [int][Math]::Round(16 * $DpiScale)
+    $modeWidth = [Math]::Min($modeMaximumWidth, [Math]::Max($modeMinimumWidth, $modeTextWidth))
     $ModeLabel.Size = New-Object Drawing.Size($modeWidth, $modeHeight)
     $ModeLabel.Location = New-Object Drawing.Point([Math]::Max([int][Math]::Round(390 * $DpiScale), $clientWidth - $modeWidth - $rightMargin), $modeTop)
     $leftContentRight = [Math]::Max([int][Math]::Round(250 * $DpiScale), [int]$ModeLabel.Left - [int][Math]::Round(14 * $DpiScale))
@@ -1832,7 +1904,7 @@ function Show-ToolAssistantWindow {
     $header.Controls.Add($scope)
     $mode = New-Object Windows.Forms.Label
     $mode.TextAlign = "MiddleCenter"
-    $mode.AutoEllipsis = $true
+    $mode.AutoEllipsis = $false
     $mode.Anchor = "Top,Right"
     $mode.Font = New-Object Drawing.Font("Segoe UI Semibold", 9)
     $mode.Padding = New-Object Windows.Forms.Padding(10, 0, 10, 0)
@@ -1978,6 +2050,9 @@ function Show-ToolAssistantWindow {
         ReportContext = $reportContext
         OnlineMode = [bool]$OnlineMode
         RequestOnline = $RequestOnline
+        Header = $header
+        TitleLabel = $title
+        ScopeLabel = $scope
         ModeLabel = $mode
         OnlineButton = $online
         SyncButton = $sync
@@ -2065,21 +2140,19 @@ function Show-ToolAssistantWindow {
         param($sender, $eventArgs)
         [void](Enable-ToolAssistantOnline -State $sender.Tag)
     })
+    $versions.Tag = $assistantState
     $versions.Add_Click({
-        try {
-            $startInfo = New-Object Diagnostics.ProcessStartInfo
-            $startInfo.FileName = [string]$script:ToolAssistantReleaseHistoryUrl
-            $startInfo.UseShellExecute = $true
-            [void][Diagnostics.Process]::Start($startInfo)
-        } catch {
+        param($sender, $eventArgs)
+        $state = $sender.Tag
+        if (-not (Open-ToolAssistantReleaseHistory)) {
             [void][Windows.Forms.MessageBox]::Show(
-                (Get-ToolAssistantUiText "OpenLinkFailed" $Culture),
-                (Get-ToolAssistantUiText "Title" $Culture),
+                (Get-ToolAssistantUiText "OpenLinkFailed" $state.Culture),
+                (Get-ToolAssistantUiText "Title" $state.Culture),
                 [Windows.Forms.MessageBoxButtons]::OK,
                 [Windows.Forms.MessageBoxIcon]::Warning
             )
         }
-    }.GetNewClosure())
+    })
     $close.Tag = $dialog
     $close.Add_Click({ param($sender, $eventArgs); $sender.Tag.Close() })
     $dialog.CancelButton = $close
@@ -2134,8 +2207,10 @@ function Show-ToolAssistantWindow {
         $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix
         [Drawing.Size]$requiredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$title.Text, $title.Font, [Drawing.Size]::Empty, $singleLineFlags)
         [Drawing.Size]$requiredScope = [Windows.Forms.TextRenderer]::MeasureText([string]$scope.Text, $scope.Font, (New-Object Drawing.Size($scope.Width, 200)), $wrappedFlags)
+        [Drawing.Size]$requiredMode = [Windows.Forms.TextRenderer]::MeasureText([string]$mode.Text, $mode.Font, [Drawing.Size]::Empty, $singleLineFlags)
         if ($title.Width -lt [int]$requiredTitle.Width -or $title.Height -lt [int]$requiredTitle.Height) { throw "Assistant title is clipped: $($title.Text)" }
         if ($scope.Height -lt [int]$requiredScope.Height) { throw "Assistant scope is clipped: $($scope.Text)" }
+        if ($mode.Width -lt ([int]$requiredMode.Width + [int]$mode.Padding.Horizontal + 8)) { throw "Assistant connection status is clipped: $($mode.Text)" }
         foreach ($button in @($send,$copy,$clear,$sync,$online,$versions,$close)) {
             [Drawing.Size]$requiredButton = [Windows.Forms.TextRenderer]::MeasureText([string]$button.Text, $button.Font, [Drawing.Size]::Empty, $singleLineFlags)
             $buttonHost = if ($button.Parent -eq $actions) { $actions } else { $composer }
