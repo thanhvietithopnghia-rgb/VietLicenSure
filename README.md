@@ -2,7 +2,7 @@
 
 - **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành ngày 06/09/2026
 - **Tác giả và phát triển:** Thanh Việt
-- **Trang phát hành công khai:** <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
+- **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
 Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Việc đổi tên không loại bỏ chức năng và giữ nguyên dòng phiên bản v5.0.
 
@@ -26,7 +26,7 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 
 ## Tải và bắt đầu
 
-1. Chỉ tải từ [trang phát hành công khai mới nhất](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest).
+1. Tải trực tiếp [VietLicenSure v5.0.0.1](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
 2. Người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải `VietLicenSure-v5.0.exe` và thay tệp cũ; dữ liệu cũ được giữ làm nguồn tương thích/migration.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
@@ -99,7 +99,7 @@ Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật
 ## Nguồn chính thức và hỗ trợ
 
 - Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure>
-- Bản mới nhất: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>
+- Tải EXE v5.0.0.1: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>
 - Zalo: `0978 005 017`
 - Email: `thanhvietit.hopnghia@gmail.com`
 

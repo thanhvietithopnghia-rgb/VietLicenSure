@@ -573,6 +573,7 @@ $fontIntroTitle = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTy
 $fontTile = New-Object System.Drawing.Font($uiTypography.FontFamily, $uiTypography.TileSize, [System.Drawing.FontStyle]::Regular)
 $fontSidebarTitle = New-Object System.Drawing.Font($uiTypography.FontFamily, 11.5, [System.Drawing.FontStyle]::Bold)
 $fontSidebarTitleCompact = New-Object System.Drawing.Font($uiTypography.FontFamily, 10.0, [System.Drawing.FontStyle]::Bold)
+$fontSidebarTitleMinimum = New-Object System.Drawing.Font($uiTypography.FontFamily, 9.0, [System.Drawing.FontStyle]::Bold)
 $fontSidebar = New-Object System.Drawing.Font($uiTypography.FontFamily, 10.0, [System.Drawing.FontStyle]::Regular)
 
 $form = New-Object System.Windows.Forms.Form
@@ -712,8 +713,8 @@ $sidebarBrand.TextAlign = "MiddleLeft"
 $sidebarBrand.UseCompatibleTextRendering = $false
 $sidebarBrand.UseMnemonic = $false
 $sidebarBrand.AutoEllipsis = $false
-$sidebarBrand.Location = New-Object System.Drawing.Point(68, 24)
-$sidebarBrand.Size = New-Object System.Drawing.Size(116, 38)
+$sidebarBrand.Location = New-Object System.Drawing.Point(64, 24)
+$sidebarBrand.Size = New-Object System.Drawing.Size(128, 38)
 $sidebarPanel.Controls.Add($sidebarBrand)
 
 $sidebarNavButtons = New-Object System.Collections.ArrayList
@@ -1481,13 +1482,24 @@ function Set-DashboardHeaderTitleFont {
 }
 
 function Set-DashboardSidebarBrandFont {
-    $availableWidth = [Math]::Max(1, $sidebarBrand.ClientSize.Width - 2)
-    $requiredWidth = [System.Windows.Forms.TextRenderer]::MeasureText(
-        [string]$sidebarBrand.Text,
-        $fontSidebarTitle,
-        [System.Drawing.Size]::Empty,
-        ([System.Windows.Forms.TextFormatFlags]::NoPadding -bor [System.Windows.Forms.TextFormatFlags]::SingleLine -bor [System.Windows.Forms.TextFormatFlags]::NoPrefix)).Width
-    $sidebarBrand.Font = if ($requiredWidth -le $availableWidth) { $fontSidebarTitle } else { $fontSidebarTitleCompact }
+    $availableWidth = [Math]::Max(1, $sidebarBrand.ClientSize.Width - 4)
+    $textFlags = [System.Windows.Forms.TextFormatFlags]::NoPadding -bor
+        [System.Windows.Forms.TextFormatFlags]::SingleLine -bor
+        [System.Windows.Forms.TextFormatFlags]::NoPrefix
+    $candidateFonts = @($fontSidebarTitle, $fontSidebarTitleCompact, $fontSidebarTitleMinimum)
+    $selectedFont = $candidateFonts[$candidateFonts.Count - 1]
+    foreach ($candidateFont in $candidateFonts) {
+        $requiredWidth = [System.Windows.Forms.TextRenderer]::MeasureText(
+            [string]$sidebarBrand.Text,
+            $candidateFont,
+            [System.Drawing.Size]::Empty,
+            $textFlags).Width + 6
+        if ($requiredWidth -le $availableWidth) {
+            $selectedFont = $candidateFont
+            break
+        }
+    }
+    $sidebarBrand.Font = $selectedFont
 }
 
 function Get-DashboardComboRequiredWidth {
@@ -1558,9 +1570,9 @@ function Update-MainLayout {
             $sidebarPanel.Height = $clientHeight
             $sidebarBrandIcon.Left = 18
             $sidebarBrandIcon.Top = 20
-            $sidebarBrand.Left = 68
+            $sidebarBrand.Left = 64
             $sidebarBrand.Top = 24
-            $sidebarBrand.Width = [Math]::Max(92, $sidebarWidth - $sidebarBrand.Left - 12)
+            $sidebarBrand.Width = [Math]::Max(92, $sidebarWidth - $sidebarBrand.Left - 4)
             $sidebarBrand.Height = 38
             Set-DashboardSidebarBrandFont
             for ($navIndex = 0; $navIndex -lt $sidebarNavButtons.Count; $navIndex++) {
@@ -2420,6 +2432,7 @@ function Set-DashboardLanguage {
     $form.Text = "$(Get-ToolText -Key "app.title" -Culture $Culture) - $releaseDisplayName"
     $title.Text = Get-ToolText -Key "app.title" -Culture $Culture
     $developer.Text = Get-ToolText -Key "app.developer" -Culture $Culture
+    $version.Text = Get-DashboardText "dashboard.versionSummary" @($releaseDisplayName, $capabilityState.WindowsReleaseName, $capabilityState.FullBuildNumber, $capabilityState.OperatingSystemArchitecture, $reportSchemaState.SchemaVersion)
     $sidebarFooter.Text = Get-DashboardText "dashboard.sidebar.footer"
     if ($script:officialBuildState -in @('Official','Store')) {
         $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
@@ -2508,7 +2521,7 @@ function Set-DashboardLanguage {
     Update-DashboardOfflineUi
     Set-DashboardTheme -Mode $script:dashboardTheme
     Update-MainLayout
-    Refresh-DashboardLocalizedActivity
+    Refresh-DashboardLocalizedActivity -ResetRenderedHistory
     [void](Write-ToolLog -Level "INFO" -Event "Culture.Changed" -Message "Dashboard culture: $Culture." -Data ([ordered]@{ Culture=$Culture }))
 }
 
@@ -3315,6 +3328,12 @@ function Update-TaskProgressDisplay([TimeSpan]$Elapsed) {
 }
 
 function Refresh-DashboardLocalizedActivity {
+    param([switch]$ResetRenderedHistory)
+
+    if ($ResetRenderedHistory -and -not $script:activeProcess) {
+        Reset-IdleTaskDisplay
+        return
+    }
     if (-not $script:hasTaskActivity) {
         $status.Text = Get-DashboardText "status.chooseTask"
         $status.ForeColor = [System.Drawing.Color]::FromArgb(20, 126, 82)
@@ -3489,6 +3508,7 @@ function Complete-DashboardStartupValidation {
 
 function Set-ButtonsEnabled([bool]$enabled) {
     foreach ($button in $buttons) { $button.Enabled = $enabled }
+    $languageCombo.Enabled = $enabled
     $canStop = [bool]((-not $enabled) -and $script:activeProcess -and -not $script:activeProcess.HasExited)
     $stopButton.Visible = $canStop
     $stopButton.Enabled = $canStop

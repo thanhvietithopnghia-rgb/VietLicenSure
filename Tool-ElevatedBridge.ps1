@@ -415,7 +415,7 @@ try {
     if ($brokerBuildState -in @('Official','Managed','Store') -and (
         -not $brokerProvenanceOfficial -or
         $brokerBuildId -ne $expectedOfficialBuildId -or
-        $brokerVerificationUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest')) {
+        $brokerVerificationUrl -ne 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build')) {
         throw 'ElevatedBrokerTrustedBuildVerificationFailed'
     }
     # Security-sensitive values come only from the compiled launcher after it
@@ -485,7 +485,7 @@ try {
         -not $brokerProvenanceOfficial -or
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -notin @('Official','Managed','Store') -or
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne $expectedOfficialBuildId -or
-        [string]$environmentValues['TOOL_OFFICIAL_VERIFICATION_URL'] -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest'
+        [string]$environmentValues['TOOL_OFFICIAL_VERIFICATION_URL'] -ne 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'
     )) {
         throw 'ElevatedBridgeTrustedBuildRequired'
     }

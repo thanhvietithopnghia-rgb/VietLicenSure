@@ -705,7 +705,7 @@ if ($errors.Count -eq 0) {
             $testChat.Controls[0].Tag.Bubble.Left -le $testChat.Controls[1].Tag.Bubble.Left -or
             $testChat.Controls[0].Tag.Bubble.BackColor.ToArgb() -eq $testChat.Controls[1].Tag.Bubble.BackColor.ToArgb() -or
             $testChat.Controls[0].Tag.Bubble.Tag.ToArgb() -eq $testChat.Controls[1].Tag.Bubble.Tag.ToArgb() -or
-            $testState.Transcript.ToString() -notmatch 'Bạn\s+kms là gì\s+Trợ lý VietLicenSure') {
+            $testState.Transcript.ToString() -notmatch 'Bạn\s+kms là gì\s+Trợ lý') {
             Add-AssistantVerificationError 'The shared Send/Enter submission path did not append a question and answer.'
         }
         Set-ToolAssistantInputFrameState -State $testState -Focused $false
@@ -717,7 +717,7 @@ if ($errors.Count -eq 0) {
         }
 
         foreach ($headerCulture in @('vi-VN','en-US')) {
-            foreach ($dpiScale in @(1.0, 1.25, 1.5)) {
+            foreach ($dpiScale in @(1.0, 1.25, 1.5, 1.75, 2.0)) {
                 $testHeader = New-Object Windows.Forms.Panel
                 $testHeader.Size = New-Object Drawing.Size([int](660 * $dpiScale), [int](112 * $dpiScale))
                 $testHeaderTitleFont = New-Object Drawing.Font('Segoe UI Semibold', ([single](17 * $dpiScale)))
@@ -830,8 +830,8 @@ if ($errors.Count -eq 0) {
     }
     $expectedScopeVi = 'Giải đáp về VietLicenSure bằng tri thức cục bộ, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có.'
     $expectedScopeEn = 'Answers questions about VietLicenSure using local knowledge, guides, version history, and available report data.'
-    $expectedWelcomeVi = 'Trợ lý VietLicenSure hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có.'
-    $expectedWelcomeEn = 'The VietLicenSure Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data.'
+    $expectedWelcomeVi = 'Trợ lý hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có.'
+    $expectedWelcomeEn = 'The Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data.'
     if ((Get-ToolAssistantUiText -Key Scope -Culture 'vi-VN') -ne $expectedScopeVi -or
         (Get-ToolAssistantUiText -Key Scope -Culture 'en-US') -ne $expectedScopeEn -or
         (Get-ToolAssistantUiText -Key Welcome -Culture 'vi-VN') -ne $expectedWelcomeVi -or
@@ -841,6 +841,26 @@ if ($errors.Count -eq 0) {
     if ((Get-ToolAssistantUiText -Key Welcome -Culture 'vi-VN') -match 'Bạn (?:có thể|cứ) (?:đặt câu hỏi|hỏi)' -or
         (Get-ToolAssistantUiText -Key Welcome -Culture 'en-US') -match 'Ask in your own words') {
         Add-AssistantVerificationError 'Assistant welcome still contains the removed invitation-to-ask sentence.'
+    }
+    $assistantUiVi = [string]::Join("`n", (@(
+        'Title','Scope','Offline','Online','Input','Send','Copy','Clear','Sync','ConnectOnline','OnlineConnected',
+        'ConnectOnlineTip','OnlineConnectedTip','SyncTip','OnlineEnabled','OnlineNotEnabled','Close','Welcome','You','Assistant'
+    ) | ForEach-Object { Get-ToolAssistantUiText -Key $_ -Culture 'vi-VN' }))
+    $assistantUiEn = [string]::Join("`n", (@(
+        'Title','Scope','Offline','Online','Input','Send','Copy','Clear','Sync','ConnectOnline','OnlineConnected',
+        'ConnectOnlineTip','OnlineConnectedTip','SyncTip','OnlineEnabled','OnlineNotEnabled','Close','Welcome','You','Assistant'
+    ) | ForEach-Object { Get-ToolAssistantUiText -Key $_ -Culture 'en-US' }))
+    $assistantSyncVi = [string]::Join("`n", (@('Offline','InvalidAddress','TooLarge','InvalidKnowledge','InvalidSignature','Downgrade','Current','NoDataFolder','Updated','Failed') | ForEach-Object { Get-ToolAssistantSyncText -Key $_ -Culture 'vi-VN' }))
+    $assistantSyncEn = [string]::Join("`n", (@('Offline','InvalidAddress','TooLarge','InvalidKnowledge','InvalidSignature','Downgrade','Current','NoDataFolder','Updated','Failed') | ForEach-Object { Get-ToolAssistantSyncText -Key $_ -Culture 'en-US' }))
+    $assistantGreetingVi = Get-ToolAssistantAnswer -Question 'xin chào' -Culture 'vi-VN'
+    $assistantGreetingEn = Get-ToolAssistantAnswer -Question 'hello' -Culture 'en-US'
+    if (($assistantUiVi + "`n" + $assistantSyncVi + "`n" + $assistantGreetingVi) -match 'Trợ lý VietLicenSure' -or
+        ($assistantUiEn + "`n" + $assistantSyncEn + "`n" + $assistantGreetingEn) -match 'VietLicenSure Assistant') {
+        Add-AssistantVerificationError 'Assistant UI still contains the long product-qualified Assistant label that can be clipped.'
+    }
+    $vietnameseAccentPattern = '[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]'
+    if (($assistantUiEn + "`n" + $assistantSyncEn + "`n" + $assistantGreetingEn) -match $vietnameseAccentPattern) {
+        Add-AssistantVerificationError 'English Assistant UI contains Vietnamese presentation text.'
     }
     foreach ($culture in @('vi-VN','en-US')) {
         foreach ($theme in @('Light','Dark')) {
@@ -868,8 +888,14 @@ if ($errors.Count -eq 0) {
         [string]$en.'about.technology.body' -notlike "*$expectedWelcomeEn*") {
         Add-AssistantVerificationError 'Product information does not use the approved professional Assistant wording.'
     }
+    if ([string]$vi.'about.model.body' -match 'Trợ lý VietLicenSure' -or
+        [string]$vi.'about.technology.body' -match 'Trợ lý VietLicenSure' -or
+        [string]$en.'about.model.body' -match 'VietLicenSure Assistant' -or
+        [string]$en.'about.technology.body' -match 'VietLicenSure Assistant') {
+        Add-AssistantVerificationError 'Product information still contains the long Assistant label that can be clipped.'
+    }
     $englishOfflineSync = Sync-ToolAssistantKnowledge -OnlineMode $false -Culture 'en-US'
-    if ([string]$englishOfflineSync.Message -notmatch '^VietLicenSure Assistant is Offline' -or [string]$englishOfflineSync.Message -match 'Trợ lý|tri thức') {
+    if ([string]$englishOfflineSync.Message -notmatch '^Assistant is Offline' -or [string]$englishOfflineSync.Message -match 'Trợ lý|tri thức') {
         Add-AssistantVerificationError 'Assistant synchronization status is not fully localized in English.'
     }
     if ([string]$vi.'report.license.windows.unverifiableShort' -notlike 'CHƯA XÁC ĐỊNH*') {

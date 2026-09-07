@@ -58,6 +58,15 @@ if ($vi -and $en) {
         if (-not $vi.ContainsKey($key)) { Add-Failure "vi-VN catalog is missing key: $key" }
     }
 
+    # The language selector intentionally names Vietnamese in Vietnamese. No
+    # other en-US value may contain Vietnamese presentation text.
+    $vietnameseAccentPattern = '[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]'
+    foreach ($key in @($en.Keys | Sort-Object)) {
+        if ($key -ne 'app.language.vi' -and [string]$en[$key] -match $vietnameseAccentPattern) {
+            Add-Failure "en-US catalog contains Vietnamese presentation text: $key"
+        }
+    }
+
     $currentUiKeys = @(
         'assurance.heading',
         'report.text.042',
@@ -284,6 +293,14 @@ if (Test-Path -LiteralPath $dashboardPath -PathType Leaf) {
     $dashboardText = Read-Utf8 $dashboardPath
     if ($dashboardText -notmatch 'Get-ToolText\s+-Key\s+"assurance\.heading"\s+-Culture\s+\$script:dashboardCulture\s+-FormatArguments\s+@\(\$toolDisplayVersion\)') {
         Add-Failure 'Assurance heading is not formatted from the shared current display version.'
+    }
+    if (-not $dashboardText.Contains('$version.Text = Get-DashboardText "dashboard.versionSummary"')) {
+        Add-Failure 'Dashboard language switching does not refresh the localized version summary.'
+    }
+    if (-not $dashboardText.Contains('Refresh-DashboardLocalizedActivity -ResetRenderedHistory') -or
+        -not $dashboardText.Contains('param([switch]$ResetRenderedHistory)') -or
+        -not $dashboardText.Contains('$languageCombo.Enabled = $enabled')) {
+        Add-Failure 'Dashboard can retain old-language task output or change language during an active task.'
     }
 }
 

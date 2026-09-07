@@ -1292,7 +1292,7 @@ if ($gui) {
             $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
             . (Join-Path $root 'Tool-Provenance.ps1')
             $env:TOOL_OFFICIAL_BUILD_ID = [string](Get-ToolProvenanceExpectedValues).BuildId
-            $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest'
+            $env:TOOL_OFFICIAL_VERIFICATION_URL = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'
             $env:TOOL_MODULE_ID = 'cleanup.scan'
             $env:TOOL_MODULE_INVOCATION_ID = [guid]::NewGuid().ToString('N')
             $bridgeChildArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -BridgeEnvironmentProbe"

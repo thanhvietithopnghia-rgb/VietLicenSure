@@ -8,10 +8,13 @@ $sourceRoot = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
 $brandName = 'VietLicenSure'
 $fullName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VmlldExpY2VuU3VyZSDigJQgUGjhuqduIG3hu4FtIEtp4buDbSB0cmEgdsOgIFF14bqjbiBsw70gQuG6o24gcXV54buBbiBI4buHIHRo4buRbmc='))
+$assistantNameVi = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VHLhu6MgbMO9'))
 $legacyStoreReservedName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VG9vbCBLaeG7g20gVHJhIELhuqNuIFF1eeG7gW4='))
 $repositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure'
 $legacyRepositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen'
 $technicalVersion = '5.0.0.1'
+$publicReleaseUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/'
+$directDownloadUrl = $repositoryUrl + '/releases/download/v' + $technicalVersion + '/VietLicenSure-v5.0.exe'
 $displayVersion = 'v5.0'
 $releaseDateVi = '06/09/2026'
 $releaseDateIso = '2026-09-06'
@@ -92,7 +95,8 @@ foreach ($document in @(
     Assert-HygieneContains $document.Name $document.Text $technicalVersion
 }
 Assert-HygieneContains 'README.md' $readme $fullName
-Assert-HygieneContains 'README.md' $readme ($repositoryUrl + '/releases/latest')
+Assert-HygieneContains 'README.md' $readme $publicReleaseUrl
+Assert-HygieneContains 'README.md' $readme $directDownloadUrl
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Viet'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Licen'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Sure'
@@ -101,6 +105,7 @@ Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'ManagedSigned/P
 Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Public Stable'
 Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top">VIETLICENSURE'
 Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned / Pilot'
+Assert-HygieneContains 'docs\index.html' $website $directDownloadUrl
 Assert-HygieneContains 'VietLicenSure-v5.0-OneFile.cs' $launcher 'namespace ThanhViet.VietLicenSure'
 Assert-HygieneContains 'Tool-Provenance.ps1' $provenanceHelper "SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'"
 Assert-HygieneContains 'BUILD.ps1' $buildScript 'VietLicenSure-v$productVersion.exe'
@@ -125,13 +130,13 @@ foreach ($jsonName in @(
 
 $stringsVi = (Read-HygieneText 'Tool-Strings.vi-VN.json') | ConvertFrom-Json
 $stringsEn = (Read-HygieneText 'Tool-Strings.en-US.json') | ConvertFrom-Json
-if ([string]$stringsVi.'app.assistant' -match 'Tool' -or
+if ([string]$stringsVi.'app.assistant' -cne $assistantNameVi -or
     [string]$stringsVi.'dashboard.sidebar.brand' -cne $brandName -or
     [string]$stringsVi.'dashboard.sidebar.edition' -match 'TOOL' -or
     [string]$stringsVi.'enterprise.form.title' -notlike 'VietLicenSure*') {
     $failures.Add('Vietnamese user-facing brand labels are not synchronized.')
 }
-if ([string]$stringsEn.'app.assistant' -cne 'VietLicenSure Assistant' -or
+if ([string]$stringsEn.'app.assistant' -cne 'Assistant' -or
     [string]$stringsEn.'dashboard.sidebar.brand' -cne $brandName -or
     [string]$stringsEn.'dashboard.sidebar.edition' -cne 'LICENSE SOFTWARE' -or
     [string]$stringsEn.'enterprise.form.title' -notlike 'VietLicenSure*') {

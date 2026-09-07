@@ -7,7 +7,7 @@
 
 ## 1. Xác minh trước khi chạy
 
-Chỉ tải từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest>, sau đó đối chiếu với `RELEASE-SHA256SUMS.txt`:
+Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>, sau đó đối chiếu với `RELEASE-SHA256SUMS.txt`:
 
 ```powershell
 Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256

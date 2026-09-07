@@ -438,12 +438,30 @@ foreach ($buttonMode in @('Light','Dark')) {
 }
 $fitViCatalog = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $fitEnCatalog = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.en-US.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-if ([string]$fitViCatalog.'app.assistant' -ne 'Trợ lý VietLicenSure' -or
-    [string]$fitEnCatalog.'app.assistant' -ne 'VietLicenSure Assistant') {
-    Add-Failure 'Nút Trợ lý chưa hiển thị đầy đủ tên VietLicenSure ở cả hai ngôn ngữ.'
+if ([string]$fitViCatalog.'app.assistant' -ne 'Trợ lý' -or
+    [string]$fitEnCatalog.'app.assistant' -ne 'Assistant') {
+    Add-Failure 'Nút Trợ lý chưa dùng nhãn ngắn, đồng bộ ở cả hai ngôn ngữ.'
+}
+$sidebarBrandText = [string]$fitViCatalog.'dashboard.sidebar.brand'
+foreach ($dpiScale in @(1.0, 1.25, 1.5, 1.75, 2.0)) {
+    $brandAvailableWidth = [int](124 * $dpiScale)
+    $brandFits = $false
+    foreach ($brandPointSize in @(11.5, 10.0, 9.0)) {
+        $brandFont = New-Object Drawing.Font('Segoe UI', ([single]($brandPointSize * $dpiScale)), [Drawing.FontStyle]::Bold)
+        try {
+            $brandFlags = [Windows.Forms.TextFormatFlags]::NoPadding -bor [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+            $brandWidth = [Windows.Forms.TextRenderer]::MeasureText($sidebarBrandText, $brandFont, [Drawing.Size]::Empty, $brandFlags).Width + [int](6 * $dpiScale)
+            if ($brandWidth -le $brandAvailableWidth) { $brandFits = $true; break }
+        } finally {
+            $brandFont.Dispose()
+        }
+    }
+    if (-not $brandFits) {
+        Add-Failure "Tên VietLicenSure cạnh logo bị cắt ở DPI $([int]($dpiScale * 100))%."
+    }
 }
 foreach ($aboutCase in @(@('vi-VN', $fitViCatalog), @('en-US', $fitEnCatalog))) {
-    foreach ($dpiScale in @(1.0, 1.25, 1.5)) {
+    foreach ($dpiScale in @(1.0, 1.25, 1.5, 1.75, 2.0)) {
         $aboutHeadingFont = New-Object Drawing.Font('Segoe UI', ([single](14 * $dpiScale)), [Drawing.FontStyle]::Bold)
         $aboutTaglineFont = New-Object Drawing.Font('Segoe UI', ([single](9.6 * $dpiScale)), [Drawing.FontStyle]::Bold)
         try {
@@ -552,7 +570,7 @@ foreach ($cleanupFitCase in @(
     @('Light', $fitEnCatalog),
     @('Dark', $fitEnCatalog)
 )) {
-    foreach ($dpiScale in @(1.0, 1.25, 1.5)) {
+    foreach ($dpiScale in @(1.0, 1.25, 1.5, 1.75, 2.0)) {
         $cleanupFooterFont = New-Object Drawing.Font('Segoe UI', ([single](8.5 * $dpiScale)), [Drawing.FontStyle]::Regular)
         $cleanupFooter = New-Object Windows.Forms.TableLayoutPanel
         try {
@@ -724,11 +742,11 @@ if ($guiAst) {
 }
 Assert-SourcePattern $text '[$]catalogTooltip\s*=\s*[$]catalogTooltip[\s\S]{0,100}[$]softwareCatalogTooltip' 'Chi tiết độ mới catalog phần mềm chưa được giữ trong tooltip dashboard.'
 Assert-SourcePattern $text "'Warning','Stale','Future','Invalid','Unavailable'" 'Invalid/Unavailable của catalog phần mềm chưa kích hoạt trạng thái cảnh báo.'
-if ([string]$viCatalog.'menu.6.title' -ne 'Khắc phục KMS/Activator Win, Office & phần mềm') {
-    Add-Failure 'Tên tiếng Việt của chức năng khắc phục bản quyền toàn bộ phần mềm chưa đúng yêu cầu.'
+if ([string]$viCatalog.'menu.6.title' -ne 'Khắc phục KMS/Activator') {
+    Add-Failure 'Tên tiếng Việt của chức năng khắc phục KMS/Activator chưa dùng nhãn ngắn chống cắt chữ.'
 }
-if ([string]$enCatalog.'menu.6.title' -ne 'Windows, Office & software KMS/Activator remediation') {
-    Add-Failure 'Tên tiếng Anh của chức năng khắc phục bản quyền toàn bộ phần mềm chưa đồng bộ.'
+if ([string]$enCatalog.'menu.6.title' -ne 'KMS/Activator remediation') {
+    Add-Failure 'Tên tiếng Anh của chức năng khắc phục KMS/Activator chưa đồng bộ hoặc còn quá dài.'
 }
 foreach ($remediationMenu in @(
     @('11','Khắc phục Windows','Remediate Windows','Windows'),
@@ -758,8 +776,9 @@ foreach ($advancedKey in @('advanced.deep.title','advanced.forensics.title')) {
         Add-Failure "Cửa sổ kiểm tra chuyên sâu còn tiền tố đánh số tại $advancedKey."
     }
 }
-if ([string]$viCatalog.'cleanup.menu.title' -ne 'Khắc phục KMS/Activator Windows, Office và đưa phần mềm về trạng thái gốc' -or [string]$enCatalog.'cleanup.menu.title' -ne 'Remediate Windows/Office KMS/Activator and return software to an original state') {
-    Add-Failure 'Tiêu đề cửa sổ khắc phục vẫn còn nhãn chức năng đánh số cũ.'
+if ([string]$viCatalog.'cleanup.menu.title' -ne 'Trung tâm khắc phục KMS/Activator' -or [string]$enCatalog.'cleanup.menu.title' -ne 'KMS/Activator remediation center' -or
+    [string]$viCatalog.'cleanup.menu.cleanupTitle' -ne 'Khắc phục KMS/Activator' -or [string]$enCatalog.'cleanup.menu.cleanupTitle' -ne 'KMS/Activator remediation') {
+    Add-Failure 'Tiêu đề cửa sổ khắc phục chưa dùng nhãn song ngữ ngắn chống cắt chữ.'
 }
 if ([string]$viCatalog.'cleanup.menu.cleanupFullTitle' -ne 'Kiểm tra và loại bỏ kích hoạt lậu khỏi Windows, Office và phần mềm' -or
     [string]$viCatalog.'cleanup.scope.scanWindows' -notmatch '^Windows' -or
@@ -887,6 +906,9 @@ Assert-SourcePattern $text 'Set-ToolOfflineModePreference' 'Dashboard chưa ghi 
 Assert-SourcePattern $text 'TOOL_OFFLINE_MODE' 'Dashboard chưa truyền Offline mode sang tiến trình con.'
 Assert-SourcePattern $text 'OfflineMode\.Changed' 'Thay đổi Offline mode chưa được audit.'
 Assert-SourcePattern $text 'function\s+Refresh-DashboardLocalizedActivity' 'Dashboard chưa làm mới nhật ký khi đổi ngôn ngữ.'
+Assert-SourcePattern $text '[$]version\.Text\s*=\s*Get-DashboardText\s+"dashboard\.versionSummary"' 'Đổi ngôn ngữ chưa cập nhật dòng phiên bản/Báo cáo.'
+Assert-SourcePattern $text 'Refresh-DashboardLocalizedActivity\s+-ResetRenderedHistory' 'Đổi ngôn ngữ chưa xóa trạng thái/nhật ký đã kết xuất bằng ngôn ngữ cũ.'
+Assert-SourcePattern $text '[$]languageCombo\.Enabled\s*=\s*[$]enabled' 'Bộ chọn ngôn ngữ chưa bị khóa trong lúc tác vụ đang chạy.'
 Assert-SourcePattern $text 'function\s+Reset-IdleTaskDisplay' 'Dashboard thiếu trạng thái tác vụ trống khi khởi động.'
 Assert-SourcePattern $text '[$]script:hasTaskActivity\s*=\s*[$]false' 'Dashboard chưa để khu vực tác vụ trống khi mở.'
 Assert-SourcePattern $text 'function\s+Stop-ActiveTask' 'Dashboard thiếu nút/hàm dừng tác vụ.'

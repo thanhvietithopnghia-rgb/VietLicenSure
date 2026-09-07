@@ -55,7 +55,7 @@ namespace ThanhViet.VietLicenSure
         // BUILD.ps1 replaces this exact placeholder from Tool-Provenance.ps1.
         // The repository source deliberately contains no duplicated BuildId.
         private const string OfficialBuildId = "REPLACE_AT_BUILD_FROM_TOOL_PROVENANCE";
-        private const string OfficialVerificationUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest";
+        private const string OfficialVerificationUrl = "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build";
 #if TOOL_SIGNED_STABLE_BUILD
         // Only a build that is required to pass Authenticode verification may
         // hand control to the self-updater.  Development artefacts must stay

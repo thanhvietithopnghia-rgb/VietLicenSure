@@ -28,7 +28,7 @@ Tool hoạt động Offline theo mặc định, không tự gửi inventory ho�
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
 
-Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản Stable từ trang chính thức `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
+Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản chính thức trực tiếp từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
 
 ## Cách chạy Tool
 
@@ -68,15 +68,15 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Nút Mở thư mục báo cáo mở nơi chứa kết quả mới nhất.
 - Nút Dừng chỉ dùng khi tác vụ kéo dài bất thường. Nếu dừng giữa lúc khắc phục, hãy giữ backup và quét lại trước khi làm tiếp.
 - Công tắc Offline/Online chỉ cấp quyền dùng mạng trong phiên hiện tại; bật Online không tự gửi dữ liệu và không tự chạy quét. Mở lại Tool luôn trở về Offline.
-- Nút **Trợ lý VietLicenSure** nằm bên trái **Giới thiệu**. Nhập câu hỏi rồi bấm **Gửi** hoặc nhấn **Enter**; dùng `Shift+Enter` nếu cần xuống dòng. Khi đang xử lý, phần mềm tạm khóa ô nhập và nút Gửi để tránh gửi trùng. Nút **Kết nối Online** chỉ cấp quyền mạng cho phiên hiện tại và tự kiểm tra gói tri thức mới; **Đồng bộ tri thức** cho phép kiểm tra lại thủ công.
+- Nút **Trợ lý** nằm bên trái **Giới thiệu**. Nhập câu hỏi rồi bấm **Gửi** hoặc nhấn **Enter**; dùng `Shift+Enter` nếu cần xuống dòng. Khi đang xử lý, phần mềm tạm khóa ô nhập và nút Gửi để tránh gửi trùng. Nút **Kết nối Online** chỉ cấp quyền mạng cho phiên hiện tại và tự kiểm tra gói tri thức mới; **Đồng bộ tri thức** cho phép kiểm tra lại thủ công.
 
-## Trợ lý VietLicenSure
+## Trợ lý
 
 Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm và toàn bộ lịch sử được ghi nhận từ v1.0.0 đến v5.0 hiện tại; mục đích, cách dùng, kết quả và lưu ý của cả 10 chức năng chính, các lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, catalogue, cập nhật và kết nối Máy chủ/Máy trạm. Toàn bộ Hướng dẫn sử dụng và toàn bộ Lịch sử phiên bản tiếng Việt/Anh đi kèm đều được lập chỉ mục theo từng mục, không chỉ một vài đoạn mẫu hay riêng chức năng OEM.
 
 ### Nút Gửi và Enter
 
-1. Bấm **Trợ lý VietLicenSure**.
+1. Bấm **Trợ lý**.
 2. Nhập câu hỏi vào khung soạn rõ viền; bấm **Gửi** hoặc nhấn `Enter`. Dùng `Shift+Enter` để xuống dòng.
 3. Đọc câu hỏi và câu trả lời trong các khung màu riêng. Nội dung mới tự cuộn tới đúng vị trí và câu trả lời xuất hiện ngay trong lượt hỏi hiện tại.
 4. Nếu cần giải thích một lỗi hoặc kết quả cụ thể, hãy gửi kèm mã lỗi, trạng thái hoặc dòng bằng chứng liên quan. Có thể hỏi tiếp bằng các cụm như “cách dùng nó”, “còn Khôi phục key OEM” hoặc “giải thích thêm”; Trợ lý giữ chủ đề của lượt ngay trước để hiểu ngữ cảnh.
@@ -482,7 +482,7 @@ Chỉ bấm Dừng khi cần thiết. Nếu đã bắt đầu khắc phục, m�
 Không mở được EXE:
 
 - Di chuyển tệp ra khỏi ZIP và chạy từ ổ đĩa cục bộ.
-- Tải lại từ trang `releases/latest`, đối chiếu SHA-256 và quét bằng Defender; không thêm ngoại lệ hoặc tắt bảo vệ chỉ để ép chạy.
+- Tải lại từ liên kết EXE trực tiếp nêu ở đầu hướng dẫn, đối chiếu SHA-256 và quét bằng Defender; không thêm ngoại lệ hoặc tắt bảo vệ chỉ để ép chạy.
 - Trên máy doanh nghiệp, liên hệ quản trị viên nếu bị AppLocker/WDAC chặn.
 
 Không thấy phần mềm cần kiểm tra:

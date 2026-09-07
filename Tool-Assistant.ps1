@@ -252,16 +252,16 @@ function Get-ToolAssistantSyncText {
 
     $english = [bool]($Culture -eq "en-US")
     switch ($Key) {
-        "Offline" { if ($english) { return "VietLicenSure Assistant is Offline; local knowledge remains available." }; return "Trợ lý đang Offline; bộ tri thức cục bộ vẫn sẵn sàng." }
+        "Offline" { if ($english) { return "Assistant is Offline; local knowledge remains available." }; return "Trợ lý đang Offline; bộ tri thức cục bộ vẫn sẵn sàng." }
         "InvalidAddress" { if ($english) { return "The synchronization address is invalid." }; return "Địa chỉ đồng bộ không hợp lệ." }
         "TooLarge" { if ($english) { return "The knowledge file exceeds the safety limit." }; return "Tệp tri thức vượt giới hạn an toàn." }
         "InvalidKnowledge" { if ($english) { return "The knowledge file has an invalid structure or unsafe content." }; return "Tệp tri thức không đúng cấu trúc hoặc chứa nội dung không an toàn." }
         "InvalidSignature" { if ($english) { return "The knowledge package signature is invalid or not from the pinned publisher." }; return "Chữ ký gói tri thức không hợp lệ hoặc không đúng nhà phát hành đã khóa." }
         "Downgrade" { if ($english) { return "An older knowledge package was rejected." }; return "Đã từ chối gói tri thức cũ hơn để chống hạ phiên bản." }
-        "Current" { if ($english) { return "VietLicenSure Assistant already has the latest signed compatible knowledge." }; return "Trợ lý đang dùng bộ tri thức tương thích có chữ ký mới nhất." }
+        "Current" { if ($english) { return "Assistant already has the latest signed compatible knowledge." }; return "Trợ lý đang dùng bộ tri thức tương thích có chữ ký mới nhất." }
         "NoDataFolder" { if ($english) { return "The user data folder could not be determined." }; return "Không xác định được thư mục dữ liệu người dùng." }
-        "Updated" { if ($english) { return "VietLicenSure Assistant knowledge has been securely synchronized." }; return "Đã đồng bộ an toàn bộ tri thức Trợ lý VietLicenSure." }
-        "Failed" { if ($english) { return "Synchronization failed; VietLicenSure Assistant continues with local knowledge." }; return "Không đồng bộ được; Trợ lý tiếp tục dùng bộ tri thức cục bộ." }
+        "Updated" { if ($english) { return "Assistant knowledge has been securely synchronized." }; return "Đã đồng bộ an toàn bộ tri thức Trợ lý." }
+        "Failed" { if ($english) { return "Synchronization failed; Assistant continues with local knowledge." }; return "Không đồng bộ được; Trợ lý tiếp tục dùng bộ tri thức cục bộ." }
         default { return $Key }
     }
 }
@@ -1248,8 +1248,8 @@ function Get-ToolAssistantAnswer {
         return Get-ToolAssistantFallbackAnswer -Kind Unsafe -Question $Question -Culture $Culture
     }
     if ($originalQueryKey -match '^(xin chao|chao|hello|hi|alo|hey)\b') {
-        if ($Culture -eq "en-US") { return "Hello. I am the VietLicenSure Assistant. Ask me about a button, report result, error code or workflow." }
-        return "Xin chào. Đây là Trợ lý VietLicenSure. Bạn có thể hỏi về nút chức năng, kết quả báo cáo, mã lỗi hoặc cách sử dụng phần mềm."
+        if ($Culture -eq "en-US") { return "Hello. I am the Assistant. Ask me about a button, report result, error code or workflow." }
+        return "Xin chào. Đây là Trợ lý. Bạn có thể hỏi về nút chức năng, kết quả báo cáo, mã lỗi hoặc cách sử dụng phần mềm."
     }
     if ($null -ne $OnlineMode -and $originalQueryKey -match '(?:(?:tool|cong cu|che do|trang thai mang|trang thai).*(?:online|offline).*(?:hien tai|luc nay|bay gio|dang)|(?:trang thai|che do).*(?:online|offline).*(?:hien tai|luc nay|bay gio)|(?:dang|hien tai).*(?:online|offline)|^online hay offline$)') {
         $isOnline = [bool]$OnlineMode
@@ -1330,7 +1330,7 @@ function Get-ToolAssistantUiText {
 
     $english = [bool]($Culture -eq "en-US")
     switch ($Key) {
-        "Title" { if ($english) { return "VietLicenSure Assistant" }; return "Trợ lý VietLicenSure" }
+        "Title" { if ($english) { return "Assistant" }; return "Trợ lý" }
         "Scope" { if ($english) { return "Answers questions about VietLicenSure using local knowledge, guides, version history, and available report data." }; return "Giải đáp về VietLicenSure bằng tri thức cục bộ, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
         "Offline" { if ($english) { return "OFFLINE · local knowledge" }; return "OFFLINE · tri thức cục bộ" }
         "Online" { if ($english) { return "ONLINE · knowledge sync allowed" }; return "ONLINE · cho phép đồng bộ tri thức" }
@@ -1341,15 +1341,15 @@ function Get-ToolAssistantUiText {
         "Sync" { if ($english) { return "Sync knowledge" }; return "Đồng bộ tri thức" }
         "ConnectOnline" { if ($english) { return "Connect Online" }; return "Kết nối Online" }
         "OnlineConnected" { if ($english) { return "Online connected" }; return "Đã Online" }
-        "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so the VietLicenSure Assistant can synchronize knowledge. Restarting the application returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại VietLicenSure vẫn trở về Offline." }
+        "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so the Assistant can synchronize knowledge. Restarting the application returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại VietLicenSure vẫn trở về Offline." }
         "OnlineConnectedTip" { if ($english) { return "Online is allowed for this session. Signed Tool knowledge can now be synchronized." }; return "Online đã được cho phép trong phiên này. Tool có thể đồng bộ gói tri thức đã ký." }
         "SyncTip" { if ($english) { return "Downloads only the signed Tool knowledge package; questions, reports and device data are never sent." }; return "Chỉ tải gói tri thức Tool đã ký; không gửi câu hỏi, báo cáo hoặc dữ liệu máy." }
         "OnlineEnabled" { if ($english) { return "Online is now allowed for this session. Signed Tool knowledge will be checked." }; return "Đã cho phép Online trong phiên này. Tool sẽ kiểm tra gói tri thức đã ký." }
-        "OnlineNotEnabled" { if ($english) { return "Online was not enabled. VietLicenSure Assistant continues with local knowledge." }; return "Chưa bật Online. Trợ lý tiếp tục dùng tri thức cục bộ." }
+        "OnlineNotEnabled" { if ($english) { return "Online was not enabled. Assistant continues with local knowledge." }; return "Chưa bật Online. Trợ lý tiếp tục dùng tri thức cục bộ." }
         "Close" { if ($english) { return "Close" }; return "Đóng" }
-        "Welcome" { if ($english) { return "The VietLicenSure Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data." }; return "Trợ lý VietLicenSure hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
+        "Welcome" { if ($english) { return "The Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data." }; return "Trợ lý hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
         "You" { if ($english) { return "You" }; return "Bạn" }
-        "Assistant" { if ($english) { return "VietLicenSure Assistant" }; return "Trợ lý VietLicenSure" }
+        "Assistant" { if ($english) { return "Assistant" }; return "Trợ lý" }
         default { return $Key }
     }
 }

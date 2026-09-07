@@ -29,8 +29,8 @@
     "operatingSystem": "Windows",
     "softwareVersion": "5.0.0.1",
     "dateModified": "2026-09-06",
-    "downloadUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest",
-    "releaseNotes": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest",
+    "downloadUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe",
+    "releaseNotes": "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#new",
     "author": {"@type":"Person","name":"Thanh Việt"},
     "offers": {"@type":"Offer","price":"0","priceCurrency":"VND"}
   }
@@ -59,14 +59,14 @@
       <h1>Kiểm tra rõ ràng.<br>Xử lý có bằng chứng.</h1>
       <p class="lead">VietLicenSure giúp rà soát cấu hình, Windows, Office và phần mềm trên máy Windows. Bản v5.0 được phát hành theo kênh ManagedSigned/Pilot, tiếp tục miễn phí cho cộng đồng, Offline theo mặc định và không có telemetry; bản này chưa mang nhãn Public Stable.</p>
       <div class="badges"><span class="badge">Offline mặc định</span><span class="badge">Catalog ký số</span><span class="badge">Hậu kiểm bắt buộc</span><span class="badge">Báo cáo che định danh</span></div>
-      <div class="actions"><a class="button primary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest">Tải phiên bản mới nhất</a><a class="button secondary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure">Kho phát hành chính thức</a></div>
+      <div class="actions"><a class="button primary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe" download>Tải VietLicenSure v5.0</a><a class="button secondary" href="#verify-official-build">Xác minh bản phát hành</a></div>
     </div>
     <aside id="verify-official-build" class="verify">
       <h2>Xác minh trước khi chạy</h2>
       <p>Tệp kiểm thử: <strong>VietLicenSure-v5.0.exe</strong></p>
       <code>Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256</code>
       <code>Get-AuthenticodeSignature .\VietLicenSure-v5.0.exe</code>
-      <p>Bản ManagedSigned/Pilot dùng chứng thư tự ký được launcher ghim nên Windows có thể hiện `Unknown publisher`. Luôn đối chiếu hash, Build ID, chữ ký và manifest nguồn gốc với <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest">trang release mới nhất</a>.</p>
+      <p>Bản ManagedSigned/Pilot dùng chứng thư tự ký được launcher ghim nên Windows có thể hiện `Unknown publisher`. Luôn đối chiếu hash, Build ID, chữ ký và manifest nguồn gốc với <a href="#download">thông tin phát hành chính thức</a>.</p>
     </aside>
   </div>
 
@@ -87,7 +87,7 @@
     <section id="download" class="wrap">
       <h2>Tải và sử dụng an toàn</h2>
       <ol class="steps">
-        <li>Chỉ dùng <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/latest">đường dẫn tải ổn định</a>, đường dẫn này luôn mở phiên bản mới nhất.</li>
+        <li>Chỉ dùng <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe" download>đường dẫn tải EXE trực tiếp</a>; liên kết này tải đúng VietLicenSure v5.0.0.1 mà không mở trang tài khoản GitHub.</li>
         <li>Với bản công khai, tải đúng EXE cùng checksum/manifest đi kèm và kiểm tra SHA-256, chữ ký, timestamp. Ứng viên cục bộ phải ghi đúng kênh <code>ManagedSigned</code> và không được coi là đã phát hành chỉ vì có ngày build.</li>
         <li>Giữ Offline cho kiểm tra cục bộ. Chỉ bật Online khi chủ động cập nhật Tool/catalog hoặc dùng LAN được phép.</li>
         <li>Xem trước, chọn đúng mục, xác nhận và giữ backup trước khi khắc phục; luôn đọc kết quả hậu kiểm.</li>
