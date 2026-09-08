@@ -25,7 +25,7 @@ $releaseIdentity = Get-ToolProvenanceExpectedValues
 $releaseVersion = [string]$releaseIdentity.ReleaseVersion
 $releaseBuildTime = [string]$releaseIdentity.BuildTime
 $officialBuildId = [string]$releaseIdentity.BuildId
-$releaseVersionMatch = [regex]::Match($releaseVersion, '^(?<major>\d+)\.(?<minor>\d+)\.\d+\.\d+$')
+$releaseVersionMatch = [regex]::Match($releaseVersion, '^(?<major>\d+)\.(?<minor>\d+)(?:\.\d+\.\d+)?$')
 if (-not $releaseVersionMatch.Success -or
     $releaseBuildTime -notmatch '^\d{4}-\d{2}-\d{2}$' -or
     $officialBuildId -cne ($releaseVersion + '-production-' + $releaseBuildTime.Replace('-', ''))) {
@@ -39,7 +39,7 @@ $publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
 $requiresVerifiedProvenance = [bool]($requiresSignedArtifact -or $AllowStoreBuild)
 $bundledUpdateManifestChannel = if ($AllowStoreBuild) { 'store' } elseif ($requiresSignedArtifact) { 'stable' } else { 'development' }
-$applicationSelfUpdateAllowed = [bool]$RequireAuthenticode
+$applicationSelfUpdateAllowed = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
 $applicationUpdateAuthority = if ($AllowStoreBuild) {
     'MicrosoftStore'
 } elseif ($AllowManagedSignedBuild) {
@@ -1343,8 +1343,8 @@ $applicationUpdateManifest = [ordered]@{
     MinimumUpdaterVersion = '4.6.1.0'
     PublishedAtUtc = $publishedAtUtc
     Title = [ordered]@{
-        'vi-VN' = 'v5.0.0.2 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều'
-        'en-US' = 'v5.0.0.2 - Clear source policy and two-way feedback channels'
+        'vi-VN' = 'v5.0 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều'
+        'en-US' = 'v5.0 - Clear source policy and two-way feedback channels'
     }
     Changes = [ordered]@{
         'vi-VN' = @(

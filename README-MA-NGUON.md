@@ -1,12 +1,12 @@
 # Hướng dẫn tham gia và tiếp cận mã nguồn có kiểm soát từ v4.9
 
-Áp dụng cho mã nguồn VietLicenSure từ v4.9 trở đi; bản hiện hành là VietLicenSure v5.0, phiên bản kỹ thuật `5.0.0.2`, phát hành ngày `08/09/2026`.
+Áp dụng cho mã nguồn VietLicenSure từ v4.9 trở đi; bản hiện hành là VietLicenSure `v5.0`, phát hành ngày `08/09/2026`.
 
 ## Mô hình phát triển
 
 VietLicenSure được cung cấp miễn phí và phát triển cùng cộng đồng thông qua báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai, không được phát hành theo giấy phép mã nguồn mở và được tác giả Thanh Việt quản lý theo cơ chế truy cập có kiểm soát. Bản thực thi chính thức tiếp tục được cung cấp miễn phí tại:
 
-<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>
 
 Tệp thực thi của nhánh phát triển hiện tại là `VietLicenSure-v5.0.exe`. Chỉ artifact có Authenticode, timestamp và provenance hợp lệ mới được công bố là Stable.
 
@@ -59,7 +59,7 @@ Hiện tại tác giả chưa cam kết ngày mở lại mã nguồn. Chính sá
 
 Trừ khi văn bản chấp thuận ghi rõ khác, quyền truy cập không cho phép:
 
-- sao chép ngoài bản kỹ thuật cần thiết trong môi trường đã được cấp;
+- tạo bản sao ngoài phạm vi tối thiểu cần thiết trong môi trường đã được cấp;
 - chia sẻ tài khoản, chuyển quyền truy cập hoặc cho người khác xem mã;
 - công bố, mirror, tải lên dịch vụ khác hoặc phát tán toàn bộ/một phần mã nguồn;
 - sửa đổi, tạo sản phẩm phái sinh hoặc tích hợp vào sản phẩm/dịch vụ khác;
@@ -90,7 +90,7 @@ Chính sách này chỉ áp dụng cho mã nguồn từ v4.9 trở đi. Phiên b
 
 - [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md)
 - [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt)
-- [Tải trực tiếp VietLicenSure v5.0.0.2](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe)
+- [Tải trực tiếp VietLicenSure v5.0](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe)
 
 Nếu nội dung tóm tắt này khác với văn bản chấp thuận riêng hoặc chính sách đầy đủ, văn bản chấp thuận và `SOURCE-POLICY-v4.9.md` được ưu tiên áp dụng.
 

@@ -1,9 +1,9 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)][string]$ClientVmSummaryPath,
     [Parameter(Mandatory=$true)][string]$IndependentSecurityReviewPath,
     [Parameter(Mandatory=$true)][ValidatePattern('^[A-Fa-f0-9]{40}$')][string]$ExpectedSourceCommit,
-    [string]$ExpectedReleaseVersion='5.0.0.2'
+    [string]$ExpectedReleaseVersion='5.0'
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version 2.0

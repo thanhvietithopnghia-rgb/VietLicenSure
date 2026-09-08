@@ -91,7 +91,7 @@ foreach ($rootVerifier in @('VERIFY-HANDOFF.ps1', 'VERIFY-HANDOFF.cmd')) {
 }
 
 $readmeLines = @(
-    'VIETLICENSURE v5.0.0.2 - GÓI BÀN GIAO',
+    'VIETLICENSURE v5.0 - GÓI BÀN GIAO',
     '',
     '1. Nhấp đúp VERIFY-HANDOFF.cmd để kiểm tra toàn bộ gói.',
     '2. Bản chạy nằm trong thư mục: phát hành',

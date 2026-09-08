@@ -14,7 +14,7 @@ $enterpriseVersionFromLauncher = [string]$env:TOOL_TOOL_VERSION
 $script:enterpriseReleaseVersion = if ($enterpriseVersionFromLauncher -match '^\d+\.\d+\.\d+\.\d+$') {
     $enterpriseVersionFromLauncher
 } else {
-    "5.0.0.2"
+    "5.0"
 }
 $script:enterpriseReleaseDisplayName = "v5.0"
 $enterpriseReleaseParts = @($script:enterpriseReleaseVersion -split '\.')

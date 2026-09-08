@@ -1,6 +1,6 @@
 # Giới hạn đã biết — VietLicenSure v5.0
 
-Tài liệu này áp dụng cho bản kỹ thuật `5.0.0.2`, phát hành ngày `08/09/2026` theo kênh `ManagedSigned/Pilot`.
+Tài liệu này áp dụng cho VietLicenSure `v5.0`, phát hành ngày `08/09/2026` theo kênh `ManagedSigned/Pilot`.
 
 ## Tin cậy phát hành
 

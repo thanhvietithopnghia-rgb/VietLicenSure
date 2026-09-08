@@ -1,4 +1,4 @@
-$script:ToolProvenanceSchemaVersion = '1.0'
+﻿$script:ToolProvenanceSchemaVersion = '1.0'
 $script:ToolProvenanceManifestFileName = 'OFFICIAL-PROVENANCE-v1.json'
 $script:ToolProvenanceSignatureFileName = 'OFFICIAL-PROVENANCE-v1.json.p7s'
 $script:ToolProvenanceMaximumManifestBytes = 32768
@@ -25,12 +25,12 @@ $script:ToolProvenanceExpectedValues = [ordered]@{
     ProductName = 'VietLicenSure'
     Author = 'Thanh Viet'
     OfficialRepository = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure'
-    ReleaseVersion = '5.0.0.2'
+    ReleaseVersion = '5.0'
     # Canonical release identity. BUILD.ps1 injects this BuildId into the
     # compiled launcher and the elevated bridge reads it at runtime. Keep the
     # release identity here so a date cannot drift independently in source,
     # payload, provenance, or the final executable.
-    BuildId = '5.0.0.2-production-20260908'
+    BuildId = '5.0-production-20260908'
     BuildTime = '2026-09-08'
     SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'
     VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'

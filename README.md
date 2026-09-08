@@ -1,10 +1,16 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · bản kỹ thuật `5.0.0.2` · phát hành ngày 08/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành ngày 08/09/2026
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Việc đổi tên không loại bỏ chức năng và giữ nguyên dòng phiên bản v5.0.
+> **Kiểm tra bản quyền rõ ràng – Quản lý hệ thống chủ động – An tâm sử dụng.**
+
+VietLicenSure là phần mềm hỗ trợ kiểm tra Windows, Microsoft Office, Microsoft 365, phần mềm đã cài đặt và các thông tin liên quan đến cấu hình, kích hoạt, giấy phép và kiểm kê hệ thống. Sản phẩm phù hợp với người dùng cá nhân, kỹ thuật viên, nhân viên IT và doanh nghiệp cần kiểm tra nhiều máy hoặc lập báo cáo quản lý phần mềm.
+
+Dự án trước đây mang tên **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm**. Khi phạm vi phát triển vượt ra ngoài một công cụ kiểm tra đơn lẻ, dự án được đổi tên thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Tên mới phản ánh đầy đủ hơn định hướng kiểm tra, giải thích bằng chứng, kiểm kê, báo cáo và hỗ trợ quản lý thiết bị.
+
+VietLicenSure được phát triển bởi Thanh Việt, một nhân viên văn phòng có niềm đam mê với lập trình và công nghệ. Từ nhu cầu thực tế phải dùng nhiều lệnh và công cụ rời rạc để kiểm tra máy tính, tác giả xây dựng dự án với mong muốn giúp mọi người rút ngắn thời gian thao tác, dễ hiểu kết quả hơn và có một quy trình an toàn để kiểm tra Windows, Office cùng các phần mềm khác.
 
 ## Ý nghĩa tên VietLicenSure
 
@@ -14,20 +20,21 @@ Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tí
 
 Tên VietLicenSure thể hiện mục tiêu giúp người dùng kiểm tra, xác minh, quản lý và khắc phục tình trạng bản quyền hệ thống theo quy trình an toàn. Phần mềm cung cấp bằng chứng kỹ thuật, không thay thế chứng nhận hoặc kết luận pháp lý về quyền sử dụng.
 
-VietLicenSure v5.0 là bản nâng cấp tiếp theo của v4.9, tập trung nâng cấp vào các phần cốt lõi:
+VietLicenSure v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9, tập trung vào sáu nhóm cải tiến cốt lõi:
 
-- **Trải nghiệm sử dụng:** khởi động nhanh hơn, giao diện rõ ràng và thích ứng tốt hơn, hỗ trợ Light/Dark và mở thẳng đúng chức năng cần dùng.
-- **Kiểm tra và nhận diện:** ba mức quét Quick, Standard và Deep; kiểm tra Windows, Microsoft Office và phần mềm khác; sắp xếp việc cần xem theo mức ưu tiên, hỗ trợ tìm kiếm, lọc và so sánh với lần quét trước.
-- **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, chạy thử, sao lưu, xác nhận và kiểm tra lại; bổ sung trung tâm sao lưu–khôi phục có kiểm tra toàn vẹn.
-- **Báo cáo và hỗ trợ:** báo cáo HTML, PDF, JSON, XML; tạo gói hỗ trợ có che thông tin nhạy cảm và hỗ trợ quản lý nhiều máy.
-- **Riêng tư và toàn vẹn:** hoạt động Offline theo mặc định, không tự gửi dữ liệu ra Internet; kiểm tra chữ ký và SHA-256 trước các thao tác quan trọng.
+- **Giao diện và trải nghiệm:** khởi động nhanh hơn, bố cục thích ứng theo DPI, hỗ trợ Sáng/Tối, điều hướng rõ ràng và mở thẳng đúng chức năng cần dùng.
+- **Kiểm tra Windows, Office và phần mềm:** bổ sung ba mức quét Quick, Standard và Deep; mở rộng nguồn kiểm kê; phân biệt trạng thái kích hoạt, loại giấy phép, lỗi đọc dữ liệu và trường hợp chưa đủ bằng chứng.
+- **Phân tích và quản lý kết quả:** sắp xếp việc cần xem theo mức Cao–Trung bình–Thấp, hỗ trợ tìm kiếm, lọc, so sánh với lần quét trước và quản lý nhiều thiết bị.
+- **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, Dry Run, sao lưu, xác nhận đúng phạm vi, hậu kiểm và hỗ trợ rollback.
+- **Báo cáo và quyền riêng tư:** xuất HTML, PDF, JSON, XML/CSV; tạo gói hỗ trợ đã che thông tin nhạy cảm và không tự gửi dữ liệu máy ra Internet.
+- **Cập nhật và toàn vẹn phát hành:** tự kiểm tra bản mới khi người dùng bật Online, tải đúng bản v5.0 mới nhất sau khi được chấp thuận, rồi xác minh CMS, SHA-256 và chữ ký Authenticode trước khi thay thế tệp hiện tại.
 
 Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
 
 ## Tải và bắt đầu
 
-1. Tải trực tiếp [VietLicenSure v5.0.0.2](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
-2. Người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải `VietLicenSure-v5.0.exe` và thay tệp cũ; dữ liệu cũ được giữ làm nguồn tương thích/migration.
+1. Tải trực tiếp [VietLicenSure v5.0](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
+2. Người đang dùng một bản v5.0 cũ có thể tải lại `VietLicenSure-v5.0.exe`; dữ liệu cũ vẫn được giữ làm nguồn tương thích/migration.
 3. Nếu tải gói đầy đủ, chạy `VERIFY-RELEASE.cmd`; script tự định vị và kiểm tra checksum, bốn chữ ký CMS, chứng thư công bố, Authenticode, manifest và SBOM. Nếu chỉ tải EXE, đối chiếu SHA-256 và chữ ký thủ công. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật VietLicenSure/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
@@ -113,7 +120,7 @@ Hiện chưa có ngày cam kết mở lại mã nguồn. Tác giả sẽ xem xé
 ## Nguồn chính thức và hỗ trợ
 
 - Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure>
-- Tải EXE v5.0.0.2: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>
+- Tải EXE v5.0: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>
 - Báo lỗi: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose>
 - Hỏi đáp và đề xuất: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions>
 - Báo cáo bảo mật riêng tư: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new>

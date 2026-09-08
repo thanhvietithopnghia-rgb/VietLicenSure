@@ -1,7 +1,6 @@
 # Hỗ trợ VietLicenSure
 
-Tài liệu này áp dụng cho **VietLicenSure v5.0**; bản kỹ thuật hiện hành là
-`5.0.0.2`, phát hành ngày `08/09/2026`.
+Tài liệu này áp dụng cho bản phát hành hiện hành **VietLicenSure v5.0**, phát hành ngày `08/09/2026`.
 
 ## Chọn đúng kênh
 
@@ -13,7 +12,7 @@ Tài liệu này áp dụng cho **VietLicenSure v5.0**; bản kỹ thuật hiệ
 
 ## Thông tin nên gửi khi báo lỗi
 
-1. Phiên bản hiển thị và mã kỹ thuật, ví dụ `VietLicenSure v5.0 / 5.0.0.2`.
+1. Phiên bản hiển thị, ví dụ `VietLicenSure v5.0`.
 2. Phiên bản Windows, kiến trúc máy và quyền chạy lúc xảy ra lỗi.
 3. Tên chức năng, bước tái hiện ngắn nhất, kết quả mong đợi và kết quả thực tế.
 4. Nguyên văn mã lỗi/thông báo và ảnh chụp đã che dữ liệu riêng tư.

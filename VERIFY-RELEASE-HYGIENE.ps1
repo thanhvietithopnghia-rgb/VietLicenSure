@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param([string]$SourceDirectory = $PSScriptRoot)
 
 $ErrorActionPreference = 'Stop'
@@ -13,7 +13,7 @@ $otherVersionsVi = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('
 $legacyStoreReservedName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VG9vbCBLaeG7g20gVHJhIELhuqNuIFF1eeG7gW4='))
 $repositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure'
 $legacyRepositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen'
-$technicalVersion = '5.0.0.2'
+$technicalVersion = '5.0'
 $publicReleaseUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/'
 $directDownloadUrl = $repositoryUrl + '/releases/download/v' + $technicalVersion + '/VietLicenSure-v5.0.exe'
 $issuesUrl = $repositoryUrl + '/issues/new/choose'

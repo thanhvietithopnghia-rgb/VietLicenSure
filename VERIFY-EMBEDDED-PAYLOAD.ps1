@@ -69,10 +69,11 @@ try {
 
     $launcherPayloadFiles = @($payloadField.GetValue($null))
     $stableMarkerField = $launcherType.GetField('SignedStableBuildMarker', $bindingFlags)
+    $selfUpdateMarkerField = $launcherType.GetField('SelfUpdateBuildMarker', $bindingFlags)
     $managedMarkerField = $launcherType.GetField('ManagedSignedBuildMarker', $bindingFlags)
     $storeMarkerField = $launcherType.GetField('StoreBuildMarker', $bindingFlags)
-    if (-not $stableMarkerField -or -not $managedMarkerField -or -not $storeMarkerField) {
-        throw 'Launcher thiếu marker trust tách biệt cho Stable/ManagedSigned/Microsoft Store.'
+    if (-not $stableMarkerField -or -not $selfUpdateMarkerField -or -not $managedMarkerField -or -not $storeMarkerField) {
+        throw 'Launcher thiếu marker trust hoặc self-update tách biệt cho Stable/ManagedSigned/Microsoft Store.'
     }
     $actualMarkers = @(
         [string]$stableMarkerField.GetRawConstantValue(),
@@ -86,6 +87,11 @@ try {
     }
     if ($actualMarkers -cne $expectedMarkers) {
         throw "Marker trust không khớp chế độ ${ExpectedTrustMode}: $actualMarkers / $expectedMarkers."
+    }
+    $actualSelfUpdateMarker = [string]$selfUpdateMarkerField.GetRawConstantValue()
+    $expectedSelfUpdateMarker = if ($ExpectedTrustMode -in @('Production','ManagedSigned')) { '1' } else { '0' }
+    if ($actualSelfUpdateMarker -cne $expectedSelfUpdateMarker) {
+        throw "Marker self-update không khớp chế độ ${ExpectedTrustMode}: $actualSelfUpdateMarker / $expectedSelfUpdateMarker."
     }
     $parseLaunchMode = $launcherType.GetMethod('ParseLaunchMode', $bindingFlags)
     $requiresTrustedBuild = $launcherType.GetMethod('RequiresTrustedBuild', $bindingFlags)
@@ -115,7 +121,7 @@ try {
     if ($ExpectedTrustMode -eq 'StoreSubmission') {
         $storeConstants = [ordered]@{
             StorePackageName = 'ThanhVit.ToolKimTraBnQuyn'
-            StorePackageVersion = '5.0.0.2'
+            StorePackageVersion = '5.0.0.0'
             StorePackagePublisherId = '9tjmpwr25h78w'
             StorePackageFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
         }
@@ -129,10 +135,10 @@ try {
         if (-not $identityValidator) { throw 'Launcher thiếu Store package identity validator.' }
         $trustValidator = $launcherType.GetMethod('IsExpectedStorePackageTrust', $bindingFlags)
         if (-not $trustValidator) { throw 'Launcher thiếu Store package origin validator.' }
-        $validFullName = 'ThanhVit.ToolKimTraBnQuyn_5.0.0.2_x64__9tjmpwr25h78w'
+        $validFullName = 'ThanhVit.ToolKimTraBnQuyn_5.0.0.0_x64__9tjmpwr25h78w'
         $validFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
         if (-not [bool]$identityValidator.Invoke($null, @($validFullName, $validFamilyName)) -or
-            [bool]$identityValidator.Invoke($null, @($validFullName.Replace('5.0.0.2','5.0.0.3'), $validFamilyName)) -or
+            [bool]$identityValidator.Invoke($null, @($validFullName.Replace('5.0.0.0','5.0.1.0'), $validFamilyName)) -or
             [bool]$identityValidator.Invoke($null, @($validFullName, $validFamilyName.Replace('9tjmpwr25h78w','8wekyb3d8bbwe'))) -or
             [bool]$identityValidator.Invoke($null, @($validFullName.Replace('ThanhVit.ToolKimTraBnQuyn','Other.Product'), $validFamilyName))) {
             throw 'Store package identity validator không fail-closed với name/version/publisher sai.'

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">VietLicenSure v5.0.0.2</title>
+  <title id="title">VietLicenSure v5.0</title>
   <desc id="desc">Kiểm tra Windows, Office và phần mềm với bằng chứng, backup và hậu kiểm.</desc>
   <defs>
     <linearGradient id="bg" x1="40" y1="20" x2="1160" y2="610" gradientUnits="userSpaceOnUse"><stop stop-color="#092d62"/><stop offset=".58" stop-color="#0b4fad"/><stop offset="1" stop-color="#087f91"/></linearGradient>
@@ -17,9 +17,9 @@
   </g>
   <text x="462" y="166" fill="#a9edf5" font-family="Segoe UI,Arial,sans-serif" font-size="25" font-weight="700" letter-spacing="3">THANH VIỆT · 08.09.2026</text>
   <text x="462" y="263" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="74" font-weight="800" letter-spacing="-2">VietLicenSure</text>
-  <text x="462" y="333" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="36" font-weight="650">Kiểm tra rõ ràng.</text>
-  <text x="462" y="382" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="36" font-weight="650">Xử lý có bằng chứng.</text>
+  <text x="462" y="333" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="34" font-weight="650">Kiểm tra bản quyền rõ ràng.</text>
+  <text x="462" y="382" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="34" font-weight="650">Quản lý hệ thống chủ động.</text>
   <rect x="462" y="425" width="610" height="58" rx="29" fill="#fff" opacity=".13"/>
   <text x="492" y="463" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="650">Offline mặc định · CMS · Authenticode · SBOM</text>
-  <text x="462" y="535" fill="#d6f7fb" font-family="Segoe UI,Arial,sans-serif" font-size="25">v5.0.0.2 · ManagedSigned/Pilot</text>
+  <text x="462" y="535" fill="#d6f7fb" font-family="Segoe UI,Arial,sans-serif" font-size="25">v5.0 · ManagedSigned/Pilot</text>
 </svg>

@@ -22,7 +22,7 @@ function Write-DashboardStartupTrace {
 }
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
-$releaseVersion = "5.0.0.2"
+$releaseVersion = "5.0"
 $releaseBuildDate = "2026.09.08"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v5.0"

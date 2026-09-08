@@ -1,6 +1,6 @@
 # Chính sách phát triển cộng đồng và mã nguồn có kiểm soát từ v4.9
 
-> **Trạng thái tài liệu:** Chính sách bắt đầu từ v4.9 và tiếp tục áp dụng cho VietLicenSure v5.0.0.2; hậu tố tệp được giữ để truy vết thời điểm chính sách có hiệu lực. Cập nhật gần nhất: 08/09/2026.
+> **Trạng thái tài liệu:** Chính sách bắt đầu từ v4.9 và tiếp tục áp dụng cho VietLicenSure v5.0; hậu tố tệp được giữ để truy vết thời điểm chính sách có hiệu lực. Cập nhật gần nhất: 08/09/2026.
 
 Copyright © 2026 Thanh Việt. Mọi quyền được bảo lưu.
 
@@ -87,7 +87,7 @@ dữ liệu cá nhân hoặc lỗ hổng chưa được khắc phục. Lỗ hổ
 
 Trừ khi văn bản chấp thuận cho phép rõ ràng, người được truy cập không được:
 
-- sao chép mã ngoài bản kỹ thuật tối thiểu cần thiết trong môi trường được cấp;
+- sao chép mã ngoài phạm vi tối thiểu cần thiết trong môi trường được cấp;
 - chia sẻ tài khoản, chuyển quyền truy cập hoặc để người không được duyệt xem mã;
 - công bố, mirror, tải lên kho/dịch vụ khác hoặc phát tán toàn bộ hay một phần mã;
 - sửa đổi, tạo sản phẩm phái sinh, đóng gói hoặc tích hợp vào sản phẩm/dịch vụ;

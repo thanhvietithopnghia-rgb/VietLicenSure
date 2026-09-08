@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][ValidateScript({ Test-Path -LiteralPath $_ -PathType Leaf })][string]$ExecutablePath,
     [Parameter(Mandatory = $true)][string]$OutputDirectory,
@@ -16,7 +16,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
-$version = '5.0.0.2'
+# MSIX requires a four-part numeric package version; public branding remains v5.0.
+$version = '5.0.0.0'
 $sdkBin = 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64'
 $makeAppx = Join-Path $sdkBin 'makeappx.exe'
 $signTool = Join-Path $sdkBin 'signtool.exe'

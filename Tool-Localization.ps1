@@ -1,5 +1,5 @@
 ﻿$script:ToolLocalizationSchemaVersion = "1.0"
-$script:ToolLocalizationToolVersion = "5.0.0.2"
+$script:ToolLocalizationToolVersion = "5.0"
 $script:ToolLocalizationDefaultCulture = "vi-VN"
 $script:ToolLocalizationSupportedCultures = @("vi-VN", "en-US")
 $script:ToolLocalizationCatalogCache = @{}

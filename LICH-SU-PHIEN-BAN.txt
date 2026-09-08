@@ -5,17 +5,17 @@ Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản
 Trang công khai:
 https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
-## v5.0 / 5.0.0.2 — 08/09/2026
+## v5.0 — 08/09/2026
 
-- Dòng v5.0 được công bố ngày 06/09/2026 với tên chính thức **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**, thay cho tên tiền thân **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm**.
-- **Bản kỹ thuật 5.0.0.2:** phát hành ngày 08/09/2026; đồng bộ tên gọi, phiên bản và ngày phát hành trong ứng dụng, tài liệu và kênh công khai.
+- **Tên gọi và định hướng:** tên chính thức được đổi từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống**; thống nhất một tên phiên bản duy nhất là **v5.0** trên ứng dụng, tài liệu, bộ cập nhật và GitHub.
+- **Nền tảng nâng cấp:** v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9, kế thừa cơ chế kiểm kê và đánh giá bằng chứng rồi mở rộng thành quy trình kiểm tra–quản lý hệ thống thống nhất.
 - **Chính sách mã nguồn:** giải thích rõ việc chuyển sang truy cập có kiểm soát từ v4.9 sau khi phát hiện phần mềm/phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành khi chưa được phép hay ủy quyền; công bố phạm vi, quy trình xin quyền và trạng thái chưa cam kết ngày mở lại.
 - **Tương tác hai chiều:** bổ sung GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho báo cáo lỗ hổng.
-- **Trải nghiệm sử dụng:** khởi động nhanh hơn, giao diện rõ ràng và thích ứng tốt hơn, hỗ trợ Light/Dark và mở thẳng đúng chức năng cần dùng.
-- **Kiểm tra và nhận diện:** ba mức quét Quick, Standard và Deep; kiểm tra Windows, Microsoft Office và phần mềm khác; sắp xếp việc cần xem theo mức ưu tiên, hỗ trợ tìm kiếm, lọc và so sánh với lần quét trước.
-- **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, chạy thử, sao lưu, xác nhận và kiểm tra lại; bổ sung trung tâm sao lưu–khôi phục có kiểm tra toàn vẹn.
-- **Báo cáo và hỗ trợ:** báo cáo HTML, PDF, JSON, XML; tạo gói hỗ trợ có che thông tin nhạy cảm và hỗ trợ quản lý nhiều máy.
-- **Riêng tư và toàn vẹn:** hoạt động Offline theo mặc định, không tự gửi dữ liệu ra Internet; kiểm tra chữ ký và SHA-256 trước các thao tác quan trọng.
+- **Giao diện và trải nghiệm:** khởi động nhanh hơn, bố cục thích ứng DPI, hỗ trợ Sáng/Tối, điều hướng rõ ràng và mở thẳng đúng chức năng.
+- **Kiểm tra Windows, Office và phần mềm:** ba mức quét Quick, Standard và Deep; mở rộng nguồn kiểm kê; phân biệt kích hoạt, loại giấy phép, lỗi đọc dữ liệu và trường hợp chưa đủ bằng chứng.
+- **Phân tích và quản lý:** ưu tiên kết quả Cao–Trung bình–Thấp, tìm kiếm, lọc, so sánh lần quét và hỗ trợ quản lý nhiều máy.
+- **Khắc phục an toàn:** tách phạm vi Windows, Office và phần mềm khác; bắt buộc xem trước, Dry Run, sao lưu, xác nhận, hậu kiểm và rollback.
+- **Báo cáo, riêng tư và toàn vẹn:** xuất HTML/PDF/JSON/XML/CSV, che dữ liệu nhạy cảm, hoạt động Offline theo mặc định, xác minh CMS/SHA-256/Authenticode và hỗ trợ cập nhật v5.0 mới nhất khi người dùng bật Online.
 
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
 

@@ -8,8 +8,8 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = $PSScriptRoot }
 $distributionRoot = [IO.Path]::GetFullPath($DistributionDirectory).TrimEnd('\')
-$expectedReleaseVersion = '5.0.0.2'
-$expectedBuildId = '5.0.0.2-production-20260908'
+$expectedReleaseVersion = '5.0'
+$expectedBuildId = '5.0-production-20260908'
 $expectedCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
 $expectedCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 $failures = New-Object System.Collections.Generic.List[string]

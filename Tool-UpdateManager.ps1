@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $script:ToolUpdateSchemaVersion = '1.0'
-$script:ToolUpdateToolVersion = '5.0.0.2'
+$script:ToolUpdateToolVersion = '5.0'
 $script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json'
 $script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s'
 $script:ToolUpdateManifestHost = 'raw.githubusercontent.com'
@@ -106,8 +106,8 @@ function Test-ToolUpdateManifestSignature {
 
 function ConvertTo-ToolUpdateVersion {
     param([Parameter(Mandatory = $true)][string]$Value)
-    if ($Value -notmatch '^[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}\.[0-9]{1,5}$') {
-        throw "Invalid four-part update version: $Value"
+    if ($Value -notmatch '^[0-9]{1,5}\.[0-9]{1,5}(?:\.[0-9]{1,5}\.[0-9]{1,5})?$') {
+        throw "Invalid two-part or four-part update version: $Value"
     }
     $parsed = $null
     if (-not [Version]::TryParse($Value, [ref]$parsed)) {
@@ -322,7 +322,7 @@ function ConvertFrom-ToolUpdateManifest {
         throw 'Stable update manifests must require a pinned Authenticode signer.'
     }
 
-    # A release may replace the public build without changing its four-part
+    # A release may replace the public build without changing its canonical
     # product version. Offer that in-place maintenance build only when the
     # caller supplied the SHA-256 of the running EXE and it differs from the
     # pinned release hash. Missing/invalid local identity therefore fails

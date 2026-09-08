@@ -1,5 +1,5 @@
 ﻿$script:ToolAssistantSchemaVersion = "1.1"
-$script:ToolAssistantToolVersion = "5.0.0.2"
+$script:ToolAssistantToolVersion = "5.0"
 $script:ToolAssistantMinimumKnowledgeVersion = [Version]"1.4.0"
 $script:ToolAssistantKnowledgeFileName = "tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json"
@@ -807,8 +807,8 @@ function Get-ToolAssistantHistoryAnswer {
         if ($queryKey -notmatch '(?:(?:toan bo|tat ca|danh sach|complete|full|all|list).*(?:lich su|phien ban|version history|versions)|(?:lich su|phien ban|version history|versions).*(?:toan bo|tat ca|danh sach|complete|full|all|list))') { return '' }
         $labels = @($historySections | ForEach-Object { 'v' + [string]$_.VersionRaw })
         if ($labels.Count -eq 0) { return '' }
-        if ($Culture -eq 'en-US') { return 'Recorded milestones indexed from the complete bundled Version history through the current technical version: ' + ($labels -join ', ') + '.' }
-        return 'Các mốc đã ghi nhận được lập chỉ mục từ toàn bộ Lịch sử phiên bản nhúng đến phiên bản kỹ thuật hiện tại: ' + ($labels -join ', ') + '.'
+        if ($Culture -eq 'en-US') { return 'Recorded milestones indexed from the complete bundled Version history through the current release: ' + ($labels -join ', ') + '.' }
+        return 'Các mốc đã ghi nhận được lập chỉ mục từ toàn bộ Lịch sử phiên bản nhúng đến bản phát hành hiện tại: ' + ($labels -join ', ') + '.'
     }
 
     $startsWithVersion = ([string]$Question).Trim() -match '(?i)^v\s*\d'

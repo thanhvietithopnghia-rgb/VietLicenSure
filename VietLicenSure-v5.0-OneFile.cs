@@ -22,9 +22,9 @@ using System.Windows.Forms;
 [assembly: AssemblyCompany("Thanh Việt")]
 [assembly: AssemblyProduct("VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống")]
 [assembly: AssemblyCopyright("Copyright © Thanh Việt 2026")]
-[assembly: AssemblyVersion("5.0.0.2")]
-[assembly: AssemblyFileVersion("5.0.0.2")]
-[assembly: AssemblyInformationalVersion("5.0.0.2")]
+[assembly: AssemblyVersion("5.0.0.0")]
+[assembly: AssemblyFileVersion("5.0.0.0")]
+[assembly: AssemblyInformationalVersion("5.0")]
 
 namespace ThanhViet.VietLicenSure
 {
@@ -49,7 +49,9 @@ namespace ThanhViet.VietLicenSure
         private const string OfficialSignerCertificateSha256 = "0000000000000000000000000000000000000000000000000000000000000000";
         private const uint CertificateUntrustedRootStatus = 0x800B0109u;
         private const string StorePackageName = "ThanhVit.ToolKimTraBnQuyn";
-        private const string StorePackageVersion = "5.0.0.2";
+        // Windows assembly and MSIX identities require a four-part numeric value.
+        // The product version shown to users and published on GitHub remains v5.0.
+        private const string StorePackageVersion = "5.0.0.0";
         private const string StorePackagePublisherId = "9tjmpwr25h78w";
         private const string StorePackageFamilyName = "ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w";
         // BUILD.ps1 replaces this exact placeholder from Tool-Provenance.ps1.
@@ -62,13 +64,15 @@ namespace ThanhViet.VietLicenSure
         // runnable in place and must never replace themselves from the public
         // stable manifest merely because their hash is different.
         private const string SignedStableBuildMarker = "1";
+        private const string SelfUpdateBuildMarker = "1";
         private const string ManagedSignedBuildMarker = "0";
         private const string StoreBuildMarker = "0";
 #elif TOOL_MANAGED_SIGNED_BUILD
-        // ManagedSigned uses a locally distributed trust anchor.  It may run
-        // approved system changes after WinVerifyTrust succeeds, but it must
-        // never identify itself as public Stable or use public self-update.
+        // ManagedSigned uses a locally distributed, hard-pinned trust anchor.
+        // It may use the signed public update manifest after the user enables
+        // Online mode; every replacement is checked by SHA-256, CMS and signer.
         private const string SignedStableBuildMarker = "0";
+        private const string SelfUpdateBuildMarker = "1";
         private const string ManagedSignedBuildMarker = "1";
         private const string StoreBuildMarker = "0";
 #elif TOOL_STORE_BUILD
@@ -77,10 +81,12 @@ namespace ThanhViet.VietLicenSure
         // exact Store package identity reserved for this product. Copying the
         // EXE out of the package therefore fails closed.
         private const string SignedStableBuildMarker = "0";
+        private const string SelfUpdateBuildMarker = "0";
         private const string ManagedSignedBuildMarker = "0";
         private const string StoreBuildMarker = "1";
 #else
         private const string SignedStableBuildMarker = "0";
+        private const string SelfUpdateBuildMarker = "0";
         private const string ManagedSignedBuildMarker = "0";
         private const string StoreBuildMarker = "0";
 #endif
@@ -1298,7 +1304,7 @@ namespace ThanhViet.VietLicenSure
                 startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_FAILURE"] = OfficialBuildFailureCode;
                 startInfo.EnvironmentVariables["TOOL_OFFICIAL_BUILD_ID"] = OfficialBuildId;
                 startInfo.EnvironmentVariables["TOOL_OFFICIAL_VERIFICATION_URL"] = OfficialVerificationUrl;
-                startInfo.EnvironmentVariables["TOOL_SELF_UPDATE_ALLOWED"] = OfficialBuildState == "Official" ? SignedStableBuildMarker : "0";
+                startInfo.EnvironmentVariables["TOOL_SELF_UPDATE_ALLOWED"] = OfficialBuildState == "Official" ? SelfUpdateBuildMarker : "0";
                 startInfo.EnvironmentVariables["TOOL_BUILD_ARCHITECTURE"] = "AnyCPU";
                 startInfo.EnvironmentVariables["TOOL_EXPECTED_PROCESS_ARCHITECTURE"] = RuntimeArchitecture;
                 startInfo.EnvironmentVariables["TOOL_POWERSHELL_PATH"] = powershellPath;
@@ -1311,7 +1317,7 @@ namespace ThanhViet.VietLicenSure
                 startInfo.EnvironmentVariables["TOOL_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
                 startInfo.EnvironmentVariables["TOOL_LAUNCH_MODE"] = mode.ToString();
                 startInfo.EnvironmentVariables["TOOL_AGENT_FORCE"] = mode == LaunchMode.EnterpriseAgentForce ? "1" : "0";
-                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "5.0.0.2";
+                startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "5.0";
                 startInfo.EnvironmentVariables["TOOL_UI_CULTURE"] = GetUiCulture();
                 startInfo.EnvironmentVariables["TOOL_CORRELATION_ID"] = correlationId;
                 startInfo.EnvironmentVariables["TOOL_CAPABILITY_SCHEMA"] = "1.1";

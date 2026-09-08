@@ -1,13 +1,13 @@
 # Bắt đầu nhanh với VietLicenSure v5.0
 
 **Tên đầy đủ:** VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
-**Phiên bản kỹ thuật:** `5.0.0.2`
+**Phiên bản:** `v5.0`
 **Ngày phát hành:** `08/09/2026`
 **Kênh:** `ManagedSigned/Pilot` — chưa mang nhãn `Public Stable`
 
 ## 1. Xác minh trước khi chạy
 
-Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>. Với gói đầy đủ, giữ nguyên toàn bộ tệp rồi nhấp đúp:
+Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>. Với gói đầy đủ, giữ nguyên toàn bộ tệp rồi nhấp đúp:
 
 ```bat
 VERIFY-RELEASE.cmd

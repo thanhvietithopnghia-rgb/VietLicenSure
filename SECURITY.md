@@ -8,7 +8,7 @@ Không đăng công khai lỗ hổng chưa được khắc phục, khóa ký, m�
 
 Báo cáo hữu ích nên có:
 
-- phiên bản, bản dựng và SHA-256 của tệp (bản hiện hành: VietLicenSure v5.0, mã kỹ thuật `5.0.0.2`);
+- phiên bản, bản dựng và SHA-256 của tệp (bản hiện hành: VietLicenSure v5.0, mã kỹ thuật `5.0`);
 - Windows/PowerShell đã thử;
 - bước tái hiện tối thiểu và tác động;
 - bằng chứng đã loại bỏ product key, token, tên máy, IP và dữ liệu cá nhân;

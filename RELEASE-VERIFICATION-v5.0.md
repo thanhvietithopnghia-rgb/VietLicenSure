@@ -1,6 +1,6 @@
 # Xác minh bản phát hành VietLicenSure v5.0
 
-Áp dụng cho: **v5.0.0.2 ManagedSigned/Pilot**  
+Áp dụng cho: **v5.0 ManagedSigned/Pilot**
 Ngày hồ sơ: **2026-09-08**
 
 ## Cách nhanh nhất

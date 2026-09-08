@@ -101,7 +101,7 @@ if ($guiAst) {
 
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
 Assert-SourcePattern $text '[$]toolVersion\s*=\s*"5\.0"' 'Phiên bản hiển thị của Dashboard chưa được khóa ở v5.0.'
-Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.2"' 'Dashboard chưa dùng release 5.0.0.2.'
+Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0"' 'Dashboard chưa dùng release 5.0.'
 Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.09\.08"' 'Dashboard chưa dùng ngày build 2026.09.08.'
 Assert-SourcePattern $text '[$]scanOptimizationHelper\s*=\s*Join-Path\s+[$]PSScriptRoot\s+"Tool-ScanOptimization\.ps1"' 'Dashboard chưa khai báo helper tối ưu phạm vi quét.'
 Assert-SourcePattern $text '(?s)[$]missingFoundationFiles\s*=\s*@\(.+?[$]scanOptimizationHelper.+?\)\s*\|\s*Where-Object' 'Dashboard chưa fail-closed khi thiếu Tool-ScanOptimization.ps1.'
@@ -1038,22 +1038,22 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+/\s+5\.0\.0\.2\s+—\s+08/09/2026\s*$' -or
+    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+08/09/2026\s*$' -or
         $historyText -notmatch 'tên chính thức' -or
         $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
         $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
         $historyText -notmatch 'Offline theo mặc định' -or
         $historyText -notmatch 'GitHub Issues' -or
         $historyText -notmatch 'Chính sách mã nguồn') {
-        Add-Failure 'Tài liệu lịch sử chưa ghi đúng danh tính v5.0.0.2, chính sách mã nguồn, kênh phản hồi hoặc các nâng cấp cốt lõi.'
+        Add-Failure 'Tài liệu lịch sử chưa ghi đúng danh tính v5.0, chính sách mã nguồn, kênh phản hồi hoặc các nâng cấp cốt lõi.'
     }
-    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+/\s+5\.0\.0\.2\s+—\s+08/09/2026\s*$.*?(?=^##\s+v4\.9)').Value
+    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+08/09/2026\s*$.*?(?=^##\s+v4\.9)').Value
     if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 9 -or
         $v5HistorySection -match 'Tên\s+\*\*VietLicenSure\*\*\s+ghép từ|kiểm thử UI tự động') {
-        Add-Failure 'Mục lịch sử v5.0.0.2 chưa được rút gọn về danh tính, chính sách, phản hồi và năm nhóm nâng cấp cốt lõi.'
+        Add-Failure 'Mục lịch sử v5.0 chưa được rút gọn về danh tính, chính sách, phản hồi và năm nhóm nâng cấp cốt lõi.'
     }
     $requiredHistoryHeadings = @(
-        '## v5.0 / 5.0.0.2 — 08/09/2026',
+        '## v5.0 — 08/09/2026',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -1105,7 +1105,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## v5.0 / 5.0.0.2 — September 8, 2026',
+        '## v5.0 — September 8, 2026',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',
