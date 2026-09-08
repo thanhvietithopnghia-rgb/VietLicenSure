@@ -14,12 +14,12 @@ VERIFY-RELEASE.cmd
 Hoặc từ Windows PowerShell:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\VERIFY-DISTRIBUTION.ps1
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\VERIFY-DISTRIBUTION.ps1
 ```
 
 Script tự định vị theo thư mục chứa nó, nên có thể chạy từ Desktop, USB hoặc một thư mục làm việc khác. Nó kiểm tra tập tệp đóng, mọi checksum, JSON, bốn chữ ký CMS exact-byte, chứng thư công bố, phiên bản/Build ID, EXE, Authenticode, update manifest và SBOM. Mã thoát `0` là đạt; mã khác `0` là không đạt.
 
-Tham số `-ExecutionPolicy Bypass` chỉ áp dụng cho tiến trình PowerShell kiểm tra đang chạy, không thay đổi execution policy của máy.
+Tham số `-ExecutionPolicy RemoteSigned` chỉ áp dụng cho tiến trình PowerShell kiểm tra đang chạy, không thay đổi execution policy của máy.
 
 ## Fingerprint được công bố
 
