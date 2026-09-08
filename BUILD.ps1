@@ -379,7 +379,7 @@ function Write-SourcePackageHashManifest {
         $_.FullName -notmatch '\\(?:\.git|dist(?:-[^\\]+)?|test|release-upload(?:-[^\\]+)?|verify-archive(?:-[^\\]+)?)(?:\\|$)'
     } | Sort-Object { $_.FullName.Substring($sourcePackageRootPrefix.Length) })
     $sourcePackageManifestLines = @(
-        "# SHA-256 cua toan bo goi ma nguon v$productVersion.0; khong tu liet ke tep manifest nay."
+        "# SHA-256 cua toan bo goi ma nguon v$releaseVersion; khong tu liet ke tep manifest nay."
     )
     foreach ($file in $sourcePackageFiles) {
         $relativePath = $file.FullName.Substring($sourcePackageRootPrefix.Length)
