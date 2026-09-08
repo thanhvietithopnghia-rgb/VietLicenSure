@@ -224,9 +224,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 54 } else { 55 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 127 } else { 128 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 144 } else { 146 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 40 } elseif ($AllowStoreManifest) { 41 } else { 42 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 129 } else { 130 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 149 } else { 151 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 42 } elseif ($AllowStoreManifest) { 43 } else { 44 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the

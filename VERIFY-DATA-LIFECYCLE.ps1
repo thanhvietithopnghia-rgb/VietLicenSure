@@ -84,3 +84,5 @@ try {
         Remove-Item -LiteralPath $resolvedFixture -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
+
+exit 0
