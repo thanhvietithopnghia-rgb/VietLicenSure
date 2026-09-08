@@ -31,6 +31,8 @@ Tách hai vai trò giúp thay chứng thư Authenticode mà không phải đồn
 8. Build/release phải nhận signer Authenticode và signer CMS nội dung bằng hai cấu hình rõ ràng; không suy diễn một thumbprint cho cả hai vai trò.
 9. Không công bố build stable chỉ dựa trên việc các verifier tĩnh đạt; còn cần chứng thư thật hoặc chữ ký Store cuối, provenance của đúng commit, worktree sạch và hậu kiểm artifact cuối.
 
+Gói ManagedSigned/Pilot phải công bố chứng thư chỉ chứa public key dưới tên `CONTENT-SIGNING-CERTIFICATE.cer`, kèm cả fingerprint SHA-1 và SHA-256. `VERIFY-DISTRIBUTION.ps1` kiểm tra detached CMS trên byte gốc bằng `SignedCms.CheckSignature($true)`, sau đó ghim signer theo SHA-256 của chứng thư công bố; việc bỏ trust-chain trong bước mật mã không được hiểu là bỏ pinning. Bộ xác minh phải chạy từ chính thư mục chứa nó và từ chối tệp ngoài `RELEASE-SHA256SUMS.txt`.
+
 ## Chuyển đổi chứng thư
 
 Rollover signer Authenticode phải giữ đường nâng cấp cho client đã cài. Khi signer cũ là chứng thư đã được Windows tin cậy trên client, trước khi phát hành executable dùng signer mới cần một **bản cập nhật bắc cầu** vẫn được ký Authenticode bằng signer cũ và có update manifest do signer CMS cũ đang được client ghim ký. Bản bắc cầu cập nhật logic/pin để client có thể chấp nhận signer Authenticode mới khi signer đó được một manifest CMS hợp lệ ủy quyền.
