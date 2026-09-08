@@ -28,7 +28,7 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 
 1. Tải trực tiếp [VietLicenSure v5.0.0.2](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
 2. Người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải `VietLicenSure-v5.0.exe` và thay tệp cũ; dữ liệu cũ được giữ làm nguồn tương thích/migration.
-3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
+3. Nếu tải gói đầy đủ, chạy `VERIFY-RELEASE.cmd`; script tự định vị và kiểm tra checksum, bốn chữ ký CMS, chứng thư công bố, Authenticode, manifest và SBOM. Nếu chỉ tải EXE, đối chiếu SHA-256 và chữ ký thủ công. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật VietLicenSure/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
 
@@ -37,6 +37,13 @@ Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256
 Get-AuthenticodeSignature .\VietLicenSure-v5.0.exe |
   Format-List Status,StatusMessage,SignerCertificate
 ```
+
+Fingerprint chứng thư công bố trong `CONTENT-SIGNING-CERTIFICATE.cer`:
+
+- SHA-1: `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA`
+- SHA-256: `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9`
+
+Đọc [quy trình xác minh bản phát hành](RELEASE-VERIFICATION-v5.0.md) nếu cần kiểm tra bằng OpenSSL hoặc phân biệt cảnh báo root tự ký với lỗi `HashMismatch`/CMS thật.
 
 ## Mười chức năng chính
 
@@ -99,6 +106,9 @@ Hiện chưa có ngày cam kết mở lại mã nguồn. Tác giả sẽ xem xé
 - [Chính sách code-signing](CODE-SIGNING-POLICY-v1.md)
 - [Lộ trình/tiến độ nhánh v5.0](ROADMAP-v5.0.md)
 - [Kết quả kiểm thử bảo mật và tương thích](SECURITY-TEST-RESULTS.md)
+- [Bản đồ tài liệu v5.0 và ý nghĩa các baseline v4.8/v4.9](DOCUMENTATION-MAP-v5.0.md)
+- [Mô hình đe dọa v5.0](THREAT-MODEL-v5.0.md)
+- [Xác minh checksum, CMS, Authenticode, SBOM và provenance](RELEASE-VERIFICATION-v5.0.md)
 
 ## Nguồn chính thức và hỗ trợ
 

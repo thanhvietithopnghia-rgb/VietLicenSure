@@ -48,6 +48,15 @@ $requiredCurrentFiles = @(
     'QUICK-START-v5.0.md',
     'KNOWN-LIMITATIONS-v5.0.md',
     'RELEASE-HYGIENE-v5.0.md'
+    'DOCUMENTATION-MAP-v5.0.md'
+    'THREAT-MODEL-v5.0.md'
+    'RELEASE-VERIFICATION-v5.0.md'
+    'VERIFY-DISTRIBUTION.ps1'
+    'VERIFY-RELEASE.cmd'
+    'CONTENT-SIGNING-CERTIFICATE.cer'
+    'docs\huong-dan.html'
+    'docs\logo.svg'
+    'docs\assets\vietlicensure-v5-ui.png'
     'SUPPORT.md'
     'CONTRIBUTING.md'
     '.github\ISSUE_TEMPLATE\bug_report.yml'
@@ -114,7 +123,7 @@ Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Sure'
 Assert-HygieneContains 'VERSION-HISTORY-en-US.md' $historyEn 'official name'
 Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'ManagedSigned/Pilot'
 Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Public Stable'
-Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top">VietLicenSure'
+Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top"><img src="logo.svg"'
 Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned/Pilot'
 Assert-HygieneContains 'docs\index.html' $website $directDownloadUrl
 foreach ($channelUrl in @($issuesUrl, $discussionsUrl, $securityAdvisoryUrl)) {
@@ -124,7 +133,12 @@ foreach ($channelUrl in @($issuesUrl, $discussionsUrl, $securityAdvisoryUrl)) {
 }
 Assert-HygieneContains 'CONTRIBUTING.md' $contributing $issuesUrl
 Assert-HygieneContains 'SOURCE-POLICY-v4.9.md' (Read-HygieneText 'SOURCE-POLICY-v4.9.md') 'no committed date for reopening the source'
-Assert-HygieneContains 'docs\index.html' $website ('href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases">' + $otherVersionsVi + '</a>')
+Assert-HygieneContains 'docs\index.html' $website ('href="' + $repositoryUrl + '/releases/tag/v' + $technicalVersion + '">')
+Assert-HygieneContains 'docs\index.html' $website ('href="' + $repositoryUrl + '/releases">')
+Assert-HygieneContains 'docs\index.html' $website 'data-user="thanhvietit.hopnghia" data-domain="gmail.com"'
+if ($website -match 'mailto:thanhvietit\.hopnghia@gmail\.com' -or $website -match '>thanhvietit\.hopnghia@gmail\.com<') {
+    $failures.Add('Website exposes the full contact email instead of constructing it after user action.')
+}
 Assert-HygieneContains 'VietLicenSure-v5.0-OneFile.cs' $launcher 'namespace ThanhViet.VietLicenSure'
 Assert-HygieneContains 'Tool-Provenance.ps1' $provenanceHelper "SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'"
 Assert-HygieneContains 'BUILD.ps1' $buildScript 'VietLicenSure-v$productVersion.exe'

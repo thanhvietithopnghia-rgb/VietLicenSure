@@ -7,7 +7,15 @@
 
 ## 1. Xác minh trước khi chạy
 
-Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>, sau đó đối chiếu với `RELEASE-SHA256SUMS.txt`:
+Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>. Với gói đầy đủ, giữ nguyên toàn bộ tệp rồi nhấp đúp:
+
+```bat
+VERIFY-RELEASE.cmd
+```
+
+Kết quả phải là `0 lỗi`. Script tự định vị thư mục phát hành và kiểm tra tập tệp đóng, mọi checksum, JSON, bốn chữ ký CMS exact-byte, chứng thư công bố, phiên bản, Build ID, Authenticode, update manifest và SBOM.
+
+Nếu chỉ có EXE, đối chiếu thủ công với `RELEASE-SHA256SUMS.txt`:
 
 ```powershell
 Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256
@@ -15,7 +23,9 @@ Get-AuthenticodeSignature .\VietLicenSure-v5.0.exe |
   Format-List Status,StatusMessage,SignerCertificate,TimeStamperCertificate
 ```
 
-Chứng thư hiện tại là chứng thư tự ký được launcher ghim. `Status = Valid` và timestamp không đồng nghĩa Windows sẽ hiển thị nhà phát hành công khai; SmartScreen vẫn có thể cảnh báo.
+Chứng thư hiện tại là chứng thư tự ký được launcher ghim và được công bố dưới tên `CONTENT-SIGNING-CERTIFICATE.cer`. Fingerprint SHA-1 là `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA`; fingerprint SHA-256 là `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9`. `Status = Valid` và timestamp không đồng nghĩa Windows sẽ hiển thị nhà phát hành công khai; SmartScreen vẫn có thể cảnh báo.
+
+Không mở/lưu lại hoặc đổi CRLF/LF của bốn tệp JSON trước khi kiểm tra `.p7s`: CMS ký byte thực của tệp. Xem `RELEASE-VERIFICATION-v5.0.md` để có lệnh PowerShell/OpenSSL chính xác.
 
 ## 2. Chọn đúng thao tác
 
@@ -42,4 +52,4 @@ Báo cáo được lưu cục bộ trong `Desktop\BaoCao-VietLicenSure`. Bản c
 - Báo cáo bảo mật riêng tư: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new>
 - Email và yêu cầu truy cập mã nguồn: `thanhvietit.hopnghia@gmail.com`
 
-Đọc thêm: `HUONG-DAN.txt`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và `LICH-SU-PHIEN-BAN.txt`.
+Đọc thêm: `HUONG-DAN.txt`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md`, `RELEASE-VERIFICATION-v5.0.md`, `DOCUMENTATION-MAP-v5.0.md` và `LICH-SU-PHIEN-BAN.txt`.

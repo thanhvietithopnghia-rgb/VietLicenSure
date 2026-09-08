@@ -297,6 +297,9 @@ $sourceFiles = @(
     'SECURITY-REVIEW-PROCESS-v1.md'
     'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json'
     'SECURITY-TEST-RESULTS.md'
+    'DOCUMENTATION-MAP-v5.0.md'
+    'THREAT-MODEL-v5.0.md'
+    'RELEASE-VERIFICATION-v5.0.md'
     $sourceName
     $applicationManifestName
     $embeddedVerifierName
@@ -334,6 +337,12 @@ $sourceFiles = @(
     'VERIFY-AUTHENTICODE.ps1'
     $peHardeningName
     'VERIFY-RELEASE.ps1'
+    'VERIFY-DISTRIBUTION.ps1'
+    'VERIFY-RELEASE.cmd'
+    'CONTENT-SIGNING-CERTIFICATE.cer'
+    'VERIFY-HANDOFF.ps1'
+    'VERIFY-HANDOFF.cmd'
+    'NEW-HANDOFF-PACKAGE.ps1'
     'VERIFY-RELEASE-HYGIENE.ps1'
     'VERIFY-STABLE-READINESS.ps1'
 ) | Select-Object -Unique
@@ -653,9 +662,12 @@ if ($requiresVerifiedProvenance) {
     $releaseMetadataAllowList = @(
         'OFFICIAL-PROVENANCE-v1.json',
         'OFFICIAL-PROVENANCE-v1.json.p7s',
+        'SECURITY-TEST-RESULTS.md',
         'SOURCE-PACKAGE-SHA256SUMS.txt',
         'SOURCE-SHA256SUMS.txt',
         'TOOL-SHA256SUMS.txt',
+        'docs/index.html',
+        'docs/huong-dan.html',
         'update-manifest-v1.json',
         'update-manifest-v1.json.p7s'
     )
@@ -930,6 +942,8 @@ $releaseSidecars = @(
     'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
+    'DOCUMENTATION-MAP-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
+    'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
@@ -1530,6 +1544,8 @@ $releaseHashFiles = @($targets.OutputName) + @(
     'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
+    'DOCUMENTATION-MAP-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
+    'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
@@ -1546,6 +1562,11 @@ foreach ($name in $releaseHashFiles) {
     $releaseHashLines += "$(Get-Sha256Hex (Join-Path $OutputDirectory $name))  $name"
 }
 [IO.File]::WriteAllLines((Join-Path $OutputDirectory 'RELEASE-SHA256SUMS.txt'), $releaseHashLines, (New-Object Text.UTF8Encoding($false)))
+
+if ($requiresSignedArtifact -and -not $SkipVerification) {
+    & (Join-Path $sourceDirectory 'VERIFY-DISTRIBUTION.ps1') -DistributionDirectory $OutputDirectory
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-DISTRIBUTION.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+}
 
 Write-Host '[6/8] Kiểm tra extension/report/plugin/timeline...'
 if (-not $SkipVerification) {

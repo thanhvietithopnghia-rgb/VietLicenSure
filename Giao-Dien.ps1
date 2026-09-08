@@ -247,8 +247,9 @@ function New-DashboardIconBitmap {
     $transparentBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::Transparent)
     $whitePen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, 3.2)
     $whiteThinPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, 2.2)
+    $mintPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(80, 227, 176), 2.1)
     $navPen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, 2.8)
-    foreach ($pen in @($whitePen, $whiteThinPen, $navPen)) {
+    foreach ($pen in @($whitePen, $whiteThinPen, $mintPen, $navPen)) {
         $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
         $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
         $pen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
@@ -291,14 +292,18 @@ function New-DashboardIconBitmap {
                     (New-Object System.Drawing.PointF(25, 34)), (New-Object System.Drawing.PointF(16, 35))))
             }
             "Shield" {
-                $graphics.FillPolygon($blueBrush, [System.Drawing.PointF[]]@(
+                $graphics.FillPolygon($lightBlueBrush, [System.Drawing.PointF[]]@(
                     (New-Object System.Drawing.PointF(24, 3)), (New-Object System.Drawing.PointF(41, 10)),
                     (New-Object System.Drawing.PointF(38, 31)), (New-Object System.Drawing.PointF(24, 45)),
                     (New-Object System.Drawing.PointF(10, 31)), (New-Object System.Drawing.PointF(7, 10))))
-                $graphics.DrawArc($whitePen, 17, 13, 14, 16, 180, 180)
-                $lockPath = New-DashboardRoundedPath -X 14 -Y 22 -Width 20 -Height 15 -Radius 3
-                try { $graphics.FillPath($whiteBrush, $lockPath) } finally { $lockPath.Dispose() }
-                $graphics.FillEllipse($blueBrush, 22, 27, 4, 6)
+                $graphics.FillPolygon($blueBrush, [System.Drawing.PointF[]]@(
+                    (New-Object System.Drawing.PointF(24, 8)), (New-Object System.Drawing.PointF(36, 13)),
+                    (New-Object System.Drawing.PointF(34, 29)), (New-Object System.Drawing.PointF(24, 39)),
+                    (New-Object System.Drawing.PointF(14, 29)), (New-Object System.Drawing.PointF(12, 13))))
+                $graphics.DrawLines($whitePen, [System.Drawing.PointF[]]@(
+                    (New-Object System.Drawing.PointF(14, 23)), (New-Object System.Drawing.PointF(22, 32)),
+                    (New-Object System.Drawing.PointF(36, 14))))
+                $graphics.DrawLine($mintPen, 22, 32, 36, 14)
             }
             "Check" {
                 $graphics.FillPolygon($greenBrush, [System.Drawing.PointF[]]@(
@@ -429,7 +434,7 @@ function New-DashboardIconBitmap {
         foreach ($resource in @(
             $graphics, $blueBrush, $lightBlueBrush, $officeBrush, $officeDarkBrush, $greenBrush,
             $cyanBrush, $purpleBrush, $amberBrush, $tealBrush, $whiteBrush, $transparentBrush,
-            $whitePen, $whiteThinPen, $navPen
+            $whitePen, $whiteThinPen, $mintPen, $navPen
         )) {
             if ($resource) { $resource.Dispose() }
         }

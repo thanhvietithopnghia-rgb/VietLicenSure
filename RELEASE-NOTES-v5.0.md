@@ -76,4 +76,12 @@ Tên gọi kết hợp **Viet** (do người Việt phát triển), **Licen** (`
 
 - Đây không phải danh tính code-signing public-CA.
 - Gói Microsoft Store được chuẩn bị riêng và chưa thay thế bản ManagedSigned/Pilot hiện tại.
+
+### Bổ sung theo đợt rà soát hồ sơ 08/09/2026
+
+- Thêm `VERIFY-RELEASE.cmd` và `VERIFY-DISTRIBUTION.ps1`, chạy từ mọi vị trí và kiểm tra tập tệp đóng, JSON, bốn chữ ký CMS exact-byte, manifest, phiên bản, Authenticode, SBOM và provenance.
+- Công bố public certificate `CONTENT-SIGNING-CERTIFICATE.cer` cùng fingerprint SHA-1/SHA-256 để đối chiếu độc lập; không đưa private key vào gói.
+- Chuẩn hóa gói bàn giao hai thư mục với `release-files.sha256`, `source-files.sha256`, `package-files.sha256` và `VERIFY-HANDOFF.cmd`.
+- Bổ sung bản đồ tài liệu v5.0, mô hình đe dọa và hướng dẫn phân biệt lỗi CMS thật với lỗi do chuyển đổi line ending.
+- Thiết kế lại logo theo biểu tượng khiên + chữ V/dấu kiểm, đồng bộ icon EXE, social card và trang chủ; thêm hướng dẫn người mới, bảng so sánh phiên bản, lộ trình và thông tin dự án.
 - `Chưa xác minh` không đồng nghĩa phần mềm vi phạm; cần kiểm tra giấy phép, tài khoản hoặc chứng từ chính thức.
