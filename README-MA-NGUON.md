@@ -1,20 +1,29 @@
 # Hướng dẫn tham gia và tiếp cận mã nguồn có kiểm soát từ v4.9
 
-Áp dụng cho VietLicenSure v4.9.0.0, build 2026.08.22 và các phiên bản mới hơn.
+Áp dụng cho mã nguồn VietLicenSure từ v4.9 trở đi; bản hiện hành là VietLicenSure v5.0, phiên bản kỹ thuật `5.0.0.2`, phát hành ngày `08/09/2026`.
 
 ## Mô hình phát triển
 
-VietLicenSure được cung cấp miễn phí và phát triển cùng cộng đồng thông qua báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được tác giả Thanh Việt quản lý theo cơ chế truy cập có kiểm soát. Bản thực thi chính thức tiếp tục được cung cấp miễn phí tại:
+VietLicenSure được cung cấp miễn phí và phát triển cùng cộng đồng thông qua báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai, không được phát hành theo giấy phép mã nguồn mở và được tác giả Thanh Việt quản lý theo cơ chế truy cập có kiểm soát. Bản thực thi chính thức tiếp tục được cung cấp miễn phí tại:
 
-<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>
+<https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>
 
 Tệp thực thi của nhánh phát triển hiện tại là `VietLicenSure-v5.0.exe`. Chỉ artifact có Authenticode, timestamp và provenance hợp lệ mới được công bố là Stable.
 
-Việc kiểm soát truy cập nhằm bảo vệ nguồn gốc và công sức phát triển sau khi tác giả ghi nhận nội dung, giao diện, mô tả và thành quả của Tool bị sao chép gần như nguyên trạng, đổi tên hoặc đổi thương hiệu thành sản phẩm cá nhân mà không xin phép hay ghi nhận tác giả. Tuyên bố này không khẳng định mã nguồn/backend đã bị lấy khi chưa có bằng chứng kỹ thuật xác nhận.
+Việc kiểm soát truy cập được áp dụng sau khi tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đổi thương hiệu hoặc đóng gói lại rồi phát hành thành một phần mềm khác khi chưa được tác giả cho phép hay ủy quyền. Chính sách nhằm bảo vệ công sức, chất xám, nguồn gốc sản phẩm, tính toàn vẹn của bản phát hành và tránh để người dùng hiểu nhầm bản đã bị sửa là bản chính thức. Thông báo này không nêu danh tính bên thứ ba và không thay thế kết luận của cơ quan có thẩm quyền về một tranh chấp cụ thể.
+
+Phạm vi được kiểm soát gồm mã giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, thành phần build–đóng gói–phát hành, kiểm thử, tài liệu kỹ thuật nội bộ và các tài sản phát triển chưa công bố từ v4.9 trở đi. Tài liệu sử dụng, chính sách, manifest/hash phát hành và kênh phản hồi vẫn được công khai khi phù hợp.
 
 ## Tham gia không cần truy cập mã nguồn
 
-Cộng đồng có thể gửi báo lỗi, đề xuất tính năng, tài liệu, bản dịch, kịch bản kiểm thử và mẫu dữ liệu đã loại thông tin nhạy cảm qua kênh chính thức. Việc tiếp nhận đóng góp không tự chuyển quyền sở hữu và không cấp quyền đối với mã nguồn chưa công bố.
+Cộng đồng có thể gửi báo lỗi, đề xuất tính năng, tài liệu, bản dịch, kịch bản kiểm thử và mẫu dữ liệu đã loại thông tin nhạy cảm qua các kênh sau:
+
+- báo lỗi: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose>;
+- hỏi đáp và đề xuất: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions>;
+- lỗ hổng bảo mật: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new>;
+- yêu cầu truy cập mã nguồn: `thanhvietit.hopnghia@gmail.com`.
+
+Việc tiếp nhận đóng góp không tự chuyển quyền sở hữu và không cấp quyền đối với mã nguồn chưa công bố. Không gửi mã nguồn được kiểm soát, bí mật, dữ liệu cá nhân hoặc lỗ hổng chưa khắc phục qua Issues/Discussions công khai.
 
 ## Ai có thể yêu cầu truy cập
 
@@ -41,6 +50,10 @@ Gửi email tới `thanhvietit.hopnghia@gmail.com` và nêu rõ:
 7. xác nhận tuân thủ `SOURCE-POLICY-v4.9.md`, `LICENSE-NOTICE.txt` và điều kiện bổ sung trong văn bản chấp thuận.
 
 Tác giả có quyền chấp thuận, giới hạn hoặc từ chối yêu cầu. Việc gửi yêu cầu không tự tạo quyền truy cập.
+
+## Khả năng mở lại mã nguồn
+
+Hiện tại tác giả chưa cam kết ngày mở lại mã nguồn. Chính sách được xem xét định kỳ dựa trên khả năng ngăn việc sao chép/phát hành trái phép, xác minh danh tính người được cấp quyền, bảo vệ thông tin nhạy cảm, duy trì an toàn chuỗi phát hành và xử lý vi phạm. Kết quả xem xét có thể là tiếp tục đóng, mở một số thành phần, cấp quyền theo từng mục đích hoặc mở rộng công khai. Mọi thay đổi chỉ có hiệu lực khi được tác giả công bố chính thức bằng văn bản.
 
 ## Giới hạn mặc định của quyền xem
 
@@ -77,7 +90,7 @@ Chính sách này chỉ áp dụng cho mã nguồn từ v4.9 trở đi. Phiên b
 
 - [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md)
 - [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt)
-- [Tải trực tiếp VietLicenSure v5.0.0.1](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe)
+- [Tải trực tiếp VietLicenSure v5.0.0.2](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe)
 
 Nếu nội dung tóm tắt này khác với văn bản chấp thuận riêng hoặc chính sách đầy đủ, văn bản chấp thuận và `SOURCE-POLICY-v4.9.md` được ưu tiên áp dụng.
 

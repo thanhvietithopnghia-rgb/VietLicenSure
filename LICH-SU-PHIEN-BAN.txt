@@ -5,9 +5,12 @@ Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản
 Trang công khai:
 https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
-## v5.0 — 06/09/2026
+## v5.0 / 5.0.0.2 — 08/09/2026
 
-- Từ v5.0, phần mềm chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**.
+- Dòng v5.0 được công bố ngày 06/09/2026 với tên chính thức **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**, thay cho tên tiền thân **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm**.
+- **Bản kỹ thuật 5.0.0.2:** phát hành ngày 08/09/2026; đồng bộ tên gọi, phiên bản và ngày phát hành trong ứng dụng, tài liệu và kênh công khai.
+- **Chính sách mã nguồn:** giải thích rõ việc chuyển sang truy cập có kiểm soát từ v4.9 sau khi phát hiện phần mềm/phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành khi chưa được phép hay ủy quyền; công bố phạm vi, quy trình xin quyền và trạng thái chưa cam kết ngày mở lại.
+- **Tương tác hai chiều:** bổ sung GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho báo cáo lỗ hổng.
 - **Trải nghiệm sử dụng:** khởi động nhanh hơn, giao diện rõ ràng và thích ứng tốt hơn, hỗ trợ Light/Dark và mở thẳng đúng chức năng cần dùng.
 - **Kiểm tra và nhận diện:** ba mức quét Quick, Standard và Deep; kiểm tra Windows, Microsoft Office và phần mềm khác; sắp xếp việc cần xem theo mức ưu tiên, hỗ trợ tìm kiếm, lọc và so sánh với lần quét trước.
 - **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, chạy thử, sao lưu, xác nhận và kiểm tra lại; bổ sung trung tâm sao lưu–khôi phục có kiểm tra toàn vẹn.
@@ -19,11 +22,11 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 ## v4.9.0.0 — 22/08/2026
 
 - **Nhận diện chính xác hơn:** kiểm kê Registry, AppX/MSIX, Winget, shortcut, trình quản lý gói và vùng portable; phân biệt cài đặt đã xác nhận, portable và tệp còn sót; gộp bản ghi trùng theo họ sản phẩm.
-- **Quét toàn vẹn thích ứng:** khi có dấu hiệu chặn máy chủ hoặc vô hiệu hóa dịch vụ hãng, Tool mở rộng kiểm tra Authenticode cho toàn bộ tệp PE trong đúng thư mục sản phẩm; bằng chứng không còn lan giữa các phần mềm cùng hãng.
+- **Quét toàn vẹn thích ứng:** khi có dấu hiệu chặn máy chủ hoặc vô hiệu hóa dịch vụ hãng, VietLicenSure mở rộng kiểm tra Authenticode cho toàn bộ tệp PE trong đúng thư mục sản phẩm; bằng chứng không còn lan giữa các phần mềm cùng hãng.
 - **Đọc bản quyền và khắc phục an toàn:** phân biệt lỗi đọc dữ liệu với chưa kích hoạt; báo cáo luôn chỉ đọc; khắc phục gỡ đúng khóa/Activation ID xấu, bảo toàn bản quyền hợp lệ cùng tồn tại và hậu kiểm theo đúng mục đã chọn.
-- **Gỡ ứng dụng có kiểm soát:** chỉ cho phép gỡ hoàn chỉnh khi người dùng chọn rõ ứng dụng và Tool xác minh được danh tính MSI/AppX gắn với nguồn; mọi thao tác đều được liệt kê trước, backup và kiểm tra lại sau xử lý.
+- **Gỡ ứng dụng có kiểm soát:** chỉ cho phép gỡ hoàn chỉnh khi người dùng chọn rõ ứng dụng và VietLicenSure xác minh được danh tính MSI/AppX gắn với nguồn; mọi thao tác đều được liệt kê trước, backup và kiểm tra lại sau xử lý.
 - **Bảo vệ bản phát hành:** EXE, provenance, catalog và manifest cập nhật được ký số; catalog online chỉ nhận dữ liệu khai báo từ nguồn chính thức đã ghim, không tải danh sách phần mềm hoặc dữ liệu máy lên Internet.
-- **Chính sách từ v4.9:** Tool tiếp tục miễn phí và phát triển hướng tới cộng đồng; mã nguồn không còn được công khai miễn phí, không phải mã nguồn mở và chỉ được tiếp cận khi tác giả chấp thuận bằng văn bản.
+- **Chính sách từ v4.9:** VietLicenSure tiếp tục miễn phí và phát triển hướng tới cộng đồng; mã nguồn không còn được công khai, không phải mã nguồn mở và chỉ được tiếp cận khi tác giả chấp thuận bằng văn bản.
 
 ## v4.8.0.1 — 18/08/2026
 

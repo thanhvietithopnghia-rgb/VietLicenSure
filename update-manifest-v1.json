@@ -1,15 +1,17 @@
 {
     "SchemaVersion":  "1.0",
     "Channel":  "stable",
-    "LatestVersion":  "5.0.0.1",
+    "LatestVersion":  "5.0.0.2",
     "MinimumUpdaterVersion":  "4.6.1.0",
-    "PublishedAtUtc":  "2026-09-06T00:00:00Z",
+    "PublishedAtUtc":  "2026-09-08T00:00:00Z",
     "Title":  {
-                  "vi-VN":  "v5.0 - Trợ lý VietLicenSure đọc đầy đủ HDSD và lịch sử phiên bản",
-                  "en-US":  "v5.0 - Complete guide and version-history support in VietLicenSure Assistant"
+                  "vi-VN":  "v5.0.0.2 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
+                  "en-US":  "v5.0.0.2 - Clear source policy and two-way feedback channels"
               },
     "Changes":  {
                     "vi-VN":  [
+                                  "Công bố rõ lý do thay đổi chính sách từ v4.9: phần mềm/phiên bản tiền thân đã bị sao chép, chỉnh sửa, đổi tên hoặc đóng gói và phát hành thành phần mềm khác khi chưa được tác giả cho phép hay ủy quyền; việc kiểm soát mã nguồn nhằm bảo vệ chất xám và nguồn gốc bản phát hành.",
+                                  "Bổ sung kênh tương tác hai chiều chính thức qua GitHub Issues và Discussions; báo cáo lỗ hổng dùng GitHub Security Advisory riêng tư hoặc email tác giả.",
                                   "Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt-Anh theo từng mục, trả đầy đủ thay đổi của một phiên bản và đối chiếu trực tiếp hai phiên bản mà không suy diễn ngoài hồ sơ.",
                                   "Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.",
                                   "Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo \u0026 Bảo đảm; không chỉ riêng OEM.",
@@ -28,10 +30,12 @@
                                   "Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.",
                                   "Kiểm kê bổ sung AppX/MSIX, Winget, shortcut, trình quản lý gói và adapter Autodesk chỉ-đọc; phân biệt bản cài đã xác nhận với portable/tệp còn sót và gộp Adobe Acrobat theo họ sản phẩm.",
                                   "Quét toàn vẹn thích ứng mở rộng Authenticode trong đúng thư mục sản phẩm khi hosts, firewall hoặc dịch vụ hãng bất thường; bằng chứng không còn lan giữa các sản phẩm Adobe.",
-                                  "Kể từ v4.9, Tool tiếp tục miễn phí nhưng mã nguồn không còn được công khai miễn phí, không phải mã nguồn mở và chỉ được tiếp cận khi tác giả chấp thuận trước bằng văn bản.",
+                                  "Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng mã nguồn không còn công khai, không phải mã nguồn mở và chỉ được tiếp cận theo phạm vi, thời hạn và điều kiện được tác giả chấp thuận trước bằng văn bản; chưa có lịch cam kết mở lại.",
                                   "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
                               ],
                     "en-US":  [
+                                  "Explains the v4.9 policy change: the software or a predecessor build was copied, modified, renamed or repackaged and released as another product without the author\u0027s permission or authorization; controlled source access protects the author\u0027s work and official-release provenance.",
+                                  "Adds official two-way channels through GitHub Issues and Discussions; vulnerabilities use a private GitHub Security Advisory or the author\u0027s email.",
                                   "VietLicenSure Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version\u0027s full change entry, and compares two versions without inferring undocumented changes.",
                                   "Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.",
                                   "Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports \u0026 Assurance actions—not only OEM.",
@@ -50,14 +54,14 @@
                                   "Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.",
                                   "Inventory adds AppX/MSIX, WinGet, shortcuts, package managers, and a read-only Autodesk adapter; it distinguishes confirmed installs from portable/residual files and merges Adobe Acrobat by product family.",
                                   "Adaptive integrity scanning expands Authenticode checks inside the exact product directory when vendor hosts, firewall rules, or licensing services are abnormal; Adobe evidence no longer leaks across products.",
-                                  "Starting with v4.9, the Tool remains free, but source is no longer published free of charge, is not open source, and requires the author\u0027s prior written approval for access.",
+                                  "Starting with v4.9, VietLicenSure remains free, but its source is not public or open source and may be accessed only within the scope, duration, and conditions approved by the author in writing; no reopening date is currently committed.",
                                   "Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate."
                               ]
                 },
-    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1",
-    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "4739B33AFF59994702371CAEA4A6422F5B5949552696EE19AD48221740DDF082",
-    "DownloadSize":  796920,
+    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.2",
+    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe",
+    "DownloadSha256":  "AF1E115C39842EF49D33EB3A58ACAD9D2699C62889C91F28940843BC46987F5A",
+    "DownloadSize":  801016,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"

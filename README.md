@@ -1,6 +1,6 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành ngày 06/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · bản kỹ thuật `5.0.0.2` · phát hành ngày 08/09/2026
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
@@ -26,10 +26,10 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 
 ## Tải và bắt đầu
 
-1. Tải trực tiếp [VietLicenSure v5.0.0.1](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
+1. Tải trực tiếp [VietLicenSure v5.0.0.2](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
 2. Người đang dùng ProductVersion/FileVersion `5.0.0.0` có thể tải `VietLicenSure-v5.0.exe` và thay tệp cũ; dữ liệu cũ được giữ làm nguồn tương thích/migration.
 3. Đối chiếu SHA-256 và chữ ký trước khi chạy. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
-4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật Tool/catalog hoặc dùng chức năng LAN được cho phép.
+4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật VietLicenSure/catalog hoặc dùng chức năng LAN được cho phép.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
 
 ```powershell
@@ -57,22 +57,24 @@ Get-AuthenticodeSignature .\VietLicenSure-v5.0.exe |
 - `VerifiedClean`: hậu kiểm đã xác nhận điều kiện làm sạch của quy tắc; không đồng nghĩa đã có giấy phép hợp lệ.
 - `ApprovedInternalKMS`: KMS tổ chức đã được người quản trị xác nhận và được giữ nguyên.
 - `RetryableFailure`: lần xử lý chưa đạt; có thể sửa nguyên nhân và thử lại.
-- `BlockedByPolicy`: chính sách quản trị đang áp dụng; Tool không âm thầm xóa policy của tổ chức.
+- `BlockedByPolicy`: chính sách quản trị đang áp dụng; VietLicenSure không âm thầm xóa policy của tổ chức.
 - `NeedsOfficeRepair`: edition/tệp/trạng thái Office cần Repair, cấu hình lại hoặc cài từ nguồn chính thức.
 
-Nếu catalog chưa đủ bằng chứng, Tool giữ trạng thái `Chưa xác minh`. Nếu bản cài Volume, file đã bị thay đổi hoặc policy tái áp dụng cấu hình, Tool có thể yêu cầu Repair/cài lại thay vì cố xử lý nguy hiểm.
+Nếu catalog chưa đủ bằng chứng, VietLicenSure giữ trạng thái `Chưa xác minh`. Nếu bản cài Volume, file đã bị thay đổi hoặc policy tái áp dụng cấu hình, VietLicenSure có thể yêu cầu Repair/cài lại thay vì cố xử lý nguy hiểm.
 
 ## Báo cáo và quyền riêng tư
 
-Báo cáo HTML/PDF/JSON/XML được tạo cục bộ. Bản chia sẻ mặc định che định danh phần cứng; bản `FullInternal` chỉ dùng trong phạm vi quản trị có trách nhiệm. Tool không xuất product key đầy đủ, mật khẩu hoặc dữ liệu đăng nhập. Trước khi gửi báo cáo ra ngoài, vẫn cần đọc lại nội dung và giới hạn người nhận.
+Báo cáo HTML/PDF/JSON/XML được tạo cục bộ. Bản chia sẻ mặc định che định danh phần cứng; bản `FullInternal` chỉ dùng trong phạm vi quản trị có trách nhiệm. VietLicenSure không xuất product key đầy đủ, mật khẩu hoặc dữ liệu đăng nhập. Trước khi gửi báo cáo ra ngoài, vẫn cần đọc lại nội dung và giới hạn người nhận.
 
 ## Phát triển cộng đồng và mã nguồn có kiểm soát từ v4.9
 
-Bản thực thi chính thức của Tool tiếp tục **miễn phí cho cộng đồng** cho các mục đích hợp pháp theo điều khoản đi kèm. Dự án tiếp nhận báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật của cộng đồng. Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được quản lý theo cơ chế truy cập có kiểm soát.
+Bản thực thi chính thức của VietLicenSure tiếp tục **miễn phí cho cộng đồng** cho các mục đích hợp pháp theo điều khoản đi kèm. Dự án tiếp nhận báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật của cộng đồng. Kể từ v4.9, mã nguồn không còn được công khai, không được phát hành theo giấy phép mã nguồn mở và được quản lý theo cơ chế truy cập có kiểm soát.
 
-Thay đổi này được đưa ra sau khi tác giả ghi nhận nội dung, giao diện, mô tả và thành quả phát triển của Tool bị sao chép gần như nguyên trạng, đổi tên/đổi thương hiệu thành sản phẩm cá nhân mà không xin phép hoặc ghi nhận tác giả. Nội dung này **không khẳng định mã nguồn hoặc backend đã bị lấy** khi chưa có bằng chứng kỹ thuật xác nhận.
+Thay đổi này được đưa ra sau khi tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đổi thương hiệu hoặc đóng gói lại rồi phát hành thành một phần mềm khác khi chưa được tác giả cho phép hay ủy quyền. Chính sách nhằm bảo vệ công sức, chất xám, nguồn gốc sản phẩm và người dùng trước các bản dựng đã bị sửa nhưng có thể bị hiểu nhầm là bản chính thức. Thông báo không nêu danh tính bên thứ ba và không thay thế kết luận pháp lý về một tranh chấp cụ thể.
 
-Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả trước khi truy cập. Quyền xem không tự cấp quyền sao chép, chia sẻ, sửa đổi, tạo sản phẩm phái sinh, đóng gói, thương mại hóa, dùng làm dữ liệu huấn luyện, đổi thương hiệu hoặc xóa ghi nhận tác giả. Chính sách áp dụng cho mã nguồn từ v4.9 trở đi và không thay đổi hồi tố điều khoản của các phiên bản cũ.
+Phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, thành phần build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ từ v4.9 trở đi. Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải gửi yêu cầu và nhận chấp thuận bằng văn bản của tác giả trước khi truy cập. Quyền xem không tự cấp quyền sao chép, chia sẻ, sửa đổi, tạo sản phẩm phái sinh, đóng gói, thương mại hóa, dùng làm dữ liệu huấn luyện, đổi thương hiệu hoặc xóa ghi nhận tác giả.
+
+Hiện chưa có ngày cam kết mở lại mã nguồn. Tác giả sẽ xem xét định kỳ dựa trên khả năng kiểm soát truy cập, bảo vệ thông tin nhạy cảm, bảo đảm chuỗi phát hành và xử lý hành vi sao chép/phát hành trái phép. Kết quả có thể là tiếp tục đóng, mở chọn lọc hoặc mở rộng quyền truy cập bằng thông báo chính thức.
 
 Đọc [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md), [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt) và [Hướng dẫn tiếp cận mã nguồn](README-MA-NGUON.md).
 
@@ -91,6 +93,8 @@ Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật
 - [Report schema và artifact quản trị](REPORT-SCHEMA-v1.5.md)
 - [Chính sách trình xem báo cáo/fallback](REPORT-VIEWER-POLICY-v1.md)
 - [Chính sách báo cáo bảo mật](SECURITY.md)
+- [Kênh hỗ trợ và phản hồi](SUPPORT.md)
+- [Hướng dẫn đóng góp](CONTRIBUTING.md)
 - [Phạm vi audit và quy trình review](AUDIT-SCOPE-v1.md)
 - [Chính sách code-signing](CODE-SIGNING-POLICY-v1.md)
 - [Lộ trình/tiến độ nhánh v5.0](ROADMAP-v5.0.md)
@@ -99,10 +103,13 @@ Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật
 ## Nguồn chính thức và hỗ trợ
 
 - Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure>
-- Tải EXE v5.0.0.1: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>
+- Tải EXE v5.0.0.2: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>
+- Báo lỗi: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose>
+- Hỏi đáp và đề xuất: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions>
+- Báo cáo bảo mật riêng tư: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new>
 - Zalo: `0978 005 017`
 - Email: `thanhvietit.hopnghia@gmail.com`
 
-Chỉ chia sẻ đường dẫn tải chính thức; không đăng lại, đóng gói, thu phí, đổi thương hiệu hoặc tuyên bố Tool là sản phẩm của người khác khi chưa có chấp thuận bằng văn bản.
+Chỉ chia sẻ đường dẫn tải chính thức; không đăng lại, đóng gói, thu phí, đổi thương hiệu hoặc tuyên bố VietLicenSure là sản phẩm của người khác khi chưa có chấp thuận bằng văn bản.
 
 © 2026 Thanh Việt. Mọi quyền được bảo lưu.

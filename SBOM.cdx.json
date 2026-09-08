@@ -3,23 +3,23 @@
     "specVersion":  "1.5",
     "version":  1,
     "metadata":  {
-                     "timestamp":  "2026-09-06T00:00:00Z",
+                     "timestamp":  "2026-09-08T00:00:00Z",
                      "tools":  [
                                    {
                                        "vendor":  "Thanh Viet",
                                        "name":  "BUILD.ps1",
-                                       "version":  "5.0.0.1"
+                                       "version":  "5.0.0.2"
                                    }
                                ],
                      "component":  {
                                        "type":  "application",
                                        "bom-ref":  "application:tool-kiem-tra",
                                        "name":  "VietLicenSure",
-                                       "version":  "5.0.0.1",
+                                       "version":  "5.0.0.2",
                                        "hashes":  [
                                                       {
                                                           "alg":  "SHA-256",
-                                                          "content":  "4739B33AFF59994702371CAEA4A6422F5B5949552696EE19AD48221740DDF082"
+                                                          "content":  "AF1E115C39842EF49D33EB3A58ACAD9D2699C62889C91F28940843BC46987F5A"
                                                       }
                                                   ],
                                        "licenses":  [
@@ -32,11 +32,11 @@
                                        "properties":  [
                                                           {
                                                               "name":  "tool:buildId",
-                                                              "value":  "5.0.0.1-production-20260906"
+                                                              "value":  "5.0.0.2-production-20260908"
                                                           },
                                                           {
                                                               "name":  "tool:sourceSnapshotCommit",
-                                                              "value":  "f9f83154d20f9dbae80d407416c0b0926a041acd"
+                                                              "value":  "63cf2bca720af54cb5b82e9855c22b8ad6b239e1"
                                                           },
                                                           {
                                                               "name":  "tool:releaseStatus",

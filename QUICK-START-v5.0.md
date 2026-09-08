@@ -1,13 +1,13 @@
 # Bắt đầu nhanh với VietLicenSure v5.0
 
 **Tên đầy đủ:** VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
-**Phiên bản kỹ thuật:** `5.0.0.1`
-**Ngày phát hành:** `06/09/2026`
+**Phiên bản kỹ thuật:** `5.0.0.2`
+**Ngày phát hành:** `08/09/2026`
 **Kênh:** `ManagedSigned/Pilot` — chưa mang nhãn `Public Stable`
 
 ## 1. Xác minh trước khi chạy
 
-Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>, sau đó đối chiếu với `RELEASE-SHA256SUMS.txt`:
+Chỉ tải trực tiếp từ <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>, sau đó đối chiếu với `RELEASE-SHA256SUMS.txt`:
 
 ```powershell
 Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256
@@ -36,5 +36,10 @@ Chứng thư hiện tại là chứng thư tự ký được launcher ghim. `Sta
 ## 4. Báo cáo và hỗ trợ
 
 Báo cáo được lưu cục bộ trong `Desktop\BaoCao-VietLicenSure`. Bản chia sẻ mặc định che định danh; vẫn cần đọc lại trước khi gửi ra ngoài. Trợ lý tích hợp tra cứu Offline toàn bộ hướng dẫn, lịch sử từ v1.0.0 đến v5.0 và cách dùng mọi chức năng đã được tài liệu hóa.
+
+- Báo lỗi: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose>
+- Hỏi đáp và đề xuất: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions>
+- Báo cáo bảo mật riêng tư: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new>
+- Email và yêu cầu truy cập mã nguồn: `thanhvietit.hopnghia@gmail.com`
 
 Đọc thêm: `HUONG-DAN.txt`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và `LICH-SU-PHIEN-BAN.txt`.

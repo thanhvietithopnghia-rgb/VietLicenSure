@@ -4,11 +4,11 @@ Phát triển bởi Thanh Việt
 
 ## Tổng quan
 
-VietLicenSure là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, trạng thái cấp phép Windows và Microsoft Office, phần mềm đã cài cùng các dấu hiệu can thiệp cần xem xét. Tool trình bày bằng chứng kỹ thuật theo từng phạm vi để người dùng phân biệt nội dung bình thường, nội dung chưa đủ dữ liệu và nội dung cần xử lý.
+VietLicenSure là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, trạng thái cấp phép Windows và Microsoft Office, phần mềm đã cài cùng các dấu hiệu can thiệp cần xem xét. VietLicenSure trình bày bằng chứng kỹ thuật theo từng phạm vi để người dùng phân biệt nội dung bình thường, nội dung chưa đủ dữ liệu và nội dung cần xử lý.
 
 Quy trình sử dụng gồm bốn bước: chọn phạm vi kiểm tra, đọc kết quả và bằng chứng, chạy thử kế hoạch nếu cần khắc phục, sau đó xác nhận và hậu kiểm. Kiểm tra và báo cáo mặc định chỉ đọc; thao tác thay đổi hệ thống luôn có xem trước, backup, xác nhận và yêu cầu quyền phù hợp.
 
-Tool hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong Tool hoặc trang phát hành chính thức.
+VietLicenSure hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong VietLicenSure hoặc trang phát hành chính thức.
 
 ## Phạm vi và nguyên tắc hoạt động
 
@@ -22,17 +22,17 @@ Tool hoạt động Offline theo mặc định, không tự gửi inventory ho�
 ## Chuẩn bị trước khi chạy
 
 1. Nếu nhận được tệp ZIP, hãy giải nén trước; không chạy trực tiếp bên trong tệp nén.
-2. Đặt tệp EXE của Tool trong một thư mục bình thường trên ổ đĩa cục bộ.
+2. Đặt tệp EXE của VietLicenSure trong một thư mục bình thường trên ổ đĩa cục bộ.
 3. Đóng Word, Excel, Outlook và các phần mềm đang cần kiểm tra trước khi thực hiện khắc phục.
 4. Nếu dự kiến thay đổi giấy phép, hãy chuẩn bị tài khoản hoặc key hợp lệ từ Microsoft, nhà sản xuất hay tổ chức của bạn.
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
 
-Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản chính thức trực tiếp từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
+Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản chính thức trực tiếp từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
 
-## Cách chạy Tool
+## Cách chạy VietLicenSure
 
-1. Nhấp đúp tệp EXE của Tool trong thư mục phát hành.
+1. Nhấp đúp tệp EXE của VietLicenSure trong thư mục phát hành.
 2. Cửa sổ chính mở bằng quyền hiện tại và không hỏi UAC chỉ để xem/kiểm tra. Nếu chọn khắc phục, cập nhật hoặc quản trị doanh nghiệp, hãy đọc tên thao tác rồi chọn Yes tại UAC khi đúng nhu cầu.
 3. Chờ cửa sổ Trung tâm điều khiển xuất hiện. Lần mở đầu có thể lâu hơn một chút vì công cụ chuẩn bị vùng chạy bảo vệ theo tài khoản.
 4. Chọn Tiếng Việt hoặc English và giao diện Sáng/Tối trong mục Cài đặt nếu cần.
@@ -52,7 +52,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Có ba mức Quick/Standard/Deep, giao diện dark/light theo hệ thống, PerMonitorV2 DPI và xuất fleet an toàn cho quản trị doanh nghiệp.
 - Mục Khắc phục có năm chức năng riêng: Windows, Microsoft Office, phần mềm khác, Khôi phục key OEM và Quản lý giấy phép hợp lệ; ba chức năng khắc phục mở thẳng đúng màn hình và khóa phạm vi từ lúc quét đến hậu kiểm.
 
-- Launcher và manifest nguồn gốc kiểm tra chữ ký, chứng thư, metadata và Build ID. Nếu bản chạy bị sửa hoặc không xác minh được, Tool cảnh báo và chặn cập nhật/thao tác thay đổi hệ thống theo nguyên tắc fail-closed.
+- Launcher và manifest nguồn gốc kiểm tra chữ ký, chứng thư, metadata và Build ID. Nếu bản chạy bị sửa hoặc không xác minh được, VietLicenSure cảnh báo và chặn cập nhật/thao tác thay đổi hệ thống theo nguyên tắc fail-closed.
 - Catalog online có chữ ký, chỉ chứa quy tắc khai báo được cho phép, giữ mốc phiên bản bền vững để chống hạ phiên bản và dùng cache dự phòng khi cập nhật không hợp lệ.
 - Mục chưa đủ bằng chứng giữ trạng thái **Chưa xác minh**, không tự bị kết luận crack và không đủ điều kiện tự động làm sạch.
 - Khắc phục chỉ báo **VerifiedClean/Đã hậu kiểm sạch** sau khi quét lại xác nhận điều kiện của quy tắc. Lỗi có thể thử lại; policy tổ chức và trường hợp cần sửa chữa/cài lại được báo riêng.
@@ -67,7 +67,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Nút Sao chép toàn bộ log dùng khi cần gửi nội dung chẩn đoán cho kỹ thuật viên.
 - Nút Mở thư mục báo cáo mở nơi chứa kết quả mới nhất.
 - Nút Dừng chỉ dùng khi tác vụ kéo dài bất thường. Nếu dừng giữa lúc khắc phục, hãy giữ backup và quét lại trước khi làm tiếp.
-- Công tắc Offline/Online chỉ cấp quyền dùng mạng trong phiên hiện tại; bật Online không tự gửi dữ liệu và không tự chạy quét. Mở lại Tool luôn trở về Offline.
+- Công tắc Offline/Online chỉ cấp quyền dùng mạng trong phiên hiện tại; bật Online không tự gửi dữ liệu và không tự chạy quét. Mở lại VietLicenSure luôn trở về Offline.
 - Nút **Trợ lý** nằm bên trái **Giới thiệu**. Nhập câu hỏi rồi bấm **Gửi** hoặc nhấn **Enter**; dùng `Shift+Enter` nếu cần xuống dòng. Khi đang xử lý, phần mềm tạm khóa ô nhập và nút Gửi để tránh gửi trùng. Nút **Kết nối Online** chỉ cấp quyền mạng cho phiên hiện tại và tự kiểm tra gói tri thức mới; **Đồng bộ tri thức** cho phép kiểm tra lại thủ công; **Các phiên bản khác** mở trang GitHub Releases chính thức để xem hoặc tải các bản phát hành trước.
 
 ## Trợ lý
@@ -81,11 +81,11 @@ Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSur
 3. Đọc câu hỏi và câu trả lời trong các khung màu riêng. Nội dung mới tự cuộn tới đúng vị trí và câu trả lời xuất hiện ngay trong lượt hỏi hiện tại.
 4. Nếu cần giải thích một lỗi hoặc kết quả cụ thể, hãy gửi kèm mã lỗi, trạng thái hoặc dòng bằng chứng liên quan. Có thể hỏi tiếp bằng các cụm như “cách dùng nó”, “còn Khôi phục key OEM” hoặc “giải thích thêm”; Trợ lý giữ chủ đề của lượt ngay trước để hiểu ngữ cảnh.
 
-Trợ lý kết hợp kho tri thức có cấu trúc, tài liệu HDSD nhúng và dữ liệu báo cáo hiện có; bộ định tuyến ưu tiên tên chức năng, mã lỗi và cụm từ cụ thể trước từ khóa chung. Có thể hỏi một phiên bản đã ghi trong lịch sử để đọc đầy đủ mục thay đổi, hoặc nêu hai phiên bản để đối chiếu trực tiếp từng mục. Nếu lịch sử không có phiên bản được hỏi — ví dụ v2.0 — Trợ lý nói rõ không có mục được ghi nhận và không tự dựng thay đổi. Trợ lý xử lý cách diễn đạt tự nhiên, câu không dấu, viết tắt, lỗi gõ và câu nhiều ý. Câu có liên quan đến Tool nhưng thiếu dữ liệu sẽ được nói rõ là chưa đủ thông tin; chỉ nội dung thật sự không liên quan mới được báo ngoài phạm vi, với cách diễn đạt phù hợp từng ngữ cảnh thay vì lặp một câu cố định.
+Trợ lý kết hợp kho tri thức có cấu trúc, tài liệu HDSD nhúng và dữ liệu báo cáo hiện có; bộ định tuyến ưu tiên tên chức năng, mã lỗi và cụm từ cụ thể trước từ khóa chung. Có thể hỏi một phiên bản đã ghi trong lịch sử để đọc đầy đủ mục thay đổi, hoặc nêu hai phiên bản để đối chiếu trực tiếp từng mục. Nếu lịch sử không có phiên bản được hỏi — ví dụ v2.0 — Trợ lý nói rõ không có mục được ghi nhận và không tự dựng thay đổi. Trợ lý xử lý cách diễn đạt tự nhiên, câu không dấu, viết tắt, lỗi gõ và câu nhiều ý. Câu có liên quan đến VietLicenSure nhưng thiếu dữ liệu sẽ được nói rõ là chưa đủ thông tin; chỉ nội dung thật sự không liên quan mới được báo ngoài phạm vi, với cách diễn đạt phù hợp từng ngữ cảnh thay vì lặp một câu cố định.
 
 ### Đồng bộ tri thức
 
-Trợ lý vẫn dùng được khi Offline trên mọi máy bằng bộ tri thức nền và dữ liệu báo cáo cục bộ của chính máy đó. Sau khi người dùng chủ động cấp quyền Online, Tool chỉ tải `tool-assistant-knowledge-v1.1.json` cùng chữ ký CMS rời từ hai đường dẫn GitHub đã khóa. Tool kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, đúng phạm vi Tool, kích thước, dải phiên bản và chống hạ phiên bản trước khi thay cache; bản hợp lệ trước đó được giữ để khôi phục. Câu hỏi, báo cáo, inventory, đường dẫn, khóa và token không được gửi đi. Phần tri thức cập nhật nằm trong `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, không được nhúng thêm vào EXE; chỉ thư mục cache cục bộ tăng theo giới hạn 2 MiB.
+Trợ lý vẫn dùng được khi Offline trên mọi máy bằng bộ tri thức nền và dữ liệu báo cáo cục bộ của chính máy đó. Sau khi người dùng chủ động cấp quyền Online, VietLicenSure chỉ tải `tool-assistant-knowledge-v1.1.json` cùng chữ ký CMS rời từ hai đường dẫn GitHub đã khóa. VietLicenSure kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, đúng phạm vi ứng dụng, kích thước, dải phiên bản và chống hạ phiên bản trước khi thay cache; bản hợp lệ trước đó được giữ để khôi phục. Câu hỏi, báo cáo, inventory, đường dẫn, khóa và token không được gửi đi. Phần tri thức cập nhật nằm trong `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, không được nhúng thêm vào EXE; chỉ thư mục cache cục bộ tăng theo giới hạn 2 MiB.
 
 ## Quy trình sử dụng được khuyến nghị
 
@@ -163,7 +163,7 @@ Cách hiểu nhanh:
 - OEM_DM: có thể có key OEM trong firmware, nhưng edition hiện tại phải tương thích.
 - Retail/MAK: cần xác nhận nguồn key và phạm vi sử dụng.
 - Volume_KMS: chỉ hợp lệ khi máy thuộc tổ chức có máy chủ KMS được phê duyệt.
-- **Đã kích hoạt — chưa xác minh quyền sử dụng**: trạng thái kỹ thuật đang hoạt động nhưng Tool chưa có tài khoản, hóa đơn hoặc hợp đồng để chứng minh quyền sử dụng.
+- **Đã kích hoạt — chưa xác minh quyền sử dụng**: trạng thái kỹ thuật đang hoạt động nhưng VietLicenSure chưa có tài khoản, hóa đơn hoặc hợp đồng để chứng minh quyền sử dụng.
 - **KMS chưa được phê duyệt**: tìm thấy cấu hình KMS trực tiếp nhưng máy chủ không nằm trong danh sách KMS hợp lệ do đơn vị cung cấp.
 - **Không thể xác minh bản quyền**: nguồn cấp phép trả lỗi, dữ liệu mâu thuẫn hoặc thiếu bằng chứng. Đây không phải xác nhận chính hãng và cũng không tự động là kết luận crack.
 
@@ -205,7 +205,7 @@ Cách thực hiện:
 6. Mở phần Dấu vết hệ thống liên quan để xem hosts, firewall, dịch vụ, task, autorun hoặc artifact được liên kết với ứng dụng.
 7. Đối chiếu tài khoản, hóa đơn, nguồn cài và thông báo từ chính hãng trước khi kết luận quyền sử dụng.
 
-Tool kiểm tra bổ sung:
+VietLicenSure kiểm tra bổ sung:
 
 - Nhiều EXE và DLL quan trọng trong thư mục cài đặt.
 - Chữ ký Authenticode, nhà phát hành và dấu hiệu HashMismatch.
@@ -255,11 +255,11 @@ Backup không lưu product key/token đầy đủ và không được dùng đ�
 
 ### Lựa chọn 2 – Kiểm tra và khắc phục thủ công
 
-Trên màn hình riêng của từng chức năng khắc phục có các cách tiếp tục phù hợp với phạm vi đó. Tool dùng ngay phạm vi đã khóa và không mở rộng sang nhóm khác; chỉ ô tổng hợp ở Tổng quan mới hiển thị ba ô tích Windows, Office và Phần mềm khác:
+Trên màn hình riêng của từng chức năng khắc phục có các cách tiếp tục phù hợp với phạm vi đó. VietLicenSure dùng ngay phạm vi đã khóa và không mở rộng sang nhóm khác; chỉ ô tổng hợp ở Tổng quan mới hiển thị ba ô tích Windows, Office và Phần mềm khác:
 
 #### Kết nối online trong Khắc phục
 
-Sau khi người dùng đồng ý, Tool tải danh mục đối chiếu được phép rồi chỉ quét các phạm vi đã tích; không tải danh sách phần mềm hoặc dữ liệu máy lên mạng.
+Sau khi người dùng đồng ý, VietLicenSure tải danh mục đối chiếu được phép rồi chỉ quét các phạm vi đã tích; không tải danh sách phần mềm hoặc dữ liệu máy lên mạng.
 
 #### Chạy thử – không thay đổi hệ thống
 
@@ -271,7 +271,7 @@ Thao tác này thực hiện luồng thật bên dưới. Nếu chọn **Thực 
 
 #### Thực hiện thật sau Chạy thử
 
-Tool luôn mở lại danh sách mục đã quét, yêu cầu người dùng chọn lại và xác nhận lần nữa trước khi xin UAC. Kế hoạch Chạy thử chỉ để xem trước và không bao giờ tự chuyển thành thao tác thật.
+VietLicenSure luôn mở lại danh sách mục đã quét, yêu cầu người dùng chọn lại và xác nhận lần nữa trước khi xin UAC. Kế hoạch Chạy thử chỉ để xem trước và không bao giờ tự chuyển thành thao tác thật.
 
 1. Chọn Kiểm tra và đưa về trạng thái gốc.
 2. Xác nhận phạm vi đã khóa; hoặc nếu mở từ ô tổng hợp, tích một hay nhiều mục Windows, Office, Phần mềm khác rồi chọn Tiếp tục.
@@ -286,13 +286,13 @@ Tool luôn mở lại danh sách mục đã quét, yêu cầu người dùng ch�
 
 #### Sửa nhanh nguồn quét
 
-Chỉ dùng khi Tool báo nguồn WMI/CIM, dịch vụ cấp phép hoặc Task Scheduler chưa đầy đủ. Tool sửa các nguồn quét cần thiết trong đúng phạm vi rồi yêu cầu quét lại; thao tác này không thay thế việc xem bằng chứng và không tự xử lý các mục phát hiện.
+Chỉ dùng khi VietLicenSure báo nguồn WMI/CIM, dịch vụ cấp phép hoặc Task Scheduler chưa đầy đủ. VietLicenSure sửa các nguồn quét cần thiết trong đúng phạm vi rồi yêu cầu quét lại; thao tác này không thay thế việc xem bằng chứng và không tự xử lý các mục phát hiện.
 
-“Sẵn sàng kích hoạt” chỉ xác nhận không còn bằng chứng crack/KMS chưa được phê duyệt trong phạm vi đã quét; không đồng nghĩa đã có giấy phép. Khi nhập key, Windows chỉ hiện `ActivationConfirmed = TRUE` sau khi hậu kiểm `LicenseStatus=1` và đúng key; Office chỉ TRUE khi đúng SKU/key báo `LICENSED`. Nếu chưa đạt, kết quả vẫn là FALSE và Tool mở trang Activation hoặc hướng dẫn đăng nhập/redeem chính thức. Với phần mềm khác, dùng nút nguồn hãng; ứng dụng bị sửa tệp phải Repair/cài lại chính thức trước. Tool giữ nguyên giấy phép chính hãng đang hợp lệ và không giả lập dòng “Activate Windows”.
+“Sẵn sàng kích hoạt” chỉ xác nhận không còn bằng chứng crack/KMS chưa được phê duyệt trong phạm vi đã quét; không đồng nghĩa đã có giấy phép. Khi nhập key, Windows chỉ hiện `ActivationConfirmed = TRUE` sau khi hậu kiểm `LicenseStatus=1` và đúng key; Office chỉ TRUE khi đúng SKU/key báo `LICENSED`. Nếu chưa đạt, kết quả vẫn là FALSE và VietLicenSure mở trang Activation hoặc hướng dẫn đăng nhập/redeem chính thức. Với phần mềm khác, dùng nút nguồn hãng; ứng dụng bị sửa tệp phải Repair/cài lại chính thức trước. VietLicenSure giữ nguyên giấy phép chính hãng đang hợp lệ và không giả lập dòng “Activate Windows”.
 
 Với máy lạ hoặc khi chưa chắc phạm vi tác động, nên chạy Dry Run trước, lưu báo cáo rồi mới quyết định có thực hiện thật hay không.
 
-Tùy bằng chứng, kế hoạch phần mềm khác chỉ có thể cách ly đúng artifact crack/activator đã xác nhận trực tiếp hoặc khôi phục đúng dòng hosts bị chặn. Tool không đặt lại kho license của hãng, không chạy Repair MSI, không gỡ ứng dụng và không tự thay đổi Firewall, tiến trình, dịch vụ, tác vụ, thư mục hay Registry. Các dấu hiệu còn lại được giữ để kiểm tra thủ công và có thể hướng dẫn Repair/cài lại từ nguồn chính thức.
+Tùy bằng chứng, kế hoạch phần mềm khác chỉ có thể cách ly đúng artifact crack/activator đã xác nhận trực tiếp hoặc khôi phục đúng dòng hosts bị chặn. VietLicenSure không đặt lại kho license của hãng, không chạy Repair MSI, không gỡ ứng dụng và không tự thay đổi Firewall, tiến trình, dịch vụ, tác vụ, thư mục hay Registry. Các dấu hiệu còn lại được giữ để kiểm tra thủ công và có thể hướng dẫn Repair/cài lại từ nguồn chính thức.
 
 Sau hậu kiểm hoặc khi bấm Quét lại, danh sách xử lý chỉ hiện mục còn bằng chứng activator/can thiệp. Phần mềm chỉ ở trạng thái Chưa xác minh vẫn được giữ trong báo cáo kiểm kê để kiểm tra thủ công nhưng không bị coi là làm sạch thất bại. Tệp activator độc lập trong Downloads, Desktop hoặc TEMP chỉ được cách ly sau khi người dùng chọn đúng dòng và xác nhận; tệp trong kho backup/quarantine không bị quét ngược.
 
@@ -316,7 +316,7 @@ Chuyển sang Quản lý giấy phép hợp lệ khi máy đã sẵn sàng; ngư
 
 #### Khôi phục backup trong Trung tâm xử lý
 
-Phục hồi dữ liệu an toàn từ bản sao lưu phù hợp sau khi Tool xác minh tính toàn vẹn và đúng máy.
+Phục hồi dữ liệu an toàn từ bản sao lưu phù hợp sau khi VietLicenSure xác minh tính toàn vẹn và đúng máy.
 
 #### Mở báo cáo trong Trung tâm xử lý
 
@@ -363,7 +363,7 @@ Nếu key không khớp edition, Windows có thể từ chối. Không dùng key
 
 ## Quản lý giấy phép hợp lệ
 
-Chức năng này gồm Quản lý cục bộ Windows/Office, Máy chủ và Máy trạm. Ở chế độ cục bộ, người dùng chọn đúng thao tác Windows hoặc Office, nhập key hợp lệ khi cần, đọc xác nhận rồi mới cho phép cài key, đổi edition hoặc kích hoạt. Ở chế độ doanh nghiệp, quản trị viên chủ động bật LAN, tạo Máy chủ, ghép Máy trạm bằng mã tạm thời và nhận báo cáo theo chính sách; lệnh thay đổi giấy phép từ xa mặc định bị tắt. Tool không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
+Chức năng này gồm Quản lý cục bộ Windows/Office, Máy chủ và Máy trạm. Ở chế độ cục bộ, người dùng chọn đúng thao tác Windows hoặc Office, nhập key hợp lệ khi cần, đọc xác nhận rồi mới cho phép cài key, đổi edition hoặc kích hoạt. Ở chế độ doanh nghiệp, quản trị viên chủ động bật LAN, tạo Máy chủ, ghép Máy trạm bằng mã tạm thời và nhận báo cáo theo chính sách; lệnh thay đổi giấy phép từ xa mặc định bị tắt. VietLicenSure không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
 
 ### Quản lý cục bộ
 
@@ -422,10 +422,10 @@ Trung tâm có tám lựa chọn:
 Cách dùng chính:
 
 - Chứng chỉ: kiểm tra chữ ký tệp lõi; chữ ký hợp lệ không tự chứng minh giấy phép hợp lệ.
-- Plugin: chạy quy tắc JSON chỉ đọc. Bản chính thức chỉ cài plugin có chữ ký CMS khi SHA-256 của chứng thư nhà phát hành đã được quản trị viên xác minh qua kênh độc lập và ghim trong `trusted-plugin-publishers-v1.json`. Nếu Tool báo chưa có chính sách này, đó là khóa bảo mật đúng thiết kế chứ không phải lỗi ứng dụng; không sao chép fingerprint từ chính gói plugin để tự cấp tin cậy. Tên `v4.6` trong đường dẫn là thế hệ lưu trữ dữ liệu tương thích, không phải phiên bản Tool đang chạy.
+- Plugin: chạy quy tắc JSON chỉ đọc. Bản chính thức chỉ cài plugin có chữ ký CMS khi SHA-256 của chứng thư nhà phát hành đã được quản trị viên xác minh qua kênh độc lập và ghim trong `trusted-plugin-publishers-v1.json`. Nếu VietLicenSure báo chưa có chính sách này, đó là khóa bảo mật đúng thiết kế chứ không phải lỗi ứng dụng; không sao chép fingerprint từ chính gói plugin để tự cấp tin cậy. Tên `v4.6` trong đường dẫn là thế hệ lưu trữ dữ liệu tương thích, không phải phiên bản VietLicenSure đang chạy.
 - Timeline: xác minh chuỗi nhật ký do công cụ tạo trên máy này.
 - Hướng dẫn: mở chính tài liệu này thành HTML và tạo PDF trên Desktop.
-- Phiên bản và cập nhật: xem lịch sử thay đổi và thông tin cập nhật của Tool.
+- Phiên bản và cập nhật: xem lịch sử thay đổi và thông tin cập nhật của VietLicenSure.
 - Gói hỗ trợ: chỉ lấy báo cáo đã che định danh, cho xem trước danh sách tệp và cảnh báo riêng tư trước khi tạo ZIP.
 
 ## Cách đọc trạng thái phần mềm
@@ -456,7 +456,7 @@ Kết nối này chỉ tải danh mục nhận diện. Công cụ không gửi d
 
 ## Báo cáo và vị trí lưu
 
-- Thư mục duy nhất là `Desktop\BaoCao-VietLicenSure`; Tool không tạo thư mục con cho từng lần xuất.
+- Thư mục duy nhất là `Desktop\BaoCao-VietLicenSure`; VietLicenSure không tạo thư mục con cho từng lần xuất.
 - HTML tổng quan, PDF chi tiết, JSON/XML và tệp SHA-256 của cùng lần xuất nằm cạnh nhau, dùng cùng tên gốc và dấu thời gian đến mili-giây.
 - Sau khi hoàn tất, công cụ chỉ tự mở HTML tổng quan bằng trình duyệt mặc định. Muốn xem đủ bảng và bằng chứng, chọn **Mở PDF chi tiết** ngay trong HTML; PDF/JSON/XML không tự bật.
 - JSON, XML hoặc CSV dùng cho tích hợp, kiểm toán và phân tích có cấu trúc.
@@ -466,7 +466,7 @@ Kết nối này chỉ tải danh mục nhận diện. Công cụ không gửi d
 
 ### Quyền riêng tư báo cáo
 
-Dùng báo cáo đã che khi chia sẻ ra ngoài. Báo cáo đầy đủ chỉ lưu và xử lý nội bộ vì có thể chứa tên máy, tên người dùng, IP, đường dẫn và KMS server; Tool không ghi product key đầy đủ vào báo cáo.
+Dùng báo cáo đã che khi chia sẻ ra ngoài. Báo cáo đầy đủ chỉ lưu và xử lý nội bộ vì có thể chứa tên máy, tên người dùng, IP, đường dẫn và KMS server; VietLicenSure không ghi product key đầy đủ vào báo cáo.
 
 ## Tác vụ chạy lâu và nút Dừng
 
@@ -536,13 +536,16 @@ Tác vụ có vẻ treo:
 
 ## Mã nguồn và quyền sử dụng từ v4.9
 
-Bản thực thi chính thức tiếp tục miễn phí cho cộng đồng theo điều khoản đi kèm. Dự án tiếp nhận báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai miễn phí, không được phát hành theo giấy phép mã nguồn mở và được tác giả quản lý theo cơ chế truy cập có kiểm soát. Chính sách bảo vệ nguồn gốc sau khi tác giả ghi nhận nội dung, giao diện, mô tả và thành quả phát triển bị sao chép gần như nguyên trạng rồi đổi tên/đổi thương hiệu mà không xin phép hoặc ghi nhận tác giả; nội dung này không khẳng định backend/mã nguồn đã bị lấy khi chưa có bằng chứng kỹ thuật.
+Bản thực thi chính thức tiếp tục miễn phí cho cộng đồng theo điều khoản đi kèm. Dự án tiếp nhận báo lỗi, đề xuất, tài liệu, bản dịch, kiểm thử và đóng góp kỹ thuật. Kể từ v4.9, mã nguồn không còn được công khai, không được phát hành theo giấy phép mã nguồn mở và được tác giả quản lý theo cơ chế truy cập có kiểm soát. Chính sách thay đổi sau khi tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành thành một phần mềm khác khi chưa được cho phép hay ủy quyền. Mục đích là bảo vệ công sức, chất xám, nguồn gốc sản phẩm, tính toàn vẹn của bản phát hành và tránh nhầm lẫn cho người dùng.
 
-Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải xin ý kiến và nhận chấp thuận bằng văn bản của tác giả trước khi truy cập. Quyền xem không tự cho phép sao chép, chia sẻ, sửa đổi, đóng gói, thương mại hóa, dùng làm dữ liệu huấn luyện, đổi thương hiệu hoặc xóa ghi nhận tác giả. Chính sách áp dụng từ v4.9, không hồi tố điều khoản của phiên bản cũ. Xem `SOURCE-POLICY-v4.9.md` và `LICENSE-NOTICE.txt` trong kho phát hành.
+Phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, thành phần build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ. Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải gửi yêu cầu tới `thanhvietit.hopnghia@gmail.com` và nhận chấp thuận bằng văn bản trước khi truy cập. Quyền xem không tự cho phép sao chép, chia sẻ, sửa đổi, đóng gói, thương mại hóa, dùng làm dữ liệu huấn luyện, đổi thương hiệu hoặc xóa ghi nhận tác giả. Hiện chưa có ngày cam kết mở lại mã nguồn; chính sách được xem xét định kỳ và chỉ thay đổi bằng thông báo chính thức. Xem `SOURCE-POLICY-v4.9.md` và `LICENSE-NOTICE.txt` trong kho phát hành.
 
 ## Kênh hỗ trợ
 
-Zalo: 0978 005 017  
-Email: thanhvietit.hopnghia@gmail.com
+- Báo lỗi: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose
+- Hỏi đáp và đề xuất: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions
+- Báo cáo bảo mật riêng tư: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new
+- Zalo: 0978 005 017
+- Email và yêu cầu truy cập mã nguồn: thanhvietit.hopnghia@gmail.com
 
 © 2026 Thanh Việt.

@@ -1,0 +1,51 @@
+name: Đề xuất tính năng
+description: Đề xuất cải thiện VietLicenSure; câu hỏi mở nên dùng GitHub Discussions.
+title: "[Đề xuất] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hãy mô tả vấn đề cần giải quyết và giá trị với người dùng. Không đăng mã nguồn được kiểm soát hoặc dữ liệu nhạy cảm.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề cần giải quyết
+      description: Hiện tại khó khăn ở đâu, với ai và trong tình huống nào?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Giải pháp đề xuất
+      description: Mô tả hành vi mong muốn, không cần cung cấp mã nguồn.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Phương án khác đã cân nhắc
+  - type: dropdown
+    id: area
+    attributes:
+      label: Phạm vi
+      options:
+        - Giao diện và khả năng tiếp cận
+        - Kiểm tra Windows/Office/phần mềm
+        - Khắc phục và sao lưu
+        - Báo cáo và quyền riêng tư
+        - Trợ lý và tài liệu
+        - Enterprise/LAN
+        - Khác
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Xác nhận
+      options:
+        - label: Tôi không đăng dữ liệu nhạy cảm hoặc mã nguồn được kiểm soát trong đề xuất này.
+          required: true
+        - label: Tôi hiểu việc gửi đề xuất không tự cấp quyền truy cập mã nguồn hoặc chuyển quyền sở hữu.
+          required: true

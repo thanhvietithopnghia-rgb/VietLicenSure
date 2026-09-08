@@ -1,9 +1,9 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật: `2026-09-06`
-Ngày phát hành: `06/09/2026`
+Ngày build kỹ thuật: `2026-09-08`
+Ngày phát hành: `08/09/2026`
 Phiên bản hiển thị: `v5.0`
-Mã kỹ thuật tương thích Windows/updater: `5.0.0.1`
+Mã kỹ thuật tương thích Windows/updater: `5.0.0.2`
 Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
 
 ## Giới thiệu
@@ -11,6 +11,15 @@ Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-
 Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. VietLicenSure giữ đầy đủ chức năng của bản trước và thống nhất tên phiên bản hiển thị là **v5.0**.
 
 Tên gọi kết hợp **Viet** (do người Việt phát triển), **Licen** (`License` — giấy phép/bản quyền phần mềm) và **Sure** (rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật). Phần mềm tập trung nâng cấp trải nghiệm sử dụng, khả năng kiểm tra–nhận diện, quy trình khắc phục an toàn, báo cáo và bảo vệ dữ liệu. VietLicenSure hoạt động Offline theo mặc định, không tự tải inventory hoặc báo cáo lên Internet và chỉ dùng Online khi người dùng chủ động cho phép.
+
+## Cập nhật v5.0.0.2 ngày 08/09/2026
+
+- Công bố rõ lý do chuyển sang mô hình mã nguồn có kiểm soát từ v4.9: tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành thành phần mềm khác khi chưa được cho phép hay ủy quyền.
+- Xác định phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ.
+- Công bố quy trình yêu cầu truy cập bằng văn bản, phạm vi quyền được cấp và nguyên tắc quyền xem không đồng nghĩa quyền sử dụng lại.
+- Xác nhận chưa cam kết ngày mở lại mã nguồn; chính sách được xem xét định kỳ theo khả năng bảo vệ sở hữu trí tuệ, kiểm soát truy cập, thông tin nhạy cảm và chuỗi phát hành.
+- Bổ sung kênh tương tác hai chiều: GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho lỗ hổng bảo mật.
+- Đồng bộ tên hiển thị `VietLicenSure v5.0`, phiên bản kỹ thuật `5.0.0.2` và ngày phát hành `08/09/2026` trong ứng dụng, tài liệu và kênh công khai.
 
 ## Cập nhật v5.0 ngày 06/09/2026
 
