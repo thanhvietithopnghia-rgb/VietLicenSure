@@ -29,3 +29,17 @@ Giới hạn: VM tự động không chứng minh không có lỗ hổng; nó ch
 ## Cổng Public Stable
 
 `BUILD.ps1 -RequireAuthenticode` bắt buộc nhận cả `ClientVmSummaryPath` và `IndependentSecurityReviewPath`. Ba tệp VM thô phải nằm cạnh summary; verifier tính lại SHA-256/kích thước, kiểm tra OS/test trong dữ liệu thô và buộc hash generator khớp source snapshot hiện tại. Cổng từ chối build nếu ma trận không đủ 3/3 Passed, commit không khớp provenance, raw evidence bị sửa, hoặc security review độc lập còn finding Critical/High mở. Tệp attestation mẫu mang trạng thái `NotReviewed` và không thể vượt cổng.
+
+## Bằng chứng cục bộ cho gói sửa theo báo cáo ngày 08/09/2026
+
+- Source snapshot được provenance ràng buộc: `580f68579e50f09f67ae10db330a316262325c3b`.
+- Môi trường chạy: Microsoft Windows 11 Pro 64-bit, phiên bản `10.0.26200`, PowerShell `5.1.26100.9168`.
+- Chế độ bản dựng: `ManagedSigned`; Build ID `5.0.0.2-production-20260908`.
+- Tệp thực thi: `VietLicenSure-v5.0.exe`; SHA-256 `EE9F49A2077C85D81C4D243FEC26209ED15E0418E209FF588F887C2CFC4AC4C7`.
+- Authenticode: `Valid`; signer thumbprint `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA`; có timestamp DigiCert.
+- `VERIFY-DISTRIBUTION.ps1`: `0 lỗi / 0 cảnh báo / 9 mục đạt`; tập đóng gồm 50 tệp; bốn chữ ký CMS được xác minh trên đúng byte tệp JSON.
+- Ca âm tính: đổi một ký tự trong `OFFICIAL-PROVENANCE-v1.json` rồi tạo lại checksum; verifier vẫn từ chối với mã thoát `1`, báo CMS không hợp lệ và source snapshot trong SBOM không khớp.
+- `VERIFY-RELEASE.ps1`: `0 lỗi / 3 cảnh báo đã biết`; x64/x86, 57 payload, 28 module, schema báo cáo, rollback, cập nhật, catalog, plugin, offline/i18n, enterprise và trợ lý đều đạt.
+- Ba cảnh báo đã biết: chứng thư tự ký có thể hiện Unknown publisher trên máy mới; launcher managed IL chưa tuyên bố CFG/load configuration native; máy kiểm tra chưa cài PSScriptAnalyzer nên dùng parser PowerShell tích hợp.
+
+Kết quả trên là bằng chứng hồi quy cục bộ cho đúng gói có SHA-256 đã nêu. Đây **không phải** ma trận máy Windows sạch: Windows 10 22H2, Windows 11 previous, tài khoản thường/admin, có/không Office và security review độc lập vẫn phải có evidence riêng trước khi gắn nhãn `Public Stable`.
