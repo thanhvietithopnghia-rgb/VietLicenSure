@@ -48,7 +48,7 @@ function Test-StoreLauncherTrustProfile {
             ManagedSignedBuildMarker = '0'
             StoreBuildMarker = '1'
             StorePackageName = 'ThanhVit.ToolKimTraBnQuyn'
-            StorePackageVersion = '5.0.0.1'
+            StorePackageVersion = '5.0.0.2'
             StorePackagePublisherId = '9tjmpwr25h78w'
             StorePackageFamilyName = 'ThanhVit.ToolKimTraBnQuyn_9tjmpwr25h78w'
         }

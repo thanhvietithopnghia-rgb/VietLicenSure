@@ -56,7 +56,7 @@ if ($failures.Count -eq 0) {
         }
 
         if ((Get-ToolCulture) -ne "vi-VN") { Fail "Ngôn ngữ mặc định không phải vi-VN." }
-        if ((Get-ToolText -Key "app.title" -Culture "en-US") -ne "VIETLICENSURE - SYSTEM LICENSE INSPECTION AND MANAGEMENT SOFTWARE") { Fail "Catalog en-US không hoạt động." }
+        if ((Get-ToolText -Key "app.title" -Culture "en-US") -ne "VietLicenSure v5.0 - System License Inspection and Management Software") { Fail "Catalog en-US không hoạt động." }
         if (-not (Set-ToolCulturePreference -Culture "en-US") -or (Get-ToolCulture) -ne "en-US") { Fail "Không lưu được en-US." }
         $missing = Get-ToolText -Key "key.does.not.exist" -Culture "en-US"
         if ($missing -ne "[key.does.not.exist]") { Fail "Fallback key ngôn ngữ không xác định sai." }

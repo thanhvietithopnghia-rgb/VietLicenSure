@@ -5,9 +5,12 @@ This document summarizes the core changes in every recorded version, from the fi
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — September 6, 2026
+## v5.0 / 5.0.0.2 — September 8, 2026
 
-- Starting with v5.0, the software is officially renamed from **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**.
+- The v5.0 line was introduced on September 6, 2026 under the official name **VietLicenSure — System License Inspection and Management Software**, replacing the predecessor name **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool**.
+- **Technical release 5.0.0.2:** published on September 8, 2026 with consistent product name, version, and date across the application, documentation, and public channels.
+- **Source policy:** explains controlled access from v4.9 after the software/predecessor was copied, modified, renamed/repackaged, and published without permission or authorization; documents scope, written access requests, and the absence of a committed reopening date.
+- **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.
 - **User experience:** starts faster, presents a clearer responsive interface, supports Light/Dark modes, and opens the requested function directly.
 - **Inspection and recognition:** offers Quick, Standard, and Deep scans for Windows, Microsoft Office, and other software; prioritizes items and supports search, filters, and previous-scan comparison.
 - **Safe remediation:** separates Windows, Office, and other software; requires preview, Dry Run, backup, confirmation, and post-check; adds an integrity-checked backup and restore center.
@@ -23,7 +26,7 @@ Public product page:
 - **Diagnosable licensing and safe remediation:** unreadable data is distinct from unactivated status; reports are read-only; remediation removes only the selected bad key/Activation ID, preserves coexisting genuine licences, and verifies the exact selected scope afterward.
 - **Controlled complete uninstall:** an application can be fully removed only after explicit selection and validation of a source-bound MSI/AppX identity; preview, backup, execution result, and absence post-check remain mandatory.
 - **Protected release chain:** the EXE, provenance, catalog, and update manifest are signed; online comparison accepts declarative data only from pinned official sources and uploads no software inventory or device data.
-- **Policy from v4.9:** the Tool remains free and community-oriented; source is no longer published free of charge, is not open source, and requires the author's prior written approval for access.
+- **Policy from v4.9:** VietLicenSure remains free and community-oriented; source is no longer published publicly, is not open source, and requires the author's prior written approval for access.
 
 ## v4.8.0.1 — August 18, 2026
 

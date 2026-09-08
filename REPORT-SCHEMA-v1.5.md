@@ -7,14 +7,14 @@
 - `SchemaVersion`: `1.5`
 - `ReportSchemaVersion`: `1.5`
 - `ReportKind`: một trong chín loại bên dưới
-- `ToolVersion`: phiên bản Tool tạo báo cáo, hiện tại `5.0.0.1`
+- `ToolVersion`: phiên bản VietLicenSure tạo báo cáo, hiện tại `5.0.0.2`
 - `ToolName`
 - `CreatedAt`: ISO 8601
 - `ComputerName` hoặc `AN_DANH` khi redact
 - `ModuleResult`: module result schema 1.0
 - `Export`: format, privacy mode và output path
 
-Tool có thể bổ sung các object `Capabilities`, `Compatibility`, `Localization` và `Offline`; consumer phải bỏ qua extension field không biết nhưng vẫn từ chối sai trường bắt buộc/schema.
+VietLicenSure có thể bổ sung các object `Capabilities`, `Compatibility`, `Localization` và `Offline`; consumer phải bỏ qua extension field không biết nhưng vẫn từ chối sai trường bắt buộc/schema.
 
 ## Chín ReportKind
 
@@ -55,11 +55,11 @@ HTML là presentation, không phải nguồn dữ liệu machine-readable:
 - A4 print CSS;
 - offline safety validation trước package/PDF.
 
-HTML là bản tổng quan không có bảng dài: chỉ giữ cấu hình chính, kết luận, cảnh báo, hướng xử lý và hướng dẫn mở PDF. PDF được tạo từ một presentation chi tiết riêng theo Edge→Chrome, giữ toàn bộ bảng và bằng chứng. Mỗi lượt trình duyệt đọc HTML và ghi PDF trung gian trong profile tạm đã khóa ACL; chỉ tiến trình Tool mới chép PDF hợp lệ về thư mục báo cáo. Cách này giữ đúng CSS khi Tool chạy nâng quyền hoặc đích thuộc hồ sơ người dùng khác, đồng thời cho phép Chrome tiếp quản nếu Edge lỗi. Word chỉ còn là fallback cho presentation cơ bản không mang theme PDF; báo cáo chi tiết `v4.8-classic-a4` sẽ fail closed để không tạo tài liệu sai bố cục. Không có engine phù hợp thì PDF có thể vắng mặt nhưng JSON/XML/HTML vẫn hợp lệ và HTML thông báo rõ trạng thái này.
+HTML là bản tổng quan không có bảng dài: chỉ giữ cấu hình chính, kết luận, cảnh báo, hướng xử lý và hướng dẫn mở PDF. PDF được tạo từ một presentation chi tiết riêng theo Edge→Chrome, giữ toàn bộ bảng và bằng chứng. Mỗi lượt trình duyệt đọc HTML và ghi PDF trung gian trong profile tạm đã khóa ACL; chỉ tiến trình VietLicenSure mới chép PDF hợp lệ về thư mục báo cáo. Cách này giữ đúng CSS khi VietLicenSure chạy nâng quyền hoặc đích thuộc hồ sơ người dùng khác, đồng thời cho phép Chrome tiếp quản nếu Edge lỗi. Word chỉ còn là fallback cho presentation cơ bản không mang theme PDF; báo cáo chi tiết `v4.8-classic-a4` sẽ fail closed để không tạo tài liệu sai bố cục. Không có engine phù hợp thì PDF có thể vắng mặt nhưng JSON/XML/HTML vẫn hợp lệ và HTML thông báo rõ trạng thái này.
 
 Ở màn hình rộng, HTML cân năm thẻ kết quả nhanh trên một hàng; màn hình hẹp tự giảm số cột. Mỗi kết luận có hai ô con riêng cho Mức xác minh và Hướng xử lý. Chân presentation chi tiết dùng hai hàng cố định (tên công cụ, sau đó thông tin tác giả/hỗ trợ) để PDF không ép hoặc cắt chữ.
 
-Schema 1.4 dùng ngắt trang A4 an toàn cho PDF và metadata `HtmlPresentation=Summary`, `PdfPresentation=Detailed`. Presentation PDF chi tiết mang chủ đề `v4.8-classic-a4`, khóa giao diện A4 sáng, khung xanh, năm thẻ trạng thái và mật độ bảng của v4.8 trong khi vẫn giữ toàn bộ dữ liệu v4.9. Các nhóm thẻ kết quả mang lớp đếm cột `cards-count-N`; vì vậy năm thẻ Windows, Office, dấu hiệu, rà soát và Online/Offline giữ trên cùng một hàng khi in PDF, còn màn hình hẹp vẫn tự co. Từ v4.8, mọi package ghi trực tiếp vào thư mục chung `Desktop\BaoCao-VietLicenSure`, không tạo thư mục con theo lượt; các tệp cùng lượt dùng chung tên gốc có timestamp mili-giây. Khi hoàn tất, Tool mở HTML tổng quan và người dùng chọn nút trong HTML để mở đúng PDF đầy đủ.
+Schema 1.4 dùng ngắt trang A4 an toàn cho PDF và metadata `HtmlPresentation=Summary`, `PdfPresentation=Detailed`. Presentation PDF chi tiết mang chủ đề `v4.8-classic-a4`, khóa giao diện A4 sáng, khung xanh, năm thẻ trạng thái và mật độ bảng của v4.8 trong khi vẫn giữ toàn bộ dữ liệu v4.9. Các nhóm thẻ kết quả mang lớp đếm cột `cards-count-N`; vì vậy năm thẻ Windows, Office, dấu hiệu, rà soát và Online/Offline giữ trên cùng một hàng khi in PDF, còn màn hình hẹp vẫn tự co. Từ v4.8, mọi package ghi trực tiếp vào thư mục chung `Desktop\BaoCao-VietLicenSure`, không tạo thư mục con theo lượt; các tệp cùng lượt dùng chung tên gốc có timestamp mili-giây. Khi hoàn tất, VietLicenSure mở HTML tổng quan và người dùng chọn nút trong HTML để mở đúng PDF đầy đủ.
 
 ## Artifact quản trị v5 ngoài envelope ReportKind
 

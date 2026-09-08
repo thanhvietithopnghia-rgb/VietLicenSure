@@ -1,6 +1,6 @@
 # Ma trận tương thích — mốc nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; đây là bằng chứng lịch sử tham khảo cho VietLicenSure v5.0.0.1, không được dùng thay ma trận máy thật của đúng bản phát hành hiện tại.
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; đây là bằng chứng lịch sử tham khảo cho VietLicenSure v5.0.0.2, không được dùng thay ma trận máy thật của đúng bản phát hành hiện tại.
 
 Mốc rà soát: **2026-08-17 UTC**. Nguồn máy đọc: `compatibility-catalog-v1.0.json`, schema catalog `1.1`, phiên bản `1.1.1.0`.
 

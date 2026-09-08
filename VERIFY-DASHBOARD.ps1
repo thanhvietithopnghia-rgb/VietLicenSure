@@ -101,8 +101,8 @@ if ($guiAst) {
 
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
 Assert-SourcePattern $text '[$]toolVersion\s*=\s*"5\.0"' 'Phiên bản hiển thị của Dashboard chưa được khóa ở v5.0.'
-Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.1"' 'Dashboard chưa dùng release 5.0.0.1.'
-Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.09\.06"' 'Dashboard chưa dùng ngày build 2026.09.06.'
+Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0\.0\.2"' 'Dashboard chưa dùng release 5.0.0.2.'
+Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.09\.08"' 'Dashboard chưa dùng ngày build 2026.09.08.'
 Assert-SourcePattern $text '[$]scanOptimizationHelper\s*=\s*Join-Path\s+[$]PSScriptRoot\s+"Tool-ScanOptimization\.ps1"' 'Dashboard chưa khai báo helper tối ưu phạm vi quét.'
 Assert-SourcePattern $text '(?s)[$]missingFoundationFiles\s*=\s*@\(.+?[$]scanOptimizationHelper.+?\)\s*\|\s*Where-Object' 'Dashboard chưa fail-closed khi thiếu Tool-ScanOptimization.ps1.'
 Assert-SourcePattern $text '(?s)try\s*\{.+?\.\s+[$]capabilityHelper.+?\.\s+[$]scanOptimizationHelper.+?\.\s+[$]loggingHelper' 'Dashboard chưa nạp Tool-ScanOptimization.ps1 trước khi mở hộp phạm vi quét.'
@@ -483,7 +483,7 @@ foreach ($aboutCase in @(@('vi-VN', $fitViCatalog), @('en-US', $fitEnCatalog))) 
             $contentWidth = $headerWidth - (2 * $sideMargin)
             $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
             $headingSize = [Windows.Forms.TextRenderer]::MeasureText([string]$aboutCase[1].'about.heading', $aboutHeadingFont, (New-Object Drawing.Size($contentWidth, 500)), $wrappedFlags)
-            $taglineText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, [string]$aboutCase[1].'about.byline', @('v5.0','2026.09.06'))
+            $taglineText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, [string]$aboutCase[1].'about.byline', @('v5.0','2026.09.08'))
             $taglineSize = [Windows.Forms.TextRenderer]::MeasureText($taglineText, $aboutTaglineFont, (New-Object Drawing.Size($contentWidth, 500)), $wrappedFlags)
             $requiredHeaderHeight = [int](8 * $dpiScale) + $headingSize.Height + [int](3 * $dpiScale) + $taglineSize.Height + [int](5 * $dpiScale)
             if ($headingSize.Width -gt $contentWidth -or $taglineSize.Width -gt $contentWidth -or $requiredHeaderHeight -gt $headerHeight) {
@@ -904,13 +904,14 @@ if ([string]$viCatalog.'app.language.vi' -ne 'Tiếng Việt' -or
     [string]$enCatalog.'app.language.en' -ne 'English') {
     Add-Failure 'Catalog thiếu hai lựa chọn ngôn ngữ Tiếng Việt/English.'
 }
-if ([string]$viCatalog.'app.title' -ne 'VIETLICENSURE - PHẦN MỀM KIỂM TRA VÀ QUẢN LÝ BẢN QUYỀN HỆ THỐNG' -or
+if ([string]$viCatalog.'app.title' -ne 'VietLicenSure v5.0 - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
     [string]$viCatalog.'app.developer' -ne 'Hỗ trợ người dùng cá nhân và doanh nghiệp' -or
-    [string]$viCatalog.'dashboard.sidebar.brand' -ne 'VietLicenSure' -or
+    [string]$viCatalog.'dashboard.sidebar.brand' -ne 'VietLicenSure v5.0' -or
     [string]$viCatalog.'dashboard.sidebar.edition' -ne 'PHẦN MỀM BẢN QUYỀN' -or
     [string]$viCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Việt" -or
     [string]$enCatalog.'dashboard.sidebar.footer' -ne "© 2026 Thanh Viet" -or
-    [string]$enCatalog.'app.title' -ne 'VIETLICENSURE - SYSTEM LICENSE INSPECTION AND MANAGEMENT SOFTWARE') {
+    [string]$enCatalog.'dashboard.sidebar.brand' -ne 'VietLicenSure v5.0' -or
+    [string]$enCatalog.'app.title' -ne 'VietLicenSure v5.0 - System License Inspection and Management Software') {
     Add-Failure 'Tên sản phẩm chưa đúng phạm vi hỗ trợ cá nhân và doanh nghiệp.'
 }
 Assert-SourcePattern $text 'function\s+Toggle-DashboardOfflineMode' 'Dashboard thiếu điều khiển Offline.'
@@ -1037,20 +1038,22 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+06/09/2026\s*$' -or
-        $historyText -notmatch 'chính thức đổi tên từ' -or
+    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+/\s+5\.0\.0\.2\s+—\s+08/09/2026\s*$' -or
+        $historyText -notmatch 'tên chính thức' -or
         $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
         $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
-        $historyText -notmatch 'Offline theo mặc định') {
-        Add-Failure 'Tài liệu lịch sử chưa giới thiệu ngắn gọn đúng định hướng nâng cấp cốt lõi của v5.0 hoặc thiếu nguyên tắc chỉ ghi phiên bản chính thức.'
+        $historyText -notmatch 'Offline theo mặc định' -or
+        $historyText -notmatch 'GitHub Issues' -or
+        $historyText -notmatch 'Chính sách mã nguồn') {
+        Add-Failure 'Tài liệu lịch sử chưa ghi đúng danh tính v5.0.0.2, chính sách mã nguồn, kênh phản hồi hoặc các nâng cấp cốt lõi.'
     }
-    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+06/09/2026\s*$.*?(?=^##\s+v4\.9)').Value
-    if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 6 -or
+    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+/\s+5\.0\.0\.2\s+—\s+08/09/2026\s*$.*?(?=^##\s+v4\.9)').Value
+    if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 9 -or
         $v5HistorySection -match 'Tên\s+\*\*VietLicenSure\*\*\s+ghép từ|kiểm thử UI tự động') {
-        Add-Failure 'Mục lịch sử v5.0 chưa được rút gọn về một dòng đổi tên và năm nhóm nâng cấp cốt lõi.'
+        Add-Failure 'Mục lịch sử v5.0.0.2 chưa được rút gọn về danh tính, chính sách, phản hồi và năm nhóm nâng cấp cốt lõi.'
     }
     $requiredHistoryHeadings = @(
-        '## v5.0 — 06/09/2026',
+        '## v5.0 / 5.0.0.2 — 08/09/2026',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -1102,7 +1105,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## v5.0 — September 6, 2026',
+        '## v5.0 / 5.0.0.2 — September 8, 2026',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',

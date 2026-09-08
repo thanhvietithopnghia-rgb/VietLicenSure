@@ -13,12 +13,15 @@ $otherVersionsVi = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('
 $legacyStoreReservedName = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('VG9vbCBLaeG7g20gVHJhIELhuqNuIFF1eeG7gW4='))
 $repositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure'
 $legacyRepositoryUrl = 'https://github.com/thanhvietithopnghia-rgb/Tool-Kiem-Tra-Ban-Quyen'
-$technicalVersion = '5.0.0.1'
+$technicalVersion = '5.0.0.2'
 $publicReleaseUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/'
 $directDownloadUrl = $repositoryUrl + '/releases/download/v' + $technicalVersion + '/VietLicenSure-v5.0.exe'
+$issuesUrl = $repositoryUrl + '/issues/new/choose'
+$discussionsUrl = $repositoryUrl + '/discussions'
+$securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
-$releaseDateVi = '06/09/2026'
-$releaseDateIso = '2026-09-06'
+$releaseDateVi = '08/09/2026'
+$releaseDateIso = '2026-09-08'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)
@@ -45,6 +48,11 @@ $requiredCurrentFiles = @(
     'QUICK-START-v5.0.md',
     'KNOWN-LIMITATIONS-v5.0.md',
     'RELEASE-HYGIENE-v5.0.md'
+    'SUPPORT.md'
+    'CONTRIBUTING.md'
+    '.github\ISSUE_TEMPLATE\bug_report.yml'
+    '.github\ISSUE_TEMPLATE\feature_request.yml'
+    '.github\ISSUE_TEMPLATE\config.yml'
 )
 foreach ($relativePath in $requiredCurrentFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot $relativePath) -PathType Leaf)) {
@@ -76,6 +84,8 @@ $website = Read-HygieneText 'docs\index.html'
 $launcher = Read-HygieneText 'VietLicenSure-v5.0-OneFile.cs'
 $provenanceHelper = Read-HygieneText 'Tool-Provenance.ps1'
 $buildScript = Read-HygieneText 'BUILD.ps1'
+$support = Read-HygieneText 'SUPPORT.md'
+$contributing = Read-HygieneText 'CONTRIBUTING.md'
 
 foreach ($document in @(
     @{ Name='README.md'; Text=$readme },
@@ -101,12 +111,19 @@ Assert-HygieneContains 'README.md' $readme $directDownloadUrl
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Viet'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Licen'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Sure'
-Assert-HygieneContains 'VERSION-HISTORY-en-US.md' $historyEn 'officially renamed'
+Assert-HygieneContains 'VERSION-HISTORY-en-US.md' $historyEn 'official name'
 Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'ManagedSigned/Pilot'
 Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Public Stable'
-Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top">VIETLICENSURE'
-Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned / Pilot'
+Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top">VietLicenSure'
+Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned/Pilot'
 Assert-HygieneContains 'docs\index.html' $website $directDownloadUrl
+foreach ($channelUrl in @($issuesUrl, $discussionsUrl, $securityAdvisoryUrl)) {
+    Assert-HygieneContains 'README.md' $readme $channelUrl
+    Assert-HygieneContains 'SUPPORT.md' $support $channelUrl
+    Assert-HygieneContains 'docs\index.html' $website $channelUrl
+}
+Assert-HygieneContains 'CONTRIBUTING.md' $contributing $issuesUrl
+Assert-HygieneContains 'SOURCE-POLICY-v4.9.md' (Read-HygieneText 'SOURCE-POLICY-v4.9.md') 'no committed date for reopening the source'
 Assert-HygieneContains 'docs\index.html' $website ('href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases">' + $otherVersionsVi + '</a>')
 Assert-HygieneContains 'VietLicenSure-v5.0-OneFile.cs' $launcher 'namespace ThanhViet.VietLicenSure'
 Assert-HygieneContains 'Tool-Provenance.ps1' $provenanceHelper "SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'"
@@ -133,13 +150,13 @@ foreach ($jsonName in @(
 $stringsVi = (Read-HygieneText 'Tool-Strings.vi-VN.json') | ConvertFrom-Json
 $stringsEn = (Read-HygieneText 'Tool-Strings.en-US.json') | ConvertFrom-Json
 if ([string]$stringsVi.'app.assistant' -cne $assistantNameVi -or
-    [string]$stringsVi.'dashboard.sidebar.brand' -cne $brandName -or
+    [string]$stringsVi.'dashboard.sidebar.brand' -cne "$brandName $displayVersion" -or
     [string]$stringsVi.'dashboard.sidebar.edition' -match 'TOOL' -or
     [string]$stringsVi.'enterprise.form.title' -notlike 'VietLicenSure*') {
     $failures.Add('Vietnamese user-facing brand labels are not synchronized.')
 }
 if ([string]$stringsEn.'app.assistant' -cne 'Assistant' -or
-    [string]$stringsEn.'dashboard.sidebar.brand' -cne $brandName -or
+    [string]$stringsEn.'dashboard.sidebar.brand' -cne "$brandName $displayVersion" -or
     [string]$stringsEn.'dashboard.sidebar.edition' -cne 'LICENSE SOFTWARE' -or
     [string]$stringsEn.'enterprise.form.title' -notlike 'VietLicenSure*') {
     $failures.Add('English user-facing brand labels are not synchronized.')
@@ -208,7 +225,7 @@ foreach ($legacyDocument in @(
     }
 }
 
-if ($releaseDateIso -ne '2026-09-06') { $failures.Add('Internal ISO release date drifted.') }
+if ($releaseDateIso -ne '2026-09-08') { $failures.Add('Internal ISO release date drifted.') }
 
 if ($failures.Count -gt 0) {
     Write-Host "VERIFY-RELEASE-HYGIENE: $($failures.Count) error(s)." -ForegroundColor Red

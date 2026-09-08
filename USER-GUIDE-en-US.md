@@ -8,7 +8,7 @@ VietLicenSure is a Windows application for reviewing computer configuration, Win
 
 The workflow has four steps: select an inspection scope, review results and evidence, preview a remediation plan when needed, then confirm and perform post-verification. Inspection and reporting are read-only by default; system-changing actions always provide a preview, backup, confirmation, and an appropriate privilege request.
 
-The Tool is Offline by default and does not automatically upload inventory or reports. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in the Tool or on the official release page.
+VietLicenSure is Offline by default and does not automatically upload inventory or reports. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page.
 
 ## Scope and operating principles
 
@@ -22,17 +22,17 @@ The Tool is Offline by default and does not automatically upload inventory or re
 ## Before you run the tool
 
 1. If the tool arrived in a ZIP file, extract it first. Do not run it from inside the archive.
-2. Place the Tool executable in a normal folder on a local drive.
+2. Place the VietLicenSure executable in a normal folder on a local drive.
 3. Close Word, Excel, Outlook, and any application that may be remediated.
 4. Prepare a valid account or product key if you expect to change licensing.
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
 6. Keep Offline enabled unless you intentionally need a catalog update or authorized LAN management.
 
-A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download the official build directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
+A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download the official build directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
 
-## How to run the Tool
+## How to run VietLicenSure
 
-1. Double-click the Tool executable in the release folder.
+1. Double-click the VietLicenSure executable in the release folder.
 2. The dashboard opens with the current user's rights and does not request UAC merely to view or scan. If you choose remediation, update, or enterprise administration, verify the named operation and approve UAC only when appropriate.
 3. Wait for Control Center to appear. The first launch can take slightly longer while the protected per-user runtime is prepared.
 4. Select English or Vietnamese and Light or Dark mode in Settings if needed.
@@ -79,13 +79,13 @@ VietLicenSure Assistant understands and answers every product-related question s
 1. Select **Assistant**.
 2. Enter a question in the clearly outlined composer; select **Send** or press `Enter`. Use `Shift+Enter` for a new line.
 3. Read questions and answers in separate colored message frames. New content scrolls into view and the answer appears in the current submission turn.
-4. For a specific error or result, include the related error code, status, or evidence line. Follow-ups such as “how do I use it?”, “what about OEM key recovery?”, or “explain further” retain the immediately preceding Tool topic.
+4. For a specific error or result, include the related error code, status, or evidence line. Follow-ups such as “how do I use it?”, “what about OEM key recovery?”, or “explain further” retain the immediately preceding VietLicenSure topic.
 
 The Assistant combines structured knowledge, bundled documentation, and available report context. Routing prioritizes exact feature names, error codes, and specific phrases before general keywords. Ask about one recorded version to read its complete change entry, or name two versions for a direct section-by-section comparison. If the history has no entry for a requested version — for example v2.0 — the Assistant states that no entry is recorded and does not invent changes. It also handles natural wording, accent-free text, abbreviations, typing errors, and multi-part questions. A related question with insufficient data is identified as such; only genuinely unrelated content is marked out of scope, using wording adapted to the context instead of one repeated canned reply.
 
 ### Sync knowledge
 
-The Assistant remains available Offline on every device through bundled baseline knowledge and that device's own local report context. After explicit Online consent, the Tool downloads only `tool-assistant-knowledge-v1.1.json` and its detached CMS signature from two pinned GitHub paths. It verifies the publisher signature, SHA-256, schema, Tool-only scope, size, compatibility range, and downgrade protection before replacing a backed-up cache. Questions, reports, inventory, paths, keys, and tokens are never uploaded. Growing knowledge is stored under `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, outside the EXE; only this bounded 2 MiB local cache can grow.
+The Assistant remains available Offline on every device through bundled baseline knowledge and that device's own local report context. After explicit Online consent, VietLicenSure downloads only `tool-assistant-knowledge-v1.1.json` and its detached CMS signature from two pinned GitHub paths. It verifies the publisher signature, SHA-256, schema, VietLicenSure-only scope, size, compatibility range, and downgrade protection before replacing a backed-up cache. Questions, reports, inventory, paths, keys, and tokens are never uploaded. Growing knowledge is stored under `%LOCALAPPDATA%\ThanhViet-VietLicenSure\assistant`, outside the EXE; only this bounded 2 MiB local cache can grow.
 
 ## Recommended workflow
 
@@ -163,7 +163,7 @@ This function uses the universal deep scan for all detected software.
 6. Review correlated system traces such as hosts, firewall, service, task, autorun, IFEO, or artifacts.
 7. Compare the technical result with the vendor account, invoice, and installation source.
 
-The Tool can inspect multiple important EXE/DLL files, Authenticode and HashMismatch results, known bad hashes, services, scheduled tasks, autoruns, hosts/firewall indicators, and bounded system locations.
+VietLicenSure can inspect multiple important EXE/DLL files, Authenticode and HashMismatch results, known bad hashes, services, scheduled tasks, autoruns, hosts/firewall indicators, and bounded system locations.
 
 Important interpretation rules:
 
@@ -211,7 +211,7 @@ Each dedicated remediation screen offers only the actions applicable to its lock
 
 #### Online in Remediation
 
-After explicit consent, the Tool downloads the allowed comparison catalog and scans only the selected scopes; it does not upload the software inventory or machine data.
+After explicit consent, VietLicenSure downloads the allowed comparison catalog and scans only the selected scopes; it does not upload the software inventory or machine data.
 
 #### Dry Run — no system changes
 
@@ -223,7 +223,7 @@ This action follows the real workflow below. Choosing **Execute for real** after
 
 #### Execute for real after Dry Run
 
-The Tool always reopens the scanned-item list, requires the user to select the intended items again, and asks for a second confirmation before UAC. A Dry Run plan is preview-only and never becomes a real action automatically.
+VietLicenSure always reopens the scanned-item list, requires the user to select the intended items again, and asks for a second confirmation before UAC. A Dry Run plan is preview-only and never becomes a real action automatically.
 
 1. Select Inspect and return to original state.
 2. Confirm the locked scope, or from the combined Overview tile select one or more scopes—Windows, Office, and Other software—then choose Continue.
@@ -238,9 +238,9 @@ The Tool always reopens the scanned-item list, requires the user to select the i
 
 #### Quick repair scan sources
 
-Use this only when the Tool reports incomplete WMI/CIM, licensing-service, or Task Scheduler sources. The Tool repairs the required scan sources within the selected scope and asks you to scan again; it does not replace evidence review or automatically remediate detected items.
+Use this only when VietLicenSure reports incomplete WMI/CIM, licensing-service, or Task Scheduler sources. VietLicenSure repairs the required scan sources within the selected scope and asks you to scan again; it does not replace evidence review or automatically remediate detected items.
 
-“Ready for activation” means that no crack or unapproved-KMS evidence remains in the scanned scope; it does not mean licensed. After key entry, Windows returns `ActivationConfirmed = TRUE` only when the post-check reports `LicenseStatus=1` for that key, and Office only when the matching SKU/key reports `LICENSED`. Otherwise the result remains FALSE and the Tool opens the official Activation or sign-in/redeem path. For other software, use the vendor-source button; modified binaries may require an official Repair/reinstall first. The Tool preserves a currently valid genuine license and never simulates the “Activate Windows” watermark.
+“Ready for activation” means that no crack or unapproved-KMS evidence remains in the scanned scope; it does not mean licensed. After key entry, Windows returns `ActivationConfirmed = TRUE` only when the post-check reports `LicenseStatus=1` for that key, and Office only when the matching SKU/key reports `LICENSED`. Otherwise the result remains FALSE and VietLicenSure opens the official Activation or sign-in/redeem path. For other software, use the vendor-source button; modified binaries may require an official Repair/reinstall first. VietLicenSure preserves a currently valid genuine license and never simulates the “Activate Windows” watermark.
 
 On an unfamiliar computer or when impact is uncertain, run Dry Run first, retain its report, and review it before authorizing real execution.
 
@@ -268,7 +268,7 @@ Move to Manage valid licenses after the system is ready; the user still needs a 
 
 #### Restore backup from Action Center
 
-Restore safe data from a suitable backup after the Tool verifies its integrity and machine binding.
+Restore safe data from a suitable backup after VietLicenSure verifies its integrity and machine binding.
 
 #### Open report from Action Center
 
@@ -307,7 +307,7 @@ Do not use an OEM key from another computer or force an unsupported edition chan
 
 ## Manage valid licenses
 
-This function includes Local Windows/Office management, Server, and Workstation. In local mode, select the exact Windows or Office action, enter a legitimate key when required, and review confirmation before installing a key, changing edition, or activating. In enterprise mode, an administrator explicitly enables LAN access, creates a Server, pairs Workstations with temporary codes, and receives reports under policy; remote license-changing actions remain disabled by default. The Tool does not generate keys, replace entitlement records, or upload data to a public cloud service.
+This function includes Local Windows/Office management, Server, and Workstation. In local mode, select the exact Windows or Office action, enter a legitimate key when required, and review confirmation before installing a key, changing edition, or activating. In enterprise mode, an administrator explicitly enables LAN access, creates a Server, pairs Workstations with temporary codes, and receives reports under policy; remote license-changing actions remain disabled by default. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
 
 ### Local management
 
@@ -357,7 +357,7 @@ The center contains eight actions:
 7. Open Version and updates.
 8. Create a redacted support bundle.
 
-A valid file signature does not by itself prove a valid license. Official builds install a read-only JSON plugin only when it has a CMS signature and an administrator has independently verified and pinned the publisher certificate SHA-256 in `trusted-plugin-publishers-v1.json`. A missing-policy notice is the intended security gate, not an application failure. Never copy a fingerprint from the plugin package itself to grant trust. The `v4.6` path segment is the compatible data-storage generation, not the running Tool version.
+A valid file signature does not by itself prove a valid license. Official builds install a read-only JSON plugin only when it has a CMS signature and an administrator has independently verified and pinned the publisher certificate SHA-256 in `trusted-plugin-publishers-v1.json`. A missing-policy notice is the intended security gate, not an application failure. Never copy a fingerprint from the plugin package itself to grant trust. The `v4.6` path segment is the compatible data-storage generation, not the running VietLicenSure version.
 
 The timeline covers records created by this tool on this computer; it is not a replacement for purchase records or a SIEM. A support bundle accepts only redacted reports, previews its files and privacy warnings, and creates the ZIP only after confirmation.
 
@@ -400,7 +400,7 @@ This action downloads recognition rules only. It does not upload software invent
 
 ### Report privacy
 
-Use a redacted report for external sharing. Keep a full report internal because it can contain the computer name, user name, IP addresses, paths, and a KMS host; the Tool does not write a complete product key into reports.
+Use a redacted report for external sharing. Keep a full report internal because it can contain the computer name, user name, IP addresses, paths, and a KMS host; VietLicenSure does not write a complete product key into reports.
 
 ## Long-running tasks and Stop
 
@@ -408,7 +408,7 @@ Software inventory, signature checks, Office queries, WMI, and PDF generation ca
 
 ### Stop task
 
-Use Stop only when necessary. If remediation was already running, some actions may have completed. Preserve the backup, reopen the Tool, and run a read-only scan before continuing.
+Use Stop only when necessary. If remediation was already running, some actions may have completed. Preserve the backup, reopen VietLicenSure, and run a read-only scan before continuing.
 
 ## Common problems
 
@@ -469,13 +469,16 @@ The task appears stuck:
 
 ## Source and use policy from v4.9
 
-The official executable remains free of charge for the community under its accompanying terms. The project welcomes bug reports, proposals, documentation, translations, testing, and technical contributions. Starting with v4.9, source code is no longer published free of charge, is not released under an open-source licence, and is managed by the author through controlled access. This policy protects origin after observed near-verbatim copying and rebranding of the Tool's content, interface, descriptions, and development work without permission or attribution. It does not claim that backend or source code was taken where technical evidence has not established that.
+The official executable remains free of charge for the community under its accompanying terms. The project welcomes bug reports, proposals, documentation, translations, testing, and technical contributions. Starting with v4.9, source code is no longer published publicly, is not released under an open-source licence, and is managed by the author through controlled access. The policy changed after the author discovered that VietLicenSure or a predecessor release had been copied, modified, renamed/rebranded or repackaged, then published as a different application without the author's permission or authorization. The purpose is to protect development work, intellectual property, product origin, release integrity, and users from confusing a modified build with an official release.
 
-Anyone wishing to review, study, research, security-test, or contribute to the source must first request and receive the author's written approval. Viewing does not itself permit copying, disclosure, modification, repackaging, commercialization, training-data use, rebranding, or removal of attribution. The policy applies from v4.9 onward and does not retroactively alter the terms of older versions. See `SOURCE-POLICY-v4.9.md` and `LICENSE-NOTICE.txt` in the official repository.
+Controlled material includes implementation source, UI and business logic, detection/remediation rules, build/package/release components, tests, and internal technical documentation. Anyone wishing to review, study, research, security-test, or contribute to the source must request access through `thanhvietit.hopnghia@gmail.com` and receive the author's written approval. Viewing does not itself permit copying, disclosure, modification, repackaging, commercialization, training-data use, rebranding, or removal of attribution. There is no committed reopening date; the policy is reviewed periodically and changes only through an official written notice. See `SOURCE-POLICY-v4.9.md` and `LICENSE-NOTICE.txt` in the official repository.
 
 ## Support
 
-Zalo: 0978 005 017  
-Email: thanhvietit.hopnghia@gmail.com
+- Bug reports: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose
+- Questions and proposals: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions
+- Private security reports: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new
+- Zalo: 0978 005 017
+- Email and controlled-source access requests: thanhvietit.hopnghia@gmail.com
 
 © 2026 Thanh Viet.

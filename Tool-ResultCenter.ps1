@@ -680,11 +680,11 @@ function New-ToolSupportBundle {
             Name='BUILD-IDENTITY.txt'; Kind='BuildIdentity'; Sha256=(Get-ToolResultFileSha256 -Path (Join-Path $stage 'BUILD-IDENTITY.txt')); Length=[int64](Get-Item -LiteralPath (Join-Path $stage 'BUILD-IDENTITY.txt')).Length
         })
         $readme = @(
-            'GOI HO TRO VIETLICENSURE v5.0',
+            'GOI HO TRO VietLicenSure v5.0',
             'Goi nay chi chua bao cao da duoc danh dau che dinh danh va nhat ky WARN/ERROR da loc lai.',
             'Khong chua truong Data, ma tuong quan, ten may/nguoi dung, duong dan day du, IP, MAC, email hoac khoa san pham nhan dien duoc.',
             '',
-            'VIETLICENSURE v5.0 SUPPORT BUNDLE',
+            'VietLicenSure v5.0 SUPPORT BUNDLE',
             'This bundle contains only an already-redacted report and a newly sanitized WARN/ERROR log.',
             'Raw Data fields and recognizable identifiers are excluded.'
         )

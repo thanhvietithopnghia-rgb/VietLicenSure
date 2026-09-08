@@ -242,13 +242,13 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
     $manifestText = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8
     if ($manifestText -notmatch 'requestedExecutionLevel\s+level="asInvoker"') { $failures.Add('Application manifest chưa dùng asInvoker cho dashboard least-privilege.') }
     if ($manifestText -match 'requestedExecutionLevel\s+level="requireAdministrator"') { $failures.Add('Application manifest vẫn buộc quyền quản trị ngay khi mở.') }
-    if ($manifestText -notmatch 'version="5\.0\.0\.1"') { $failures.Add('Application manifest sai phiên bản 5.0.0.1.') }
+    if ($manifestText -notmatch 'version="5\.0\.0\.2"') { $failures.Add('Application manifest sai phiên bản 5.0.0.2.') }
 }
 
 $versionChecks = @(
     @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0\.0\.1"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.09\.06"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0\.0\.2"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.09\.08"' },
     @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-assurance.ps1'; Pattern='\$ReleaseVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-backup.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
@@ -259,9 +259,9 @@ $versionChecks = @(
     @{ File='windows-license-restore.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
     @{ File='windows-oem-license-assistant.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
     @{ File='enterprise-license-manager.ps1'; Pattern='\$script:enterpriseReleaseDisplayName\s*=\s*"v5\.0"' },
-    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyVersion\("5\.0\.0\.1"\)' },
-    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyFileVersion\("5\.0\.0\.1"\)' },
-    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyInformationalVersion\("5\.0\.0\.1"\)' }
+    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyVersion\("5\.0\.0\.2"\)' },
+    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyFileVersion\("5\.0\.0\.2"\)' },
+    @{ File='VietLicenSure-v5.0-OneFile.cs'; Pattern='AssemblyInformationalVersion\("5\.0\.0\.2"\)' }
 )
 foreach ($check in $versionChecks) {
     $path = Join-Path $sourceDirectoryFull $check.File
@@ -1140,8 +1140,8 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
             [string]$applicationUpdateManifest.PublishedAtUtc -ne $expectedPublishedAtUtc) {
             throw 'Sai schema/channel/version cập nhật.'
         }
-        if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.1' -or
-            [string]$applicationUpdateManifest.DownloadUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.1/VietLicenSure-v5.0.exe') {
+        if ([string]$applicationUpdateManifest.ReleasePageUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.2' -or
+            [string]$applicationUpdateManifest.DownloadUrl -ne 'https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe') {
             throw 'URL phát hành/cập nhật không đúng allowlist ổn định.'
         }
         if ([string]$applicationUpdateManifest.DownloadSha256 -ne (Get-Sha256Hex $exePath) -or

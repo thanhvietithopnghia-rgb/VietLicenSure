@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $script:ToolUpdateSchemaVersion = '1.0'
-$script:ToolUpdateToolVersion = '5.0.0.1'
+$script:ToolUpdateToolVersion = '5.0.0.2'
 $script:ToolUpdateDefaultManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json'
 $script:ToolUpdateDefaultManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s'
 $script:ToolUpdateManifestHost = 'raw.githubusercontent.com'
@@ -309,7 +309,7 @@ function ConvertFrom-ToolUpdateManifest {
             throw 'Update manifest contains an invalid signer thumbprint.'
         }
         if (-not $ManifestSignatureVerified -and $script:ToolUpdateSignerThumbprints -notcontains $thumbprint) {
-            throw 'Update manifest declares a signer that is not pinned by this Tool build.'
+            throw 'Update manifest declares a signer that is not pinned by this VietLicenSure build.'
         }
         if ($signerThumbprints.Contains($thumbprint)) { throw 'Update manifest contains a duplicate signer thumbprint.' }
         [void]$signerThumbprints.Add($thumbprint)
@@ -639,7 +639,7 @@ function Wait-ToolUpdateLauncherExit {
     if ($ProcessId -le 0 -or $ProcessId -eq $PID) { throw 'Launcher process identifier is invalid.' }
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     while (Get-Process -Id $ProcessId -ErrorAction SilentlyContinue) {
-        if ([DateTime]::UtcNow -ge $deadline) { throw 'Timed out while waiting for the current Tool to close.' }
+        if ([DateTime]::UtcNow -ge $deadline) { throw 'Timed out while waiting for the current VietLicenSure to close.' }
         Start-Sleep -Milliseconds 250
     }
 }
@@ -657,7 +657,7 @@ function Install-ToolUpdateExecutable {
     $targetFull = [IO.Path]::GetFullPath($TargetPath)
     $targetItem = Get-Item -LiteralPath $targetFull -Force
     if ($targetItem.Extension -ne '.exe' -or ($targetItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
-        throw 'Current Tool launcher path is unsafe.'
+        throw 'Current VietLicenSure launcher path is unsafe.'
     }
     $targetDirectory = Split-Path -Parent $targetFull
     $backupPath = Join-Path $CacheDirectory ("VietLicenSure-$InstalledVersion-backup.exe")
@@ -691,7 +691,7 @@ function Install-ToolUpdateExecutable {
             }
         }
         if ((Get-ToolUpdateSha256 $targetFull) -ne $TargetSha256) {
-            throw 'Installed Tool does not match the verified update.'
+            throw 'Installed VietLicenSure does not match the verified update.'
         }
 
         if (-not $SkipRestart) {
@@ -708,7 +708,7 @@ function Install-ToolUpdateExecutable {
                 }
                 $rollbackCompleted = $true
                 [void](Start-Process -FilePath $targetFull -WorkingDirectory $targetDirectory)
-                throw 'The new Tool exited during startup; the previous version was restored.'
+                throw 'The new VietLicenSure exited during startup; the previous version was restored.'
             }
         }
     } catch {
@@ -786,7 +786,7 @@ function Invoke-ToolUpdateApply {
         Set-ToolUpdateProgress $window (Get-ToolUpdateText 'update.apply.checking') 3
         $candidate = Invoke-ToolUpdateCheck -InstalledVersion $InstalledVersion -InstalledSha256 $CurrentLauncherSha256 -ExplicitConsent -SelectedCulture $Culture -SourceUrl $SourceUrl
         if (-not $candidate.UpdateAvailable -or $candidate.LatestVersion -ne (ConvertTo-ToolUpdateVersion $RequiredVersion).ToString()) {
-            throw 'The available update changed after confirmation. Recheck from the Tool.'
+            throw 'The available update changed after confirmation. Recheck from the VietLicenSure.'
         }
         if (-not $candidate.CanSelfUpdate) { throw 'This update requires a newer updater foundation.' }
 

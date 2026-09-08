@@ -1,5 +1,5 @@
 ﻿$script:ToolAssistantSchemaVersion = "1.1"
-$script:ToolAssistantToolVersion = "5.0.0.1"
+$script:ToolAssistantToolVersion = "5.0.0.2"
 $script:ToolAssistantMinimumKnowledgeVersion = [Version]"1.4.0"
 $script:ToolAssistantKnowledgeFileName = "tool-assistant-knowledge-v1.1.json"
 $script:ToolAssistantKnowledgeUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json"
@@ -1169,7 +1169,7 @@ function Get-ToolAssistantFallbackAnswer {
                 'I cannot help bypass licensing or security controls. I can explain the finding and the safe, official remediation path in VietLicenSure.',
                 'That would weaken licensing or security controls, so I cannot guide it. I can help review the evidence, back up state, and use an official repair path.'
             ) } else { @(
-                'Trợ lý không hướng dẫn lách bản quyền hoặc vô hiệu hóa lớp bảo vệ. Nếu cần, tôi có thể giải thích bằng chứng và hướng khắc phục an toàn, chính thức trong Tool.',
+                'Trợ lý không hướng dẫn lách bản quyền hoặc vô hiệu hóa lớp bảo vệ. Nếu cần, tôi có thể giải thích bằng chứng và hướng khắc phục an toàn, chính thức trong VietLicenSure.',
                 'Nội dung này có thể làm yếu kiểm soát bản quyền hoặc bảo mật nên Trợ lý không thể hướng dẫn. Tôi có thể hỗ trợ đọc bằng chứng, sao lưu và chọn cách xử lý chính thức.'
             ) }
         }
@@ -1184,39 +1184,39 @@ function Get-ToolAssistantFallbackAnswer {
         }
         'Missing' {
             if ($english) { @('The local knowledge base is unavailable, so I cannot give a reliable answer yet.') }
-            else { @('Không đọc được bộ tri thức tương thích của phiên bản Tool này nên Trợ lý chưa thể trả lời đáng tin cậy.') }
+            else { @('Không đọc được bộ tri thức tương thích của phiên bản VietLicenSure này nên Trợ lý chưa thể trả lời đáng tin cậy.') }
         }
         'Insufficient' {
             if ($english) { @(
                 'This is related to VietLicenSure, but the local data does not contain enough verified detail for a reliable conclusion. Add the exact feature, status, error line, or current report evidence.',
-                'I can identify this as a Tool topic, but the available Tool data is not specific enough to answer safely. Send the button name, complete message, or matching report section.'
+                'I can identify this as a VietLicenSure topic, but the available VietLicenSure data is not specific enough to answer safely. Send the button name, complete message, or matching report section.'
             ) } else { @(
-                'Câu hỏi có liên quan đến Tool, nhưng dữ liệu cục bộ chưa đủ chi tiết đã kiểm chứng để kết luận đáng tin cậy. Bạn hãy thêm tên chức năng, trạng thái, nguyên dòng lỗi hoặc bằng chứng trong báo cáo hiện tại.',
-                'Trợ lý nhận ra đây là nội dung của Tool nhưng dữ liệu sẵn có chưa đủ cụ thể để trả lời an toàn. Hãy gửi tên nút, thông báo đầy đủ hoặc đúng mục báo cáo liên quan.'
+                'Câu hỏi có liên quan đến VietLicenSure, nhưng dữ liệu cục bộ chưa đủ chi tiết đã kiểm chứng để kết luận đáng tin cậy. Bạn hãy thêm tên chức năng, trạng thái, nguyên dòng lỗi hoặc bằng chứng trong báo cáo hiện tại.',
+                'Trợ lý nhận ra đây là nội dung của VietLicenSure nhưng dữ liệu sẵn có chưa đủ cụ thể để trả lời an toàn. Hãy gửi tên nút, thông báo đầy đủ hoặc đúng mục báo cáo liên quan.'
             ) }
         }
         default {
             $outsideKey = ConvertTo-ToolAssistantSearchKey -Value $Question
             if ($outsideKey -match '\b(?:nau|mon an|bun|pho|com|banh|cong thuc nau)\b') {
-                if ($english) { @('Cooking is outside VietLicenSure, so I do not have Tool data to answer that recipe. I can still help with running or interpreting the Tool.') }
-                else { @('Câu hỏi về nấu ăn nằm ngoài phạm vi VietLicenSure nên Trợ lý không có dữ liệu Tool để trả lời công thức này. Trợ lý vẫn có thể hỗ trợ cách chạy hoặc đọc kết quả của Tool.') }
+                if ($english) { @('Cooking is outside VietLicenSure, so I do not have VietLicenSure data to answer that recipe. I can still help with running or interpreting the VietLicenSure.') }
+                else { @('Câu hỏi về nấu ăn nằm ngoài phạm vi VietLicenSure nên Trợ lý không có dữ liệu VietLicenSure để trả lời công thức này. Trợ lý vẫn có thể hỗ trợ cách chạy hoặc đọc kết quả của VietLicenSure.') }
             } elseif ($outsideKey -match '\b(?:thoi tiet|du bao|mua nang|tin tuc|the thao|ty so)\b') {
-                if ($english) { @('Live weather, news, and sports are outside VietLicenSure and are not present in its local data. Ask about a Tool status, scan, or report instead.') }
-                else { @('Thời tiết, tin tức hoặc tỷ số trực tiếp nằm ngoài phạm vi VietLicenSure và không có trong dữ liệu cục bộ của Tool. Bạn có thể hỏi về trạng thái, lượt quét hoặc báo cáo của Tool.') }
+                if ($english) { @('Live weather, news, and sports are outside VietLicenSure and are not present in its local data. Ask about a VietLicenSure status, scan, or report instead.') }
+                else { @('Thời tiết, tin tức hoặc tỷ số trực tiếp nằm ngoài phạm vi VietLicenSure và không có trong dữ liệu cục bộ của VietLicenSure. Bạn có thể hỏi về trạng thái, lượt quét hoặc báo cáo của VietLicenSure.') }
             } elseif ($outsideKey -match '\b(?:benh|thuoc|suc khoe|bac si|luat|dau tu|chung khoan)\b') {
-                if ($english) { @('That professional topic is outside VietLicenSure. This assistant will not substitute Tool data for medical, legal, or financial guidance.') }
-                else { @('Chủ đề chuyên môn này nằm ngoài phạm vi VietLicenSure. Trợ lý không dùng dữ liệu của Tool để thay cho tư vấn y tế, pháp lý hoặc tài chính.') }
+                if ($english) { @('That professional topic is outside VietLicenSure. This assistant will not substitute VietLicenSure data for medical, legal, or financial guidance.') }
+                else { @('Chủ đề chuyên môn này nằm ngoài phạm vi VietLicenSure. Trợ lý không dùng dữ liệu của VietLicenSure để thay cho tư vấn y tế, pháp lý hoặc tài chính.') }
             } elseif ($outsideKey -match '\b(?:viet bai|lam tho|dich van ban|ke chuyen|sang tac)\b') {
-                if ($english) { @('Writing or translation unrelated to the product is outside VietLicenSure. I can explain Tool text, labels, reports, and workflows when those are the subject.') }
-                else { @('Viết bài, làm thơ hoặc dịch nội dung không liên quan đến sản phẩm nằm ngoài phạm vi VietLicenSure. Nếu đó là nhãn, báo cáo hay quy trình của Tool, Trợ lý có thể giải thích.') }
+                if ($english) { @('Writing or translation unrelated to the product is outside VietLicenSure. I can explain VietLicenSure text, labels, reports, and workflows when those are the subject.') }
+                else { @('Viết bài, làm thơ hoặc dịch nội dung không liên quan đến sản phẩm nằm ngoài phạm vi VietLicenSure. Nếu đó là nhãn, báo cáo hay quy trình của VietLicenSure, Trợ lý có thể giải thích.') }
             } elseif ($english) { @(
-                'That topic is outside VietLicenSure, so its local knowledge does not provide an answer. Questions about any Tool feature, state, report, error, or workflow remain in scope.',
-                'I cannot connect this question to VietLicenSure data. If it concerns the product, include the screen, button, status, or message so I can use the right Tool context.',
+                'That topic is outside VietLicenSure, so its local knowledge does not provide an answer. Questions about any VietLicenSure feature, state, report, error, or workflow remain in scope.',
+                'I cannot connect this question to VietLicenSure data. If it concerns the product, include the screen, button, status, or message so I can use the right VietLicenSure context.',
                 'This request is unrelated to VietLicenSure. The assistant remains available for the product, its operation, its evidence, and its supported Windows/Office/software workflows.'
             ) } else { @(
-                'Chủ đề này không liên quan đến VietLicenSure nên nằm ngoài phạm vi dữ liệu của Trợ lý. Mọi câu hỏi về sản phẩm, chức năng, trạng thái, báo cáo, lỗi hoặc quy trình của Tool vẫn được hỗ trợ.',
-                'Trợ lý chưa liên hệ được câu hỏi này với dữ liệu của VietLicenSure. Nếu câu hỏi thực sự nói về Tool, bạn hãy thêm tên màn hình, nút, trạng thái hoặc thông báo để xác định đúng ngữ cảnh.',
-                'Yêu cầu này không thuộc VietLicenSure. Trợ lý vẫn trả lời các nội dung liên quan đến cách vận hành, bằng chứng và quy trình Windows, Office hoặc phần mềm mà Tool hỗ trợ.'
+                'Chủ đề này không liên quan đến VietLicenSure nên nằm ngoài phạm vi dữ liệu của Trợ lý. Mọi câu hỏi về sản phẩm, chức năng, trạng thái, báo cáo, lỗi hoặc quy trình của VietLicenSure vẫn được hỗ trợ.',
+                'Trợ lý chưa liên hệ được câu hỏi này với dữ liệu của VietLicenSure. Nếu câu hỏi thực sự nói về VietLicenSure, bạn hãy thêm tên màn hình, nút, trạng thái hoặc thông báo để xác định đúng ngữ cảnh.',
+                'Yêu cầu này không thuộc VietLicenSure. Trợ lý vẫn trả lời các nội dung liên quan đến cách vận hành, bằng chứng và quy trình Windows, Office hoặc phần mềm mà VietLicenSure hỗ trợ.'
             ) }
         }
     }
@@ -1269,11 +1269,11 @@ function Get-ToolAssistantAnswer {
     if ($null -ne $OnlineMode -and $originalQueryKey -match '(?:(?:tool|cong cu|che do|trang thai mang|trang thai).*(?:online|offline).*(?:hien tai|luc nay|bay gio|dang)|(?:trang thai|che do).*(?:online|offline).*(?:hien tai|luc nay|bay gio)|(?:dang|hien tai).*(?:online|offline)|^online hay offline$)') {
         $isOnline = [bool]$OnlineMode
         if ($Culture -eq 'en-US') {
-            if ($isOnline) { return 'The Tool is Online for this session. Network access is allowed only for actions you explicitly start; reopening the Tool returns to Offline.' }
-            return 'The Tool is currently Offline. Local scans, reports, and the bundled Assistant knowledge remain available without Internet access.'
+            if ($isOnline) { return 'The VietLicenSure is Online for this session. Network access is allowed only for actions you explicitly start; reopening the VietLicenSure returns to Offline.' }
+            return 'The VietLicenSure is currently Offline. Local scans, reports, and the bundled Assistant knowledge remain available without Internet access.'
         }
-        if ($isOnline) { return 'Tool đang Online trong phiên hiện tại. Quyền mạng chỉ được dùng cho thao tác bạn chủ động chạy; đóng rồi mở lại Tool sẽ trở về Offline.' }
-        return 'Tool hiện đang Offline. Các lượt quét cục bộ, báo cáo và kho tri thức nhúng của Trợ lý vẫn dùng được mà không cần Internet.'
+        if ($isOnline) { return 'VietLicenSure đang Online trong phiên hiện tại. Quyền mạng chỉ được dùng cho thao tác bạn chủ động chạy; đóng rồi mở lại VietLicenSure sẽ trở về Offline.' }
+        return 'VietLicenSure hiện đang Offline. Các lượt quét cục bộ, báo cáo và kho tri thức nhúng của Trợ lý vẫn dùng được mà không cần Internet.'
     }
     if ($originalQueryKey -match '(bao cao hien tai|bao cao vua|ket qua hien tai|ket qua vua|trang thai hien tai cua may|may nay dang the nao|scan result|current report|current status|explain (?:the )?current report)') {
         return Format-ToolAssistantReportContext -Context $ReportContext -Culture $Culture
@@ -1360,9 +1360,9 @@ function Get-ToolAssistantUiText {
         "OpenLinkFailed" { if ($english) { return "The GitHub Releases page could not be opened. Please check your default browser." }; return "Không mở được trang GitHub Releases. Hãy kiểm tra trình duyệt mặc định." }
         "OnlineConnected" { if ($english) { return "Online connected" }; return "Đã Online" }
         "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so the Assistant can synchronize knowledge. Restarting the application returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại VietLicenSure vẫn trở về Offline." }
-        "OnlineConnectedTip" { if ($english) { return "Online is allowed for this session. Signed Tool knowledge can now be synchronized." }; return "Online đã được cho phép trong phiên này. Tool có thể đồng bộ gói tri thức đã ký." }
-        "SyncTip" { if ($english) { return "Downloads only the signed Tool knowledge package; questions, reports and device data are never sent." }; return "Chỉ tải gói tri thức Tool đã ký; không gửi câu hỏi, báo cáo hoặc dữ liệu máy." }
-        "OnlineEnabled" { if ($english) { return "Online is now allowed for this session. Signed Tool knowledge will be checked." }; return "Đã cho phép Online trong phiên này. Tool sẽ kiểm tra gói tri thức đã ký." }
+        "OnlineConnectedTip" { if ($english) { return "Online is allowed for this session. Signed VietLicenSure knowledge can now be synchronized." }; return "Online đã được cho phép trong phiên này. VietLicenSure có thể đồng bộ gói tri thức đã ký." }
+        "SyncTip" { if ($english) { return "Downloads only the signed VietLicenSure knowledge package; questions, reports and device data are never sent." }; return "Chỉ tải gói tri thức VietLicenSure đã ký; không gửi câu hỏi, báo cáo hoặc dữ liệu máy." }
+        "OnlineEnabled" { if ($english) { return "Online is now allowed for this session. Signed VietLicenSure knowledge will be checked." }; return "Đã cho phép Online trong phiên này. VietLicenSure sẽ kiểm tra gói tri thức đã ký." }
         "OnlineNotEnabled" { if ($english) { return "Online was not enabled. Assistant continues with local knowledge." }; return "Chưa bật Online. Trợ lý tiếp tục dùng tri thức cục bộ." }
         "Close" { if ($english) { return "Close" }; return "Đóng" }
         "Welcome" { if ($english) { return "The Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data." }; return "Trợ lý hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }

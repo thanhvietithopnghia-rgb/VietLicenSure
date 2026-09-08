@@ -74,7 +74,7 @@ function Assert-UpdateSigningCertificate {
     $actualThumbprint = ([string]$Certificate.Thumbprint).Replace(' ', '').ToUpperInvariant()
     $actualCertificateSha256 = Get-UpdateSigningSha256 -Bytes $Certificate.RawData
     if ($actualThumbprint -cne $expectedThumbprint -or $actualCertificateSha256 -cne $expectedCertificateSha256) {
-        throw 'Signing certificate does not match the hard-pinned Tool publisher.'
+        throw 'Signing certificate does not match the hard-pinned VietLicenSure publisher.'
     }
 }
 
@@ -115,7 +115,7 @@ if ($actualFields.Count -ne $allowedFields.Count -or @($actualFields | Where-Obj
     throw 'Update manifest contains missing or unknown root fields.'
 }
 if ([string]$manifest.SchemaVersion -ne '1.0' -or [string]$manifest.Channel -ne 'stable' -or
-    [string]$manifest.LatestVersion -ne '5.0.0.1' -or [bool]$manifest.AuthenticodeRequired -ne $true -or
+    [string]$manifest.LatestVersion -ne '5.0.0.2' -or [bool]$manifest.AuthenticodeRequired -ne $true -or
     @($manifest.SignerThumbprints).Count -ne 1 -or
     ([string]$manifest.SignerThumbprints[0]).Replace(' ', '').ToUpperInvariant() -notmatch '^[A-F0-9]{40}$') {
     throw 'Update manifest identity or stable signing policy is invalid.'

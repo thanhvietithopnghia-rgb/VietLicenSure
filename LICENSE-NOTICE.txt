@@ -15,13 +15,26 @@ không được đăng lại tệp, đóng gói kèm sản phẩm khác, sửa �
 tên/đổi thương hiệu, mạo danh tác giả, xóa thông tin nguồn gốc hoặc vượt qua cơ
 chế xác minh bản chính thức.
 
-Kể từ phiên bản v4.9, mã nguồn không còn được công khai miễn phí và không được
+Kể từ phiên bản v4.9, mã nguồn không còn được công khai và không được
 phát hành theo giấy phép mã nguồn mở. Việc tiếp cận, tham khảo và sử dụng mã
 nguồn được tác giả quản lý theo cơ chế có kiểm soát. Cá nhân hoặc tổ chức muốn
 xem mã nguồn để học tập, nghiên cứu, đánh giá bảo mật hay đóng góp phát triển
 phải được tác giả chấp thuận trước bằng văn bản. Mỗi chấp thuận chỉ có hiệu lực
 cho đúng người, mục đích, phạm vi, thời hạn và điều kiện được ghi rõ; tác giả có
 quyền giới hạn hoặc từ chối yêu cầu.
+
+Chính sách thay đổi sau khi tác giả phát hiện VietLicenSure hoặc phiên bản tiền
+thân bị sao chép, chỉnh sửa, đổi tên/đổi thương hiệu hoặc đóng gói lại rồi phát
+hành thành một phần mềm khác khi chưa được tác giả cho phép hay ủy quyền. Mục
+đích của việc kiểm soát là bảo vệ công sức, chất xám, nguồn gốc sản phẩm, tính
+toàn vẹn của bản phát hành và tránh nhầm lẫn cho người dùng. Thông báo này không
+nêu danh tính bên thứ ba và không thay thế kết luận pháp lý về tranh chấp cụ thể.
+
+Phạm vi được kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc
+nhận diện/khắc phục, thành phần build–đóng gói–phát hành, kiểm thử và tài liệu kỹ
+thuật nội bộ từ v4.9 trở đi. Yêu cầu truy cập phải gửi bằng văn bản tới
+thanhvietit.hopnghia@gmail.com, nêu rõ người yêu cầu, mục đích, phạm vi, thời hạn,
+người được truy cập và biện pháp bảo vệ mã.
 
 Quyền xem mã không tự cho phép sao chép, trích xuất, chia sẻ, công bố, mirror,
 sửa đổi, dịch ngược, tạo sản phẩm phái sinh, đóng gói, tích hợp, thương mại hóa,
@@ -32,7 +45,9 @@ thuận riêng.
 
 Chính sách này áp dụng cho mã nguồn từ v4.9 trở đi. Phiên bản trước tiếp tục
 chịu điều khoản đi kèm tại thời điểm phát hành; không hồi tố quyền đã được cấp
-hợp lệ. Phần mềm được cung cấp nguyên trạng, không có bảo đảm. Người dùng chịu
+hợp lệ. Hiện chưa có ngày cam kết mở lại mã nguồn; tác giả sẽ xem xét định kỳ và
+chỉ thay đổi chính sách bằng thông báo chính thức bằng văn bản. Phần mềm được
+cung cấp nguyên trạng, không có bảo đảm. Người dùng chịu
 trách nhiệm sao lưu, tuân thủ pháp luật và xác minh phạm vi quản trị trước mọi
 thao tác thay đổi hệ thống.
 
@@ -53,13 +68,24 @@ the file may not be rehosted, bundled, modified, sold, monetized, renamed,
 rebranded, claimed as another person's work, stripped of origin notices, or
 altered to bypass official-build verification.
 
-Starting with v4.9, source code is no longer published free of charge and is not
+Starting with v4.9, source code is no longer published publicly and is not
 released under an open-source licence. Access, review, and use are managed by
 the author through controlled access. Anyone who wants to review, study,
 research, security-test, or contribute to the source must first receive the
 author's written approval. Each approval is limited to the named recipient,
 purpose, scope, duration, and conditions. The author may limit or decline a
 request.
+
+The policy changed after the author discovered that VietLicenSure or a
+predecessor release had been copied, modified, renamed/rebranded or repackaged,
+then published as a different application without the author's permission or
+authorization. Controlled material includes implementation source, UI and
+business logic, detection/remediation rules, build/package/release components,
+tests, and internal technical documentation from v4.9 onward. Requests must be
+sent in writing to thanhvietit.hopnghia@gmail.com and identify the requester,
+purpose, scope, duration, authorized readers, and source-protection measures.
+This notice does not identify a third party or replace a legal determination in
+any specific dispute.
 
 Permission to view source does not itself permit copying, extraction,
 disclosure, publication, mirroring, modification, reverse engineering,
@@ -71,7 +97,9 @@ submission channel, copyright terms, and test requirements.
 
 This policy applies to source code from v4.9 onward. Earlier versions remain
 governed by the terms distributed with them; rights validly granted earlier are
-not retroactively changed. The software is provided “as is”, without warranty.
+not retroactively changed. There is no committed reopening date; the author will
+review the policy periodically and announce any change in an official written
+notice. The software is provided “as is”, without warranty.
 Users are responsible for backups, legal compliance, and confirming their
 authorized administrative scope before system-changing work.
 

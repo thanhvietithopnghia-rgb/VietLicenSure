@@ -88,7 +88,7 @@ try {
         Fail 'Banner bản đang dùng vẫn lộ thuật ngữ phát hành hoặc chưa dùng câu chữ phổ thông.'
     }
     if ([string]$viStrings.'software.results.status.noIssue' -ne 'Không thấy dấu hiệu cần xử lý' -or
-        [string]$viStrings.'software.results.status.reviewOnly' -ne 'Cần xem thêm - Tool chưa kết luận' -or
+        [string]$viStrings.'software.results.status.reviewOnly' -ne 'Cần xem thêm - VietLicenSure chưa kết luận' -or
         [string]$viStrings.'software.results.hint' -notmatch '(?i)có thể chọn phần mềm trả phí, thuê bao, dùng thử, nghi ngờ hoặc chưa rõ' -or
         [string]$viStrings.'software.results.noEvidence' -match '(?i)chính hãng|bằng chứng đủ mạnh') {
         Fail 'Danh sách phần mềm vẫn biến việc chưa có dấu hiệu thành kết luận bản quyền gây hiểu nhầm.'

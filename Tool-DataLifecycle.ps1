@@ -2,7 +2,7 @@
 $script:ToolDataSchemaVersion = "2.0"
 $script:ToolDataStorageGeneration = "v4.6"
 $script:ToolDataLegacyStorageGeneration = "v4.6"
-$script:ToolDataToolVersion = "5.0.0.1"
+$script:ToolDataToolVersion = "5.0.0.2"
 $script:ToolDataMigrationMutexName = "Global\ThanhViet.ToolKiemTra.DataMigration.v4.6"
 $script:ToolDataInitializedRoot = ""
 $script:ToolDataLifecycleState = $null
@@ -297,7 +297,7 @@ function Initialize-ToolDataLifecycle {
                 throw "StorageGeneration không tương thích: $([string]$state.StorageGeneration)."
             }
             if ([string]$state.MigrationStatus -eq 'Partial') {
-                throw "Migration dữ liệu trước đó chưa hoàn tất; Tool từ chối ghi để tránh dùng trạng thái một phần."
+                throw "Migration dữ liệu trước đó chưa hoàn tất; VietLicenSure từ chối ghi để tránh dùng trạng thái một phần."
             }
             if (-not $state.PSObject.Properties['ProducerVersion']) {
                 $producerVersion = if ($state.PSObject.Properties['ProductVersion']) { [string]$state.ProductVersion } else { $script:ToolDataToolVersion }

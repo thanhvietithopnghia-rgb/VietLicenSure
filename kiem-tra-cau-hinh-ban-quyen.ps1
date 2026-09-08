@@ -18,7 +18,7 @@
 )
 
 $ToolVersion = "5.0"
-$ToolReleaseVersion = "5.0.0.1"
+$ToolReleaseVersion = "5.0.0.2"
 
 # A report can contain hardware serials, UUIDs, asset tags, and other
 # identifying data.  Fail closed for direct CLI use: callers must explicitly

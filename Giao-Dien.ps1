@@ -22,8 +22,8 @@ function Write-DashboardStartupTrace {
 }
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
-$releaseVersion = "5.0.0.1"
-$releaseBuildDate = "2026.09.06"
+$releaseVersion = "5.0.0.2"
+$releaseBuildDate = "2026.09.08"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v5.0"
 $script:isUnsignedDevelopmentBuild = $false
@@ -1891,6 +1891,21 @@ function Show-ProductIntroduction {
     [void]$detailTabs.TabPages.Add($overviewPage)
 
     $officialReleaseUrl = "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/"
+    $officialIssuesUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose"
+    $officialDiscussionsUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions"
+    $officialSecurityUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new"
+    $approvedAboutUrls = @(
+        $officialReleaseUrl,
+        $officialIssuesUrl,
+        $officialDiscussionsUrl,
+        $officialSecurityUrl
+    )
+    $communitySupportBody = @(
+        (Get-ToolText -Key "about.support.body" -Culture $script:dashboardCulture),
+        "GitHub Issues: $officialIssuesUrl",
+        "GitHub Discussions: $officialDiscussionsUrl",
+        "Security advisory: $officialSecurityUrl"
+    ) -join "`r`n"
     $aboutBox = New-Object System.Windows.Forms.RichTextBox
     $aboutBox.Dock = "Fill"
     $aboutBox.ReadOnly = $true
@@ -1901,7 +1916,7 @@ function Show-ProductIntroduction {
     $aboutBox.BackColor = $surface
     $aboutBox.ForeColor = $text
     $aboutBox.Font = $fontNormal
-    $aboutBox.Tag = $officialReleaseUrl
+    $aboutBox.Tag = $approvedAboutUrls
     $aboutPage.Controls.Add($aboutBox)
 
     $aboutSections = @(
@@ -1923,7 +1938,7 @@ function Show-ProductIntroduction {
         },
         @{
             Title = Get-ToolText -Key "about.support.title" -Culture $script:dashboardCulture
-            Body = Get-ToolText -Key "about.support.body" -Culture $script:dashboardCulture
+            Body = $communitySupportBody
         },
         @{
             Title = Get-ToolText -Key "about.release.title" -Culture $script:dashboardCulture
@@ -1954,8 +1969,11 @@ function Show-ProductIntroduction {
     $aboutBox.SelectionLength = 0
     $aboutBox.Add_LinkClicked({
         param($sender, $eventArgs)
-        $approvedUrl = [string]$sender.Tag
-        if ([string]::Equals([string]$eventArgs.LinkText, $approvedUrl, [StringComparison]::OrdinalIgnoreCase)) {
+        $requestedUrl = [string]$eventArgs.LinkText
+        $approvedUrl = @($sender.Tag) | Where-Object {
+            [string]::Equals([string]$_, $requestedUrl, [StringComparison]::OrdinalIgnoreCase)
+        } | Select-Object -First 1
+        if (-not [string]::IsNullOrWhiteSpace([string]$approvedUrl)) {
             if ($script:offlineMode) {
                 [System.Windows.Forms.MessageBox]::Show(
                     (Get-ToolText -Key "app.offline.blocked" -Culture $script:dashboardCulture),
@@ -1966,7 +1984,7 @@ function Show-ProductIntroduction {
                 return
             }
             try {
-                [void][Diagnostics.Process]::Start($approvedUrl)
+                [void][Diagnostics.Process]::Start([string]$approvedUrl)
             } catch {
                 [System.Windows.Forms.MessageBox]::Show(
                     (Get-ToolText -Key "about.openReleaseFailed" -Culture $script:dashboardCulture -FormatArguments @($approvedUrl)),
@@ -4113,7 +4131,7 @@ function Enable-DashboardOnlineForCurrentCatalogSession {
     }
 
     # This is intentionally local to the current process.  The Offline policy
-    # writes NextLaunchMode=Offline, so a new Tool launch will fail closed even
+    # writes NextLaunchMode=Offline, so a new VietLicenSure launch will fail closed even
     # though the catalog button can enable Online for this one approved run.
     if ($script:offlineMode -or [string]$env:TOOL_OFFLINE_MODE -ne '0' -or
         -not (Test-ToolNetworkActionAllowed -Scope Internet)) {

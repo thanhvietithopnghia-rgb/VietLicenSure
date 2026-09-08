@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Hỏi đáp và trao đổi cộng đồng
+    url: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions
+    about: Dùng GitHub Discussions cho câu hỏi sử dụng, ý tưởng và trao đổi mở.
+  - name: Báo cáo lỗ hổng riêng tư
+    url: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new
+    about: Không đăng công khai lỗ hổng chưa được khắc phục.
+  - name: Chính sách mã nguồn từ v4.9
+    url: https://github.com/thanhvietithopnghia-rgb/VietLicenSure/blob/main/SOURCE-POLICY-v4.9.md
+    about: Đọc phạm vi kiểm soát và quy trình xin quyền truy cập bằng văn bản.

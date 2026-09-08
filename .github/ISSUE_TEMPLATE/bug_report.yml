@@ -1,0 +1,68 @@
+name: Báo lỗi VietLicenSure
+description: Báo lỗi có thể công khai, không chứa dữ liệu nhạy cảm hoặc lỗ hổng chưa khắc phục.
+title: "[Lỗi] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi. Không gửi product key đầy đủ, mật khẩu, token, mã ghép nối, dữ liệu cá nhân, báo cáo FullInternal hoặc lỗ hổng chưa được khắc phục tại đây.
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản VietLicenSure
+      description: Xem trong mục Giới thiệu hoặc Phiên bản và cập nhật.
+      placeholder: "VietLicenSure v5.0 / 5.0.0.2"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Môi trường
+      description: Phiên bản Windows, kiến trúc và quyền chạy.
+      placeholder: "Windows 11 24H2, x64, tài khoản Administrator"
+    validations:
+      required: true
+  - type: input
+    id: feature
+    attributes:
+      label: Chức năng gặp lỗi
+      placeholder: "Ví dụ: Bản quyền Windows / Trợ lý / Xuất báo cáo"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Các bước tái hiện
+      description: Liệt kê bước ngắn nhất để lỗi xuất hiện.
+      placeholder: |
+        1. Mở...
+        2. Chọn...
+        3. Quan sát...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Kết quả thực tế và thông báo lỗi
+      description: Dán nguyên văn thông báo sau khi đã che dữ liệu nhạy cảm.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Kiểm tra riêng tư và bảo mật
+      options:
+        - label: Tôi đã loại product key, mật khẩu, token, mã ghép nối và dữ liệu cá nhân.
+          required: true
+        - label: Đây không phải lỗ hổng bảo mật chưa được khắc phục; nếu là lỗ hổng, tôi sẽ dùng Private vulnerability reporting.
+          required: true
+        - label: Tôi đang dùng bản tải từ kênh phát hành chính thức hoặc đã ghi rõ nếu không phải.
+          required: true

@@ -1,6 +1,6 @@
 # Entry points nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các hợp đồng còn hiệu lực được dùng làm tài liệu nền cho VietLicenSure v5.0.0.1. Mã nguồn và verifier hiện hành luôn là nguồn sự thật cuối cùng.
+> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các hợp đồng còn hiệu lực được dùng làm tài liệu nền cho VietLicenSure v5.0.0.2. Mã nguồn và verifier hiện hành luôn là nguồn sự thật cuối cùng.
 
 Nguồn chuẩn là `Tool-ModuleContract.ps1`. Catalog có 27 descriptor, trong đó 24 entry point công khai và ba nguồn kiểm kê nội bộ.
 

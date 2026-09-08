@@ -40,7 +40,7 @@ if ($errors.Count -eq 0) {
     $compatibleFutureKnowledge = (Get-Content -LiteralPath $knowledgePath -Raw -Encoding UTF8) | ConvertFrom-Json
     $compatibleFutureKnowledge.KnowledgeVersion = '1.9.1'
     $compatibleFutureKnowledge.UpdatedAtUtc = '2026-09-06T11:14:26Z'
-    $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.1'
+    $compatibleFutureKnowledge.ReleasedWithToolVersion = '5.0.0.2'
     if (-not (Test-ToolAssistantKnowledge -Knowledge $compatibleFutureKnowledge)) {
         Add-AssistantVerificationError 'A newer signed-compatible knowledge version cannot evolve independently of the EXE.'
     }
@@ -247,7 +247,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='06/09/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='08/09/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -380,8 +380,8 @@ if ($errors.Count -eq 0) {
         }
     }
 
-    $currentVi = Get-ToolAssistantAnswer -Question 'v5.0.0.1 cập nhật những gì' -Culture 'vi-VN' -Knowledge $knowledge
-    $currentEn = Get-ToolAssistantAnswer -Question 'what changed in v5.0.0.1' -Culture 'en-US' -Knowledge $knowledge
+    $currentVi = Get-ToolAssistantAnswer -Question 'v5.0.0.2 cập nhật những gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $currentEn = Get-ToolAssistantAnswer -Question 'what changed in v5.0.0.2' -Culture 'en-US' -Knowledge $knowledge
     $currentAliasVi = Get-ToolAssistantAnswer -Question 'phiên bản hiện tại cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
     $currentAliasEn = Get-ToolAssistantAnswer -Question 'current version changes' -Culture 'en-US' -Knowledge $knowledge
     $latestAliasVi = Get-ToolAssistantAnswer -Question 'mới nhất cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
@@ -389,19 +389,19 @@ if ($errors.Count -eq 0) {
     $bareLatestEn = Get-ToolAssistantAnswer -Question 'latest changes' -Culture 'en-US' -Knowledge $knowledge
     $currentCompareVi = Get-ToolAssistantAnswer -Question 'bản hiện tại so với v4.9' -Culture 'vi-VN' -Knowledge $knowledge
     $currentCompareEn = Get-ToolAssistantAnswer -Question 'compare v4.9 with the current version' -Culture 'en-US' -Knowledge $knowledge
-    $futureMissing = Get-ToolAssistantAnswer -Question 'v5.0.0.2 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $futureMissing = Get-ToolAssistantAnswer -Question 'v5.0.0.3 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
     if ($currentVi -notmatch 'v5\.0' -or $currentVi -notmatch 'Trải nghiệm sử dụng' -or $currentVi -notmatch 'Riêng tư và toàn vẹn' -or
         $currentEn -notmatch 'v5\.0' -or $currentEn -notmatch 'User experience' -or $currentEn -notmatch 'Privacy and integrity' -or
         $currentAliasVi -notmatch 'v5\.0' -or $currentAliasEn -notmatch 'v5\.0' -or
         $latestAliasVi -notmatch 'v5\.0' -or $latestAliasEn -notmatch 'v5\.0' -or
         $bareLatestEn -notmatch 'v5\.0' -or
-        $futureMissing -notmatch 'không có mục được ghi nhận cho v5\.0\.0\.2') {
+        $futureMissing -notmatch 'không có mục được ghi nhận cho v5\.0\.0\.3') {
         Add-AssistantVerificationError 'Current technical version lookup/alias or future-version rejection is incomplete.'
     }
-    if ($currentCompareVi.IndexOf('v5.0 —', [StringComparison]::Ordinal) -lt 0 -or
-        $currentCompareVi.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -le $currentCompareVi.IndexOf('v5.0 —', [StringComparison]::Ordinal) -or
+    if ($currentCompareVi.IndexOf('v5.0 / 5.0.0.2 —', [StringComparison]::Ordinal) -lt 0 -or
+        $currentCompareVi.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -le $currentCompareVi.IndexOf('v5.0 / 5.0.0.2 —', [StringComparison]::Ordinal) -or
         $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal) -lt 0 -or
-        $currentCompareEn.IndexOf('v5.0 —', [StringComparison]::Ordinal) -le $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal)) {
+        $currentCompareEn.IndexOf('v5.0 / 5.0.0.2 —', [StringComparison]::Ordinal) -le $currentCompareEn.IndexOf('v4.9.0.0 —', [StringComparison]::Ordinal)) {
         Add-AssistantVerificationError 'Current/latest comparison did not resolve v5.0 or preserve question order.'
     }
 
@@ -411,21 +411,21 @@ if ($errors.Count -eq 0) {
     $downloadUpdateVi = Get-ToolAssistantAnswer -Question 'làm sao tải bản cập nhật mới nhất' -Culture 'vi-VN' -Knowledge $knowledge
     if ($catalogUpdateEn -notmatch 'remains usable Offline' -or $catalogUpdateVi -notmatch 'vẫn dùng được Offline' -or
         $installUpdateEn -notmatch 'Update checks work' -or $downloadUpdateVi -notmatch 'Kiểm tra cập nhật' -or
-        $catalogUpdateEn -match 'Version history.*v5\.0\.0\.1' -or $catalogUpdateVi -match 'Lịch sử phiên bản.*v5\.0\.0\.1') {
+        $catalogUpdateEn -match 'Version history.*v5\.0\.0\.2' -or $catalogUpdateVi -match 'Lịch sử phiên bản.*v5\.0\.0\.2') {
         Add-AssistantVerificationError 'Current/latest aliases hijacked catalog or application-update workflows.'
     }
 
     $windowsCurrentVersion = Get-ToolAssistantAnswer -Question 'phiên bản Windows hiện tại là gì' -Culture 'vi-VN' -Knowledge $knowledge
     $powershellSupportedVersion = Get-ToolAssistantAnswer -Question 'what is the latest PowerShell version supported by the Tool' -Culture 'en-US' -Knowledge $knowledge
     if ($windowsCurrentVersion -notmatch 'Chức năng 3 đọc edition' -or $powershellSupportedVersion -notmatch 'PowerShell 3 or later' -or
-        $windowsCurrentVersion -match 'v5\.0\.0\.1' -or $powershellSupportedVersion -match 'technical version v5\.0\.0\.1') {
+        $windowsCurrentVersion -match 'v5\.0\.0\.2' -or $powershellSupportedVersion -match 'technical version v5\.0\.0\.2') {
         Add-AssistantVerificationError 'Current/latest foreign-product version wording was confused with Tool version history.'
     }
 
     foreach ($capabilityTest in @(
-        @{ Culture='vi-VN'; Question='v5.0.0.1 có tất cả chức năng gì'; Expected='Toàn bộ 10 chức năng chính' },
+        @{ Culture='vi-VN'; Question='v5.0.0.2 có tất cả chức năng gì'; Expected='Toàn bộ 10 chức năng chính' },
         @{ Culture='vi-VN'; Question='tất cả chức năng của phiên bản hiện tại'; Expected='Toàn bộ 10 chức năng chính' },
-        @{ Culture='en-US'; Question='what features does v5.0.0.1 have'; Expected='All ten main functions' },
+        @{ Culture='en-US'; Question='what features does v5.0.0.2 have'; Expected='All ten main functions' },
         @{ Culture='en-US'; Question='list all functions in the current version'; Expected='All ten main functions' }
     )) {
         $capabilityAnswer = Get-ToolAssistantAnswer -Question $capabilityTest.Question -Culture $capabilityTest.Culture -Knowledge $knowledge
@@ -522,11 +522,11 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
-        $releaseDateVi -notmatch 'v5\.0.*06/09/2026' -or
-        $releaseDateEn -notmatch 'v5\.0.*6 September 2026' -or
+        $releaseDateVi -notmatch 'v5\.0.*08/09/2026' -or
+        $releaseDateEn -notmatch 'v5\.0.*8 September 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
-        $sourceEn -notmatch "author's written approval" -or
+        $sourceEn -notmatch "author's (?:prior )?written approval" -or
         $statusTermsEn -notmatch 'UNDETERMINED/Unknown' -or $statusTermsEn -notmatch 'UNVERIFIED' -or
         $statusTermsEn -notmatch 'SUSPICIOUS' -or $statusTermsEn -notmatch 'CRACKCONFIRMED' -or
         $statusTermsEn -notmatch 'no remediation yet' -or $statusTermsEn -notmatch 'not a legal verdict') {

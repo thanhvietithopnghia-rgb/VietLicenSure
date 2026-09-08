@@ -277,6 +277,8 @@ $sourceFiles = @(
     'KNOWN-LIMITATIONS-v5.0.md'
     'RELEASE-HYGIENE-v5.0.md'
     'README-MA-NGUON.md'
+    'SUPPORT.md'
+    'CONTRIBUTING.md'
     'MODULE-CONTRACT-v1.0.md'
     'REPORT-SCHEMA-v1.5.md'
     'ROADMAP-v5.0.md'
@@ -509,6 +511,8 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'KNOWN-LIMITATIONS-v5.0.md',
     'RELEASE-HYGIENE-v5.0.md',
     'README-MA-NGUON.md',
+    'SUPPORT.md',
+    'CONTRIBUTING.md',
     'MODULE-CONTRACT-v1.0.md',
     'REPORT-SCHEMA-v1.5.md',
     'ROADMAP-v5.0.md',
@@ -923,7 +927,7 @@ try {
 Write-Host '[5/8] Tạo metadata phát hành...'
 $releaseSidecars = @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
@@ -1325,11 +1329,13 @@ $applicationUpdateManifest = [ordered]@{
     MinimumUpdaterVersion = '4.6.1.0'
     PublishedAtUtc = $publishedAtUtc
     Title = [ordered]@{
-        'vi-VN' = 'v5.0 - Trợ lý VietLicenSure đọc đầy đủ HDSD và lịch sử phiên bản'
-        'en-US' = 'v5.0 - Complete guide and version-history support in VietLicenSure Assistant'
+        'vi-VN' = 'v5.0.0.2 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều'
+        'en-US' = 'v5.0.0.2 - Clear source policy and two-way feedback channels'
     }
     Changes = [ordered]@{
         'vi-VN' = @(
+            'Công bố rõ lý do thay đổi chính sách từ v4.9: phần mềm/phiên bản tiền thân đã bị sao chép, chỉnh sửa, đổi tên hoặc đóng gói và phát hành thành phần mềm khác khi chưa được tác giả cho phép hay ủy quyền; việc kiểm soát mã nguồn nhằm bảo vệ chất xám và nguồn gốc bản phát hành.',
+            'Bổ sung kênh tương tác hai chiều chính thức qua GitHub Issues và Discussions; báo cáo lỗ hổng dùng GitHub Security Advisory riêng tư hoặc email tác giả.',
             'Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt-Anh theo từng mục, trả đầy đủ thay đổi của một phiên bản và đối chiếu trực tiếp hai phiên bản mà không suy diễn ngoài hồ sơ.',
             'Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.',
             'Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; không chỉ riêng OEM.',
@@ -1348,10 +1354,12 @@ $applicationUpdateManifest = [ordered]@{
             'Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.',
             'Kiểm kê bổ sung AppX/MSIX, Winget, shortcut, trình quản lý gói và adapter Autodesk chỉ-đọc; phân biệt bản cài đã xác nhận với portable/tệp còn sót và gộp Adobe Acrobat theo họ sản phẩm.',
             'Quét toàn vẹn thích ứng mở rộng Authenticode trong đúng thư mục sản phẩm khi hosts, firewall hoặc dịch vụ hãng bất thường; bằng chứng không còn lan giữa các sản phẩm Adobe.',
-            'Kể từ v4.9, Tool tiếp tục miễn phí nhưng mã nguồn không còn được công khai miễn phí, không phải mã nguồn mở và chỉ được tiếp cận khi tác giả chấp thuận trước bằng văn bản.',
+            'Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng mã nguồn không còn công khai, không phải mã nguồn mở và chỉ được tiếp cận theo phạm vi, thời hạn và điều kiện được tác giả chấp thuận trước bằng văn bản; chưa có lịch cam kết mở lại.',
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
+            'Explains the v4.9 policy change: the software or a predecessor build was copied, modified, renamed or repackaged and released as another product without the author''s permission or authorization; controlled source access protects the author''s work and official-release provenance.',
+            'Adds official two-way channels through GitHub Issues and Discussions; vulnerabilities use a private GitHub Security Advisory or the author''s email.',
             'VietLicenSure Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version''s full change entry, and compares two versions without inferring undocumented changes.',
             'Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.',
             'Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports & Assurance actions—not only OEM.',
@@ -1370,7 +1378,7 @@ $applicationUpdateManifest = [ordered]@{
             'Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.',
             'Inventory adds AppX/MSIX, WinGet, shortcuts, package managers, and a read-only Autodesk adapter; it distinguishes confirmed installs from portable/residual files and merges Adobe Acrobat by product family.',
             'Adaptive integrity scanning expands Authenticode checks inside the exact product directory when vendor hosts, firewall rules, or licensing services are abnormal; Adobe evidence no longer leaks across products.',
-            'Starting with v4.9, the Tool remains free, but source is no longer published free of charge, is not open source, and requires the author''s prior written approval for access.',
+            'Starting with v4.9, VietLicenSure remains free, but its source is not public or open source and may be accessed only within the scope, duration, and conditions approved by the author in writing; no reopening date is currently committed.',
             'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
     }
@@ -1429,7 +1437,7 @@ $authenticodeTrustInfo = if ([string]$primaryArtifact.AuthenticodeStatus -eq 'Va
     'Tep chua co chu ky Authenticode; chi tai tu GitHub chinh thuc va doi chieu SHA-256.'
 }
 $infoLines = @(
-    "PHAN MEM KIEM TRA BAN QUYEN v$releaseVersion - HO TRO CA NHAN VA DOANH NGHIEP",
+    "VietLicenSure v$productVersion - PHAN MEM KIEM TRA VA QUAN LY BAN QUYEN HE THONG",
     "Release version: $releaseVersion",
     "Release build date: $releaseBuildDate",
     "Release label: $releaseLabel",
@@ -1448,7 +1456,7 @@ $infoLines = @(
     'Da ngon ngu: vi-VN va en-US dung catalog JSON dong bo cho dashboard, log trang thai, bao cao, trung tam doanh nghiep va trinh quan ly Windows/Office cuc bo; lua chon duoc ghi nho theo tai khoan.',
     'Ghi nho ngon ngu, giao dien System/Light/Dark va profile quet; moi lan mo van bat dau Offline, khong khoi phuc Online tu phien truoc.',
     'Canh bao khi phat hien may ao hoac Remote Desktop; khong khoa cac chuc nang hien co.',
-    'Them nut Sao chep toan bo log va Mo thu muc bao cao; lich su phien ban hien thi ngay trong Tool.',
+    'Them nut Sao chep toan bo log va Mo thu muc bao cao; lich su phien ban hien thi ngay trong VietLicenSure.',
     'Bo nhan danh so cu tren cua so chuc nang; toan bo nut WinForms dung mau va icon vector hanh dong chung o Light/Dark.',
     'Quet Office va tep chi bao duoc song song co gioi han, bo qua reparse point va giu nguyen pham vi quet cu.',
     'Quet sau pho quat moi phan mem phat hien duoc: nhieu EXE/DLL, Authenticode, hash xau da biet, artifact va dau vet he thong tuong quan; ngan sach chu ky duoc chia deu va do phu duoc ghi trong JSON/report.',
@@ -1460,7 +1468,7 @@ $infoLines = @(
     'Offline toan ung dung mac dinh; trung tam doanh nghiep co cong tac mang rieng mac dinh tat, co the bat/tat lai ma khong an chuc nang hoac xoa cau hinh.',
     'Ket noi online chi chay sau khi nguoi dung xac nhan, tai catalog JSON HTTPS tu host allowlist; khong gui inventory, duong dan, khoa hoac token va khong doi preference Offline.',
     'Tu dong kiem tra phien ban moi chi khi Online da duoc cho phep; khong co service nen, telemetry hay cap nhat im lang.',
-    'Khi co ban moi, Tool hoi 3 lua chon: Cap nhat ngay, De sau, Bo qua lan nay. De sau hoi lai sau tac vu ke tiep hoac 2 gio.',
+    'Khi co ban moi, VietLicenSure hoi 3 lua chon: Cap nhat ngay, De sau, Bo qua lan nay. De sau hoi lai sau tac vu ke tiep hoac 2 gio.',
     'Cap nhat ngay chi tai EXE tu GitHub HTTPS co dinh, doi chieu dung luong/SHA-256/chu ky neu bat buoc, backup ban cu va rollback neu ban moi loi.',
     "Compatibility catalog $($compatibilityMetadata.CatalogVersion), schema $($compatibilityMetadata.CatalogSchemaVersion), ra soat $($compatibilityMetadata.ReviewedAtUtc); canh bao $($compatibilityMetadata.ReviewWarningAgeDays) ngay va het han $($compatibilityMetadata.MaximumReviewAgeDays) ngay.",
     "Nhan dien theo catalog: $(@($compatibilityMetadata.WindowsReleaseNames) -join ', '); build moi/chua biet chuyen sang ReadOnlyManualReview.",
@@ -1482,7 +1490,7 @@ $infoLines = @(
     'Bao cao HTML la ban tong quan gon, khong con bang dai; chi giu cau hinh chinh, ket luan, canh bao va nut mo PDF day du.',
     'PDF la ban chi tiet A4 gom toan bo bang cau hinh, phan mem, bang chung va du lieu ky thuat; moi lan xuat van gom HTML/PDF/JSON/XML/checksum trong mot thu muc va chi tu mo HTML.',
     'Ket luan ban quyen tach ro trang thai kich hoat voi quyen su dung; du lieu cap phep khong doc duoc ghi CHUA XAC DINH va khong tu chung minh hop le/khong hop le.',
-    'Tro ly Tool dung tri thuc cuc bo, khong tu khac phuc va khong tai cau hoi/bao cao/du lieu may len mang; Online chi tai JSON va chu ky CMS tu hai path GitHub co dinh.',
+    'Tro ly VietLicenSure dung tri thuc cuc bo, khong tu khac phuc va khong tai cau hoi/bao cao/du lieu may len mang; Online chi tai JSON va chu ky CMS tu hai path GitHub co dinh.',
     'Tro ly bo tri truc tiep va co them luot ve bu sau su kien Gui/Enter; cau tra loi hien ngay sau khi xu ly, khong cho cau hoi tiep theo; nhan Offline co le an toan, khung nhap co vien focus va bong bong hoi-dap co mau/vien rieng.',
     'HTML, PDF va cac bao cao dung chung giu du nam o ket qua tren cung mot hang khi du rong; Muc xac minh/Huong xu ly tach thanh o con va chan trang PDF chia hai hang.',
     'Tro ly dong bo day du vi-VN/en-US cho nut, trang thai dong bo va dien giai bao cao hien tai theo ma ket qua.',
@@ -1504,7 +1512,7 @@ $infoLines = @(
     'HTML/PDF chi dung asset cuc bo, CSP default-src none; browser PDF tat background networking va map DNS ve 0.0.0.0.',
     'Profile Edge/Chrome tam nam trong %LOCALAPPDATA%\Temp, ACL chi cho nguoi dung hien tai va SYSTEM; profile duoc don sau moi lan xuat.',
     'Plugin chi dung JSON khai bao, khong chay script/command; thu muc plugin co ACL Administrators/SYSTEM.',
-    'Timeline dung DPAPI LocalMachine, HMAC-SHA256 va hash chain; neu chuoi hong tool tu choi noi them.',
+    'Timeline dung DPAPI LocalMachine, HMAC-SHA256 va hash chain; neu chuoi hong, VietLicenSure tu choi noi them.',
     'Certificate audit kiem tra Authenticode va chuoi tin cay offline cua tep Windows/Office quan trong.',
     "Module contract schema $($moduleContractMetadata.ContractSchemaVersion): $($moduleContractMetadata.EntryPointCount) entry point / $($moduleContractMetadata.ModuleCount) module; co capability gate va ModuleResult thong nhat.",
     'Log JSON Lines cua dashboard nam trong LocalAppData theo tai khoan; che do nang quyen va doanh nghiep dung ProgramData co ACL Administrators/SYSTEM; khong ghi product key day du.',
@@ -1519,7 +1527,7 @@ $infoLines = @(
 
 $releaseHashFiles = @($targets.OutputName) + @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'OFFICIAL-PROVENANCE-v1.json',
+    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',

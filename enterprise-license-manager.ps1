@@ -1,5 +1,5 @@
 ﻿<#
-    Trung tâm quản lý license doanh nghiệp của Tool.
+    Trung tâm quản lý license doanh nghiệp của VietLicenSure.
     Giao diện chỉ điều phối các thao tác chính; dữ liệu nhạy cảm được xử lý
     trong Tool-Enterprise.ps1 và không ghi product key đầy đủ vào log.
 #>
@@ -14,7 +14,7 @@ $enterpriseVersionFromLauncher = [string]$env:TOOL_TOOL_VERSION
 $script:enterpriseReleaseVersion = if ($enterpriseVersionFromLauncher -match '^\d+\.\d+\.\d+\.\d+$') {
     $enterpriseVersionFromLauncher
 } else {
-    "5.0.0.1"
+    "5.0.0.2"
 }
 $script:enterpriseReleaseDisplayName = "v5.0"
 $enterpriseReleaseParts = @($script:enterpriseReleaseVersion -split '\.')
