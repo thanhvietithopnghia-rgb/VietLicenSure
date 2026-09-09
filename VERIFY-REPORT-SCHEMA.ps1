@@ -160,13 +160,16 @@ try {
             $pdfFixtureHtml = Join-Path $pdfFixtureRoot 'fixture.html'
             $pdfFixturePath = Join-Path $pdfFixtureRoot 'fixture.pdf'
             [IO.File]::WriteAllText($pdfFixtureHtml, $genericDetailedHtml, (New-Object Text.UTF8Encoding($false)))
-            $browserPdfResult = Convert-ToolHtmlToPdf -HtmlPath $pdfFixtureHtml -PdfPath $pdfFixturePath -TimeoutSeconds 45
+            # Clean VM runners can be constrained to 1 GB while Chromium is
+            # starting its first isolated profile. Keep this fixture tolerant
+            # of that cold-start cost without changing the product default.
+            $browserPdfResult = Convert-ToolHtmlToPdf -HtmlPath $pdfFixtureHtml -PdfPath $pdfFixturePath -TimeoutSeconds 90
             $expectedEngines = @($browserPaths | ForEach-Object { [IO.Path]::GetFileNameWithoutExtension([string]$_) })
             if (-not $browserPdfResult.Success -or
                 [string]$browserPdfResult.Engine -notin $expectedEngines -or
                 -not (Test-Path -LiteralPath $pdfFixturePath -PathType Leaf) -or
                 (Get-Item -LiteralPath $pdfFixturePath).Length -le 1024) {
-                Add-Failure 'Fixture PDF không được tạo bằng Edge/Chrome qua staging an toàn.'
+                Add-Failure "Fixture PDF không được tạo bằng Edge/Chrome qua staging an toàn: $([string]$browserPdfResult.Error)"
             }
         } catch {
             Add-Failure "Không kiểm tra được staging/failover PDF trình duyệt: $($_.Exception.Message)"

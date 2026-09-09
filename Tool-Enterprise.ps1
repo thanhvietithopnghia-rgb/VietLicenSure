@@ -1174,9 +1174,9 @@ function Get-ToolEnterpriseLicenseSnapshot {
         WindowsLicenses = $windowsLicenses
         OfficeLicenses = $officeLicenses
         OfficeInstallation = [ordered]@{
-            ProductReleaseIds = ConvertTo-ToolEnterpriseSafeText $officeConfiguration.ProductReleaseIds 400
-            Version = ConvertTo-ToolEnterpriseSafeText $officeConfiguration.VersionToReport 80
-            Platform = ConvertTo-ToolEnterpriseSafeText $officeConfiguration.Platform 40
+            ProductReleaseIds = ConvertTo-ToolEnterpriseSafeText $(if ($officeConfiguration -and $officeConfiguration.PSObject.Properties['ProductReleaseIds']) { $officeConfiguration.ProductReleaseIds } else { '' }) 400
+            Version = ConvertTo-ToolEnterpriseSafeText $(if ($officeConfiguration -and $officeConfiguration.PSObject.Properties['VersionToReport']) { $officeConfiguration.VersionToReport } else { '' }) 80
+            Platform = ConvertTo-ToolEnterpriseSafeText $(if ($officeConfiguration -and $officeConfiguration.PSObject.Properties['Platform']) { $officeConfiguration.Platform } else { '' }) 40
         }
         Privacy = [ordered]@{
             FullProductKeyIncluded = $false
