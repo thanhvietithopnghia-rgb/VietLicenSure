@@ -1,12 +1,12 @@
 {
     "SchemaVersion":  "1.0",
     "Channel":  "stable",
-    "LatestVersion":  "5.0.0.2",
+    "LatestVersion":  "5.0",
     "MinimumUpdaterVersion":  "4.6.1.0",
     "PublishedAtUtc":  "2026-09-08T00:00:00Z",
     "Title":  {
-                  "vi-VN":  "v5.0.0.2 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
-                  "en-US":  "v5.0.0.2 - Clear source policy and two-way feedback channels"
+                  "vi-VN":  "v5.0 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
+                  "en-US":  "v5.0 - Clear source policy and two-way feedback channels"
               },
     "Changes":  {
                     "vi-VN":  [
@@ -58,9 +58,9 @@
                                   "Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate."
                               ]
                 },
-    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0.0.2",
-    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0.0.2/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "EE9F49A2077C85D81C4D243FEC26209ED15E0418E209FF588F887C2CFC4AC4C7",
+    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
+    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe",
+    "DownloadSha256":  "586E6D58F70CD501E95BE8735D6C739068822786EB0E7BFEB7C573AEF6A57849",
     "DownloadSize":  852216,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [

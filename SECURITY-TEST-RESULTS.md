@@ -34,8 +34,8 @@ Giới hạn: VM tự động không chứng minh không có lỗ hổng; nó ch
 
 - Source snapshot được provenance ràng buộc: `580f68579e50f09f67ae10db330a316262325c3b`.
 - Môi trường chạy: Microsoft Windows 11 Pro 64-bit, phiên bản `10.0.26200`, PowerShell `5.1.26100.9168`.
-- Chế độ bản dựng: `ManagedSigned`; Build ID `5.0.0.2-production-20260908`.
-- Tệp thực thi: `VietLicenSure-v5.0.exe`; SHA-256 `EE9F49A2077C85D81C4D243FEC26209ED15E0418E209FF588F887C2CFC4AC4C7`.
+- Chế độ bản dựng: `ManagedSigned`; Build ID `5.0-production-20260908`.
+- Tệp thực thi: `VietLicenSure-v5.0.exe`; SHA-256 được tạo theo từng build ký số và công bố trong `RELEASE-SHA256SUMS.txt`, `RELEASE-MANIFEST.json` cùng `update-manifest-v1.json` của chính gói đó.
 - Authenticode: `Valid`; signer thumbprint `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA`; có timestamp DigiCert.
 - `VERIFY-DISTRIBUTION.ps1`: `0 lỗi / 0 cảnh báo / 9 mục đạt`; tập đóng gồm 50 tệp; bốn chữ ký CMS được xác minh trên đúng byte tệp JSON.
 - Ca âm tính: đổi một ký tự trong `OFFICIAL-PROVENANCE-v1.json` rồi tạo lại checksum; verifier vẫn từ chối với mã thoát `1`, báo CMS không hợp lệ và source snapshot trong SBOM không khớp.

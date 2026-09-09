@@ -4,7 +4,7 @@
 
 - Tên ngắn: `VietLicenSure`.
 - Tên đầy đủ: `VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống`.
-- Dòng sản phẩm: `v5.0`; phiên bản kỹ thuật: `5.0.0.2`; ngày phát hành: `08/09/2026`.
+- Phiên bản sản phẩm và phát hành: `v5.0`; ngày phát hành: `08/09/2026`.
 - Tệp chạy: `VietLicenSure-v5.0.exe`.
 - Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure>.
 

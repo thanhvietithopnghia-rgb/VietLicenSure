@@ -8,18 +8,18 @@
                                    {
                                        "vendor":  "Thanh Viet",
                                        "name":  "BUILD.ps1",
-                                       "version":  "5.0.0.2"
+                                       "version":  "5.0"
                                    }
                                ],
                      "component":  {
                                        "type":  "application",
                                        "bom-ref":  "application:tool-kiem-tra",
                                        "name":  "VietLicenSure",
-                                       "version":  "5.0.0.2",
+                                       "version":  "5.0",
                                        "hashes":  [
                                                       {
                                                           "alg":  "SHA-256",
-                                                          "content":  "EE9F49A2077C85D81C4D243FEC26209ED15E0418E209FF588F887C2CFC4AC4C7"
+                                                          "content":  "586E6D58F70CD501E95BE8735D6C739068822786EB0E7BFEB7C573AEF6A57849"
                                                       }
                                                   ],
                                        "licenses":  [
@@ -32,11 +32,11 @@
                                        "properties":  [
                                                           {
                                                               "name":  "tool:buildId",
-                                                              "value":  "5.0.0.2-production-20260908"
+                                                              "value":  "5.0-production-20260908"
                                                           },
                                                           {
                                                               "name":  "tool:sourceSnapshotCommit",
-                                                              "value":  "580f68579e50f09f67ae10db330a316262325c3b"
+                                                              "value":  "0c9964bd9b811a1cee69271b34a0b732b014451e"
                                                           },
                                                           {
                                                               "name":  "tool:releaseStatus",

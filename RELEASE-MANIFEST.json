@@ -1,9 +1,9 @@
 {
     "SchemaVersion":  "2.0",
     "ToolVersion":  "5.0",
-    "ReleaseVersion":  "5.0.0.2",
+    "ReleaseVersion":  "5.0",
     "ReleaseBuildDate":  "2026.09.08",
-    "ReleaseLabel":  "5.0.0.2-managed-signed-20260908",
+    "ReleaseLabel":  "5.0-managed-signed-20260908",
     "ReleaseStatus":  "ManagedSigned",
     "PrimaryFileName":  "VietLicenSure-v5.0.exe",
     "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
@@ -12,7 +12,7 @@
                           "FileName":  "VietLicenSure-v5.0.exe",
                           "Architecture":  "AnyCPU",
                           "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
-                          "Sha256":  "EE9F49A2077C85D81C4D243FEC26209ED15E0418E209FF588F887C2CFC4AC4C7",
+                          "Sha256":  "586E6D58F70CD501E95BE8735D6C739068822786EB0E7BFEB7C573AEF6A57849",
                           "AuthenticodeStatus":  "Valid",
                           "AuthenticodeSigner":  "CN=Thanh Viet - Tool Kiem Tra v4.9 (Self-Signed Code Signing)",
                           "AuthenticodeThumbprint":  "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA",
@@ -40,7 +40,7 @@
                  "FileName":  "SBOM.cdx.json",
                  "Format":  "CycloneDX",
                  "SpecVersion":  "1.5",
-                 "Sha256":  "E0F5B48D980A11826FF1E09BC71471E61574BDA900BFF6A73C4D4ECFE219BA70"
+                 "Sha256":  "6D5EDB055B1CAB63D9907029AB6A8942F7E993EA8130F2B73C868E36A533D293"
              },
     "PayloadCount":  57,
     "IntegrityFileCount":  55,
@@ -51,10 +51,10 @@
                                "ResourceCount":  1,
                                "PayloadCount":  57,
                                "HeaderBytes":  480,
-                               "SourceBytes":  3454384,
-                               "BundleBytes":  3454864,
-                               "EmbeddedBytes":  734449,
-                               "SavedBytes":  2719935,
+                               "SourceBytes":  3454382,
+                               "BundleBytes":  3454862,
+                               "EmbeddedBytes":  734515,
+                               "SavedBytes":  2719867,
                                "SavingsPercent":  78.74,
                                "MaximumPayloadBytes":  8388608,
                                "MaximumPayloadDataBytes":  16777216,
@@ -95,7 +95,7 @@
     "BackgroundUpdateService":  false,
     "SilentUpdate":  false,
     "ApplicationUpdateSchemaVersion":  "1.0",
-    "ApplicationSelfUpdateAllowed":  false,
+    "ApplicationSelfUpdateAllowed":  true,
     "ApplicationUpdateAuthority":  "ManagedDeployment",
     "BundledUpdateManifestChannel":  "stable",
     "ApplicationUpdateManifestUrl":  "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json",
@@ -109,7 +109,7 @@
     "ApplicationUpdateVerification":  "Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback",
     "OfficialBuildProvenance":  {
                                     "State":  "Official",
-                                    "BuildId":  "5.0.0.2-production-20260908",
+                                    "BuildId":  "5.0-production-20260908",
                                     "ManifestFile":  "OFFICIAL-PROVENANCE-v1.json",
                                     "SignatureFile":  "OFFICIAL-PROVENANCE-v1.json.p7s",
                                     "VerificationUrl":  "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build",
@@ -171,7 +171,7 @@
     "SoftwareLicenseCatalogGeneratedAtUtc":  "2026-08-31T06:05:00Z",
     "SoftwareLicenseCatalogFreshnessStatus":  "Fresh",
     "SoftwareLicenseCatalogFreshForDecisiveEvidence":  true,
-    "SoftwareLicenseCatalogAgeDays":  8.287,
+    "SoftwareLicenseCatalogAgeDays":  8.424,
     "SoftwareLicenseCatalogFreshnessWarningAgeDays":  30,
     "SoftwareLicenseCatalogFreshnessMaximumAgeDays":  45,
     "SoftwareLicenseCatalogProductRules":  94,
@@ -416,7 +416,7 @@
     "ModuleCount":  28,
     "ModuleEntryPointCount":  24,
     "DataSchemaVersion":  "2.0",
-    "DataProducerVersion":  "5.0.0.2",
+    "DataProducerVersion":  "5.0",
     "DataStorageGeneration":  "v4.6",
     "LegacyDataStorageGeneration":  "v4.6",
     "DataMigrationPolicy":  "Verified staging copy + transactional commit + rollback",
@@ -438,5 +438,5 @@
                              "Status":  "NotClaimed",
                              "Reason":  "Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia."
                          },
-    "BuiltAtUtc":  "2026-09-08T12:58:51.4507398Z"
+    "BuiltAtUtc":  "2026-09-08T16:15:59.8916860Z"
 }

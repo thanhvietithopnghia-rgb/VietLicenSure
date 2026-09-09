@@ -5,17 +5,17 @@ This document summarizes the core changes in every recorded version, from the fi
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 / 5.0.0.2 — September 8, 2026
+## v5.0 — September 8, 2026
 
-- The v5.0 line was introduced on September 6, 2026 under the official name **VietLicenSure — System License Inspection and Management Software**, replacing the predecessor name **Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool**.
-- **Technical release 5.0.0.2:** published on September 8, 2026 with consistent product name, version, and date across the application, documentation, and public channels.
+- **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
+- **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
 - **Source policy:** explains controlled access from v4.9 after the software/predecessor was copied, modified, renamed/repackaged, and published without permission or authorization; documents scope, written access requests, and the absence of a committed reopening date.
 - **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.
-- **User experience:** starts faster, presents a clearer responsive interface, supports Light/Dark modes, and opens the requested function directly.
-- **Inspection and recognition:** offers Quick, Standard, and Deep scans for Windows, Microsoft Office, and other software; prioritizes items and supports search, filters, and previous-scan comparison.
-- **Safe remediation:** separates Windows, Office, and other software; requires preview, Dry Run, backup, confirmation, and post-check; adds an integrity-checked backup and restore center.
-- **Reports and support:** exports HTML, PDF, JSON, and XML; creates privacy-redacted support packages and supports multi-device management.
-- **Privacy and integrity:** remains Offline by default, uploads no data automatically, and checks signatures and SHA-256 before important actions.
+- **Interface and experience:** faster startup, DPI-aware layout, Light/Dark modes, clearer navigation, and direct access to the requested function.
+- **Windows, Office, and software inspection:** Quick, Standard, and Deep modes; broader inventory sources; separate activation, licence type, read failures, and insufficient-evidence results.
+- **Analysis and management:** High–Medium–Low prioritization, search, filters, previous-scan comparison, and multi-device support.
+- **Safe remediation:** separate Windows, Office, and third-party scopes with mandatory preview, Dry Run, backup, confirmation, post-check, and rollback support.
+- **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, CMS/SHA-256/Authenticode verification, and updates to the latest approved v5.0 build when Online mode is enabled.
 
 `Unverified` does not mean that software violates its licence.
 

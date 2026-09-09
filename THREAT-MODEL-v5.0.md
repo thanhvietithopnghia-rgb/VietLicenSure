@@ -1,6 +1,6 @@
 # Mô hình đe dọa VietLicenSure v5.0
 
-Phiên bản áp dụng: **v5.0.0.2 ManagedSigned/Pilot**  
+Phiên bản áp dụng: **v5.0 ManagedSigned/Pilot**
 Ngày rà soát: **2026-09-08**
 
 ## Mục tiêu bảo vệ

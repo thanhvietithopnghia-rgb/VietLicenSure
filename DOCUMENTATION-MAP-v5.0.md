@@ -1,10 +1,10 @@
 # Bản đồ tài liệu VietLicenSure v5.0
 
-Phiên bản áp dụng: **VietLicenSure v5.0.0.2**  
+Phiên bản áp dụng: **VietLicenSure v5.0**
 Kênh áp dụng: **ManagedSigned/Pilot**  
 Ngày chốt hồ sơ: **2026-09-08**
 
-Tài liệu này xác định đâu là hồ sơ hiện hành của v5.0.0.2 và giải thích các tên tệp còn mang mốc v4.8/v4.9. Mốc trong tên tệp là phiên bản hình thành hợp đồng kỹ thuật hoặc chính sách, không phải phiên bản của tệp thực thi đang bàn giao.
+Tài liệu này xác định đâu là hồ sơ hiện hành của v5.0 và giải thích các tên tệp còn mang mốc v4.8/v4.9. Mốc trong tên tệp là phiên bản hình thành hợp đồng kỹ thuật hoặc chính sách, không phải phiên bản của tệp thực thi đang bàn giao.
 
 ## Tài liệu nên đọc trước
 
@@ -23,7 +23,7 @@ Tài liệu này xác định đâu là hồ sơ hiện hành của v5.0.0.2 và
 
 ## Ý nghĩa các tài liệu mang tên v4.8/v4.9
 
-Các tệp sau là **baseline lịch sử vẫn còn hiệu lực trong v5.0.0.2**:
+Các tệp sau là **baseline lịch sử vẫn còn hiệu lực trong v5.0**:
 
 - `TECHNICAL-ARCHITECTURE-v4.8.md`: baseline kiến trúc từ v4.8, được mở rộng bởi hợp đồng mô-đun và hồ sơ release v5.0.
 - `ENTRY-POINTS-v4.8.md`: baseline điểm vào; danh sách thực tế được kiểm tra lại khi build v5.0.
@@ -32,7 +32,7 @@ Các tệp sau là **baseline lịch sử vẫn còn hiệu lực trong v5.0.0.2
 - `SECURITY-HARDENING-v4.8.md`: baseline hardening PE/runtime; không đồng nghĩa mọi kiểm soát native như CFG đều đã có.
 - `SOURCE-POLICY-v4.9.md`: chính sách mã nguồn có kiểm soát bắt đầu từ v4.9 và tiếp tục áp dụng cho v5.0.
 
-Không dùng riêng các baseline trên để tuyên bố một bản v5.0.0.2 đã vượt qua nghiệm thu. Tuyên bố phát hành phải đồng thời khớp `RELEASE-MANIFEST.json`, `SBOM.cdx.json`, provenance có chữ ký và bằng chứng kiểm thử gắn đúng commit/build.
+Không dùng riêng các baseline trên để tuyên bố một bản v5.0 đã vượt qua nghiệm thu. Tuyên bố phát hành phải đồng thời khớp `RELEASE-MANIFEST.json`, `SBOM.cdx.json`, provenance có chữ ký và bằng chứng kiểm thử gắn đúng commit/build.
 
 ## Thứ tự ưu tiên khi có khác biệt
 

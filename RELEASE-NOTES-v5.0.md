@@ -3,34 +3,36 @@
 Ngày build kỹ thuật: `2026-09-08`
 Ngày phát hành: `08/09/2026`
 Phiên bản hiển thị: `v5.0`
-Mã kỹ thuật tương thích Windows/updater: `5.0.0.2`
 Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
 
 ## Giới thiệu
 
-Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. VietLicenSure giữ đầy đủ chức năng của bản trước và thống nhất tên phiên bản hiển thị là **v5.0**.
+> **Kiểm tra bản quyền rõ ràng – Quản lý hệ thống chủ động – An tâm sử dụng.**
 
-Tên gọi kết hợp **Viet** (do người Việt phát triển), **Licen** (`License` — giấy phép/bản quyền phần mềm) và **Sure** (rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật). Phần mềm tập trung nâng cấp trải nghiệm sử dụng, khả năng kiểm tra–nhận diện, quy trình khắc phục an toàn, báo cáo và bảo vệ dữ liệu. VietLicenSure hoạt động Offline theo mặc định, không tự tải inventory hoặc báo cáo lên Internet và chỉ dùng Online khi người dùng chủ động cho phép.
+VietLicenSure v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9. Dự án được đổi tên từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống** để phản ánh phạm vi mới: kiểm tra Windows, Microsoft Office/Microsoft 365, phần mềm đã cài, cấu hình và dữ liệu kiểm kê trên một quy trình thống nhất.
 
-## Cập nhật v5.0.0.2 ngày 08/09/2026
+VietLicenSure được phát triển bởi Thanh Việt, một nhân viên văn phòng có niềm đam mê với lập trình. Dự án bắt đầu từ mong muốn thay thế nhiều lệnh và công cụ kiểm tra rời rạc bằng một phần mềm dễ sử dụng hơn cho người dùng cá nhân, kỹ thuật viên, nhân viên IT và doanh nghiệp. VietLicenSure cung cấp bằng chứng kỹ thuật và hỗ trợ quản lý; không kích hoạt trái phép và không thay thế hóa đơn, hợp đồng hoặc kết luận pháp lý về quyền sử dụng.
+
+Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`License` — giấy phép/bản quyền phần mềm) và **Sure** (rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật).
+
+## Những nâng cấp cốt lõi từ v4.9 lên v5.0
+
+- **Giao diện và trải nghiệm:** khởi động nhanh hơn, bố cục thích ứng DPI, hỗ trợ Sáng/Tối, điều hướng rõ ràng và mở thẳng đúng chức năng.
+- **Kiểm tra Windows, Office và phần mềm:** ba mức Quick, Standard và Deep; mở rộng nguồn kiểm kê; phân biệt trạng thái kích hoạt, loại giấy phép, lỗi đọc dữ liệu và trường hợp chưa đủ bằng chứng.
+- **Phân tích và quản lý:** xếp ưu tiên Cao–Trung bình–Thấp, tìm kiếm, lọc, so sánh lần quét, timeline và hỗ trợ quản lý nhiều thiết bị.
+- **Khắc phục an toàn:** tách phạm vi Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, sao lưu, xác nhận đúng mục tiêu, hậu kiểm và rollback.
+- **Báo cáo và quyền riêng tư:** xuất HTML/PDF/JSON/XML/CSV, che thông tin nhạy cảm theo mặc định, tạo gói hỗ trợ an toàn và không tự tải dữ liệu máy lên Internet.
+- **Cập nhật và chuỗi tin cậy:** khi người dùng bật Online, phần mềm tự kiểm tra bản v5.0 mới nhất; trước khi thay thế tệp, updater xác minh manifest CMS, SHA-256, Authenticode và signer đã ghim.
+- **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh, giải thích đầy đủ các chức năng và chỉ đối chiếu theo hồ sơ đã ghi nhận.
+
+## Chính sách và kênh hỗ trợ của v5.0
 
 - Công bố rõ lý do chuyển sang mô hình mã nguồn có kiểm soát từ v4.9: tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành thành phần mềm khác khi chưa được cho phép hay ủy quyền.
 - Xác định phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ.
 - Công bố quy trình yêu cầu truy cập bằng văn bản, phạm vi quyền được cấp và nguyên tắc quyền xem không đồng nghĩa quyền sử dụng lại.
 - Xác nhận chưa cam kết ngày mở lại mã nguồn; chính sách được xem xét định kỳ theo khả năng bảo vệ sở hữu trí tuệ, kiểm soát truy cập, thông tin nhạy cảm và chuỗi phát hành.
 - Bổ sung kênh tương tác hai chiều: GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho lỗ hổng bảo mật.
-- Đồng bộ tên hiển thị `VietLicenSure v5.0`, phiên bản kỹ thuật `5.0.0.2` và ngày phát hành `08/09/2026` trong ứng dụng, tài liệu và kênh công khai.
-
-## Cập nhật v5.0 ngày 06/09/2026
-
-- Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử phiên bản Việt–Anh, dùng được Offline và bao phủ mọi chức năng được tài liệu hóa.
-- Hỏi một phiên bản có hồ sơ sẽ nhận đúng mục thay đổi; hỏi hai phiên bản sẽ nhận đối chiếu trực tiếp, không suy diễn ngoài tài liệu; “bản hiện tại” và “mới nhất” được hiểu là v5.0.
-- Đồng bộ tên VietLicenSure và v5.0 trên Dashboard, Trợ lý, Giới thiệu, quản lý doanh nghiệp, tài liệu và trang GitHub.
-- Sửa vùng tiêu đề/mô tả Trợ lý bị cắt và bổ sung kiểm thử UI tự động ở Việt/Anh, Sáng/Tối để chặn lỗi thiếu chữ tái diễn.
-- Mọi mục HDSD có thể được gọi đúng theo tên: 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ của Trung tâm Báo cáo & Bảo đảm.
-- Khôi phục các mốc v1.0.0–v1.0.9 bị lược bỏ và sửa nội dung v1.1.0–v3.3 theo hồ sơ phát hành gốc; xác định rõ không có hồ sơ v2.0–v2.3.
-- Giải thích đầy đủ quy trình OEM: kiểm tra OA3 chỉ đọc, che key, xác nhận quyền/edition, áp dụng bằng cơ chế Windows chính thức và hậu kiểm tối đa ba lần; đây là một phần của độ phủ toàn bộ chức năng.
-- Bổ sung kiểm thử chống nhầm phiên bản Windows/Office/PowerShell/.NET với lịch sử phần mềm, kiểm thử mọi mục chức năng và kiểm thử toàn vẹn chỉ mục tài liệu.
+- Đồng bộ duy nhất tên `VietLicenSure v5.0` trong ứng dụng, tài liệu, bộ cập nhật và các kênh công khai.
 
 ## Cập nhật kỹ thuật ngày 05/09/2026
 
