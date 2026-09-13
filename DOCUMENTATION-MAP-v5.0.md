@@ -2,7 +2,7 @@
 
 Phiên bản áp dụng: **VietLicenSure v5.0**
 Kênh áp dụng: **ManagedSigned/Pilot**  
-Ngày chốt hồ sơ: **2026-09-08**
+Ngày chốt hồ sơ: **2026-09-13**
 
 Tài liệu này xác định đâu là hồ sơ hiện hành của v5.0 và giải thích các tên tệp còn mang mốc v4.8/v4.9. Mốc trong tên tệp là phiên bản hình thành hợp đồng kỹ thuật hoặc chính sách, không phải phiên bản của tệp thực thi đang bàn giao.
 
@@ -46,4 +46,4 @@ Nếu hai nguồn mâu thuẫn, dừng sử dụng chức năng thay đổi hệ
 
 ## Trạng thái nghiệm thu
 
-`ManagedSigned/Pilot` không phải `Public Stable`. Kiểm thử cục bộ và kiểm tra tĩnh không thay thế ma trận máy Windows 10/11 sạch. Chỉ nâng trạng thái khi có đủ log độc lập, thông tin hệ điều hành, hash kết quả và người duyệt theo `SECURITY-REVIEW-PROCESS-v1.md`.
+`ManagedSigned/Pilot` không phải `Public Stable`. Harness4 ngày 13/09/2026 đã đạt 3/3 nền tảng Windows ở cấp verifier và ràng buộc artifact cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`, nhưng không trực tiếp khởi chạy EXE/UI. Chỉ nâng trạng thái khi có thêm bằng chứng runtime artifact phù hợp, review độc lập hoàn tất, thông tin hệ điều hành, hash kết quả và người duyệt theo `SECURITY-REVIEW-PROCESS-v1.md`.

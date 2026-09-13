@@ -1,11 +1,12 @@
 # Giới hạn đã biết — VietLicenSure v5.0
 
-Tài liệu này áp dụng cho VietLicenSure `v5.0`, phát hành ngày `08/09/2026` theo kênh `ManagedSigned/Pilot`.
+Tài liệu này áp dụng cho VietLicenSure `v5.0`, phát hành ngày `08/09/2026` theo kênh `ManagedSigned/Pilot`; hồ sơ QA được cập nhật ngày `13/09/2026`.
 
 ## Tin cậy phát hành
 
 - EXE được ký và có timestamp, nhưng dùng chứng thư tự ký được launcher ghim; Windows có thể hiển thị `Unknown publisher` hoặc cảnh báo SmartScreen.
-- Bản này chưa được gọi là `Public Stable`: còn thiếu ma trận máy thật/VM đầy đủ, chứng thư code-signing do CA công cộng cấp và biên bản đánh giá bảo mật độc lập hoàn tất cho đúng artifact.
+- Ma trận Harness4 ngày 13/09/2026 đã đạt `3/3` nền tảng, mỗi nền tảng đạt `11/11` kiểm tra canonical và `1/1` kiểm tra updater bổ sung, gắn với source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`.
+- Harness4 xác minh hồi quy nguồn và ràng buộc danh tính EXE/metadata nhưng không trực tiếp khởi chạy EXE đóng gói. Bản này chưa được gọi là `Public Stable`: còn thiếu ma trận runtime đầy đủ cho EXE/UI, chứng thư code-signing do CA công cộng cấp và biên bản đánh giá bảo mật độc lập hoàn tất cho đúng artifact.
 - Verifier tĩnh và checksum không thay thế kiểm thử runtime, WinVerifyTrust trên máy sạch hoặc pentest độc lập.
 
 ## Tương thích và giao diện

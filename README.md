@@ -3,6 +3,7 @@
 - **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành ngày 08/09/2026
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
+- **Bằng chứng QA hiện hành:** Harness4 ngày 13/09/2026 đạt 3/3 nền tảng ở cấp verifier cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`; Harness4 không trực tiếp khởi chạy EXE/UI.
 
 > **Kiểm tra bản quyền rõ ràng – Quản lý hệ thống chủ động – An tâm sử dụng.**
 
