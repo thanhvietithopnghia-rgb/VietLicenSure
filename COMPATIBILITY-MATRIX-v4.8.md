@@ -2,6 +2,8 @@
 
 > **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; đây là bằng chứng lịch sử tham khảo cho VietLicenSure v5.0, không được dùng thay ma trận máy thật của đúng bản phát hành hiện tại.
 
+> **Bằng chứng v5.0 hiện hành:** Harness4 ngày 13/09/2026 đạt 3/3 nền tảng cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2 đều đạt 11/11 kiểm tra canonical cùng 1/1 kiểm tra updater bổ sung. Harness4 không khởi chạy EXE/UI; xem `SECURITY-TEST-RESULTS.md` để biết phạm vi và giới hạn chính xác.
+
 Mốc rà soát: **2026-08-17 UTC**. Nguồn máy đọc: `compatibility-catalog-v1.0.json`, schema catalog `1.1`, phiên bản `1.1.1.0`.
 
 Catalog Microsoft này tách biệt với `software-license-catalog-v1.0.json` phiên bản `1.4.0.1`. Catalogue phần mềm có 77 quy tắc sản phẩm duy nhất, metadata phạm vi/chính sách cập nhật và chữ ký CMS tách rời, gồm IObit Driver Booster, WIRIS MathType, PDF editor thương mại, IDM, các nhóm CAD/CAE/BIM, mô phỏng, kết cấu, GIS, EDA, đo lường, rendering và nhiều ứng dụng phổ biến. Các quy tắc bổ sung nhận diện signer/domain/tệp lõi/artifact nhưng không hạ ngưỡng kết luận fail-closed của engine quét sâu; `HashMismatch` đơn lẻ chỉ tạo `IntegrityCompromised`. Mô hình giấy phép được trình bày riêng với bằng chứng can thiệp; mức `Low` không tạo hành động xóa.

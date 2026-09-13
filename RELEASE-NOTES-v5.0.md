@@ -50,6 +50,12 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Không chuyển `TOOL_UPDATE_CACHE_ROOT` qua ranh giới UAC, kiểm lại SHA-256 của launcher sau khi tiến trình cũ thoát và giữ backup cùng thư mục đích với tên ngẫu nhiên.
 - Bổ sung regression test để khóa các điều kiện trên và ngăn tái xuất hiện đường nâng quyền qua writable-path race.
 
+## Cập nhật bằng chứng QA ngày 13/09/2026
+
+- Harness4 đạt `3/3` nền tảng cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2.
+- Mỗi nền tảng đạt `11/11` kiểm tra canonical cùng `1/1` kiểm tra updater bổ sung; ba kết quả thô được ghim bằng SHA-256 trong hồ sơ evidence.
+- Phạm vi là hồi quy nguồn, hardening updater và ràng buộc source/metadata/EXE. EXE đóng gói chưa được khởi chạy bởi Harness4; runtime EXE/UI và security review độc lập vẫn là cổng riêng trước `Public Stable`.
+
 ## Cập nhật lịch sử và bài giới thiệu
 
 - Khôi phục lịch sử đầy đủ của các phiên bản công khai từ v1.0 đến v5.0 trong cả tài liệu tiếng Việt và tiếng Anh.
