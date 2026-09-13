@@ -156,15 +156,13 @@ try {
     Assert-UpdateTest ($developmentDeniedProcess.ExitCode -eq 2) 'An unsigned development build was allowed to contact the updater.'
     Assert-UpdateTest (-not (Test-Path -LiteralPath $developmentDeniedResultPath)) 'Development update denial wrote a result after the pre-network gate.'
     $env:TOOL_SELF_UPDATE_ALLOWED = '1'
-    $positiveGateArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$updateManagerPath`" -Mode Apply -ConsentGranted -NoUi -NoRestart"
+    $positiveGateArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$updateManagerPath`" -Mode Apply -ConsentGranted -NoUi"
     $positiveGateProcess = Start-Process -FilePath $verificationPowerShell -ArgumentList $positiveGateArguments -WindowStyle Hidden -Wait -PassThru
     Assert-UpdateTest ($positiveGateProcess.ExitCode -eq 3) 'The stable self-update marker did not pass the pre-network gate.'
     $env:TOOL_OFFLINE_MODE = '1'
 
     $stagedPath = Join-Path $temporaryRoot 'staged.exe'
     $targetPath = Join-Path $temporaryRoot 'VietLicenSure-v5.0.exe'
-    $cacheDirectory = Join-Path $temporaryRoot 'install-cache'
-    New-Item -ItemType Directory -Path $cacheDirectory | Out-Null
     $newBytes = New-Object byte[] 65536
     $newBytes[0] = 0x4D
     $newBytes[1] = 0x5A
@@ -177,9 +175,16 @@ try {
     Assert-UpdateThrows { Assert-ToolUpdateExecutable -Path $stagedPath -ExpectedSize 65536 -ExpectedSha256 $newSha256 -AuthenticodeRequired $true -SignerThumbprints @(('C' * 40)) | Out-Null } 'An unsigned staged executable was accepted when Authenticode was required.'
     [IO.File]::WriteAllBytes($targetPath, ([Text.Encoding]::UTF8.GetBytes('MZ-old-version')))
     $oldSha256 = Get-ToolUpdateSha256 $targetPath
-    $installResult = Install-ToolUpdateExecutable -StagedPath $stagedPath -TargetPath $targetPath -TargetSha256 $newSha256 -InstalledVersion '4.8.0.1' -TargetVersion '5.0' -CacheDirectory $cacheDirectory -SkipRestart
+    Assert-UpdateThrows {
+        Install-ToolUpdateExecutable -StagedPath $stagedPath -TargetPath $targetPath -TargetSha256 $newSha256 -ExpectedCurrentSha256 ('C' * 64) -InstalledVersion '4.8.0.1' -TargetVersion '5.0' | Out-Null
+    } 'Installer accepted a launcher that changed after user confirmation.'
+    Assert-UpdateTest ((Get-ToolUpdateSha256 $targetPath) -eq $oldSha256) 'Current-hash rejection changed the launcher.'
+    $installResult = Install-ToolUpdateExecutable -StagedPath $stagedPath -TargetPath $targetPath -TargetSha256 $newSha256 -ExpectedCurrentSha256 $oldSha256 -InstalledVersion '4.8.0.1' -TargetVersion '5.0'
     Assert-UpdateTest ([bool]$installResult.Success -and (Get-ToolUpdateSha256 $targetPath) -eq $newSha256) 'Safe EXE replacement failed.'
     Assert-UpdateTest ((Get-ToolUpdateSha256 $installResult.BackupPath) -eq $oldSha256) 'Previous EXE backup is invalid.'
+    Assert-UpdateTest ([bool]$installResult.RestartRequired -and
+        (Split-Path -Parent ([IO.Path]::GetFullPath([string]$installResult.BackupPath))) -eq (Split-Path -Parent ([IO.Path]::GetFullPath($targetPath)))) `
+        'Update backup is not bound to the launcher directory or manual restart is not required.'
 
     . (Join-Path $root 'Tool-OfflinePolicy.ps1')
     . (Join-Path $root 'Tool-ModuleContract.ps1')
@@ -216,6 +221,32 @@ try {
     $elevatedBridgeText = Get-Content -LiteralPath (Join-Path $root 'Tool-ElevatedBridge.ps1') -Raw -Encoding UTF8
     Assert-UpdateTest ($elevatedBridgeText.Contains("'application.update.apply' = 'Tool-UpdateManager.ps1'")) 'The elevated bridge does not bind the update apply module to the updater script.'
     Assert-UpdateTest ($elevatedBridgeText.Contains("'TOOL_SELF_UPDATE_ALLOWED'")) 'The elevated bridge does not preserve the self-update build gate.'
+    Assert-UpdateTest (-not $elevatedBridgeText.Contains("'TOOL_UPDATE_CACHE_ROOT'")) 'The elevated bridge preserves a caller-controlled update cache root.'
+    Assert-UpdateTest (-not $dashboardText.Contains("'TOOL_UPDATE_CACHE_ROOT'")) 'The GUI forwards a caller-controlled update cache root across elevation.'
+    $bridgeTokens = $null
+    $bridgeParseErrors = $null
+    $bridgeAst = [Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'Tool-ElevatedBridge.ps1'), [ref]$bridgeTokens, [ref]$bridgeParseErrors)
+    Assert-UpdateTest ($bridgeParseErrors.Count -eq 0) 'Elevated bridge cannot be parsed for update-profile verification.'
+    foreach ($functionName in @('ConvertFrom-BridgeTargetArguments','Get-BridgeArgumentValue','Test-BridgePathWithin','Test-BridgeLocalAbsolutePath','Assert-BridgeModuleArgumentProfile')) {
+        $functionAst = $bridgeAst.Find({
+            param($node)
+            $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $functionName
+        }, $true)
+        Assert-UpdateTest ($null -ne $functionAst) "Elevated bridge is missing $functionName."
+        Invoke-Expression ([string]$functionAst.Extent.Text)
+    }
+    $bridgeLauncherPath = Join-Path $temporaryRoot 'VietLicenSure-v5.0-bridge-fixture.exe'
+    $bridgeUpdaterPath = Join-Path $temporaryRoot 'Tool-UpdateManager.ps1'
+    foreach ($versionFixture in @('5.0','5.0.0.0')) {
+        $bridgeArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$bridgeUpdaterPath`" -Mode Apply -ConsentGranted -Culture vi-VN -CurrentVersion `"$versionFixture`" -ExpectedVersion `"$versionFixture`" -ManifestUrl `"$script:ToolUpdateDefaultManifestUrl`" -LauncherPath `"$bridgeLauncherPath`" -LauncherProcessId 123 -ExpectedCurrentSha256 `"$('A' * 64)`""
+        $parsedBridgeArguments = ConvertFrom-BridgeTargetArguments -Arguments $bridgeArguments
+        Assert-BridgeModuleArgumentProfile -ModuleId 'application.update.apply' -ParsedArguments $parsedBridgeArguments -OriginalRuntimeRoot $temporaryRoot -TrustedLauncherPath $bridgeLauncherPath
+    }
+    $forbiddenRestartArguments = $bridgeArguments + ' -NoRestart'
+    Assert-UpdateThrows {
+        $parsedForbiddenRestartArguments = ConvertFrom-BridgeTargetArguments -Arguments $forbiddenRestartArguments
+        Assert-BridgeModuleArgumentProfile -ModuleId 'application.update.apply' -ParsedArguments $parsedForbiddenRestartArguments -OriginalRuntimeRoot $temporaryRoot -TrustedLauncherPath $bridgeLauncherPath
+    } 'Elevated bridge still accepts the removed restart-control switch.'
     $launcherText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
     Assert-UpdateTest ($launcherText.Contains('"Tool-UpdateManager.ps1"') -and $launcherText.Contains('TOOL_LAUNCHER_PID') -and $launcherText.Contains('TOOL_TOOL_VERSION"] = "5.0"') -and $launcherText.Contains('TOOL_SIGNED_STABLE_BUILD') -and $launcherText.Contains('TOOL_MANAGED_SIGNED_BUILD') -and $launcherText.Contains('TOOL_STORE_BUILD') -and $launcherText.Contains('TOOL_SELF_UPDATE_ALLOWED')) 'Launcher does not embed or pin the v5.0 update foundation.'
     $buildText = Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8
@@ -227,7 +258,7 @@ try {
 
     foreach ($catalogName in @('Tool-Strings.vi-VN.json','Tool-Strings.en-US.json')) {
         $catalog = Get-Content -LiteralPath (Join-Path $root $catalogName) -Raw -Encoding UTF8 | ConvertFrom-Json
-        foreach ($key in @('update.choice.updateNow','update.choice.remindLater','update.choice.dismissSession','update.apply.failedMessage','foundation.module.applicationUpdateCheck')) {
+        foreach ($key in @('update.choice.updateNow','update.choice.remindLater','update.choice.dismissSession','update.apply.completedTitle','update.apply.completedMessage','update.apply.failedMessage','foundation.module.applicationUpdateCheck')) {
             Assert-UpdateTest ($null -ne $catalog.PSObject.Properties[$key]) "$catalogName is missing update key $key."
         }
     }
@@ -235,8 +266,13 @@ try {
     $updateManagerText = Get-Content -LiteralPath $updateManagerPath -Raw -Encoding UTF8
     Assert-UpdateTest ($updateManagerText.Contains('-InstalledSha256 $CurrentLauncherSha256')) 'Apply-time manifest recheck does not preserve same-version hash detection.'
     Assert-UpdateTest ($updateManagerText.Contains('TOOL_SELF_UPDATE_ALLOWED')) 'Updater does not fail closed for development builds.'
+    Assert-UpdateTest ($updateManagerText.Contains("if (`$Mode -eq 'Library') { [string]`$env:TOOL_UPDATE_CACHE_ROOT } else { '' }")) 'Production updater still accepts a caller-controlled cache root.'
+    Assert-UpdateTest ($updateManagerText.Contains('-ExpectedCurrentSha256 $CurrentLauncherSha256')) 'Installer does not revalidate the launcher after it exits.'
+    Assert-UpdateTest ($updateManagerText -notmatch '(?i)\bStart-Process\b') 'Elevated updater can still launch a medium-integrity-controlled path.'
+    Assert-UpdateTest ($buildText.Contains('$applicationSelfUpdateAllowed = [bool]$RequireAuthenticode')) 'ManagedSigned build still enables the public self-updater.'
+    Assert-UpdateTest ($launcherText -match '(?s)#elif TOOL_MANAGED_SIGNED_BUILD.+?SelfUpdateBuildMarker = "0";') 'ManagedSigned launcher still embeds the public self-update marker.'
 
-    Write-Host 'VERIFY-APPLICATION-UPDATE: OK (Offline/consent gates + signed-stable policy + anti-downgrade + same-version hash replacement + version/asset/hash/size/signer validation + verified swap/backup)' -ForegroundColor Green
+    Write-Host 'VERIFY-APPLICATION-UPDATE: OK (Offline/consent gates + signed-stable policy + anti-downgrade + same-version hash replacement + version/asset/hash/size/signer validation + revalidated swap/backup + no elevated restart)' -ForegroundColor Green
     exit 0
 } catch {
     Write-Error $_.Exception.Message

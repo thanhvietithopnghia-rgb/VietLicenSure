@@ -14,7 +14,7 @@ if (([int][bool]$AllowManagedSignedManifest + [int][bool]$AllowStoreManifest + [
 }
 $unsignedExecutableManifest = [bool]($AllowDevelopmentManifest -or $AllowStoreManifest)
 $expectedTrustMode = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
-$expectedApplicationSelfUpdateAllowed = [bool]($expectedTrustMode -in @('Production','ManagedSigned'))
+$expectedApplicationSelfUpdateAllowed = [bool]($expectedTrustMode -eq 'Production')
 $expectedApplicationUpdateAuthority = if ($AllowStoreManifest) { 'MicrosoftStore' } elseif ($AllowManagedSignedManifest) { 'ManagedDeployment' } elseif ($AllowDevelopmentManifest) { 'None' } else { 'PublicStableManifest' }
 $expectedBundledUpdateManifestChannel = if ($AllowStoreManifest) { 'store' } elseif ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }

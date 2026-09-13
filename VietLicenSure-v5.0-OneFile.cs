@@ -69,10 +69,10 @@ namespace ThanhViet.VietLicenSure
         private const string StoreBuildMarker = "0";
 #elif TOOL_MANAGED_SIGNED_BUILD
         // ManagedSigned uses a locally distributed, hard-pinned trust anchor.
-        // It may use the signed public update manifest after the user enables
-        // Online mode; every replacement is checked by SHA-256, CMS and signer.
+        // Updates remain under managed deployment control; a self-signed pilot
+        // must never consume or replace itself from the public Stable channel.
         private const string SignedStableBuildMarker = "0";
-        private const string SelfUpdateBuildMarker = "1";
+        private const string SelfUpdateBuildMarker = "0";
         private const string ManagedSignedBuildMarker = "1";
         private const string StoreBuildMarker = "0";
 #elif TOOL_STORE_BUILD

@@ -89,7 +89,7 @@ try {
         throw "Marker trust không khớp chế độ ${ExpectedTrustMode}: $actualMarkers / $expectedMarkers."
     }
     $actualSelfUpdateMarker = [string]$selfUpdateMarkerField.GetRawConstantValue()
-    $expectedSelfUpdateMarker = if ($ExpectedTrustMode -in @('Production','ManagedSigned')) { '1' } else { '0' }
+    $expectedSelfUpdateMarker = if ($ExpectedTrustMode -eq 'Production') { '1' } else { '0' }
     if ($actualSelfUpdateMarker -cne $expectedSelfUpdateMarker) {
         throw "Marker self-update không khớp chế độ ${ExpectedTrustMode}: $actualSelfUpdateMarker / $expectedSelfUpdateMarker."
     }

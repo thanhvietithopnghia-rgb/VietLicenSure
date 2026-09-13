@@ -3090,6 +3090,8 @@
   "update.apply.waiting": "Đang chờ phiên bản hiện tại đóng hoàn toàn...",
   "update.apply.installing": "Đang thay thế bằng phiên bản mới; bản cũ được giữ để khôi phục nếu cần...",
   "update.apply.privacy": "Không có dữ liệu máy được tải lên. Không tắt máy trong lúc thay thế tệp.",
+  "update.apply.completedTitle": "Cập nhật hoàn tất",
+  "update.apply.completedMessage": "Phiên bản mới đã được xác minh và thay thế an toàn. Hãy mở lại VietLicenSure theo cách bình thường; trình cập nhật không tự chạy ứng dụng bằng quyền Administrator.",
   "update.apply.failedTitle": "Cập nhật chưa hoàn tất",
   "update.apply.failedMessage": "Không thể hoàn tất cập nhật an toàn. Phần mềm sẽ giữ hoặc khôi phục bản cũ.\r\n\r\n{0}",
   "software.results.title": "Kết quả quét và kiểm kê phần mềm",

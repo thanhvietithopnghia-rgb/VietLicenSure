@@ -246,9 +246,9 @@ function Assert-BridgeModuleArgumentProfile {
             $switches = @('repairscansources','redactsensitive')
         }
         'application.update.apply' {
-            $allowed = @('mode','consentgranted','culture','currentversion','expectedversion','manifesturl','launcherpath','launcherprocessid','expectedcurrentsha256','norestart','noui')
+            $allowed = @('mode','consentgranted','culture','currentversion','expectedversion','manifesturl','launcherpath','launcherprocessid','expectedcurrentsha256','noui')
             $required = @('mode','consentgranted','culture','currentversion','expectedversion','manifesturl','launcherpath','launcherprocessid','expectedcurrentsha256')
-            $switches = @('consentgranted','norestart','noui')
+            $switches = @('consentgranted','noui')
         }
         'oem.apply' {
             $allowed = @('mode','outputdir','decisionfile','culture')
@@ -333,8 +333,8 @@ function Assert-BridgeModuleArgumentProfile {
             -not [string]::Equals([IO.Path]::GetFullPath($launcherPath), [IO.Path]::GetFullPath($TrustedLauncherPath), [StringComparison]::OrdinalIgnoreCase) -or
             $manifestUrl -notmatch '^https://[^\s]+$' -or
             $launcherProcessId -notmatch '^[1-9][0-9]{0,9}$' -or
-            (Get-BridgeArgumentValue -Parameters $parameters -Name 'currentversion') -notmatch '^\d+\.\d+\.\d+\.\d+$' -or
-            (Get-BridgeArgumentValue -Parameters $parameters -Name 'expectedversion') -notmatch '^\d+\.\d+\.\d+\.\d+$' -or
+            (Get-BridgeArgumentValue -Parameters $parameters -Name 'currentversion') -notmatch '^\d{1,5}\.\d{1,5}(?:\.\d{1,5}\.\d{1,5})?$' -or
+            (Get-BridgeArgumentValue -Parameters $parameters -Name 'expectedversion') -notmatch '^\d{1,5}\.\d{1,5}(?:\.\d{1,5}\.\d{1,5})?$' -or
             (Get-BridgeArgumentValue -Parameters $parameters -Name 'expectedcurrentsha256') -notmatch '^[A-Fa-f0-9]{64}$') {
             throw 'ElevatedBridgeUpdateArgumentProfileInvalid'
         }
@@ -403,7 +403,7 @@ try {
         'TOOL_SELF_UPDATE_ALLOWED',
         'TOOL_SECURE_RUNTIME_DIR','TOOL_SECURE_RUNTIME_FAILED','TOOL_TIMELINE_KEY_PATH','TOOL_TIMELINE_PATH',
         'TOOL_TOOL_VERSION','TOOL_UI_CULTURE','TOOL_UI_CULTURE_SETTINGS_PATH','TOOL_UI_THEME',
-        'TOOL_UI_THEME_SETTINGS_PATH','TOOL_UPDATE_CACHE_ROOT'
+        'TOOL_UI_THEME_SETTINGS_PATH'
     )
     $environmentValues = @{}
     foreach ($property in @($payload.Environment.PSObject.Properties)) {
@@ -438,7 +438,7 @@ try {
         'TOOL_ENTERPRISE_NETWORK_SETTINGS_PATH','TOOL_ENTERPRISE_ROOT','TOOL_LAUNCHER_PATH',
         'TOOL_LEGACY_DATA_ROOT','TOOL_LOG_PATH','TOOL_OFFLINE_SETTINGS_PATH','TOOL_PLUGIN_DIR',
         'TOOL_POWERSHELL_PATH','TOOL_SECURE_RUNTIME_DIR','TOOL_TIMELINE_KEY_PATH','TOOL_TIMELINE_PATH',
-        'TOOL_UI_CULTURE_SETTINGS_PATH','TOOL_UI_THEME_SETTINGS_PATH','TOOL_UPDATE_CACHE_ROOT')) {
+        'TOOL_UI_CULTURE_SETTINGS_PATH','TOOL_UI_THEME_SETTINGS_PATH')) {
         if ($environmentValues.ContainsKey($pathName) -and
             -not [string]::IsNullOrWhiteSpace([string]$environmentValues[$pathName]) -and
             -not (Test-BridgeLocalAbsolutePath -Path ([string]$environmentValues[$pathName]))) {

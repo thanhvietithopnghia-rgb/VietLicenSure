@@ -39,7 +39,7 @@ $publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
 $requiresVerifiedProvenance = [bool]($requiresSignedArtifact -or $AllowStoreBuild)
 $bundledUpdateManifestChannel = if ($AllowStoreBuild) { 'store' } elseif ($requiresSignedArtifact) { 'stable' } else { 'development' }
-$applicationSelfUpdateAllowed = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
+$applicationSelfUpdateAllowed = [bool]$RequireAuthenticode
 $applicationUpdateAuthority = if ($AllowStoreBuild) {
     'MicrosoftStore'
 } elseif ($AllowManagedSignedBuild) {

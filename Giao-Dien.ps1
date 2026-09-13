@@ -3521,7 +3521,7 @@ function Get-ToolElevatedEnvironmentSnapshot {
         'TOOL_SELF_UPDATE_ALLOWED',
         'TOOL_SECURE_RUNTIME_DIR','TOOL_SECURE_RUNTIME_FAILED','TOOL_TIMELINE_KEY_PATH','TOOL_TIMELINE_PATH',
         'TOOL_TOOL_VERSION','TOOL_UI_CULTURE','TOOL_UI_CULTURE_SETTINGS_PATH','TOOL_UI_THEME',
-        'TOOL_UI_THEME_SETTINGS_PATH','TOOL_UPDATE_CACHE_ROOT'
+        'TOOL_UI_THEME_SETTINGS_PATH'
     )
     $snapshot = [ordered]@{}
     foreach ($name in $allowedNames) {

@@ -10,7 +10,6 @@ param(
     [string]$LauncherPath = '',
     [int]$LauncherProcessId = 0,
     [string]$ExpectedCurrentSha256 = '',
-    [switch]$NoRestart,
     [switch]$NoUi
 )
 
@@ -29,7 +28,6 @@ $script:ToolUpdateMaximumExecutableBytes = 104857600
 $script:ToolUpdateMinimumExecutableBytes = 65536
 $script:ToolUpdateSignerThumbprints = @('ABE70696679B1D8987A2D5B1F6C1C6909D364CEA')
 $script:ToolUpdateSignerCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
-$script:ToolUpdateRestartAttempted = $false
 
 # Every executable entry point fails closed before loading helpers or making a
 # request. Library mode exists only for deterministic local verification.
@@ -431,7 +429,10 @@ function Invoke-ToolUpdateCheck {
 }
 
 function Get-ToolUpdateCacheRoot {
-    $root = [string]$env:TOOL_UPDATE_CACHE_ROOT
+    # A production Apply process is elevated. Never accept a caller-controlled
+    # cache root across that boundary; the override exists only for isolated,
+    # non-elevated Library-mode verification fixtures.
+    $root = if ($Mode -eq 'Library') { [string]$env:TOOL_UPDATE_CACHE_ROOT } else { '' }
     if ([string]::IsNullOrWhiteSpace($root)) {
         $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
         if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [string]$env:LOCALAPPDATA }
@@ -649,24 +650,43 @@ function Install-ToolUpdateExecutable {
         [Parameter(Mandatory = $true)][string]$StagedPath,
         [Parameter(Mandatory = $true)][string]$TargetPath,
         [Parameter(Mandatory = $true)][string]$TargetSha256,
+        [Parameter(Mandatory = $true)][string]$ExpectedCurrentSha256,
         [Parameter(Mandatory = $true)][string]$InstalledVersion,
-        [Parameter(Mandatory = $true)][string]$TargetVersion,
-        [Parameter(Mandatory = $true)][string]$CacheDirectory,
-        [switch]$SkipRestart
+        [Parameter(Mandatory = $true)][string]$TargetVersion
     )
+    if ($TargetSha256 -notmatch '^[0-9A-Fa-f]{64}$' -or $ExpectedCurrentSha256 -notmatch '^[0-9A-Fa-f]{64}$') {
+        throw 'Update installation hashes are invalid.'
+    }
+    $targetSha256Normalized = $TargetSha256.ToUpperInvariant()
+    $expectedCurrentSha256Normalized = $ExpectedCurrentSha256.ToUpperInvariant()
     $targetFull = [IO.Path]::GetFullPath($TargetPath)
     $targetItem = Get-Item -LiteralPath $targetFull -Force
     if ($targetItem.Extension -ne '.exe' -or ($targetItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw 'Current VietLicenSure launcher path is unsafe.'
     }
     $targetDirectory = Split-Path -Parent $targetFull
-    $backupPath = Join-Path $CacheDirectory ("VietLicenSure-$InstalledVersion-backup.exe")
-    Copy-Item -LiteralPath $targetFull -Destination $backupPath -Force
+    $targetDirectoryItem = Get-Item -LiteralPath $targetDirectory -Force
+    if (($targetDirectoryItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'Current VietLicenSure launcher directory is unsafe.'
+    }
+    if ((Get-ToolUpdateSha256 $targetFull) -ne $expectedCurrentSha256Normalized) {
+        throw 'Current launcher changed before installation.'
+    }
+
+    # Keep rollback material beside the launcher. If that directory is
+    # privileged, an unprivileged caller cannot race or replace the backup; if
+    # it is user-writable, the caller already controls the target itself.
+    $backupPath = Join-Path $targetDirectory ('.tool-update-backup-' + [Guid]::NewGuid().ToString('N') + '.exe')
+    Copy-Item -LiteralPath $targetFull -Destination $backupPath
+    if ((Get-ToolUpdateSha256 $backupPath) -ne $expectedCurrentSha256Normalized) {
+        Remove-Item -LiteralPath $backupPath -Force -ErrorAction SilentlyContinue
+        throw 'Update backup does not match the current launcher.'
+    }
 
     $swapNew = Join-Path $targetDirectory ('.tool-update-new-' + [Guid]::NewGuid().ToString('N') + '.exe')
     $swapBackup = Join-Path $targetDirectory ('.tool-update-old-' + [Guid]::NewGuid().ToString('N') + '.exe')
     Copy-Item -LiteralPath $StagedPath -Destination $swapNew
-    if ((Get-ToolUpdateSha256 $swapNew) -ne $TargetSha256) {
+    if ((Get-ToolUpdateSha256 $swapNew) -ne $targetSha256Normalized) {
         Remove-Item -LiteralPath $swapNew -Force -ErrorAction SilentlyContinue
         throw 'Update changed while staging beside the launcher.'
     }
@@ -690,26 +710,8 @@ function Install-ToolUpdateExecutable {
                 throw
             }
         }
-        if ((Get-ToolUpdateSha256 $targetFull) -ne $TargetSha256) {
+        if ((Get-ToolUpdateSha256 $targetFull) -ne $targetSha256Normalized) {
             throw 'Installed VietLicenSure does not match the verified update.'
-        }
-
-        if (-not $SkipRestart) {
-            $script:ToolUpdateRestartAttempted = $true
-            $newProcess = Start-Process -FilePath $targetFull -WorkingDirectory $targetDirectory -PassThru
-            Start-Sleep -Seconds 5
-            if ($newProcess.HasExited) {
-                $rollbackNew = Join-Path $targetDirectory ('.tool-update-rollback-' + [Guid]::NewGuid().ToString('N') + '.exe')
-                Copy-Item -LiteralPath $backupPath -Destination $rollbackNew
-                try { [IO.File]::Replace($rollbackNew, $targetFull, $null) }
-                catch {
-                    if (Test-Path -LiteralPath $targetFull -PathType Leaf) { Remove-Item -LiteralPath $targetFull -Force }
-                    [IO.File]::Move($rollbackNew, $targetFull)
-                }
-                $rollbackCompleted = $true
-                [void](Start-Process -FilePath $targetFull -WorkingDirectory $targetDirectory)
-                throw 'The new VietLicenSure exited during startup; the previous version was restored.'
-            }
         }
     } catch {
         $installError = $_
@@ -717,6 +719,9 @@ function Install-ToolUpdateExecutable {
             $rollbackNew = Join-Path $targetDirectory ('.tool-update-rollback-' + [Guid]::NewGuid().ToString('N') + '.exe')
             try {
                 Copy-Item -LiteralPath $backupPath -Destination $rollbackNew
+                if ((Get-ToolUpdateSha256 $rollbackNew) -ne $expectedCurrentSha256Normalized) {
+                    throw 'Update rollback backup changed unexpectedly.'
+                }
                 try { [IO.File]::Replace($rollbackNew, $targetFull, $null) }
                 catch {
                     if (Test-Path -LiteralPath $targetFull -PathType Leaf) { Remove-Item -LiteralPath $targetFull -Force }
@@ -732,7 +737,9 @@ function Install-ToolUpdateExecutable {
         if (Test-Path -LiteralPath $swapNew -PathType Leaf) { Remove-Item -LiteralPath $swapNew -Force -ErrorAction SilentlyContinue }
         if (Test-Path -LiteralPath $swapBackup -PathType Leaf) { Remove-Item -LiteralPath $swapBackup -Force -ErrorAction SilentlyContinue }
         if (-not $replaced -and -not (Test-Path -LiteralPath $targetFull -PathType Leaf) -and (Test-Path -LiteralPath $backupPath -PathType Leaf)) {
-            Copy-Item -LiteralPath $backupPath -Destination $targetFull -Force
+            if ((Get-ToolUpdateSha256 $backupPath) -eq $expectedCurrentSha256Normalized) {
+                Copy-Item -LiteralPath $backupPath -Destination $targetFull -Force
+            }
         }
     }
     return [pscustomobject][ordered]@{
@@ -741,7 +748,8 @@ function Install-ToolUpdateExecutable {
         InstalledVersion = $TargetVersion
         LauncherPath = $targetFull
         BackupPath = $backupPath
-        InstalledSha256 = $TargetSha256
+        InstalledSha256 = $targetSha256Normalized
+        RestartRequired = $true
         CompletedAtUtc = [DateTime]::UtcNow.ToString('o')
     }
 }
@@ -800,11 +808,18 @@ function Invoke-ToolUpdateApply {
         Set-ToolUpdateProgress $window (Get-ToolUpdateText 'update.apply.waiting') 100
         Wait-ToolUpdateLauncherExit -ProcessId $CurrentLauncherProcessId
         Set-ToolUpdateProgress $window (Get-ToolUpdateText 'update.apply.installing') 100
-        $result = Install-ToolUpdateExecutable -StagedPath $stagedPath -TargetPath $launcherFull -TargetSha256 ([string]$candidate.DownloadSha256) -InstalledVersion $InstalledVersion -TargetVersion ([string]$candidate.LatestVersion) -CacheDirectory $cacheDirectory -SkipRestart:$NoRestart
+        $result = Install-ToolUpdateExecutable -StagedPath $stagedPath -TargetPath $launcherFull -TargetSha256 ([string]$candidate.DownloadSha256) -ExpectedCurrentSha256 $CurrentLauncherSha256 -InstalledVersion $InstalledVersion -TargetVersion ([string]$candidate.LatestVersion)
         $resultPath = Join-Path $cacheRoot 'last-update-result.json'
         Write-ToolUpdateJson $resultPath $result
         Close-ToolUpdateProgressWindow $window
         $window = $null
+        if (-not $NoUi) {
+            [System.Windows.Forms.MessageBox]::Show(
+                (Get-ToolUpdateText 'update.apply.completedMessage'),
+                (Get-ToolUpdateText 'update.apply.completedTitle'),
+                'OK',
+                'Information') | Out-Null
+        }
         return $result
     } finally {
         if (Test-Path -LiteralPath $stagedPath -PathType Leaf) { Remove-Item -LiteralPath $stagedPath -Force -ErrorAction SilentlyContinue }
@@ -865,20 +880,9 @@ try {
                     'Error') | Out-Null
             } catch {}
         }
-        if (-not $NoRestart -and -not $script:ToolUpdateRestartAttempted -and (Test-Path -LiteralPath $LauncherPath -PathType Leaf)) {
-            try {
-                # The UI requests its own shutdown immediately after starting this
-                # helper, but an early network/manifest failure can reach this catch
-                # before the launcher has actually released its single-instance
-                # mutex. Wait for that exact trusted launcher process so reopening
-                # the unchanged build cannot be lost to the still-running instance.
-                if ($CurrentLauncherProcessId -gt 0 -and $CurrentLauncherProcessId -ne $PID -and (Get-Process -Id $CurrentLauncherProcessId -ErrorAction SilentlyContinue)) {
-                    Wait-ToolUpdateLauncherExit -ProcessId $CurrentLauncherProcessId -TimeoutSeconds 30
-                }
-                $script:ToolUpdateRestartAttempted = $true
-                [void](Start-Process -FilePath ([IO.Path]::GetFullPath($LauncherPath)) -WorkingDirectory (Split-Path -Parent ([IO.Path]::GetFullPath($LauncherPath))))
-            } catch {}
-        }
+        # Never launch a path supplied by the medium-integrity process from this
+        # elevated helper. The user reopens VietLicenSure normally after success
+        # or failure, so a writable-path race cannot become elevated code execution.
     }
     exit 3
 }

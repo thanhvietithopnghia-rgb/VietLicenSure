@@ -3090,6 +3090,8 @@
   "update.apply.waiting": "Waiting for the current application to close completely...",
   "update.apply.installing": "Installing the new version; the previous version is retained for recovery...",
   "update.apply.privacy": "No machine data is uploaded. Do not shut down the computer while the file is being replaced.",
+  "update.apply.completedTitle": "Update completed",
+  "update.apply.completedMessage": "The new version was verified and installed safely. Reopen VietLicenSure normally; the updater does not launch the application with Administrator privileges.",
   "update.apply.failedTitle": "Update not completed",
   "update.apply.failedMessage": "The safe update could not be completed. The previous version will be kept or restored.\r\n\r\n{0}",
   "software.results.title": "Software scan and inventory results",
