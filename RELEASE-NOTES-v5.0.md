@@ -22,7 +22,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Phân tích và quản lý:** xếp ưu tiên Cao–Trung bình–Thấp, tìm kiếm, lọc, so sánh lần quét, timeline và hỗ trợ quản lý nhiều thiết bị.
 - **Khắc phục an toàn:** tách phạm vi Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, sao lưu, xác nhận đúng mục tiêu, hậu kiểm và rollback.
 - **Báo cáo và quyền riêng tư:** xuất HTML/PDF/JSON/XML/CSV, che thông tin nhạy cảm theo mặc định, tạo gói hỗ trợ an toàn và không tự tải dữ liệu máy lên Internet.
-- **Cập nhật và chuỗi tin cậy:** khi người dùng bật Online, phần mềm tự kiểm tra bản v5.0 mới nhất; trước khi thay thế tệp, updater xác minh manifest CMS, SHA-256, Authenticode và signer đã ghim.
+- **Cập nhật và chuỗi tin cậy:** updater Public Stable xác minh manifest CMS, SHA-256, Authenticode và signer đã ghim; kênh ManagedSigned hiện tại giữ self-update tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh, giải thích đầy đủ các chức năng và chỉ đối chiếu theo hồ sơ đã ghi nhận.
 
 ## Chính sách và kênh hỗ trợ của v5.0
@@ -42,6 +42,13 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Không hiện thao tác xử lý mục còn lại nếu không có ID còn lại chính xác; bằng chứng mạnh chỉ dừng đúng PID/path/hash rồi cách ly executable sau khi tái xác minh danh tính.
 - Thông báo thiếu chính sách nhà phát hành plugin nay giải thích đây là khóa bảo mật bình thường, chỉ dẫn cấu hình an toàn và không còn hiển thị như lỗi ứng dụng.
 - Đồng bộ Hướng dẫn Việt/Anh, Trợ lý cục bộ và mô tả đủ tám chức năng của Trung tâm Báo cáo & Bảo đảm.
+
+## Cập nhật an toàn ngày 13/09/2026
+
+- Khóa public self-update đối với `ManagedSigned/Pilot`; chỉ Public Stable dùng chứng thư CA công cộng mới được bật cơ chế này.
+- Updater không còn tự chạy lại EXE bằng token Administrator sau khi cập nhật hoặc khi gặp lỗi; người dùng mở lại VietLicenSure theo cách bình thường.
+- Không chuyển `TOOL_UPDATE_CACHE_ROOT` qua ranh giới UAC, kiểm lại SHA-256 của launcher sau khi tiến trình cũ thoát và giữ backup cùng thư mục đích với tên ngẫu nhiên.
+- Bổ sung regression test để khóa các điều kiện trên và ngăn tái xuất hiện đường nâng quyền qua writable-path race.
 
 ## Cập nhật lịch sử và bài giới thiệu
 

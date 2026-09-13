@@ -27,7 +27,7 @@ VietLicenSure v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9, t
 - **Phân tích và quản lý kết quả:** sắp xếp việc cần xem theo mức Cao–Trung bình–Thấp, hỗ trợ tìm kiếm, lọc, so sánh với lần quét trước và quản lý nhiều thiết bị.
 - **Khắc phục an toàn:** tách riêng Windows, Office và phần mềm khác; bắt buộc xem trước, Dry Run, sao lưu, xác nhận đúng phạm vi, hậu kiểm và hỗ trợ rollback.
 - **Báo cáo và quyền riêng tư:** xuất HTML, PDF, JSON, XML/CSV; tạo gói hỗ trợ đã che thông tin nhạy cảm và không tự gửi dữ liệu máy ra Internet.
-- **Cập nhật và toàn vẹn phát hành:** tự kiểm tra bản mới khi người dùng bật Online, tải đúng bản v5.0 mới nhất sau khi được chấp thuận, rồi xác minh CMS, SHA-256 và chữ ký Authenticode trước khi thay thế tệp hiện tại.
+- **Cập nhật và toàn vẹn phát hành:** kênh Public Stable chỉ kiểm tra bản mới khi người dùng bật Online và chấp thuận, rồi xác minh CMS, SHA-256 và Authenticode trước khi thay thế; bản ManagedSigned hiện tại giữ self-update tắt và được thay qua quy trình triển khai quản trị hoặc tải thủ công.
 
 Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
 
@@ -36,7 +36,7 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 1. Tải trực tiếp [VietLicenSure v5.0](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
 2. Người đang dùng một bản v5.0 cũ có thể tải lại `VietLicenSure-v5.0.exe`; dữ liệu cũ vẫn được giữ làm nguồn tương thích/migration.
 3. Nếu tải gói đầy đủ, chạy `VERIFY-RELEASE.cmd`; script tự định vị và kiểm tra checksum, bốn chữ ký CMS, chứng thư công bố, Authenticode, manifest và SBOM. Nếu chỉ tải EXE, đối chiếu SHA-256 và chữ ký thủ công. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
-4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Chỉ bật Online khi muốn cập nhật VietLicenSure/catalog hoặc dùng chức năng LAN được cho phép.
+4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Với bản ManagedSigned, Online chỉ dành cho các tác vụ người dùng chủ động như cập nhật catalog hoặc chức năng LAN được cho phép; ứng dụng không tự thay EXE từ kênh Public Stable.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
 
 ```powershell
