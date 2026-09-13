@@ -60,7 +60,7 @@
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "4C34A99EAEBAF149943DA5BB4C76E0C645BF91B0D4AAE95637AD235803CA0674",
+    "DownloadSha256":  "CC40F56A9DE0FEE70AB5905765E11F9D1436E88C5DB4A6DBD2CA1DDF0DDF547A",
     "DownloadSize":  852216,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
