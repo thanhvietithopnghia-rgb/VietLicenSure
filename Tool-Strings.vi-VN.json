@@ -196,6 +196,8 @@
   "about.capabilitiesTab": "Năng lực",
   "about.product.title": "SẢN PHẨM",
   "about.product.body": "VietLicenSure v5.0 - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống\r\nKiểm tra cục bộ · Báo cáo có thể đối chiếu · Khắc phục có kiểm soát · Trợ lý chuyên biệt\r\nPhiên bản hiển thị: {0} · Build {1}\r\nTác giả phát triển: Thanh Việt",
+  "about.author.title": "THÔNG TIN TÁC GIẢ",
+  "about.author.body": "Thanh Việt — Tác giả & Nhà phát triển VietLicenSure\r\n\r\nThanh Việt là tác giả và nhà phát triển chính của VietLicenSure, trực tiếp phụ trách thiết kế, phát triển, kiểm thử và hoàn thiện các phiên bản của dự án.\r\n\r\nVietLicenSure được xây dựng theo định hướng an toàn, minh bạch, bảo vệ quyền riêng tư và có khả năng kiểm chứng, hỗ trợ người dùng kiểm tra trạng thái bản quyền Windows, Office/Microsoft 365, rà soát phần mềm đã cài đặt, thông tin hệ thống và các dấu hiệu liên quan đến cấu hình kích hoạt.\r\n\r\nDự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ ràng và thận trọng, giúp người dùng dễ dàng nắm bắt tình trạng bản quyền và phần mềm trên thiết bị của mình.",
   "about.purpose.title": "MỤC ĐÍCH SỬ DỤNG",
   "about.purpose.body": "VietLicenSure v5.0 hỗ trợ kiểm tra cấu hình phần cứng, trạng thái kích hoạt Windows và Microsoft Office, phần mềm đã cài đặt cùng các dấu hiệu can thiệp; đồng thời tạo báo cáo kỹ thuật phục vụ người dùng, kỹ thuật viên và quản trị viên. Kết quả phản ánh dữ liệu tại thời điểm kiểm tra, tách trạng thái kích hoạt khỏi quyền sử dụng và không thay thế hóa đơn, hợp đồng hoặc chứng từ cấp phép.",
   "about.model.title": "MÔ HÌNH VẬN HÀNH",

@@ -1930,6 +1930,10 @@ function Show-ProductIntroduction {
             Body = Get-ToolText -Key "about.product.body" -Culture $script:dashboardCulture -FormatArguments @($releaseDisplayName, $releaseBuildDate)
         },
         @{
+            Title = Get-ToolText -Key "about.author.title" -Culture $script:dashboardCulture
+            Body = Get-ToolText -Key "about.author.body" -Culture $script:dashboardCulture
+        },
+        @{
             Title = Get-ToolText -Key "about.purpose.title" -Culture $script:dashboardCulture
             Body = Get-ToolText -Key "about.purpose.body" -Culture $script:dashboardCulture
         },

@@ -196,6 +196,8 @@
   "about.capabilitiesTab": "Capabilities",
   "about.product.title": "PRODUCT",
   "about.product.body": "VietLicenSure v5.0 - System License Inspection and Management Software\r\nLocal inspection · Reconciliable reports · Controlled remediation · Built-in assistant\r\nDisplay version: {0} · Build {1}\r\nDeveloper: Thanh Viet",
+  "about.author.title": "AUTHOR INFORMATION",
+  "about.author.body": "Thanh Viet — Author & Developer of VietLicenSure\r\n\r\nThanh Viet is the author and lead developer of VietLicenSure, directly responsible for designing, developing, testing, and refining the project's releases.\r\n\r\nVietLicenSure is built around safety, transparency, privacy protection, and verifiability. It helps users check Windows and Office/Microsoft 365 licensing status, review installed software and system information, and identify indicators related to activation configuration.\r\n\r\nThe project aims to provide a reliable, clear, and cautious technical inspection tool that helps users easily understand the licensing and software status of their devices.",
   "about.purpose.title": "INTENDED USE",
   "about.purpose.body": "VietLicenSure v5.0 inspects hardware configuration, Windows and Microsoft Office activation state, installed software and interference signals, then creates technical reports for users, technicians and administrators. Results reflect the scan time, separate activation state from entitlement, and do not replace invoices, agreements or license records.",
   "about.model.title": "OPERATING MODEL",

@@ -11,7 +11,15 @@ VietLicenSure là phần mềm hỗ trợ kiểm tra Windows, Microsoft Office, 
 
 Dự án trước đây mang tên **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm**. Khi phạm vi phát triển vượt ra ngoài một công cụ kiểm tra đơn lẻ, dự án được đổi tên thành **VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống**. Tên mới phản ánh đầy đủ hơn định hướng kiểm tra, giải thích bằng chứng, kiểm kê, báo cáo và hỗ trợ quản lý thiết bị.
 
-VietLicenSure được phát triển bởi Thanh Việt, một nhân viên văn phòng có niềm đam mê với lập trình và công nghệ. Từ nhu cầu thực tế phải dùng nhiều lệnh và công cụ rời rạc để kiểm tra máy tính, tác giả xây dựng dự án với mong muốn giúp mọi người rút ngắn thời gian thao tác, dễ hiểu kết quả hơn và có một quy trình an toàn để kiểm tra Windows, Office cùng các phần mềm khác.
+## Thông tin tác giả
+
+**Thanh Việt — Tác giả & Nhà phát triển VietLicenSure**
+
+Thanh Việt là tác giả và nhà phát triển chính của VietLicenSure, trực tiếp phụ trách thiết kế, phát triển, kiểm thử và hoàn thiện các phiên bản của dự án.
+
+VietLicenSure được xây dựng theo định hướng an toàn, minh bạch, bảo vệ quyền riêng tư và có khả năng kiểm chứng, hỗ trợ người dùng kiểm tra trạng thái bản quyền Windows, Office/Microsoft 365, rà soát phần mềm đã cài đặt, thông tin hệ thống và các dấu hiệu liên quan đến cấu hình kích hoạt.
+
+Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ ràng và thận trọng, giúp người dùng dễ dàng nắm bắt tình trạng bản quyền và phần mềm trên thiết bị của mình.
 
 ## Ý nghĩa tên VietLicenSure
 
