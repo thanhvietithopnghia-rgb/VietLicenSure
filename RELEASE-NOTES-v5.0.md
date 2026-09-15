@@ -11,7 +11,15 @@ Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-
 
 VietLicenSure v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9. Dự án được đổi tên từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống** để phản ánh phạm vi mới: kiểm tra Windows, Microsoft Office/Microsoft 365, phần mềm đã cài, cấu hình và dữ liệu kiểm kê trên một quy trình thống nhất.
 
-VietLicenSure được phát triển bởi Thanh Việt, một nhân viên văn phòng có niềm đam mê với lập trình. Dự án bắt đầu từ mong muốn thay thế nhiều lệnh và công cụ kiểm tra rời rạc bằng một phần mềm dễ sử dụng hơn cho người dùng cá nhân, kỹ thuật viên, nhân viên IT và doanh nghiệp. VietLicenSure cung cấp bằng chứng kỹ thuật và hỗ trợ quản lý; không kích hoạt trái phép và không thay thế hóa đơn, hợp đồng hoặc kết luận pháp lý về quyền sử dụng.
+## Thông tin tác giả
+
+**Thanh Việt — Tác giả & Nhà phát triển VietLicenSure**
+
+Thanh Việt là tác giả và nhà phát triển chính của VietLicenSure, trực tiếp phụ trách thiết kế, phát triển, kiểm thử và hoàn thiện các phiên bản của dự án.
+
+VietLicenSure được xây dựng theo định hướng an toàn, minh bạch, bảo vệ quyền riêng tư và có khả năng kiểm chứng, hỗ trợ người dùng kiểm tra trạng thái bản quyền Windows, Office/Microsoft 365, rà soát phần mềm đã cài đặt, thông tin hệ thống và các dấu hiệu liên quan đến cấu hình kích hoạt.
+
+Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ ràng và thận trọng, giúp người dùng dễ dàng nắm bắt tình trạng bản quyền và phần mềm trên thiết bị của mình.
 
 Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`License` — giấy phép/bản quyền phần mềm) và **Sure** (rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật).
 

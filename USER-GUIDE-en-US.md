@@ -10,6 +10,16 @@ The workflow has four steps: select an inspection scope, review results and evid
 
 VietLicenSure is Offline by default and does not automatically upload inventory or reports. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page.
 
+## Author information
+
+Thanh Viet — Author & Developer of VietLicenSure
+
+Thanh Viet is the author and lead developer of VietLicenSure, directly responsible for designing, developing, testing, and refining the project's releases.
+
+VietLicenSure is built around safety, transparency, privacy protection, and verifiability. It helps users check Windows and Office/Microsoft 365 licensing status, review installed software and system information, and identify indicators related to activation configuration.
+
+The project aims to provide a reliable, clear, and cautious technical inspection tool that helps users easily understand the licensing and software status of their devices.
+
 ## Scope and operating principles
 
 - The tool inventories the computer, checks Windows and Office, reviews installed software, looks for KMS/activator/crack indicators, creates backups, restores safe data, and performs controlled remediation.

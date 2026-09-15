@@ -10,6 +10,16 @@ Quy trình sử dụng gồm bốn bước: chọn phạm vi kiểm tra, đọc 
 
 VietLicenSure hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong VietLicenSure hoặc trang phát hành chính thức.
 
+## Thông tin tác giả
+
+Thanh Việt — Tác giả & Nhà phát triển VietLicenSure
+
+Thanh Việt là tác giả và nhà phát triển chính của VietLicenSure, trực tiếp phụ trách thiết kế, phát triển, kiểm thử và hoàn thiện các phiên bản của dự án.
+
+VietLicenSure được xây dựng theo định hướng an toàn, minh bạch, bảo vệ quyền riêng tư và có khả năng kiểm chứng, hỗ trợ người dùng kiểm tra trạng thái bản quyền Windows, Office/Microsoft 365, rà soát phần mềm đã cài đặt, thông tin hệ thống và các dấu hiệu liên quan đến cấu hình kích hoạt.
+
+Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ ràng và thận trọng, giúp người dùng dễ dàng nắm bắt tình trạng bản quyền và phần mềm trên thiết bị của mình.
+
 ## Phạm vi và nguyên tắc hoạt động
 
 - Công cụ hỗ trợ kiểm kê máy tính, kiểm tra Windows/Office, rà soát phần mềm, phát hiện dấu hiệu KMS/activator/crack, sao lưu, khôi phục và khắc phục có kiểm soát.
