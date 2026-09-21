@@ -133,6 +133,8 @@ $payloadFiles = @(
     'approved-kms-servers.txt',
     'HUONG-DAN.txt',
     'USER-GUIDE-en-US.md',
+    'FAQ-NGUOI-DUNG-MOI-v5.0.md',
+    'FIRST-RUN-FAQ-v5.0.md',
     'LICH-SU-PHIEN-BAN.txt',
     'VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt',
@@ -192,6 +194,8 @@ $payloadFiles = @(
 $integrityFiles = @(
     'HUONG-DAN.txt',
     'USER-GUIDE-en-US.md',
+    'FAQ-NGUOI-DUNG-MOI-v5.0.md',
+    'FIRST-RUN-FAQ-v5.0.md',
     'LICH-SU-PHIEN-BAN.txt',
     'VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt',
@@ -298,6 +302,7 @@ $sourceFiles = @(
     'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json'
     'SECURITY-TEST-RESULTS.md'
     'DOCUMENTATION-MAP-v5.0.md'
+    'RELEASE-STATUS-v5.0.md'
     'THREAT-MODEL-v5.0.md'
     'RELEASE-VERIFICATION-v5.0.md'
     $sourceName
@@ -540,6 +545,8 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'SECURITY-REVIEW-PROCESS-v1.md',
     'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json',
     'SECURITY-TEST-RESULTS.md',
+    'DOCUMENTATION-MAP-v5.0.md',
+    'RELEASE-STATUS-v5.0.md',
     $sourceName,
     $applicationManifestName,
     $embeddedVerifierName,
@@ -663,6 +670,7 @@ if ($requiresVerifiedProvenance) {
         'OFFICIAL-PROVENANCE-v1.json',
         'OFFICIAL-PROVENANCE-v1.json.p7s',
         'SECURITY-TEST-RESULTS.md',
+        'RELEASE-STATUS-v5.0.md',
         'SOURCE-PACKAGE-SHA256SUMS.txt',
         'SOURCE-SHA256SUMS.txt',
         'TOOL-SHA256SUMS.txt',
@@ -938,11 +946,11 @@ try {
 
 Write-Host '[5/8] Tạo metadata phát hành...'
 $releaseSidecars = @(
-    'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
+    'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'FAQ-NGUOI-DUNG-MOI-v5.0.md', 'FIRST-RUN-FAQ-v5.0.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
     'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
-    'DOCUMENTATION-MAP-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
+    'DOCUMENTATION-MAP-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
     'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
@@ -1540,11 +1548,11 @@ $infoLines = @(
 [IO.File]::WriteAllLines((Join-Path $OutputDirectory $infoName), $infoLines, (New-Object Text.UTF8Encoding($false)))
 
 $releaseHashFiles = @($targets.OutputName) + @(
-    'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
+    'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'FAQ-NGUOI-DUNG-MOI-v5.0.md', 'FIRST-RUN-FAQ-v5.0.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
     'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
-    'DOCUMENTATION-MAP-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
+    'DOCUMENTATION-MAP-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
     'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',

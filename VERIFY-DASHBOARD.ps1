@@ -125,10 +125,15 @@ Assert-SourcePattern $text 'Fit-MainWindowToWorkingArea' 'Dashboard thiếu đi�
 Assert-SourcePattern $text '[$]form\.AutoScroll\s*=\s*[$]false' 'Cửa sổ chính chưa khóa thanh cuộn.'
 Assert-SourcePattern $text 'AutoScrollMargin\s*=\s*New-Object\s+System\.Drawing\.Size\(0,\s*0\)' 'Dashboard chưa loại bỏ lề cuộn dư.'
 if ($text -match '[$]form\.AutoScroll\s*=\s*[$]true') { Add-Failure 'Cửa sổ chính vẫn có nhánh bật thanh cuộn.' }
+Assert-SourcePattern $text '[$]form\.AutoScaleMode\s*=\s*\[System\.Windows\.Forms\.AutoScaleMode\]::None' 'Cửa sổ chính còn bị WinForms auto-scale lần hai sau layout thủ công.'
 Assert-SourcePattern $text '[$]form\.Size\s*=\s*New-Object\s+System\.Drawing\.Size\(1480,\s*900\)' 'Dashboard chưa dùng khung hiện đại 1480 x 900.'
 Assert-SourcePattern $text '[$]availableWidth\s*=\s*\[Math\]::Max\(640,\s*[$]workArea\.Width\s*-\s*16\)' 'Dashboard chưa co chiều rộng an toàn theo WorkingArea.'
 Assert-SourcePattern $text '[$]availableHeight\s*=\s*\[Math\]::Max\(520,\s*[$]workArea\.Height\s*-\s*12\)' 'Dashboard chưa co chiều cao an toàn theo WorkingArea.'
-Assert-SourcePattern $text 'BeginInvoke\(\[System\.Action\]\{\s*Update-MainLayout\s*\}\)' 'Dashboard chưa căn lại layout sau khi Bounds/ClientSize được cập nhật ở message-pump kế tiếp.'
+Assert-SourcePattern $text 'CreateGraphics\(\)\s*\r?\n\s*[$]dpiScale\s*=\s*\[Math\]::Max\(1\.0,\s*\(\[double\][$]dpiProbe\.DpiX\s*/\s*96\.0\)\)' 'Dashboard chưa đo DPI vật lý từ Graphics sau khi HWND được tạo.'
+Assert-SourcePattern $text '[$]desiredWidth\s*=\s*\[int\]\[Math\]::Round\(1480\s*\*\s*[$]dpiScale\)' 'Dashboard chưa scale chiều rộng mục tiêu ở DPI cao.'
+Assert-SourcePattern $text '[$]desiredHeight\s*=\s*\[int\]\[Math\]::Round\(900\s*\*\s*[$]dpiScale\)' 'Dashboard chưa scale chiều cao mục tiêu ở DPI cao.'
+Assert-SourcePattern $text '[$]form\.MinimumSize\s*=\s*New-Object\s+System\.Drawing\.Size\(\[Math\]::Min\([$]minimumWidth,\s*[$]targetWidth\),\s*\[Math\]::Min\([$]minimumHeight,\s*[$]targetHeight\)\)' 'Dashboard chưa scale MinimumSize theo DPI và WorkingArea.'
+Assert-SourcePattern $text 'BeginInvoke\(\[System\.Action\]\{\s*Fit-MainWindowToWorkingArea\s*;\s*Update-MainLayout\s*\}\)' 'Dashboard chưa đo lại DeviceDpi và căn layout sau khi cửa sổ thật đã hiển thị.'
 Assert-SourcePattern $text '[$]closeButton\.Width\s*=\s*108' 'Nút Đóng chưa đủ rộng sau khi thêm icon nên vẫn có thể mất chữ.'
 Assert-SourcePattern $text 'ClientSize\.Height\s*-lt\s*760' 'Dashboard chưa chuyển sang layout gọn ở chiều cao phù hợp.'
 Assert-SourcePattern $text 'ClientSize\.Height\s*-lt\s*640' 'Dashboard thiếu layout siêu gọn cho vùng làm việc thấp.'
@@ -157,6 +162,13 @@ Assert-SourcePattern $text 'software\.online\.buttonCompact' 'Nút Online chưa 
 Assert-SourcePattern $text "[$]footerButton\.Tag\s*=\s*'ToolUiCompactTextOnly'" 'Nút Khắc phục chưa ưu tiên đủ vùng chữ ở DPI cao.'
 Assert-SourcePattern $text '[$]heading\.AutoEllipsis\s*=\s*[$]false' 'Tiêu đề Giới thiệu vẫn có thể bị rút gọn bằng dấu ba chấm.'
 Assert-SourcePattern $text 'Get-DashboardWrappedTextHeight\s+-Text\s+\(\[string\][$]heading\.Text\)' 'Tiêu đề Giới thiệu chưa đo chiều cao xuống dòng.'
+Assert-SourcePattern $text 'function\s+Sync-DashboardCardAccessibility' 'Thẻ trạng thái chưa đồng bộ tooltip và mô tả đầy đủ cho screen reader.'
+Assert-SourcePattern $text 'Sync-DashboardCardAccessibility\s+-CardKey\s+"Compatibility"\s+-Detail\s+[$]catalogTooltip' 'Trạng thái tương thích bị cắt chưa có tooltip/mô tả đầy đủ.'
+Assert-SourcePattern $text 'function\s+Open-FirstRunFaq' 'UI Giới thiệu chưa mở được FAQ người dùng lần đầu.'
+Assert-SourcePattern $text '[$]selectedFaqFile\s*=\s*if\s*\([$]script:dashboardCulture\s+-eq\s+"en-US"\)' 'FAQ trong UI chưa chọn đúng tài liệu Việt/Anh.'
+Assert-SourcePattern $text 'FIRST-RUN-FAQ-v5\.0\.md' 'Dashboard chưa tham chiếu FAQ tiếng Anh.'
+Assert-SourcePattern $text 'about\.smartscreen\.title' 'UI Giới thiệu chưa có hướng dẫn xử lý SmartScreen.'
+Assert-SourcePattern $text 'about\.openFaqDescription' 'Nút FAQ chưa có mô tả screen reader/tooltip.'
 Assert-SourcePattern $text 'function\s+Set-ModernRoundedRegion' 'Dashboard thiếu bo góc cho card/tile.'
 Assert-SourcePattern $text 'FlatAppearance\.BorderSize\s*=\s*0' 'Tile hiện đại chưa dùng nút phẳng.'
 Assert-SourcePattern $text 'Add_MouseEnter' 'Tile chưa có hover state.'
@@ -366,12 +378,18 @@ if ($guiAst) {
 }
 
 . (Join-Path $root 'Tool-UiTheme.ps1')
+$previousHighContrastOverride = [string]$env:TOOL_UI_HIGH_CONTRAST
+$env:TOOL_UI_HIGH_CONTRAST = '0'
 $themeText = Get-Content -LiteralPath (Join-Path $root 'Tool-UiTheme.ps1') -Raw -Encoding UTF8
 foreach ($themePattern in @(
     'function\s+Get-ToolUiSystemTheme',
     'function\s+Get-ToolUiThemePreference',
     'ValidateSet\("System",\s*"Light",\s*"Dark"\)',
     'function\s+Initialize-ToolDpiAwareness',
+    'function\s+Test-ToolUiHighContrast',
+    'SystemInformation\]::HighContrast',
+    'TOOL_UI_HIGH_CONTRAST',
+    'Drawing\.SystemColors',
     'SetProcessDpiAwarenessContext',
     'SetProcessDPIAware',
     'function\s+Get-ToolUiButtonRole',
@@ -387,10 +405,24 @@ foreach ($themePattern in @(
     '[$]Button\.Parent\s+-is\s+\[Windows\.Forms\.FlowLayoutPanel\]',
     'TextRenderer\]::MeasureText',
     'function\s+Set-ToolUiLiteralText',
+    'function\s+Set-ToolUiAccessibility',
+    'function\s+Set-ToolControlHighContrastTheme',
     'Set-ToolUiLiteralText\s+-Root\s+[$]Root',
-    'Set-ToolUiActionButtons\s+-Root\s+[$]Root'
+    'Set-ToolUiActionButtons\s+-Root\s+[$]Root',
+    'Set-ToolUiAccessibility\s+-Root\s+[$]Root',
+    '[$]Button\.Image\.Tag\s*=\s*[$]marker'
 )) {
     if ($themeText -notmatch $themePattern) { Add-Failure "Theme dùng chung thiếu action style/icon: $themePattern" }
+}
+if ($themeText -match 'AccessibleDescription\s*=\s*[$]marker' -or
+    $themeText -match 'AccessibleDescription[^\r\n]+ToolUiIcon:') {
+    Add-Failure 'Theme vẫn dùng AccessibleDescription làm vùng lưu marker icon nội bộ.'
+}
+if ($text -notmatch 'function\s+Set-DashboardCompositeButtonAccessibility' -or
+    $text -notmatch 'AccessibleRole\s*=\s*\[System\.Windows\.Forms\.AccessibleRole\]::PushButton' -or
+    $text -notmatch 'Set-DashboardCompositeButtonAccessibility\s+-Button\s+[$]button\s+-AccessibleText\s+[$]buttonText' -or
+    $text -notmatch '[$]button\.Text\s*=\s*\[string\][$]metadata\.TitleLabel\.Text') {
+    Add-Failure 'Nút tác vụ tổng hợp chưa giữ semantic Text/PushButton cho UI Automation và đồng bộ khi đổi ngôn ngữ.'
 }
 $manifestText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.manifest') -Raw -Encoding UTF8
 if ($manifestText -notmatch '<dpiAware[^>]*>true/pm</dpiAware>' -or
@@ -439,6 +471,88 @@ try {
         $env:TOOL_UI_THEME = $previousTheme
     }
 }
+
+try {
+    $env:TOOL_UI_HIGH_CONTRAST = '0'
+    if (Test-ToolUiHighContrast) {
+        Add-Failure 'Override High Contrast = 0 không vô hiệu hóa trạng thái kiểm thử.'
+    }
+
+    $accessibilityHost = New-Object Windows.Forms.Panel
+    $accessibilityHost.Size = New-Object Drawing.Size(420, 120)
+    $accessibilityButton = New-Object Windows.Forms.Button
+    $accessibilityButton.Text = "Kiểm tra & sửa"
+    $accessibilityButton.Size = New-Object Drawing.Size(180, 34)
+    $accessibilityButton.AccessibleDescription = 'Mô tả riêng cho screen reader'
+    $accessibilityHost.Controls.Add($accessibilityButton)
+
+    $ellipsisLabel = New-Object Windows.Forms.Label
+    $ellipsisLabel.Text = 'Trạng thái đầy đủ không được mất khi giao diện bị thu hẹp'
+    $ellipsisLabel.AutoEllipsis = $true
+    $ellipsisLabel.Size = New-Object Drawing.Size(180, 24)
+    $ellipsisLabel.Location = New-Object Drawing.Point(0, 42)
+    $accessibilityHost.Controls.Add($ellipsisLabel)
+
+    $describedLabel = New-Object Windows.Forms.Label
+    $describedLabel.Text = 'Nhãn đã có mô tả'
+    $describedLabel.AutoEllipsis = $true
+    $describedLabel.AccessibleDescription = 'Mô tả chuyên biệt đã khai báo'
+    $describedLabel.Location = New-Object Drawing.Point(0, 72)
+    $accessibilityHost.Controls.Add($describedLabel)
+
+    Set-ToolWindowTheme -Root $accessibilityHost -Mode Light
+    $firstAccessibilityWidth = $accessibilityButton.Width
+    Set-ToolWindowTheme -Root $accessibilityHost -Mode Light
+    if ([string]$accessibilityButton.AccessibleName -ne 'Kiểm tra & sửa') {
+        Add-Failure 'Accessibility helper chưa suy luận AccessibleName từ nhãn nút.'
+    }
+    if ([string]$accessibilityButton.AccessibleDescription -ne 'Mô tả riêng cho screen reader') {
+        Add-Failure 'Action style đã ghi đè AccessibleDescription chuyên biệt của nút.'
+    }
+    if ($null -eq $accessibilityButton.Image -or
+        -not ([string]$accessibilityButton.Image.Tag).StartsWith('ToolUiIcon:', [StringComparison]::Ordinal) -or
+        $accessibilityButton.Width -ne $firstAccessibilityWidth) {
+        Add-Failure 'Marker icon bằng Image.Tag không ổn định sau khi áp theme lặp lại.'
+    }
+    if ([string]$ellipsisLabel.AccessibleDescription -ne [string]$ellipsisLabel.Text) {
+        Add-Failure 'Nhãn AutoEllipsis chưa cung cấp toàn bộ nội dung cho screen reader.'
+    }
+    if ([string]$describedLabel.AccessibleDescription -ne 'Mô tả chuyên biệt đã khai báo') {
+        Add-Failure 'Accessibility helper đã ghi đè mô tả hiện có của nhãn.'
+    }
+
+    $env:TOOL_UI_HIGH_CONTRAST = '1'
+    if (-not (Test-ToolUiHighContrast)) {
+        Add-Failure 'Override High Contrast = 1 không kích hoạt trạng thái kiểm thử.'
+    }
+    $highContrastPalette = Get-ToolUiPalette -Mode Dark
+    if (-not $highContrastPalette.HighContrast -or
+        $highContrastPalette.Background.ToArgb() -ne [Drawing.SystemColors]::Window.ToArgb() -or
+        $highContrastPalette.Text.ToArgb() -ne [Drawing.SystemColors]::WindowText.ToArgb() -or
+        $highContrastPalette.Border.ToArgb() -ne [Drawing.SystemColors]::WindowFrame.ToArgb()) {
+        Add-Failure 'Palette High Contrast không lấy màu từ SystemColors của Windows.'
+    }
+    Set-ToolWindowTheme -Root $accessibilityHost -Mode Dark
+    if ($null -ne $accessibilityButton.Image -or
+        $accessibilityButton.FlatStyle -ne [Windows.Forms.FlatStyle]::Standard -or
+        [string]$accessibilityButton.AccessibleDescription -ne 'Mô tả riêng cho screen reader') {
+        Add-Failure 'Nút High Contrast chưa bỏ icon trang trí/giữ native renderer và mô tả screen reader.'
+    }
+    if ($accessibilityHost.BackColor.ToArgb() -ne [Drawing.SystemColors]::Window.ToArgb() -or
+        $accessibilityHost.ForeColor.ToArgb() -ne [Drawing.SystemColors]::WindowText.ToArgb()) {
+        Add-Failure 'Control High Contrast chưa dùng màu nền/chữ hệ thống.'
+    }
+} catch {
+    Add-Failure "Không thể kiểm thử động High Contrast/screen reader: $($_.Exception.Message)"
+} finally {
+    if ([string]::IsNullOrWhiteSpace($previousHighContrastOverride)) {
+        Remove-Item Env:TOOL_UI_HIGH_CONTRAST -ErrorAction SilentlyContinue
+    } else {
+        $env:TOOL_UI_HIGH_CONTRAST = $previousHighContrastOverride
+    }
+    if ($accessibilityHost) { $accessibilityHost.Dispose() }
+}
+
 foreach ($buttonMode in @('Light','Dark')) {
     foreach ($buttonTone in @('Primary','Success','Warning','Danger','Purple','Teal','Neutral')) {
         $buttonPalette = Get-ToolUiButtonPalette -Tone $buttonTone -Mode $buttonMode
@@ -1125,9 +1239,9 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
 Assert-SourcePattern $text 'function\s+Open-ToolReportPresentation' 'Dashboard thiếu bộ chuyển báo cáo TXT/HTML về giao diện HTML/PDF dùng chung.'
 Assert-SourcePattern $text 'Export-ToolTextReportPresentation' 'Báo cáo văn bản chưa được chuyển thành HTML/PDF chuyên nghiệp.'
 $buildText = Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8
-if ($buildText -notmatch '(?s)[$]payloadFiles\s*=.*?''USER-GUIDE-en-US\.md''' -or
-    $buildText -notmatch '(?s)[$]integrityFiles\s*=.*?''USER-GUIDE-en-US\.md''') {
-    Add-Failure 'Hướng dẫn English chưa được nhúng và bảo vệ toàn vẹn trong EXE.'
+if ($buildText -notmatch '(?s)[$]payloadFiles\s*=.*?''USER-GUIDE-en-US\.md''.*?''FIRST-RUN-FAQ-v5\.0\.md''' -or
+    $buildText -notmatch '(?s)[$]integrityFiles\s*=.*?''USER-GUIDE-en-US\.md''.*?''FIRST-RUN-FAQ-v5\.0\.md''') {
+    Add-Failure 'Hướng dẫn/FAQ English chưa được nhúng và bảo vệ toàn vẹn trong EXE.'
 }
 
 $reportPath = Join-Path $root 'kiem-tra-cau-hinh-ban-quyen.ps1'

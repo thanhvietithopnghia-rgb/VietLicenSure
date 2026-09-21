@@ -104,6 +104,19 @@ if ($cleanup -and ($cleanup.Text -notmatch 'ManagedNoGenTicketPolicy' -or
     Fail 'Deep cleanup chưa khóa policy NoGenTicket thuộc GPO/MDM ở trạng thái BlockedByPolicy.'
 }
 if ($restore -and $restore.Text -notmatch 'Test-ToolRegistryValueRestoreAllowed') { Fail 'Restore chưa dùng allowlist theo đúng Registry path/value.' }
+if ($restore -and ($restore.Text -notmatch '\$expectedBackupRoot\s*=\s*@\(\$allowedBackupRoots' -or
+    $restore.Text -notmatch '\$versionRoot\s*=\s*Split-Path\s+-Parent\s+\$expectedBackupRoot' -or
+    $restore.Text -notmatch '\$productRoot\s*=\s*Split-Path\s+-Parent\s+\$versionRoot' -or
+    $restore.Text -notmatch 'foreach\s*\(\$protectedPath\s+in\s+@\(\$productRoot,\s*\$versionRoot,\s*\$expectedBackupRoot,\s*\$script:backupRoot\)\)')) {
+    Fail 'Restore chưa ràng buộc và khởi tạo đầy đủ chuỗi ACL product/version/backups/backup trước khi phục hồi.'
+}
+if ($restore -and ($restore.Text -match '\$key\.SetValue\(' -or
+    $restore.Text -notmatch '(?s)New-ItemProperty\s+-LiteralPath\s+\(\[string\]\$item\.OriginalPath\).+?-PropertyType\s+\(\[string\]\$kind\)')) {
+    Fail 'Restore RegistryValues vẫn dùng RegistryKey read-only hoặc chưa ghi giá trị bằng cmdlet có quyền ghi sau allowlist.'
+}
+if ($restore -and $restore.Text -match 'if\s*\(\$Arguments\s+-and\s+@\(\$Arguments\)\.Count') {
+    Fail 'Restore vẫn bỏ qua định dạng tham số số 0 và có thể in nguyên placeholder {0} trong báo cáo.'
+}
 
 foreach ($entry in @($backup, $cleanup, $restore)) {
     if ($entry -and $entry.Text -notmatch 'SafetyPolicySha256') { Fail 'Một luồng backup/restore thiếu hash Tool-SafetyPolicy.ps1.' }
@@ -2265,18 +2278,20 @@ if ($softwareCatalogUpdater) {
     $consentResult = Join-Path ([IO.Path]::GetTempPath()) ('ToolCatalogConsent-' + [Guid]::NewGuid().ToString('N') + '.json')
     $offlineResult = Join-Path ([IO.Path]::GetTempPath()) ('ToolCatalogOffline-' + [Guid]::NewGuid().ToString('N') + '.json')
     try {
-        & $nativePowerShell -NoProfile -ExecutionPolicy RemoteSigned -File $softwareCatalogUpdaterPath -ResultFile $consentResult
-        if ($LASTEXITCODE -ne 2 -or (Test-Path -LiteralPath $consentResult)) { Fail 'Không truyền consent không fail-closed với mã 2.' }
         $escapedUpdaterPath = $softwareCatalogUpdaterPath.Replace("'", "''")
         $escapedResultPath = $consentResult.Replace("'", "''")
-        $falseConsentCommand = "& '$escapedUpdaterPath' -ResultFile '$escapedResultPath' -ConsentGranted:`$false; exit `$LASTEXITCODE"
+        $missingConsentCommand = "`$ProgressPreference='SilentlyContinue'; & '$escapedUpdaterPath' -ResultFile '$escapedResultPath'; exit `$LASTEXITCODE"
+        $missingConsentEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($missingConsentCommand))
+        & $nativePowerShell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -EncodedCommand $missingConsentEncoded
+        if ($LASTEXITCODE -ne 2 -or (Test-Path -LiteralPath $consentResult)) { Fail 'Không truyền consent không fail-closed với mã 2.' }
+        $falseConsentCommand = "`$ProgressPreference='SilentlyContinue'; & '$escapedUpdaterPath' -ResultFile '$escapedResultPath' -ConsentGranted:`$false; exit `$LASTEXITCODE"
         $falseConsentEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($falseConsentCommand))
-        & $nativePowerShell -NoProfile -ExecutionPolicy RemoteSigned -EncodedCommand $falseConsentEncoded
+        & $nativePowerShell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -EncodedCommand $falseConsentEncoded
         if ($LASTEXITCODE -ne 2 -or (Test-Path -LiteralPath $consentResult)) { Fail 'Consent false không fail-closed với mã 2.' }
         $escapedOfflineResultPath = $offlineResult.Replace("'", "''")
-        $offlineCommand = "`$env:TOOL_OFFLINE_MODE='1'; & '$escapedUpdaterPath' -ResultFile '$escapedOfflineResultPath' -ConsentGranted; exit `$LASTEXITCODE"
+        $offlineCommand = "`$ProgressPreference='SilentlyContinue'; `$env:TOOL_OFFLINE_MODE='1'; & '$escapedUpdaterPath' -ResultFile '$escapedOfflineResultPath' -ConsentGranted; exit `$LASTEXITCODE"
         $offlineEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($offlineCommand))
-        & $nativePowerShell -NoProfile -ExecutionPolicy RemoteSigned -EncodedCommand $offlineEncoded
+        & $nativePowerShell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -EncodedCommand $offlineEncoded
         $offlinePayload = if (Test-Path -LiteralPath $offlineResult -PathType Leaf) { Get-Content -LiteralPath $offlineResult -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
         if ($LASTEXITCODE -ne 3 -or -not $offlinePayload -or [bool]$offlinePayload.Success -or [string]$offlinePayload.Error -notmatch 'OFFLINE_MODE_BLOCKED') {
             Fail 'Updater danh mục vẫn có thể chạy khi TOOL_OFFLINE_MODE=1 hoặc không báo lỗi Offline rõ ràng.'
@@ -2297,6 +2312,7 @@ if ($softwareInventory) {
         # policy themselves and fail before any HTTP request can begin.
         $escapedInventoryPath = $softwareInventoryPath.Replace("'", "''")
         $directOfflineCommand = @'
+$ProgressPreference='SilentlyContinue'
 $env:TOOL_OFFLINE_MODE='1'
 . '__INVENTORY_PATH__'
 $updateBlocked = $false
@@ -2307,7 +2323,7 @@ if ($updateBlocked -and $httpBlocked) { exit 0 }
 exit 91
 '@.Replace('__INVENTORY_PATH__', $escapedInventoryPath)
         $directOfflineEncoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($directOfflineCommand))
-        & $nativePowerShell -NoProfile -ExecutionPolicy RemoteSigned -EncodedCommand $directOfflineEncoded
+        & $nativePowerShell -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -EncodedCommand $directOfflineEncoded
         if ($LASTEXITCODE -ne 0) { Fail 'Gọi trực tiếp Tool-SoftwareInventory vẫn có thể vượt Offline hoặc chạm đường HTTP.' }
     } catch {
         Fail "Không chạy được fixture Offline trực tiếp của Tool-SoftwareInventory: $($_.Exception.Message)"

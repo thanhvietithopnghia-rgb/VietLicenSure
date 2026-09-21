@@ -16,7 +16,7 @@ Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tí
 - Đổi tên các artifact mang thương hiệu hiện hành: EXE, launcher source/manifest, icon, CMD và script đóng gói MSIX.
 - Bổ sung Bắt đầu nhanh, Giới hạn đã biết và verifier chống version/date/name drift.
 - Giữ riêng gói người dùng với mã nguồn/maintainer; mọi tệp phát hành phải nằm trong `RELEASE-SHA256SUMS.txt`.
-- Nhãn phát hành là `ManagedSigned/Pilot`, không dùng `Public Stable` khi các cổng bằng chứng chưa đạt.
+- Nhãn phát hành là `ManagedSigned / Internal Pilot`, không dùng `Public Stable` khi các cổng bằng chứng chưa đạt.
 
 ## Ngoại lệ legacy bắt buộc
 

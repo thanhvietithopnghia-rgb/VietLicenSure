@@ -103,6 +103,8 @@ namespace ThanhViet.VietLicenSure
             "approved-kms-servers.txt",
             "HUONG-DAN.txt",
             "USER-GUIDE-en-US.md",
+            "FAQ-NGUOI-DUNG-MOI-v5.0.md",
+            "FIRST-RUN-FAQ-v5.0.md",
             "LICH-SU-PHIEN-BAN.txt",
             "VERSION-HISTORY-en-US.md",
             "LICENSE-NOTICE.txt",
@@ -165,6 +167,8 @@ namespace ThanhViet.VietLicenSure
         {
             "HUONG-DAN.txt",
             "USER-GUIDE-en-US.md",
+            "FAQ-NGUOI-DUNG-MOI-v5.0.md",
+            "FIRST-RUN-FAQ-v5.0.md",
             "LICH-SU-PHIEN-BAN.txt",
             "VERSION-HISTORY-en-US.md",
             "LICENSE-NOTICE.txt",

@@ -51,6 +51,9 @@ if (-not (Test-Path -LiteralPath $cleanupPath -PathType Leaf)) {
 }
 
 $requiredFunctions = @(
+    'Get-LicenseChannel',
+    'Test-ApprovedKms',
+    'Test-WindowsLicenseRemediationTarget',
     'Get-OfficeKmsPathKey',
     'Get-OfficeKmsTargetIdentity',
     'Get-OfficeKmsHostOverrideIdentity',
@@ -74,6 +77,79 @@ if ($failures.Count -eq 0) {
     }
 
     try {
+        $script:ApprovedKmsServers = @('kms.corp.example')
+        $expectedWindowsKms = [pscustomobject]@{
+            ID='activation-a'; Name='Windows'; Description='VOLUME_KMSCLIENT';
+            LicenseStatus=5; PartialProductKey='ABCDE'; KeyManagementServiceMachine='kms.bad.example'
+        }
+        $currentWindowsKms = [pscustomobject]@{
+            ID='activation-a'; Name='Windows'; Description='VOLUME_KMSCLIENT';
+            LicenseStatus=5; PartialProductKey='ABCDE'; KeyManagementServiceMachine='kms.bad.example'
+        }
+        $windowsTargetPass = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $expectedWindowsKms -CurrentProducts @($currentWindowsKms)
+        Assert-Check -Condition ([bool]$windowsTargetPass.Allowed) `
+            -Message 'Unchanged selected Windows KMS target did not pass immediate revalidation.'
+
+        $approvedWindowsKms = $currentWindowsKms.PSObject.Copy()
+        $approvedWindowsKms.KeyManagementServiceMachine = 'kms.corp.example'
+        $windowsApprovedBlocked = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $expectedWindowsKms -CurrentProducts @($approvedWindowsKms)
+        Assert-Check -Condition (-not [bool]$windowsApprovedBlocked.Allowed -and
+            [string]$windowsApprovedBlocked.Reason -eq 'TargetNoLongerUnapprovedKms') `
+            -Message 'A Windows target that became approved internal KMS was not blocked.'
+
+        $changedWindowsKey = $currentWindowsKms.PSObject.Copy()
+        $changedWindowsKey.PartialProductKey = 'VWXYZ'
+        $windowsKeyChangedBlocked = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $expectedWindowsKms -CurrentProducts @($changedWindowsKey)
+        Assert-Check -Condition (-not [bool]$windowsKeyChangedBlocked.Allowed -and
+            [string]$windowsKeyChangedBlocked.Reason -eq 'PartialProductKeyChanged') `
+            -Message 'A Windows target whose partial key changed after consent was not blocked.'
+
+        foreach ($missingExpectedPartialKey in @($null, '', '   ')) {
+            $missingExpectedWindowsKey = $expectedWindowsKms.PSObject.Copy()
+            $missingExpectedWindowsKey.PartialProductKey = $missingExpectedPartialKey
+            $missingExpectedKeyBlocked = Test-WindowsLicenseRemediationTarget `
+                -TargetProduct $missingExpectedWindowsKey -CurrentProducts @($currentWindowsKms)
+            Assert-Check -Condition (-not [bool]$missingExpectedKeyBlocked.Allowed -and
+                [string]$missingExpectedKeyBlocked.Reason -eq 'MissingExpectedPartialProductKey') `
+                -Message 'A Windows target without a consent-time partial key allowed removal of a newly observed key.'
+        }
+
+        $missingCurrentWindowsKey = $currentWindowsKms.PSObject.Copy()
+        $missingCurrentWindowsKey.PartialProductKey = ''
+        $missingBothKeysBlocked = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $missingExpectedWindowsKey -CurrentProducts @($missingCurrentWindowsKey)
+        Assert-Check -Condition (-not [bool]$missingBothKeysBlocked.Allowed -and
+            [string]$missingBothKeysBlocked.Reason -eq 'MissingExpectedPartialProductKey') `
+            -Message 'A Windows target with no partial key in either snapshot remained eligible for key removal.'
+
+        $missingCurrentKeyBlocked = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $expectedWindowsKms -CurrentProducts @($missingCurrentWindowsKey)
+        Assert-Check -Condition (-not [bool]$missingCurrentKeyBlocked.Allowed -and
+            [string]$missingCurrentKeyBlocked.Reason -eq 'PartialProductKeyChanged') `
+            -Message 'A Windows target whose key disappeared after consent remained eligible for key removal.'
+
+        $normalizedWindowsKey = $expectedWindowsKms.PSObject.Copy()
+        $normalizedWindowsKey.PartialProductKey = ' abcde '
+        $normalizedKeyAllowed = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $normalizedWindowsKey -CurrentProducts @($currentWindowsKms)
+        Assert-Check -Condition ([bool]$normalizedKeyAllowed.Allowed) `
+            -Message 'Partial-key revalidation rejected an unchanged key after case and whitespace normalization.'
+
+        $expectedNonGenuine = [pscustomobject]@{
+            ID='activation-b'; Name='Windows'; Description='RETAIL'; LicenseStatus=4;
+            PartialProductKey='12345'; KeyManagementServiceMachine=''
+        }
+        $currentGenuine = $expectedNonGenuine.PSObject.Copy()
+        $currentGenuine.LicenseStatus = 1
+        $windowsGenuineBlocked = Test-WindowsLicenseRemediationTarget `
+            -TargetProduct $expectedNonGenuine -CurrentProducts @($currentGenuine)
+        Assert-Check -Condition (-not [bool]$windowsGenuineBlocked.Allowed -and
+            [string]$windowsGenuineBlocked.Reason -eq 'TargetNoLongerNonGenuine') `
+            -Message 'A Windows target that became genuine after consent was not blocked.'
+
         $osppPath = 'C:\Program Files\Microsoft Office\Office16\OSPP.VBS'
         $entryA = [pscustomobject]@{ Path=$osppPath; SkuId='SKU-A'; Last5='x4vq2' }
         $entryB = [pscustomobject]@{ Path=$osppPath; SkuId='SKU-A'; Last5='xqbr2' }
@@ -105,6 +181,37 @@ if ($failures.Count -eq 0) {
             -ApplicationPresent:$true -OfficialLicenseState 'Unactivated' -ArtifactCleanupCompleted:$true
         Assert-Check -Condition ([string]$record.State -eq 'VerifiedClean' -and -not [bool]$record.RetryAllowed) `
             -Message 'Strict clean fixture did not become VerifiedClean.'
+
+        # Simulate a process/UAC interruption without invoking any operating-system
+        # mutation.  An interrupted attempt must remain explicitly retryable, the
+        # retry must increment the attempt counter, and a terminal success must not
+        # be reopenable by stale UI or broker output.
+        $interrupted = New-RemediationStateRecord -CandidateId 'interrupted-attempt'
+        $interrupted = Set-RemediationStateRecord -Record $interrupted -State Running
+        $interrupted = Set-RemediationStateRecord -Record $interrupted -State RetryableFailure `
+            -ErrorCode 'OperationInterrupted' -ErrorDetail 'Fixture process ended before post-check.'
+        Assert-Check -Condition ([string]$interrupted.State -eq 'RetryableFailure' -and
+            [bool]$interrupted.RetryAllowed -and [int]$interrupted.AttemptCount -eq 1 -and
+            [string]$interrupted.LastErrorCode -eq 'OperationInterrupted') `
+            -Message 'Interrupted remediation was not preserved as an explicit retryable failure.'
+        $interrupted = Set-RemediationStateRecord -Record $interrupted -State Running
+        Assert-Check -Condition ([string]$interrupted.State -eq 'Running' -and
+            [int]$interrupted.AttemptCount -eq 2 -and
+            [string]::IsNullOrWhiteSpace([string]$interrupted.LastErrorCode)) `
+            -Message 'Retry after interruption did not start a new cleanly recorded attempt.'
+        $interrupted = Resolve-RemediationPostCheckState -Record $interrupted `
+            -DirectCrackEvidenceRemaining:$false -ApplicationPresent:$true `
+            -OfficialLicenseState 'Unactivated' -ArtifactCleanupCompleted:$true
+        $terminalTransitionBlocked = $false
+        try {
+            [void](Set-RemediationStateRecord -Record $interrupted -State Running)
+        } catch {
+            $terminalTransitionBlocked = ([string]$_.Exception.Message -match 'Invalid remediation state transition')
+        }
+        Assert-Check -Condition ([string]$interrupted.State -eq 'VerifiedClean' -and
+            -not [bool]$interrupted.RetryAllowed -and [int]$interrupted.AttemptCount -eq 2 -and
+            $terminalTransitionBlocked) `
+            -Message 'A completed retry could be reopened or did not retain its attempt history.'
 
         $trial = New-RemediationStateRecord -CandidateId 'trial'
         $trial = Set-RemediationStateRecord -Record $trial -State Running
@@ -203,6 +310,7 @@ if ($null -ne $cleanupAst) {
     $deepCandidatesAst = @(Get-FunctionAstByName -Ast $cleanupAst -Name 'Get-DeepCleanupCandidates')
     $deepCleanupAst = @(Get-FunctionAstByName -Ast $cleanupAst -Name 'Invoke-DeepCleanupV35')
     $invokeAst = @(Get-FunctionAstByName -Ast $cleanupAst -Name 'Invoke-Remediation')
+    $windowsKmsOverrideTargetAst = @(Get-FunctionAstByName -Ast $cleanupAst -Name 'Test-WindowsKmsOverrideRemediationTarget')
 
     Assert-Check -Condition ($allCandidatesAst.Count -eq 1 -and
         $allCandidatesAst[0].Extent.Text -match "Kind 'OfficeKmsHostOverride'" -and
@@ -215,9 +323,146 @@ if ($null -ne $cleanupAst) {
         $deepCandidatesAst[0].Extent.Text -match "InitialRemediationState 'BlockedByPolicy'" -and
         $deepCandidatesAst[0].Extent.Text -match 'GroupPolicyOrMDM') `
         -Message 'NoGenTicket is not represented as a managed GPO/MDM diagnostic.'
+    Assert-Check -Condition ($deepCandidatesAst.Count -eq 1 -and
+        $deepCandidatesAst[0].Extent.Text -match "RegistryValueName 'KeyManagementServiceName'" -and
+        $deepCandidatesAst[0].Extent.Text -match 'ExpectedRegistryValue\s+[$]server') `
+        -Message 'Windows KMS override candidate does not bind the server value observed at selection time.'
+    Assert-Check -Condition ($windowsKmsOverrideTargetAst.Count -eq 1 -and
+        $windowsKmsOverrideTargetAst[0].Extent.Text -match 'KmsOverrideChanged' -and
+        $windowsKmsOverrideTargetAst[0].Extent.Text -match 'ApprovedInternalKms' -and
+        $windowsKmsOverrideTargetAst[0].Extent.Text -match 'Get-ItemProperty') `
+        -Message 'Windows KMS override lacks an immediate identity/approved-server revalidation helper.'
     Assert-Check -Condition ($deepCleanupAst.Count -eq 1 -and
         $deepCleanupAst[0].Extent.Text -notmatch 'SppNoGenTicketPolicy') `
         -Message 'Deep cleanup still contains an automatic NoGenTicket policy-removal branch.'
+
+    if ($deepCleanupAst.Count -eq 1) {
+        $deepCleanupText = [string]$deepCleanupAst[0].Extent.Text
+        Assert-Check -Condition ($deepCleanupText -match '(?s)if\s*\(\s*-not\s*\(Is-Admin\)\s*\).+?SystemChangeCount=0.+?SystemChangeApplied=\$false.+?return') `
+            -Message 'Deep cleanup does not fail closed before work when elevation is unavailable.'
+        Assert-Check -Condition ($deepCleanupText -match '(?s)if\s*\(\s*-not\s+\$restoreBundleReady\s*\).+?backupRequiredBlocked.+?SystemChangeCount=0.+?SystemChangeApplied=\$false.+?return') `
+            -Message 'Deep cleanup can continue when the authenticated restore bundle is incomplete.'
+
+        $backupGateRelativeOffset = $deepCleanupText.IndexOf('if (-not $restoreBundleReady)', [StringComparison]::Ordinal)
+        $systemMutationNames = @(
+            'Stop-Process','Stop-Service','Set-Service','Start-Service',
+            'Remove-ItemProperty','Remove-MpPreference','Remove-CompatibleScheduledTask',
+            'Remove-AppxPackage','Start-Process','Run-SlmgrActionText'
+        )
+        $preBackupSystemMutations = @($deepCleanupAst[0].FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.CommandAst] -and
+            [string]$node.GetCommandName() -in $systemMutationNames
+        }, $true) | Where-Object {
+            ([int]$_.Extent.StartOffset - [int]$deepCleanupAst[0].Extent.StartOffset) -lt $backupGateRelativeOffset
+        })
+        Assert-Check -Condition ($backupGateRelativeOffset -ge 0 -and $preBackupSystemMutations.Count -eq 0) `
+            -Message 'A system mutator can run before the authenticated restore-bundle gate.'
+
+        $kmsRevalidationCalls = @($deepCleanupAst[0].FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.CommandAst] -and
+            [string]$node.GetCommandName() -eq 'Test-WindowsKmsOverrideRemediationTarget'
+        }, $true))
+        $kmsBackupCalls = @($deepCleanupAst[0].FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.CommandAst] -and
+            [string]$node.GetCommandName() -eq 'Backup-RegKeyV35'
+        }, $true))
+        $kmsRemovalCalls = @($deepCleanupAst[0].FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.CommandAst] -and
+            [string]$node.GetCommandName() -eq 'Remove-ItemProperty'
+        }, $true))
+        Assert-Check -Condition ($kmsRevalidationCalls.Count -ge 2 -and
+            $kmsBackupCalls.Count -ge 1 -and $kmsRemovalCalls.Count -ge 1 -and
+            [int]$kmsRevalidationCalls[0].Extent.StartOffset -lt [int]$kmsBackupCalls[0].Extent.StartOffset -and
+            [int]$kmsRevalidationCalls[-1].Extent.StartOffset -lt [int]$kmsRemovalCalls[0].Extent.StartOffset) `
+            -Message 'Windows KMS override is not revalidated both before backup and immediately before mutation.'
+
+        if ($windowsKmsOverrideTargetAst.Count -eq 1) {
+            try {
+                $kmsGuardResults = & {
+                    param([string]$GuardBody)
+                    $script:fixtureKmsServer = 'kms.bad.example'
+                    function Get-ItemProperty {
+                        param($LiteralPath,$ErrorAction)
+                        return [pscustomobject]@{ KeyManagementServiceName=$script:fixtureKmsServer }
+                    }
+                    function Test-ApprovedKms { param([string]$Server) return [bool]($Server -eq 'kms.corp.example') }
+                    Invoke-Expression ('function Test-WindowsKmsOverrideRemediationTarget ' + $GuardBody)
+                    $candidate = [pscustomobject]@{
+                        Kind='KmsOverride'; Provider='WindowsSPP';
+                        RegistryValueName='KeyManagementServiceName';
+                        Location='HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform';
+                        ExpectedRegistryValue='kms.bad.example'
+                    }
+                    $unchanged = Test-WindowsKmsOverrideRemediationTarget -Candidate $candidate
+                    $script:fixtureKmsServer = 'kms.changed.example'
+                    $changed = Test-WindowsKmsOverrideRemediationTarget -Candidate $candidate
+                    $script:fixtureKmsServer = 'kms.corp.example'
+                    $candidate.ExpectedRegistryValue = 'kms.corp.example'
+                    $approved = Test-WindowsKmsOverrideRemediationTarget -Candidate $candidate
+                    $script:fixtureKmsServer = ''
+                    $absent = Test-WindowsKmsOverrideRemediationTarget -Candidate $candidate
+                    return [pscustomobject]@{ Unchanged=$unchanged; Changed=$changed; Approved=$approved; Absent=$absent }
+                } $windowsKmsOverrideTargetAst[0].Body.Extent.Text
+
+                Assert-Check -Condition ([bool]$kmsGuardResults.Unchanged.Allowed -and
+                    -not [bool]$kmsGuardResults.Changed.Allowed -and
+                    [string]$kmsGuardResults.Changed.Reason -eq 'KmsOverrideChanged' -and
+                    -not [bool]$kmsGuardResults.Approved.Allowed -and
+                    [string]$kmsGuardResults.Approved.Reason -eq 'ApprovedInternalKms' -and
+                    [bool]$kmsGuardResults.Absent.AlreadyClean) `
+                    -Message 'Windows KMS override revalidation does not fail closed for changed/approved/absent fixtures.'
+            } catch {
+                Add-CheckFailure ('Windows KMS override guard fixture raised an exception: ' + $_.Exception.Message)
+            }
+        }
+
+        try {
+            $nonAdminDeepResult = & {
+                param([string]$DeepCleanupBody)
+                $script:fixtureMutationCount = 0
+                function Register-FixtureMutation {
+                    $script:fixtureMutationCount++
+                    throw 'A deep-cleanup mutator was reached by the non-admin fixture.'
+                }
+                function Is-Admin { return $false }
+                function Get-CleanupText { param([string]$Key, [object[]]$Arguments = @()) return $Key }
+                function Ensure-Dir { param($Path) Register-FixtureMutation }
+                function Set-ProtectedBackupAcl { param($Path) Register-FixtureMutation }
+                function Copy-Item { param($LiteralPath,$Destination,$Force,$Recurse,$ErrorAction) Register-FixtureMutation }
+                function Move-Item { param($LiteralPath,$Destination,$Force) Register-FixtureMutation }
+                function Remove-Item { param($LiteralPath,$Force,$Recurse,$ErrorAction) Register-FixtureMutation }
+                function Remove-ItemProperty { param($LiteralPath,$Name,$Force,$ErrorAction) Register-FixtureMutation }
+                function Stop-Process { param($Id,$Name,$Force,$ErrorAction) Register-FixtureMutation }
+                function Stop-Service { param($Name,$Force,$ErrorAction) Register-FixtureMutation }
+                function Set-Service { param($Name,$StartupType,$ErrorAction) Register-FixtureMutation }
+                function Disable-ScheduledTask { param($TaskName,$TaskPath,$ErrorAction) Register-FixtureMutation }
+                function Remove-MpPreference { param($ExclusionPath,$ErrorAction) Register-FixtureMutation }
+                function Start-Process { param($FilePath,$ArgumentList,$Wait,$PassThru,$WindowStyle,$ErrorAction) Register-FixtureMutation }
+                function Remove-AppxPackage { param($Package,$AllUsers,$ErrorAction) Register-FixtureMutation }
+
+                Invoke-Expression ('function Invoke-DeepCleanupV35 ' + $DeepCleanupBody)
+                $fixtureCandidate = [pscustomobject]@{ Id='fixture'; Type='File'; Kind='HookFile'; Name='fixture'; Location='C:\Fixture\hook.dll' }
+                $result = Invoke-DeepCleanupV35 -Candidates @($fixtureCandidate) -SelectedIds @('fixture')
+                return [pscustomobject]@{
+                    MutationCount = [int]$script:fixtureMutationCount
+                    Result = $result
+                }
+            } $deepCleanupAst[0].Body.Extent.Text
+
+            Assert-Check -Condition ([int]$nonAdminDeepResult.MutationCount -eq 0 -and
+                -not [bool]$nonAdminDeepResult.Result.SystemChangeApplied -and
+                [int]$nonAdminDeepResult.Result.SystemChangeCount -eq 0 -and
+                [int]$nonAdminDeepResult.Result.SelectedCount -eq 0 -and
+                [string]::IsNullOrWhiteSpace([string]$nonAdminDeepResult.Result.BackupDirectory)) `
+                -Message 'Non-admin/UAC-denied deep cleanup reached a mutator or reported a partial change.'
+        } catch {
+            Add-CheckFailure ('Non-admin/UAC-denied deep-cleanup fixture raised an exception: ' + $_.Exception.Message)
+        }
+    }
 
     if ($invokeAst.Count -eq 1) {
         $argumentStrings = @($invokeAst[0].FindAll({
@@ -232,9 +477,95 @@ if ($null -ne $cleanupAst) {
             -Message 'Office host cleanup is not ordered after exact /unpkey removal attempts.'
         Assert-Check -Condition ($invokeAst[0].Extent.Text -match 'Get-OfficeLicenseProbeForPathBounded.+MaximumAttempts 3') `
             -Message 'Office remediation lacks a bounded three-attempt post-probe.'
+        $windowsKeyMutationLoops = @($invokeAst[0].FindAll({
+            param($node)
+            $node -is [System.Management.Automation.Language.ForEachStatementAst] -and
+            $node.Body.Extent.Text -match "Invoke-SlmgrCommand\s+-SlmgrArguments\s+@\('/upk',\s*[$]activationId\)"
+        }, $true))
+        Assert-Check -Condition ($windowsKeyMutationLoops.Count -eq 1 -and
+            $windowsKeyMutationLoops[0].Body.Extent.Text -match '(?s)Get-WindowsLicenseProducts.+?Test-WindowsLicenseRemediationTarget.+?Invoke-SlmgrCommand\s+-SlmgrArguments\s+@\(''/upk'',\s*[$]activationId\)') `
+            -Message 'Windows /upk does not immediately re-probe and revalidate the exact selected target.'
+
+        # Exercise the non-admin branch with every mutating command shadowed by a
+        # throwing fixture.  This is deliberately behavioral: even if a future
+        # refactor moves code around, loss/denial of UAC must still return before
+        # touching services, tasks, keys, Office, or restore points.
+        try {
+            $nonAdminResult = & {
+                param(
+                    [string]$InvokeBody,
+                    [string]$PathKeyBody,
+                    [string]$TargetIdentityBody,
+                    [string]$HostIdentityBody,
+                    [string]$NewStateBody,
+                    [string]$SetStateBody
+                )
+                $script:fixtureMutationCount = 0
+                function Register-FixtureMutation {
+                    $script:fixtureMutationCount++
+                    throw 'A mutating command was reached by the non-admin fixture.'
+                }
+                function Is-Admin { return $false }
+                function Get-CleanupText {
+                    param([string]$Key, [object[]]$Arguments = @())
+                    return $Key
+                }
+                function Checkpoint-Computer { param($Description,$RestorePointType) Register-FixtureMutation }
+                function Stop-Process { param($Name,$Force,$ErrorAction) Register-FixtureMutation }
+                function Stop-Service { param($Name,$Force,$ErrorAction) Register-FixtureMutation }
+                function Set-Service { param($Name,$StartupType,$ErrorAction) Register-FixtureMutation }
+                function Disable-ScheduledTask { param($TaskName,$TaskPath,$ErrorAction) Register-FixtureMutation }
+                function Invoke-SlmgrCommand { param($SlmgrArguments) Register-FixtureMutation }
+                function Invoke-OfficeOsppCommand { param($Path,$Arguments,$SuccessPattern) Register-FixtureMutation }
+
+                Invoke-Expression ('function Get-OfficeKmsPathKey ' + $PathKeyBody)
+                Invoke-Expression ('function Get-OfficeKmsTargetIdentity ' + $TargetIdentityBody)
+                Invoke-Expression ('function Get-OfficeKmsHostOverrideIdentity ' + $HostIdentityBody)
+                Invoke-Expression ('function New-RemediationStateRecord ' + $NewStateBody)
+                Invoke-Expression ('function Set-RemediationStateRecord ' + $SetStateBody)
+                Invoke-Expression ('function Invoke-Remediation ' + $InvokeBody)
+
+                $officeFixture = [pscustomobject]@{
+                    Path='C:\Fixture\OSPP.VBS'; SkuId='fixture-sku'; Last5='ABCDE'
+                }
+                $result = Invoke-Remediation -Products @() `
+                    -Findings @([pscustomobject]@{ Type='Process'; Name='fixture-activator' }) `
+                    -CleanupActivator -CleanupKmsConfiguration `
+                    -WindowsProductsToRemove @([pscustomobject]@{ ID='fixture-activation-id' }) `
+                    -OfficeEntries @($officeFixture) -OfficeHostOverridePaths @($officeFixture.Path)
+                return [pscustomobject]@{
+                    MutationCount = [int]$script:fixtureMutationCount
+                    Result = $result
+                }
+            } $invokeAst[0].Body.Extent.Text `
+                $functionAsts['Get-OfficeKmsPathKey'].Body.Extent.Text `
+                $functionAsts['Get-OfficeKmsTargetIdentity'].Body.Extent.Text `
+                $functionAsts['Get-OfficeKmsHostOverrideIdentity'].Body.Extent.Text `
+                $functionAsts['New-RemediationStateRecord'].Body.Extent.Text `
+                $functionAsts['Set-RemediationStateRecord'].Body.Extent.Text
+
+            Assert-Check -Condition ([int]$nonAdminResult.MutationCount -eq 0 -and
+                -not [bool]$nonAdminResult.Result.SystemChangeApplied -and
+                [int]$nonAdminResult.Result.SystemChangeCount -eq 0 -and
+                @($nonAdminResult.Result.RemediationStates).Count -eq 2 -and
+                @($nonAdminResult.Result.RemediationStates | Where-Object {
+                    [string]$_.State -ne 'RetryableFailure' -or
+                    [string]$_.LastErrorCode -ne 'AdministratorRequired' -or
+                    -not [bool]$_.RetryAllowed
+                }).Count -eq 0) `
+                -Message 'Non-admin/UAC-denied remediation reached a mutator or returned a non-retryable result.'
+        } catch {
+            Add-CheckFailure ('Non-admin/UAC-denied behavioral fixture raised an exception: ' + $_.Exception.Message)
+        }
     } else {
         Add-CheckFailure 'Missing or duplicate Invoke-Remediation function.'
     }
+
+    # The normal selected-item flow must never opt into the legacy broad
+    # activator/KMS switches, and it must call the exact-key remediation only
+    # after a protected backup directory has been produced.
+    Assert-Check -Condition ($cleanupText -match '(?s)if\s*\(\$backupDirectory\)\s*\{.+?Invoke-Remediation.+?-CleanupActivator:\$false.+?-CleanupKmsConfiguration:\$false') `
+        -Message 'Main remediation flow can enable broad activator/KMS cleanup or bypass the signed-backup gate.'
 
     $destructiveCommands = @($cleanupAst.FindAll({
         param($node)

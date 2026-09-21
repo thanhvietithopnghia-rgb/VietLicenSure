@@ -8,7 +8,7 @@ VietLicenSure is a Windows application for reviewing computer configuration, Win
 
 The workflow has four steps: select an inspection scope, review results and evidence, preview a remediation plan when needed, then confirm and perform post-verification. Inspection and reporting are read-only by default; system-changing actions always provide a preview, backup, confirmation, and an appropriate privilege request.
 
-VietLicenSure is Offline by default and does not automatically upload inventory or reports. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page.
+VietLicenSure is Offline by default and does not automatically upload inventory or reports. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page. The current acceptance state is maintained only in `RELEASE-STATUS-v5.0.md`.
 
 ## Author information
 
@@ -38,7 +38,13 @@ The project aims to provide a reliable, clear, and cautious technical inspection
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
 6. Keep Offline enabled unless you intentionally need a catalog update or authorized LAN management.
 
-A Stable single-file EXE carries a trusted signature and provenance manifest for tamper detection. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download the official build directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender. Do not disable Defender or SmartScreen. On a managed computer, contact the administrator if AppLocker or WDAC blocks it.
+The `ManagedSigned / Internal Pilot` single-file EXE carries a signature and provenance manifest for tamper detection, but it is not currently labelled `Public Stable`. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download the official build directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender.
+
+### Handle a SmartScreen warning safely
+
+Do not disable Defender or SmartScreen, add an exclusion, lower device policy, or install the certificate into Trusted Root merely to suppress a warning. Confirm the official download channel, SHA-256, signer, timestamp, and—when the full package is available—a `0 errors` result from `VERIFY-RELEASE.cmd`. Stop if the hash differs, Authenticode reports `HashMismatch` or `NotSigned`, the signer differs, the timestamp is missing, or CMS validation fails.
+
+When all checks pass, a self-signed ManagedSigned certificate can still produce a warning on a new personal computer. Choosing **More info → Run anyway** is then an informed user decision. On a managed device, when that option is unavailable, or when AppLocker/WDAC blocks the file, stop and contact the administrator. See `RELEASE-VERIFICATION-v5.0.md` and `FIRST-RUN-FAQ-v5.0.md`.
 
 ## How to run VietLicenSure
 
@@ -419,6 +425,20 @@ Software inventory, signature checks, Office queries, WMI, and PDF generation ca
 ### Stop task
 
 Use Stop only when necessary. If remediation was already running, some actions may have completed. Preserve the backup, reopen VietLicenSure, and run a read-only scan before continuing.
+
+## First-run FAQ
+
+**What should I choose first?** Keep Offline enabled, run as a standard user, and select **Check everything**. Review the summary before opening detailed evidence.
+
+**Does a warning mean an application is cracked?** No. VietLicenSure correlates multiple sources and evidence rules; `Unverified`, `Suspicious`, and `Confirmed crack` are different states.
+
+**Why might a portable application be missing?** Portable software may have no Registry install record or may be outside the configured scan roots. Confirm its actual path and shortcut.
+
+**Is every KMS finding unauthorized?** No. An authorized internal KMS must be confirmed against the organization's administrator and licensing records; never approve an unfamiliar server from its name alone.
+
+**Should I approve UAC immediately?** Only when the displayed operation matches the action you just selected. Routine inspection does not require running the entire application as Administrator.
+
+See `FIRST-RUN-FAQ-v5.0.md` for the complete English FAQ, including SmartScreen, PowerShell/permission failures, and safe support reporting. The Vietnamese counterpart is `FAQ-NGUOI-DUNG-MOI-v5.0.md`.
 
 ## Common problems
 

@@ -1,9 +1,10 @@
 ﻿[CmdletBinding()]
-param([string]$SourceDirectory = $PSScriptRoot)
+param([string]$SourceDirectory = '')
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
+if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $sourceRoot = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
 $brandName = 'VietLicenSure'
@@ -49,6 +50,9 @@ $requiredCurrentFiles = @(
     'KNOWN-LIMITATIONS-v5.0.md',
     'RELEASE-HYGIENE-v5.0.md'
     'DOCUMENTATION-MAP-v5.0.md'
+    'RELEASE-STATUS-v5.0.md'
+    'FAQ-NGUOI-DUNG-MOI-v5.0.md'
+    'FIRST-RUN-FAQ-v5.0.md'
     'THREAT-MODEL-v5.0.md'
     'RELEASE-VERIFICATION-v5.0.md'
     'VERIFY-DISTRIBUTION.ps1'
@@ -88,6 +92,9 @@ $historyVi = Read-HygieneText 'LICH-SU-PHIEN-BAN.txt'
 $historyEn = Read-HygieneText 'VERSION-HISTORY-en-US.md'
 $quickStart = Read-HygieneText 'QUICK-START-v5.0.md'
 $limitations = Read-HygieneText 'KNOWN-LIMITATIONS-v5.0.md'
+$releaseStatus = Read-HygieneText 'RELEASE-STATUS-v5.0.md'
+$firstRunFaq = Read-HygieneText 'FAQ-NGUOI-DUNG-MOI-v5.0.md'
+$firstRunFaqEn = Read-HygieneText 'FIRST-RUN-FAQ-v5.0.md'
 $hygiene = Read-HygieneText 'RELEASE-HYGIENE-v5.0.md'
 $website = Read-HygieneText 'docs\index.html'
 $launcher = Read-HygieneText 'VietLicenSure-v5.0-OneFile.cs'
@@ -121,10 +128,18 @@ Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Viet'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Licen'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Sure'
 Assert-HygieneContains 'VERSION-HISTORY-en-US.md' $historyEn 'official name'
-Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'ManagedSigned/Pilot'
+Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'ManagedSigned / Internal Pilot'
 Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Public Stable'
 Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top"><img src="logo.svg"'
-Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned/Pilot'
+Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned / Internal Pilot'
+Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'Nguồn sự thật duy nhất'
+Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'Public Stable'
+Assert-HygieneContains 'FAQ-NGUOI-DUNG-MOI-v5.0.md' $firstRunFaq 'SmartScreen'
+Assert-HygieneContains 'FAQ-NGUOI-DUNG-MOI-v5.0.md' $firstRunFaq 'Trusted Root'
+Assert-HygieneContains 'FIRST-RUN-FAQ-v5.0.md' $firstRunFaqEn 'SmartScreen'
+Assert-HygieneContains 'FIRST-RUN-FAQ-v5.0.md' $firstRunFaqEn 'Trusted Root'
+Assert-HygieneContains 'docs\index.html' $website 'RELEASE-STATUS-v5.0.md'
+Assert-HygieneContains 'docs\index.html' $website 'FAQ-NGUOI-DUNG-MOI-v5.0.md'
 Assert-HygieneContains 'docs\index.html' $website $directDownloadUrl
 foreach ($channelUrl in @($issuesUrl, $discussionsUrl, $securityAdvisoryUrl)) {
     Assert-HygieneContains 'README.md' $readme $channelUrl
@@ -234,7 +249,8 @@ foreach ($legacyDocument in @(
     'SOURCE-POLICY-v4.9.md'
 )) {
     $legacyText = Read-HygieneText $legacyDocument
-    if ($legacyText -notmatch 'VietLicenSure v5\.0(?:[^0-9]|$)') {
+    if ($legacyText -notmatch 'DOCUMENTATION-MAP-v5\.0\.md' -or
+        $legacyText -notmatch 'RELEASE-STATUS-v5\.0\.md') {
         $failures.Add("Legacy-suffixed document lacks current applicability notice: $legacyDocument")
     }
 }

@@ -1,12 +1,12 @@
 # Giới hạn đã biết — VietLicenSure v5.0
 
-Tài liệu này áp dụng cho VietLicenSure `v5.0`, phát hành ngày `08/09/2026` theo kênh `ManagedSigned/Pilot`; hồ sơ QA được cập nhật ngày `13/09/2026`.
+Tài liệu này áp dụng cho VietLicenSure `v5.0` theo kênh `ManagedSigned / Internal Pilot`. Trạng thái nghiệm thu hiện hành chỉ được công bố tại `RELEASE-STATUS-v5.0.md`.
 
 ## Tin cậy phát hành
 
 - EXE được ký và có timestamp, nhưng dùng chứng thư tự ký được launcher ghim; Windows có thể hiển thị `Unknown publisher` hoặc cảnh báo SmartScreen.
-- Ma trận Harness4 ngày 13/09/2026 đã đạt `3/3` nền tảng, mỗi nền tảng đạt `11/11` kiểm tra canonical và `1/1` kiểm tra updater bổ sung, gắn với source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`.
-- Harness4 xác minh hồi quy nguồn và ràng buộc danh tính EXE/metadata nhưng không trực tiếp khởi chạy EXE đóng gói. Bản này chưa được gọi là `Public Stable`: còn thiếu ma trận runtime đầy đủ cho EXE/UI, chứng thư code-signing do CA công cộng cấp và biên bản đánh giá bảo mật độc lập hoàn tất cho đúng artifact.
+- Các bộ Harness cũ chỉ là bằng chứng lịch sử của đúng snapshot/artifact mà chúng ghi nhận; không được tái sử dụng để đóng cổng cho EXE khác. Xem `RELEASE-STATUS-v5.0.md` để biết cặp source–EXE và kết quả hiện hành.
+- Bản này chưa được gọi là `Public Stable`; các điều kiện còn thiếu và quyết định HOLD được duy trì tại nguồn trạng thái duy nhất nêu trên.
 - Verifier tĩnh và checksum không thay thế kiểm thử runtime, WinVerifyTrust trên máy sạch hoặc pentest độc lập.
 
 ## Tương thích và giao diện
@@ -26,4 +26,4 @@ Tài liệu này áp dụng cho VietLicenSure `v5.0`, phát hành ngày `08/09/2
 - Các luồng Cleanup, Update, plugin/catalog và Enterprise pairing có bề mặt rủi ro lớn hơn chế độ quét chỉ đọc; chỉ dùng trong phạm vi quản trị được ủy quyền.
 - Gói Microsoft Store vẫn dùng một số định danh legacy do Partner Center cấp. Đây là ngoại lệ tương thích, không phải tên hiển thị hiện hành.
 
-Danh sách cổng còn thiếu trước Public Stable được theo dõi trong `ROADMAP-v5.0.md` và `RELEASE-HYGIENE-v5.0.md`.
+Danh sách cổng còn thiếu trước Public Stable được theo dõi tại `RELEASE-STATUS-v5.0.md`; roadmap và tài liệu vệ sinh phát hành chỉ giải thích quy trình.

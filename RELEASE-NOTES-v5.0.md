@@ -3,7 +3,7 @@
 Ngày build kỹ thuật: `2026-09-08`
 Ngày phát hành: `08/09/2026`
 Phiên bản hiển thị: `v5.0`
-Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
+Trạng thái: `ManagedSigned / Internal Pilot`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
 ## Giới thiệu
 
@@ -53,16 +53,16 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 
 ## Cập nhật an toàn ngày 13/09/2026
 
-- Khóa public self-update đối với `ManagedSigned/Pilot`; chỉ Public Stable dùng chứng thư CA công cộng mới được bật cơ chế này.
+- Khóa public self-update đối với `ManagedSigned / Internal Pilot`; chỉ Public Stable dùng chứng thư CA công cộng mới được bật cơ chế này.
 - Updater không còn tự chạy lại EXE bằng token Administrator sau khi cập nhật hoặc khi gặp lỗi; người dùng mở lại VietLicenSure theo cách bình thường.
 - Không chuyển `TOOL_UPDATE_CACHE_ROOT` qua ranh giới UAC, kiểm lại SHA-256 của launcher sau khi tiến trình cũ thoát và giữ backup cùng thư mục đích với tên ngẫu nhiên.
 - Bổ sung regression test để khóa các điều kiện trên và ngăn tái xuất hiện đường nâng quyền qua writable-path race.
 
-## Cập nhật bằng chứng QA ngày 13/09/2026
+## Bằng chứng QA lịch sử ngày 13/09/2026
 
-- Harness4 đạt `3/3` nền tảng cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2.
+- Harness4 đã đạt `3/3` nền tảng cho source snapshot lịch sử `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2.
 - Mỗi nền tảng đạt `11/11` kiểm tra canonical cùng `1/1` kiểm tra updater bổ sung; ba kết quả thô được ghim bằng SHA-256 trong hồ sơ evidence.
-- Phạm vi là hồi quy nguồn, hardening updater và ràng buộc source/metadata/EXE. EXE đóng gói chưa được khởi chạy bởi Harness4; runtime EXE/UI và security review độc lập vẫn là cổng riêng trước `Public Stable`.
+- Phạm vi là hồi quy nguồn, hardening updater và ràng buộc source/metadata/EXE tại thời điểm đó. Không dùng kết quả này cho artifact khác; trạng thái hiện hành chỉ xem tại `RELEASE-STATUS-v5.0.md`.
 
 ## Cập nhật lịch sử và bài giới thiệu
 
@@ -98,7 +98,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 ## Giới hạn công khai
 
 - Đây không phải danh tính code-signing public-CA.
-- Gói Microsoft Store được chuẩn bị riêng và chưa thay thế bản ManagedSigned/Pilot hiện tại.
+- Gói Microsoft Store được chuẩn bị riêng và chưa thay thế bản `ManagedSigned / Internal Pilot` hiện tại.
 
 ### Bổ sung theo đợt rà soát hồ sơ 08/09/2026
 

@@ -1,6 +1,6 @@
 # Offline mode, Trợ lý và báo cáo — tài liệu nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; các nguyên tắc còn hiệu lực áp dụng cho VietLicenSure v5.0 trừ khi một mục ghi rõ phiên bản khác.
+> **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
 
 ## Chính sách mặc định
 

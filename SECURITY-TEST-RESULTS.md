@@ -1,6 +1,6 @@
 # Kết quả kiểm thử bảo mật và tương thích
 
-Trạng thái: tài liệu sống cho nhánh phát triển v5. Không dùng tài liệu này để tuyên bố một bản phát hành đã được chứng nhận.
+Trạng thái: hồ sơ kỹ thuật và lịch sử bằng chứng. Trạng thái nghiệm thu hiện hành chỉ xem tại `RELEASE-STATUS-v5.0.md`; không dùng riêng tài liệu này để tuyên bố một bản phát hành đã được chứng nhận.
 
 ## Cổng tự động trong kho mã
 
@@ -24,7 +24,7 @@ Bản v5.0 từng công bố gói kiểm thử ngày 28/08/2026. Tóm tắt bên
 
 Tổng trạng thái của **riêng gói lịch sử ngày 28/08/2026**: `Passed=1`, `Failed=0`, `Missing=2`, `Status=IncompleteOrFailed`. Kết quả này được giữ để truy vết và không còn là trạng thái QA hiện hành. Mọi source snapshot mới phải tạo evidence mới; không được tái sử dụng kết quả của source snapshot khác.
 
-## Bằng chứng Harness4 hiện hành ngày 13/09/2026
+## Bằng chứng Harness4 lịch sử ngày 13/09/2026
 
 Ma trận dưới đây gắn với source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`. Summary được tạo lúc `2026-09-13T08:34:51.4970862Z`; ba kết quả thô đã được đối chiếu SHA-256 và kích thước trước khi tổng hợp.
 

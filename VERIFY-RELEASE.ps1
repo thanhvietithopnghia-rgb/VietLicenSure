@@ -223,10 +223,10 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 54 } else { 55 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 138 } else { 139 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 160 } else { 162 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 48 } elseif ($AllowStoreManifest) { 49 } else { 50 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 56 } else { 57 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 141 } else { 142 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 163 } else { 165 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -661,7 +661,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 }
 
 $payloadFiles = @(
-    'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
+    'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','FAQ-NGUOI-DUNG-MOI-v5.0.md','FIRST-RUN-FAQ-v5.0.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt','SOURCE-POLICY-v4.9.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
@@ -896,8 +896,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 56 } else { 57 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 54 } else { 55 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 58 } else { 59 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 56 } else { 57 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
@@ -1023,7 +1023,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.CompatibilitySchemaVersion -ne '1.0' -or
             [string]$releaseManifest.CompatibilityCatalogSchemaVersion -ne '1.1' -or
             [string]$releaseManifest.CompatibilityCatalogVersion -ne '1.1.1.0' -or
-            [string]$releaseManifest.CompatibilityCatalogHealth -ne 'Fresh' -or
+            [string]$releaseManifest.CompatibilityCatalogHealth -notin @('Fresh','Warning') -or
             [int]$releaseManifest.CompatibilityCatalogReviewWarningAgeDays -ne 30 -or
             [int]$releaseManifest.CompatibilityCatalogMaximumReviewAgeDays -ne 45 -or
             [string]$releaseManifest.FutureCompatibilityMode -ne 'ReadOnlyManualReview' -or

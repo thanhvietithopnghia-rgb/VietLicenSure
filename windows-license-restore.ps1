@@ -15,7 +15,7 @@ function Get-RestoreText {
     param([Parameter(Mandatory = $true)][string]$Key, [object[]]$Arguments = @())
     $property = $script:restoreCatalog.PSObject.Properties[$Key]
     $text = if ($property) { [string]$property.Value } else { "[$Key]" }
-    if ($Arguments -and @($Arguments).Count -gt 0) {
+    if (@($Arguments).Count -gt 0) {
         try { return [string]::Format([Globalization.CultureInfo]::GetCultureInfo($Culture), $text, [object[]]$Arguments) } catch { return $text }
     }
     return $text
@@ -191,11 +191,16 @@ if ([string]::IsNullOrWhiteSpace($legacyDataRoot)) { $legacyDataRoot = Join-Path
 $allowedBackupRoots = @($currentDataRoot, $legacyDataRoot) | ForEach-Object {
     try { ([IO.Path]::GetFullPath((Join-Path $_ "backups"))).TrimEnd('\') } catch { $null }
 } | Where-Object { $_ } | Select-Object -Unique
-$insideAllowedRoot = $false
-foreach ($allowedRoot in $allowedBackupRoots) {
-    if ($script:backupRoot.StartsWith(($allowedRoot + '\'), [StringComparison]::OrdinalIgnoreCase)) { $insideAllowedRoot = $true; break }
+$expectedBackupRoot = @($allowedBackupRoots | Where-Object {
+    $script:backupRoot.StartsWith(($_ + '\'), [StringComparison]::OrdinalIgnoreCase)
+} | Sort-Object { $_.Length } -Descending | Select-Object -First 1)
+if ($expectedBackupRoot.Count -ne 1) { Fail-Restore 23 (Get-RestoreText "restoreReport.outsideProtectedRoot") }
+$expectedBackupRoot = [string]$expectedBackupRoot[0]
+$versionRoot = Split-Path -Parent $expectedBackupRoot
+$productRoot = Split-Path -Parent $versionRoot
+if ([string]::IsNullOrWhiteSpace($versionRoot) -or [string]::IsNullOrWhiteSpace($productRoot)) {
+    Fail-Restore 23 (Get-RestoreText "restoreReport.outsideProtectedRoot")
 }
-if (-not $insideAllowedRoot) { Fail-Restore 23 (Get-RestoreText "restoreReport.outsideProtectedRoot") }
 foreach ($protectedPath in @($productRoot, $versionRoot, $expectedBackupRoot, $script:backupRoot)) {
     if (-not (Test-ProtectedBackupAcl $protectedPath)) { Fail-Restore 23 (Get-RestoreText "restoreReport.unsafeAcl") }
 }
@@ -297,7 +302,9 @@ foreach ($item in $manifestItems) {
                 if ($allowedNamesForPath.Count -eq 0) { throw (Get-RestoreText "restoreReport.registryValuesOutsideScope") }
                 $data = Get-Content -LiteralPath $source -Raw | ConvertFrom-Json
                 if ([string]$data.RegistryPath -ne [string]$item.OriginalPath) { throw (Get-RestoreText "restoreReport.registryValuesPathMismatch") }
-                $key = Get-Item -LiteralPath ([string]$item.OriginalPath) -ErrorAction Stop
+                if (-not (Test-Path -LiteralPath ([string]$item.OriginalPath) -PathType Container)) {
+                    New-Item -Path ([string]$item.OriginalPath) -Force -ErrorAction Stop | Out-Null
+                }
                 foreach ($entry in @($data.Values)) {
                     if (-not (Test-ToolRegistryValueRestoreAllowed -Path ([string]$item.OriginalPath) -ValueName ([string]$entry.Name))) { throw (Get-RestoreText "restoreReport.registryValueOutsideScope" @($entry.Name)) }
                     $kind = [Microsoft.Win32.RegistryValueKind]([Enum]::Parse([Microsoft.Win32.RegistryValueKind], [string]$entry.Kind, $true))
@@ -307,7 +314,8 @@ foreach ($item in $manifestItems) {
                     elseif ($kind -eq [Microsoft.Win32.RegistryValueKind]::QWord) { $value = [long]$value }
                     elseif ($kind -eq [Microsoft.Win32.RegistryValueKind]::MultiString) { $value = [string[]]@($value) }
                     else { $value = [string]$value }
-                    $key.SetValue([string]$entry.Name, $value, $kind)
+                    New-ItemProperty -LiteralPath ([string]$item.OriginalPath) -Name ([string]$entry.Name) `
+                        -Value $value -PropertyType ([string]$kind) -Force -ErrorAction Stop | Out-Null
                 }
                 $actions.Add((Get-RestoreText "restoreReport.action.registryValues" @($item.Name))); $restored++
             }

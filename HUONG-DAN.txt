@@ -8,7 +8,7 @@ VietLicenSure là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, t
 
 Quy trình sử dụng gồm bốn bước: chọn phạm vi kiểm tra, đọc kết quả và bằng chứng, chạy thử kế hoạch nếu cần khắc phục, sau đó xác nhận và hậu kiểm. Kiểm tra và báo cáo mặc định chỉ đọc; thao tác thay đổi hệ thống luôn có xem trước, backup, xác nhận và yêu cầu quyền phù hợp.
 
-VietLicenSure hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong VietLicenSure hoặc trang phát hành chính thức.
+VietLicenSure hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong VietLicenSure hoặc trang phát hành chính thức. Trạng thái nghiệm thu mới nhất được duy trì duy nhất tại `RELEASE-STATUS-v5.0.md`.
 
 ## Thông tin tác giả
 
@@ -38,7 +38,13 @@ Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
 
-Tệp Stable một-EXE phải có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản chính thức trực tiếp từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender. Không tắt Defender/SmartScreen; trên máy doanh nghiệp hãy liên hệ quản trị viên nếu AppLocker/WDAC chặn.
+Tệp một-EXE của kênh `ManagedSigned / Internal Pilot` có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa, nhưng hiện chưa mang nhãn `Public Stable`. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản chính thức trực tiếp từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender.
+
+### Xử lý cảnh báo SmartScreen an toàn
+
+Không tắt Defender/SmartScreen, không thêm ngoại lệ và không hạ policy để ép chạy. Trước tiên hãy xác nhận đúng kênh tải, chạy `VERIFY-RELEASE.cmd` nếu có gói đầy đủ, đối chiếu SHA-256, signer và timestamp. Dừng lại nếu hash sai, trạng thái là `HashMismatch`/`NotSigned`, signer không khớp, thiếu timestamp hoặc CMS lỗi.
+
+Nếu mọi kiểm tra đều đạt nhưng máy cá nhân vẫn cảnh báo vì chứng thư ManagedSigned tự ký, bạn có thể chủ động chọn **More info → Run anyway**. Trên máy doanh nghiệp, nếu không có tùy chọn này hoặc AppLocker/WDAC chặn, hãy liên hệ quản trị viên. Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo. Xem quy trình đầy đủ trong `RELEASE-VERIFICATION-v5.0.md` và câu trả lời ngắn trong `FAQ-NGUOI-DUNG-MOI-v5.0.md`.
 
 ## Cách chạy VietLicenSure
 
@@ -486,6 +492,20 @@ Dùng báo cáo đã che khi chia sẻ ra ngoài. Báo cáo đầy đủ chỉ l
 ### Nút Dừng
 
 Chỉ bấm Dừng khi cần thiết. Nếu đã bắt đầu khắc phục, một phần thao tác có thể đã hoàn tất. Sau khi dừng tác vụ khắc phục, giữ nguyên backup, mở lại công cụ và chạy quét chỉ đọc trước khi tiếp tục.
+
+## FAQ cho người dùng lần đầu
+
+**Lần đầu nên chọn gì?** Giữ Offline, chạy bằng tài khoản thường và chọn **Kiểm tra toàn bộ**. Đọc tổng quan trước khi mở bằng chứng chi tiết.
+
+**Cảnh báo có đồng nghĩa phần mềm crack?** Không. VietLicenSure đối chiếu nhiều nguồn và quy tắc; `Chưa xác minh`, `Nghi vấn` và `Crack đã xác nhận` là các mức khác nhau.
+
+**Vì sao ứng dụng portable có thể không xuất hiện?** Ứng dụng portable thường không có bản ghi Registry hoặc nằm ngoài vùng quét; hãy kiểm tra đường dẫn và shortcut thực tế.
+
+**KMS có luôn vi phạm?** Không. KMS nội bộ chỉ được coi là được phép sau khi đối chiếu với quản trị viên và hồ sơ cấp phép của tổ chức; không tự xác nhận một máy chủ lạ.
+
+**Có nên cấp UAC ngay?** Chỉ chấp nhận khi tên tác vụ khớp thao tác bạn vừa chọn. Kiểm tra thông thường không cần chạy toàn bộ ứng dụng bằng Administrator.
+
+Xem câu trả lời đầy đủ, gồm SmartScreen, lỗi PowerShell/quyền hạn và cách báo lỗi an toàn, tại `FAQ-NGUOI-DUNG-MOI-v5.0.md`.
 
 ## Xử lý lỗi thường gặp
 

@@ -384,6 +384,7 @@ if (Test-Path -LiteralPath $mainReportPath -PathType Leaf) {
 
 foreach ($pair in @(
     @('HUONG-DAN.txt','USER-GUIDE-en-US.md'),
+    @('FAQ-NGUOI-DUNG-MOI-v5.0.md','FIRST-RUN-FAQ-v5.0.md'),
     @('LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md')
 )) {
     foreach ($name in $pair) {

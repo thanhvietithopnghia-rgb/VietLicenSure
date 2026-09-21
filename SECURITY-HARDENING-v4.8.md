@@ -1,6 +1,6 @@
 # Security hardening baseline — tài liệu nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; baseline còn hiệu lực là tài liệu nền cho VietLicenSure v5.0 và không thay thế kiểm thử của đúng artifact phát hành.
+> **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
 
 ## Artefact và build
 

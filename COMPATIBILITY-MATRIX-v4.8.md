@@ -1,8 +1,6 @@
 # Ma trận tương thích — mốc nền v4.8
 
-> **Trạng thái tài liệu:** Tên tệp giữ theo mốc hình thành v4.8 để truy vết; đây là bằng chứng lịch sử tham khảo cho VietLicenSure v5.0, không được dùng thay ma trận máy thật của đúng bản phát hành hiện tại.
-
-> **Bằng chứng v5.0 hiện hành:** Harness4 ngày 13/09/2026 đạt 3/3 nền tảng cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2 đều đạt 11/11 kiểm tra canonical cùng 1/1 kiểm tra updater bổ sung. Harness4 không khởi chạy EXE/UI; xem `SECURITY-TEST-RESULTS.md` để biết phạm vi và giới hạn chính xác.
+> **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
 
 Mốc rà soát: **2026-08-17 UTC**. Nguồn máy đọc: `compatibility-catalog-v1.0.json`, schema catalog `1.1`, phiên bản `1.1.1.0`.
 

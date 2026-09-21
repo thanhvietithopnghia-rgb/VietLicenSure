@@ -224,12 +224,56 @@ namespace VietLicenSure {
     return $script:ToolUiDpiInitialization
 }
 
+function Test-ToolUiHighContrast {
+    [CmdletBinding()]
+    param()
+
+    # Override này chỉ phục vụ kiểm thử tự động và tiến trình con. Giá trị không
+    # hợp lệ được bỏ qua để Windows tiếp tục là nguồn sự thật của chế độ tương phản.
+    $override = ([string]$env:TOOL_UI_HIGH_CONTRAST).Trim().ToLowerInvariant()
+    if ($override -in @('1', 'true', 'yes', 'on')) { return $true }
+    if ($override -in @('0', 'false', 'no', 'off')) { return $false }
+
+    try {
+        return [bool][Windows.Forms.SystemInformation]::HighContrast
+    } catch {
+        # Windows 7/PowerShell cũ hoặc host không có WinForms không được phép làm
+        # ứng dụng lỗi ngay khi khởi động.
+        return $false
+    }
+}
+
 function Get-ToolUiPalette {
     param([ValidateSet("Light", "Dark")][string]$Mode = (Get-ToolUiTheme))
+
+    if (Test-ToolUiHighContrast) {
+        return [pscustomobject][ordered]@{
+            Mode           = $Mode
+            HighContrast   = $true
+            Background     = [Drawing.SystemColors]::Window
+            Surface        = [Drawing.SystemColors]::Window
+            SurfaceAlt     = [Drawing.SystemColors]::Control
+            Input          = [Drawing.SystemColors]::Window
+            Primary        = [Drawing.SystemColors]::HotTrack
+            Text           = [Drawing.SystemColors]::WindowText
+            Muted          = [Drawing.SystemColors]::GrayText
+            Border         = [Drawing.SystemColors]::WindowFrame
+            Button         = [Drawing.SystemColors]::Control
+            ButtonHover    = [Drawing.SystemColors]::Control
+            InfoSurface    = [Drawing.SystemColors]::Window
+            SuccessSurface = [Drawing.SystemColors]::Window
+            WarningSurface = [Drawing.SystemColors]::Window
+            PurpleSurface  = [Drawing.SystemColors]::Window
+            Success        = [Drawing.SystemColors]::WindowText
+            Warning        = [Drawing.SystemColors]::WindowText
+            Danger         = [Drawing.SystemColors]::WindowText
+        }
+    }
 
     if ($Mode -eq "Dark") {
         return [pscustomobject][ordered]@{
             Mode           = "Dark"
+            HighContrast   = $false
             Background     = [Drawing.Color]::FromArgb(20, 24, 33)
             Surface        = [Drawing.Color]::FromArgb(31, 36, 48)
             SurfaceAlt     = [Drawing.Color]::FromArgb(39, 46, 61)
@@ -252,6 +296,7 @@ function Get-ToolUiPalette {
 
     return [pscustomobject][ordered]@{
         Mode           = "Light"
+        HighContrast   = $false
         Background     = [Drawing.Color]::FromArgb(244, 246, 249)
         Surface        = [Drawing.Color]::White
         SurfaceAlt     = [Drawing.Color]::FromArgb(244, 246, 249)
@@ -335,6 +380,16 @@ function Get-ToolUiButtonPalette {
         [ValidateSet("Light", "Dark")][string]$Mode = (Get-ToolUiTheme)
     )
 
+    if (Test-ToolUiHighContrast) {
+        return [pscustomobject]@{
+            Back   = [Drawing.SystemColors]::Control
+            Fore   = [Drawing.SystemColors]::ControlText
+            Border = [Drawing.SystemColors]::WindowFrame
+            Hover  = [Drawing.SystemColors]::Control
+            Accent = [Drawing.SystemColors]::ControlText
+        }
+    }
+
     $dark = [bool]($Mode -eq "Dark")
     if ($dark) {
         switch ($Tone) {
@@ -361,6 +416,16 @@ function Get-ToolUiButtonPalette {
 
 function Get-ToolUiPrimaryActionPalette {
     param([ValidateSet("Light", "Dark")][string]$Mode = (Get-ToolUiTheme))
+
+    if (Test-ToolUiHighContrast) {
+        return [pscustomobject][ordered]@{
+            Back    = [Drawing.SystemColors]::Highlight
+            Fore    = [Drawing.SystemColors]::HighlightText
+            Border  = [Drawing.SystemColors]::WindowFrame
+            Hover   = [Drawing.SystemColors]::Highlight
+            Pressed = [Drawing.SystemColors]::Highlight
+        }
+    }
 
     if ($Mode -eq "Dark") {
         return [pscustomobject][ordered]@{
@@ -391,6 +456,10 @@ function Set-ToolUiPrimaryActionButtonVisual {
     # trạng thái thường, hover và nhấn. Việc chỉ đổi BackColor/ForeColor khiến
     # WinForms giữ MouseOverBackColor cũ và có thể làm chữ trắng bị nhòe/mất.
     Set-ToolUiActionButtonVisual -Button $Button -Mode $Mode
+    if (Test-ToolUiHighContrast) {
+        # Giữ cách vẽ native để Windows tự áp focus cue và màu High Contrast.
+        return
+    }
     $visual = Get-ToolUiPrimaryActionPalette -Mode $Mode
     $Button.UseVisualStyleBackColor = $false
     $Button.FlatStyle = [Windows.Forms.FlatStyle]::Flat
@@ -666,6 +735,25 @@ function Set-ToolUiActionButtonVisual {
     $role = Get-ToolUiButtonRole -Button $Button
     $tone = Get-ToolUiButtonTone -Role $role
     $visual = Get-ToolUiButtonPalette -Tone $tone -Mode $Mode
+    $managedImage = [bool]($null -ne $Button.Image -and
+        ([string]$Button.Image.Tag).StartsWith('ToolUiIcon:', [StringComparison]::Ordinal))
+
+    if (Test-ToolUiHighContrast) {
+        # Không ép màu/icon trang trí trong High Contrast. Native renderer giữ
+        # màu hệ thống, đường focus và trạng thái nhấn mà người dùng đã chọn.
+        if ($managedImage) { $Button.Image = $null }
+        $Button.UseVisualStyleBackColor = $true
+        $Button.UseMnemonic = $false
+        $Button.FlatStyle = [Windows.Forms.FlatStyle]::Standard
+        $Button.Cursor = [Windows.Forms.Cursors]::Default
+        $Button.BackColor = [Drawing.SystemColors]::Control
+        $Button.ForeColor = [Drawing.SystemColors]::ControlText
+        $Button.Padding = New-Object Windows.Forms.Padding(0)
+        $Button.TextImageRelation = [Windows.Forms.TextImageRelation]::Overlay
+        $Button.Region = $null
+        return
+    }
+
     $Button.UseVisualStyleBackColor = $false
     # Nội dung localization dùng dấu & theo nghĩa ký tự hiển thị (ví dụ
     # "Phiên bản & cập nhật"), không phải phím tắt mnemonic của WinForms.
@@ -686,10 +774,11 @@ function Set-ToolUiActionButtonVisual {
     if (-not $compactTextOnly -and $Button.Width -ge 90 -and $Button.Height -ge 26 -and -not [string]::IsNullOrWhiteSpace([string]$Button.Text)) {
         $iconSize = if ($Button.Height -le 28) { 16 } elseif ($Button.Height -ge 40) { 22 } else { 18 }
         $marker = "ToolUiIcon:{0}:{1}:{2}" -f $role, $Mode, $iconSize
-        $managedImage = ([string]$Button.AccessibleDescription).StartsWith("ToolUiIcon:", [StringComparison]::Ordinal)
         if ($null -eq $Button.Image -or $managedImage) {
             $Button.Image = Get-ToolUiActionIcon -Role $role -Accent $visual.Accent -Mode $Mode -Size $iconSize
-            $Button.AccessibleDescription = $marker
+            # Image.Tag là metadata nội bộ phù hợp; AccessibleDescription phải
+            # luôn dành riêng cho screen reader và nội dung trợ năng của nút.
+            $Button.Image.Tag = $marker
             $Button.ImageAlign = [Drawing.ContentAlignment]::MiddleLeft
             $Button.TextImageRelation = [Windows.Forms.TextImageRelation]::ImageBeforeText
             $Button.Padding = New-Object Windows.Forms.Padding(10, 0, 9, 0)
@@ -732,6 +821,36 @@ function Set-ToolUiLiteralText {
     }
     foreach ($child in $Root.Controls) {
         Set-ToolUiLiteralText -Root $child
+    }
+}
+
+function Set-ToolUiAccessibility {
+    param([Parameter(Mandatory = $true)][Windows.Forms.Control]$Root)
+
+    # Chỉ bổ sung dữ liệu còn thiếu. Tên/mô tả do từng màn hình khai báo luôn có
+    # độ ưu tiên cao hơn suy luận chung và tuyệt đối không bị theme ghi đè.
+    $visibleText = ''
+    if ($Root -is [Windows.Forms.ButtonBase] -or
+        $Root -is [Windows.Forms.Label] -or
+        $Root -is [Windows.Forms.GroupBox] -or
+        $Root -is [Windows.Forms.TabPage]) {
+        $visibleText = (([string]$Root.Text) -replace '[\r\n]+', ' ').Trim()
+    }
+    if (-not [string]::IsNullOrWhiteSpace($visibleText) -and
+        [string]::IsNullOrWhiteSpace([string]$Root.AccessibleName)) {
+        $Root.AccessibleName = $visibleText
+    }
+
+    $canEllipsize = [bool]($Root -is [Windows.Forms.Label] -or $Root -is [Windows.Forms.ButtonBase])
+    if ($canEllipsize -and $Root.AutoEllipsis -and
+        -not [string]::IsNullOrWhiteSpace($visibleText) -and
+        [string]::IsNullOrWhiteSpace([string]$Root.AccessibleDescription)) {
+        # Screen reader vẫn nhận toàn bộ giá trị khi giao diện hẹp chỉ còn dấu ….
+        $Root.AccessibleDescription = $visibleText
+    }
+
+    foreach ($child in $Root.Controls) {
+        Set-ToolUiAccessibility -Root $child
     }
 }
 
@@ -862,12 +981,103 @@ function Set-ToolUiTabTheme {
     })
 }
 
+function Set-ToolControlHighContrastTheme {
+    param([Parameter(Mandatory = $true)][Windows.Forms.Control]$Control)
+
+    if ($Control -is [Windows.Forms.Form]) {
+        $Control.BackColor = [Drawing.SystemColors]::Window
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    } elseif ($Control -is [Windows.Forms.TabControl]) {
+        # OwnerDraw của Dark mode không được giữ lại vì có thể che màu hệ thống.
+        $Control.DrawMode = [Windows.Forms.TabDrawMode]::Normal
+        $Control.BackColor = [Drawing.SystemColors]::Window
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    } elseif ($Control -is [Windows.Forms.TabPage]) {
+        $Control.BackColor = [Drawing.SystemColors]::Window
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    } elseif ($Control -is [Windows.Forms.RichTextBox]) {
+        $Control.BackColor = [Drawing.SystemColors]::Window
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+        if ($Control.TextLength -gt 0) {
+            $selectionStart = $Control.SelectionStart
+            $selectionLength = $Control.SelectionLength
+            $Control.SelectAll()
+            $Control.SelectionColor = [Drawing.SystemColors]::WindowText
+            $Control.SelectionBackColor = [Drawing.SystemColors]::Window
+            $Control.SelectionStart = [Math]::Min($selectionStart, $Control.TextLength)
+            $Control.SelectionLength = [Math]::Min($selectionLength, $Control.TextLength - $Control.SelectionStart)
+        }
+    } elseif ($Control -is [Windows.Forms.ListView]) {
+        $Control.BackColor = [Drawing.SystemColors]::Window
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+        foreach ($item in $Control.Items) {
+            $item.BackColor = [Drawing.SystemColors]::Window
+            $item.ForeColor = [Drawing.SystemColors]::WindowText
+        }
+    } elseif ($Control -is [Windows.Forms.TextBoxBase] -or
+              $Control -is [Windows.Forms.ListBox] -or
+              $Control -is [Windows.Forms.TreeView] -or
+              $Control -is [Windows.Forms.ComboBox] -or
+              $Control -is [Windows.Forms.NumericUpDown]) {
+        $Control.BackColor = [Drawing.SystemColors]::Window
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    } elseif ($Control -is [Windows.Forms.DataGridView]) {
+        $Control.EnableHeadersVisualStyles = $true
+        $Control.BackgroundColor = [Drawing.SystemColors]::Window
+        $Control.GridColor = [Drawing.SystemColors]::WindowFrame
+        $Control.DefaultCellStyle.BackColor = [Drawing.SystemColors]::Window
+        $Control.DefaultCellStyle.ForeColor = [Drawing.SystemColors]::WindowText
+        $Control.DefaultCellStyle.SelectionBackColor = [Drawing.SystemColors]::Highlight
+        $Control.DefaultCellStyle.SelectionForeColor = [Drawing.SystemColors]::HighlightText
+        $Control.ColumnHeadersDefaultCellStyle.BackColor = [Drawing.SystemColors]::Control
+        $Control.ColumnHeadersDefaultCellStyle.ForeColor = [Drawing.SystemColors]::ControlText
+    } elseif ($Control -is [Windows.Forms.Button]) {
+        $Control.UseVisualStyleBackColor = $true
+        $Control.FlatStyle = [Windows.Forms.FlatStyle]::Standard
+        $Control.BackColor = [Drawing.SystemColors]::Control
+        $Control.ForeColor = [Drawing.SystemColors]::ControlText
+        $Control.Region = $null
+    } elseif ($Control -is [Windows.Forms.LinkLabel]) {
+        $Control.BackColor = [Drawing.Color]::Transparent
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+        $Control.LinkColor = [Drawing.SystemColors]::HotTrack
+        $Control.ActiveLinkColor = [Drawing.SystemColors]::Highlight
+        $Control.VisitedLinkColor = [Drawing.SystemColors]::HotTrack
+    } elseif ($Control -is [Windows.Forms.CheckBox] -or $Control -is [Windows.Forms.RadioButton]) {
+        $Control.UseVisualStyleBackColor = $true
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    } elseif ($Control -is [Windows.Forms.Label] -or $Control -is [Windows.Forms.GroupBox]) {
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+        if ($Control -is [Windows.Forms.GroupBox]) {
+            $Control.BackColor = [Drawing.SystemColors]::Window
+        }
+    } elseif ($Control -is [Windows.Forms.Panel] -or
+              $Control -is [Windows.Forms.TableLayoutPanel] -or
+              $Control -is [Windows.Forms.FlowLayoutPanel] -or
+              $Control -is [Windows.Forms.SplitContainer]) {
+        if ($Control.BackColor -ne [Drawing.Color]::Transparent) {
+            $Control.BackColor = [Drawing.SystemColors]::Window
+        }
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    } else {
+        $Control.ForeColor = [Drawing.SystemColors]::WindowText
+    }
+
+    foreach ($child in $Control.Controls) {
+        Set-ToolControlHighContrastTheme -Control $child
+    }
+}
+
 function Set-ToolControlTheme {
     param(
         [Parameter(Mandatory = $true)][Windows.Forms.Control]$Control,
         [Parameter(Mandatory = $true)][ValidateSet("Light", "Dark")][string]$Mode
     )
 
+    if (Test-ToolUiHighContrast) {
+        Set-ToolControlHighContrastTheme -Control $Control
+        return
+    }
     if ($Mode -ne "Dark") { return }
     $palette = Get-ToolUiPalette -Mode $Mode
     $originalBack = Get-ToolUiColorKey $Control.BackColor
@@ -992,6 +1202,7 @@ function Set-ToolWindowTheme {
     Set-ToolControlTheme -Control $Root -Mode $Mode
     Register-ToolUiDynamicContrast -Root $Root -Mode $Mode
     Set-ToolUiActionButtons -Root $Root -Mode $Mode
+    Set-ToolUiAccessibility -Root $Root
     $Root.Invalidate($true)
 }
 

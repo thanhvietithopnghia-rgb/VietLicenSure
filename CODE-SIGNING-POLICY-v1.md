@@ -31,7 +31,7 @@ Tách hai vai trò giúp thay chứng thư Authenticode mà không phải đồn
 8. Build/release phải nhận signer Authenticode và signer CMS nội dung bằng hai cấu hình rõ ràng; không suy diễn một thumbprint cho cả hai vai trò.
 9. Không công bố build stable chỉ dựa trên việc các verifier tĩnh đạt; còn cần chứng thư thật hoặc chữ ký Store cuối, provenance của đúng commit, worktree sạch và hậu kiểm artifact cuối.
 
-Gói ManagedSigned/Pilot phải công bố chứng thư chỉ chứa public key dưới tên `CONTENT-SIGNING-CERTIFICATE.cer`, kèm cả fingerprint SHA-1 và SHA-256. `VERIFY-DISTRIBUTION.ps1` kiểm tra detached CMS trên byte gốc bằng `SignedCms.CheckSignature($true)`, sau đó ghim signer theo SHA-256 của chứng thư công bố; việc bỏ trust-chain trong bước mật mã không được hiểu là bỏ pinning. Bộ xác minh phải chạy từ chính thư mục chứa nó và từ chối tệp ngoài `RELEASE-SHA256SUMS.txt`.
+Gói `ManagedSigned / Internal Pilot` phải công bố chứng thư chỉ chứa public key dưới tên `CONTENT-SIGNING-CERTIFICATE.cer`, kèm cả fingerprint SHA-1 và SHA-256. `VERIFY-DISTRIBUTION.ps1` kiểm tra detached CMS trên byte gốc bằng `SignedCms.CheckSignature($true)`, sau đó ghim signer theo SHA-256 của chứng thư công bố; việc bỏ trust-chain trong bước mật mã không được hiểu là bỏ pinning. Bộ xác minh phải chạy từ chính thư mục chứa nó và từ chối tệp ngoài `RELEASE-SHA256SUMS.txt`.
 
 ## Chuyển đổi chứng thư
 

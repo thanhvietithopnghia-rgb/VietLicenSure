@@ -512,11 +512,13 @@ $localLicenseManagerScript = Join-Path $baseDir "windows-office-license-manager.
 $assuranceScript = Join-Path $baseDir "windows-license-assurance.ps1"
 $guideFile = Join-Path $baseDir "HUONG-DAN.txt"
 $englishGuideFile = Join-Path $baseDir "USER-GUIDE-en-US.md"
+$firstRunFaqFile = Join-Path $baseDir "FAQ-NGUOI-DUNG-MOI-v5.0.md"
+$englishFirstRunFaqFile = Join-Path $baseDir "FIRST-RUN-FAQ-v5.0.md"
 $historyFile = Join-Path $baseDir "LICH-SU-PHIEN-BAN.txt"
 $englishHistoryFile = Join-Path $baseDir "VERSION-HISTORY-en-US.md"
 $integrityManifest = Join-Path $baseDir "TOOL-SHA256SUMS.txt"
 $requiredIntegrityFiles = @(
-    "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md", "LICENSE-NOTICE.txt",
+    "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "FAQ-NGUOI-DUNG-MOI-v5.0.md", "FIRST-RUN-FAQ-v5.0.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md", "LICENSE-NOTICE.txt",
     "SOURCE-POLICY-v4.9.md", "Tool-Provenance.ps1", "OFFICIAL-PROVENANCE-v1.json",
     "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "VietLicenSure-icon.svg",
     "VietLicenSure.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-DashboardPresentation.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
@@ -595,7 +597,11 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
 $form.Font = $fontNormal
 $form.AutoScroll = $false
 $form.AutoScrollMargin = New-Object System.Drawing.Size(0, 0)
-$form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
+# The main dashboard is positioned by Update-MainLayout in the current
+# per-monitor physical coordinate space.  Letting WinForms auto-scale these
+# manually positioned children a second time at 150-200% DPI causes clipped
+# labels and overlapping tiles.  Modal dialogs keep their own Dpi mode below.
+$form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::None
 $script:dashboardDialogStack = New-Object System.Collections.Stack
 $script:dashboardWorkflowCloseRequested = $false
 
@@ -1003,6 +1009,28 @@ $dashboardPanel.Size = New-Object System.Drawing.Size(860, 92)
 $dashboardPanel.BackColor = [System.Drawing.Color]::Transparent
 $form.Controls.Add($dashboardPanel)
 
+function Sync-DashboardCardAccessibility {
+    param(
+        [Parameter(Mandatory = $true)][string]$CardKey,
+        [AllowEmptyString()][string]$Detail = ""
+    )
+    if (-not $dashboardCards.ContainsKey($CardKey)) { return }
+    $cardRecord = $dashboardCards[$CardKey]
+    $captionText = ([string]$cardRecord.Caption.Text).Trim()
+    $valueText = ([string]$cardRecord.Value.Text).Trim()
+    $summary = ((@($captionText, $valueText) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join ": ")
+    $descriptionText = if ([string]::IsNullOrWhiteSpace($Detail)) { $summary } else { $Detail }
+    $cardRecord.Panel.AccessibleName = $summary
+    $cardRecord.Panel.AccessibleDescription = $descriptionText
+    $cardRecord.Caption.AccessibleName = $captionText
+    $cardRecord.Caption.AccessibleDescription = $captionText
+    $cardRecord.Value.AccessibleName = $summary
+    $cardRecord.Value.AccessibleDescription = $descriptionText
+    $toolTip.SetToolTip($cardRecord.Caption, $descriptionText)
+    $toolTip.SetToolTip($cardRecord.Value, $descriptionText)
+    $toolTip.SetToolTip($cardRecord.Panel, $descriptionText)
+}
+
 $cardDefinitions = @(
     @{ Key="Compatibility"; IconKind="Windows"; Tone="Windows"; Caption=(Get-ToolText -Key "dashboard.windows" -Culture $script:dashboardCulture); Value=[string]$capabilityState.WindowsReleaseName },
     @{ Key="Architecture"; IconKind="Office"; Tone="Office"; Caption=(Get-ToolText -Key "dashboard.office" -Culture $script:dashboardCulture); Value=[string]$capabilityState.OfficeSummary },
@@ -1067,8 +1095,7 @@ for ($cardIndex = 0; $cardIndex -lt $cardDefinitions.Count; $cardIndex++) {
     }
     [void]$dashboardCardPanels.Add($card)
     $dashboardPanel.Controls.Add($card)
-    $toolTip.SetToolTip($cardCaption, [string]$definition.Caption)
-    $toolTip.SetToolTip($cardValue, [string]$definition.Value)
+    Sync-DashboardCardAccessibility -CardKey ([string]$definition.Key)
     if ([string]$definition.Key -eq "ActionCenter") {
         $card.Cursor = [System.Windows.Forms.Cursors]::Hand
         $card.AccessibleName = Get-DashboardText "resultCenter.card.caption"
@@ -1777,9 +1804,32 @@ function Fit-MainWindowToWorkingArea {
     $workArea = [System.Windows.Forms.Screen]::FromControl($form).WorkingArea
     $availableWidth = [Math]::Max(640, $workArea.Width - 16)
     $availableHeight = [Math]::Max(520, $workArea.Height - 12)
-    $targetWidth = [Math]::Min(1480, $availableWidth)
-    $targetHeight = [Math]::Min(900, $availableHeight)
-    $form.MinimumSize = New-Object System.Drawing.Size([Math]::Min(860, $targetWidth), [Math]::Min(560, $targetHeight))
+    # Bounds and manually positioned child controls are expressed in physical
+    # pixels.  Fonts still grow with per-monitor DPI, so retaining a fixed
+    # 1480x900 outer window at 150-200% starves the responsive layout and clips
+    # otherwise valid labels.  Scale the desired canvas with the window DPI,
+    # then cap it to the current monitor's working area.
+    $dpiScale = 1.0
+    $dpiProbe = $null
+    try {
+        if ($form.IsHandleCreated) {
+            $dpiProbe = $form.CreateGraphics()
+            $dpiScale = [Math]::Max(1.0, ([double]$dpiProbe.DpiX / 96.0))
+        } elseif ($form.DeviceDpi) {
+            $dpiScale = [Math]::Max(1.0, ([double]$form.DeviceDpi / 96.0))
+        }
+    } catch {
+        try { $dpiScale = [Math]::Max(1.0, ([double]$form.DeviceDpi / 96.0)) } catch { $dpiScale = 1.0 }
+    } finally {
+        if ($dpiProbe) { $dpiProbe.Dispose() }
+    }
+    $desiredWidth = [int][Math]::Round(1480 * $dpiScale)
+    $desiredHeight = [int][Math]::Round(900 * $dpiScale)
+    $targetWidth = [Math]::Min($desiredWidth, $availableWidth)
+    $targetHeight = [Math]::Min($desiredHeight, $availableHeight)
+    $minimumWidth = [int][Math]::Round(860 * $dpiScale)
+    $minimumHeight = [int][Math]::Round(560 * $dpiScale)
+    $form.MinimumSize = New-Object System.Drawing.Size([Math]::Min($minimumWidth, $targetWidth), [Math]::Min($minimumHeight, $targetHeight))
     $targetX = $workArea.Left + [Math]::Max(0, [Math]::Floor(($workArea.Width - $targetWidth) / 2))
     $targetY = $workArea.Top + [Math]::Max(0, [Math]::Floor(($workArea.Height - $targetHeight) / 2))
     $form.StartPosition = "Manual"
@@ -1954,6 +2004,10 @@ function Show-ProductIntroduction {
             Body = Get-ToolText -Key "about.release.body" -Culture $script:dashboardCulture -FormatArguments @($officialReleaseUrl)
         },
         @{
+            Title = Get-ToolText -Key "about.smartscreen.title" -Culture $script:dashboardCulture
+            Body = Get-ToolText -Key "about.smartscreen.body" -Culture $script:dashboardCulture
+        },
+        @{
             Title = Get-ToolText -Key "about.terms.title" -Culture $script:dashboardCulture
             Body = Get-ToolText -Key "about.terms.body" -Culture $script:dashboardCulture
         },
@@ -2092,31 +2146,57 @@ function Show-ProductIntroduction {
     $close = New-Object System.Windows.Forms.Button
     $close.Text = Get-ToolText -Key "common.close" -Culture $script:dashboardCulture
     $close.Font = $fontBold
-    $close.Size = New-Object System.Drawing.Size(112, 30)
+    $close.Size = New-Object System.Drawing.Size(94, 30)
     $close.BackColor = $primary
     $close.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(18, 26, 38) } else { [System.Drawing.Color]::White }
     $close.FlatStyle = "Flat"
     $close.FlatAppearance.BorderSize = 0
+    $close.AccessibleName = $close.Text
+    $close.AccessibleDescription = $close.Text
+    $close.TabIndex = 3
+    $toolTip.SetToolTip($close, $close.AccessibleDescription)
     $close.Add_Click({ Close-DashboardWorkflowSession -Dialog $dialog })
     $buttonBar.Controls.Add($close)
 
     $guide = New-Object System.Windows.Forms.Button
     $guide.Text = Get-ToolText -Key "about.openGuide" -Culture $script:dashboardCulture
     $guide.Font = $fontBold
-    $guide.Size = New-Object System.Drawing.Size(154, 30)
+    $guide.Size = New-Object System.Drawing.Size(128, 30)
     $guide.BackColor = $surface
     $guide.ForeColor = $text
     $guide.FlatStyle = "Flat"
+    $guide.AccessibleName = $guide.Text
+    $guide.AccessibleDescription = Get-ToolText -Key "about.openGuideDescription" -Culture $script:dashboardCulture
+    $guide.TabIndex = 2
+    $toolTip.SetToolTip($guide, $guide.AccessibleDescription)
     $guide.Add_Click({ Open-Guide })
     $buttonBar.Controls.Add($guide)
+
+    $faq = New-Object System.Windows.Forms.Button
+    $faq.Text = Get-ToolText -Key "about.openFaq" -Culture $script:dashboardCulture
+    $faq.Font = $fontBold
+    $faq.Size = New-Object System.Drawing.Size(144, 30)
+    $faq.BackColor = $surface
+    $faq.ForeColor = $text
+    $faq.FlatStyle = "Flat"
+    $faq.AccessibleName = $faq.Text
+    $faq.AccessibleDescription = Get-ToolText -Key "about.openFaqDescription" -Culture $script:dashboardCulture
+    $faq.TabIndex = 1
+    $toolTip.SetToolTip($faq, $faq.AccessibleDescription)
+    $faq.Add_Click({ Open-FirstRunFaq })
+    $buttonBar.Controls.Add($faq)
 
     $history = New-Object System.Windows.Forms.Button
     $history.Text = Get-ToolText -Key "about.openHistory" -Culture $script:dashboardCulture
     $history.Font = $fontBold
-    $history.Size = New-Object System.Drawing.Size(204, 30)
+    $history.Size = New-Object System.Drawing.Size(168, 30)
     $history.BackColor = $surface
     $history.ForeColor = $text
     $history.FlatStyle = "Flat"
+    $history.AccessibleName = $history.Text
+    $history.AccessibleDescription = Get-ToolText -Key "about.openHistoryDescription" -Culture $script:dashboardCulture
+    $history.TabIndex = 0
+    $toolTip.SetToolTip($history, $history.AccessibleDescription)
     $history.Add_Click({ Open-VersionHistory })
     $buttonBar.Controls.Add($history)
 
@@ -2379,6 +2459,11 @@ function Set-DashboardLanguage {
         $description.Text = Get-DashboardText 'officialBuild.banner.unverifiedTitle'
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.unverifiedBody' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
     }
+    $toolTip.SetToolTip($description, [string]$description.Text)
+    $toolTip.SetToolTip($introSummary, [string]$introSummary.Text)
+    $description.AccessibleName = [string]$description.Text
+    $introSummary.AccessibleName = [string]$introSummary.Text
+    $introSummary.AccessibleDescription = [string]$introSummary.Text
     $introAssistantButton.Text = Get-ToolText -Key "app.assistant" -Culture $Culture
     $toolTip.SetToolTip($introAssistantButton, (Get-ToolText -Key "assistant.tooltip" -Culture $Culture))
     $introDetailButton.Text = Get-ToolText -Key "app.about" -Culture $Culture
@@ -2431,6 +2516,9 @@ function Set-DashboardLanguage {
             Get-ToolText -Key "dashboard.integrity.failed" -Culture $Culture
         }
     }
+    foreach ($dashboardCardKey in @($dashboardCards.Keys)) {
+        Sync-DashboardCardAccessibility -CardKey ([string]$dashboardCardKey)
+    }
     Update-ResultActionCard -UseCachedState -HeaderOnly
     foreach ($button in $buttons) {
         $metadata = $button.Tag
@@ -2438,6 +2526,7 @@ function Set-DashboardLanguage {
             if ([string]$metadata.Kind -in @("QuickAction", "ReportAction") -and $metadata.TitleLabel -and $metadata.DescriptionLabel) {
                 $metadata.TitleLabel.Text = Get-ToolText -Key ([string]$metadata.TitleKey) -Culture $Culture
                 $metadata.DescriptionLabel.Text = Get-ToolText -Key ([string]$metadata.DescriptionKey) -Culture $Culture
+                $button.Text = [string]$metadata.TitleLabel.Text
             } else {
                 $button.Text = Get-DashboardMenuText -Metadata $metadata
             }
@@ -2461,6 +2550,14 @@ function Get-DashboardTilePalette {
         [switch]$Hover
     )
 
+    if (Test-ToolUiHighContrast) {
+        return [pscustomobject]@{
+            BackColor = [System.Drawing.SystemColors]::Control
+            ForeColor = [System.Drawing.SystemColors]::ControlText
+            TitleColor = [System.Drawing.SystemColors]::ControlText
+            DescriptionColor = [System.Drawing.SystemColors]::ControlText
+        }
+    }
     $dark = [bool]($Mode -eq "Dark")
     return [pscustomobject]@{
         BackColor = if ($dark) {
@@ -2479,6 +2576,13 @@ function Get-DashboardStatusPalette {
         [ValidateSet("Windows", "Office", "Secure", "Integrity", "Action")][string]$Tone,
         [ValidateSet("Light", "Dark")][string]$Mode = "Light"
     )
+    if (Test-ToolUiHighContrast) {
+        return [pscustomobject]@{
+            BackColor = [System.Drawing.SystemColors]::Window
+            AccentColor = [System.Drawing.SystemColors]::WindowFrame
+            ValueColor = [System.Drawing.SystemColors]::WindowText
+        }
+    }
     $dark = [bool]($Mode -eq "Dark")
     return [pscustomobject]@{
         BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(31, 38, 50) } else { [System.Drawing.Color]::FromArgb(247, 249, 252) }
@@ -2616,6 +2720,11 @@ function Complete-DashboardThemeInitialization {
     Write-DashboardStartupTrace "Theme.ControlsStyled"
     Set-ToolUiLiteralText -Root $form
     Write-DashboardStartupTrace "Theme.TextNormalized"
+    if (Test-ToolUiHighContrast) {
+        Set-ToolWindowTheme -Root $form -Mode $Mode
+        Write-DashboardStartupTrace "Theme.HighContrastReady"
+        return
+    }
     Register-ToolUiDynamicContrast -Root $form -Mode $Mode
     Write-DashboardStartupTrace "Theme.ContrastReady"
 }
@@ -2623,8 +2732,8 @@ function Complete-DashboardThemeInitialization {
 function Update-DashboardStatus {
     param($IntegrityResult)
     $script:lastIntegrityResult = $IntegrityResult
-    $successColor = if ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(86, 230, 156) } else { [System.Drawing.Color]::FromArgb(0, 125, 69) }
-    $warningColor = if ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(255, 193, 82) } else { [System.Drawing.Color]::FromArgb(217, 119, 0) }
+    $successColor = if (Test-ToolUiHighContrast) { [System.Drawing.SystemColors]::WindowText } elseif ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(86, 230, 156) } else { [System.Drawing.Color]::FromArgb(0, 125, 69) }
+    $warningColor = if (Test-ToolUiHighContrast) { [System.Drawing.SystemColors]::WindowText } elseif ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(255, 193, 82) } else { [System.Drawing.Color]::FromArgb(217, 119, 0) }
     $compatibilityCard = $dashboardCards["Compatibility"]
     $compatibilityCard.Value.AutoEllipsis = $true
     $catalogHealth = [string]$compatibilityState.CatalogHealth
@@ -2691,6 +2800,10 @@ function Update-DashboardStatus {
     $dashboardCards["Integrity"].Value.Tag = "StatusColor"
     $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -in @('Official','Managed','Store')) { $successColor } else { $warningColor }
     $dashboardCards["SecureLaunch"].Value.Tag = "StatusColor"
+    Sync-DashboardCardAccessibility -CardKey "Compatibility" -Detail $catalogTooltip
+    Sync-DashboardCardAccessibility -CardKey "Architecture"
+    Sync-DashboardCardAccessibility -CardKey "SecureLaunch"
+    Sync-DashboardCardAccessibility -CardKey "Integrity"
     Update-DashboardOfflineUi
 }
 
@@ -7339,6 +7452,15 @@ function Open-Guide {
         -ExportedKey "guide.exported" -ExportFailedKey "guide.exportFailed"
 }
 
+function Open-FirstRunFaq {
+    $selectedFaqFile = if ($script:dashboardCulture -eq "en-US") { $englishFirstRunFaqFile } else { $firstRunFaqFile }
+    Open-ToolEmbeddedDocument `
+        -SourceFile $selectedFaqFile -FilePrefix "FAQ-Nguoi-Dung-Moi-VietLicenSure" `
+        -TitleKey "faq.title" -SubtitleKey "faq.subtitle" -EyebrowKey "faq.eyebrow" -FooterKey "faq.footer" `
+        -MissingKey "faq.missing" -ExportingKey "faq.exporting" -ExportingDetailKey "faq.exportingDetail" `
+        -ExportedKey "faq.exported" -ExportFailedKey "faq.exportFailed"
+}
+
 function Open-VersionHistory {
     $hasPreviousStep = [bool]($script:dashboardDialogStack.Count -gt 0)
     $selectedHistoryFile = if ($script:dashboardCulture -eq "en-US") { $englishHistoryFile } else { $historyFile }
@@ -8665,6 +8787,7 @@ function Update-ResultActionCard {
             $toolTip.SetToolTip($card.Panel, $tooltip)
             $toolTip.SetToolTip($card.Caption, $tooltip)
             $toolTip.SetToolTip($card.Value, $tooltip)
+            Sync-DashboardCardAccessibility -CardKey "ActionCenter" -Detail $tooltip
             return
         }
         if (-not $UseCachedState -or $null -eq $script:resultCenterState) {
@@ -8678,7 +8801,9 @@ function Update-ResultActionCard {
             $tooltip = Get-DashboardText "resultCenter.card.noReportTooltip"
         } else {
             $card.Value.Text = Get-DashboardText "resultCenter.card.summary" @([int]$state.HighCount, [int]$state.MediumCount, [int]$state.LowCount)
-            $card.Value.ForeColor = if ([int]$state.HighCount -gt 0) {
+            $card.Value.ForeColor = if (Test-ToolUiHighContrast) {
+                [System.Drawing.SystemColors]::WindowText
+            } elseif ([int]$state.HighCount -gt 0) {
                 if ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(255, 142, 142) } else { [System.Drawing.Color]::FromArgb(185, 28, 28) }
             } elseif ([int]$state.MediumCount -gt 0) {
                 if ($script:dashboardTheme -eq "Dark") { [System.Drawing.Color]::FromArgb(255, 193, 82) } else { [System.Drawing.Color]::FromArgb(180, 83, 9) }
@@ -8692,9 +8817,11 @@ function Update-ResultActionCard {
         $toolTip.SetToolTip($card.Panel, $tooltip)
         $toolTip.SetToolTip($card.Caption, $tooltip)
         $toolTip.SetToolTip($card.Value, $tooltip)
+        Sync-DashboardCardAccessibility -CardKey "ActionCenter" -Detail $tooltip
     } catch {
         $card.Value.Text = Get-DashboardText "resultCenter.card.unavailable"
         $toolTip.SetToolTip($card.Panel, $_.Exception.Message)
+        Sync-DashboardCardAccessibility -CardKey "ActionCenter" -Detail ([string]$_.Exception.Message)
     }
 }
 
@@ -9326,6 +9453,38 @@ function Get-DashboardMenuIconKind([int]$Number) {
     }
 }
 
+function Set-DashboardCompositeButtonAccessibility {
+    param(
+        [Parameter(Mandatory = $true)][System.Windows.Forms.Button]$Button,
+        [Parameter(Mandatory = $true)][string]$AccessibleText
+    )
+
+    # The PowerShell-hosted WinForms UI Automation bridge derives the name of
+    # a Button from Text. AccessibleName alone is not surfaced reliably when
+    # Text is empty, leaving keyboard tab stops unnamed for screen readers.
+    # Keep semantic Text on the real Button and mask only the base-rendered
+    # text area; the visible child labels are painted afterwards.
+    $Button.Text = $AccessibleText
+    $Button.AccessibleName = $AccessibleText
+    $Button.AccessibleRole = [System.Windows.Forms.AccessibleRole]::PushButton
+    $Button.UseMnemonic = $false
+    $Button.Add_Paint({
+        param($sender, $eventArgs)
+        $maskLeft = 52
+        $maskTop = 2
+        $maskWidth = [Math]::Max(0, $sender.ClientSize.Width - $maskLeft - 2)
+        $maskHeight = [Math]::Max(0, $sender.ClientSize.Height - 4)
+        if ($maskWidth -gt 0 -and $maskHeight -gt 0) {
+            $brush = New-Object System.Drawing.SolidBrush($sender.BackColor)
+            try {
+                $eventArgs.Graphics.FillRectangle($brush, $maskLeft, $maskTop, $maskWidth, $maskHeight)
+            } finally {
+                $brush.Dispose()
+            }
+        }
+    })
+}
+
 function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey, [int]$index, [scriptblock]$action, [bool]$warning) {
     $button = New-Object System.Windows.Forms.Button
     $metadata = [pscustomobject][ordered]@{
@@ -9338,7 +9497,8 @@ function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey
         TitleLabel = $null
         DescriptionLabel = $null
     }
-    $button.Text = ""
+    $buttonText = Get-ToolText -Key $titleKey -Culture $script:dashboardCulture
+    Set-DashboardCompositeButtonAccessibility -Button $button -AccessibleText $buttonText
     $button.Font = $fontTile
     $button.ImageAlign = "MiddleLeft"
     $button.Padding = New-Object System.Windows.Forms.Padding(12, 0, 10, 0)
@@ -9388,7 +9548,7 @@ function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey
     $button.Controls.Add($descriptionLabel)
     $metadata.TitleLabel = $titleLabel
     $metadata.DescriptionLabel = $descriptionLabel
-    $button.AccessibleName = Get-ToolText -Key $titleKey -Culture $script:dashboardCulture
+    $button.AccessibleName = $buttonText
     $button.AccessibleDescription = Get-ToolText -Key $descriptionKey -Culture $script:dashboardCulture
     $rootAction = $action
     $button.Add_Click({
@@ -9427,7 +9587,8 @@ function Add-ReportMenuButton([string]$actionId, [string]$titleKey, [string]$des
         TitleLabel = $null
         DescriptionLabel = $null
     }
-    $button.Text = ""
+    $buttonText = Get-ToolText -Key $titleKey -Culture $script:dashboardCulture
+    Set-DashboardCompositeButtonAccessibility -Button $button -AccessibleText $buttonText
     $button.Font = $fontTile
     $button.ImageAlign = "MiddleLeft"
     $button.Padding = New-Object System.Windows.Forms.Padding(12, 0, 10, 0)
@@ -9494,7 +9655,7 @@ function Add-ReportMenuButton([string]$actionId, [string]$titleKey, [string]$des
     }
     $metadata.TitleLabel = $titleLabel
     $metadata.DescriptionLabel = $descriptionLabel
-    $button.AccessibleName = Get-ToolText -Key $titleKey -Culture $script:dashboardCulture
+    $button.AccessibleName = $buttonText
     $button.AccessibleDescription = Get-ToolText -Key $descriptionKey -Culture $script:dashboardCulture
     $button.Visible = $false
     $button.Add_Click({
@@ -9591,7 +9752,10 @@ $startupValidationTimer.Add_Tick({
 foreach ($button in $buttons) { $button.Enabled = $false }
 $form.Add_Shown({
     Write-DashboardStartupTrace "Window.Shown"
-    [void]$form.BeginInvoke([System.Action]{ Update-MainLayout })
+    # DeviceDpi is authoritative only after the native window handle is shown.
+    # Refit once on the message pump before the responsive layout pass so the
+    # 150-200% canvas receives the physical pixels calculated above.
+    [void]$form.BeginInvoke([System.Action]{ Fit-MainWindowToWorkingArea; Update-MainLayout })
     $startupValidationTimer.Start()
     Show-ExecutionEnvironmentWarning
     $updateTimer.Start()

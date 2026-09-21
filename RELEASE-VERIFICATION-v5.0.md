@@ -1,6 +1,6 @@
 # Xác minh bản phát hành VietLicenSure v5.0
 
-Áp dụng cho: **v5.0 ManagedSigned/Pilot**
+Áp dụng cho: **v5.0 ManagedSigned / Internal Pilot**
 Ngày hồ sơ: **2026-09-08**
 
 ## Cách nhanh nhất
@@ -92,4 +92,4 @@ Ba manifest chuẩn hóa có vai trò:
 
 ## Phạm vi khẳng định
 
-Kết quả đạt chứng minh các tệp nhận được khớp nhau và đúng signer/pin trong hồ sơ. Nó không chứng minh quyền sở hữu giấy phép phần mềm, không thay thế kiểm thử runtime Windows 10/11 sạch và không tự nâng `ManagedSigned/Pilot` thành `Public Stable`.
+Kết quả đạt chứng minh các tệp nhận được khớp nhau và đúng signer/pin trong hồ sơ. Nó không chứng minh quyền sở hữu giấy phép phần mềm, không thay thế kiểm thử runtime Windows 10/11 sạch và không tự nâng `ManagedSigned / Internal Pilot` thành `Public Stable`.

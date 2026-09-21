@@ -1,6 +1,6 @@
 # Chính sách phát triển cộng đồng và mã nguồn có kiểm soát từ v4.9
 
-> **Trạng thái tài liệu:** Chính sách bắt đầu từ v4.9 và tiếp tục áp dụng cho VietLicenSure v5.0; hậu tố tệp được giữ để truy vết thời điểm chính sách có hiệu lực. Cập nhật gần nhất: 08/09/2026.
+> **Trạng thái tài liệu:** Baseline hỗ trợ bắt đầu từ v4.9 và tiếp tục áp dụng cho VietLicenSure v5.0; không phải hồ sơ nghiệm thu. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
 
 Copyright © 2026 Thanh Việt. Mọi quyền được bảo lưu.
 

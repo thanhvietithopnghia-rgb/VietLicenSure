@@ -2784,7 +2784,8 @@ function Get-DeepCleanupCandidates {
                 $items.Add((New-CleanupItem -Type "Registry" -Kind "KmsOverride" `
                     -Name (Get-CleanupText "cleanupReport.candidate.unapprovedKms") -Location $path `
                     -Detail (Get-CleanupText "cleanupReport.candidate.unapprovedKmsDetail" @($server)) `
-                    -ComponentScope 'Windows' -Provider 'WindowsSPP'))
+                    -ComponentScope 'Windows' -Provider 'WindowsSPP' `
+                    -RegistryValueName 'KeyManagementServiceName' -ExpectedRegistryValue $server))
             }
         } catch {}
     }
@@ -4325,6 +4326,88 @@ function Invoke-OfficeLicenseServiceRefresh {
     }
 }
 
+function Test-WindowsLicenseRemediationTarget {
+    param(
+        [Parameter(Mandatory = $true)]$TargetProduct,
+        $CurrentProducts = @()
+    )
+
+    $activationId = ([string]$TargetProduct.ID).Trim()
+    if ([string]::IsNullOrWhiteSpace($activationId)) {
+        return [pscustomobject]@{ Allowed=$false; Reason='MissingActivationId'; CurrentProduct=$null }
+    }
+
+    $matches = @($CurrentProducts | Where-Object {
+        [string]::Equals(([string]$_.ID).Trim(), $activationId, [StringComparison]::OrdinalIgnoreCase)
+    })
+    if ($matches.Count -ne 1) {
+        return [pscustomobject]@{ Allowed=$false; Reason='ActivationIdMissingOrAmbiguous'; CurrentProduct=$null }
+    }
+
+    $current = $matches[0]
+    $expectedChannel = Get-LicenseChannel $TargetProduct
+    $currentChannel = Get-LicenseChannel $current
+    $expectedPartialKey = ([string]$TargetProduct.PartialProductKey).Trim().ToUpperInvariant()
+    $currentPartialKey = ([string]$current.PartialProductKey).Trim().ToUpperInvariant()
+    if ([string]::IsNullOrWhiteSpace($expectedPartialKey)) {
+        return [pscustomobject]@{ Allowed=$false; Reason='MissingExpectedPartialProductKey'; CurrentProduct=$current }
+    }
+    if (-not [string]::Equals($expectedPartialKey, $currentPartialKey, [StringComparison]::Ordinal)) {
+        return [pscustomobject]@{ Allowed=$false; Reason='PartialProductKeyChanged'; CurrentProduct=$current }
+    }
+
+    if ($expectedChannel -eq 'KMS') {
+        $expectedServer = ([string]$TargetProduct.KeyManagementServiceMachine).Trim()
+        $currentServer = ([string]$current.KeyManagementServiceMachine).Trim()
+        if ($currentChannel -ne 'KMS' -or (Test-ApprovedKms -Server $currentServer)) {
+            return [pscustomobject]@{ Allowed=$false; Reason='TargetNoLongerUnapprovedKms'; CurrentProduct=$current }
+        }
+        if (-not [string]::Equals($expectedServer, $currentServer, [StringComparison]::OrdinalIgnoreCase)) {
+            return [pscustomobject]@{ Allowed=$false; Reason='KmsServerChanged'; CurrentProduct=$current }
+        }
+    } elseif ([int]$TargetProduct.LicenseStatus -eq 4 -and -not [string]::IsNullOrWhiteSpace($expectedPartialKey)) {
+        if ([int]$current.LicenseStatus -ne 4 -or $currentChannel -eq 'KMS') {
+            return [pscustomobject]@{ Allowed=$false; Reason='TargetNoLongerNonGenuine'; CurrentProduct=$current }
+        }
+    } else {
+        return [pscustomobject]@{ Allowed=$false; Reason='TargetWasNotRemediationEligible'; CurrentProduct=$current }
+    }
+
+    return [pscustomobject]@{ Allowed=$true; Reason=''; CurrentProduct=$current }
+}
+
+function Test-WindowsKmsOverrideRemediationTarget {
+    param([Parameter(Mandatory = $true)]$Candidate)
+
+    $expectedPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform'
+    $path = ([string]$Candidate.Location).Trim()
+    $expectedServer = ([string]$Candidate.ExpectedRegistryValue).Trim()
+    if ([string]$Candidate.Kind -ne 'KmsOverride' -or
+        [string]$Candidate.Provider -ne 'WindowsSPP' -or
+        [string]$Candidate.RegistryValueName -ne 'KeyManagementServiceName' -or
+        -not [string]::Equals($path, $expectedPath, [StringComparison]::OrdinalIgnoreCase) -or
+        [string]::IsNullOrWhiteSpace($expectedServer)) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason='InvalidKmsOverrideIdentity'; CurrentServer='' }
+    }
+
+    try {
+        $item = Get-ItemProperty -LiteralPath $path -ErrorAction Stop
+        $currentServer = ([string]$item.KeyManagementServiceName).Trim()
+    } catch {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason='KmsOverrideProbeFailed'; CurrentServer='' }
+    }
+    if ([string]::IsNullOrWhiteSpace($currentServer)) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$true; Reason='KmsOverrideAlreadyAbsent'; CurrentServer='' }
+    }
+    if (-not [string]::Equals($currentServer, $expectedServer, [StringComparison]::OrdinalIgnoreCase)) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason='KmsOverrideChanged'; CurrentServer=$currentServer }
+    }
+    if (Test-ApprovedKms -Server $currentServer) {
+        return [pscustomobject]@{ Allowed=$false; AlreadyClean=$false; Reason='ApprovedInternalKms'; CurrentServer=$currentServer }
+    }
+    return [pscustomobject]@{ Allowed=$true; AlreadyClean=$false; Reason=''; CurrentServer=$currentServer }
+}
+
 function Test-OfficeKmsHostOverrideTarget {
     param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -4581,6 +4664,15 @@ function Invoke-Remediation {
             $activationId = [string]$targetProduct.ID
             if ([string]::IsNullOrWhiteSpace($activationId)) {
                 $actions.Add((Get-CleanupText "cleanupReport.action.upkBlocked"))
+                continue
+            }
+            # Re-query immediately before every key mutation. A later target
+            # must not inherit the snapshot captured for an earlier /upk.
+            $currentWindowsProducts = @(Get-WindowsLicenseProducts)
+            $targetValidation = Test-WindowsLicenseRemediationTarget `
+                -TargetProduct $targetProduct -CurrentProducts $currentWindowsProducts
+            if (-not [bool]$targetValidation.Allowed) {
+                $actions.Add((Get-CleanupText 'cleanupReport.action.windowsTargetChanged' @($activationId, [string]$targetValidation.Reason)))
                 continue
             }
             $upkResult = Invoke-SlmgrCommand -SlmgrArguments @('/upk', $activationId)
@@ -5074,12 +5166,29 @@ function Invoke-DeepCleanupV35 {
     }
 
     foreach ($candidate in @($selected | Where-Object { $_.Type -eq "Registry" })) {
+        if ($candidate.Kind -eq 'KmsOverride') {
+            $kmsPrecheck = Test-WindowsKmsOverrideRemediationTarget -Candidate $candidate
+            if ([bool]$kmsPrecheck.AlreadyClean) {
+                $actions.Add((Get-CleanupText 'cleanupReport.action.windowsKmsTargetChanged' @([string]$kmsPrecheck.Reason)))
+                continue
+            }
+            if (-not [bool]$kmsPrecheck.Allowed) {
+                $actions.Add((Get-CleanupText 'cleanupReport.action.windowsKmsTargetChanged' @([string]$kmsPrecheck.Reason)))
+                continue
+            }
+        }
         if (-not (Backup-RegKeyV35 $candidate)) {
             Add-ThirdPartyExecutionResult -Candidate $candidate -Status 'Failed' -Changed $false -Message (Get-CleanupText 'cleanupReport.thirdParty.execution.backupFailed')
             continue
         }
         try {
             if ($candidate.Kind -eq "KmsOverride") {
+                # Revalidate after backup as well, narrowing the race between the
+                # authenticated snapshot and the actual registry/slmgr mutation.
+                $kmsValidation = Test-WindowsKmsOverrideRemediationTarget -Candidate $candidate
+                if (-not [bool]$kmsValidation.Allowed) {
+                    throw (Get-CleanupText 'cleanupReport.action.windowsKmsTargetChanged' @([string]$kmsValidation.Reason))
+                }
                 foreach ($name in @(
                     "KeyManagementServiceName", "KeyManagementServicePort",
                     "KeyManagementServiceLookupDomain", "DiscoveredKeyManagementServiceName",
