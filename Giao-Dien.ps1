@@ -1045,7 +1045,26 @@ for ($cardIndex = 0; $cardIndex -lt $cardDefinitions.Count; $cardIndex++) {
     $card.BackColor = [System.Drawing.Color]::White
     $card.Size = New-Object System.Drawing.Size(202, 80)
     $card.Location = New-Object System.Drawing.Point(($cardIndex * 216), 6)
-    $card.Tag = "DashboardCard"
+    $card.Tag = [pscustomobject]@{
+        Kind = "DashboardCard"
+        Tone = [string]$definition.Tone
+        BorderColor = [System.Drawing.SystemColors]::ControlDark
+    }
+    $card.Add_Paint({
+        param($sender, $eventArgs)
+        if (-not $sender -or -not $eventArgs -or $sender.ClientSize.Width -lt 2 -or $sender.ClientSize.Height -lt 2) { return }
+        $borderColor = if ($sender.Tag -and $sender.Tag.PSObject.Properties["BorderColor"]) {
+            [System.Drawing.Color]$sender.Tag.BorderColor
+        } else {
+            [System.Drawing.SystemColors]::ControlDark
+        }
+        $borderPen = New-Object System.Drawing.Pen($borderColor, 1)
+        try {
+            $eventArgs.Graphics.DrawRectangle($borderPen, 0, 0, ($sender.ClientSize.Width - 1), ($sender.ClientSize.Height - 1))
+        } finally {
+            $borderPen.Dispose()
+        }
+    })
 
     $cardCaption = New-Object System.Windows.Forms.Label
     $cardCaption.Text = [string]$definition.Caption
@@ -2580,14 +2599,60 @@ function Get-DashboardStatusPalette {
         return [pscustomobject]@{
             BackColor = [System.Drawing.SystemColors]::Window
             AccentColor = [System.Drawing.SystemColors]::WindowFrame
+            BorderColor = [System.Drawing.SystemColors]::WindowFrame
             ValueColor = [System.Drawing.SystemColors]::WindowText
         }
     }
     $dark = [bool]($Mode -eq "Dark")
-    return [pscustomobject]@{
-        BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(31, 38, 50) } else { [System.Drawing.Color]::FromArgb(247, 249, 252) }
-        AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(105, 153, 222) } else { [System.Drawing.Color]::FromArgb(70, 112, 166) }
-        ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(220, 228, 239) } else { [System.Drawing.Color]::FromArgb(34, 61, 94) }
+    switch ($Tone) {
+        "Windows" {
+            return [pscustomobject]@{
+                BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(35, 48, 66) } else { [System.Drawing.Color]::FromArgb(242, 248, 255) }
+                AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(93, 151, 231) } else { [System.Drawing.Color]::FromArgb(45, 111, 203) }
+                BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(70, 93, 121) } else { [System.Drawing.Color]::FromArgb(191, 214, 244) }
+                ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(190, 216, 250) } else { [System.Drawing.Color]::FromArgb(18, 76, 137) }
+            }
+        }
+        "Office" {
+            return [pscustomobject]@{
+                BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(65, 42, 35) } else { [System.Drawing.Color]::FromArgb(255, 246, 242) }
+                AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(242, 117, 78) } else { [System.Drawing.Color]::FromArgb(234, 88, 35) }
+                BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(120, 76, 60) } else { [System.Drawing.Color]::FromArgb(247, 205, 190) }
+                ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(255, 205, 185) } else { [System.Drawing.Color]::FromArgb(177, 59, 25) }
+            }
+        }
+        "Secure" {
+            return [pscustomobject]@{
+                BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(31, 54, 70) } else { [System.Drawing.Color]::FromArgb(241, 248, 255) }
+                AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(83, 171, 225) } else { [System.Drawing.Color]::FromArgb(28, 132, 201) }
+                BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(60, 104, 132) } else { [System.Drawing.Color]::FromArgb(190, 224, 244) }
+                ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(190, 230, 250) } else { [System.Drawing.Color]::FromArgb(12, 91, 146) }
+            }
+        }
+        "Integrity" {
+            return [pscustomobject]@{
+                BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(30, 62, 49) } else { [System.Drawing.Color]::FromArgb(240, 251, 246) }
+                AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(67, 190, 142) } else { [System.Drawing.Color]::FromArgb(20, 157, 102) }
+                BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(57, 111, 84) } else { [System.Drawing.Color]::FromArgb(190, 232, 211) }
+                ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(184, 240, 211) } else { [System.Drawing.Color]::FromArgb(8, 116, 73) }
+            }
+        }
+        "Action" {
+            return [pscustomobject]@{
+                BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(54, 42, 74) } else { [System.Drawing.Color]::FromArgb(247, 243, 255) }
+                AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(157, 125, 230) } else { [System.Drawing.Color]::FromArgb(122, 77, 216) }
+                BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(102, 81, 139) } else { [System.Drawing.Color]::FromArgb(220, 205, 247) }
+                ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(226, 211, 255) } else { [System.Drawing.Color]::FromArgb(91, 47, 169) }
+            }
+        }
+        default {
+            return [pscustomobject]@{
+                BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(31, 38, 50) } else { [System.Drawing.Color]::FromArgb(247, 249, 252) }
+                AccentColor = if ($dark) { [System.Drawing.Color]::FromArgb(105, 153, 222) } else { [System.Drawing.Color]::FromArgb(70, 112, 166) }
+                BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(70, 82, 101) } else { [System.Drawing.Color]::FromArgb(220, 226, 235) }
+                ValueColor = if ($dark) { [System.Drawing.Color]::FromArgb(220, 228, 239) } else { [System.Drawing.Color]::FromArgb(34, 61, 94) }
+            }
+        }
     }
 }
 
@@ -2676,6 +2741,10 @@ function Set-DashboardTheme {
         $cardRecord = $dashboardCards[$cardKey]
         $statusPalette = Get-DashboardStatusPalette -Tone ([string]$cardRecord.Tone) -Mode $Mode
         $cardRecord.Panel.BackColor = $statusPalette.BackColor
+        if ($cardRecord.Panel.Tag -and $cardRecord.Panel.Tag.PSObject.Properties["BorderColor"]) {
+            $cardRecord.Panel.Tag.BorderColor = $statusPalette.BorderColor
+        }
+        $cardRecord.Panel.Invalidate()
         $cardRecord.Caption.ForeColor = $muted
         if ($cardRecord.Value.Tag -ne "StatusColor") { $cardRecord.Value.ForeColor = $statusPalette.ValueColor }
         foreach ($child in $cardRecord.Panel.Controls) {
