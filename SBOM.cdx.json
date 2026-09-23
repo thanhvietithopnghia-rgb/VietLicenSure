@@ -3,7 +3,7 @@
     "specVersion":  "1.5",
     "version":  1,
     "metadata":  {
-                     "timestamp":  "2026-09-08T00:00:00Z",
+                     "timestamp":  "2026-09-23T00:00:00Z",
                      "tools":  [
                                    {
                                        "vendor":  "Thanh Viet",
@@ -19,7 +19,7 @@
                                        "hashes":  [
                                                       {
                                                           "alg":  "SHA-256",
-                                                          "content":  "ED48460205656A4BBCF2DE2E66F4E567F4EF2AAC4A040E4EB9CFDC988917D5C7"
+                                                          "content":  "67D836AB08F59D2EE15E4AD4C8C269555BE645987DCE2C1C2349DAC90652DCED"
                                                       }
                                                   ],
                                        "licenses":  [
@@ -32,11 +32,11 @@
                                        "properties":  [
                                                           {
                                                               "name":  "tool:buildId",
-                                                              "value":  "5.0-production-20260908"
+                                                              "value":  "5.0-production-20260923"
                                                           },
                                                           {
                                                               "name":  "tool:sourceSnapshotCommit",
-                                                              "value":  "4a4ceaf5ce4dac52a8169f23777ed58339d3a8d4"
+                                                              "value":  "63c79c8313da4e2509a1dbd83f08562899e41e6f"
                                                           },
                                                           {
                                                               "name":  "tool:releaseStatus",

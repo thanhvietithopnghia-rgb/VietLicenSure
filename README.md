@@ -1,9 +1,10 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành ngày 08/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 23/09/2026
+- **Trạng thái:** `ManagedSigned / Internal Pilot`; **Public Stable: HOLD**
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
-- **Bằng chứng QA hiện hành:** Harness4 ngày 13/09/2026 đạt 3/3 nền tảng ở cấp verifier cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`; Harness4 không trực tiếp khởi chạy EXE/UI.
+- **Nguồn sự thật về trạng thái và bằng chứng QA:** [RELEASE-STATUS-v5.0.md](RELEASE-STATUS-v5.0.md)
 
 > **Kiểm tra bản quyền rõ ràng – Quản lý hệ thống chủ động – An tâm sử dụng.**
 
@@ -47,6 +48,8 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 3. Nếu tải gói đầy đủ, chạy `VERIFY-RELEASE.cmd`; script tự định vị và kiểm tra checksum, bốn chữ ký CMS, chứng thư công bố, Authenticode, manifest và SBOM. Nếu chỉ tải EXE, đối chiếu SHA-256 và chữ ký thủ công. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
 4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Với bản ManagedSigned, Online chỉ dành cho các tác vụ người dùng chủ động như cập nhật catalog hoặc chức năng LAN được cho phép; ứng dụng không tự thay EXE từ kênh Public Stable.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
+
+Nếu SmartScreen cảnh báo, **không tắt SmartScreen/Defender và không thêm ngoại lệ để ép chạy**. Xác nhận đúng kênh tải, SHA-256, signer, timestamp và kết quả `VERIFY-RELEASE.cmd` trước. Chỉ khi tất cả đều đạt, người dùng máy cá nhân mới cân nhắc **More info → Run anyway**; máy doanh nghiệp cần liên hệ quản trị viên. Sai hash, sai signer, thiếu timestamp hoặc CMS lỗi là lý do dừng sử dụng. Xem [FAQ người dùng lần đầu](FAQ-NGUOI-DUNG-MOI-v5.0.md#smartscreen-hiện-cảnh-báo-thì-làm-gì).
 
 ```powershell
 Get-FileHash .\VietLicenSure-v5.0.exe -Algorithm SHA256
@@ -103,7 +106,10 @@ Hiện chưa có ngày cam kết mở lại mã nguồn. Tác giả sẽ xem xé
 
 ## Tài liệu
 
+- [Trạng thái phát hành v5.0 — nguồn sự thật duy nhất](RELEASE-STATUS-v5.0.md)
 - [Bắt đầu nhanh v5.0](QUICK-START-v5.0.md)
+- [FAQ cho người dùng lần đầu v5.0](FAQ-NGUOI-DUNG-MOI-v5.0.md)
+- [First-run FAQ v5.0 (English)](FIRST-RUN-FAQ-v5.0.md)
 - [Giới hạn đã biết v5.0](KNOWN-LIMITATIONS-v5.0.md)
 - [Vệ sinh phát hành và tài liệu v5.0](RELEASE-HYGIENE-v5.0.md)
 - [Hướng dẫn sử dụng tiếng Việt](HUONG-DAN.txt)
@@ -111,7 +117,7 @@ Hiện chưa có ngày cam kết mở lại mã nguồn. Tác giả sẽ xem xé
 - [Lịch sử phiên bản](LICH-SU-PHIEN-BAN.txt)
 - [English version history](VERSION-HISTORY-en-US.md)
 - [Release notes v5.0](RELEASE-NOTES-v5.0.md)
-- [Release notes v4.9](RELEASE-NOTES-v4.9.md)
+- [Release notes v4.9 — hồ sơ lịch sử](RELEASE-NOTES-v4.9.md)
 - [Chính sách an toàn](SAFETY-POLICY-v1.0.md)
 - [Report schema và artifact quản trị](REPORT-SCHEMA-v1.5.md)
 - [Chính sách trình xem báo cáo/fallback](REPORT-VIEWER-POLICY-v1.md)

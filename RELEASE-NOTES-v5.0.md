@@ -1,9 +1,10 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật: `2026-09-08`
-Ngày phát hành: `08/09/2026`
+Ngày build kỹ thuật hiện hành: `2026-09-23`
+Ngày phát hành lần đầu: `08/09/2026`
+Nội dung cập nhật đến: `23/09/2026`
 Phiên bản hiển thị: `v5.0`
-Trạng thái: `ManagedSigned`; launcher ghim đúng signer và certificate SHA-256
+Trạng thái: `ManagedSigned / Internal Pilot`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
 ## Giới thiệu
 
@@ -33,6 +34,15 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** updater Public Stable xác minh manifest CMS, SHA-256, Authenticode và signer đã ghim; kênh ManagedSigned hiện tại giữ self-update tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh, giải thích đầy đủ các chức năng và chỉ đối chiếu theo hồ sơ đã ghi nhận.
 
+## Cập nhật hiện hành ngày 23/09/2026
+
+- Giữ nguyên tên và phiên bản công khai `VietLicenSure v5.0`; không tạo v5.1 hoặc nhãn bản dựng mới trong giao diện.
+- Bỏ dải màu riêng bên trái của năm thẻ trạng thái Windows, Office, Bản đang dùng, Toàn vẹn và Việc cần xử lý; mỗi thẻ dùng viền màu 2 px bao quanh theo đúng màu chức năng, kèm nền tint tương ứng.
+- Khóa giao diện mới bằng verifier chống tái xuất hiện dải trái; kiểm tra Light/Dark, bàn phím, MSAA, DPI 100–200% và High Contrast trên VM sạch.
+- Hoàn thiện backup/restore fail-closed: scope-lock, HMAC, phát hiện dữ liệu/manifest bị sửa, rollback và hậu kiểm không mở rộng ngoài mục tiêu.
+- Kiểm chứng runtime EXE đóng gói dưới token Medium, Offline, không thay đổi policy; UAC secure desktop được gọi thật bằng `RunAs` và hủy an toàn với mã `1223` trước remediation.
+- Chuỗi ManagedSigned/Internal Pilot dùng cùng danh tính ký cho provenance/CMS/Authenticode, có RFC3161 timestamp và checksum đóng; Public Stable tiếp tục HOLD vì signer miễn phí là self-signed.
+
 ## Chính sách và kênh hỗ trợ của v5.0
 
 - Công bố rõ lý do chuyển sang mô hình mã nguồn có kiểm soát từ v4.9: tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành thành phần mềm khác khi chưa được cho phép hay ủy quyền.
@@ -53,16 +63,16 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 
 ## Cập nhật an toàn ngày 13/09/2026
 
-- Khóa public self-update đối với `ManagedSigned/Pilot`; chỉ Public Stable dùng chứng thư CA công cộng mới được bật cơ chế này.
+- Khóa public self-update đối với `ManagedSigned / Internal Pilot`; chỉ Public Stable dùng chứng thư CA công cộng mới được bật cơ chế này.
 - Updater không còn tự chạy lại EXE bằng token Administrator sau khi cập nhật hoặc khi gặp lỗi; người dùng mở lại VietLicenSure theo cách bình thường.
 - Không chuyển `TOOL_UPDATE_CACHE_ROOT` qua ranh giới UAC, kiểm lại SHA-256 của launcher sau khi tiến trình cũ thoát và giữ backup cùng thư mục đích với tên ngẫu nhiên.
 - Bổ sung regression test để khóa các điều kiện trên và ngăn tái xuất hiện đường nâng quyền qua writable-path race.
 
-## Cập nhật bằng chứng QA ngày 13/09/2026
+## Bằng chứng QA lịch sử ngày 13/09/2026
 
-- Harness4 đạt `3/3` nền tảng cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2.
+- Harness4 đã đạt `3/3` nền tảng cho source snapshot lịch sử `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2.
 - Mỗi nền tảng đạt `11/11` kiểm tra canonical cùng `1/1` kiểm tra updater bổ sung; ba kết quả thô được ghim bằng SHA-256 trong hồ sơ evidence.
-- Phạm vi là hồi quy nguồn, hardening updater và ràng buộc source/metadata/EXE. EXE đóng gói chưa được khởi chạy bởi Harness4; runtime EXE/UI và security review độc lập vẫn là cổng riêng trước `Public Stable`.
+- Phạm vi là hồi quy nguồn, hardening updater và ràng buộc source/metadata/EXE tại thời điểm đó. Không dùng kết quả này cho artifact khác; trạng thái hiện hành chỉ xem tại `RELEASE-STATUS-v5.0.md`.
 
 ## Cập nhật lịch sử và bài giới thiệu
 
@@ -98,7 +108,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 ## Giới hạn công khai
 
 - Đây không phải danh tính code-signing public-CA.
-- Gói Microsoft Store được chuẩn bị riêng và chưa thay thế bản ManagedSigned/Pilot hiện tại.
+- Gói Microsoft Store được chuẩn bị riêng và chưa thay thế bản `ManagedSigned / Internal Pilot` hiện tại.
 
 ### Bổ sung theo đợt rà soát hồ sơ 08/09/2026
 
