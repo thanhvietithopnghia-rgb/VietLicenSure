@@ -2,7 +2,8 @@
 
 **Tên đầy đủ:** VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 **Phiên bản:** `v5.0`
-**Ngày phát hành:** `08/09/2026`
+**Ngày phát hành lần đầu:** `08/09/2026`
+**Nội dung và gói hiện hành cập nhật đến:** `23/09/2026`
 **Kênh:** `ManagedSigned / Internal Pilot` — `Public Stable: HOLD`
 **Trạng thái hiện hành:** `RELEASE-STATUS-v5.0.md`
 
