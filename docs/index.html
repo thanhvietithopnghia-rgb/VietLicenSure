@@ -106,6 +106,17 @@
       <div class="table-wrap"><table class="compare"><thead><tr><th>Nhóm</th><th>v4.8</th><th>v4.9</th><th>v5.0</th></tr></thead><tbody><tr><td>Nền tảng</td><td>Baseline kiến trúc, Offline/reporting</td><td>Siết nguồn gốc và catalog</td><td class="current">Hợp đồng mô-đun, dashboard thích ứng, ManagedSigned</td></tr><tr><td>Chuỗi phát hành</td><td>Hash và hardening nền</td><td>Provenance/chính sách mã nguồn</td><td class="current">Tập tệp đóng, 4 CMS, cert công bố, Authenticode, SBOM</td></tr><tr><td>Quét phần mềm</td><td>Windows/Office và inventory nền</td><td>Catalog mở rộng, bằng chứng thận trọng</td><td class="current">Quick/Standard/Deep, budget và trust gate</td></tr><tr><td>Khắc phục</td><td>Backup và luồng an toàn</td><td>Evidence threshold chặt hơn</td><td class="current">Preview, scope-lock, UAC theo nhu cầu, hậu kiểm/rollback</td></tr><tr><td>Trải nghiệm</td><td>Giao diện chức năng</td><td>Bổ sung trợ lý/chính sách</td><td class="current">Dark/light, DPI, Result Center và tài liệu trong ứng dụng</td></tr></tbody></table></div>
     </section>
 
+    <section id="integrity" class="wrap">
+      <div class="kicker">Toàn vẹn phát hành hiện hành</div>
+      <h2>Harness4 và provenance đã khớp đúng snapshot/artifact</h2>
+      <div class="grid three">
+        <article class="card"><h3>Source snapshot</h3><p><code>63c79c8313da4e2509a1dbd83f08562899e41e6f</code></p><p>Provenance CMS, update manifest và bundle đã xác minh exact-byte.</p></article>
+        <article class="card"><h3>Artifact v5.0</h3><p><code>67D836AB08F59D2EE15E4AD4C8C269555BE645987DCE2C1C2349DAC90652DCED</code></p><p>862.456 byte · Authenticode hợp lệ · RFC3161 timestamp.</p></article>
+        <article class="card"><h3>Cổng Harness4</h3><p><strong>CLOSED / PASS — 3/3 nền tảng.</strong></p><p>Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2 đều đạt 11/11 verifier + updater.</p></article>
+      </div>
+      <div class="notice"><strong>Ranh giới phát hành:</strong> cổng Harness4 + provenance snapshot đã đóng cho đúng cặp source/EXE trên. Public Stable tổng thể vẫn <strong>HOLD</strong> vì chứng thư hiện tại là self-signed và các yêu cầu public-CA/đánh giá độc lập của chính sách chưa hoàn tất. <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0-managedsigned-current-sync-harness4-20260923">Xem release và evidence Harness4</a>.</div>
+    </section>
+
     <section class="wrap">
       <div class="kicker">Đặt đúng kỳ vọng</div>
       <h2>VietLicenSure thuộc nhóm công cụ nào?</h2>
