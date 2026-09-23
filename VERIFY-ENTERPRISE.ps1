@@ -12,6 +12,16 @@ function Assert-Enterprise {
     if (-not $Condition) { throw $Message }
 }
 
+function Get-AvailableLoopbackPort {
+    $listener = New-Object Net.Sockets.TcpListener -ArgumentList ([Net.IPAddress]::Loopback),0
+    try {
+        $listener.Start()
+        return [int]([Net.IPEndPoint]$listener.LocalEndpoint).Port
+    } finally {
+        $listener.Stop()
+    }
+}
+
 $required = @(
     "Tool-Enterprise.ps1",
     "Tool-EnterpriseHost.ps1",
@@ -57,6 +67,7 @@ $testRoot = Join-Path $temporaryBase ("ThanhViet-v48-enterprise-test-" + [Guid]:
 $exportRoot = Join-Path $temporaryBase ("ThanhViet-v48-enterprise-export-" + [Guid]::NewGuid().ToString("N"))
 $separateClientRoot = Join-Path $temporaryBase ("ThanhViet-v48-enterprise-client-test-" + [Guid]::NewGuid().ToString("N"))
 $hostProcess = $null
+$enterprisePort = Get-AvailableLoopbackPort
 try {
     $env:TOOL_ENTERPRISE_ROOT = $testRoot
     $env:TOOL_ENTERPRISE_SKIP_ACL = "1"
@@ -77,14 +88,14 @@ try {
     $invalidEndpoint = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "địa chỉ không hợp lệ" -Port 49420 -TimeoutMs 200
     Assert-Enterprise (-not [bool]$invalidEndpoint.Success -and [string]$invalidEndpoint.Code -eq "InvalidEndpoint") "Chẩn đoán không phân biệt địa chỉ máy chủ không hợp lệ."
 
-    $server = New-ToolEnterpriseServerConfiguration -ServerName "EnterpriseVerification" -AdminCode "Verify-Admin-4826" -BindAddress "127.0.0.1" -Port 49542 -AllowedCidrs @("127.0.0.0/8")
+    $server = New-ToolEnterpriseServerConfiguration -ServerName "EnterpriseVerification" -AdminCode "Verify-Admin-4826" -BindAddress "127.0.0.1" -Port $enterprisePort -AllowedCidrs @("127.0.0.0/8")
     Assert-Enterprise (Test-ToolEnterpriseAdminCode -AdminCode "Verify-Admin-4826" -Verifier $server.AdminVerifier) "Không xác minh được mã quản trị đúng."
     Assert-Enterprise (-not (Test-ToolEnterpriseAdminCode -AdminCode "Wrong-Admin" -Verifier $server.AdminVerifier)) "Mã quản trị sai lại được chấp nhận."
     $pairing = Get-ToolEnterprisePairingCode -AdminCode "Verify-Admin-4826"
     Assert-Enterprise ($pairing.Length -ge 20) "Mã ghép nối quá ngắn."
 
-    $client = Set-ToolEnterpriseClientConfiguration -ServerAddress "127.0.0.1" -Port 49542 -AllowRemoteLicenseChanges:$false
-    $clientAgain = Set-ToolEnterpriseClientConfiguration -ServerAddress "127.0.0.1" -Port 49542 -AllowRemoteLicenseChanges:$false
+    $client = Set-ToolEnterpriseClientConfiguration -ServerAddress "127.0.0.1" -Port $enterprisePort -AllowRemoteLicenseChanges:$false
+    $clientAgain = Set-ToolEnterpriseClientConfiguration -ServerAddress "127.0.0.1" -Port $enterprisePort -AllowRemoteLicenseChanges:$false
     Assert-Enterprise ([string]$client.ClientId -eq [string]$clientAgain.ClientId) "ClientId bị đổi khi cập nhật cấu hình."
 
     $paths = Get-ToolEnterprisePaths
@@ -127,7 +138,7 @@ try {
     do {
         Start-Sleep -Milliseconds 150
         if ($hostProcess.HasExited) { break }
-        $liveDiagnostic = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "127.0.0.1:49542" -Port 49420 -TimeoutMs 700
+        $liveDiagnostic = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "127.0.0.1:$enterprisePort" -Port 49420 -TimeoutMs 700
     } while (($null -eq $liveDiagnostic -or -not [bool]$liveDiagnostic.Success) -and [DateTime]::UtcNow -lt $liveDeadline)
     $hostFailure = ""
     if (Test-Path -LiteralPath $hostError -PathType Leaf) {
@@ -136,7 +147,7 @@ try {
     }
     $diagnosticSummary = if ($null -ne $liveDiagnostic) { "$([string]$liveDiagnostic.Code) $([string]$liveDiagnostic.Message)" } else { "không tạo được kết quả chẩn đoán" }
     Assert-Enterprise ($null -ne $liveDiagnostic -and [bool]$liveDiagnostic.Success) "Listener loopback không sẵn sàng: $diagnosticSummary $hostFailure"
-    $registeredClient = Register-ToolEnterpriseClient -ServerAddress "127.0.0.1:49542" -Port 49420 -PairingCode $pairing -AllowRemoteLicenseChanges:$false -AutoSend:$true
+    $registeredClient = Register-ToolEnterpriseClient -ServerAddress "127.0.0.1:$enterprisePort" -Port 49420 -PairingCode $pairing -AllowRemoteLicenseChanges:$false -AutoSend:$true
     Assert-Enterprise ([bool]$registeredClient.Enrolled -and [string]$registeredClient.ClientId -eq [string]$client.ClientId) "Máy trạm không ghép nối được với listener thật."
     $sendResponse = Send-ToolEnterpriseReport -Report $report
     Assert-Enterprise ([bool]$sendResponse.Accepted) "Listener thật không nhận báo cáo máy trạm."
@@ -149,7 +160,7 @@ try {
     try {
         $env:TOOL_ENTERPRISE_ROOT = $separateClientRoot
         $env:TOOL_ENTERPRISE_NETWORK_SETTINGS_PATH = Join-Path $separateClientRoot 'enterprise-network-settings.json'
-        $separateClient = Register-ToolEnterpriseClient -ServerAddress '127.0.0.1:49542' -Port 49420 -PairingCode $pairing -AllowRemoteLicenseChanges:$false -AutoSend:$true
+        $separateClient = Register-ToolEnterpriseClient -ServerAddress "127.0.0.1:$enterprisePort" -Port 49420 -PairingCode $pairing -AllowRemoteLicenseChanges:$false -AutoSend:$true
         $separateClientId = [string]$separateClient.ClientId
         $separatePaths = Get-ToolEnterprisePaths
         Assert-Enterprise ([bool]$separateClient.Enrolled -and (Test-Path -LiteralPath $separatePaths.ClientSecret -PathType Leaf)) 'Máy trạm ở kho dữ liệu độc lập không ghép nối/ghi secret được.'
@@ -240,7 +251,7 @@ try {
     Assert-Enterprise ($null -eq (Get-ToolEnterpriseServerConfig)) "Cấu hình máy chủ vẫn còn sau khi xóa."
     $resetAuditText = Get-Content -LiteralPath $paths.ServerAudit -Raw
     Assert-Enterprise ($resetAuditText -match 'Server\.ConfigurationResetRequested' -and $resetAuditText -match 'Server\.ConfigurationResetCompleted') "Audit thiếu sự kiện yêu cầu/hoàn tất xóa cấu hình."
-    $serverAfterReset = New-ToolEnterpriseServerConfiguration -ServerName "EnterpriseVerificationAfterReset" -AdminCode "Verify-Admin-After-Reset" -BindAddress "127.0.0.1" -Port 49542 -AllowedCidrs @("127.0.0.0/8")
+    $serverAfterReset = New-ToolEnterpriseServerConfiguration -ServerName "EnterpriseVerificationAfterReset" -AdminCode "Verify-Admin-After-Reset" -BindAddress "127.0.0.1" -Port $enterprisePort -AllowedCidrs @("127.0.0.0/8")
     Assert-Enterprise ([string]$serverAfterReset.ServerName -eq "EnterpriseVerificationAfterReset") "Không tạo lại được máy chủ sau khi xóa cấu hình."
 
     $catalog = Get-ToolModuleCatalog
