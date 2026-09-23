@@ -134,11 +134,15 @@ try {
     $hostArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$hostScript`""
     $hostProcess = Start-Process -FilePath $nativePowerShell -ArgumentList $hostArguments -WorkingDirectory $SourceDirectory -WindowStyle Hidden -PassThru -RedirectStandardOutput $hostOutput -RedirectStandardError $hostError
     $liveDiagnostic = $null
-    $liveDeadline = [DateTime]::UtcNow.AddSeconds(10)
+    # Cold, memory-constrained validation VMs can register the HTTP.sys
+    # listener before the PowerShell host has completed service startup. Keep
+    # the same protocol/version gate, but allow the service up to 30 seconds to
+    # return its first valid status response.
+    $liveDeadline = [DateTime]::UtcNow.AddSeconds(30)
     do {
         Start-Sleep -Milliseconds 150
         if ($hostProcess.HasExited) { break }
-        $liveDiagnostic = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "127.0.0.1:$enterprisePort" -Port 49420 -TimeoutMs 700
+        $liveDiagnostic = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "127.0.0.1:$enterprisePort" -Port 49420 -TimeoutMs 1500
     } while (($null -eq $liveDiagnostic -or -not [bool]$liveDiagnostic.Success) -and [DateTime]::UtcNow -lt $liveDeadline)
     $hostFailure = ""
     if (Test-Path -LiteralPath $hostError -PathType Leaf) {

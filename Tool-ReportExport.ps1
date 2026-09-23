@@ -953,12 +953,16 @@ function Convert-ToolHtmlToPdf {
     $browsers = @(Get-ToolPdfBrowsers)
     if ($browsers.Count -gt 0) {
         foreach ($browser in $browsers) {
-            $profileRoot = ""
-            $profilePath = ""
-            try {
-                $profileState = New-ToolPdfProfileDirectory
-                $profileRoot = [string]$profileState.RootPath
-                $profilePath = [string]$profileState.ProfilePath
+            # Chromium may occasionally exit successfully before the PDF file is
+            # committed on a cold/low-memory Windows desktop. Retry once with a
+            # brand-new secured profile; never reuse a partial profile or PDF.
+            for ($browserAttempt = 1; $browserAttempt -le 2; $browserAttempt++) {
+                $profileRoot = ""
+                $profilePath = ""
+                try {
+                    $profileState = New-ToolPdfProfileDirectory
+                    $profileRoot = [string]$profileState.RootPath
+                    $profilePath = [string]$profileState.ProfilePath
 
                 # Chromium can de-elevate itself on Windows.  If the report is
                 # being written for another interactive profile, that child
@@ -967,54 +971,55 @@ function Convert-ToolHtmlToPdf {
                 # per-run browser profile, then copy the validated PDF back from
                 # the parent process.  This also keeps every browser attempt
                 # isolated and lets Chrome take over when Edge is unavailable.
-                $stagedHtmlPath = Join-Path $profilePath "report-input.html"
-                $stagedPdfPath = Join-Path $profilePath "report-output.pdf"
-                [IO.File]::Copy([IO.Path]::GetFullPath($HtmlPath), $stagedHtmlPath, $false)
-                if (-not (Test-ToolHtmlOfflineSafe -HtmlPath $stagedHtmlPath)) {
-                    throw (Get-ToolReportExportText "foundation.reportExport.htmlOfflineUnsafe")
-                }
-                $htmlUri = ([Uri]$stagedHtmlPath).AbsoluteUri
-                $arguments = @(
-                    "--headless",
-                    "--disable-gpu",
-                    "--disable-extensions",
-                    "--disable-background-networking",
-                    "--disable-component-update",
-                    "--disable-domain-reliability",
-                    "--disable-sync",
-                    "--metrics-recording-only",
-                    "--host-resolver-rules=`"MAP * 0.0.0.0`"",
-                    "--no-first-run",
-                    "--no-default-browser-check",
-                    "--run-all-compositor-stages-before-draw",
-                    "--no-pdf-header-footer",
-                    "--print-to-pdf-no-header",
-                    "--user-data-dir=`"$profilePath`"",
-                    "--print-to-pdf=`"$stagedPdfPath`"",
-                    "`"$htmlUri`""
-                )
-                $browserStartedAt = [DateTime]::UtcNow
-                $process = Start-Process -FilePath $browser -ArgumentList $arguments -PassThru -WindowStyle Hidden
-                if (-not $process.WaitForExit([Math]::Max(5, $TimeoutSeconds) * 1000)) {
-                    try { $process.Kill() } catch {}
-                    throw (Get-ToolReportExportText "foundation.reportExport.browserTimeout" -Arguments @($TimeoutSeconds))
-                }
-                $elapsedSeconds = [Math]::Max(0, ([DateTime]::UtcNow - $browserStartedAt).TotalSeconds)
-                $remainingSeconds = [Math]::Max(1, [Math]::Ceiling([Math]::Max(5, $TimeoutSeconds) - $elapsedSeconds))
-                if ($process.ExitCode -eq 0 -and (Wait-ToolPdfFileComplete -PdfPath $stagedPdfPath -TimeoutSeconds $remainingSeconds)) {
-                    [IO.File]::Copy($stagedPdfPath, [IO.Path]::GetFullPath($PdfPath), $true)
-                    if (Test-ToolPdfFileComplete -PdfPath $PdfPath) {
-                        return [pscustomobject][ordered]@{ Success=$true; Engine=[IO.Path]::GetFileNameWithoutExtension($browser); Path=$PdfPath; Error="" }
+                    $stagedHtmlPath = Join-Path $profilePath "report-input.html"
+                    $stagedPdfPath = Join-Path $profilePath "report-output.pdf"
+                    [IO.File]::Copy([IO.Path]::GetFullPath($HtmlPath), $stagedHtmlPath, $false)
+                    if (-not (Test-ToolHtmlOfflineSafe -HtmlPath $stagedHtmlPath)) {
+                        throw (Get-ToolReportExportText "foundation.reportExport.htmlOfflineUnsafe")
                     }
-                }
-                throw (Get-ToolReportExportText "foundation.reportExport.browserPdfInvalid" -Arguments @($process.ExitCode))
-            } catch {
-                $engineName = [IO.Path]::GetFileNameWithoutExtension([string]$browser)
-                $engineError = "$engineName`: $($_.Exception.Message)"
-                [void]$errors.Add((Get-ToolReportExportText "foundation.reportExport.browserError" -Arguments @($engineError)))
-            } finally {
-                if (-not [string]::IsNullOrWhiteSpace($profilePath) -and -not [string]::IsNullOrWhiteSpace($profileRoot)) {
-                    [void](Remove-ToolPdfProfileDirectory -ProfilePath $profilePath -ProfileRoot $profileRoot)
+                    $htmlUri = ([Uri]$stagedHtmlPath).AbsoluteUri
+                    $arguments = @(
+                        "--headless",
+                        "--disable-gpu",
+                        "--disable-extensions",
+                        "--disable-background-networking",
+                        "--disable-component-update",
+                        "--disable-domain-reliability",
+                        "--disable-sync",
+                        "--metrics-recording-only",
+                        "--host-resolver-rules=`"MAP * 0.0.0.0`"",
+                        "--no-first-run",
+                        "--no-default-browser-check",
+                        "--run-all-compositor-stages-before-draw",
+                        "--no-pdf-header-footer",
+                        "--print-to-pdf-no-header",
+                        "--user-data-dir=`"$profilePath`"",
+                        "--print-to-pdf=`"$stagedPdfPath`"",
+                        "`"$htmlUri`""
+                    )
+                    $browserStartedAt = [DateTime]::UtcNow
+                    $process = Start-Process -FilePath $browser -ArgumentList $arguments -PassThru -WindowStyle Hidden
+                    if (-not $process.WaitForExit([Math]::Max(5, $TimeoutSeconds) * 1000)) {
+                        try { $process.Kill() } catch {}
+                        throw (Get-ToolReportExportText "foundation.reportExport.browserTimeout" -Arguments @($TimeoutSeconds))
+                    }
+                    $elapsedSeconds = [Math]::Max(0, ([DateTime]::UtcNow - $browserStartedAt).TotalSeconds)
+                    $remainingSeconds = [Math]::Max(1, [Math]::Ceiling([Math]::Max(5, $TimeoutSeconds) - $elapsedSeconds))
+                    if ($process.ExitCode -eq 0 -and (Wait-ToolPdfFileComplete -PdfPath $stagedPdfPath -TimeoutSeconds $remainingSeconds)) {
+                        [IO.File]::Copy($stagedPdfPath, [IO.Path]::GetFullPath($PdfPath), $true)
+                        if (Test-ToolPdfFileComplete -PdfPath $PdfPath) {
+                            return [pscustomobject][ordered]@{ Success=$true; Engine=[IO.Path]::GetFileNameWithoutExtension($browser); Path=$PdfPath; Error="" }
+                        }
+                    }
+                    throw (Get-ToolReportExportText "foundation.reportExport.browserPdfInvalid" -Arguments @($process.ExitCode))
+                } catch {
+                    $engineName = [IO.Path]::GetFileNameWithoutExtension([string]$browser)
+                    $engineError = "$engineName attempt $browserAttempt/2`: $($_.Exception.Message)"
+                    [void]$errors.Add((Get-ToolReportExportText "foundation.reportExport.browserError" -Arguments @($engineError)))
+                } finally {
+                    if (-not [string]::IsNullOrWhiteSpace($profilePath) -and -not [string]::IsNullOrWhiteSpace($profileRoot)) {
+                        [void](Remove-ToolPdfProfileDirectory -ProfilePath $profilePath -ProfileRoot $profileRoot)
+                    }
                 }
             }
         }

@@ -143,7 +143,8 @@ try {
         'report-output.pdf',
         '[IO.File]::Copy($stagedPdfPath',
         'Wait-ToolPdfFileComplete -PdfPath $stagedPdfPath',
-        'Test-ToolReportRequiresBrowserPdf -HtmlPath $HtmlPath'
+        'Test-ToolReportRequiresBrowserPdf -HtmlPath $HtmlPath',
+        'for ($browserAttempt = 1; $browserAttempt -le 2; $browserAttempt++)'
     )) {
         if (-not $reportExportText.Contains($requiredBrowserFailoverToken)) {
             Add-Failure "Bộ xuất PDF thiếu staging/failover trình duyệt: $requiredBrowserFailoverToken"
