@@ -2,7 +2,7 @@
 
 > **Nguồn sự thật duy nhất (SSOT) về mức sẵn sàng phát hành.** Khi tài liệu khác mô tả khác với trang này, dùng trạng thái tại đây. Đối với tính nguyên vẹn của từng tệp, metadata có chữ ký, manifest và checksum của chính gói vẫn là căn cứ kỹ thuật bắt buộc.
 
-- **Cập nhật trạng thái:** 15/09/2026
+- **Cập nhật trạng thái:** 23/09/2026
 - **Phiên bản:** `v5.0`
 - **Kênh kỹ thuật:** `ManagedSigned`
 - **Giai đoạn triển khai:** `Internal Pilot`
@@ -17,8 +17,8 @@
 |---|---|---|
 | Tệp thực thi | `VietLicenSure-v5.0.exe` | Release v5.0 |
 | Build ID | `5.0-production-20260908` | `OFFICIAL-PROVENANCE-v1.json` |
-| SHA-256 của EXE | `ED48460205656A4BBCF2DE2E66F4E567F4EF2AAC4A040E4EB9CFDC988917D5C7` | `update-manifest-v1.json` và hồ sơ checksum của gói |
-| Source snapshot được provenance khai báo | `4a4ceaf5ce4dac52a8169f23777ed58339d3a8d4` | `OFFICIAL-PROVENANCE-v1.json` có chữ ký tách rời |
+| SHA-256 của EXE | Xem `RELEASE-MANIFEST.json` và `RELEASE-SHA256SUMS.txt` của chính gói nhận được | Hash thay đổi khi build/ký/timestamp; không sao chép giá trị từ gói khác |
+| Source snapshot được provenance khai báo | Xem `OFFICIAL-PROVENANCE-v1.json` của chính gói nhận được | Provenance có chữ ký CMS tách rời và phải khớp manifest |
 | Chứng thư ký | Chứng thư tự ký được launcher ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |
 
 Các giá trị trên mô tả artifact đang công bố; chúng không tự chứng minh source snapshot và EXE đã được chạy cùng nhau trong Harness4. Nếu bất kỳ giá trị nào thay đổi, phải cập nhật metadata/chữ ký/checksum của gói trước, rồi mới cập nhật bảng này.
@@ -28,18 +28,18 @@ Các giá trị trên mô tả artifact đang công bố; chúng không tự ch�
 | Cổng | Trạng thái | Phạm vi và việc còn lại |
 |---|---|---|
 | Toàn vẹn gói, CMS, Authenticode, manifest, SBOM | Theo hồ sơ phát hành hiện hành | Chạy `VERIFY-RELEASE.cmd` trên chính gói nhận được; kết quả cục bộ của người dùng mới là căn cứ cho bản sao họ đang có. |
-| Harness4 ngày 13/09/2026 | **Historical / không dùng để đóng cổng artifact hiện hành** | Kết quả đã ghi nhận `3/3` nền tảng ở cấp verifier nhưng gắn với source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`, khác snapshot `4a4ceaf5…` mà provenance của EXE đang khai báo; Harness4 đó cũng không trực tiếp khởi chạy EXE/UI đóng gói. |
-| Harness4 đúng source snapshot của EXE | **PENDING** | Chạy lại từ snapshot được xác nhận là nguồn của EXE, lưu OS/build, hash artifact, lệnh chạy, log và người duyệt. Chỉ chuyển sang `PASS` sau khi bằng chứng được đưa vào hồ sơ. |
-| Runtime EXE/UI trên Windows 10/11 sạch | **PENDING** | Cần chạy chính artifact đóng gói ở tài khoản thường và Administrator, Offline/Online, có/không Office. |
-| Audit KMS/Activator và thao tác thay đổi hệ thống | **PENDING** | Cần chứng minh read-only không thay đổi máy; mọi thay đổi có preview, scope-lock, backup, xác nhận, UAC theo nhu cầu và hậu kiểm. |
-| Rollback, UAC, quyền hạn, hủy và lỗi gián đoạn | **PENDING** | Cần bằng chứng khôi phục được hoặc fail-safe khi bị từ chối quyền, file lock, mất nguồn, dừng tác vụ hay crash. |
-| Accessibility, DPI, High Contrast và screen reader | **PENDING** | Cần ma trận bàn phím-only, 100–200% DPI, nhiều màn hình, High Contrast và screen reader trên máy thật. |
+| Harness4 ngày 13/09/2026 | **Historical / không dùng để đóng cổng artifact hiện hành** | Kết quả `3/3` nền tảng chỉ gắn với source snapshot lịch sử `291ed82db5f99a36aaf6962a41f09ecdec851320`; Harness4 đó không trực tiếp khởi chạy EXE/UI đóng gói và không được chuyển sang artifact khác. |
+| Harness4 đúng source snapshot của EXE | **Đạt ở cấp verifier cho gói bàn giao gần nhất; phải chạy lại nếu EXE đổi** | Hồ sơ QA ngoài gói ghi OS/build, source commit và hash artifact; manifest của chính gói là căn cứ ràng buộc cuối. |
+| Runtime EXE/UI trên Windows 10/11 sạch | **Đạt cho gói bàn giao gần nhất; phụ thuộc hash** | Đã kiểm tra EXE đóng gói trên ma trận Windows 10/11, tài khoản giới hạn, Offline và UI thật; mọi build/ký lại phải chạy lại. |
+| Audit KMS/Activator và thao tác thay đổi hệ thống | **Đạt ở phạm vi fixture cô lập; Public Stable vẫn HOLD** | Read-only không đổi máy; backup/restore, scope-lock, tamper rejection, hậu kiểm và rollback được kiểm trên VM checkpoint. |
+| Rollback, UAC, quyền hạn, hủy và lỗi gián đoạn | **Đạt cho gói bàn giao gần nhất; phụ thuộc hash** | UAC secure desktop được gọi bằng `RunAs`, Esc hủy với mã `1223`, policy không đổi và checkpoint sạch được phục hồi. |
+| Accessibility, DPI, High Contrast và screen reader | **Đạt ở phạm vi VM lab; review độc lập vẫn PENDING** | Bàn phím-only, MSAA, DPI 100–200%, High Contrast và ảnh trực quan đã đạt; cần review độc lập trước Public Stable. |
 | Đánh giá bảo mật độc lập đúng artifact | **PENDING** | Chưa có biên bản hoàn tất gắn với hash EXE hiện hành. |
 | Chứng thư code-signing do CA công cộng cấp | **PENDING** | Artifact hiện dùng chứng thư tự ký được ghim; SmartScreen/Windows có thể vẫn cảnh báo. |
 
 ## Quyết định hiện hành
 
-**Tiếp tục `ManagedSigned / Internal Pilot`; giữ `Public Stable` ở trạng thái HOLD.** Chưa quảng bá v5.0 là Public Stable, chưa bật public self-update và chưa dùng kết quả Harness4 của snapshot `291ed82d…` để khẳng định EXE khai báo snapshot `4a4ceaf5…` đã vượt qua Harness4.
+**Tiếp tục `ManagedSigned / Internal Pilot`; giữ `Public Stable` ở trạng thái HOLD.** Các cổng kỹ thuật gần nhất đã có bằng chứng theo artifact, nhưng chứng thư miễn phí vẫn là self-signed và đánh giá bảo mật độc lập chưa hoàn tất; không quảng bá v5.0 là Public Stable hoặc bật public self-update.
 
 Chỉ gỡ HOLD khi tối thiểu các cổng Harness4 đúng snapshot, runtime artifact, thao tác thay đổi hệ thống/rollback, accessibility và review độc lập có bằng chứng đạt cho cùng artifact; quy trình ký Public Stable cũng phải đáp ứng chính sách code-signing hiện hành.
 

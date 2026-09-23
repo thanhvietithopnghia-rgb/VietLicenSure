@@ -1,6 +1,6 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through September 23, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
@@ -11,11 +11,11 @@ Public product page:
 - **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
 - **Source policy:** explains controlled access from v4.9 after the software/predecessor was copied, modified, renamed/repackaged, and published without permission or authorization; documents scope, written access requests, and the absence of a committed reopening date.
 - **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.
-- **Interface and experience:** faster startup, DPI-aware layout, Light/Dark modes, clearer navigation, and direct access to the requested function.
+- **Interface and experience:** faster startup, 100–200% DPI-aware layout, Light/Dark/High Contrast support, and clearer navigation; the five status cards now use tinted surfaces and full function-colored borders with no separate left accent strip.
 - **Windows, Office, and software inspection:** Quick, Standard, and Deep modes; broader inventory sources; separate activation, licence type, read failures, and insufficient-evidence results.
 - **Analysis and management:** High–Medium–Low prioritization, search, filters, previous-scan comparison, and multi-device support.
-- **Safe remediation:** separate Windows, Office, and third-party scopes with mandatory preview, Dry Run, backup, confirmation, post-check, and rollback support.
-- **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, CMS/SHA-256/Authenticode verification, and updates to the latest approved v5.0 build when Online mode is enabled.
+- **Safe remediation:** separate Windows, Office, and third-party scopes with mandatory preview, Dry Run, scope locking, HMAC backup, UAC consent, post-checks, and fail-closed rollback.
+- **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, and a ManagedSigned chain bound by provenance/CMS/SHA-256/Authenticode/RFC3161 plus clean-VM runtime, UAC-cancellation, DPI, and High Contrast evidence.
 
 `Unverified` does not mean that software violates its licence.
 

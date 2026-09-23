@@ -2,6 +2,7 @@
 
 Ngày build kỹ thuật: `2026-09-08`
 Ngày phát hành: `08/09/2026`
+Nội dung cập nhật đến: `23/09/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `ManagedSigned / Internal Pilot`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -32,6 +33,15 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Báo cáo và quyền riêng tư:** xuất HTML/PDF/JSON/XML/CSV, che thông tin nhạy cảm theo mặc định, tạo gói hỗ trợ an toàn và không tự tải dữ liệu máy lên Internet.
 - **Cập nhật và chuỗi tin cậy:** updater Public Stable xác minh manifest CMS, SHA-256, Authenticode và signer đã ghim; kênh ManagedSigned hiện tại giữ self-update tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh, giải thích đầy đủ các chức năng và chỉ đối chiếu theo hồ sơ đã ghi nhận.
+
+## Cập nhật hiện hành ngày 23/09/2026
+
+- Giữ nguyên tên và phiên bản công khai `VietLicenSure v5.0`; không tạo v5.1 hoặc nhãn bản dựng mới trong giao diện.
+- Bỏ dải màu riêng bên trái của năm thẻ trạng thái Windows, Office, Bản đang dùng, Toàn vẹn và Việc cần xử lý; mỗi thẻ dùng viền màu 2 px bao quanh theo đúng màu chức năng, kèm nền tint tương ứng.
+- Khóa giao diện mới bằng verifier chống tái xuất hiện dải trái; kiểm tra Light/Dark, bàn phím, MSAA, DPI 100–200% và High Contrast trên VM sạch.
+- Hoàn thiện backup/restore fail-closed: scope-lock, HMAC, phát hiện dữ liệu/manifest bị sửa, rollback và hậu kiểm không mở rộng ngoài mục tiêu.
+- Kiểm chứng runtime EXE đóng gói dưới token Medium, Offline, không thay đổi policy; UAC secure desktop được gọi thật bằng `RunAs` và hủy an toàn với mã `1223` trước remediation.
+- Chuỗi ManagedSigned/Internal Pilot dùng cùng danh tính ký cho provenance/CMS/Authenticode, có RFC3161 timestamp và checksum đóng; Public Stable tiếp tục HOLD vì signer miễn phí là self-signed.
 
 ## Chính sách và kênh hỗ trợ của v5.0
 
