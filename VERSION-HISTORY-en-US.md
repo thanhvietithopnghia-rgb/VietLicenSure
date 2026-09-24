@@ -18,6 +18,10 @@ Public product page:
 - **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, and a ManagedSigned chain bound by provenance/CMS/SHA-256/Authenticode/RFC3161 plus clean-VM runtime, UAC-cancellation, DPI, and High Contrast evidence.
 - **Release channel:** moved to **Official Self-Signed**—an official release using the pinned self-issued signer, RFC3161 timestamping, and fail-closed verification; it is explicitly not public-CA, EV, or Store signed, and SmartScreen can still warn.
 
+### Core summary across the two generations
+
+**v4.9** concentrated on the recognition foundation: correlating multiple inventory sources, grading evidence, avoiding unsupported conclusions, and binding uninstall/remediation to the exact selected identity. **v5.0** retains that foundation and unifies inspection, remediation, reporting, and management in one dashboard with DPI/Light/Dark/High Contrast support, an Offline Assistant, and Local/Server/Workstation management. Remediation is separated into Windows, Office, and third-party scopes with Dry Run, scope locking, backup, UAC, post-checks, and fail-closed rollback; reporting expands to HTML/PDF/JSON/XML/CSV, signed plugins, and a protected timeline. Offline remains the default; only after the user explicitly enables Online for the current session does v5.0 validate the signed catalog and check the signed new-version manifest, without uploading inventory or silently downloading/installing an EXE, and the next launch returns to Offline.
+
 `Unverified` does not mean that software violates its licence.
 
 ## v4.9.0.0 — August 22, 2026

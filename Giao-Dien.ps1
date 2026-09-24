@@ -1289,6 +1289,8 @@ $cleanupPreviousSession = $null
 $softwareCatalogUpdateResultFile = ""
 $softwareCatalogAutoScan = $false
 $softwareCatalogAutoScanScope = "ThirdParty"
+$softwareCatalogRefreshPending = $false
+$softwareCatalogBackgroundSync = $false
 $applicationUpdateResultFile = ""
 $availableApplicationUpdate = $null
 $applicationUpdateProcess = $null
@@ -2461,9 +2463,11 @@ function Toggle-DashboardOfflineMode {
     Refresh-DashboardLocalizedActivity
     [void](Write-ToolLog -Level "AUDIT" -Event "OfflineMode.Changed" -Message $(if ($script:offlineMode) { Get-DashboardText "offline.enabledLog" } else { Get-DashboardText "offline.networkAllowedLog" }) -Data ([ordered]@{ OfflineMode=[bool]$script:offlineMode }))
     if ($script:offlineMode) {
+        $script:softwareCatalogRefreshPending = $false
+        $script:softwareCatalogBackgroundSync = $false
         Reset-ApplicationUpdateForOffline
     } else {
-        Request-ApplicationUpdateCheck
+        Request-OnlineSessionRefresh
     }
 }
 
@@ -4366,6 +4370,9 @@ function Enable-DashboardOnlineForCurrentCatalogSession {
         [void](Write-ToolLog -Level 'AUDIT' -Event 'OnlineMode.CatalogSessionEnabled' -Message (Get-DashboardText 'offline.networkAllowedLog') -Data ([ordered]@{
             Source='SoftwareCatalog'; SessionOnly=$true; UploadedInventory=$false; SentLicenseKeys=$false
         }))
+        if (Test-ApplicationSelfUpdateAllowed) {
+            $script:applicationUpdateCheckPending = $true
+        }
     }
     return [bool](Test-ToolNetworkActionAllowed -Scope Internet)
 }
@@ -4374,14 +4381,20 @@ function Start-SoftwareCatalogOnlineUpdate {
     param(
         [ValidateSet("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")]
         [string]$ScanScope = "ThirdParty",
-        [switch]$ConsentAlreadyGranted
+        [switch]$ConsentAlreadyGranted,
+        [switch]$CatalogOnly,
+        [switch]$BackgroundSync
     )
 
     $script:softwareCatalogAutoScan = $false
     $script:softwareCatalogAutoScanScope = "ThirdParty"
+    $script:softwareCatalogBackgroundSync = $false
     if (-not (Enable-DashboardOnlineForCurrentCatalogSession -ConsentAlreadyGranted:$ConsentAlreadyGranted)) {
         return
     }
+    $script:softwareCatalogAutoScan = -not [bool]$CatalogOnly
+    $script:softwareCatalogAutoScanScope = if ($CatalogOnly) { "ThirdParty" } else { $ScanScope }
+    $script:softwareCatalogBackgroundSync = [bool]$BackgroundSync
     try {
         Start-ProgressDisplay (Get-DashboardText "software.online.action") (Get-DashboardText "software.online.connecting") $false
         Write-ProgressLog (Get-DashboardText "software.online.privacyLog")
@@ -4396,14 +4409,17 @@ function Start-SoftwareCatalogOnlineUpdate {
         Set-ButtonsEnabled $false
         $timer.Start()
     } catch {
+        $wasBackgroundSync = [bool]$script:softwareCatalogBackgroundSync
         $script:softwareCatalogAutoScan = $false
         $script:softwareCatalogAutoScanScope = "ThirdParty"
+        $script:softwareCatalogBackgroundSync = $false
         if ($script:softwareCatalogUpdateResultFile -and (Test-Path -LiteralPath $script:softwareCatalogUpdateResultFile -PathType Leaf)) {
             Remove-Item -LiteralPath $script:softwareCatalogUpdateResultFile -Force -ErrorAction SilentlyContinue
         }
         $script:softwareCatalogUpdateResultFile = ""
         Set-ButtonsEnabled $true
         Stop-ProgressOnStartError (Get-DashboardText "software.online.startFailed" @($_.Exception.Message))
+        if ($wasBackgroundSync) { Invoke-PendingOnlineSessionWork }
     }
 }
 
@@ -4483,12 +4499,14 @@ function Show-SoftwareCatalogFailureDialog {
 function Complete-SoftwareCatalogOnlineUpdate {
     Set-ButtonsEnabled $true
     $shouldScan = [bool]$script:softwareCatalogAutoScan
+    $wasBackgroundSync = [bool]$script:softwareCatalogBackgroundSync
     $requestedScanScope = [string]$script:softwareCatalogAutoScanScope
     if ($requestedScanScope -notin @("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")) {
         $requestedScanScope = "ThirdParty"
     }
     $script:softwareCatalogAutoScan = $false
     $script:softwareCatalogAutoScanScope = "ThirdParty"
+    $script:softwareCatalogBackgroundSync = $false
     $result = $null
     try {
         if (-not $script:softwareCatalogUpdateResultFile -or -not (Test-Path -LiteralPath $script:softwareCatalogUpdateResultFile -PathType Leaf)) {
@@ -4530,9 +4548,15 @@ function Complete-SoftwareCatalogOnlineUpdate {
         }
         $status.ForeColor = [System.Drawing.Color]::DarkGreen
         Write-ProgressLog $successLog
-        [System.Windows.Forms.MessageBox]::Show(
-            $successMessage, $successTitle, "OK", "Information") | Out-Null
-        if ($shouldScan) { Start-Cleanup -ScanScope $requestedScanScope }
+        if (-not $wasBackgroundSync) {
+            [System.Windows.Forms.MessageBox]::Show(
+                $successMessage, $successTitle, "OK", "Information") | Out-Null
+        }
+        if ($shouldScan) {
+            Start-Cleanup -ScanScope $requestedScanScope
+        } else {
+            Invoke-PendingOnlineSessionWork
+        }
         return
     }
 
@@ -4540,12 +4564,53 @@ function Complete-SoftwareCatalogOnlineUpdate {
     $status.Text = Get-DashboardText "software.online.failedStatus"
     $status.ForeColor = [System.Drawing.Color]::DarkOrange
     Write-ProgressLog (Get-DashboardText "software.online.failedLog" @($failureDetail))
+    if ($wasBackgroundSync) {
+        Invoke-PendingOnlineSessionWork
+        return
+    }
     $fallback = Show-SoftwareCatalogFailureDialog -Detail (Get-DashboardText "software.online.fallbackPrompt" @($failureDetail))
     if ($fallback -eq 'Retry') {
         Start-SoftwareCatalogOnlineUpdate -ScanScope $requestedScanScope -ConsentAlreadyGranted
     } elseif ($shouldScan -and $fallback -eq 'Offline') {
         Start-Cleanup -ScanScope $requestedScanScope
     }
+}
+
+function Request-OnlineSessionRefresh {
+    if ($script:offlineMode -or [string]$env:TOOL_OFFLINE_MODE -ne "0" -or
+        -not (Test-ToolNetworkActionAllowed -Scope Internet)) {
+        return
+    }
+
+    # A fresh launch remains Offline.  This queue is populated only after the
+    # user explicitly enables Online for the current session.  Catalog data is
+    # refreshed first; the signed application manifest is checked afterwards.
+    $script:softwareCatalogRefreshPending = $true
+    if (Test-ApplicationSelfUpdateAllowed) {
+        $script:applicationUpdateCheckPending = $true
+    }
+    [void](Write-ToolLog -Level "AUDIT" -Event "OnlineMode.RefreshQueued" -Message (Get-DashboardText "online.refresh.queued") -Data ([ordered]@{
+        Catalog=$true; ApplicationVersion=[bool](Test-ApplicationSelfUpdateAllowed); SessionOnly=$true; SilentInstall=$false
+    }))
+    Invoke-PendingOnlineSessionWork
+}
+
+function Invoke-PendingOnlineSessionWork {
+    if ($script:offlineMode -or [string]$env:TOOL_OFFLINE_MODE -ne "0" -or
+        -not (Test-ToolNetworkActionAllowed -Scope Internet)) {
+        $script:softwareCatalogRefreshPending = $false
+        return
+    }
+    if (($script:activeProcess -and -not $script:activeProcess.HasExited) -or
+        ($script:applicationUpdateProcess -and -not $script:applicationUpdateProcess.HasExited)) {
+        return
+    }
+    if ($script:softwareCatalogRefreshPending) {
+        $script:softwareCatalogRefreshPending = $false
+        Start-SoftwareCatalogOnlineUpdate -ScanScope "ThirdParty" -ConsentAlreadyGranted -CatalogOnly -BackgroundSync
+        return
+    }
+    Invoke-PendingApplicationUpdateWork
 }
 
 function Get-ApplicationUpdateFileSha256 {
@@ -7389,6 +7454,14 @@ function Convert-GuideSourceToSections {
                 $firstHeading = $false
                 continue
             }
+            # The preamble after the document title is already the overview.
+            # When the first explicit heading is also Overview/Tổng quan, keep
+            # both bodies in one section instead of emitting duplicate TOC rows.
+            if ($groups.Count -eq 0 -and
+                [string]::Equals([string]$currentTitle, [string]$headingText, [StringComparison]::OrdinalIgnoreCase)) {
+                $currentTitle = [string]$headingText
+                continue
+            }
             if ($currentLines.Count -gt 0) {
                 [void]$groups.Add([pscustomobject][ordered]@{
                     Title = $currentTitle
@@ -7436,7 +7509,7 @@ function Open-ToolEmbeddedDocument {
         Start-ProgressDisplay $documentAction (Get-ToolText -Key $ExportingDetailKey -Culture $script:dashboardCulture) $false
         [System.Windows.Forms.Application]::DoEvents()
 
-        $documentRendererRevision = "2"
+        $documentRendererRevision = "3"
         $sourceHash = Get-ToolSha256Hex -Path $SourceFile
         $documentDirectory = Join-Path $reportRoot "TaiLieu"
         if (-not (Test-Path -LiteralPath $documentDirectory -PathType Container)) {
@@ -9859,7 +9932,7 @@ $form.Add_Shown({
     $startupValidationTimer.Start()
     Show-ExecutionEnvironmentWarning
     $updateTimer.Start()
-    if (-not $script:offlineMode) { Request-ApplicationUpdateCheck }
+    if (-not $script:offlineMode) { Request-OnlineSessionRefresh }
 })
 $form.Add_Resize({ Update-MainLayout })
 
@@ -10056,7 +10129,7 @@ $updateTimer.Add_Tick({
     if ($script:applicationUpdateProcess -and $script:applicationUpdateProcess.HasExited) {
         Complete-ApplicationUpdateCheck
     }
-    Invoke-PendingApplicationUpdateWork
+    Invoke-PendingOnlineSessionWork
 })
 
 $form.Add_FormClosing({

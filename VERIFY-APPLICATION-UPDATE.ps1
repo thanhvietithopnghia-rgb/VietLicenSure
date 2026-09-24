@@ -189,7 +189,9 @@ try {
     . (Join-Path $root 'Tool-OfflinePolicy.ps1')
     . (Join-Path $root 'Tool-ModuleContract.ps1')
     $offlineMetadata = Get-ToolOfflinePolicyMetadata
+    Assert-UpdateTest ([bool]$offlineMetadata.AutomaticCatalogRefresh -and $offlineMetadata.AutomaticCatalogRefreshTrigger -eq 'UserEnabledOnline') 'Offline metadata does not gate catalog refresh on user-enabled Online mode.'
     Assert-UpdateTest ([bool]$offlineMetadata.AutomaticUpdateCheck -and $offlineMetadata.AutomaticUpdateCheckTrigger -eq 'UserEnabledOnline') 'Offline metadata does not gate update checks on user-enabled Online mode.'
+    Assert-UpdateTest ((@($offlineMetadata.OnlineRefreshOrder) -join ',') -eq 'SignedCatalog,SignedApplicationManifest') 'Online refresh order is not catalog-first then signed application manifest.'
     Assert-UpdateTest (-not [bool]$offlineMetadata.BackgroundUpdateService -and -not [bool]$offlineMetadata.SilentUpdate) 'Metadata permits a background service or silent update.'
     $updateDescriptor = Get-ToolModuleDescriptor -ModuleId 'application.update.check'
     Assert-UpdateTest ($updateDescriptor.NetworkScope -eq 'Internet' -and $updateDescriptor.AccessMode -eq 'ReadOnly') 'Update module contract is invalid.'
@@ -203,7 +205,9 @@ try {
         'TOOL_LAUNCHER_PID', '-Mode Apply', '-Mode Check', 'ExpectedCurrentSha256', 'currentHashArgument',
         'Test-ApplicationSelfUpdateAllowed', 'TOOL_SELF_UPDATE_ALLOWED',
         'Start-DetachedToolModuleProcess -ModuleId "application.update.apply" -Arguments $arguments -Elevate -Hidden',
-        'if (-not $script:offlineMode) { Request-ApplicationUpdateCheck }'
+        'if (-not $script:offlineMode) { Request-OnlineSessionRefresh }',
+        'Start-SoftwareCatalogOnlineUpdate -ScanScope "ThirdParty" -ConsentAlreadyGranted -CatalogOnly -BackgroundSync',
+        'Invoke-PendingOnlineSessionWork'
     )) {
         Assert-UpdateTest ($dashboardText.Contains($pattern)) "GUI is missing required update flow: $pattern"
     }

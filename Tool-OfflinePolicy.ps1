@@ -145,8 +145,11 @@ function Get-ToolOfflinePolicyMetadata {
         EnterpriseNetworkDefault = "Blocked"
         CurrentEnterpriseNetworkAllowed = [bool](Get-ToolEnterpriseNetworkAllowed)
         Telemetry = "Disabled"
+        AutomaticCatalogRefresh = $true
+        AutomaticCatalogRefreshTrigger = "UserEnabledOnline"
         AutomaticUpdateCheck = $true
         AutomaticUpdateCheckTrigger = "UserEnabledOnline"
+        OnlineRefreshOrder = @("SignedCatalog", "SignedApplicationManifest")
         BackgroundUpdateService = $false
         SilentUpdate = $false
     }

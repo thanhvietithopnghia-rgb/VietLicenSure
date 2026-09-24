@@ -405,6 +405,17 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Current/latest comparison did not resolve v5.0 or preserve question order.'
     }
 
+    $coreCompareVi = Get-ToolAssistantAnswer -Question 'v4.9 so với v5.0 khác gì cốt lõi' -Culture 'vi-VN' -Knowledge $knowledge
+    $coreCompareEn = Get-ToolAssistantAnswer -Question 'what are the core changes from v4.9 to v5.0' -Culture 'en-US' -Knowledge $knowledge
+    $onlinePolicyVi = Get-ToolAssistantAnswer -Question 'bật online thì catalog và phiên bản cập nhật thế nào' -Culture 'vi-VN' -Knowledge $knowledge
+    $onlinePolicyEn = Get-ToolAssistantAnswer -Question 'what happens when I enable Online' -Culture 'en-US' -Knowledge $knowledge
+    if ($coreCompareVi -notmatch 'v4\.9' -or $coreCompareVi -notmatch 'v5\.0' -or $coreCompareVi -notmatch 'Offline' -or
+        $coreCompareEn -notmatch 'v4\.9' -or $coreCompareEn -notmatch 'v5\.0' -or $coreCompareEn -notmatch 'Offline' -or
+        $onlinePolicyVi -notmatch 'catalog ký số' -or $onlinePolicyVi -notmatch 'manifest phiên bản mới' -or $onlinePolicyVi -notmatch 'không tự tải(?: hoặc |/)cài EXE' -or
+        $onlinePolicyEn -notmatch 'signed catalog' -or $onlinePolicyEn -notmatch 'new-version manifest' -or $onlinePolicyEn -notmatch 'no silent EXE') {
+        Add-AssistantVerificationError 'Assistant knowledge is not synchronized with the v4.9→v5.0 summary or explicit-Online refresh policy.'
+    }
+
     $catalogUpdateEn = Get-ToolAssistantAnswer -Question 'latest catalog update failed' -Culture 'en-US' -Knowledge $knowledge
     $catalogUpdateVi = Get-ToolAssistantAnswer -Question 'cập nhật danh mục mới nhất bị lỗi' -Culture 'vi-VN' -Knowledge $knowledge
     $installUpdateEn = Get-ToolAssistantAnswer -Question 'how do I install the latest update' -Culture 'en-US' -Knowledge $knowledge
@@ -469,7 +480,7 @@ if ($errors.Count -eq 0) {
         @{ Culture='vi-VN'; Question='mở hướng dẫn sử dụng ở đâu'; Expected='HDSD HTML/PDF' },
         @{ Culture='vi-VN'; Question='xem phiên bản và cập nhật ở đâu'; Expected='Phiên bản và cập nhật' },
         @{ Culture='vi-VN'; Question='tạo gói hỗ trợ đã che định danh ra sao'; Expected='bản xem trước' },
-        @{ Culture='vi-VN'; Question='kết nối online để cập nhật nhận diện hoạt động ra sao'; Expected='chỉ tải danh mục nhận diện' },
+        @{ Culture='vi-VN'; Question='bật online để cập nhật catalog và kiểm tra phiên bản hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bật Online để cập nhật catalog và kiểm tra phiên bản:' },
         @{ Culture='vi-VN'; Question='đồng bộ tri thức hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Đồng bộ tri thức:' },
         @{ Culture='vi-VN'; Question='nút Gửi và Enter hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Nút Gửi và Enter:' },
         @{ Culture='vi-VN'; Question='quyền riêng tư báo cáo hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quyền riêng tư báo cáo:' },

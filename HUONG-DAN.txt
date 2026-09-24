@@ -8,7 +8,7 @@ VietLicenSure là ứng dụng Windows hỗ trợ kiểm tra cấu hình máy, t
 
 Quy trình sử dụng gồm bốn bước: chọn phạm vi kiểm tra, đọc kết quả và bằng chứng, chạy thử kế hoạch nếu cần khắc phục, sau đó xác nhận và hậu kiểm. Kiểm tra và báo cáo mặc định chỉ đọc; thao tác thay đổi hệ thống luôn có xem trước, backup, xác nhận và yêu cầu quyền phù hợp.
 
-VietLicenSure hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong VietLicenSure hoặc trang phát hành chính thức. Trạng thái nghiệm thu mới nhất được duy trì duy nhất tại `RELEASE-STATUS-v5.0.md`.
+VietLicenSure hoạt động Offline theo mặc định, không tự gửi inventory hoặc báo cáo ra Internet. Chỉ sau khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure mới tải và xác minh catalog ký số, rồi kiểm tra manifest phiên bản mới; phần mềm không tải/cài EXE ngầm và lần mở sau vẫn tự trở về Offline. HDSD tập trung vào thao tác, cách đọc kết quả và nguyên tắc sử dụng an toàn; thông tin phiên bản, ngày phát hành, chữ ký và SHA-256 được xem tại **Phiên bản và cập nhật** trong VietLicenSure hoặc trang phát hành chính thức. Trạng thái nghiệm thu mới nhất được duy trì duy nhất tại `RELEASE-STATUS-v5.0.md`.
 
 ## Thông tin tác giả
 
@@ -36,7 +36,7 @@ Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ
 3. Đóng Word, Excel, Outlook và các phần mềm đang cần kiểm tra trước khi thực hiện khắc phục.
 4. Nếu dự kiến thay đổi giấy phép, hãy chuẩn bị tài khoản hoặc key hợp lệ từ Microsoft, nhà sản xuất hay tổ chức của bạn.
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
-6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
+6. Mặc định nên giữ Offline. Khi chủ động bật Online cho phiên hiện tại, VietLicenSure tự cập nhật catalog ký số và kiểm tra phiên bản mới; LAN doanh nghiệp vẫn dùng công tắc cho phép riêng.
 
 Tệp một-EXE của kênh `Official Self-Signed` dùng trust mode kỹ thuật `ManagedSigned`, có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Đây là bản phát hành chính thức bằng chứng thư tự ký, không phải public-CA/EV/Store-signed. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender.
 
@@ -458,9 +458,11 @@ HashMismatch, hash activator đã biết hoặc module cấp phép bị thay có
 
 Nếu báo cáo ghi Độ phủ chưa hoàn tất, hãy kiểm tra lý do như thiếu quyền Administrator, hết thời gian quét, tệp bị khóa hoặc nguồn WMI/Task Scheduler lỗi trước khi đánh giá.
 
-## Kết nối online để cập nhật nhận diện
+## Bật Online để cập nhật catalog và kiểm tra phiên bản
 
-Kết nối online dành cho catalog phần mềm khác, nằm trong **Khắc phục phần mềm khác** hoặc ô khắc phục tổng hợp ở Tổng quan, tại màn hình Kiểm tra và đưa về trạng thái gốc.
+Mỗi lần mở VietLicenSure đều bắt đầu ở Offline. Khi người dùng chủ động chuyển nút mạng trên dashboard sang **Online** và xác nhận, phần mềm xếp hàng hai tác vụ chỉ đọc cho phiên hiện tại: tải/xác minh catalog nhận diện ký số, sau đó kiểm tra manifest phiên bản mới đã ký. Không có dịch vụ cập nhật nền, không tự tải/cài EXE và lần mở sau vẫn mặc định Offline.
+
+Nút cập nhật catalog thủ công vẫn có trong **Khắc phục phần mềm khác** hoặc ô khắc phục tổng hợp ở Tổng quan, tại màn hình Kiểm tra và đưa về trạng thái gốc:
 
 1. Chọn Khắc phục phần mềm khác hoặc ô khắc phục tổng hợp ở Tổng quan.
 2. Chọn Kiểm tra và đưa về trạng thái gốc.
@@ -468,7 +470,7 @@ Kết nối online dành cho catalog phần mềm khác, nằm trong **Khắc ph
 4. Đọc thông báo về quyền riêng tư và chọn đồng ý nếu muốn tiếp tục.
 5. Chờ cập nhật hoàn tất rồi tiếp tục với phạm vi phần mềm khác.
 
-Kết nối này chỉ tải danh mục nhận diện. Công cụ không gửi danh sách phần mềm, đường dẫn, product key, token hoặc báo cáo. Nếu cập nhật thất bại, vẫn có thể tiếp tục dùng danh mục tích hợp ở chế độ Offline.
+Hai tác vụ Online chỉ gửi yêu cầu GET tới nguồn HTTPS cố định; công cụ không gửi danh sách phần mềm, đường dẫn, product key, token hoặc báo cáo. Catalog chỉ được dùng sau khi qua allowlist, chữ ký, schema và chống hạ phiên bản. Nếu cập nhật thất bại, VietLicenSure giữ catalog tích hợp/cache tin cậy và vẫn hoạt động Offline bình thường. Khi phát hiện phiên bản phần mềm mới, người dùng vẫn phải tự chọn tải/cài đặt; không có cập nhật im lặng.
 
 ## Báo cáo và vị trí lưu
 

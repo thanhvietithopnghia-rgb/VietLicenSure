@@ -46,7 +46,7 @@ Bản hiện tại dùng chứng thư tự ký được launcher ghim nên Windo
 1. Tải trực tiếp [VietLicenSure v5.0](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe) từ tài sản phát hành chính thức.
 2. Người đang dùng một bản v5.0 cũ có thể tải lại `VietLicenSure-v5.0.exe`; dữ liệu cũ vẫn được giữ làm nguồn tương thích/migration.
 3. Nếu tải gói đầy đủ, chạy `VERIFY-RELEASE.cmd`; script tự định vị và kiểm tra checksum, bốn chữ ký CMS, chứng thư công bố, Authenticode, manifest và SBOM. Nếu chỉ tải EXE, đối chiếu SHA-256 và chữ ký thủ công. Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
-4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Với bản Official Self-Signed, Online chỉ dành cho các tác vụ người dùng chủ động như cập nhật catalog hoặc chức năng LAN được cho phép; ứng dụng không tự thay EXE.
+4. Giữ Offline nếu chỉ kiểm tra máy cục bộ. Khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure tự xác minh catalog ký số rồi kiểm tra manifest phiên bản mới; không upload inventory, không tự tải/cài EXE và lần mở sau trở lại Offline. LAN doanh nghiệp dùng quyền cho phép riêng.
 5. Chỉ chấp nhận UAC khi tên tác vụ đúng với thao tác khắc phục, cập nhật hoặc quản trị mà bạn vừa chọn.
 
 Nếu SmartScreen cảnh báo, **không tắt SmartScreen/Defender và không thêm ngoại lệ để ép chạy**. Xác nhận đúng kênh tải, SHA-256, signer, timestamp và kết quả `VERIFY-RELEASE.cmd` trước. Chỉ khi tất cả đều đạt, người dùng máy cá nhân mới cân nhắc **More info → Run anyway**; máy doanh nghiệp cần liên hệ quản trị viên. Sai hash, sai signer, thiếu timestamp hoặc CMS lỗi là lý do dừng sử dụng. Xem [FAQ người dùng lần đầu](FAQ-NGUOI-DUNG-MOI-v5.0.md#smartscreen-hiện-cảnh-báo-thì-làm-gì).

@@ -981,6 +981,11 @@ Assert-SourcePattern $text 'Name="Windows";\s*TextKey="cleanup\.scope\.scanWindo
 Assert-SourcePattern $text 'Name="Office";\s*TextKey="cleanup\.scope\.scanOffice"' 'Khắc phục thiếu ô tích Office.'
 Assert-SourcePattern $text 'Name="ThirdParty";\s*TextKey="cleanup\.scope\.scanThirdParty"' 'Khắc phục thiếu ô tích Phần mềm khác.'
 Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]selectedScope' 'Kết nối Online chưa dùng cùng phạm vi người dùng đã tích.'
+Assert-SourcePattern $text 'function\s+Request-OnlineSessionRefresh' 'Dashboard thiếu hàng đợi đồng bộ sau khi người dùng chủ động bật Online.'
+Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+"ThirdParty"\s+-ConsentAlreadyGranted\s+-CatalogOnly\s+-BackgroundSync' 'Bật Online chưa tự cập nhật catalog ký số ở chế độ nền/không quét.'
+Assert-SourcePattern $text '[$]script:applicationUpdateCheckPending\s*=\s*[$]true' 'Bật Online chưa xếp hàng kiểm tra manifest phiên bản mới.'
+Assert-SourcePattern $text 'if\s*\(-not\s+[$]script:offlineMode\)\s*\{\s*Request-OnlineSessionRefresh\s*\}' 'Khởi tạo Online được cho phép chưa dùng cùng hàng đợi catalog + phiên bản.'
+Assert-SourcePattern $text 'Invoke-PendingOnlineSessionWork' 'Dashboard chưa điều phối tuần tự catalog và kiểm tra phiên bản.'
 Assert-SourcePattern $text 'Start-CleanupBackup\s+-Scope\s+[$]selectedScope' 'Backup chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-CleanupRestore\s+-Scope\s+[$]selectedScope' 'Khôi phục chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-Cleanup\s+-ScanScope\s+[$]selectedScope' 'Quét khắc phục chưa nhận phạm vi người dùng chọn.'
@@ -1064,6 +1069,13 @@ if ([string]$viCatalog.'menu.7.description' -ne 'Kiểm tra key firmware; chỉ 
     [string]$viCatalog.'about.card.config.body' -match '\b(?:0[1-9]|10)\b' -or
     [string]$enCatalog.'about.card.config.body' -match '\b(?:0[1-9]|10)\b') {
     Add-Failure 'Mô tả tile/Năng lực phải đầy đủ và không hiển thị số tác vụ vi-VN/en-US.'
+}
+if ([string]$viCatalog.'about.card.config.body' -notmatch 'Quick, Standard và Deep' -or
+    [string]$viCatalog.'about.card.remediation.body' -notmatch 'Dry Run' -or
+    [string]$viCatalog.'about.card.report.body' -notmatch 'HTML/PDF/JSON/XML/CSV' -or
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'chỉ kiểm tra sau khi bật Online' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'only after Online consent') {
+    Add-Failure 'Ô Năng lực trong Giới thiệu chưa phản ánh đúng chức năng v5.0 hiện tại.'
 }
 foreach ($lightCardColor in @('238,246,255','255,248,232','237,250,244','247,241,255')) {
     Assert-SourcePattern $text ([regex]::Escape("FromArgb($lightCardColor)")) "Khung Năng lực Light thiếu màu nổi bật $lightCardColor."
@@ -1204,6 +1216,11 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $guideViText -notmatch 'không phải lỗi ứng dụng' -or
         $guideEnText -notmatch 'not an application failure') {
         Add-Failure 'HDSD thiếu Tổng quan, chưa mô tả đủ tám tác vụ Báo cáo hoặc chưa giải thích khóa tin cậy plugin.'
+    }
+    if (@([regex]::Matches($guideViText, '(?m)^##\s+Tổng quan\s*$')).Count -ne 1 -or
+        @([regex]::Matches($guideEnText, '(?m)^##\s+Overview\s*$')).Count -ne 1 -or
+        $text -notmatch '\[string\]::Equals\(\[string\][$]currentTitle,\s*\[string\][$]headingText,\s*\[StringComparison\]::OrdinalIgnoreCase\)') {
+        Add-Failure 'Bộ dựng HDSD chưa bảo đảm mục lục chỉ có một Tổng quan/Overview.'
     }
     if ($guideViText -match 'Phiên bản ManagedSigned:|Ứng viên Microsoft Store:' -or
         $guideEnText -match 'ManagedSigned version:|Microsoft Store candidate:') {
