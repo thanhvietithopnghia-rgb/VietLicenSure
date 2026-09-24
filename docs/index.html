@@ -60,9 +60,9 @@
 
   <div id="top" class="wrap hero">
     <div>
-      <div class="eyebrow">v5.0 · cập nhật 23/09/2026 · ManagedSigned / Internal Pilot · Public Stable: HOLD</div>
+      <div class="eyebrow">v5.0 · cập nhật 24/09/2026 · Official Self-Signed · phát hành chính thức</div>
       <h1>Kiểm tra bản quyền rõ ràng.<br>Quản lý hệ thống chủ động.</h1>
-      <p><strong>An tâm sử dụng.</strong> Phát hành lần đầu 08/09/2026; nội dung và gói hiện hành cập nhật đến 23/09/2026, vẫn giữ nguyên phiên bản v5.0.</p>
+      <p><strong>An tâm sử dụng.</strong> Phát hành lần đầu 08/09/2026; nội dung và gói hiện hành cập nhật đến 24/09/2026, vẫn giữ nguyên phiên bản v5.0.</p>
       <p class="lead"><strong>VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống</strong> hỗ trợ người dùng cá nhân, kỹ thuật viên, nhân viên IT và doanh nghiệp kiểm tra Windows, Microsoft Office/Microsoft 365, phần mềm đã cài và thông tin hệ thống. VietLicenSure gom kết quả về một nơi, giải thích bằng chứng, hỗ trợ kiểm kê và tạo báo cáo đã che định danh — thay vì buộc người dùng tự ghép nhiều lệnh rời rạc.</p>
       <div class="badges"><span class="badge">Offline mặc định</span><span class="badge">Không telemetry</span><span class="badge">Catalog ký số</span><span class="badge">Có backup &amp; hậu kiểm</span></div>
       <div class="actions"><a class="button primary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe" download>Tải VietLicenSure</a><a class="button secondary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0">Mở trang Releases</a><a class="button secondary" href="huong-dan.html">Hướng dẫn người mới</a></div>
@@ -70,8 +70,9 @@
     <aside id="verify-official-build" class="verify">
       <h2>Xác minh trước khi chạy</h2>
       <p>Tệp chính thức: <strong>VietLicenSure-v5.0.exe</strong></p>
-      <div class="hash"><div class="hash-label"><span>SHA-256</span></div><code id="release-hash">Xem RELEASE-SHA256SUMS.txt của gói hiện hành</code></div>
-      <p><strong>Build ID:</strong> 5.0-production-20260923</p>
+      <div class="hash"><div class="hash-label"><span>SHA-256</span></div><code id="release-hash">F857CAF6D0E6757B2AF5E1D608BD6F77257E37D4ECE170066AEF471409F2041D</code></div>
+      <p><strong>Build ID:</strong> 5.0-production-20260924</p>
+      <p><strong>Source snapshot:</strong> <code>08d8a5efb4c479aad71343262128a9ce2512d0c8</code><br><strong>Release bundle:</strong> <code>befd9255e020814985cb4647a5d800dade6861c4</code></p>
       <p>Chạy <code>VERIFY-RELEASE.cmd</code> trong gói để kiểm tra checksum, bốn chữ ký CMS, chứng thư, Authenticode, manifest và SBOM. <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/blob/main/RELEASE-VERIFICATION-v5.0.md">Đọc quy trình đầy đủ</a>.</p>
     </aside>
   </div>
@@ -106,17 +107,6 @@
       <div class="table-wrap"><table class="compare"><thead><tr><th>Nhóm</th><th>v4.8</th><th>v4.9</th><th>v5.0</th></tr></thead><tbody><tr><td>Nền tảng</td><td>Baseline kiến trúc, Offline/reporting</td><td>Siết nguồn gốc và catalog</td><td class="current">Hợp đồng mô-đun, dashboard thích ứng, ManagedSigned</td></tr><tr><td>Chuỗi phát hành</td><td>Hash và hardening nền</td><td>Provenance/chính sách mã nguồn</td><td class="current">Tập tệp đóng, 4 CMS, cert công bố, Authenticode, SBOM</td></tr><tr><td>Quét phần mềm</td><td>Windows/Office và inventory nền</td><td>Catalog mở rộng, bằng chứng thận trọng</td><td class="current">Quick/Standard/Deep, budget và trust gate</td></tr><tr><td>Khắc phục</td><td>Backup và luồng an toàn</td><td>Evidence threshold chặt hơn</td><td class="current">Preview, scope-lock, UAC theo nhu cầu, hậu kiểm/rollback</td></tr><tr><td>Trải nghiệm</td><td>Giao diện chức năng</td><td>Bổ sung trợ lý/chính sách</td><td class="current">Dark/light, DPI, Result Center và tài liệu trong ứng dụng</td></tr></tbody></table></div>
     </section>
 
-    <section id="integrity" class="wrap">
-      <div class="kicker">Toàn vẹn phát hành hiện hành</div>
-      <h2>Harness4 và provenance đã khớp đúng snapshot/artifact</h2>
-      <div class="grid three">
-        <article class="card"><h3>Source snapshot</h3><p><code>63c79c8313da4e2509a1dbd83f08562899e41e6f</code></p><p>Provenance CMS, update manifest và bundle đã xác minh exact-byte.</p></article>
-        <article class="card"><h3>Artifact v5.0</h3><p><code>67D836AB08F59D2EE15E4AD4C8C269555BE645987DCE2C1C2349DAC90652DCED</code></p><p>862.456 byte · Authenticode hợp lệ · RFC3161 timestamp.</p></article>
-        <article class="card"><h3>Cổng Harness4</h3><p><strong>CLOSED / PASS — 3/3 nền tảng.</strong></p><p>Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2 đều đạt 11/11 verifier + updater.</p></article>
-      </div>
-      <div class="notice"><strong>Ranh giới phát hành:</strong> cổng Harness4 + provenance snapshot đã đóng cho đúng cặp source/EXE trên. Public Stable tổng thể vẫn <strong>HOLD</strong> vì chứng thư hiện tại là self-signed và các yêu cầu public-CA/đánh giá độc lập của chính sách chưa hoàn tất. <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0-managedsigned-current-sync-harness4-20260923">Xem release và evidence Harness4</a>.</div>
-    </section>
-
     <section class="wrap">
       <div class="kicker">Đặt đúng kỳ vọng</div>
       <h2>VietLicenSure thuộc nhóm công cụ nào?</h2>
@@ -137,8 +127,8 @@
 
     <section id="roadmap" class="wrap">
       <div class="kicker">Lộ trình ngắn hạn</div>
-      <h2>Từ Pilot đến hồ sơ sẵn sàng phát hành rộng</h2>
-      <div class="roadmap"><article class="card phase done"><h3>Nền tảng đã có</h3><p>Chuỗi build/hash/CMS, provenance, SBOM, signer pinning, dashboard v5 và tài liệu song ngữ.</p></article><article class="card phase"><h3>Kiểm chứng theo artifact</h3><p>Mỗi source snapshot và EXE phải có evidence riêng; kết quả cũ không được chuyển sang artifact mới.</p></article><article class="card phase next"><h3>Quyết định hiện hành</h3><p><a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/blob/main/RELEASE-STATUS-v5.0.md">Xem nguồn trạng thái duy nhất</a> trước khi đánh giá mức sẵn sàng Public Stable.</p></article></div>
+      <h2>Phát hành chính thức với chuỗi bằng chứng tự ký</h2>
+      <div class="roadmap"><article class="card phase done"><h3>Nền tảng đã có</h3><p>Chuỗi build/hash/CMS, provenance, SBOM, signer pinning, dashboard v5 và tài liệu song ngữ.</p></article><article class="card phase done"><h3>Kiểm chứng theo artifact</h3><p>Mỗi source snapshot và EXE có evidence riêng; kết quả cũ không được chuyển sang artifact mới.</p></article><article class="card phase next"><h3>Trust model hiện hành</h3><p><a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/blob/main/RELEASE-STATUS-v5.0.md">Official Self-Signed</a>: chính thức, có pinning/timestamp, nhưng không phải public-CA/EV/Store-signed.</p></article></div>
     </section>
 
     <section id="source-policy" class="wrap">
