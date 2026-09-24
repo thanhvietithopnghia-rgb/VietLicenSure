@@ -1463,6 +1463,8 @@ $infoLines = @(
     "Release version: $releaseVersion",
     "Release build date: $releaseBuildDate",
     "Release label: $releaseLabel",
+    "Public release channel: Official Self-Signed.",
+    "Technical trust mode: $releaseStatus.",
     "Release status: $releaseStatus.",
     "Tep chay duy nhat: VietLicenSure-v$productVersion.exe",
     "SHA-256: $($primaryArtifact.Sha256)",
