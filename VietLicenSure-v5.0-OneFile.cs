@@ -108,7 +108,7 @@ namespace ThanhViet.VietLicenSure
             "LICH-SU-PHIEN-BAN.txt",
             "VERSION-HISTORY-en-US.md",
             "LICENSE-NOTICE.txt",
-            "SOURCE-POLICY-v4.9.md",
+            "SOURCE-POLICY-v5.0.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
 #if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD || TOOL_STORE_BUILD
@@ -172,7 +172,7 @@ namespace ThanhViet.VietLicenSure
             "LICH-SU-PHIEN-BAN.txt",
             "VERSION-HISTORY-en-US.md",
             "LICENSE-NOTICE.txt",
-            "SOURCE-POLICY-v4.9.md",
+            "SOURCE-POLICY-v5.0.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
 #if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD || TOOL_STORE_BUILD
