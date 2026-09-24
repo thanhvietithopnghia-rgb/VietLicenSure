@@ -45,8 +45,9 @@ thuận riêng.
 
 Chính sách này áp dụng cho mã nguồn từ v4.9 trở đi. Phiên bản trước tiếp tục
 chịu điều khoản đi kèm tại thời điểm phát hành; không hồi tố quyền đã được cấp
-hợp lệ. Hiện chưa có ngày cam kết mở lại mã nguồn; tác giả sẽ xem xét định kỳ và
-chỉ thay đổi chính sách bằng thông báo chính thức bằng văn bản. Phần mềm được
+hợp lệ. Chính sách v5.0 công bố lộ trình dự kiến bốn giai đoạn đến và sau
+07/2027; các mốc không phải cam kết cứng và có thể thay đổi theo rủi ro. Mọi
+thay đổi chính sách chỉ có hiệu lực qua thông báo chính thức bằng văn bản. Phần mềm được
 cung cấp nguyên trạng, không có bảo đảm. Người dùng chịu
 trách nhiệm sao lưu, tuân thủ pháp luật và xác minh phạm vi quản trị trước mọi
 thao tác thay đổi hệ thống.
@@ -97,10 +98,11 @@ submission channel, copyright terms, and test requirements.
 
 This policy applies to source code from v4.9 onward. Earlier versions remain
 governed by the terms distributed with them; rights validly granted earlier are
-not retroactively changed. There is no committed reopening date; the author will
-review the policy periodically and announce any change in an official written
-notice. The software is provided “as is”, without warranty.
+not retroactively changed. The v5.0 policy publishes a four-stage indicative
+roadmap through and after July 2027; dates are not firm commitments and remain
+risk-gated. Any change is announced through an official written notice. The
+software is provided “as is”, without warranty.
 Users are responsible for backups, legal compliance, and confirming their
 authorized administrative scope before system-changing work.
 
-Chi tiết / Full policy: SOURCE-POLICY-v4.9.md
+Chi tiết / Full policy: SOURCE-POLICY-v5.0.md

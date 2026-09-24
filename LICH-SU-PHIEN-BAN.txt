@@ -9,7 +9,7 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
 - **Tên gọi và định hướng:** tên chính thức được đổi từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống**; thống nhất một tên phiên bản duy nhất là **v5.0** trên ứng dụng, tài liệu, bộ cập nhật và GitHub.
 - **Nền tảng nâng cấp:** v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9, kế thừa cơ chế kiểm kê và đánh giá bằng chứng rồi mở rộng thành quy trình kiểm tra–quản lý hệ thống thống nhất.
-- **Chính sách mã nguồn:** giải thích rõ việc chuyển sang truy cập có kiểm soát từ v4.9 sau khi phát hiện phần mềm/phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành khi chưa được phép hay ủy quyền; công bố phạm vi, quy trình xin quyền và trạng thái chưa cam kết ngày mở lại.
+- **Chính sách mã nguồn:** `SOURCE-POLICY-v5.0` thay thế bản v4.9, tiếp tục mô hình truy cập có kiểm soát và công bố lộ trình dự kiến bốn giai đoạn đến và sau 07/2027; các mốc không phải cam kết cứng và phụ thuộc đánh giá rủi ro.
 - **Tương tác hai chiều:** bổ sung GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho báo cáo lỗ hổng.
 - **Giao diện và trải nghiệm:** khởi động nhanh hơn, bố cục thích ứng DPI 100–200%, hỗ trợ Sáng/Tối/High Contrast, điều hướng rõ ràng; năm thẻ trạng thái dùng nền tint và viền màu bao quanh theo từng chức năng, không còn dải màu riêng bên trái.
 - **Kiểm tra Windows, Office và phần mềm:** ba mức quét Quick, Standard và Deep; mở rộng nguồn kiểm kê; phân biệt kích hoạt, loại giấy phép, lỗi đọc dữ liệu và trường hợp chưa đủ bằng chứng.

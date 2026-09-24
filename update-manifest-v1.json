@@ -30,7 +30,7 @@
                                   "Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.",
                                   "Kiểm kê bổ sung AppX/MSIX, Winget, shortcut, trình quản lý gói và adapter Autodesk chỉ-đọc; phân biệt bản cài đã xác nhận với portable/tệp còn sót và gộp Adobe Acrobat theo họ sản phẩm.",
                                   "Quét toàn vẹn thích ứng mở rộng Authenticode trong đúng thư mục sản phẩm khi hosts, firewall hoặc dịch vụ hãng bất thường; bằng chứng không còn lan giữa các sản phẩm Adobe.",
-                                  "Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng mã nguồn không còn công khai, không phải mã nguồn mở và chỉ được tiếp cận theo phạm vi, thời hạn và điều kiện được tác giả chấp thuận trước bằng văn bản; chưa có lịch cam kết mở lại.",
+                                  "Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng không phải mã nguồn mở; SOURCE-POLICY-v5.0 công bố lộ trình dự kiến bốn giai đoạn đến và sau 07/2027, không phải cam kết cứng và luôn phụ thuộc đánh giá rủi ro.",
                                   "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
                               ],
                     "en-US":  [
@@ -54,14 +54,14 @@
                                   "Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.",
                                   "Inventory adds AppX/MSIX, WinGet, shortcuts, package managers, and a read-only Autodesk adapter; it distinguishes confirmed installs from portable/residual files and merges Adobe Acrobat by product family.",
                                   "Adaptive integrity scanning expands Authenticode checks inside the exact product directory when vendor hosts, firewall rules, or licensing services are abnormal; Adobe evidence no longer leaks across products.",
-                                  "Starting with v4.9, VietLicenSure remains free, but its source is not public or open source and may be accessed only within the scope, duration, and conditions approved by the author in writing; no reopening date is currently committed.",
+                                  "Starting with v4.9, VietLicenSure remains free but is not open source; SOURCE-POLICY-v5.0 publishes a four-stage indicative roadmap through and after July 2027, with no firm-date commitment and risk-gated progression.",
                                   "Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate."
                               ]
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "ABB0D776DC1374E547B2C818EF712083C9713E7D5A605E4F802DE5EBDB8016F5",
-    "DownloadSize":  865016,
+    "DownloadSha256":  "F63EE524E81170286365A44328D84BF90D7367BAAEE923159587117D60C62D77",
+    "DownloadSize":  866040,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"

@@ -9,7 +9,7 @@ Public product page:
 
 - **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
 - **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
-- **Source policy:** explains controlled access from v4.9 after the software/predecessor was copied, modified, renamed/repackaged, and published without permission or authorization; documents scope, written access requests, and the absence of a committed reopening date.
+- **Source policy:** establishes `SOURCE-POLICY-v5.0` as the current SSOT, retains controlled access from v4.9, and publishes a four-stage indicative roadmap through and after July 2027; dates are not firm commitments and remain risk-gated.
 - **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.
 - **Interface and experience:** faster startup, 100–200% DPI-aware layout, Light/Dark/High Contrast support, and clearer navigation; the five status cards now use tinted surfaces and full function-colored borders with no separate left accent strip.
 - **Windows, Office, and software inspection:** Quick, Standard, and Deep modes; broader inventory sources; separate activation, licence type, read failures, and insufficient-evidence results.

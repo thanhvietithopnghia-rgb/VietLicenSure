@@ -1,13 +1,13 @@
 # Hỗ trợ VietLicenSure
 
-Tài liệu này áp dụng cho bản phát hành hiện hành **VietLicenSure v5.0**, phát hành ngày `08/09/2026`.
+Tài liệu này áp dụng cho bản phát hành hiện hành **VietLicenSure v5.0**, phát hành lần đầu ngày `08/09/2026` và cập nhật đến `24/09/2026`.
 
 ## Chọn đúng kênh
 
 - **Báo lỗi có thể công khai:** dùng [GitHub Issues](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose).
 - **Hỏi đáp, ý tưởng và đề xuất:** dùng [GitHub Discussions](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions).
 - **Lỗ hổng chưa được khắc phục:** dùng [Private vulnerability reporting](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new), không đăng công khai.
-- **Yêu cầu truy cập mã nguồn có kiểm soát:** gửi văn bản tới `thanhvietit.hopnghia@gmail.com` theo [chính sách mã nguồn](SOURCE-POLICY-v4.9.md).
+- **Yêu cầu truy cập mã nguồn có kiểm soát:** gửi văn bản tới `thanhvietit.hopnghia@gmail.com` theo [chính sách mã nguồn](SOURCE-POLICY-v5.0.md).
 - **Liên hệ trực tiếp:** Zalo `0978 005 017` hoặc email `thanhvietit.hopnghia@gmail.com`.
 
 ## Thông tin nên gửi khi báo lỗi
