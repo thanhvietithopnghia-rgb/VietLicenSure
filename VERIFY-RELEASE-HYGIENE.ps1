@@ -22,8 +22,8 @@ $discussionsUrl = $repositoryUrl + '/discussions'
 $securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
 $releaseDateVi = '08/09/2026'
-$releaseDateIso = '2026-09-23'
-$currentUpdateDateVi = '23/09/2026'
+$releaseDateIso = '2026-09-24'
+$currentUpdateDateVi = '24/09/2026'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)
@@ -140,12 +140,14 @@ Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Viet'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Licen'
 Assert-HygieneContains 'RELEASE-NOTES-v5.0.md' $releaseNotes 'Sure'
 Assert-HygieneContains 'VERSION-HISTORY-en-US.md' $historyEn 'official name'
-Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'ManagedSigned / Internal Pilot'
-Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Public Stable'
+Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'Official Self-Signed'
+Assert-HygieneContains 'KNOWN-LIMITATIONS-v5.0.md' $limitations 'không được mô tả là public-CA'
 Assert-HygieneContains 'docs\index.html' $website '<a class="brand" href="#top"><img src="logo.svg"'
-Assert-HygieneContains 'docs\index.html' $website 'ManagedSigned / Internal Pilot'
+Assert-HygieneContains 'docs\index.html' $website 'Official Self-Signed'
 Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'Nguồn sự thật duy nhất'
-Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'Public Stable'
+Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'phát hành chính thức'
+Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'NotReviewed'
+Assert-HygieneContains 'OFFICIAL-SELF-SIGNED-POLICY-v1.md' (Get-Content -LiteralPath (Join-Path $SourceDirectory 'OFFICIAL-SELF-SIGNED-POLICY-v1.md') -Raw -Encoding UTF8) 'Official Self-Signed'
 Assert-HygieneContains 'FAQ-NGUOI-DUNG-MOI-v5.0.md' $firstRunFaq 'SmartScreen'
 Assert-HygieneContains 'FAQ-NGUOI-DUNG-MOI-v5.0.md' $firstRunFaq 'Trusted Root'
 Assert-HygieneContains 'FIRST-RUN-FAQ-v5.0.md' $firstRunFaqEn 'SmartScreen'
@@ -267,7 +269,7 @@ foreach ($legacyDocument in @(
     }
 }
 
-if ($releaseDateIso -ne '2026-09-23') { $failures.Add('Internal ISO update date drifted.') }
+if ($releaseDateIso -ne '2026-09-24') { $failures.Add('Internal ISO update date drifted.') }
 
 if ($failures.Count -gt 0) {
     Write-Host "VERIFY-RELEASE-HYGIENE: $($failures.Count) error(s)." -ForegroundColor Red

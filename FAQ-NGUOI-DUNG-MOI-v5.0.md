@@ -23,7 +23,7 @@ Không tắt SmartScreen, Microsoft Defender hoặc thêm ngoại lệ chỉ đ�
 4. Nếu có gói đầy đủ, chạy `VERIFY-RELEASE.cmd`; yêu cầu kết quả `0 lỗi`. Quét tệp bằng Microsoft Defender.
 5. **Dừng lại và tải lại/báo lỗi** nếu hash sai, `HashMismatch`, `NotSigned`, signer không khớp, thiếu timestamp hoặc CMS lỗi.
 
-Bản v5.0 hiện ở kênh `ManagedSigned / Internal Pilot` và dùng chứng thư tự ký được launcher ghim, nên một máy mới vẫn có thể hiện `Unknown publisher` hoặc SmartScreen dù tệp không bị sửa. Chỉ sau khi mọi bước xác minh đều đạt, trên máy cá nhân không bị quản trị, việc chọn **More info → Run anyway** là quyết định có chủ đích của người dùng. Nếu không có tùy chọn đó hoặc máy thuộc cơ quan/doanh nghiệp, hãy dừng và liên hệ quản trị viên; không thay đổi policy hay cài chứng thư vào Trusted Root chỉ để bỏ cảnh báo.
+Bản v5.0 là `Official Self-Signed`, dùng trust mode kỹ thuật `ManagedSigned` và chứng thư tự ký được launcher ghim. Vì vậy máy mới vẫn có thể hiện `Unknown publisher` hoặc SmartScreen dù tệp không bị sửa. Chỉ sau khi mọi bước xác minh đều đạt, trên máy cá nhân không bị quản trị, việc chọn **More info → Run anyway** là quyết định có chủ đích của người dùng. Nếu không có tùy chọn đó hoặc máy thuộc cơ quan/doanh nghiệp, hãy dừng và liên hệ quản trị viên; không thay đổi policy hay cài chứng thư vào Trusted Root chỉ để bỏ cảnh báo.
 
 ## Lần đầu nên chọn chức năng nào?
 

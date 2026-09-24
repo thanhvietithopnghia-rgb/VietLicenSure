@@ -23,7 +23,7 @@ Do not disable SmartScreen or Microsoft Defender, and do not add an exclusion me
 4. If you have the full package, run `VERIFY-RELEASE.cmd` and require `0 errors`. Scan the file with Microsoft Defender.
 5. **Stop and download again or report the problem** if the hash differs, the status is `HashMismatch` or `NotSigned`, the signer differs, the timestamp is missing, or CMS verification fails.
 
-VietLicenSure v5.0 is currently distributed as `ManagedSigned / Internal Pilot` and uses a pinned self-signed certificate. A new computer can therefore still show `Unknown publisher` or a SmartScreen warning even when the file has not been modified. Only after every verification step passes, on a personal unmanaged computer, may you deliberately choose **More info → Run anyway**. If that option is unavailable or the device is managed by an organization, stop and contact the administrator. Do not change device policy or install the certificate into Trusted Root merely to suppress the warning.
+VietLicenSure v5.0 is officially distributed through the `Official Self-Signed` channel, using the technical `ManagedSigned` trust mode and a pinned self-signed certificate. A new computer can therefore still show `Unknown publisher` or a SmartScreen warning even when the file has not been modified. Only after every verification step passes, on a personal unmanaged computer, may you deliberately choose **More info → Run anyway**. If that option is unavailable or the device is managed by an organization, stop and contact the administrator. Do not change device policy or install the certificate into Trusted Root merely to suppress the warning.
 
 ## Which function should I choose first?
 

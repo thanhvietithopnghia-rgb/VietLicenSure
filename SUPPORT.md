@@ -1,6 +1,6 @@
 # Hỗ trợ VietLicenSure
 
-Tài liệu này áp dụng cho bản phát hành hiện hành **VietLicenSure v5.0**, phát hành lần đầu ngày `08/09/2026` và cập nhật đến `23/09/2026`.
+Tài liệu này áp dụng cho bản phát hành hiện hành **VietLicenSure v5.0**, phát hành lần đầu ngày `08/09/2026` và cập nhật đến `24/09/2026`.
 
 ## Chọn đúng kênh
 

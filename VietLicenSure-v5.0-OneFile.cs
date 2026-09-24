@@ -69,8 +69,8 @@ namespace ThanhViet.VietLicenSure
         private const string StoreBuildMarker = "0";
 #elif TOOL_MANAGED_SIGNED_BUILD
         // ManagedSigned uses a locally distributed, hard-pinned trust anchor.
-        // Updates remain under managed deployment control; a self-signed pilot
-        // must never consume or replace itself from the public Stable channel.
+        // Updates remain under managed deployment control; an Official
+        // Self-Signed build must never replace itself from a public-CA channel.
         private const string SignedStableBuildMarker = "0";
         private const string SelfUpdateBuildMarker = "0";
         private const string ManagedSignedBuildMarker = "1";
@@ -571,7 +571,7 @@ namespace ThanhViet.VietLicenSure
 
         private static bool IsPinnedSelfSignedPublisherAccepted(uint trustStatus, bool signerIsSelfSigned)
         {
-            // A public-CA Stable build must always pass the normal Windows trust
+            // A public-CA build must always pass the normal Windows trust
             // chain.  The explicitly selected ManagedSigned channel may be used
             // on a clean PC without pre-installing our self-signed certificate,
             // but only when WinVerifyTrust reports the single expected chain
@@ -629,7 +629,7 @@ namespace ThanhViet.VietLicenSure
                 }
 
                 uint trustStatus = GetAuthenticodeTrustStatus(filePath);
-                // Public Stable still requires the normal Windows trust chain.
+                // A public-CA channel still requires the normal Windows trust chain.
                 // ManagedSigned can accept only CERT_E_UNTRUSTEDROOT for the
                 // exact self-signed certificate pinned above; a modified file
                 // returns TRUST_E_BAD_DIGEST and remains blocked.

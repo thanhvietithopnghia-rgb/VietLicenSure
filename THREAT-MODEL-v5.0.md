@@ -1,7 +1,7 @@
 # Mô hình đe dọa VietLicenSure v5.0
 
-Phiên bản áp dụng: **v5.0 ManagedSigned / Internal Pilot**
-Ngày rà soát: **2026-09-13**
+Phiên bản áp dụng: **v5.0 Official Self-Signed** — trust mode kỹ thuật `ManagedSigned`
+Ngày rà soát: **2026-09-24**
 
 ## Mục tiêu bảo vệ
 
@@ -59,7 +59,7 @@ Nếu nguồn gốc bản dựng, signer, schema, backup hoặc mục tiêu thay
 
 - Metadata cập nhật phải đến từ URL GitHub HTTPS cố định, đúng kích thước/hash và có chữ ký CMS của chứng thư ghim.
 - EXE tải về phải có Authenticode đúng signer; bản ManagedSigned chấp nhận root tự ký chưa được máy tin cậy chỉ khi cả SHA-1/SHA-256 đều khớp hồ sơ.
-- Chỉ kênh Public Stable dùng chứng thư CA công cộng mới bật self-update; `ManagedSigned / Internal Pilot` dùng `ManagedDeployment` và không đọc public Stable manifest để tự thay thế.
+- Kênh `Official Self-Signed` dùng `ManagedDeployment`/tải thủ công và không đọc manifest để tự thay EXE; nếu sau này chuyển public-CA/Store phải tạo chuỗi phát hành mới.
 - Updater nâng quyền không nhận cache root từ tiến trình trước UAC, phải kiểm lại hash launcher sau khi tiến trình cũ thoát và không bao giờ tự khởi chạy đường dẫn launcher bằng token Administrator; người dùng mở lại ứng dụng theo cách bình thường.
 - SBOM CycloneDX và provenance phải gắn đúng EXE, Build ID, source snapshot và release status.
 - Bản không xác minh được không được tự cập nhật hoặc thực hiện hành động thay đổi hệ thống.
@@ -74,4 +74,4 @@ Nếu nguồn gốc bản dựng, signer, schema, backup hoặc mục tiêu thay
 
 ## Tiêu chí xem xét lại
 
-Rà soát mô hình này khi thay signer/cert, định dạng manifest, nguồn cập nhật, broker nâng quyền, adapter phần mềm, vị trí lưu backup/log, protocol doanh nghiệp hoặc trước khi nâng kênh thành Public Stable.
+Rà soát mô hình này khi thay signer/cert, định dạng manifest, nguồn cập nhật, broker nâng quyền, adapter phần mềm, vị trí lưu backup/log, protocol doanh nghiệp hoặc trước khi chuyển sang public-CA/EV/Store.

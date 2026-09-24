@@ -38,7 +38,7 @@ Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Chỉ bật Online khi cần cập nhật danh mục nhận diện hoặc dùng chức năng quản lý trong mạng nội bộ.
 
-Tệp một-EXE của kênh `ManagedSigned / Internal Pilot` có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa, nhưng hiện chưa mang nhãn `Public Stable`. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải bản chính thức trực tiếp từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender.
+Tệp một-EXE của kênh `Official Self-Signed` dùng trust mode kỹ thuật `ManagedSigned`, có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Đây là bản phát hành chính thức bằng chứng thư tự ký, không phải public-CA/EV/Store-signed. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender.
 
 ### Xử lý cảnh báo SmartScreen an toàn
 
@@ -63,7 +63,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 ## Điểm cần biết trong v5.0
 
 - Bản ManagedSigned hiển thị trạng thái riêng, chỉ mở thao tác hệ thống khi Authenticode, timestamp, provenance và chứng thư quản trị đều hợp lệ trên máy.
-- Stable chỉ được tạo khi chứng thư CA-issued/HSM, RFC3161 timestamp, provenance CMS, source commit sạch và bộ verifier đều đạt.
+- Bản Official Self-Signed chỉ được công bố khi đúng signer tự ký đã ghim, RFC3161 timestamp, provenance CMS, source commit sạch và bộ verifier/artifact-bound QA đều đạt; nếu chuyển public-CA/EV/Store phải tạo chuỗi phát hành mới.
 - Catalog có trạng thái độ mới; plugin bên thứ ba chỉ dùng metadata khai báo đã ký với fingerprint nhà phát hành được ghim.
 - Có ba mức Quick/Standard/Deep, giao diện dark/light theo hệ thống, PerMonitorV2 DPI và xuất fleet an toàn cho quản trị doanh nghiệp.
 - Mục Khắc phục có năm chức năng riêng: Windows, Microsoft Office, phần mềm khác, Khôi phục key OEM và Quản lý giấy phép hợp lệ; ba chức năng khắc phục mở thẳng đúng màn hình và khóa phạm vi từ lúc quét đến hậu kiểm.

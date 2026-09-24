@@ -1,8 +1,8 @@
 # Bản đồ tài liệu — VietLicenSure v5.0
 
 - **Phiên bản áp dụng:** `v5.0`
-- **Kênh:** `ManagedSigned / Internal Pilot`
-- **Public Stable:** `HOLD`
+- **Kênh:** `Official Self-Signed`
+- **Trạng thái:** phát hành chính thức bằng chứng thư tự ký; trust mode kỹ thuật `ManagedSigned`
 - **Nguồn sự thật về trạng thái:** `RELEASE-STATUS-v5.0.md`
 
 Trang này là mục lục chuẩn. Tên hiển thị dùng thống nhất trong README, website và gói bàn giao; hậu tố v4.8/v4.9 trên một số tệp chỉ mốc hình thành tài liệu, không phải phiên bản của EXE v5.0.
@@ -60,7 +60,7 @@ Thông báo chuẩn ở đầu tài liệu legacy:
 5. Baseline v4.8/v4.9.
 6. Nội dung giới thiệu trên website và hồ sơ lịch sử.
 
-Nếu các nguồn mâu thuẫn, dừng chức năng thay đổi hệ thống và báo lỗi qua kênh chính thức. Không chọn nguồn “gần đúng” và không tự chuyển trạng thái từ Internal Pilot sang Public Stable.
+Nếu các nguồn mâu thuẫn, dừng chức năng thay đổi hệ thống và báo lỗi qua kênh chính thức. Không chọn nguồn “gần đúng” và không tự suy diễn Official Self-Signed thành public-CA/EV/Store-signed.
 
 ## Quy tắc duy trì
 

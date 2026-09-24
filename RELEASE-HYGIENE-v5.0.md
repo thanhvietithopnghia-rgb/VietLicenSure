@@ -4,7 +4,7 @@
 
 - Tên ngắn: `VietLicenSure`.
 - Tên đầy đủ: `VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống`.
-- Phiên bản sản phẩm và phát hành: `v5.0`; phát hành lần đầu: `08/09/2026`; nội dung/gói hiện hành cập nhật đến: `23/09/2026`.
+- Phiên bản sản phẩm và phát hành: `v5.0`; phát hành lần đầu: `08/09/2026`; nội dung/gói hiện hành cập nhật đến: `24/09/2026`.
 - Tệp chạy: `VietLicenSure-v5.0.exe`.
 - Kho phát hành: <https://github.com/thanhvietithopnghia-rgb/VietLicenSure>.
 
@@ -16,7 +16,7 @@ Ngày 06/09/2026, v5.0 chính thức đổi tên từ **Tool Kiểm Tra Máy Tí
 - Đổi tên các artifact mang thương hiệu hiện hành: EXE, launcher source/manifest, icon, CMD và script đóng gói MSIX.
 - Bổ sung Bắt đầu nhanh, Giới hạn đã biết và verifier chống version/date/name drift.
 - Giữ riêng gói người dùng với mã nguồn/maintainer; mọi tệp phát hành phải nằm trong `RELEASE-SHA256SUMS.txt`.
-- Nhãn phát hành là `ManagedSigned / Internal Pilot`, không dùng `Public Stable` khi các cổng bằng chứng chưa đạt.
+- Nhãn phát hành là `Official Self-Signed`, trust mode kỹ thuật `ManagedSigned`; mọi bề mặt phải ghi rõ self-signed và không được mô tả là public-CA/EV/Store-signed.
 
 ## Ngoại lệ legacy bắt buộc
 

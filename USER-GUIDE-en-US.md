@@ -38,7 +38,7 @@ The project aims to provide a reliable, clear, and cautious technical inspection
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
 6. Keep Offline enabled unless you intentionally need a catalog update or authorized LAN management.
 
-The `ManagedSigned / Internal Pilot` single-file EXE carries a signature and provenance manifest for tamper detection, but it is not currently labelled `Public Stable`. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download the official build directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender.
+The `Official Self-Signed` single-file EXE uses the technical `ManagedSigned` trust mode and carries a signature plus provenance manifest for tamper detection. It is an official release signed with a pinned self-issued certificate; it is not public-CA, EV, or Microsoft Store signed. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download it directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender.
 
 ### Handle a SmartScreen warning safely
 
@@ -63,7 +63,7 @@ You do not need source access, configuration files, or technical documentation t
 ## What v5.0 changes
 
 - ManagedSigned uses a distinct state and enables approved system actions only when Authenticode, timestamp, provenance, and administrator trust all validate on the machine.
-- Stable requires a CA-issued/HSM signing certificate, RFC3161 timestamp, valid CMS provenance, a clean source commit, and a fully passing verifier suite.
+- Official Self-Signed requires the exact pinned self-issued signer, RFC3161 timestamp, valid CMS provenance, a clean source commit, and fully passing verifier/artifact-bound QA. A future public-CA/EV/Store channel requires a new release chain.
 - Catalog freshness is explicit, and third-party plugins accept only signed declarative metadata from pinned publisher fingerprints.
 - Quick, Standard, and Deep scans, system-aware dark/light themes, PerMonitorV2 DPI, and safe fleet exports support larger deployments.
 - Remediation contains five separate entries: Windows, Microsoft Office, other software, OEM key recovery, and valid-license management. The first three open their scope-specific screen directly and keep that scope locked through scan, backup, confirmation, and post-check.

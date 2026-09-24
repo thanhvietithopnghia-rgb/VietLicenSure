@@ -21,5 +21,5 @@
   <text x="462" y="382" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="34" font-weight="650">Quản lý hệ thống chủ động.</text>
   <rect x="462" y="425" width="610" height="58" rx="29" fill="#fff" opacity=".13"/>
   <text x="492" y="463" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="650">Offline mặc định · CMS · Authenticode · SBOM</text>
-  <text x="462" y="535" fill="#d6f7fb" font-family="Segoe UI,Arial,sans-serif" font-size="25">v5.0 · ManagedSigned / Internal Pilot</text>
+  <text x="462" y="535" fill="#d6f7fb" font-family="Segoe UI,Arial,sans-serif" font-size="25">v5.0 · Official Self-Signed</text>
 </svg>
