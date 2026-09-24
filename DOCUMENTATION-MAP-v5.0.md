@@ -22,7 +22,7 @@ Trang này là mục lục chuẩn. Tên hiển thị dùng thống nhất trong
 | Lịch sử phiên bản Việt/Anh | **Lịch sử phiên bản** | `LICH-SU-PHIEN-BAN.txt`, `VERSION-HISTORY-en-US.md` |
 | An toàn và mô hình đe dọa | **Chính sách an toàn**, **Mô hình đe dọa v5.0** | `SAFETY-POLICY-v1.0.md`, `THREAT-MODEL-v5.0.md` |
 | Nguồn gốc bản dựng | Metadata có chữ ký và manifest của gói | `OFFICIAL-PROVENANCE-v1.json` + `.p7s`, `RELEASE-MANIFEST.json`, `SBOM.cdx.json` |
-| Chính sách mã nguồn | **Chính sách mã nguồn có kiểm soát từ v4.9** | `SOURCE-POLICY-v4.9.md`, `README-MA-NGUON.md` |
+| Chính sách mã nguồn | **Chính sách phát triển cộng đồng và mã nguồn có kiểm soát v5.0** | `SOURCE-POLICY-v5.0.md`, `README-MA-NGUON.md` |
 | Hỗ trợ và báo lỗi | **Hỗ trợ**, **Báo cáo bảo mật**, **Đóng góp** | `SUPPORT.md`, `SECURITY.md`, `CONTRIBUTING.md` |
 
 ## Vòng đời tài liệu
@@ -45,7 +45,7 @@ Không xóa tài liệu legacy chỉ để làm gọn kho. Gắn thông báo vò
 | `SECURITY-HARDENING-v4.8.md` | Baseline hỗ trợ | Hardening nền; không dùng riêng để tuyên bố v5.0 đã đạt. |
 | `DANH-GIA-VA-NANG-CAP-v4.8.md` | Lịch sử | Đánh giá tại mốc v4.8; roadmap hiện hành nằm trong `RELEASE-STATUS-v5.0.md` và `ROADMAP-v5.0.md`. |
 | `RELEASE-NOTES-v4.9.md` | Lịch sử | Chỉ dùng truy vết thay đổi v4.9; xem `RELEASE-NOTES-v5.0.md` cho bản hiện tại. |
-| `SOURCE-POLICY-v4.9.md` | Baseline hỗ trợ | Chính sách bắt đầu từ v4.9 và tiếp tục áp dụng cho v5.0 cho tới thông báo chính thức mới. |
+| `SOURCE-POLICY-v4.9.md` | Lịch sử/chuyển hướng | Chính sách cũ bắt đầu từ v4.9; đã được thay thế bởi `SOURCE-POLICY-v5.0.md` từ 24/09/2026. |
 
 Thông báo chuẩn ở đầu tài liệu legacy:
 

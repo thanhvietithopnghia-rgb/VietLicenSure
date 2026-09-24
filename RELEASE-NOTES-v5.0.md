@@ -49,7 +49,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Công bố rõ lý do chuyển sang mô hình mã nguồn có kiểm soát từ v4.9: tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành thành phần mềm khác khi chưa được cho phép hay ủy quyền.
 - Xác định phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ.
 - Công bố quy trình yêu cầu truy cập bằng văn bản, phạm vi quyền được cấp và nguyên tắc quyền xem không đồng nghĩa quyền sử dụng lại.
-- Xác nhận chưa cam kết ngày mở lại mã nguồn; chính sách được xem xét định kỳ theo khả năng bảo vệ sở hữu trí tuệ, kiểm soát truy cập, thông tin nhạy cảm và chuỗi phát hành.
+- Công bố lộ trình mở mã nguồn dự kiến theo bốn giai đoạn từ nay đến sau 07/2027; các mốc không phải cam kết cứng và có thể thay đổi theo đánh giá rủi ro.
 - Bổ sung kênh tương tác hai chiều: GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho lỗ hổng bảo mật.
 - Đồng bộ duy nhất tên `VietLicenSure v5.0` trong ứng dụng, tài liệu, bộ cập nhật và các kênh công khai.
 

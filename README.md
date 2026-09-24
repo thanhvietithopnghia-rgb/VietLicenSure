@@ -100,9 +100,9 @@ Thay đổi này được đưa ra sau khi tác giả phát hiện VietLicenSure
 
 Phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, thành phần build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ từ v4.9 trở đi. Người muốn tham khảo, học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải gửi yêu cầu và nhận chấp thuận bằng văn bản của tác giả trước khi truy cập. Quyền xem không tự cấp quyền sao chép, chia sẻ, sửa đổi, tạo sản phẩm phái sinh, đóng gói, thương mại hóa, dùng làm dữ liệu huấn luyện, đổi thương hiệu hoặc xóa ghi nhận tác giả.
 
-Hiện chưa có ngày cam kết mở lại mã nguồn. Tác giả sẽ xem xét định kỳ dựa trên khả năng kiểm soát truy cập, bảo vệ thông tin nhạy cảm, bảo đảm chuỗi phát hành và xử lý hành vi sao chép/phát hành trái phép. Kết quả có thể là tiếp tục đóng, mở chọn lọc hoặc mở rộng quyền truy cập bằng thông báo chính thức.
+Chính sách v5.0 công bố lộ trình dự kiến theo bốn giai đoạn: kiểm soát chặt đến hết 11/2026, có thể mở chọn lọc module không chứa lõi đến hết 02/2027, xem xét mở rộng thành phần ổn định đến hết 06/2027 và mở rộng có điều kiện từ 07/2027. Các mốc này không phải cam kết cứng; phạm vi hoặc thời gian có thể thay đổi theo rủi ro bảo mật, pháp lý và sao chép trái phép.
 
-Đọc [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md), [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt) và [Hướng dẫn tiếp cận mã nguồn](README-MA-NGUON.md).
+Đọc [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v5.0.md), [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt) và [Hướng dẫn tiếp cận mã nguồn](README-MA-NGUON.md).
 
 ## Tài liệu
 

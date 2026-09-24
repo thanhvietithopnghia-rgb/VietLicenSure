@@ -32,7 +32,7 @@ phát sinh sau khi tác giả chấp thuận bằng văn bản và không đư�
 Nếu được duyệt, tác giả sẽ quy định riêng nhánh/phạm vi, cách gửi thay đổi, tiêu
 chuẩn kiểm thử, cách ghi nhận và điều kiện quyền tác giả. Không đẩy mã được kiểm
 soát lên fork/kho công khai, issue, discussion, paste service hoặc dịch vụ chưa
-được chấp thuận. Xem [SOURCE-POLICY-v4.9.md](SOURCE-POLICY-v4.9.md) và
+được chấp thuận. Xem [SOURCE-POLICY-v5.0.md](SOURCE-POLICY-v5.0.md) và
 [LICENSE-NOTICE.txt](LICENSE-NOTICE.txt).
 
 ## Quyền đối với đóng góp

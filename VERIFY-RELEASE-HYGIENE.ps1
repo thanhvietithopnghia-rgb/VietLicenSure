@@ -161,7 +161,8 @@ foreach ($channelUrl in @($issuesUrl, $discussionsUrl, $securityAdvisoryUrl)) {
     Assert-HygieneContains 'docs\index.html' $website $channelUrl
 }
 Assert-HygieneContains 'CONTRIBUTING.md' $contributing $issuesUrl
-Assert-HygieneContains 'SOURCE-POLICY-v4.9.md' (Read-HygieneText 'SOURCE-POLICY-v4.9.md') 'no committed date for reopening the source'
+Assert-HygieneContains 'SOURCE-POLICY-v5.0.md' (Read-HygieneText 'SOURCE-POLICY-v5.0.md') 'không phải cam kết cứng'
+Assert-HygieneContains 'SOURCE-POLICY-v5.0.md' (Read-HygieneText 'SOURCE-POLICY-v5.0.md') 'tháng 07/2027'
 Assert-HygieneContains 'docs\index.html' $website ('href="' + $repositoryUrl + '/releases/tag/v' + $technicalVersion + '">')
 Assert-HygieneContains 'docs\index.html' $website ('href="' + $repositoryUrl + '/releases">')
 Assert-HygieneContains 'docs\index.html' $website 'data-user="thanhvietit.hopnghia" data-domain="gmail.com"'

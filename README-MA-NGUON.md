@@ -47,13 +47,13 @@ Gửi email tới `thanhvietit.hopnghia@gmail.com` và nêu rõ:
 4. thời gian dự kiến cần truy cập;
 5. người sẽ được truy cập và biện pháp bảo vệ dữ liệu nguồn;
 6. đầu ra dự kiến, cách công bố kết quả và kế hoạch tiết lộ lỗ hổng nếu có;
-7. xác nhận tuân thủ `SOURCE-POLICY-v4.9.md`, `LICENSE-NOTICE.txt` và điều kiện bổ sung trong văn bản chấp thuận.
+7. xác nhận tuân thủ `SOURCE-POLICY-v5.0.md`, `LICENSE-NOTICE.txt` và điều kiện bổ sung trong văn bản chấp thuận.
 
 Tác giả có quyền chấp thuận, giới hạn hoặc từ chối yêu cầu. Việc gửi yêu cầu không tự tạo quyền truy cập.
 
-## Khả năng mở lại mã nguồn
+## Lộ trình mở mã nguồn dự kiến
 
-Hiện tại tác giả chưa cam kết ngày mở lại mã nguồn. Chính sách được xem xét định kỳ dựa trên khả năng ngăn việc sao chép/phát hành trái phép, xác minh danh tính người được cấp quyền, bảo vệ thông tin nhạy cảm, duy trì an toàn chuỗi phát hành và xử lý vi phạm. Kết quả xem xét có thể là tiếp tục đóng, mở một số thành phần, cấp quyền theo từng mục đích hoặc mở rộng công khai. Mọi thay đổi chỉ có hiệu lực khi được tác giả công bố chính thức bằng văn bản.
+`SOURCE-POLICY-v5.0.md` quy định lộ trình bốn giai đoạn: kiểm soát chặt đến hết 11/2026; có thể mở chọn lọc module không chứa lõi đến hết 02/2027; xem xét mở rộng thành phần ổn định đến hết 06/2027; và mở rộng có điều kiện từ 07/2027. Đây là khung dự kiến, không phải cam kết cứng. Tác giả có thể gia hạn, rút ngắn, thay đổi phạm vi hoặc tạm dừng nếu có rủi ro bảo mật, pháp lý, lộ thông tin nhạy cảm hay sao chép trái phép. Mọi thay đổi chỉ có hiệu lực khi được công bố chính thức bằng văn bản.
 
 ## Giới hạn mặc định của quyền xem
 
@@ -88,10 +88,10 @@ Chính sách này chỉ áp dụng cho mã nguồn từ v4.9 trở đi. Phiên b
 
 ## Tài liệu chính sách chuẩn
 
-- [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v4.9.md)
+- [Chính sách phát triển cộng đồng và mã nguồn có kiểm soát](SOURCE-POLICY-v5.0.md)
 - [Thông báo bản quyền và điều khoản sử dụng](LICENSE-NOTICE.txt)
 - [Tải trực tiếp VietLicenSure v5.0](https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe)
 
-Nếu nội dung tóm tắt này khác với văn bản chấp thuận riêng hoặc chính sách đầy đủ, văn bản chấp thuận và `SOURCE-POLICY-v4.9.md` được ưu tiên áp dụng.
+Nếu nội dung tóm tắt này khác với văn bản chấp thuận riêng hoặc chính sách đầy đủ, văn bản chấp thuận và `SOURCE-POLICY-v5.0.md` được ưu tiên áp dụng.
 
 © 2026 Thanh Việt. Mọi quyền được bảo lưu.

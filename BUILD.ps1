@@ -138,7 +138,7 @@ $payloadFiles = @(
     'LICH-SU-PHIEN-BAN.txt',
     'VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md',
+    'SOURCE-POLICY-v5.0.md',
     'Tool-Provenance.ps1',
     'OFFICIAL-PROVENANCE-v1.json',
     'OFFICIAL-PROVENANCE-v1.json.p7s',
@@ -199,7 +199,7 @@ $integrityFiles = @(
     'LICH-SU-PHIEN-BAN.txt',
     'VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md',
+    'SOURCE-POLICY-v5.0.md',
     'Tool-Provenance.ps1',
     'OFFICIAL-PROVENANCE-v1.json',
     'OFFICIAL-PROVENANCE-v1.json.p7s',
@@ -273,7 +273,7 @@ $sourceFiles = @(
     'CODE-SIGNING-POLICY-v1.md'
     'DANH-GIA-VA-NANG-CAP-v4.8.md'
     'LICENSE-NOTICE.txt'
-    'SOURCE-POLICY-v4.9.md'
+    'SOURCE-POLICY-v5.0.md'
     'RELEASE-NOTES-v4.9.md'
     'RELEASE-NOTES-v5.0.md'
     'README.md'
@@ -517,7 +517,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'CODE-SIGNING-POLICY-v1.md',
     'DANH-GIA-VA-NANG-CAP-v4.8.md',
     'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md',
+    'SOURCE-POLICY-v5.0.md',
     'RELEASE-NOTES-v4.9.md',
     'RELEASE-NOTES-v5.0.md',
     'README.md',
@@ -947,7 +947,7 @@ try {
 Write-Host '[5/8] Tạo metadata phát hành...'
 $releaseSidecars = @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'FAQ-NGUOI-DUNG-MOI-v5.0.md', 'FIRST-RUN-FAQ-v5.0.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
+    'SOURCE-POLICY-v5.0.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'DOCUMENTATION-MAP-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
@@ -1376,7 +1376,7 @@ $applicationUpdateManifest = [ordered]@{
             'Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.',
             'Kiểm kê bổ sung AppX/MSIX, Winget, shortcut, trình quản lý gói và adapter Autodesk chỉ-đọc; phân biệt bản cài đã xác nhận với portable/tệp còn sót và gộp Adobe Acrobat theo họ sản phẩm.',
             'Quét toàn vẹn thích ứng mở rộng Authenticode trong đúng thư mục sản phẩm khi hosts, firewall hoặc dịch vụ hãng bất thường; bằng chứng không còn lan giữa các sản phẩm Adobe.',
-            'Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng mã nguồn không còn công khai, không phải mã nguồn mở và chỉ được tiếp cận theo phạm vi, thời hạn và điều kiện được tác giả chấp thuận trước bằng văn bản; chưa có lịch cam kết mở lại.',
+            'Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng không phải mã nguồn mở; SOURCE-POLICY-v5.0 công bố lộ trình dự kiến bốn giai đoạn đến và sau 07/2027, không phải cam kết cứng và luôn phụ thuộc đánh giá rủi ro.',
             'Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng.'
         )
         'en-US' = @(
@@ -1400,7 +1400,7 @@ $applicationUpdateManifest = [ordered]@{
             'Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.',
             'Inventory adds AppX/MSIX, WinGet, shortcuts, package managers, and a read-only Autodesk adapter; it distinguishes confirmed installs from portable/residual files and merges Adobe Acrobat by product family.',
             'Adaptive integrity scanning expands Authenticode checks inside the exact product directory when vendor hosts, firewall rules, or licensing services are abnormal; Adobe evidence no longer leaks across products.',
-            'Starting with v4.9, VietLicenSure remains free, but its source is not public or open source and may be accessed only within the scope, duration, and conditions approved by the author in writing; no reopening date is currently committed.',
+            'Starting with v4.9, VietLicenSure remains free but is not open source; SOURCE-POLICY-v5.0 publishes a four-stage indicative roadmap through and after July 2027, with no firm-date commitment and risk-gated progression.',
             'Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate.'
         )
     }
@@ -1551,7 +1551,7 @@ $infoLines = @(
 
 $releaseHashFiles = @($targets.OutputName) + @(
     'approved-kms-servers.txt', 'HUONG-DAN.txt', 'USER-GUIDE-en-US.md', 'FAQ-NGUOI-DUNG-MOI-v5.0.md', 'FIRST-RUN-FAQ-v5.0.md', 'LICH-SU-PHIEN-BAN.txt', 'VERSION-HISTORY-en-US.md', 'LICENSE-NOTICE.txt',
-    'SOURCE-POLICY-v4.9.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json',
+    'SOURCE-POLICY-v5.0.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.5.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'DOCUMENTATION-MAP-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',

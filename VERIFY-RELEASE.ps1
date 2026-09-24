@@ -225,7 +225,7 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 56 } else { 57 }
 $expectedSourceHashCount = if ($AllowDevelopmentManifest) { 141 } else { 142 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 164 } else { 166 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 165 } else { 167 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -662,7 +662,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','FAQ-NGUOI-DUNG-MOI-v5.0.md','FIRST-RUN-FAQ-v5.0.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
-    'LICENSE-NOTICE.txt','SOURCE-POLICY-v4.9.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
+    'LICENSE-NOTICE.txt','SOURCE-POLICY-v5.0.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
     'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',

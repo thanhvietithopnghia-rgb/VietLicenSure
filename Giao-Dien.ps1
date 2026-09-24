@@ -519,7 +519,7 @@ $englishHistoryFile = Join-Path $baseDir "VERSION-HISTORY-en-US.md"
 $integrityManifest = Join-Path $baseDir "TOOL-SHA256SUMS.txt"
 $requiredIntegrityFiles = @(
     "HUONG-DAN.txt", "USER-GUIDE-en-US.md", "FAQ-NGUOI-DUNG-MOI-v5.0.md", "FIRST-RUN-FAQ-v5.0.md", "LICH-SU-PHIEN-BAN.txt", "VERSION-HISTORY-en-US.md", "LICENSE-NOTICE.txt",
-    "SOURCE-POLICY-v4.9.md", "Tool-Provenance.ps1", "OFFICIAL-PROVENANCE-v1.json",
+    "SOURCE-POLICY-v5.0.md", "Tool-Provenance.ps1", "OFFICIAL-PROVENANCE-v1.json",
     "Giao-Dien.ps1", "kiem-tra-cau-hinh-ban-quyen.ps1", "VietLicenSure-icon.svg",
     "VietLicenSure.cmd", "Tool-Runtime.ps1", "Tool-ElevatedBridge.ps1", "Tool-DataLifecycle.ps1", "Tool-Compatibility.ps1", "compatibility-catalog-v1.0.json", "Tool-Capabilities.ps1", "Tool-ScanOptimization.ps1", "Tool-Logging.ps1", "Tool-ModuleContract.ps1", "Tool-UiTheme.ps1", "Tool-DashboardPresentation.ps1", "Tool-Localization.ps1", "Tool-Strings.vi-VN.json", "Tool-Strings.en-US.json", "Tool-OfflinePolicy.ps1", "Tool-Assistant.ps1", "tool-assistant-knowledge-v1.1.json", "Tool-SoftwareInventory.ps1", "software-license-catalog-v1.0.json", "software-license-catalog-v1.0.json.p7s", "software-license-online-update.ps1", "Tool-UpdateManager.ps1", "windows-license-backup.ps1",
     "Tool-ReportSchema.ps1", "Tool-ResultCenter.ps1", "Tool-ReportExport.ps1", "Tool-PluginEngine.ps1", "Tool-LicenseTimeline.ps1", "Tool-SafetyPolicy.ps1",
@@ -997,7 +997,10 @@ $introAssistantButton.ForeColor = [System.Drawing.Color]::White
 $introAssistantButton.TextImageRelation = [System.Windows.Forms.TextImageRelation]::ImageBeforeText
 $introAssistantButton.ImageAlign = "MiddleLeft"
 $introAssistantButton.TextAlign = "MiddleCenter"
-$introAssistantButton.Padding = New-Object System.Windows.Forms.Padding(7, 0, 6, 0)
+$introAssistantButton.UseMnemonic = $false
+$introAssistantButton.AutoEllipsis = $false
+$introAssistantButton.AutoSize = $false
+$introAssistantButton.Padding = New-Object System.Windows.Forms.Padding(10, 0, 9, 0)
 $introAssistantIcon = New-DashboardIconBitmap -Kind "Chat" -Size 18
 [void]$dashboardIconImages.Add($introAssistantIcon)
 $introAssistantButton.Image = $introAssistantIcon
@@ -1614,17 +1617,21 @@ function Update-MainLayout {
         $introPanel.Left = $left
         $introPanel.Top = $headerPanel.Bottom + $(if ($ultraCompactHeight) { 8 } else { 14 })
         $introPanel.Width = $contentWidth
-        $introPanel.Height = if ($ultraCompactHeight) { 44 } elseif ($compactHeight) { 50 } else { 58 }
+        $introButtonTextHeight = [Math]::Max($introAssistantButton.Font.Height, $introDetailButton.Font.Height)
+        $introButtonImageHeight = if ($introAssistantButton.Image) { [int]$introAssistantButton.Image.Height } else { 0 }
+        $introActionHeight = [Math]::Max(30, [Math]::Max(($introButtonTextHeight + 12), ($introButtonImageHeight + 10)))
+        $introPanelBaseHeight = if ($ultraCompactHeight) { 44 } elseif ($compactHeight) { 50 } else { 58 }
+        $introPanel.Height = [Math]::Max($introPanelBaseHeight, ($introActionHeight + 8))
         $introDetailButton.Width = [Math]::Max(
             $(if ($ultraCompactHeight) { 142 } else { 154 }),
-            (Get-ToolUiButtonRequiredWidth -Button $introDetailButton -HorizontalSafety 12))
-        $introDetailButton.Height = 30
+            (Get-ToolUiButtonRequiredWidth -Button $introDetailButton -HorizontalSafety 20))
+        $introDetailButton.Height = $introActionHeight
         $introDetailButton.Left = $introPanel.ClientSize.Width - $introDetailButton.Width - 10
         $introDetailButton.Top = [Math]::Max(4, [Math]::Floor(($introPanel.ClientSize.Height - $introDetailButton.Height) / 2))
         $introAssistantButton.Width = [Math]::Max(
             $(if ($ultraCompactHeight) { 176 } else { 188 }),
-            (Get-ToolUiButtonRequiredWidth -Button $introAssistantButton -HorizontalSafety 12))
-        $introAssistantButton.Height = 30
+            (Get-ToolUiButtonRequiredWidth -Button $introAssistantButton -HorizontalSafety 26))
+        $introAssistantButton.Height = $introActionHeight
         $introAssistantButton.Left = $introDetailButton.Left - $introAssistantButton.Width - 8
         $introAssistantButton.Top = $introDetailButton.Top
         $description.Left = 15

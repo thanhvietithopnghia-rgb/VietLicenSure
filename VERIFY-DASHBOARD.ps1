@@ -598,6 +598,39 @@ if ([string]$fitViCatalog.'app.assistant' -ne 'Trợ lý' -or
     [string]$fitEnCatalog.'app.assistant' -ne 'Assistant') {
     Add-Failure 'Nút Trợ lý chưa dùng nhãn ngắn, đồng bộ ở cả hai ngôn ngữ.'
 }
+foreach ($assistantCase in @(
+    @('vi-VN', [string]$fitViCatalog.'app.assistant'),
+    @('en-US', [string]$fitEnCatalog.'app.assistant')
+)) {
+    foreach ($dpiScale in @(1.0, 1.25, 1.5, 1.75, 2.0)) {
+        $assistantFont = New-Object Drawing.Font('Segoe UI', ([single](9.6 * $dpiScale)), [Drawing.FontStyle]::Bold)
+        $assistantIcon = New-Object Drawing.Bitmap([Math]::Max(18, [int][Math]::Round(18 * $dpiScale)), [Math]::Max(18, [int][Math]::Round(18 * $dpiScale)))
+        $assistantButton = New-Object Windows.Forms.Button
+        try {
+            $assistantButton.Text = [string]$assistantCase[1]
+            $assistantButton.Font = $assistantFont
+            $assistantButton.Image = $assistantIcon
+            $assistantButton.TextImageRelation = [Windows.Forms.TextImageRelation]::ImageBeforeText
+            $assistantButton.Padding = New-Object Windows.Forms.Padding(10, 0, 9, 0)
+            $assistantButton.UseMnemonic = $false
+            $assistantButton.AutoEllipsis = $false
+            $assistantRequiredWidth = Get-ToolUiButtonRequiredWidth -Button $assistantButton -HorizontalSafety 26
+            $assistantRequiredHeight = [Math]::Max(30, [Math]::Max(($assistantButton.Font.Height + 12), ($assistantButton.Image.Height + 10)))
+            $assistantButton.Size = New-Object Drawing.Size([Math]::Max(188, $assistantRequiredWidth), $assistantRequiredHeight)
+            $assistantTextFlags = [Windows.Forms.TextFormatFlags]::NoPadding -bor [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+            $assistantTextSize = [Windows.Forms.TextRenderer]::MeasureText($assistantButton.Text, $assistantButton.Font, [Drawing.Size]::Empty, $assistantTextFlags)
+            $assistantContentWidth = $assistantTextSize.Width + $assistantButton.Image.Width + $assistantButton.Padding.Horizontal + 26
+            $assistantContentHeight = [Math]::Max($assistantTextSize.Height, $assistantButton.Image.Height) + 10
+            if ($assistantButton.Width -lt $assistantContentWidth -or $assistantButton.Height -lt $assistantContentHeight -or $assistantButton.UseMnemonic -or $assistantButton.AutoEllipsis) {
+                Add-Failure "Nút Trợ lý $($assistantCase[0]) bị cắt ở DPI $([int]($dpiScale * 100))%."
+            }
+        } finally {
+            $assistantButton.Dispose()
+            $assistantIcon.Dispose()
+            $assistantFont.Dispose()
+        }
+    }
+}
 $sidebarBrandText = [string]$fitViCatalog.'dashboard.sidebar.brand'
 foreach ($dpiScale in @(1.0, 1.25, 1.5, 1.75, 2.0)) {
     $brandAvailableWidth = [int](124 * $dpiScale)
