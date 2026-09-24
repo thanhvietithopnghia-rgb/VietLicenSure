@@ -386,9 +386,10 @@ function Get-LocalLicenseClippedTextControls {
 
     foreach ($control in $Root.Controls) {
         if ($control -is [System.Windows.Forms.Button] -and -not [string]::IsNullOrWhiteSpace([string]$control.Text)) {
-            if ($control.Width -lt (Get-ToolUiButtonRequiredWidth -Button $control -HorizontalSafety 8) -or
+            $requiredButtonWidth = Get-ToolUiButtonRequiredWidth -Button $control -HorizontalSafety 8
+            if ($control.Width -lt $requiredButtonWidth -or
                 (([string]$control.Text).Contains('&') -and $control.UseMnemonic)) {
-                Write-Output "Button: $([string]$control.Text)"
+                Write-Output "Button: $([string]$control.Text) [$($control.Width) < $requiredButtonWidth]"
             }
         } elseif ($control -is [System.Windows.Forms.Label] -and -not [string]::IsNullOrWhiteSpace([string]$control.Text)) {
             $requiredHeight = Get-LocalLicenseWrappedTextHeight -Control $control -Width $control.ClientSize.Width -MinimumHeight 1
@@ -408,8 +409,8 @@ $fontTitle = New-Object System.Drawing.Font($localTypography.FontFamily, $localT
 $form = New-Object System.Windows.Forms.Form
 $form.Text = Get-LocalLicenseText "localLicense.form.title" @($script:localLicenseVersion)
 $form.StartPosition = 'CenterScreen'
-$form.ClientSize = New-Object System.Drawing.Size(720, 520)
-$form.MinimumSize = New-Object System.Drawing.Size(680, 490)
+$form.ClientSize = New-Object System.Drawing.Size(840, 560)
+$form.MinimumSize = New-Object System.Drawing.Size(720, 520)
 $form.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
 $form.Font = $font
 $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::Dpi
@@ -462,11 +463,13 @@ $tabs.BringToFront()
 $windowsTab = New-Object System.Windows.Forms.TabPage
 $windowsTab.Text = 'Windows'
 $windowsTab.BackColor = [System.Drawing.Color]::White
+$windowsTab.AutoScroll = $true
 $tabs.TabPages.Add($windowsTab)
 
 $officeTab = New-Object System.Windows.Forms.TabPage
 $officeTab.Text = 'Microsoft Office'
 $officeTab.BackColor = [System.Drawing.Color]::White
+$officeTab.AutoScroll = $true
 $tabs.TabPages.Add($officeTab)
 
 $windowsInfo = Get-WindowsDetails
@@ -482,6 +485,8 @@ $winCurrent.Location = New-Object System.Drawing.Point(18, 16)
 $winCurrent.Size = New-Object System.Drawing.Size(660, 42)
 $winCurrent.Anchor = 'Top,Left,Right'
 $winCurrent.Font = $fontBold
+$winCurrent.AutoEllipsis = $false
+$winCurrent.UseCompatibleTextRendering = $true
 $winCurrent.Text = Get-LocalLicenseText "localLicense.current" @("$($windowsInfo.Name) | Edition: $($windowsInfo.Edition) | $($windowsInfo.Release) build $($windowsInfo.Build)")
 $windowsTab.Controls.Add($winCurrent)
 
@@ -489,6 +494,8 @@ $winActivationStatus = New-Object System.Windows.Forms.Label
 $winActivationStatus.Location = New-Object System.Drawing.Point(18, 55)
 $winActivationStatus.Size = New-Object System.Drawing.Size(660, 42)
 $winActivationStatus.Anchor = 'Top,Left,Right'
+$winActivationStatus.AutoEllipsis = $false
+$winActivationStatus.UseCompatibleTextRendering = $true
 $winActivationStatus.ForeColor = if ([bool]$windowsActivationState.ActivationConfirmed) { [System.Drawing.Color]::DarkGreen } else { [System.Drawing.Color]::DarkOrange }
 $winActivationStatus.Text = Get-WindowsActivationStatusText -State $windowsActivationState
 $windowsTab.Controls.Add($winActivationStatus)
@@ -550,6 +557,8 @@ $winResult = New-Object System.Windows.Forms.Label
 $winResult.Location = New-Object System.Drawing.Point(18, 271)
 $winResult.Size = New-Object System.Drawing.Size(660, 86)
 $winResult.Anchor = 'Top,Left,Right'
+$winResult.AutoEllipsis = $false
+$winResult.UseCompatibleTextRendering = $true
 $winResult.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
 $winResult.Text = if ($windowsTargets.Count -gt 0) {
     Get-LocalLicenseText "localLicense.windows.targetsFound" @(($windowsTargets -join ', '))
@@ -620,6 +629,8 @@ $officeCurrent.Location = New-Object System.Drawing.Point(18, 16)
 $officeCurrent.Size = New-Object System.Drawing.Size(660, 42)
 $officeCurrent.Anchor = 'Top,Left,Right'
 $officeCurrent.Font = $fontBold
+$officeCurrent.AutoEllipsis = $false
+$officeCurrent.UseCompatibleTextRendering = $true
 $officeCurrent.Text = Get-LocalLicenseText "localLicense.current" @("$($officeDetails.Product) | $($script:officeCompatibility.Family) | $(Get-LocalLicenseText "localLicense.build"): $($officeDetails.Version) | $($script:officeCompatibility.Channel)")
 $officeTab.Controls.Add($officeCurrent)
 
@@ -627,6 +638,8 @@ $officeActivationStatus = New-Object System.Windows.Forms.Label
 $officeActivationStatus.Location = New-Object System.Drawing.Point(18, 55)
 $officeActivationStatus.Size = New-Object System.Drawing.Size(660, 42)
 $officeActivationStatus.Anchor = 'Top,Left,Right'
+$officeActivationStatus.AutoEllipsis = $false
+$officeActivationStatus.UseCompatibleTextRendering = $true
 $officeActivationStatus.ForeColor = if ([bool]$officeActivationState.ActivationConfirmed) { [System.Drawing.Color]::DarkGreen } else { [System.Drawing.Color]::DarkOrange }
 $officeActivationStatus.Text = Get-OfficeActivationStatusText -State $officeActivationState
 $officeTab.Controls.Add($officeActivationStatus)
@@ -677,6 +690,8 @@ $officeResult = New-Object System.Windows.Forms.Label
 $officeResult.Location = New-Object System.Drawing.Point(18, 216)
 $officeResult.Size = New-Object System.Drawing.Size(660, 140)
 $officeResult.Anchor = 'Top,Left,Right'
+$officeResult.AutoEllipsis = $false
+$officeResult.UseCompatibleTextRendering = $true
 $officeResult.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
 $officeResult.Text = if ($osppPaths.Count -gt 0) {
     Get-LocalLicenseText "localLicense.office.osppFound"
@@ -684,6 +699,130 @@ $officeResult.Text = if ($osppPaths.Count -gt 0) {
     Get-LocalLicenseText "localLicense.office.osppMissing"
 }
 $officeTab.Controls.Add($officeResult)
+
+$licenseToolTip = New-Object System.Windows.Forms.ToolTip
+$licenseToolTip.AutoPopDelay = 15000
+$licenseToolTip.InitialDelay = 350
+$licenseToolTip.ReshowDelay = 100
+
+function Update-LocalLicenseLayout {
+    if ($script:updatingLocalLicenseLayout) { return }
+    $script:updatingLocalLicenseLayout = $true
+    try {
+        $dpi = try { [int]$form.DeviceDpi } catch { 96 }
+        if ($dpi -lt 96) { $dpi = 96 }
+        $scale = [double]$dpi / 96.0
+        $margin = [int][Math]::Round(18 * $scale)
+        $gap = [int][Math]::Round(10 * $scale)
+        $smallGap = [int][Math]::Round(6 * $scale)
+        $labelGap = [int][Math]::Round(5 * $scale)
+        $buttonHeight = [int][Math]::Round(32 * $scale)
+        $fieldHeight = [int][Math]::Round(28 * $scale)
+        $minimumResultHeight = [int][Math]::Round(72 * $scale)
+
+        $setWrappedLabel = {
+            param($Control, [int]$X, [int]$Y, [int]$Width, [int]$MinimumHeight)
+            $Control.SetBounds($X, $Y, $Width, 1)
+            $height = Get-LocalLicenseWrappedTextHeight -Control $Control -Width $Width -MinimumHeight $MinimumHeight
+            $Control.Height = $height
+            $licenseToolTip.SetToolTip($Control, [string]$Control.Text)
+            return $height
+        }
+
+        $bottomHeight = [int][Math]::Round(48 * $scale)
+        $bottom.Height = $bottomHeight
+        $close.Height = [Math]::Max($buttonHeight, [int][Math]::Round(30 * $scale))
+        $close.Width = [Math]::Max([int][Math]::Round(104 * $scale), (Get-ToolUiButtonRequiredWidth -Button $close -HorizontalSafety 10))
+        $close.Left = [Math]::Max($margin, $bottom.ClientSize.Width - $close.Width - $margin)
+        $close.Top = [Math]::Max(4, [Math]::Floor(($bottom.ClientSize.Height - $close.Height) / 2))
+
+        $tabViewportWidth = [Math]::Max($tabs.ClientSize.Width, ($form.ClientSize.Width - [int][Math]::Round(20 * $scale)))
+        $windowsViewportWidth = [Math]::Max($windowsTab.ClientSize.Width, $tabViewportWidth)
+        $windowsWidth = [Math]::Max([int][Math]::Round(420 * $scale), $windowsViewportWidth - (2 * $margin))
+        $winY = $margin
+        $height = & $setWrappedLabel $winCurrent $margin $winY $windowsWidth ([int][Math]::Round(24 * $scale))
+        $winY += $height + $smallGap
+        $height = & $setWrappedLabel $winActivationStatus $margin $winY $windowsWidth ([int][Math]::Round(38 * $scale))
+        $winY += $height + $gap
+        $height = & $setWrappedLabel $winTargetLabel $margin $winY $windowsWidth ([int][Math]::Round(22 * $scale))
+        $winY += $height + $labelGap
+        $winTarget.SetBounds($margin, $winY, [Math]::Min($windowsWidth, [int][Math]::Round(430 * $scale)), $fieldHeight)
+        $winY += $fieldHeight + $gap
+        $height = & $setWrappedLabel $winKeyLabel $margin $winY $windowsWidth ([int][Math]::Round(22 * $scale))
+        $winY += $height + $labelGap
+        $minimumKeyWidth = [int][Math]::Round(180 * $scale)
+        $applyRequiredWidth = [Math]::Max([int][Math]::Round(220 * $scale), (Get-ToolUiButtonRequiredWidth -Button $winApply -HorizontalSafety 10))
+        $applyWidth = [Math]::Min(($windowsWidth - $gap - $minimumKeyWidth), $applyRequiredWidth)
+        $keyWidth = [Math]::Max($minimumKeyWidth, $windowsWidth - $gap - $applyWidth)
+        $winKey.SetBounds($margin, $winY, $keyWidth, $fieldHeight)
+        $winApply.SetBounds(($margin + $keyWidth + $gap), $winY, $applyWidth, $buttonHeight)
+        $winY += [Math]::Max($fieldHeight, $buttonHeight) + $gap
+        $activationRequiredWidth = Get-ToolUiButtonRequiredWidth -Button $winActivation -HorizontalSafety 10
+        $storeRequiredWidth = Get-ToolUiButtonRequiredWidth -Button $winStore -HorizontalSafety 10
+        if (($activationRequiredWidth + $gap + $storeRequiredWidth) -le $windowsWidth) {
+            $firstActionWidth = [Math]::Max($activationRequiredWidth, [Math]::Floor(($windowsWidth - $gap) * 0.44))
+            $secondActionWidth = $windowsWidth - $gap - $firstActionWidth
+            $winActivation.SetBounds($margin, $winY, $firstActionWidth, $buttonHeight)
+            $winStore.SetBounds(($margin + $firstActionWidth + $gap), $winY, $secondActionWidth, $buttonHeight)
+            $winY += $buttonHeight + $gap
+        } else {
+            $winActivation.SetBounds($margin, $winY, $windowsWidth, $buttonHeight)
+            $winY += $buttonHeight + $smallGap
+            $winStore.SetBounds($margin, $winY, $windowsWidth, $buttonHeight)
+            $winY += $buttonHeight + $gap
+        }
+        $availableResultHeight = [Math]::Max($minimumResultHeight, $windowsTab.ClientSize.Height - $winY - $margin)
+        $requiredResultHeight = Get-LocalLicenseWrappedTextHeight -Control $winResult -Width $windowsWidth -MinimumHeight $minimumResultHeight
+        $winResult.SetBounds($margin, $winY, $windowsWidth, [Math]::Max($availableResultHeight, $requiredResultHeight))
+        $licenseToolTip.SetToolTip($winResult, [string]$winResult.Text)
+        $windowsTab.AutoScrollMinSize = New-Object System.Drawing.Size(0, ($winResult.Bottom + $margin))
+
+        $officeViewportWidth = [Math]::Max($officeTab.ClientSize.Width, $tabViewportWidth)
+        $officeWidth = [Math]::Max([int][Math]::Round(420 * $scale), $officeViewportWidth - (2 * $margin))
+        $officeY = $margin
+        $height = & $setWrappedLabel $officeCurrent $margin $officeY $officeWidth ([int][Math]::Round(24 * $scale))
+        $officeY += $height + $smallGap
+        $height = & $setWrappedLabel $officeActivationStatus $margin $officeY $officeWidth ([int][Math]::Round(38 * $scale))
+        $officeY += $height + $gap
+        $height = & $setWrappedLabel $officeKeyLabel $margin $officeY $officeWidth ([int][Math]::Round(22 * $scale))
+        $officeY += $height + $labelGap
+        $officeMinimumKeyWidth = [int][Math]::Round(180 * $scale)
+        $officeApplyRequiredWidth = [Math]::Max([int][Math]::Round(220 * $scale), (Get-ToolUiButtonRequiredWidth -Button $officeApply -HorizontalSafety 10))
+        $officeApplyWidth = [Math]::Min(($officeWidth - $gap - $officeMinimumKeyWidth), $officeApplyRequiredWidth)
+        $officeKeyWidth = [Math]::Max($officeMinimumKeyWidth, $officeWidth - $gap - $officeApplyWidth)
+        $officeKey.SetBounds($margin, $officeY, $officeKeyWidth, $fieldHeight)
+        $officeApply.SetBounds(($margin + $officeKeyWidth + $gap), $officeY, $officeApplyWidth, $buttonHeight)
+        $officeY += [Math]::Max($fieldHeight, $buttonHeight) + $gap
+        $officeSwitchRequiredWidth = Get-ToolUiButtonRequiredWidth -Button $officeSwitch -HorizontalSafety 10
+        $officeRedeemRequiredWidth = Get-ToolUiButtonRequiredWidth -Button $officeRedeem -HorizontalSafety 10
+        if (($officeSwitchRequiredWidth + $gap + $officeRedeemRequiredWidth) -le $officeWidth) {
+            $officeFirstWidth = [Math]::Max($officeSwitchRequiredWidth, [Math]::Floor(($officeWidth - $gap) / 2))
+            $officeSecondWidth = $officeWidth - $gap - $officeFirstWidth
+            $officeSwitch.SetBounds($margin, $officeY, $officeFirstWidth, $buttonHeight)
+            $officeRedeem.SetBounds(($margin + $officeFirstWidth + $gap), $officeY, $officeSecondWidth, $buttonHeight)
+            $officeY += $buttonHeight + $gap
+        } else {
+            $officeSwitch.SetBounds($margin, $officeY, $officeWidth, $buttonHeight)
+            $officeY += $buttonHeight + $smallGap
+            $officeRedeem.SetBounds($margin, $officeY, $officeWidth, $buttonHeight)
+            $officeY += $buttonHeight + $gap
+        }
+        $officeAvailableResultHeight = [Math]::Max($minimumResultHeight, $officeTab.ClientSize.Height - $officeY - $margin)
+        $officeRequiredResultHeight = Get-LocalLicenseWrappedTextHeight -Control $officeResult -Width $officeWidth -MinimumHeight $minimumResultHeight
+        $officeResult.SetBounds($margin, $officeY, $officeWidth, [Math]::Max($officeAvailableResultHeight, $officeRequiredResultHeight))
+        $licenseToolTip.SetToolTip($officeResult, [string]$officeResult.Text)
+        $officeTab.AutoScrollMinSize = New-Object System.Drawing.Size(0, ($officeResult.Bottom + $margin))
+    } finally {
+        $script:updatingLocalLicenseLayout = $false
+    }
+}
+
+$form.Add_Resize({ Update-LocalLicenseLayout })
+$tabs.Add_SelectedIndexChanged({ Update-LocalLicenseLayout })
+$form.Add_Shown({ Update-LocalLicenseLayout })
+foreach ($wrappedLabel in @($winCurrent, $winActivationStatus, $winResult, $officeCurrent, $officeActivationStatus, $officeResult)) {
+    $wrappedLabel.Add_TextChanged({ Update-LocalLicenseLayout })
+}
 
 $officeApply.Add_Click({
     if ($script:localOfflineMode) { Show-LocalOfflineBlocked (Get-LocalLicenseText "localLicense.office.apply"); return }
@@ -747,6 +886,9 @@ $officeSwitch.Enabled = -not $script:localOfflineMode
 $officeRedeem.Enabled = -not $script:localOfflineMode
 $winApply.Enabled = -not $script:localOfflineMode
 $officeApply.Enabled = [bool]($osppPaths.Count -gt 0 -and -not $script:localOfflineMode)
+$form.PerformLayout()
+$tabs.PerformLayout()
+Update-LocalLicenseLayout
 if ([string]$env:TOOL_UI_SMOKE_TEST -eq "1") {
     if ($form.Text -ne (Get-LocalLicenseText "localLicense.form.title" @($script:localLicenseVersion))) {
         throw (Get-LocalLicenseText "localLicense.smoke.title")
@@ -769,15 +911,29 @@ if ([string]$env:TOOL_UI_SMOKE_TEST -eq "1") {
         ) -join "`n"
         if ($visibleText -cmatch '[À-ỹ]') { throw (Get-LocalLicenseText "localLicense.smoke.englishLeak" @($visibleText)) }
     }
+    # Exercise the longest real Windows/Office result shapes seen after a
+    # rejected key so the smoke gate covers the clipped-text regression.
+    $winResult.Text = Get-LocalLicenseText "localLicense.windows.rejected" @(-2147217373)
+    $officeResult.Text = Get-LocalLicenseText "localLicense.office.rejected" @('XXXXX', '0xC004F050 - edition/channel mismatch')
+    $form.PerformLayout()
+    $tabs.PerformLayout()
+    Update-LocalLicenseLayout
     $form.PerformLayout()
     $clippedControls = @(Get-LocalLicenseClippedTextControls -Root $form)
     if ($clippedControls.Count -gt 0) {
         throw (Get-LocalLicenseText "localLicense.smoke.buttonClipped" @(($clippedControls -join ', ')))
     }
     Write-Output (Get-LocalLicenseText "localLicense.smoke.pass" @($script:localLicenseCulture, (-not $script:localOfflineMode)))
+    try { $licenseToolTip.Dispose() } catch {}
     foreach ($resource in @($font, $fontBold, $fontTitle)) { try { $resource.Dispose() } catch {} }
     $form.Dispose()
     exit 0
 }
-[void]$form.ShowDialog()
+try {
+    [void]$form.ShowDialog()
+} finally {
+    try { $licenseToolTip.Dispose() } catch {}
+    foreach ($resource in @($font, $fontBold, $fontTitle)) { try { $resource.Dispose() } catch {} }
+    try { $form.Dispose() } catch {}
+}
 

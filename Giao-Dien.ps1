@@ -904,13 +904,34 @@ $introPanel.Location = New-Object System.Drawing.Point(38, 100)
 $introPanel.Size = New-Object System.Drawing.Size(860, 58)
 $introPanel.BackColor = [System.Drawing.Color]::FromArgb(235, 244, 255)
 $introPanel.BorderStyle = "None"
+$introPanel.Tag = [pscustomobject]@{
+    Kind = "OverviewCard"
+    BorderColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
+}
+$introPanel.Add_Paint({
+    param($sender, $eventArgs)
+    if (-not $sender -or -not $eventArgs -or $sender.ClientSize.Width -lt 2 -or $sender.ClientSize.Height -lt 2) { return }
+    $borderColor = if ($sender.Tag -and $sender.Tag.PSObject.Properties["BorderColor"]) {
+        [System.Drawing.Color]$sender.Tag.BorderColor
+    } else {
+        [System.Drawing.SystemColors]::ControlDark
+    }
+    $borderPen = New-Object System.Drawing.Pen($borderColor, 2)
+    try {
+        $eventArgs.Graphics.DrawRectangle($borderPen, 1, 1, ($sender.ClientSize.Width - 3), ($sender.ClientSize.Height - 3))
+    } finally {
+        $borderPen.Dispose()
+    }
+})
 $form.Controls.Add($introPanel)
 
-$introAccent = New-Object System.Windows.Forms.Panel
-$introAccent.BackColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
-$introAccent.Location = New-Object System.Drawing.Point(0, 0)
-$introAccent.Size = New-Object System.Drawing.Size(5, 58)
-$introPanel.Controls.Add($introAccent)
+function Set-DashboardIntroBorderColor {
+    param([Parameter(Mandatory = $true)][System.Drawing.Color]$Color)
+    if ($introPanel.Tag -and $introPanel.Tag.PSObject.Properties["BorderColor"]) {
+        $introPanel.Tag.BorderColor = $Color
+    }
+    $introPanel.Invalidate()
+}
 
 $description = New-Object System.Windows.Forms.Label
 $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $script:dashboardCulture
@@ -936,7 +957,7 @@ $introPanel.Controls.Add($introSummary)
 $script:officialBuildState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
 if ($script:officialBuildState -eq 'Managed') {
     $introPanel.BackColor = [System.Drawing.Color]::FromArgb(232, 245, 255)
-    $introAccent.BackColor = [System.Drawing.Color]::FromArgb(2, 132, 199)
+    Set-DashboardIntroBorderColor -Color ([System.Drawing.Color]::FromArgb(2, 132, 199))
     $description.ForeColor = [System.Drawing.Color]::FromArgb(3, 105, 161)
     $description.Text = Get-DashboardText 'officialBuild.banner.managedTitle'
     $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(7, 89, 133)
@@ -944,21 +965,21 @@ if ($script:officialBuildState -eq 'Managed') {
 } elseif ($script:officialBuildState -notin @('Official','Store')) {
     if ($script:isUnsignedDevelopmentBuild) {
         $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 225)
-        $introAccent.BackColor = [System.Drawing.Color]::FromArgb(217, 119, 6)
+        Set-DashboardIntroBorderColor -Color ([System.Drawing.Color]::FromArgb(217, 119, 6))
         $description.ForeColor = [System.Drawing.Color]::FromArgb(146, 64, 14)
         $description.Text = Get-DashboardText 'officialBuild.banner.developmentTitle'
         $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(120, 53, 15)
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.developmentBody'
     } elseif ($script:officialBuildState -eq 'Modified') {
         $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
-        $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
+        Set-DashboardIntroBorderColor -Color ([System.Drawing.Color]::FromArgb(185, 28, 28))
         $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
         $description.Text = Get-DashboardText 'officialBuild.banner.modifiedTitle'
         $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.modifiedBody' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL)
     } else {
         $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 235, 238)
-        $introAccent.BackColor = [System.Drawing.Color]::FromArgb(185, 28, 28)
+        Set-DashboardIntroBorderColor -Color ([System.Drawing.Color]::FromArgb(185, 28, 28))
         $description.ForeColor = [System.Drawing.Color]::FromArgb(153, 27, 27)
         $description.Text = Get-DashboardText 'officialBuild.banner.unverifiedTitle'
         $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(127, 29, 29)
@@ -1594,10 +1615,6 @@ function Update-MainLayout {
         $introPanel.Top = $headerPanel.Bottom + $(if ($ultraCompactHeight) { 8 } else { 14 })
         $introPanel.Width = $contentWidth
         $introPanel.Height = if ($ultraCompactHeight) { 44 } elseif ($compactHeight) { 50 } else { 58 }
-        $introAccent.Left = 0
-        $introAccent.Top = 0
-        $introAccent.Width = 4
-        $introAccent.Height = $introPanel.ClientSize.Height
         $introDetailButton.Width = [Math]::Max(
             $(if ($ultraCompactHeight) { 142 } else { 154 }),
             (Get-ToolUiButtonRequiredWidth -Button $introDetailButton -HorizontalSafety 12))
@@ -2666,24 +2683,27 @@ function Set-DashboardTheme {
     $version.ForeColor = $muted
     if ($script:officialBuildState -in @('Official','Store')) {
         $introPanel.BackColor = $introSurface
-        $introAccent.BackColor = $primary
+        Set-DashboardIntroBorderColor -Color $primary
         $description.ForeColor = $primary
         $introSummary.ForeColor = $text
     } elseif ($script:officialBuildState -eq 'Managed') {
         $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(8, 47, 73) } else { [System.Drawing.Color]::FromArgb(232, 245, 255) }
-        $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(56, 189, 248) } else { [System.Drawing.Color]::FromArgb(2, 132, 199) }
+        Set-DashboardIntroBorderColor -Color $(if ($dark) { [System.Drawing.Color]::FromArgb(56, 189, 248) } else { [System.Drawing.Color]::FromArgb(2, 132, 199) })
         $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(186, 230, 253) } else { [System.Drawing.Color]::FromArgb(3, 105, 161) }
         $introSummary.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(224, 242, 254) } else { [System.Drawing.Color]::FromArgb(7, 89, 133) }
     } elseif ($script:isUnsignedDevelopmentBuild) {
         $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(69, 45, 15) } else { [System.Drawing.Color]::FromArgb(255, 248, 225) }
-        $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(251, 191, 36) } else { [System.Drawing.Color]::FromArgb(217, 119, 6) }
+        Set-DashboardIntroBorderColor -Color $(if ($dark) { [System.Drawing.Color]::FromArgb(251, 191, 36) } else { [System.Drawing.Color]::FromArgb(217, 119, 6) })
         $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 240, 138) } else { [System.Drawing.Color]::FromArgb(146, 64, 14) }
         $introSummary.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 243, 199) } else { [System.Drawing.Color]::FromArgb(120, 53, 15) }
     } else {
         $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(67, 28, 33) } else { [System.Drawing.Color]::FromArgb(255, 235, 238) }
-        $introAccent.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(248, 113, 113) } else { [System.Drawing.Color]::FromArgb(185, 28, 28) }
+        Set-DashboardIntroBorderColor -Color $(if ($dark) { [System.Drawing.Color]::FromArgb(248, 113, 113) } else { [System.Drawing.Color]::FromArgb(185, 28, 28) })
         $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 202, 202) } else { [System.Drawing.Color]::FromArgb(153, 27, 27) }
         $introSummary.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(254, 226, 226) } else { [System.Drawing.Color]::FromArgb(127, 29, 29) }
+    }
+    if (Test-ToolUiHighContrast) {
+        Set-DashboardIntroBorderColor -Color ([System.Drawing.SystemColors]::Highlight)
     }
     $introAssistantButton.BackColor = $primary
     $introAssistantButton.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(18, 26, 38) } else { [System.Drawing.Color]::White }
@@ -2765,11 +2785,31 @@ function Set-DashboardTheme {
     $form.Invalidate($true)
 }
 
+function Set-DashboardAssistantButtonHighlight {
+    param([ValidateSet("Light", "Dark")][string]$Mode)
+
+    # High Contrast must retain native system colors and focus rendering.
+    if (Test-ToolUiHighContrast) { return }
+
+    $dark = [bool]($Mode -eq "Dark")
+    $introAssistantButton.UseVisualStyleBackColor = $false
+    $introAssistantButton.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $introAssistantButton.Font = $fontBold
+    $introAssistantButton.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(29, 78, 216) } else { [System.Drawing.Color]::FromArgb(0, 95, 184) }
+    $introAssistantButton.ForeColor = [System.Drawing.Color]::White
+    $introAssistantButton.FlatAppearance.BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(147, 197, 253) } else { [System.Drawing.Color]::FromArgb(0, 57, 120) }
+    $introAssistantButton.FlatAppearance.BorderSize = 2
+    $introAssistantButton.FlatAppearance.MouseOverBackColor = if ($dark) { [System.Drawing.Color]::FromArgb(30, 64, 175) } else { [System.Drawing.Color]::FromArgb(0, 120, 212) }
+    $introAssistantButton.FlatAppearance.MouseDownBackColor = if ($dark) { [System.Drawing.Color]::FromArgb(30, 58, 138) } else { [System.Drawing.Color]::FromArgb(0, 76, 145) }
+    Set-ToolUiRoundedButtonRegion -Button $introAssistantButton -Radius 9
+}
+
 function Complete-DashboardThemeInitialization {
     param([ValidateSet("Light", "Dark")][string]$Mode)
     foreach ($actionButton in @($introAssistantButton, $introDetailButton, $themeButton, $offlineButton, $openReportFolderButton, $copyLogButton, $stopButton, $closeButton)) {
         Set-ToolUiActionButtonVisual -Button $actionButton -Mode $Mode
     }
+    Set-DashboardAssistantButtonHighlight -Mode $Mode
     Write-DashboardStartupTrace "Theme.ControlsStyled"
     Set-ToolUiLiteralText -Root $form
     Write-DashboardStartupTrace "Theme.TextNormalized"

@@ -48,6 +48,19 @@ $resultCenterText = if (Test-Path -LiteralPath $resultCenterPath -PathType Leaf)
     Add-Failure 'Thiếu Tool-ResultCenter.ps1.'
     ''
 }
+$licenseManagerPath = Join-Path $root 'windows-office-license-manager.ps1'
+$licenseManagerText = if (Test-Path -LiteralPath $licenseManagerPath -PathType Leaf) {
+    $licenseTokens = $null
+    $licenseParseErrors = $null
+    [void][Management.Automation.Language.Parser]::ParseFile($licenseManagerPath, [ref]$licenseTokens, [ref]$licenseParseErrors)
+    foreach ($parseError in @($licenseParseErrors)) {
+        Add-Failure "Lỗi cú pháp windows-office-license-manager.ps1: $($parseError.Message)"
+    }
+    Get-Content -LiteralPath $licenseManagerPath -Raw -Encoding UTF8
+} else {
+    Add-Failure 'Thiếu windows-office-license-manager.ps1.'
+    ''
+}
 
 # The dashboard re-checks TOOL-SHA256SUMS.txt before every elevated action.
 # Keep its allow-list exactly synchronized with the generated integrity manifest.
@@ -195,7 +208,19 @@ Assert-SourcePattern $text '[$]card\.Add_Paint\(' 'Các thẻ trạng thái chư
 Assert-SourcePattern $text 'New-Object\s+System\.Drawing\.Pen\([$]borderColor,\s*2\)' 'Khung thẻ trạng thái chưa dùng viền màu 2 px bao quanh.'
 Assert-SourcePattern $text '[$]cardRecord\.Panel\.Tag\.BorderColor\s*=\s*[$]statusPalette\.AccentColor' 'Theme dashboard chưa dùng đúng màu chức năng cho toàn bộ khung thẻ trạng thái.'
 if ($text -match 'CardAccent|[$]cardAccent') { Add-Failure 'Thẻ trạng thái vẫn còn dải màu riêng bên trái thay vì chỉ dùng viền bao quanh.' }
+Assert-SourcePattern $text '[$]introPanel\.Add_Paint\(' 'Khung Kết quả kiểm tra gần nhất chưa tự vẽ viền kín.'
+Assert-SourcePattern $text 'function\s+Set-DashboardIntroBorderColor' 'Khung Kết quả kiểm tra gần nhất chưa đổi màu viền theo trạng thái/theme.'
+Assert-SourcePattern $text 'Kind\s*=\s*"OverviewCard"' 'Khung Kết quả kiểm tra gần nhất chưa có metadata viền riêng.'
+if ($text -match '[$]introAccent') { Add-Failure 'Khung Kết quả kiểm tra gần nhất vẫn còn dải màu trái thay vì viền kín.' }
+Assert-SourcePattern $text 'function\s+Set-DashboardAssistantButtonHighlight' 'Nút Trợ lý chưa có kiểu nhấn mạnh riêng.'
+Assert-SourcePattern $text '[$]introAssistantButton\.FlatAppearance\.BorderSize\s*=\s*2' 'Nút Trợ lý chưa có viền nổi bật 2 px.'
+Assert-SourcePattern $text 'Set-DashboardAssistantButtonHighlight\s+-Mode\s+[$]Mode' 'Theme chưa áp dụng kiểu nổi bật riêng cho nút Trợ lý.'
 Assert-SourcePattern $text 'Set-ToolUiActionButtonVisual\s+-Button\s+[$]actionButton' 'Các nút Hoạt động chưa dùng màu và icon hành động chung.'
+Assert-SourcePattern $licenseManagerText 'function\s+Update-LocalLicenseLayout' 'Hộp giấy phép chưa có layout tự thích ứng theo DPI/kích thước thật.'
+Assert-SourcePattern $licenseManagerText '[$](windowsTab|officeTab)\.AutoScroll\s*=\s*[$]true' 'Hộp giấy phép chưa có đường lui cuộn dọc khi màn hình thấp.'
+Assert-SourcePattern $licenseManagerText 'Get-LocalLicenseWrappedTextHeight\s+-Control\s+[$](winResult|officeResult)' 'Kết quả giấy phép chưa đo chiều cao chữ đầy đủ trước khi hiển thị.'
+Assert-SourcePattern $licenseManagerText '[$]licenseToolTip\.SetToolTip\([$](winResult|officeResult)' 'Kết quả giấy phép chưa giữ toàn bộ nội dung trong tooltip.'
+Assert-SourcePattern $licenseManagerText 'localLicense\.windows\.rejected.+-2147217373' 'Smoke test hộp giấy phép chưa bao phủ thông báo Windows dài từng bị cắt.'
 Assert-SourcePattern $text 'function\s+Test-GuiSystemComponent' 'Dashboard chưa dùng cờ IsSystemComponent cuối cùng để tách phần mềm.'
 Assert-SourcePattern $text 'function\s+Show-ThirdPartyAssessmentResults\s*\{' 'Dashboard thiếu hộp kết quả phần mềm responsive.'
 Assert-SourcePattern $text 'software\.results\.tab\.thirdParty' 'Kết quả phần mềm chưa có tab ứng dụng người dùng/bên thứ ba.'
