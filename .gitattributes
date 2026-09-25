@@ -1,7 +1,10 @@
 *.json text eol=lf
-update-manifest-v1.json binary
+OFFICIAL-PROVENANCE-v1.json -text
 RELEASE-MANIFEST.json -text
 SBOM.cdx.json -text
+software-license-catalog-v1.0.json -text
+tool-assistant-knowledge-v1.1.json -text
+update-manifest-v1.json binary
 RELEASE-SHA256SUMS.txt -text
 THONG-TIN-PHAT-HANH-v5.0.txt -text
 *.p7s binary

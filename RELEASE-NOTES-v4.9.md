@@ -1,5 +1,7 @@
 # Tool Kiểm Tra v4.9.0.0
 
+> **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
+
 ## Bản bảo trì nhận diện ngày 22/08/2026
 
 - Phân biệt rõ cài đặt đã xác nhận, đăng ký đơn nguồn, ứng dụng portable và bộ tệp còn sót; AutoCAD chỉ tìm thấy từ cây tệp không còn bị trình bày như một bản cài chính thức.

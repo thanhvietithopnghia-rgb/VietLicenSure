@@ -1,18 +1,18 @@
 VietLicenSure v5.0 - PHAN MEM KIEM TRA VA QUAN LY BAN QUYEN HE THONG
 Release version: 5.0
-Release build date: 2026.09.24
-Release label: 5.0-managed-signed-20260924
+Release build date: 2026.09.25
+Release label: 5.0-managed-signed-20260925
 Public release channel: Official Self-Signed.
 Technical trust mode: ManagedSigned.
 Release status: ManagedSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 618A4DF6D19286772161E578C8054795BFD6B14569957D8E526A728D7CC3994A
+SHA-256: 5D6994C4AA336F4E4E8EF4BD8FB47BB789DB5707F37DD373F8FF75AD277A8F87
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
 Dashboard mo bang quyen nguoi dung hien tai; UAC chi duoc yeu cau theo nhu cau khi thay doi he thong, cap nhat ung dung hoac quan tri doanh nghiep.
 Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.
-Payload nhung duoc toi uu SolidDeflateBundle-v1: 59 tep trong mot resource Deflate co header fail-closed; giam 78.83% va van doi chieu SHA-256 tung tep sau giai nen.
+Payload nhung duoc toi uu SolidDeflateBundle-v1: 59 tep trong mot resource Deflate co header fail-closed; giam 78.82% va van doi chieu SHA-256 tung tep sau giai nen.
 Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.
 Dashboard schema 2.0: WinForms hien dai, theo Light/Dark cua he thong, cho phep ghi nho tuy chon va co fallback DPI tu PerMonitorV2 den Win7.
 Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.

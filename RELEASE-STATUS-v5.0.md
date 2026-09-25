@@ -2,7 +2,7 @@
 
 > **Nguồn sự thật duy nhất (SSOT) về mức sẵn sàng phát hành.** Khi tài liệu khác mô tả khác với trang này, dùng trạng thái tại đây. Đối với tính nguyên vẹn của từng tệp, metadata có chữ ký, manifest và checksum của chính gói vẫn là căn cứ kỹ thuật bắt buộc.
 
-- **Cập nhật trạng thái:** 24/09/2026
+- **Cập nhật trạng thái:** 25/09/2026
 - **Phiên bản:** `v5.0`
 - **Kênh công khai:** `Official Self-Signed`
 - **Kênh kỹ thuật:** `ManagedSigned`
@@ -16,7 +16,7 @@
 | Trường | Giá trị đang được hồ sơ phát hành khai báo | Căn cứ |
 |---|---|---|
 | Tệp thực thi | `VietLicenSure-v5.0.exe` | Release v5.0 |
-| Build ID | `5.0-production-20260924` | `OFFICIAL-PROVENANCE-v1.json` |
+| Build ID | `5.0-production-20260925` | `OFFICIAL-PROVENANCE-v1.json` |
 | SHA-256 của EXE | Xem `RELEASE-MANIFEST.json` và `RELEASE-SHA256SUMS.txt` của chính gói nhận được | Hash thay đổi khi build/ký/timestamp; không sao chép giá trị từ gói khác |
 | Source snapshot được provenance khai báo | Xem `OFFICIAL-PROVENANCE-v1.json` của chính gói nhận được | Provenance có chữ ký CMS tách rời và phải khớp manifest |
 | Chứng thư ký | Chứng thư tự ký được launcher ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |

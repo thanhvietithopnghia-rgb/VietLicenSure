@@ -1,6 +1,6 @@
 # Lộ trình VietLicenSure v5.0
 
-Trạng thái cập nhật cho v5.0: các hạng mục dưới đây được tích hợp trên nhánh tính năng `feature/v5.0-trust-enterprise`. Có mã nguồn hoặc workflow không đồng nghĩa đã có bằng chứng phát hành. Bản ManagedSigned được phát hành có kiểm soát nhưng chưa phải danh tính Public Stable dùng chứng thư public-CA; mọi build không ký vẫn phải mang `ReleaseStatus=DevelopmentUnsigned` và nhãn development.
+Đây là lộ trình kỹ thuật, không phải bảng trạng thái nghiệm thu. Trạng thái hiện hành của v5.0 được duy trì duy nhất tại `RELEASE-STATUS-v5.0.md`. Có mã nguồn hoặc workflow không đồng nghĩa đã có bằng chứng phát hành.
 
 ## Đã tích hợp trên nhánh tính năng
 
@@ -11,16 +11,11 @@ Trạng thái cập nhật cho v5.0: các hạng mục dưới đây được t�
 - **Báo cáo:** HTML vẫn self-contained/offline-safe trước khi mở. WebView2 được hoãn, chưa có runtime loader/control và không phải dependency. Trình duyệt mặc định cùng chuỗi xuất PDF Edge/Chrome/Word tiếp tục là fallback để ứng dụng vẫn khởi động trên Windows 7; khả năng tạo PDF còn phụ thuộc engine có trên máy và yêu cầu PDF phải thất bại rõ ràng nếu không tạo được tệp.
 - **Doanh nghiệp:** xuất fleet hàng loạt JSON/CSV/HTML/PDF, mặc định che dữ liệu nhạy cảm, lọc client/freshness và chống CSV formula injection; có CLI headless cùng script Install/Detect/Repair/Uninstall idempotent cho Intune/MDM hoặc quản trị trung tâm.
 - **Minh bạch và review:** có security policy, audit scope, quy trình disclosure/review có kiểm soát, chính sách code-signing và tài liệu kết quả kiểm thử. Schema/catalog/safety policy và verifier là phạm vi ưu tiên cho review; khóa ký, bí mật Enterprise, dữ liệu khách hàng và logic khắc phục nhạy cảm không được công khai.
-- **Ma trận VM:** workflow và bộ tổng hợp public-safe đã được khai báo cho Windows 10 22H2, Windows 11 nhánh trước và nhánh hiện hành. Harness4 ngày 13/09/2026 đã tạo bằng chứng 3/3 Passed cho source snapshot `291ed82db5f99a36aaf6962a41f09ecdec851320`; summary ghi DisplayVersion/build/UBR, commit, danh sách verifier và hash của dữ liệu thô.
+- **Ma trận VM:** workflow và bộ tổng hợp public-safe đã được khai báo cho Windows 10 22H2, Windows 11 nhánh trước và nhánh hiện hành; mỗi kết quả chỉ có hiệu lực cho đúng source snapshot và hash EXE được khóa trong evidence.
 
-## Trạng thái bằng chứng hiện tại
+## Theo dõi bằng chứng
 
-- Bằng chứng Harness4 hiện hành ngày 13/09/2026 có `Passed=3`, `Failed=0`, `Missing=0`: Windows 10 22H2, Windows 11 previous/24H2 và Windows 11 current/25H2 đều đạt 11/11 verifier canonical cùng 1/1 kiểm tra updater bổ sung.
-- Bằng chứng ngày 28/08/2026 có `Passed=1`, `Missing=2` chỉ còn là lịch sử và đã được thay thế; không dùng nó để mô tả trạng thái QA hiện hành.
-- Harness4 không khởi chạy EXE đóng gói. Chưa có ma trận runtime đầy đủ cho EXE/UI, tài khoản thường/admin, có/không Office và các luồng UAC/report/update/backup/rollback.
-- Chưa có hậu kiểm Public Stable bằng chứng thư CA-issued; artifact hiện hành dùng chứng thư tự ký có timestamp. Security review độc lập vẫn ở trạng thái `NotReviewed`.
-- Chưa có kiểm thử WebView2 vì tính năng này được hoãn. Fallback Windows 7, chuyển màn hình/DPI, accessibility và đổi theme khi đang chạy vẫn cần kiểm thử máy thật phù hợp.
-- Scan profile chỉ cam kết cho luồng tạo báo cáo/kiểm kê read-only; tài liệu và UI không được mô tả nó là profile quét toàn ứng dụng.
+Mọi kết quả hiện hành, cặp source–EXE, cổng đã đạt/chưa đạt và quyết định Public Stable nằm tại `RELEASE-STATUS-v5.0.md`. `SECURITY-TEST-RESULTS.md` giữ chi tiết kỹ thuật và bằng chứng lịch sử; không dùng roadmap để suy ra trạng thái phát hành.
 
 ## Cổng còn phải hoàn tất ngoài mã nguồn
 

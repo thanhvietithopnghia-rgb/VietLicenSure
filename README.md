@@ -1,6 +1,6 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 24/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 25/09/2026
 - **Trạng thái:** `Official Self-Signed`; trust mode kỹ thuật `ManagedSigned`; **phát hành chính thức bằng chứng thư tự ký**
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>

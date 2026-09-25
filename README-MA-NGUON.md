@@ -1,6 +1,6 @@
 # Hướng dẫn tham gia và tiếp cận mã nguồn có kiểm soát từ v4.9
 
-Áp dụng cho mã nguồn VietLicenSure từ v4.9 trở đi; bản hiện hành là VietLicenSure `v5.0`, phát hành lần đầu ngày `08/09/2026` và cập nhật đến `24/09/2026`.
+Áp dụng cho mã nguồn VietLicenSure từ v4.9 trở đi; bản hiện hành là VietLicenSure `v5.0`, phát hành lần đầu ngày `08/09/2026` và cập nhật đến `25/09/2026`.
 
 ## Mô hình phát triển
 
