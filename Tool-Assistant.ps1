@@ -431,6 +431,7 @@ function Test-ToolAssistantFollowUpQuery {
 
     if ([string]::IsNullOrWhiteSpace($QueryKey)) { return $false }
     if ($QueryKey -match '^(?:con|the con|vay|vay con|no|cai nay|cai do|muc nay|muc do|chuc nang nay|chuc nang do|truong hop nay|truong hop do)\b') { return $true }
+    if ($QueryKey -match '^(?:trang thai|loi|ma loi|chuc nang|muc|nut|ket qua|bao cao|thong bao) (?:nay|do)\b') { return $true }
     if ($QueryKey -match '^(?:cach dung no|su dung no|lam sao dung|noi ro hon|chi tiet hon|giai thich them|tai sao vay|sao nua|tiep theo)\b') { return $true }
     if ($QueryKey -match '^(?:o dau|link dau|link nao|where|where exactly)$') { return $true }
     $tokens = @($QueryKey -split ' ' | Where-Object { $_ })
@@ -458,7 +459,7 @@ function Test-ToolAssistantRelatedQuery {
     )
 
     if (-not [string]::IsNullOrWhiteSpace((Get-ToolAssistantPriorityEntryId -QueryKey $QueryKey))) { return $true }
-    if ($QueryKey -match '\b(?:tool|cong cu|tro ly|dashboard|bao cao|quet|scan|windows|office|phan mem|software|ung dung|may chu|may tram|server|client|pdf|json|html|xml|docx|kms|activator|crack|crackconfirmed|mas|pmas|kmspico|repack|backup|sao luu|khoi phuc|khac phuc|remediation|cap nhat|loi|uac|administrator|catalog|catalogue|oem|oa3|oa3xoriginalproductkey|firmware|ban quyen|giay phep|license|mien phi|tra phi|gia tool|freeware|free|paid|open source|nguon mo|ma nguon|source code|repository|github|kich hoat|nghi van|suspicious|dau hieu|evidence|tampering|artifact|third party|smartscreen|defender|sha256|hash|chu ky|chung chi|certificate|plugin|timeline|offline|online|dry run|forensic|giao dien|cai dat|chuc nang|tinh nang|tac vu|function|functions|feature|features|capability|capabilities|nut|muc|tri thuc|kien thuc|hoc hoi|dung luong exe|dung luong file exe|cache tri thuc|goi tri thuc|confidence|tin cay|chua xac dinh|chua xac minh|unknown|undetermined|unverified|v1 0|first version|first release|winrar|mathtype)\b') { return $true }
+    if ($QueryKey -match '\b(?:tool|cong cu|tro ly|dashboard|bao cao|quet|scan|windows|office|phan mem|software|ung dung|may chu|may tram|server|client|pdf|json|html|xml|docx|kms|activator|crack|crackconfirmed|mas|pmas|kmspico|repack|backup|sao luu|khoi phuc|khac phuc|remediation|cap nhat|loi|uac|administrator|catalog|catalogue|oem|oa3|oa3xoriginalproductkey|firmware|ban quyen|giay phep|license|mien phi|tra phi|gia tool|freeware|free|paid|open source|nguon mo|ma nguon|source code|repository|github|kich hoat|nghi van|suspicious|dau hieu|evidence|tampering|artifact|third party|smartscreen|defender|sha256|hash|chu ky|chung chi|certificate|signing|signature|release|chinh sach|policy|dieu khoan|quy dinh|plugin|timeline|offline|online|dry run|forensic|giao dien|cai dat|chuc nang|tinh nang|tac vu|function|functions|feature|features|capability|capabilities|nut|muc|tri thuc|kien thuc|hoc hoi|dung luong exe|dung luong file exe|cache tri thuc|goi tri thuc|confidence|tin cay|chua xac dinh|chua xac minh|unknown|undetermined|unverified|v1 0|first version|first release|winrar|mathtype)\b') { return $true }
     if ($QueryKey -match '^(?:chua du bang chung|thieu bang chung|du bang chung chua)$') { return $true }
     if ($QueryKey -match '^(?:phien ban|version|do ai phat trien|ai phat trien|tac gia|ngay phat hanh|ngay build|tom tat|noi dung chinh|muc dich|nguyen tac|cong nghe|yeu cau he thong|cach chay|cach cai|tai o dau)\b') { return $true }
     if (-not [string]::IsNullOrWhiteSpace([string]$PreviousQuestion) -and (Test-ToolAssistantFollowUpQuery -QueryKey $QueryKey)) {
@@ -849,6 +850,36 @@ function Get-ToolAssistantHistoryAnswer {
         return "Đối chiếu trực tiếp từ Lịch sử phiên bản đã ghi nhận (không suy diễn thay đổi ngoài tài liệu):`r`n`r`n" + ($blocks -join "`r`n`r`n")
 }
 
+function Get-ToolAssistantPolicyEntryId {
+    param([Parameter(Mandatory = $true)][string]$QueryKey)
+
+    if ($QueryKey -notmatch '\b(?:chinh sach|policy|dieu khoan|quy dinh)\b') { return '' }
+    if ($QueryKey -match '\b(?:plugin|nha phat hanh|publisher)\b') { return 'plugin-management' }
+    if ($QueryKey -match '\b(?:ma nguon|source code|open source|nguon mo|repository|repo|github|sao chep|copy|sua doi|modify|dong ma nguon|mo ma nguon)\b' -or
+        $QueryKey -match '(?:tai sao|ly do|why).*(?:thay doi|doi|change).*(?:v4(?:[ .]?9)?|ma nguon|source)' -or
+        $QueryKey -match '(?:v4(?:[ .]?9)?).*(?:thay doi|doi|change|chinh sach|policy)') { return 'source-code-license' }
+    if ($QueryKey -match '\b(?:online|offline|internet|network|mang|catalog|catalogue|danh muc|telemetry|gui du lieu|tai du lieu)\b') { return 'software-catalog' }
+    if ($QueryKey -match '\b(?:ky so|chu ky|signing|signature|phat hanh|release|certificate|chung thu|smartscreen|authenticode)\b') { return 'signature-warning' }
+    if ($QueryKey -match '\b(?:cap nhat|update|phien ban moi|version check|tai ban moi|download version)\b') { return 'update' }
+    if ($QueryKey -match '\b(?:an toan|bao mat|security|nguyen tac|triet ly|privacy|rieng tu|du lieu)\b') { return 'tool-principles' }
+    return ''
+}
+
+function Get-ToolAssistantPolicyClarification {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    if ($QueryKey -notmatch '\b(?:chinh sach|policy|dieu khoan|quy dinh)\b') { return '' }
+    if ($QueryKey -match '\b(?:how does|how do|hoat dong ra sao|hoat dong the nao)\b') { return '' }
+    if (-not [string]::IsNullOrWhiteSpace((Get-ToolAssistantPolicyEntryId -QueryKey $QueryKey))) { return '' }
+    if ($Culture -eq 'en-US') {
+        return 'Which VietLicenSure policy do you mean: (1) source code and permitted use; (2) Online/Offline, catalog, and data; (3) signing and official releases; (4) updates; or (5) plugins and enterprise use? Add the topic or paste the exact message.'
+    }
+    return 'Bạn muốn hỏi chính sách nào của VietLicenSure: (1) mã nguồn và quyền sử dụng; (2) Online/Offline, catalog và dữ liệu; (3) ký số và phát hành chính thức; (4) cập nhật phiên bản; hay (5) plugin và doanh nghiệp? Hãy thêm chủ đề hoặc gửi nguyên thông báo.'
+}
+
 function Get-ToolAssistantEntryScore {
     param([Parameter(Mandatory = $true)][string]$QueryKey, [Parameter(Mandatory = $true)][object]$Entry)
 
@@ -856,12 +887,13 @@ function Get-ToolAssistantEntryScore {
     $queryTokens = @($QueryKey -split ' ' | Where-Object { $_.Length -ge 2 -and $_ -notin $stopTokens } | Select-Object -Unique)
     $keywordTokenSet = @{}
     $phraseScore = 0
+    $weakKeywords = @('phan mem','software','ung dung','application','thay doi','change','hien tai','current','moi nhat','latest','cap nhat','update','bao cao','report','ket qua','result','tool','cong cu')
     foreach ($keywordValue in @($Entry.Keywords)) {
         $keyword = ConvertTo-ToolAssistantSearchKey -Value ([string]$keywordValue)
         if ([string]::IsNullOrWhiteSpace($keyword)) { continue }
         if ($QueryKey -eq $keyword) { return (10000 + $keyword.Length) }
         if ($QueryKey.Contains($keyword)) {
-            $candidateScore = if ($keyword.Contains(' ')) { 220 + $keyword.Length } elseif ($keyword.Length -ge 4) { 48 + $keyword.Length } else { 12 }
+            $candidateScore = if ($keyword -in $weakKeywords) { 10 } elseif ($keyword.Contains(' ')) { 220 + $keyword.Length } elseif ($keyword.Length -ge 4) { 48 + $keyword.Length } else { 12 }
             if ($candidateScore -gt $phraseScore) { $phraseScore = $candidateScore }
         }
         $keywordTokens = @($keyword -split ' ' | Where-Object { $_.Length -ge 2 -and $_ -notin $stopTokens })
@@ -977,6 +1009,14 @@ function Resolve-ToolAssistantEntry {
         [Parameter(Mandatory = $true)][string]$QueryKey,
         [Parameter(Mandatory = $true)][object]$Knowledge
     )
+
+    $policyId = Get-ToolAssistantPolicyEntryId -QueryKey $QueryKey
+    if (-not [string]::IsNullOrWhiteSpace($policyId)) {
+        $policyEntry = @($Knowledge.Entries | Where-Object { [string]$_.Id -eq $policyId } | Select-Object -First 1)
+        if ($policyEntry.Count -gt 0) {
+            return [pscustomobject]@{ Entry=$policyEntry[0]; Score=9750; Route='PolicyIntent' }
+        }
+    }
 
     $priorityId = Get-ToolAssistantPriorityEntryId -QueryKey $QueryKey
     if ($priorityId -in @('first-release','tool-pricing','source-code-license','status-terms')) {
@@ -1278,6 +1318,19 @@ function Get-ToolAssistantAnswer {
     if ($originalQueryKey -match '(bao cao hien tai|bao cao vua|ket qua hien tai|ket qua vua|trang thai hien tai cua may|may nay dang the nao|scan result|current report|current status|explain (?:the )?current report)') {
         return Format-ToolAssistantReportContext -Context $ReportContext -Culture $Culture
     }
+    $policyClarification = Get-ToolAssistantPolicyClarification -QueryKey $queryKey -Culture $Culture
+    if (-not [string]::IsNullOrWhiteSpace($policyClarification)) {
+        return $policyClarification
+    }
+    $missingReferenceContext = [string]::IsNullOrWhiteSpace([string]$PreviousQuestion) -and (
+        $originalQueryKey -match '^(?:cai nay|cai do|no)\b' -or
+        $originalQueryKey -match '\b(?:trang thai|loi|ma loi|chuc nang|muc|nut|ket qua|bao cao|thong bao) (?:nay|do)\b')
+    if ($missingReferenceContext) {
+        if ($Culture -eq 'en-US') {
+            return 'I do not yet know what "this/that" refers to. Please paste the exact status, error message, button name, or screen you are asking about.'
+        }
+        return 'Trợ lý chưa biết "này/đó" đang chỉ nội dung nào. Hãy gửi nguyên trạng thái, thông báo lỗi, tên nút hoặc màn hình bạn muốn hỏi.'
+    }
     $namedGuideAnswer = Get-ToolAssistantNamedGuideAnswer -QueryKey $queryKey -Culture $Culture
     if (-not [string]::IsNullOrWhiteSpace($namedGuideAnswer)) {
         return Add-ToolAssistantNaturalLead -Answer $namedGuideAnswer -Question $Question -Culture $Culture
@@ -1324,10 +1377,13 @@ function Get-ToolAssistantAnswer {
         $resolved.PSObject.Properties['SecondScore'] -and [int]$resolved.SecondScore -ge 18 -and [int]$resolved.Margin -lt 5) {
         $firstTitle = if ($Culture -eq 'en-US') { [string]$bestEntry.TitleEn } else { [string]$bestEntry.TitleVi }
         $secondTitle = if ($Culture -eq 'en-US') { [string]$resolved.SecondEntry.TitleEn } else { [string]$resolved.SecondEntry.TitleVi }
-        $firstAnswer = if ($Culture -eq 'en-US') { [string]$bestEntry.AnswerEn } else { [string]$bestEntry.AnswerVi }
-        $secondAnswer = if ($Culture -eq 'en-US') { [string]$resolved.SecondEntry.AnswerEn } else { [string]$resolved.SecondEntry.AnswerVi }
-        $combined = "${firstTitle}:`r`n$firstAnswer`r`n`r`n${secondTitle}:`r`n$secondAnswer"
-        return Add-ToolAssistantNaturalLead -Answer $combined -Question $Question -Culture $Culture
+        $explicitMultiPart = $queryKey -match '\b(?:va|dong thoi|kem theo|them nua|and|also|plus)\b'
+        if (-not $explicitMultiPart) {
+            if ($Culture -eq 'en-US') {
+                return ('Your question may refer to either "{0}" or "{1}". Which one do you mean? Add the feature, screen, status, or exact error message.' -f $firstTitle, $secondTitle)
+            }
+            return ('Câu hỏi có thể nói về "{0}" hoặc "{1}". Bạn muốn hỏi mục nào? Hãy thêm tên chức năng, màn hình, trạng thái hoặc nguyên thông báo lỗi.' -f $firstTitle, $secondTitle)
+        }
     }
     $answer = if ($Culture -eq "en-US") { [string]$bestEntry.AnswerEn } else { [string]$bestEntry.AnswerVi }
     if ($queryKey -match '\b(va|dong thoi|kem theo|them nua)\b' -and

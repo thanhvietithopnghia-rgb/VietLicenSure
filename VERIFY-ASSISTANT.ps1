@@ -247,7 +247,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='24/09/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='25/09/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -416,6 +416,25 @@ if ($errors.Count -eq 0) {
         Add-AssistantVerificationError 'Assistant knowledge is not synchronized with the v4.9→v5.0 summary or explicit-Online refresh policy.'
     }
 
+    $policyGeneralVi = Get-ToolAssistantAnswer -Question 'chính sách phần mềm' -Culture 'vi-VN' -Knowledge $knowledge
+    $policyChangedVi = Get-ToolAssistantAnswer -Question 'phần mềm thay đổi chính sách gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $policySourceVi = Get-ToolAssistantAnswer -Question 'chính sách mã nguồn của VietLicenSure' -Culture 'vi-VN' -Knowledge $knowledge
+    $policyOnlineVi = Get-ToolAssistantAnswer -Question 'chính sách online offline thế nào' -Culture 'vi-VN' -Knowledge $knowledge
+    $policySigningEn = Get-ToolAssistantAnswer -Question 'what is the release signing policy' -Culture 'en-US' -Knowledge $knowledge
+    $policyTypoVi = Get-ToolAssistantAnswer -Question 'chinh sach ma ngun pm' -Culture 'vi-VN' -Knowledge $knowledge
+    $missingContextVi = Get-ToolAssistantAnswer -Question 'trạng thái này nghĩa là gì' -Culture 'vi-VN' -Knowledge $knowledge
+    $contextFollowUpVi = Get-ToolAssistantAnswer -Question 'trạng thái này nghĩa là gì' -PreviousQuestion 'CrackConfirmed trong báo cáo' -Culture 'vi-VN' -Knowledge $knowledge
+    if ($policyGeneralVi -notmatch 'mã nguồn.*Online/Offline|Online/Offline.*mã nguồn' -or
+        $policyChangedVi -notmatch 'mã nguồn.*Online/Offline|Online/Offline.*mã nguồn' -or
+        $policySourceVi -notmatch 'mã nguồn|SOURCE-POLICY' -or
+        $policyOnlineVi -notmatch 'Offline|Online|catalog' -or
+        $policySigningEn -notmatch 'self-signed|sign|release' -or
+        $policyTypoVi -notmatch 'mã nguồn|SOURCE-POLICY' -or
+        $missingContextVi -notmatch 'chưa biết.*này/đó|gửi nguyên trạng thái' -or
+        $contextFollowUpVi -notmatch 'Crack|crack|kích hoạt|bằng chứng') {
+        Add-AssistantVerificationError 'Intent router does not clarify broad policy questions or route source/Online/signing policy variants correctly.'
+    }
+
     $catalogUpdateEn = Get-ToolAssistantAnswer -Question 'latest catalog update failed' -Culture 'en-US' -Knowledge $knowledge
     $catalogUpdateVi = Get-ToolAssistantAnswer -Question 'cập nhật danh mục mới nhất bị lỗi' -Culture 'vi-VN' -Knowledge $knowledge
     $installUpdateEn = Get-ToolAssistantAnswer -Question 'how do I install the latest update' -Culture 'en-US' -Knowledge $knowledge
@@ -533,8 +552,8 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
-        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*24/09/2026' -or
-        $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*24 September 2026' -or
+        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*25/09/2026' -or
+        $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*25 September 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's (?:prior )?written approval" -or

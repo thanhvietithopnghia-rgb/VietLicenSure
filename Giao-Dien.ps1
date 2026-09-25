@@ -23,7 +23,7 @@ function Write-DashboardStartupTrace {
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0"
-$releaseBuildDate = "2026.09.24"
+$releaseBuildDate = "2026.09.25"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v5.0"
 $script:isUnsignedDevelopmentBuild = $false
