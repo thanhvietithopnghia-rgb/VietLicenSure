@@ -88,6 +88,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Phần mềm trả phí, thuê bao hoặc dùng thử chưa xác minh luôn được nhắc kiểm tra giấy phép, không tự kết luận vi phạm.
 - Thành phần hệ thống, runtime, codec, extension nền, trình cài đặt, add-in, gói hỗ trợ và trình gỡ driver chỉ nằm trong kiểm kê/báo cáo, không xuất hiện ở cửa sổ xử lý.
 - Catalog tích hợp và Online `1.6.3.0` có 94 nhóm sản phẩm, được ký CMS, kiểm tra schema và chống hạ phiên bản.
+- Mỗi lần mở vẫn mặc định Offline. Chỉ sau khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure mới tự cập nhật/xác minh catalog ký số rồi kiểm tra manifest phiên bản mới; không upload inventory, không có dịch vụ nền hoặc cài EXE im lặng, và lần mở sau trở lại Offline.
 - Khắc phục tách riêng Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm.
 - Báo cáo HTML/PDF/JSON/XML được tạo cục bộ và che định danh phần cứng trong bản chia sẻ mặc định.
 - Hỗ trợ giao diện responsive, DPI cao, Light/Dark, timeline, plugin khai báo có chữ ký, CLI headless và quản trị nhiều máy.

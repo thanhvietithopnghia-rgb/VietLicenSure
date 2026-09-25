@@ -18,6 +18,10 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 - **Báo cáo, riêng tư và toàn vẹn:** xuất HTML/PDF/JSON/XML/CSV, che dữ liệu nhạy cảm, Offline theo mặc định; gói ManagedSigned được khóa provenance/CMS/SHA-256/Authenticode/RFC3161 và kiểm thử runtime, UAC cancellation, DPI/High Contrast trên VM sạch trước khi bàn giao.
 - **Kênh phát hành:** chuyển sang **Official Self-Signed** — phát hành chính thức bằng signer tự ký đã ghim, có RFC3161 timestamp và verifier fail-closed; công bố rõ đây không phải public-CA/EV/Store-signed và SmartScreen vẫn có thể cảnh báo.
 
+### Tóm tắt cốt lõi giữa hai thế hệ
+
+**v4.9** tập trung làm chính xác nền nhận diện: hợp nhất nhiều nguồn kiểm kê, phân tầng bằng chứng, chống kết luận nhầm và khóa chặt thao tác gỡ/khắc phục theo đúng đối tượng. **v5.0** kế thừa nền đó và hợp nhất thành dashboard kiểm tra–khắc phục–báo cáo–quản lý hoàn chỉnh, hỗ trợ DPI/Light/Dark/High Contrast, Trợ lý Offline và quản lý Cục bộ/Máy chủ/Máy trạm. Khắc phục tách rõ Windows, Office và phần mềm khác, có Dry Run, scope-lock, backup, UAC, hậu kiểm và rollback fail-closed; báo cáo mở rộng sang HTML/PDF/JSON/XML/CSV, plugin ký số và timeline bảo vệ. Offline vẫn là mặc định; chỉ khi người dùng chủ động bật Online cho phiên hiện tại, v5.0 mới xác minh catalog ký số rồi kiểm tra manifest phiên bản mới, không upload inventory, không tải/cài EXE ngầm và lần mở sau trở lại Offline.
+
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
 
 ## v4.9.0.0 — 22/08/2026

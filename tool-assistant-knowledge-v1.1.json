@@ -1,6 +1,6 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.10.0",
+  "KnowledgeVersion": "1.11.0",
    "UpdatedAtUtc": "2026-09-24T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
@@ -38,6 +38,14 @@
       "Keywords": ["tac gia cua tool", "do ai phat trien", "ai phat trien tool", "nguoi viet tool", "developer cua tool", "ai tao ra cong cu", "thanh viet la ai"],
       "AnswerVi": "VietLicenSure do Thanh Việt phát triển. Thông tin này được ghi trong mục Giới thiệu, Hướng dẫn sử dụng và phần chân giao diện của bản phát hành.",
       "AnswerEn": "VietLicenSure is developed by Thanh Viet. This attribution appears in About, the user guide, and the release interface footer."
+    },
+    {
+      "Id": "v49-vs-v50",
+      "TitleVi": "Khác biệt cốt lõi giữa v4.9 và v5.0",
+      "TitleEn": "Core differences between v4.9 and v5.0",
+      "Keywords": ["v4.9 so voi v5.0", "v5.0 khac v4.9", "v5 co gi moi so voi v4.9", "so sanh v4.9 v5.0", "compare v4.9 and v5.0", "v5.0 changes from v4.9", "what changed since v4.9"],
+      "AnswerVi": "v4.9 tập trung hoàn thiện nền nhận diện: hợp nhất nhiều nguồn kiểm kê, phân tầng bằng chứng, tránh kết luận khi thiếu dữ liệu và khóa thao tác gỡ/khắc phục theo đúng đối tượng. v5.0 kế thừa nền đó rồi hợp nhất thành dashboard kiểm tra–khắc phục–báo cáo–quản lý hoàn chỉnh; bổ sung DPI/Light/Dark/High Contrast, Trợ lý Offline, Cục bộ/Máy chủ/Máy trạm, Dry Run/scope-lock/backup/UAC/hậu kiểm/rollback và báo cáo HTML/PDF/JSON/XML/CSV cùng plugin/timeline bảo vệ. Offline vẫn là mặc định; chỉ sau khi người dùng chủ động bật Online cho phiên hiện tại, v5.0 mới xác minh catalog ký số rồi kiểm tra manifest phiên bản mới, không upload inventory hoặc cài EXE ngầm.",
+      "AnswerEn": "v4.9 concentrated on the recognition foundation: correlating multiple inventory sources, grading evidence, avoiding unsupported conclusions, and binding uninstall/remediation to the exact item. v5.0 retains that foundation and unifies inspection, remediation, reporting, and management in one dashboard; it adds DPI/Light/Dark/High Contrast support, an Offline Assistant, Local/Server/Workstation management, Dry Run/scope-lock/backup/UAC/post-check/rollback, plus HTML/PDF/JSON/XML/CSV reports with protected plugins/timeline. Offline remains the default; only after the user explicitly enables Online for the current session does v5.0 validate the signed catalog and check the signed new-version manifest, without uploading inventory or silently installing an EXE."
     },
     {
       "Id": "release-date",
@@ -164,8 +172,8 @@
       "TitleVi": "Chế độ Offline và Online",
       "TitleEn": "Offline and Online modes",
       "Keywords": ["offline", "che do offline", "hoat dong offline", "online", "mang", "internet", "chuyen online", "chuyen offline", "mac dinh", "ket noi"],
-      "AnswerVi": "Mỗi lần mở, VietLicenSure mặc định ở chế độ Offline và không tự truy cập Internet. Khi người dùng chủ động chuyển Online, phần mềm mới cho phép kiểm tra cập nhật, đồng bộ danh mục và đồng bộ bộ tri thức của Trợ lý VietLicenSure. Đóng rồi mở lại ứng dụng sẽ trở về Offline.",
-      "AnswerEn": "Every launch starts Offline and does not access the Internet automatically. Online mode must be enabled explicitly for update checks, catalog sync and VietLicenSure Assistant knowledge sync. Restarting the application returns it to Offline."
+      "AnswerVi": "Mỗi lần mở, VietLicenSure mặc định Offline và không tự truy cập Internet. Chỉ sau khi người dùng chủ động bật Online cho phiên hiện tại, phần mềm mới tự tải/xác minh catalog ký số rồi kiểm tra manifest phiên bản mới; các tính năng Online khác vẫn chỉ chạy khi người dùng chọn. Không có telemetry, không gửi inventory/báo cáo, không tự tải hoặc cài EXE và lần mở sau trở lại Offline.",
+      "AnswerEn": "Every launch starts Offline and does not access the Internet automatically. Only after the user explicitly enables Online for the current session does VietLicenSure automatically download/validate the signed catalog and then check the signed new-version manifest; other Online features still run only when selected. There is no telemetry, no inventory/report upload, no silent EXE download/install, and the next launch returns to Offline."
     },
     {
       "Id": "privacy",
@@ -420,8 +428,8 @@
       "TitleVi": "Danh mục nhận diện phần mềm",
       "TitleEn": "Software recognition catalogue",
       "Keywords": ["mo rong catalogue phan mem", "cap nhat danh muc phan mem", "quet nhieu phan mem hon", "nhan dien them ung dung", "software catalogue", "catalog nhan dien"],
-      "AnswerVi": "Catalogue kết hợp tên sản phẩm, nhà phát hành, dấu vết cài đặt, tệp thực thi và đặc điểm cấp phép. Bản đi kèm VietLicenSure là nguồn mặc định Offline; bản Online chỉ được nhận sau khi kiểm tra nguồn, phiên bản, kích thước và cấu trúc. Phần mềm chưa có catalogue vẫn xuất hiện trong kho cài đặt nhưng được đánh dấu cần đối chiếu thay vì đoán bản quyền.",
-      "AnswerEn": "The catalogue combines product names, publishers, install traces, executables, and licensing characteristics. The bundled catalogue is the Offline default; Online data is accepted only after source, version, size, and schema validation. Uncatalogued applications still appear in inventory but are marked for review rather than having licensing guessed."
+      "AnswerVi": "Catalogue kết hợp tên sản phẩm, nhà phát hành, dấu vết cài đặt, tệp thực thi và đặc điểm cấp phép. Bản đi kèm VietLicenSure là nguồn mặc định Offline. Sau khi người dùng chủ động bật Online cho phiên hiện tại, phần mềm tự tải/xác minh catalog ký số trước rồi kiểm tra manifest phiên bản mới đã ký; catalog chỉ được nhận sau allowlist HTTPS, chữ ký, phiên bản chống hạ cấp, kích thước và schema. Không có inventory máy được tải lên, không tự tải hoặc cài EXE và lần mở sau trở lại Offline. Phần mềm chưa có catalogue vẫn xuất hiện nhưng được đánh dấu cần đối chiếu thay vì đoán bản quyền.",
+      "AnswerEn": "The catalogue combines product names, publishers, install traces, executables, and licensing characteristics. The bundled catalogue is the Offline default. After the user explicitly enables Online for the current session, VietLicenSure automatically downloads/validates the signed catalog first and then checks the signed new-version manifest; catalog data is accepted only after HTTPS allowlist, signature, anti-downgrade version, size, and schema checks. No device inventory is uploaded, there is no silent EXE download/install, and the next launch returns to Offline. Uncatalogued applications still appear but are marked for review rather than having licensing guessed."
     },
     {
       "Id": "duplicate-software",

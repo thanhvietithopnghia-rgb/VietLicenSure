@@ -12,7 +12,7 @@
                           "FileName":  "VietLicenSure-v5.0.exe",
                           "Architecture":  "AnyCPU",
                           "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
-                          "Sha256":  "ABB0D776DC1374E547B2C818EF712083C9713E7D5A605E4F802DE5EBDB8016F5",
+                          "Sha256":  "618A4DF6D19286772161E578C8054795BFD6B14569957D8E526A728D7CC3994A",
                           "AuthenticodeStatus":  "Valid",
                           "AuthenticodeSigner":  "CN=Thanh Viet - Tool Kiem Tra v4.9 (Self-Signed Code Signing)",
                           "AuthenticodeThumbprint":  "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA",
@@ -40,7 +40,7 @@
                  "FileName":  "SBOM.cdx.json",
                  "Format":  "CycloneDX",
                  "SpecVersion":  "1.5",
-                 "Sha256":  "C554BFDC530D04B298459177979F74130C2E0584C2A63171377D709D2899FE5A"
+                 "Sha256":  "09F2225A91E1085539C9C240748D8B6C2D5495C5CBEFD0AD92ED40863C4F2F7E"
              },
     "PayloadCount":  59,
     "IntegrityFileCount":  57,
@@ -51,11 +51,11 @@
                                "ResourceCount":  1,
                                "PayloadCount":  59,
                                "HeaderBytes":  496,
-                               "SourceBytes":  3534632,
-                               "BundleBytes":  3535128,
-                               "EmbeddedBytes":  747296,
-                               "SavedBytes":  2787336,
-                               "SavingsPercent":  78.86,
+                               "SourceBytes":  3549653,
+                               "BundleBytes":  3550149,
+                               "EmbeddedBytes":  751356,
+                               "SavedBytes":  2798297,
+                               "SavingsPercent":  78.83,
                                "MaximumPayloadBytes":  8388608,
                                "MaximumPayloadDataBytes":  16777216,
                                "MaximumCompressedBytes":  16777216,
@@ -171,7 +171,7 @@
     "SoftwareLicenseCatalogGeneratedAtUtc":  "2026-08-31T06:05:00Z",
     "SoftwareLicenseCatalogFreshnessStatus":  "Fresh",
     "SoftwareLicenseCatalogFreshForDecisiveEvidence":  true,
-    "SoftwareLicenseCatalogAgeDays":  23.898,
+    "SoftwareLicenseCatalogAgeDays":  24.38,
     "SoftwareLicenseCatalogFreshnessWarningAgeDays":  30,
     "SoftwareLicenseCatalogFreshnessMaximumAgeDays":  45,
     "SoftwareLicenseCatalogProductRules":  94,
@@ -438,5 +438,5 @@
                              "Status":  "NotClaimed",
                              "Reason":  "Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia."
                          },
-    "BuiltAtUtc":  "2026-09-24T03:37:59.4044168Z"
+    "BuiltAtUtc":  "2026-09-24T15:11:51.1198582Z"
 }

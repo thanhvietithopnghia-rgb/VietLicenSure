@@ -1,5 +1,9 @@
 *.json text eol=lf
 update-manifest-v1.json binary
+RELEASE-MANIFEST.json -text
+SBOM.cdx.json -text
+RELEASE-SHA256SUMS.txt -text
+THONG-TIN-PHAT-HANH-v5.0.txt -text
 *.p7s binary
 *.cer binary
 *.ico binary
