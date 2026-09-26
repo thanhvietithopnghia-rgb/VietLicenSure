@@ -20,7 +20,7 @@ if (-not [string]::IsNullOrWhiteSpace($script:startupTracePath)) {
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0"
-$releaseBuildDate = "2026.09.25"
+$releaseBuildDate = "2026.09.26"
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v5.0"
 $script:isUnsignedDevelopmentBuild = $false
