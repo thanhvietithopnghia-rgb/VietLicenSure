@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
+. (Join-Path $SourceDirectory 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Assert-Enterprise {
     param([bool]$Condition, [string]$Message)
@@ -272,7 +273,7 @@ try {
     Assert-Enterprise ($launcherText -match 'ResolveEnterpriseNetworkAllowed' -and
         $launcherText -match 'TOOL_ENTERPRISE_NETWORK_ALLOWED' -and
         $launcherText -match 'mode\s*==\s*LaunchMode\.EnterpriseServer\s*\|\|\s*mode\s*==\s*LaunchMode\.EnterpriseAgent') "Launcher không còn chặn riêng tiến trình mạng server/agent theo công tắc Mục 8."
-    $dashboardText = Get-Content -LiteralPath (Join-Path $SourceDirectory "Giao-Dien.ps1") -Raw -Encoding UTF8
+    $dashboardText = Get-VietLicenSureComposedSourceText -SourceDirectory $SourceDirectory -EntrypointName 'Giao-Dien.ps1'
     Assert-Enterprise ($dashboardText -match 'Start-Process\s+-FilePath\s+\$launcherPath\s+-ArgumentList\s+"--enterprise-ui"' -and
         $dashboardText -match '-File\s+`"\$licenseManagerScript`"' -and
         $dashboardText -notmatch '\$licenseLaunchMode\s*=\s*if\s*\(\$script:offlineMode\)' -and

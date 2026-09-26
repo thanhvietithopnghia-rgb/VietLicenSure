@@ -6,6 +6,7 @@ if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScri
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
 $checkCount = 0
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Add-CheckFailure {
     param([Parameter(Mandatory = $true)][string]$Message)
@@ -41,9 +42,8 @@ if (-not (Test-Path -LiteralPath $cleanupPath -PathType Leaf)) {
 } else {
     $tokens = $null
     $parseErrors = $null
-    $cleanupAst = [System.Management.Automation.Language.Parser]::ParseFile(
-        $cleanupPath, [ref]$tokens, [ref]$parseErrors)
-    $cleanupText = Get-Content -LiteralPath $cleanupPath -Raw -Encoding UTF8
+    $cleanupAst = Get-VietLicenSureComposedSourceAst -SourceDirectory $root -EntrypointName 'windows-license-compliance-cleanup.ps1' -Tokens ([ref]$tokens) -ParseErrors ([ref]$parseErrors)
+    $cleanupText = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'windows-license-compliance-cleanup.ps1'
     foreach ($parseError in @($parseErrors)) {
         Add-CheckFailure ("PowerShell parse error at {0}:{1}: {2}" -f
             $parseError.Extent.StartLineNumber, $parseError.Extent.StartColumnNumber, $parseError.Message)

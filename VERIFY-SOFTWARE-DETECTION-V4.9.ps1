@@ -4,6 +4,7 @@ param([switch]$IncludeLiveInventory)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $root 'Tool-SoftwareInventory.ps1')
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 
 $failures = New-Object System.Collections.Generic.List[string]
 function Assert-Detection {
@@ -50,7 +51,7 @@ try {
     if (Test-Path -LiteralPath $scratch) { Remove-Item -LiteralPath $scratch -Recurse -Force }
 }
 
-$cleanupSource = [IO.File]::ReadAllText((Join-Path $root 'windows-license-compliance-cleanup.ps1'))
+$cleanupSource = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'windows-license-compliance-cleanup.ps1'
 $rootFunctionStart = $cleanupSource.IndexOf('function Get-ThirdPartyNormalizedInstallRoot', [StringComparison]::Ordinal)
 $rootFunctionEnd = $cleanupSource.IndexOf('function Test-ThirdPartyArtifactPath', $rootFunctionStart, [StringComparison]::Ordinal)
 $rootFunction = if ($rootFunctionStart -ge 0 -and $rootFunctionEnd -gt $rootFunctionStart) { $cleanupSource.Substring($rootFunctionStart, $rootFunctionEnd - $rootFunctionStart) } else { '' }

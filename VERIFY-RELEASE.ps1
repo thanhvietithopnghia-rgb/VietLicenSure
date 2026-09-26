@@ -133,6 +133,7 @@ function Get-VerificationPowerShell([string]$Architecture) {
 }
 
 $sourceDirectoryFull = [IO.Path]::GetFullPath($SourceDirectory)
+. (Join-Path $sourceDirectoryFull 'VERIFY-COMPOSED-SOURCE.ps1')
 $distributionDirectoryFull = [IO.Path]::GetFullPath($DistributionDirectory)
 $releaseIdentityHelperPath = Join-Path $sourceDirectoryFull 'Tool-Provenance.ps1'
 if (-not (Test-Path -LiteralPath $releaseIdentityHelperPath -PathType Leaf)) {
@@ -154,6 +155,7 @@ $peHelperPath = Join-Path $sourceDirectoryFull 'PE-HARDENING.ps1'
 $embeddedVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-EMBEDDED-PAYLOAD.ps1'
 $foundationVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-FOUNDATION.ps1'
 $moduleVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-MODULE-CONTRACT.ps1'
+$modularizationVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-MODULARIZATION.ps1'
 $reportSchemaVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-REPORT-SCHEMA.ps1'
 $safetyVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-SAFETY-REGRESSIONS.ps1'
 $dashboardVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-DASHBOARD.ps1'
@@ -182,6 +184,7 @@ else { . $peHelperPath }
 if (-not (Test-Path -LiteralPath $embeddedVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-EMBEDDED-PAYLOAD.ps1.') }
 if (-not (Test-Path -LiteralPath $foundationVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-FOUNDATION.ps1.') }
 if (-not (Test-Path -LiteralPath $moduleVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-MODULE-CONTRACT.ps1.') }
+if (-not (Test-Path -LiteralPath $modularizationVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-MODULARIZATION.ps1.') }
 if (-not (Test-Path -LiteralPath $reportSchemaVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-REPORT-SCHEMA.ps1.') }
 if (-not (Test-Path -LiteralPath $safetyVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-SAFETY-REGRESSIONS.ps1.') }
 if (-not (Test-Path -LiteralPath $dashboardVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-DASHBOARD.ps1.') }
@@ -223,10 +226,10 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 56 } else { 57 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 141 } else { 142 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 165 } else { 167 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 65 } else { 66 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 176 } else { 178 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 60 } elseif ($AllowStoreManifest) { 61 } else { 62 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -270,9 +273,9 @@ foreach ($check in $versionChecks) {
     }
 }
 
-$guiText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Giao-Dien.ps1') -Raw -Encoding UTF8
+$guiText = Get-VietLicenSureComposedSourceText -SourceDirectory $sourceDirectoryFull -EntrypointName 'Giao-Dien.ps1'
 $elevatedBridgeText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'Tool-ElevatedBridge.ps1') -Raw -Encoding UTF8
-$cleanupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-compliance-cleanup.ps1') -Raw -Encoding UTF8
+$cleanupText = Get-VietLicenSureComposedSourceText -SourceDirectory $sourceDirectoryFull -EntrypointName 'windows-license-compliance-cleanup.ps1'
 $backupText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-backup.ps1') -Raw -Encoding UTF8
 $restoreText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'windows-license-restore.ps1') -Raw -Encoding UTF8
 $reportText = Get-Content -LiteralPath (Join-Path $sourceDirectoryFull 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
@@ -663,7 +666,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','FAQ-NGUOI-DUNG-MOI-v5.0.md','FIRST-RUN-FAQ-v5.0.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt','SOURCE-POLICY-v5.0.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
-    'Giao-Dien.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
+    'Giao-Dien.ps1','Dashboard-Core.ps1','Dashboard-Execution.ps1','Dashboard-OnlineUpdate.ps1','Dashboard-CleanupWorkflow.ps1','Dashboard-AssuranceCenter.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-DashboardPresentation.ps1','Tool-Localization.ps1',
@@ -672,7 +675,7 @@ $payloadFiles = @(
     'Tool-ReportSchema.ps1','Tool-ResultCenter.ps1','Tool-ReportExport.ps1','Tool-PluginEngine.ps1','Tool-LicenseTimeline.ps1',
     'Tool-SafetyPolicy.ps1','Tool-Enterprise.ps1','Tool-EnterpriseCli.ps1','Tool-EnterpriseHost.ps1','Tool-EnterpriseAgent.ps1',
     'enterprise-license-manager.ps1','TOOL-SHA256SUMS.txt','windows-license-backup.ps1',
-    'windows-license-compliance-cleanup.ps1','windows-license-restore.ps1','windows-license-deep-scan.ps1',
+    'windows-license-compliance-cleanup.ps1','Cleanup-Platform.ps1','Cleanup-Detection.ps1','Cleanup-Evidence.ps1','Cleanup-Remediation.ps1','windows-license-restore.ps1','windows-license-deep-scan.ps1',
     'windows-license-forensics.ps1','windows-oem-license-assistant.ps1','windows-office-license-manager.ps1',
     'windows-license-assurance.ps1','builtin-windows-office-trust.plugin.json'
 )
@@ -896,8 +899,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 58 } else { 59 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 56 } else { 57 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 67 } else { 68 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 65 } else { 66 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
@@ -1207,6 +1210,10 @@ if ($profile) {
 if (Test-Path -LiteralPath $reportSchemaVerifierPath -PathType Leaf) {
     & $reportSchemaVerifierPath -SourceDirectory $sourceDirectoryFull
     if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra schema báo cáo v4.3 thất bại.') }
+}
+if (Test-Path -LiteralPath $modularizationVerifierPath -PathType Leaf) {
+    & $modularizationVerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra modularization v5.0 thất bại.') }
 }
 if (Test-Path -LiteralPath $safetyVerifierPath -PathType Leaf) {
     & $safetyVerifierPath -SourceDirectory $sourceDirectoryFull

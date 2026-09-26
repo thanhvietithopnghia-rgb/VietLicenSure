@@ -5,6 +5,7 @@ $ErrorActionPreference = "Stop"
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 function Fail([string]$Message) { [void]$failures.Add($Message) }
 
 $offlinePath = Join-Path $root "Tool-OfflinePolicy.ps1"
@@ -76,7 +77,7 @@ if ($failures.Count -eq 0) {
         $catalogDifference = @(Compare-Object $catalogKeys["Tool-Strings.vi-VN.json"] $catalogKeys["Tool-Strings.en-US.json"])
         if ($catalogDifference.Count -gt 0) { Fail "Catalog vi-VN/en-US không đồng bộ key." }
 
-        $dashboardText = Get-Content -LiteralPath (Join-Path $root "Giao-Dien.ps1") -Raw -Encoding UTF8
+        $dashboardText = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1'
         if ($dashboardText -notmatch 'ArgumentList\s+"--enterprise-ui"' -or
             $dashboardText -match '\$licenseLaunchMode\s*=\s*if\s*\(\$script:offlineMode\)' -or
             $dashboardText -match 'máy chủ/máy trạm bị ẩn') {

@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("VietLicenSure-v5.0-performance-" + [Guid]::NewGuid().ToString('N'))
 $previousScanSettingsPath = [string]$env:TOOL_SCAN_SETTINGS_PATH
 
@@ -205,7 +206,7 @@ try {
     }
 
     $inventoryText = Get-Content -LiteralPath (Join-Path $root 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
-    $cleanupText = Get-Content -LiteralPath (Join-Path $root 'windows-license-compliance-cleanup.ps1') -Raw -Encoding UTF8
+    $cleanupText = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'windows-license-compliance-cleanup.ps1'
     $softwareInventoryText = Get-Content -LiteralPath $softwareInventoryPath -Raw -Encoding UTF8
     foreach ($pattern in @('Get-ToolOptimizedOfficeOsppPaths','Invoke-ToolParallelOfficeStatus')) {
         if ($inventoryText -notmatch $pattern -or $cleanupText -notmatch $pattern) {

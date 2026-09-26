@@ -182,7 +182,7 @@ if ($Mode -eq 'Store') {
         [string]$launcherTrustProfile.StorePackageVersion -cne $version -or
         [string]$launcherTrustProfile.StorePackagePublisherId -cne $storePublisherId -or
         [string]$launcherTrustProfile.StorePackageFamilyName -cne $storeFamilyName -or
-        [int]$launcherTrustProfile.PayloadCount -ne 56 -or
+        [int]$launcherTrustProfile.PayloadCount -ne 65 -or
         -not [bool]$launcherTrustProfile.ProvenanceSignatureEmbedded -or
         -not [bool]$launcherTrustProfile.ResultCenterEmbedded) {
         throw 'Store mode requires a fail-closed StoreSubmission executable with exact Partner Center identity and signed provenance.'

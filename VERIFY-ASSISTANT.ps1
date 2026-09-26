@@ -4,6 +4,7 @@ param([string]$SourceDirectory = '')
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $errors = New-Object System.Collections.Generic.List[string]
+. (Join-Path $SourceDirectory 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Add-AssistantVerificationError([string]$Message) {
     $script:errors.Add($Message)
@@ -868,7 +869,7 @@ if ($errors.Count -eq 0) {
         Remove-Item -LiteralPath $temporarySettings -Force -ErrorAction SilentlyContinue
     }
 
-    $guiSource = Get-Content -LiteralPath (Join-Path $SourceDirectory 'Giao-Dien.ps1') -Raw -Encoding UTF8
+    $guiSource = Get-VietLicenSureComposedSourceText -SourceDirectory $SourceDirectory -EntrypointName 'Giao-Dien.ps1'
     foreach ($requiredToken in @('$introAssistantButton','Show-ToolAssistantWindow','TitleLabel','DescriptionLabel','TitleColor')) {
         if (-not $guiSource.Contains($requiredToken)) { Add-AssistantVerificationError "Dashboard integration token missing: $requiredToken" }
     }

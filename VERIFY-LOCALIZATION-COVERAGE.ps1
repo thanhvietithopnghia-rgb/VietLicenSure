@@ -7,6 +7,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 $SourceDirectory = if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $PSScriptRoot } else { [IO.Path]::GetFullPath($SourceDirectory) }
 $failures = New-Object System.Collections.Generic.List[string]
+. (Join-Path $SourceDirectory 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Add-Failure([string]$Message) {
     if (-not [string]::IsNullOrWhiteSpace($Message)) { [void]$failures.Add($Message) }
@@ -290,7 +291,7 @@ if (Test-Path -LiteralPath $launcherPath -PathType Leaf) {
 
 $dashboardPath = Join-Path $SourceDirectory 'Giao-Dien.ps1'
 if (Test-Path -LiteralPath $dashboardPath -PathType Leaf) {
-    $dashboardText = Read-Utf8 $dashboardPath
+    $dashboardText = Get-VietLicenSureComposedSourceText -SourceDirectory $SourceDirectory -EntrypointName 'Giao-Dien.ps1'
     if ($dashboardText -notmatch 'Get-ToolText\s+-Key\s+"assurance\.heading"\s+-Culture\s+\$script:dashboardCulture\s+-FormatArguments\s+@\(\$toolDisplayVersion\)') {
         Add-Failure 'Assurance heading is not formatted from the shared current display version.'
     }
@@ -306,7 +307,7 @@ if (Test-Path -LiteralPath $dashboardPath -PathType Leaf) {
 
 $cleanupPath = Join-Path $SourceDirectory 'windows-license-compliance-cleanup.ps1'
 if (Test-Path -LiteralPath $cleanupPath -PathType Leaf) {
-    $cleanupText = Read-Utf8 $cleanupPath
+    $cleanupText = Get-VietLicenSureComposedSourceText -SourceDirectory $SourceDirectory -EntrypointName 'windows-license-compliance-cleanup.ps1'
     $tokens = $null
     $parseErrors = $null
     $ast = [Management.Automation.Language.Parser]::ParseInput($cleanupText, [ref]$tokens, [ref]$parseErrors)
@@ -334,7 +335,7 @@ if (Test-Path -LiteralPath $cleanupPath -PathType Leaf) {
 
 $dashboardPath = Join-Path $SourceDirectory 'Giao-Dien.ps1'
 if (Test-Path -LiteralPath $dashboardPath -PathType Leaf) {
-    $dashboard = Read-Utf8 $dashboardPath
+    $dashboard = Get-VietLicenSureComposedSourceText -SourceDirectory $SourceDirectory -EntrypointName 'Giao-Dien.ps1'
     if (-not $dashboard.Contains('$selectedHistoryFile = if ($script:dashboardCulture -eq "en-US")'.Replace('\',''))) { Add-Failure 'Version history does not select a file by culture.' }
     if (-not $dashboard.Contains('$selectedGuideFile = if ($script:dashboardCulture -eq "en-US")'.Replace('\',''))) { Add-Failure 'User guide does not select a file by culture.' }
     $moduleVariables = [ordered]@{

@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $sourceDirectoryFull = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
+. (Join-Path $sourceDirectoryFull 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Add-Failure([string]$Message) { $failures.Add($Message) }
 
@@ -18,9 +19,15 @@ function Read-SourceText([string]$Name) {
     }
     $tokens = $null
     $parseErrors = $null
-    [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+    if ($Name -in @('Giao-Dien.ps1','windows-license-compliance-cleanup.ps1')) {
+        [void](Get-VietLicenSureComposedSourceAst -SourceDirectory $sourceDirectoryFull -EntrypointName $Name -Tokens ([ref]$tokens) -ParseErrors ([ref]$parseErrors))
+        $sourceText = Get-VietLicenSureComposedSourceText -SourceDirectory $sourceDirectoryFull -EntrypointName $Name
+    } else {
+        [void][System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+        $sourceText = Get-Content -LiteralPath $path -Raw -Encoding UTF8
+    }
     foreach ($parseError in @($parseErrors)) { Add-Failure "Lỗi cú pháp ${Name}: $($parseError.Message)" }
-    return Get-Content -LiteralPath $path -Raw -Encoding UTF8
+    return $sourceText
 }
 
 $helperPath = Join-Path $sourceDirectoryFull 'Tool-ReportSchema.ps1'

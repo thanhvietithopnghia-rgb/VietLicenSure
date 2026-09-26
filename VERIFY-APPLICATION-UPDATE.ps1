@@ -4,6 +4,7 @@ param([string]$SourceDirectory = '')
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Assert-UpdateTest {
     param([bool]$Condition, [Parameter(Mandatory = $true)][string]$Message)
@@ -198,7 +199,7 @@ try {
     $applyDescriptor = Get-ToolModuleDescriptor -ModuleId 'application.update.apply'
     Assert-UpdateTest ($applyDescriptor -and -not [bool]$applyDescriptor.IsEntryPoint -and $applyDescriptor.NetworkScope -eq 'Internet' -and $applyDescriptor.AccessMode -eq 'SystemChange' -and [bool]$applyDescriptor.RequiresElevation) 'Update apply module does not require the secure elevated bridge.'
 
-    $dashboardText = Get-Content -LiteralPath (Join-Path $root 'Giao-Dien.ps1') -Raw -Encoding UTF8
+    $dashboardText = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1'
     foreach ($pattern in @(
         'Request-ApplicationUpdateCheck', 'Reset-ApplicationUpdateForOffline', 'applicationUpdateReminderDueUtc',
         'AddHours(2)', 'update.choice.updateNow', 'update.choice.remindLater', 'update.choice.dismissSession',
@@ -214,7 +215,7 @@ try {
     Assert-UpdateTest ($dashboardText -notmatch '\$updateApplyStartParameters|Start-Process\s+@updateApplyStartParameters') 'Update apply bypasses the secure elevated bridge.'
     $dashboardTokens = $null
     $dashboardParseErrors = $null
-    $dashboardAst = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'Giao-Dien.ps1'), [ref]$dashboardTokens, [ref]$dashboardParseErrors)
+    $dashboardAst = Get-VietLicenSureComposedSourceAst -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1' -Tokens ([ref]$dashboardTokens) -ParseErrors ([ref]$dashboardParseErrors)
     Assert-UpdateTest ($dashboardParseErrors.Count -eq 0) 'Dashboard cannot be parsed for update handoff verification.'
     $applyFunctionAst = $dashboardAst.Find({
         param($node)

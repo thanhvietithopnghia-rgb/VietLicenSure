@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 function Fail([string]$Message) { $failures.Add($Message) }
 
 function Test-CanonicalJsonFile {
@@ -66,9 +67,15 @@ function Read-And-Parse([string]$Name) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { Fail "Thiếu tệp: $Name"; return '' }
     $tokens = $null
     $parseErrors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+    if ($Name -in @('Giao-Dien.ps1','windows-license-compliance-cleanup.ps1')) {
+        $ast = Get-VietLicenSureComposedSourceAst -SourceDirectory $root -EntrypointName $Name -Tokens ([ref]$tokens) -ParseErrors ([ref]$parseErrors)
+        $sourceText = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName $Name
+    } else {
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors)
+        $sourceText = Get-Content -LiteralPath $path -Raw -Encoding UTF8
+    }
     foreach ($parseError in @($parseErrors)) { Fail "Lỗi cú pháp ${Name}: $($parseError.Message)" }
-    return [pscustomobject]@{ Text=(Get-Content -LiteralPath $path -Raw -Encoding UTF8); Ast=$ast }
+    return [pscustomobject]@{ Text=$sourceText; Ast=$ast }
 }
 
 $backup = Read-And-Parse 'windows-license-backup.ps1'

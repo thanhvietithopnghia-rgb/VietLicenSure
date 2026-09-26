@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
+. (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
 
 function Add-Failure([string]$Message) {
     [void]$failures.Add($Message)
@@ -23,11 +24,11 @@ if (-not (Test-Path -LiteralPath $guiPath -PathType Leaf)) {
 } else {
     $tokens = $null
     $parseErrors = $null
-    $guiAst = [Management.Automation.Language.Parser]::ParseFile($guiPath, [ref]$tokens, [ref]$parseErrors)
+    $guiAst = Get-VietLicenSureComposedSourceAst -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1' -Tokens ([ref]$tokens) -ParseErrors ([ref]$parseErrors)
     foreach ($parseError in @($parseErrors)) {
         Add-Failure "Lỗi cú pháp Giao-Dien.ps1: $($parseError.Message)"
     }
-    $text = Get-Content -LiteralPath $guiPath -Raw -Encoding UTF8
+    $text = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1'
 }
 $presentationPath = Join-Path $root 'Tool-DashboardPresentation.ps1'
 if (Test-Path -LiteralPath $presentationPath -PathType Leaf) {
