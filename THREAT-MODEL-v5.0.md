@@ -1,7 +1,7 @@
 # Mô hình đe dọa VietLicenSure v5.0
 
 Phiên bản áp dụng: **v5.0 Official Self-Signed** — trust mode kỹ thuật `ManagedSigned`
-Ngày rà soát: **2026-09-25**
+Ngày rà soát: **2026-09-26**
 
 ## Mục tiêu bảo vệ
 
