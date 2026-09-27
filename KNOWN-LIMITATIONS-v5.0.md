@@ -1,6 +1,6 @@
 # Giới hạn đã biết — VietLicenSure v5.0
 
-Tài liệu này áp dụng cho VietLicenSure `v5.0` theo kênh `Official Self-Signed`, dùng trust mode kỹ thuật `ManagedSigned`. Trạng thái nghiệm thu hiện hành chỉ được công bố tại `RELEASE-STATUS-v5.0.md`.
+Tài liệu này áp dụng cho VietLicenSure `v5.0` theo kênh `Official Self-Signed`, dùng trust mode kỹ thuật `OfficialSelfSigned`. Trạng thái nghiệm thu hiện hành chỉ được công bố tại `RELEASE-STATUS-v5.0.md`.
 
 ## Tin cậy phát hành
 

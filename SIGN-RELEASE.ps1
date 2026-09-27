@@ -108,7 +108,7 @@ try {
         }
         if ($PSCmdlet.ParameterSetName -eq 'Store' -and -not [string]::IsNullOrWhiteSpace($TimestampServer)) {
             # Always prefer SignTool for certificate-store keys so both public
-            # Stable and ManagedSigned builds receive an RFC 3161 timestamp.
+            # Stable and OfficialSelfSigned builds receive an RFC 3161 timestamp.
             $signTool = Find-WindowsSignTool
             if ([string]::IsNullOrWhiteSpace($signTool)) { throw 'signtool.exe from the Windows SDK is required for RFC 3161 signing.' }
             $signerThumbprint = ([string]$certificate.Thumbprint -replace '\s', '').ToUpperInvariant()

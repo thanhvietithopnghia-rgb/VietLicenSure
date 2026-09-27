@@ -45,7 +45,7 @@ function Test-StoreLauncherTrustProfile {
         $flags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
         $expected = [ordered]@{
             SignedStableBuildMarker = '0'
-            ManagedSignedBuildMarker = '0'
+            OfficialSelfSignedBuildMarker = '0'
             StoreBuildMarker = '1'
             StorePackageName = 'ThanhVit.ToolKimTraBnQuyn'
             StorePackageVersion = '5.0.0.0'

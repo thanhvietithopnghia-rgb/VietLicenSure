@@ -1223,8 +1223,8 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $text -notmatch '\[string\]::Equals\(\[string\][$]currentTitle,\s*\[string\][$]headingText,\s*\[StringComparison\]::OrdinalIgnoreCase\)') {
         Add-Failure 'Bộ dựng HDSD chưa bảo đảm mục lục chỉ có một Tổng quan/Overview.'
     }
-    if ($guideViText -match 'Phiên bản ManagedSigned:|Ứng viên Microsoft Store:' -or
-        $guideEnText -match 'ManagedSigned version:|Microsoft Store candidate:') {
+    if ($guideViText -match 'Phiên bản OfficialSelfSigned:|Ứng viên Microsoft Store:' -or
+        $guideEnText -match 'OfficialSelfSigned version:|Microsoft Store candidate:') {
         Add-Failure 'Phần Tổng quan HDSD còn metadata phiên bản hoặc ứng viên phát hành.'
     }
     if ($historyText -match '(?m)^Phiên bản hiện tại:' -or
@@ -1233,7 +1233,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+cập nhật\s+26/09/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$' -or
+    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+cập nhật\s+27/09/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$' -or
         $historyText -notmatch 'tên chính thức' -or
         $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
         $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
@@ -1242,13 +1242,13 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyText -notmatch 'Chính sách mã nguồn') {
         Add-Failure 'Tài liệu lịch sử chưa ghi đúng danh tính v5.0, chính sách mã nguồn, kênh phản hồi hoặc các nâng cấp cốt lõi.'
     }
-    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+cập nhật\s+26/09/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$.*?(?=^##\s+v4\.9)').Value
+    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+cập nhật\s+27/09/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$.*?(?=^##\s+v4\.9)').Value
     if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 11 -or
         $v5HistorySection -match 'Tên\s+\*\*VietLicenSure\*\*\s+ghép từ|kiểm thử UI tự động') {
         Add-Failure 'Mục lịch sử v5.0 chưa được rút gọn về danh tính, chính sách, phản hồi, kênh phát hành và các nhóm nâng cấp cốt lõi.'
     }
     $requiredHistoryHeadings = @(
-        '## v5.0 — cập nhật 26/09/2026 (phát hành lần đầu 08/09/2026)',
+        '## v5.0 — cập nhật 27/09/2026 (phát hành lần đầu 08/09/2026)',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -1300,7 +1300,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## v5.0 — updated September 26, 2026 (first released September 8, 2026)',
+        '## v5.0 — updated September 27, 2026 (first released September 8, 2026)',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',

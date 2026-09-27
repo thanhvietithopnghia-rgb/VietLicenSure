@@ -1573,9 +1573,9 @@ function Set-DashboardLanguage {
     if ($script:officialBuildState -in @('Official','Store')) {
         $description.Text = Get-ToolText -Key "dashboard.overview.title" -Culture $Culture
         $introSummary.Text = Get-ToolText -Key "dashboard.overview.subtitle" -Culture $Culture
-    } elseif ($script:officialBuildState -eq 'Managed') {
-        $description.Text = Get-DashboardText 'officialBuild.banner.managedTitle'
-        $introSummary.Text = Get-DashboardText 'officialBuild.banner.managedBody'
+    } elseif ($script:officialBuildState -eq 'OfficialSelfSigned') {
+        $description.Text = Get-DashboardText 'officialBuild.banner.selfSignedTitle'
+        $introSummary.Text = Get-DashboardText 'officialBuild.banner.selfSignedBody'
     } elseif ($script:isUnsignedDevelopmentBuild) {
         $description.Text = Get-DashboardText 'officialBuild.banner.developmentTitle'
         $introSummary.Text = Get-DashboardText 'officialBuild.banner.developmentBody'
@@ -1627,8 +1627,8 @@ function Set-DashboardLanguage {
     $dashboardCards["ActionCenter"].Panel.AccessibleDescription = Get-DashboardText "resultCenter.card.tooltip"
     $dashboardCards["SecureLaunch"].Value.Text = if ($script:officialBuildState -eq 'Official') {
         Get-DashboardText 'officialBuild.state.official'
-    } elseif ($script:officialBuildState -eq 'Managed') {
-        Get-DashboardText 'officialBuild.state.managed'
+    } elseif ($script:officialBuildState -eq 'OfficialSelfSigned') {
+        Get-DashboardText 'officialBuild.state.selfSigned'
     } elseif ($script:officialBuildState -eq 'Store') {
         Get-DashboardText 'officialBuild.state.store'
     } elseif ($script:officialBuildState -eq 'Modified') {
@@ -1785,7 +1785,7 @@ function Set-DashboardTheme {
         Set-DashboardIntroBorderColor -Color $primary
         $description.ForeColor = $primary
         $introSummary.ForeColor = $text
-    } elseif ($script:officialBuildState -eq 'Managed') {
+    } elseif ($script:officialBuildState -eq 'OfficialSelfSigned') {
         $introPanel.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(8, 47, 73) } else { [System.Drawing.Color]::FromArgb(232, 245, 255) }
         Set-DashboardIntroBorderColor -Color $(if ($dark) { [System.Drawing.Color]::FromArgb(56, 189, 248) } else { [System.Drawing.Color]::FromArgb(2, 132, 199) })
         $description.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(186, 230, 253) } else { [System.Drawing.Color]::FromArgb(3, 105, 161) }
@@ -1974,8 +1974,8 @@ function Update-DashboardStatus {
     $dashboardCards["Architecture"].Value.Text = [string]$capabilityState.OfficeSummary
     $dashboardCards["SecureLaunch"].Value.Text = if ($script:officialBuildState -eq 'Official') {
         Get-DashboardText 'officialBuild.state.official'
-    } elseif ($script:officialBuildState -eq 'Managed') {
-        Get-DashboardText 'officialBuild.state.managed'
+    } elseif ($script:officialBuildState -eq 'OfficialSelfSigned') {
+        Get-DashboardText 'officialBuild.state.selfSigned'
     } elseif ($script:officialBuildState -eq 'Store') {
         Get-DashboardText 'officialBuild.state.store'
     } elseif ($script:officialBuildState -eq 'Modified') {
@@ -1990,7 +1990,7 @@ function Update-DashboardStatus {
     }
     $dashboardCards["Integrity"].Value.ForeColor = if ($IntegrityResult.Valid) { $successColor } else { $warningColor }
     $dashboardCards["Integrity"].Value.Tag = "StatusColor"
-    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -in @('Official','Managed','Store')) { $successColor } else { $warningColor }
+    $dashboardCards["SecureLaunch"].Value.ForeColor = if ($script:officialBuildState -in @('Official','OfficialSelfSigned','Store')) { $successColor } else { $warningColor }
     $dashboardCards["SecureLaunch"].Value.Tag = "StatusColor"
     Sync-DashboardCardAccessibility -CardKey "Compatibility" -Detail $catalogTooltip
     Sync-DashboardCardAccessibility -CardKey "Architecture"

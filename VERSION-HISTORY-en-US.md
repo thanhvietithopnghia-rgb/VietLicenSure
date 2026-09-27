@@ -1,11 +1,11 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through September 26, 2026; the public version remains v5.0.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through September 27, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — updated September 26, 2026 (first released September 8, 2026)
+## v5.0 — updated September 27, 2026 (first released September 8, 2026)
 
 - **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
 - **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
@@ -16,8 +16,8 @@ Public product page:
 - **Analysis, management, and Assistant:** High–Medium–Low prioritization, search, filters, previous-scan comparison, and multi-device support; the Offline Assistant routes natural questions by intent, follows explicit conversational context, and asks for clarification when a request is ambiguous instead of combining unrelated answers.
 - **Source architecture:** split `Giao-Dien.ps1` and `windows-license-compliance-cleanup.ps1` into nine functional libraries while retaining both compatible entrypoints; new gates lock function counts, packaging dependencies, and composed-source behaviour so the monoliths shrink without changing functionality.
 - **Safe remediation:** separate Windows, Office, and third-party scopes with mandatory preview, Dry Run, scope locking, HMAC backup, UAC consent, post-checks, and fail-closed rollback.
-- **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, and a ManagedSigned chain bound by provenance/CMS/SHA-256/Authenticode/RFC3161 plus clean-VM runtime, UAC-cancellation, DPI, and High Contrast evidence.
-- **Release channel:** moved to **Official Self-Signed**—an official release using the pinned self-issued signer, RFC3161 timestamping, and fail-closed verification; it is explicitly not public-CA, EV, or Store signed, and SmartScreen can still warn.
+- **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, and a OfficialSelfSigned chain bound by provenance/CMS/SHA-256/Authenticode/RFC3161 plus clean-VM runtime, UAC-cancellation, DPI, and High Contrast evidence.
+- **Release channel:** standardized as **Official Self-Signed** with internal state `OfficialSelfSigned`; the `ManagedSigned` and `Pilot` labels are no longer used, while the pinned self-issued signer, RFC3161 timestamping, and fail-closed verification remain unchanged; it is explicitly not public-CA, EV, or Store signed, and SmartScreen can still warn.
 
 ### Core summary across the two generations
 

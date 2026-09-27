@@ -2,20 +2,20 @@
 param(
     [string]$SourceDirectory = '',
     [string]$DistributionDirectory = '',
-    [switch]$AllowManagedSignedManifest,
+    [switch]$AllowOfficialSelfSignedManifest,
     [switch]$AllowStoreManifest,
     [switch]$AllowDevelopmentManifest
 )
 
 $ErrorActionPreference = 'Stop'
 $productVersion = ''
-if (([int][bool]$AllowManagedSignedManifest + [int][bool]$AllowStoreManifest + [int][bool]$AllowDevelopmentManifest) -gt 1) {
-    throw 'ManagedSigned, StoreSubmission và DevelopmentUnsigned là các chế độ loại trừ nhau.'
+if (([int][bool]$AllowOfficialSelfSignedManifest + [int][bool]$AllowStoreManifest + [int][bool]$AllowDevelopmentManifest) -gt 1) {
+    throw 'OfficialSelfSigned, StoreSubmission và DevelopmentUnsigned là các chế độ loại trừ nhau.'
 }
 $unsignedExecutableManifest = [bool]($AllowDevelopmentManifest -or $AllowStoreManifest)
-$expectedTrustMode = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
+$expectedTrustMode = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowOfficialSelfSignedManifest) { 'OfficialSelfSigned' } else { 'Production' }
 $expectedApplicationSelfUpdateAllowed = [bool]($expectedTrustMode -eq 'Production')
-$expectedApplicationUpdateAuthority = if ($AllowStoreManifest) { 'MicrosoftStore' } elseif ($AllowManagedSignedManifest) { 'ManagedDeployment' } elseif ($AllowDevelopmentManifest) { 'None' } else { 'PublicStableManifest' }
+$expectedApplicationUpdateAuthority = if ($AllowStoreManifest) { 'MicrosoftStore' } elseif ($AllowOfficialSelfSignedManifest) { 'ManagedDeployment' } elseif ($AllowDevelopmentManifest) { 'None' } else { 'PublicStableManifest' }
 $expectedBundledUpdateManifestChannel = if ($AllowStoreManifest) { 'store' } elseif ($AllowDevelopmentManifest) { 'development' } else { 'stable' }
 if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScriptRoot }
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = Join-Path $SourceDirectory 'dist' }
@@ -146,7 +146,7 @@ if (-not (Test-Path -LiteralPath $releaseIdentityHelperPath -PathType Leaf)) {
     $expectedReleaseBuildTime = [string]$expectedReleaseIdentity.BuildTime
     $expectedReleaseBuildDate = $expectedReleaseBuildTime.Replace('-', '.')
     $expectedReleaseDateToken = $expectedReleaseBuildTime.Replace('-', '')
-    $expectedManagedBuildId = $expectedReleaseVersion + '-managed-signed-' + $expectedReleaseDateToken
+    $expectedOfficialSelfSignedBuildId = $expectedReleaseVersion + '-official-self-signed-' + $expectedReleaseDateToken
     $expectedPublishedAtUtc = $expectedReleaseBuildTime + 'T00:00:00Z'
     $expectedVersionObject = [version]$expectedReleaseVersion
     $productVersion = [string]$expectedVersionObject.Major + '.' + [string]$expectedVersionObject.Minor
@@ -747,7 +747,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
     if ($signature.Status -eq 'Valid' -and $signature.SignerCertificate -and
         ([string]$signature.SignerCertificate.Subject -eq [string]$signature.SignerCertificate.Issuer -or
          [string]$signature.SignerCertificate.Subject -match '(?i)Self-Signed')) {
-        if ($AllowManagedSignedManifest) {
+        if ($AllowOfficialSelfSignedManifest) {
             $warnings.Add("$targetFileName dùng chứng thư tự ký được launcher ghim SHA-1/SHA-256; Windows vẫn có thể báo Unknown publisher trên máy mới.")
         } elseif (-not $unsignedExecutableManifest) {
             $failures.Add("$targetFileName dùng chứng thư tự ký; public Stable yêu cầu signer CA-issued.")
@@ -779,8 +779,8 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
             $untrustedRootAccepted = [bool]$portableTrustMethod.Invoke($null, [object[]]@($untrustedRoot, $true))
             $badDigestAccepted = [bool]$portableTrustMethod.Invoke($null, [object[]]@($badDigest, $true))
             $nonSelfSignedAccepted = [bool]$portableTrustMethod.Invoke($null, [object[]]@($untrustedRoot, $false))
-            if ($untrustedRootAccepted -ne [bool]$AllowManagedSignedManifest -or $badDigestAccepted -or $nonSelfSignedAccepted) {
-                throw 'Cổng chữ ký portable không giới hạn đúng ManagedSigned/CERT_E_UNTRUSTEDROOT/self-signed.'
+            if ($untrustedRootAccepted -ne [bool]$AllowOfficialSelfSignedManifest -or $badDigestAccepted -or $nonSelfSignedAccepted) {
+                throw 'Cổng chữ ký portable không giới hạn đúng OfficialSelfSigned/CERT_E_UNTRUSTEDROOT/self-signed.'
             }
 
             $tamperedPath = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-v5.0-tampered-' + [Guid]::NewGuid().ToString('N') + '.exe')
@@ -867,15 +867,15 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         if ([string]$releaseManifest.ReleaseVersion -ne $expectedReleaseVersion -or [string]$releaseManifest.ReleaseBuildDate -ne $expectedReleaseBuildDate) {
             throw 'Release manifest chưa đồng bộ với release identity chuẩn.'
         }
-        $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowManagedSignedManifest) { 'ManagedSigned' } else { 'Production' }
-        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { $expectedReleaseVersion + '-development-unsigned' } elseif ($AllowStoreManifest) { $expectedReleaseVersion + '-store-submission' } elseif ($AllowManagedSignedManifest) { $expectedManagedBuildId } else { $expectedOfficialBuildId }
-        $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowStoreManifest) { 'MicrosoftStorePackageIdentity' } elseif ($AllowManagedSignedManifest) { 'PinnedSelfSignedPortable' } else { 'PublicWindowsTrust' }
+        $expectedReleaseStatus = if ($AllowDevelopmentManifest) { 'DevelopmentUnsigned' } elseif ($AllowStoreManifest) { 'StoreSubmission' } elseif ($AllowOfficialSelfSignedManifest) { 'OfficialSelfSigned' } else { 'Production' }
+        $expectedReleaseLabel = if ($AllowDevelopmentManifest) { $expectedReleaseVersion + '-development-unsigned' } elseif ($AllowStoreManifest) { $expectedReleaseVersion + '-store-submission' } elseif ($AllowOfficialSelfSignedManifest) { $expectedOfficialSelfSignedBuildId } else { $expectedOfficialBuildId }
+        $expectedAuthenticodeTrustScope = if ($AllowDevelopmentManifest) { 'None' } elseif ($AllowStoreManifest) { 'MicrosoftStorePackageIdentity' } elseif ($AllowOfficialSelfSignedManifest) { 'PinnedSelfSignedPortable' } else { 'PublicWindowsTrust' }
         $expectedAuthenticodeRequired = [bool](-not $unsignedExecutableManifest)
         if ([string]$releaseManifest.ReleaseLabel -ne $expectedReleaseLabel -or
             [string]$releaseManifest.ReleaseStatus -ne $expectedReleaseStatus -or
             [string]$releaseManifest.AuthenticodeTrustScope -ne $expectedAuthenticodeTrustScope -or
             [bool]$releaseManifest.AuthenticodeRequired -ne $expectedAuthenticodeRequired) {
-            throw 'Release status không khớp chế độ build Stable/ManagedSigned/Store/development.'
+            throw 'Release status không khớp chế độ build Stable/OfficialSelfSigned/Store/development.'
         }
         $expectedProvenanceState = if ($AllowDevelopmentManifest) { 'Unverified' } else { 'Official' }
         if ([string]$releaseManifest.OfficialBuildProvenance.State -ne $expectedProvenanceState -or

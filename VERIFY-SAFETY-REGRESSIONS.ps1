@@ -89,8 +89,8 @@ $runtime = Read-And-Parse 'Tool-Runtime.ps1'
 
 try {
     $viStrings = Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ([string]$viStrings.'officialBuild.banner.managedTitle' -match '(?i)ManagedSigned|xác minh|chạy bình thường' -or
-        [string]$viStrings.'officialBuild.banner.managedTitle' -ne 'Kết quả kiểm tra gần nhất' -or
+    if ([string]$viStrings.'officialBuild.banner.selfSignedTitle' -match '(?i)OfficialSelfSigned|xác minh|chạy bình thường' -or
+        [string]$viStrings.'officialBuild.banner.selfSignedTitle' -ne 'Kết quả kiểm tra gần nhất' -or
         [string]$viStrings.'dashboard.runMode' -ne 'BẢN ĐANG DÙNG') {
         Fail 'Banner bản đang dùng vẫn lộ thuật ngữ phát hành hoặc chưa dùng câu chữ phổ thông.'
     }

@@ -12,7 +12,7 @@ param(
     [string]$ClientVmSummaryPath = '',
     [string]$IndependentSecurityReviewPath = '',
     [switch]$RequireAuthenticode,
-    [switch]$AllowManagedSignedBuild,
+    [switch]$AllowOfficialSelfSignedBuild,
     [switch]$AllowStoreBuild,
     [switch]$AllowUnsignedDevelopmentBuild
 )
@@ -34,15 +34,15 @@ if (-not $releaseVersionMatch.Success -or
 $productVersion = $releaseVersionMatch.Groups['major'].Value + '.' + $releaseVersionMatch.Groups['minor'].Value
 $releaseBuildDate = $releaseBuildTime.Replace('-', '.')
 $releaseDateToken = $releaseBuildTime.Replace('-', '')
-$managedBuildId = "$releaseVersion-managed-signed-$releaseDateToken"
+$officialSelfSignedBuildId = "$releaseVersion-official-self-signed-$releaseDateToken"
 $publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
-$requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowManagedSignedBuild)
+$requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowOfficialSelfSignedBuild)
 $requiresVerifiedProvenance = [bool]($requiresSignedArtifact -or $AllowStoreBuild)
 $bundledUpdateManifestChannel = if ($AllowStoreBuild) { 'store' } elseif ($requiresSignedArtifact) { 'stable' } else { 'development' }
 $applicationSelfUpdateAllowed = [bool]$RequireAuthenticode
 $applicationUpdateAuthority = if ($AllowStoreBuild) {
     'MicrosoftStore'
-} elseif ($AllowManagedSignedBuild) {
+} elseif ($AllowOfficialSelfSignedBuild) {
     'ManagedDeployment'
 } elseif ($AllowUnsignedDevelopmentBuild) {
     'None'
@@ -53,8 +53,8 @@ $releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
     "$releaseVersion-development-unsigned"
 } elseif ($AllowStoreBuild) {
     "$releaseVersion-store-submission"
-} elseif ($AllowManagedSignedBuild) {
-    $managedBuildId
+} elseif ($AllowOfficialSelfSignedBuild) {
+    $officialSelfSignedBuildId
 } else {
     $officialBuildId
 }
@@ -101,8 +101,8 @@ function Assert-BuildOutputDirectoryReady {
     }
 }
 
-if (([int][bool]$RequireAuthenticode + [int][bool]$AllowManagedSignedBuild + [int][bool]$AllowStoreBuild + [int][bool]$AllowUnsignedDevelopmentBuild) -ne 1) {
-    throw 'Chọn đúng một chế độ build: RequireAuthenticode (public Stable), AllowManagedSignedBuild, AllowStoreBuild hoặc AllowUnsignedDevelopmentBuild.'
+if (([int][bool]$RequireAuthenticode + [int][bool]$AllowOfficialSelfSignedBuild + [int][bool]$AllowStoreBuild + [int][bool]$AllowUnsignedDevelopmentBuild) -ne 1) {
+    throw 'Chọn đúng một chế độ build: RequireAuthenticode (public Stable), AllowOfficialSelfSignedBuild, AllowStoreBuild hoặc AllowUnsignedDevelopmentBuild.'
 }
 if ($requiresVerifiedProvenance -and $SkipVerification) {
     throw 'Build production/Store không cho phép SkipVerification; mọi verifier và provenance bắt buộc phải chạy.'
@@ -874,10 +874,10 @@ try {
         # development builds, even when they have the same version number as
         # the public stable release.
         $compilerArguments += '/define:TOOL_SIGNED_STABLE_BUILD'
-    } elseif ($AllowManagedSignedBuild) {
-        # Managed builds are signed, timestamped and provenance-verified, but
+    } elseif ($AllowOfficialSelfSignedBuild) {
+        # Official Self-Signed builds are signed, timestamped and provenance-verified, but
         # they must never inherit the public Stable self-update marker.
-        $compilerArguments += '/define:TOOL_MANAGED_SIGNED_BUILD'
+        $compilerArguments += '/define:TOOL_OFFICIAL_SELF_SIGNED_BUILD'
     } elseif ($AllowStoreBuild) {
         # Partner Center signs the MSIX package, not this pre-submission EXE.
         # Runtime trust is therefore bound to the exact Windows package
@@ -909,7 +909,7 @@ try {
 
     foreach ($runtimeArchitecture in @('x64', 'x86')) {
         $verificationPowerShell = Get-VerificationPowerShell $runtimeArchitecture
-        $expectedTrustMode = if ($RequireAuthenticode) { 'Production' } elseif ($AllowManagedSignedBuild) { 'ManagedSigned' } elseif ($AllowStoreBuild) { 'StoreSubmission' } else { 'DevelopmentUnsigned' }
+        $expectedTrustMode = if ($RequireAuthenticode) { 'Production' } elseif ($AllowOfficialSelfSignedBuild) { 'OfficialSelfSigned' } elseif ($AllowStoreBuild) { 'StoreSubmission' } else { 'DevelopmentUnsigned' }
         & $verificationPowerShell -NoProfile -ExecutionPolicy RemoteSigned -File (Join-Path $sourceDirectory $embeddedVerifierName) `
             -ExePath $outputPath -SourceDirectory $sourceDirectory -PayloadList $payloadListArgument -ExpectedArchitecture $runtimeArchitecture -ExpectedTrustMode $expectedTrustMode
         if ($LASTEXITCODE -ne 0) { throw "Đối chiếu cùng EXE AnyCPU trên CLR $runtimeArchitecture thất bại, mã thoát: $LASTEXITCODE" }
@@ -1020,8 +1020,8 @@ $releaseStatus = if ($AllowUnsignedDevelopmentBuild) {
     'DevelopmentUnsigned'
 } elseif ($AllowStoreBuild) {
     'StoreSubmission'
-} elseif ($AllowManagedSignedBuild) {
-    'ManagedSigned'
+} elseif ($AllowOfficialSelfSignedBuild) {
+    'OfficialSelfSigned'
 } else {
     'Production'
 }
@@ -1344,7 +1344,7 @@ $releaseManifest = [ordered]@{
     DeterministicManagedBuild = $true
     DeterministicScope = 'Unsigned managed image; Authenticode intentionally changes final bytes when enabled.'
     AuthenticodeRequired = $requiresSignedArtifact
-    AuthenticodeTrustScope = $(if ($AllowUnsignedDevelopmentBuild) { 'None' } elseif ($AllowStoreBuild) { 'MicrosoftStorePackageIdentity' } elseif ($AllowManagedSignedBuild) { 'PinnedSelfSignedPortable' } else { 'PublicWindowsTrust' })
+    AuthenticodeTrustScope = $(if ($AllowUnsignedDevelopmentBuild) { 'None' } elseif ($AllowStoreBuild) { 'MicrosoftStorePackageIdentity' } elseif ($AllowOfficialSelfSignedBuild) { 'PinnedSelfSignedPortable' } else { 'PublicWindowsTrust' })
     ControlFlowGuard = [ordered]@{
         Status = 'NotClaimed'
         Reason = 'Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia.'
@@ -1380,7 +1380,7 @@ $applicationUpdateManifest = [ordered]@{
             'Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.',
             'Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; không chỉ riêng OEM.',
             'v5.0 siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.',
-            'Bản ManagedSigned chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.',
+            'Bản Official Self-Signed chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.',
             'Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.',
             'Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.',
             'Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.',
@@ -1404,7 +1404,7 @@ $applicationUpdateManifest = [ordered]@{
             'Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.',
             'Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports & Assurance actions—not only OEM.',
             'v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.',
-            'The ManagedSigned build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.',
+            'The Official Self-Signed build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.',
             'Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.',
             'Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.',
             'Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.',
@@ -1628,7 +1628,7 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-MSIX-PACKAGING.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     Write-Host '[7/8] Kiểm tra phát hành tổng thể...'
     & (Join-Path $sourceDirectory 'VERIFY-RELEASE.ps1') -SourceDirectory $sourceDirectory -DistributionDirectory $OutputDirectory `
-        -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowManagedSignedManifest:$AllowManagedSignedBuild -AllowStoreManifest:$AllowStoreBuild
+        -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowOfficialSelfSignedManifest:$AllowOfficialSelfSignedBuild -AllowStoreManifest:$AllowStoreBuild
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-RELEASE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     if ($requiresSignedArtifact) {
         & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "VietLicenSure-v$productVersion.exe") -RequireTimestamp
@@ -1637,7 +1637,7 @@ if (-not $SkipVerification) {
             -CertificateThumbprint $normalizedStableSignerThumbprint `
             -StoreLocation $SigningCertificateStore `
             -ArtifactPath (Join-Path $OutputDirectory "VietLicenSure-v$productVersion.exe") `
-            -AllowManagedSelfSigned:$AllowManagedSignedBuild
+            -AllowOfficialSelfSigned:$AllowOfficialSelfSignedBuild
         if ($LASTEXITCODE -ne 0) { throw "VERIFY-CODE-SIGNING-READINESS.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     }
 }

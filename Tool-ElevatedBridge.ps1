@@ -411,8 +411,8 @@ try {
         if ($allowedEnvironmentNames -notcontains $name) { throw 'ElevatedBridgeEnvironmentNameInvalid' }
         $environmentValues[$name] = if ($null -eq $property.Value) { $null } else { [string]$property.Value }
     }
-    if ($brokerBuildState -notin @('Official','Managed','Store','Modified','Unverified')) { throw 'ElevatedBrokerBuildStateInvalid' }
-    if ($brokerBuildState -in @('Official','Managed','Store') -and (
+    if ($brokerBuildState -notin @('Official','OfficialSelfSigned','Store','Modified','Unverified')) { throw 'ElevatedBrokerBuildStateInvalid' }
+    if ($brokerBuildState -in @('Official','OfficialSelfSigned','Store') -and (
         -not $brokerProvenanceOfficial -or
         $brokerBuildId -ne $expectedOfficialBuildId -or
         $brokerVerificationUrl -ne 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build')) {
@@ -483,7 +483,7 @@ try {
     $systemChangeModules = @('cleanup.deep','cleanup.repair','application.update.apply','oem.apply','license.manager','backup.create','restore.apply')
     if ($systemChangeModules -contains $moduleId -and (
         -not $brokerProvenanceOfficial -or
-        [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -notin @('Official','Managed','Store') -or
+        [string]$environmentValues['TOOL_OFFICIAL_BUILD_STATE'] -notin @('Official','OfficialSelfSigned','Store') -or
         [string]$environmentValues['TOOL_OFFICIAL_BUILD_ID'] -ne $expectedOfficialBuildId -or
         [string]$environmentValues['TOOL_OFFICIAL_VERIFICATION_URL'] -ne 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'
     )) {

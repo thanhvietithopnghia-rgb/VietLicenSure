@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory = $true)][string]$SourceDirectory,
     [Parameter(Mandatory = $true)][string]$PayloadList,
     [Parameter(Mandatory = $true)][ValidateSet("x64", "x86")][string]$ExpectedArchitecture,
-    [ValidateSet('Production','ManagedSigned','StoreSubmission','DevelopmentUnsigned')][string]$ExpectedTrustMode = 'DevelopmentUnsigned'
+    [ValidateSet('Production','OfficialSelfSigned','StoreSubmission','DevelopmentUnsigned')][string]$ExpectedTrustMode = 'DevelopmentUnsigned'
 )
 
 $ErrorActionPreference = "Stop"
@@ -70,18 +70,18 @@ try {
     $launcherPayloadFiles = @($payloadField.GetValue($null))
     $stableMarkerField = $launcherType.GetField('SignedStableBuildMarker', $bindingFlags)
     $selfUpdateMarkerField = $launcherType.GetField('SelfUpdateBuildMarker', $bindingFlags)
-    $managedMarkerField = $launcherType.GetField('ManagedSignedBuildMarker', $bindingFlags)
+    $officialSelfSignedMarkerField = $launcherType.GetField('OfficialSelfSignedBuildMarker', $bindingFlags)
     $storeMarkerField = $launcherType.GetField('StoreBuildMarker', $bindingFlags)
-    if (-not $stableMarkerField -or -not $selfUpdateMarkerField -or -not $managedMarkerField -or -not $storeMarkerField) {
-        throw 'Launcher thiếu marker trust hoặc self-update tách biệt cho Stable/ManagedSigned/Microsoft Store.'
+    if (-not $stableMarkerField -or -not $selfUpdateMarkerField -or -not $officialSelfSignedMarkerField -or -not $storeMarkerField) {
+        throw 'Launcher thiếu marker trust hoặc self-update tách biệt cho Stable/OfficialSelfSigned/Microsoft Store.'
     }
     $actualMarkers = @(
         [string]$stableMarkerField.GetRawConstantValue(),
-        [string]$managedMarkerField.GetRawConstantValue(),
+        [string]$officialSelfSignedMarkerField.GetRawConstantValue(),
         [string]$storeMarkerField.GetRawConstantValue()) -join ''
     $expectedMarkers = switch ($ExpectedTrustMode) {
         'Production' { '100' }
-        'ManagedSigned' { '010' }
+        'OfficialSelfSigned' { '010' }
         'StoreSubmission' { '001' }
         default { '000' }
     }

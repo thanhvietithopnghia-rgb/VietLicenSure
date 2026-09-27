@@ -811,7 +811,7 @@ function Stop-ActiveTask {
 function Get-ReadyToolModule([string]$moduleId, [bool]$elevatedLaunch) {
     $availability = Test-ToolModuleAvailability -ModuleId $moduleId -CapabilityProfile $capabilityState -SourceDirectory $baseDir
     if (-not $availability.Available) { throw (Get-DashboardText "module.unavailable" @($moduleId, $availability.Message)) }
-    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -notin @('Official','Managed','Store')) {
+    if ([string]$availability.Descriptor.AccessMode -eq 'SystemChange' -and [string]$env:TOOL_OFFICIAL_BUILD_STATE -notin @('Official','OfficialSelfSigned','Store')) {
         throw (Get-DashboardText 'officialBuild.systemChangeBlocked' @([string]$env:TOOL_OFFICIAL_VERIFICATION_URL))
     }
     if ($availability.Descriptor.RequiresElevation -and -not $elevatedLaunch) { throw (Get-DashboardText "module.elevationRequired" @($moduleId)) }

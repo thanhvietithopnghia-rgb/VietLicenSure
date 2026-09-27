@@ -117,7 +117,7 @@ try {
     $provenanceState = Get-ToolOfficialBuildState -ManifestPath $provenanceManifest -SignaturePath $provenanceSignature
     $launcherOfficialState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
     $launcherOfficialFailure = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_FAILURE)) { 'NotChecked' } else { [string]$env:TOOL_OFFICIAL_BUILD_FAILURE }
-    if ($launcherOfficialState -in @('Official','Managed','Store') -and [string]$provenanceState.State -eq 'Official') {
+    if ($launcherOfficialState -in @('Official','OfficialSelfSigned','Store') -and [string]$provenanceState.State -eq 'Official') {
         $env:TOOL_OFFICIAL_BUILD_STATE = $launcherOfficialState
         $env:TOOL_OFFICIAL_BUILD_FAILURE = ''
     } elseif ($launcherOfficialState -eq 'Modified' -or [string]$provenanceState.State -eq 'Modified') {
@@ -556,13 +556,13 @@ $introSummary.Size = New-Object System.Drawing.Size(650, 20)
 $introPanel.Controls.Add($introSummary)
 
 $script:officialBuildState = if ([string]::IsNullOrWhiteSpace([string]$env:TOOL_OFFICIAL_BUILD_STATE)) { 'Unverified' } else { [string]$env:TOOL_OFFICIAL_BUILD_STATE }
-if ($script:officialBuildState -eq 'Managed') {
+if ($script:officialBuildState -eq 'OfficialSelfSigned') {
     $introPanel.BackColor = [System.Drawing.Color]::FromArgb(232, 245, 255)
     Set-DashboardIntroBorderColor -Color ([System.Drawing.Color]::FromArgb(2, 132, 199))
     $description.ForeColor = [System.Drawing.Color]::FromArgb(3, 105, 161)
-    $description.Text = Get-DashboardText 'officialBuild.banner.managedTitle'
+    $description.Text = Get-DashboardText 'officialBuild.banner.selfSignedTitle'
     $introSummary.ForeColor = [System.Drawing.Color]::FromArgb(7, 89, 133)
-    $introSummary.Text = Get-DashboardText 'officialBuild.banner.managedBody'
+    $introSummary.Text = Get-DashboardText 'officialBuild.banner.selfSignedBody'
 } elseif ($script:officialBuildState -notin @('Official','Store')) {
     if ($script:isUnsignedDevelopmentBuild) {
         $introPanel.BackColor = [System.Drawing.Color]::FromArgb(255, 248, 225)
@@ -637,7 +637,7 @@ $form.Controls.Add($dashboardPanel)
 $cardDefinitions = @(
     @{ Key="Compatibility"; IconKind="Windows"; Tone="Windows"; Caption=(Get-ToolText -Key "dashboard.windows" -Culture $script:dashboardCulture); Value=[string]$capabilityState.WindowsReleaseName },
     @{ Key="Architecture"; IconKind="Office"; Tone="Office"; Caption=(Get-ToolText -Key "dashboard.office" -Culture $script:dashboardCulture); Value=[string]$capabilityState.OfficeSummary },
-    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'Managed') { Get-DashboardText 'officialBuild.state.managed' } elseif ($script:officialBuildState -eq 'Store') { Get-DashboardText 'officialBuild.state.store' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
+    @{ Key="SecureLaunch"; IconKind="Shield"; Tone="Secure"; Caption=(Get-ToolText -Key "dashboard.runMode" -Culture $script:dashboardCulture); Value=$(if ($script:officialBuildState -eq 'Official') { Get-DashboardText 'officialBuild.state.official' } elseif ($script:officialBuildState -eq 'OfficialSelfSigned') { Get-DashboardText 'officialBuild.state.selfSigned' } elseif ($script:officialBuildState -eq 'Store') { Get-DashboardText 'officialBuild.state.store' } elseif ($script:officialBuildState -eq 'Modified') { Get-DashboardText 'officialBuild.state.modified' } else { Get-DashboardText 'officialBuild.state.unverified' }) },
     @{ Key="Integrity"; IconKind="Check"; Tone="Integrity"; Caption=(Get-ToolText -Key "dashboard.integrity" -Culture $script:dashboardCulture); Value=(Get-ToolText -Key "dashboard.checking" -Culture $script:dashboardCulture) },
     @{ Key="ActionCenter"; IconKind="Report"; Tone="Action"; Caption=(Get-DashboardText "resultCenter.card.caption"); Value=(Get-DashboardText "resultCenter.card.noReport") }
 )

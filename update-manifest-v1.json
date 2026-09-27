@@ -3,7 +3,7 @@
     "Channel":  "stable",
     "LatestVersion":  "5.0",
     "MinimumUpdaterVersion":  "4.6.1.0",
-    "PublishedAtUtc":  "2026-09-26T00:00:00Z",
+    "PublishedAtUtc":  "2026-09-27T00:00:00Z",
     "Title":  {
                   "vi-VN":  "v5.0 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
                   "en-US":  "v5.0 - Clear source policy and two-way feedback channels"
@@ -16,7 +16,7 @@
                                   "Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.",
                                   "Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo \u0026 Bảo đảm; không chỉ riêng OEM.",
                                   "v5.0 siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.",
-                                  "Bản ManagedSigned chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.",
+                                  "Bản Official Self-Signed chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.",
                                   "Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.",
                                   "Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.",
                                   "Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.",
@@ -40,7 +40,7 @@
                                   "Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.",
                                   "Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports \u0026 Assurance actions—not only OEM.",
                                   "v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.",
-                                  "The ManagedSigned build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.",
+                                  "The Official Self-Signed build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.",
                                   "Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.",
                                   "Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.",
                                   "Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.",

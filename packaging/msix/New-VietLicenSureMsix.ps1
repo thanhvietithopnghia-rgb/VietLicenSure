@@ -106,7 +106,7 @@ function Get-LauncherTrustProfile {
     $type = $assembly.GetType('ThanhViet.VietLicenSure.Program', $true)
     $flags = [Reflection.BindingFlags]::NonPublic -bor [Reflection.BindingFlags]::Static
     $values = [ordered]@{}
-    foreach ($name in @('SignedStableBuildMarker','ManagedSignedBuildMarker','StoreBuildMarker','StorePackageName','StorePackageVersion','StorePackagePublisherId','StorePackageFamilyName')) {
+    foreach ($name in @('SignedStableBuildMarker','OfficialSelfSignedBuildMarker','StoreBuildMarker','StorePackageName','StorePackageVersion','StorePackagePublisherId','StorePackageFamilyName')) {
         $field = $type.GetField($name, $flags)
         if (-not $field) { throw "Executable is missing trust marker: $name" }
         $values[$name] = [string]$field.GetRawConstantValue()
@@ -176,7 +176,7 @@ $exe = Get-Item -LiteralPath $ExecutablePath
 $launcherTrustProfile = Get-LauncherTrustProfile -Path $exe.FullName
 if ($Mode -eq 'Store') {
     if ([string]$launcherTrustProfile.SignedStableBuildMarker -ne '0' -or
-        [string]$launcherTrustProfile.ManagedSignedBuildMarker -ne '0' -or
+        [string]$launcherTrustProfile.OfficialSelfSignedBuildMarker -ne '0' -or
         [string]$launcherTrustProfile.StoreBuildMarker -ne '1' -or
         [string]$launcherTrustProfile.StorePackageName -cne $storePackageName -or
         [string]$launcherTrustProfile.StorePackageVersion -cne $version -or

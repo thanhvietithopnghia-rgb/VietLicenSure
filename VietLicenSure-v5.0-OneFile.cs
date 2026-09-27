@@ -65,15 +65,15 @@ namespace ThanhViet.VietLicenSure
         // stable manifest merely because their hash is different.
         private const string SignedStableBuildMarker = "1";
         private const string SelfUpdateBuildMarker = "1";
-        private const string ManagedSignedBuildMarker = "0";
+        private const string OfficialSelfSignedBuildMarker = "0";
         private const string StoreBuildMarker = "0";
-#elif TOOL_MANAGED_SIGNED_BUILD
-        // ManagedSigned uses a locally distributed, hard-pinned trust anchor.
+#elif TOOL_OFFICIAL_SELF_SIGNED_BUILD
+        // OfficialSelfSigned uses a locally distributed, hard-pinned trust anchor.
         // Updates remain under managed deployment control; an Official
         // Self-Signed build must never replace itself from a public-CA channel.
         private const string SignedStableBuildMarker = "0";
         private const string SelfUpdateBuildMarker = "0";
-        private const string ManagedSignedBuildMarker = "1";
+        private const string OfficialSelfSignedBuildMarker = "1";
         private const string StoreBuildMarker = "0";
 #elif TOOL_STORE_BUILD
         // Microsoft Store builds are unsigned before Partner Center. They may
@@ -82,12 +82,12 @@ namespace ThanhViet.VietLicenSure
         // EXE out of the package therefore fails closed.
         private const string SignedStableBuildMarker = "0";
         private const string SelfUpdateBuildMarker = "0";
-        private const string ManagedSignedBuildMarker = "0";
+        private const string OfficialSelfSignedBuildMarker = "0";
         private const string StoreBuildMarker = "1";
 #else
         private const string SignedStableBuildMarker = "0";
         private const string SelfUpdateBuildMarker = "0";
-        private const string ManagedSignedBuildMarker = "0";
+        private const string OfficialSelfSignedBuildMarker = "0";
         private const string StoreBuildMarker = "0";
 #endif
         private static string OfficialBuildState = "Unverified";
@@ -111,7 +111,7 @@ namespace ThanhViet.VietLicenSure
             "SOURCE-POLICY-v5.0.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
-#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD || TOOL_STORE_BUILD
+#if TOOL_SIGNED_STABLE_BUILD || TOOL_OFFICIAL_SELF_SIGNED_BUILD || TOOL_STORE_BUILD
             "OFFICIAL-PROVENANCE-v1.json.p7s",
 #endif
             "Giao-Dien.ps1",
@@ -184,7 +184,7 @@ namespace ThanhViet.VietLicenSure
             "SOURCE-POLICY-v5.0.md",
             "Tool-Provenance.ps1",
             "OFFICIAL-PROVENANCE-v1.json",
-#if TOOL_SIGNED_STABLE_BUILD || TOOL_MANAGED_SIGNED_BUILD || TOOL_STORE_BUILD
+#if TOOL_SIGNED_STABLE_BUILD || TOOL_OFFICIAL_SELF_SIGNED_BUILD || TOOL_STORE_BUILD
             "OFFICIAL-PROVENANCE-v1.json.p7s",
 #endif
             "Giao-Dien.ps1",
@@ -284,10 +284,10 @@ namespace ThanhViet.VietLicenSure
             if (!IsArchitectureSupported())
                 return 12;
             OfficialBuildState = EvaluateOfficialBuildState(out OfficialBuildFailureCode);
-            if ((SignedStableBuildMarker == "1" || ManagedSignedBuildMarker == "1" || StoreBuildMarker == "1") &&
-                OfficialBuildState != "Official" && OfficialBuildState != "Managed" && OfficialBuildState != "Store" && IsInteractiveMode(mode))
+            if ((SignedStableBuildMarker == "1" || OfficialSelfSignedBuildMarker == "1" || StoreBuildMarker == "1") &&
+                OfficialBuildState != "Official" && OfficialBuildState != "OfficialSelfSigned" && OfficialBuildState != "Store" && IsInteractiveMode(mode))
                 ShowMessage(mode, L("launcher.officialBuildInvalid", OfficialBuildFailureCode, OfficialVerificationUrl), MessageBoxIcon.Warning);
-            if (RequiresTrustedBuild(mode) && OfficialBuildState != "Official" && OfficialBuildState != "Managed" && OfficialBuildState != "Store")
+            if (RequiresTrustedBuild(mode) && OfficialBuildState != "Official" && OfficialBuildState != "OfficialSelfSigned" && OfficialBuildState != "Store")
             {
                 ShowMessage(mode, L("launcher.officialBuildChangeBlocked", OfficialVerificationUrl), MessageBoxIcon.Error);
                 return 15;
@@ -590,12 +590,12 @@ namespace ThanhViet.VietLicenSure
         private static bool IsPinnedSelfSignedPublisherAccepted(uint trustStatus, bool signerIsSelfSigned)
         {
             // A public-CA build must always pass the normal Windows trust
-            // chain.  The explicitly selected ManagedSigned channel may be used
+            // chain.  The explicitly selected OfficialSelfSigned channel may be used
             // on a clean PC without pre-installing our self-signed certificate,
             // but only when WinVerifyTrust reports the single expected chain
             // error. Digest, signer, certificate SHA-256 and every other trust
             // failure remain fail-closed.
-            return ManagedSignedBuildMarker == "1" && signerIsSelfSigned &&
+            return OfficialSelfSignedBuildMarker == "1" && signerIsSelfSigned &&
                 trustStatus == CertificateUntrustedRootStatus;
         }
 
@@ -606,7 +606,7 @@ namespace ThanhViet.VietLicenSure
             {
                 return TryGetCurrentStorePackageTrust(out failureCode) ? "Store" : "Modified";
             }
-            if (SignedStableBuildMarker != "1" && ManagedSignedBuildMarker != "1")
+            if (SignedStableBuildMarker != "1" && OfficialSelfSignedBuildMarker != "1")
                 return "Unverified";
             try
             {
@@ -648,7 +648,7 @@ namespace ThanhViet.VietLicenSure
 
                 uint trustStatus = GetAuthenticodeTrustStatus(filePath);
                 // A public-CA channel still requires the normal Windows trust chain.
-                // ManagedSigned can accept only CERT_E_UNTRUSTEDROOT for the
+                // OfficialSelfSigned can accept only CERT_E_UNTRUSTEDROOT for the
                 // exact self-signed certificate pinned above; a modified file
                 // returns TRUST_E_BAD_DIGEST and remains blocked.
                 if (trustStatus != 0 && !IsPinnedSelfSignedPublisherAccepted(trustStatus, signerIsSelfSigned))
@@ -657,7 +657,7 @@ namespace ThanhViet.VietLicenSure
                     return "Modified";
                 }
                 failureCode = String.Empty;
-                return ManagedSignedBuildMarker == "1" ? "Managed" : "Official";
+                return OfficialSelfSignedBuildMarker == "1" ? "OfficialSelfSigned" : "Official";
             }
             catch (Exception ex)
             {

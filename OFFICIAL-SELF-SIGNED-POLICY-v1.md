@@ -5,8 +5,8 @@
 ## Quyết định kênh
 
 - Tên kênh công khai: **Official Self-Signed**.
-- Trạng thái phân phối: **phát hành chính thức**; không dùng nhãn Pilot hoặc pre-release cho artifact đã vượt đủ cổng của chính sách này.
-- Trust mode kỹ thuật trong launcher/manifest: `ManagedSigned`.
+- Trạng thái phân phối: **phát hành chính thức**; không dùng nhãn thử nghiệm hoặc pre-release cho artifact đã vượt đủ cổng của chính sách này.
+- Trust mode kỹ thuật trong launcher/manifest: `OfficialSelfSigned`.
 - Signer Authenticode là chứng thư tự ký đã ghim; chữ ký phải có RFC 3161 timestamp.
 - Bản phát hành không được mô tả là public-CA, EV hoặc Microsoft Store-signed.
 

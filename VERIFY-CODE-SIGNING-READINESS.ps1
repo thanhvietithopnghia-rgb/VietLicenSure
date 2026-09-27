@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory = $true)][string]$CertificateThumbprint,
     [ValidateSet('CurrentUser','LocalMachine')][string]$StoreLocation = 'CurrentUser',
     [string]$ArtifactPath = '',
-    [switch]$AllowManagedSelfSigned,
+    [switch]$AllowOfficialSelfSigned,
     [switch]$AsJson
 )
 
@@ -56,7 +56,7 @@ if (-not [string]::IsNullOrWhiteSpace($ArtifactPath)) {
 $ready = [bool](
     $certificate.HasPrivateKey -and
     $hasCodeSigningEku -and
-    ($AllowManagedSelfSigned -or [string]$certificate.Subject -ne [string]$certificate.Issuer) -and
+    ($AllowOfficialSelfSigned -or [string]$certificate.Subject -ne [string]$certificate.Issuer) -and
     (Get-Date) -ge $certificate.NotBefore -and
     (Get-Date) -le $certificate.NotAfter -and
     $chainValid -and
@@ -75,7 +75,7 @@ $result = [pscustomobject][ordered]@{
     CodeSigningEku = $hasCodeSigningEku
     SelfSigned = [bool]([string]$certificate.Subject -eq [string]$certificate.Issuer)
     WindowsChainValid = $chainValid
-    TrustScope = if ($AllowManagedSelfSigned) { 'Managed current-user trust; not public-CA identity.' } else { 'Windows trust chain on this build host; public-CA/EV eligibility requires release-owner certificate procurement review.' }
+    TrustScope = if ($AllowOfficialSelfSigned) { 'Pinned self-signed trust for the Official Self-Signed channel; not public-CA identity.' } else { 'Windows trust chain on this build host; public-CA/EV eligibility requires release-owner certificate procurement review.' }
     ChainErrors = @($chainErrors)
     ArtifactStatus = $artifactStatus
     ArtifactTimestamped = $artifactTimestamped

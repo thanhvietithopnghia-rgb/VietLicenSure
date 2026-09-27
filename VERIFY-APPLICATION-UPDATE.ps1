@@ -253,9 +253,9 @@ try {
         Assert-BridgeModuleArgumentProfile -ModuleId 'application.update.apply' -ParsedArguments $parsedForbiddenRestartArguments -OriginalRuntimeRoot $temporaryRoot -TrustedLauncherPath $bridgeLauncherPath
     } 'Elevated bridge still accepts the removed restart-control switch.'
     $launcherText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
-    Assert-UpdateTest ($launcherText.Contains('"Tool-UpdateManager.ps1"') -and $launcherText.Contains('TOOL_LAUNCHER_PID') -and $launcherText.Contains('TOOL_TOOL_VERSION"] = "5.0"') -and $launcherText.Contains('TOOL_SIGNED_STABLE_BUILD') -and $launcherText.Contains('TOOL_MANAGED_SIGNED_BUILD') -and $launcherText.Contains('TOOL_STORE_BUILD') -and $launcherText.Contains('TOOL_SELF_UPDATE_ALLOWED')) 'Launcher does not embed or pin the v5.0 update foundation.'
+    Assert-UpdateTest ($launcherText.Contains('"Tool-UpdateManager.ps1"') -and $launcherText.Contains('TOOL_LAUNCHER_PID') -and $launcherText.Contains('TOOL_TOOL_VERSION"] = "5.0"') -and $launcherText.Contains('TOOL_SIGNED_STABLE_BUILD') -and $launcherText.Contains('TOOL_OFFICIAL_SELF_SIGNED_BUILD') -and $launcherText.Contains('TOOL_STORE_BUILD') -and $launcherText.Contains('TOOL_SELF_UPDATE_ALLOWED')) 'Launcher does not embed or pin the v5.0 update foundation.'
     $buildText = Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8
-    Assert-UpdateTest ($buildText.Contains("'Tool-UpdateManager.ps1'") -and $buildText.Contains("'VERIFY-APPLICATION-UPDATE.ps1'") -and $buildText.Contains("'/define:TOOL_SIGNED_STABLE_BUILD'") -and $buildText.Contains("'/define:TOOL_MANAGED_SIGNED_BUILD'") -and $buildText.Contains("'/define:TOOL_STORE_BUILD'")) 'Build does not package or verify the updater.'
+    Assert-UpdateTest ($buildText.Contains("'Tool-UpdateManager.ps1'") -and $buildText.Contains("'VERIFY-APPLICATION-UPDATE.ps1'") -and $buildText.Contains("'/define:TOOL_SIGNED_STABLE_BUILD'") -and $buildText.Contains("'/define:TOOL_OFFICIAL_SELF_SIGNED_BUILD'") -and $buildText.Contains("'/define:TOOL_STORE_BUILD'")) 'Build does not package or verify the updater.'
     Assert-UpdateTest ($buildText -match 'if\s*\(\$requiresVerifiedProvenance\s+-and\s+\$SkipVerification\)\s*\{\s*throw') 'A production/Store build can bypass the verification suite.'
     Assert-UpdateTest ($buildText -match 'if\s*\(Test-Path\s+-LiteralPath\s+\$outputUpdateSignaturePath[^\)]*\)\s*\{\s*Remove-Item\s+-LiteralPath\s+\$outputUpdateSignaturePath') 'Development build does not remove a stale stable update signature from a reused output directory.'
     Assert-UpdateTest ($buildText.Contains('function Assert-BuildOutputDirectoryReady') -and
@@ -274,8 +274,8 @@ try {
     Assert-UpdateTest ($updateManagerText.Contains("if (`$Mode -eq 'Library') { [string]`$env:TOOL_UPDATE_CACHE_ROOT } else { '' }")) 'Production updater still accepts a caller-controlled cache root.'
     Assert-UpdateTest ($updateManagerText.Contains('-ExpectedCurrentSha256 $CurrentLauncherSha256')) 'Installer does not revalidate the launcher after it exits.'
     Assert-UpdateTest ($updateManagerText -notmatch '(?i)\bStart-Process\b') 'Elevated updater can still launch a medium-integrity-controlled path.'
-    Assert-UpdateTest ($buildText.Contains('$applicationSelfUpdateAllowed = [bool]$RequireAuthenticode')) 'ManagedSigned build still enables the public self-updater.'
-    Assert-UpdateTest ($launcherText -match '(?s)#elif TOOL_MANAGED_SIGNED_BUILD.+?SelfUpdateBuildMarker = "0";') 'ManagedSigned launcher still embeds the public self-update marker.'
+    Assert-UpdateTest ($buildText.Contains('$applicationSelfUpdateAllowed = [bool]$RequireAuthenticode')) 'OfficialSelfSigned build still enables the public self-updater.'
+    Assert-UpdateTest ($launcherText -match '(?s)#elif TOOL_OFFICIAL_SELF_SIGNED_BUILD.+?SelfUpdateBuildMarker = "0";') 'OfficialSelfSigned launcher still embeds the public self-update marker.'
 
     Write-Host 'VERIFY-APPLICATION-UPDATE: OK (Offline/consent gates + signed-stable policy + anti-downgrade + same-version hash replacement + version/asset/hash/size/signer validation + revalidated swap/backup + no elevated restart)' -ForegroundColor Green
     exit 0
