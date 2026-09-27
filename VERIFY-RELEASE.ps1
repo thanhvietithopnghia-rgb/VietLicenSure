@@ -227,9 +227,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 65 } else { 66 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 150 } else { 151 }
 $expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 176 } else { 178 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 60 } elseif ($AllowStoreManifest) { 61 } else { 62 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -251,7 +251,7 @@ if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
 $versionChecks = @(
     @{ File='Giao-Dien.ps1'; Pattern='\$toolVersion\s*=\s*"5\.0"' },
     @{ File='Giao-Dien.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
-    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.09\.25"' },
+    @{ File='Giao-Dien.ps1'; Pattern='\$releaseBuildDate\s*=\s*"2026\.09\.26"' },
     @{ File='kiem-tra-cau-hinh-ban-quyen.ps1'; Pattern='\$ToolVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-assurance.ps1'; Pattern='\$ReleaseVersion\s*=\s*"5\.0"' },
     @{ File='windows-license-backup.ps1'; Pattern='\$releaseVersion\s*=\s*"5\.0"' },
