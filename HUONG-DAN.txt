@@ -38,13 +38,13 @@ Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ
 5. Đảm bảo còn đủ dung lượng trên ổ hệ thống và Desktop để lưu backup, gói báo cáo và dữ liệu kiểm tra.
 6. Mặc định nên giữ Offline. Khi chủ động bật Online cho phiên hiện tại, VietLicenSure tự cập nhật catalog ký số và kiểm tra phiên bản mới; LAN doanh nghiệp vẫn dùng công tắc cho phép riêng.
 
-Tệp một-EXE của kênh `Official Self-Signed` dùng trust mode kỹ thuật `ManagedSigned`, có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Đây là bản phát hành chính thức bằng chứng thư tự ký, không phải public-CA/EV/Store-signed. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender.
+Tệp một-EXE của kênh `Official Self-Signed` dùng trust mode kỹ thuật `OfficialSelfSigned`, có chữ ký và manifest nguồn gốc để nhận biết tệp bị sửa. Đây là bản phát hành chính thức bằng chứng thư tự ký, không phải public-CA/EV/Store-signed. Cơ chế xác minh không loại bỏ mọi cảnh báo SmartScreen và không thể ngăn tuyệt đối việc sao chép/dịch ngược. Chỉ tải từ `https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe`, đối chiếu SHA-256/Build ID/chữ ký, xem chứng thư bằng `Get-AuthenticodeSignature` và quét lại bằng Microsoft Defender.
 
 ### Xử lý cảnh báo SmartScreen an toàn
 
 Không tắt Defender/SmartScreen, không thêm ngoại lệ và không hạ policy để ép chạy. Trước tiên hãy xác nhận đúng kênh tải, chạy `VERIFY-RELEASE.cmd` nếu có gói đầy đủ, đối chiếu SHA-256, signer và timestamp. Dừng lại nếu hash sai, trạng thái là `HashMismatch`/`NotSigned`, signer không khớp, thiếu timestamp hoặc CMS lỗi.
 
-Nếu mọi kiểm tra đều đạt nhưng máy cá nhân vẫn cảnh báo vì chứng thư ManagedSigned tự ký, bạn có thể chủ động chọn **More info → Run anyway**. Trên máy doanh nghiệp, nếu không có tùy chọn này hoặc AppLocker/WDAC chặn, hãy liên hệ quản trị viên. Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo. Xem quy trình đầy đủ trong `RELEASE-VERIFICATION-v5.0.md` và câu trả lời ngắn trong `FAQ-NGUOI-DUNG-MOI-v5.0.md`.
+Nếu mọi kiểm tra đều đạt nhưng máy cá nhân vẫn cảnh báo vì chứng thư OfficialSelfSigned tự ký, bạn có thể chủ động chọn **More info → Run anyway**. Trên máy doanh nghiệp, nếu không có tùy chọn này hoặc AppLocker/WDAC chặn, hãy liên hệ quản trị viên. Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo. Xem quy trình đầy đủ trong `RELEASE-VERIFICATION-v5.0.md` và câu trả lời ngắn trong `FAQ-NGUOI-DUNG-MOI-v5.0.md`.
 
 ## Cách chạy VietLicenSure
 
@@ -62,7 +62,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 
 ## Điểm cần biết trong v5.0
 
-- Bản ManagedSigned hiển thị trạng thái riêng, chỉ mở thao tác hệ thống khi Authenticode, timestamp, provenance và chứng thư quản trị đều hợp lệ trên máy.
+- Bản OfficialSelfSigned hiển thị trạng thái riêng, chỉ mở thao tác hệ thống khi Authenticode, timestamp, provenance và chứng thư quản trị đều hợp lệ trên máy.
 - Bản Official Self-Signed chỉ được công bố khi đúng signer tự ký đã ghim, RFC3161 timestamp, provenance CMS, source commit sạch và bộ verifier/artifact-bound QA đều đạt; nếu chuyển public-CA/EV/Store phải tạo chuỗi phát hành mới.
 - Catalog có trạng thái độ mới; plugin bên thứ ba chỉ dùng metadata khai báo đã ký với fingerprint nhà phát hành được ghim.
 - Có ba mức Quick/Standard/Deep, giao diện dark/light theo hệ thống, PerMonitorV2 DPI và xuất fleet an toàn cho quản trị doanh nghiệp.

@@ -9,7 +9,7 @@ Set-StrictMode -Version 2.0
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = $PSScriptRoot }
 $distributionRoot = [IO.Path]::GetFullPath($DistributionDirectory).TrimEnd('\')
 $expectedReleaseVersion = '5.0'
-$expectedBuildId = '5.0-production-20260926'
+$expectedBuildId = '5.0-production-20260927'
 $expectedCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
 $expectedCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 $failures = New-Object System.Collections.Generic.List[string]
@@ -287,7 +287,7 @@ if ($null -ne $releaseManifest) {
             }
             $releaseStatus = [string](Get-PropertyValue $releaseManifest 'ReleaseStatus')
             if ($status -ceq 'Valid') { Add-Pass 'Authenticode hợp lệ trên máy kiểm tra.' }
-            elseif ($status -ceq 'UnknownError' -and $releaseStatus -ceq 'ManagedSigned' -and $null -ne $signature.SignerCertificate -and (Test-ManagedSignerTrustException $signature.SignerCertificate)) { Add-Warning 'Authenticode có chữ ký ghim đúng; kiểm tra chain chỉ còn lỗi UntrustedRoot của chứng thư tự ký ManagedSigned.' }
+            elseif ($status -ceq 'UnknownError' -and $releaseStatus -ceq 'OfficialSelfSigned' -and $null -ne $signature.SignerCertificate -and (Test-ManagedSignerTrustException $signature.SignerCertificate)) { Add-Warning 'Authenticode có chữ ký ghim đúng; kiểm tra chain chỉ còn lỗi UntrustedRoot của chứng thư tự ký OfficialSelfSigned.' }
             else { Add-Failure "Trạng thái Authenticode không chấp nhận: $status ($($signature.StatusMessage))" }
             if ($null -eq $signature.TimeStamperCertificate) { Add-Failure 'Authenticode không có timestamp certificate.' }
             else { Add-Pass "Timestamp Authenticode: $($signature.TimeStamperCertificate.Subject)" }
@@ -301,7 +301,7 @@ $summary = "KẾT QUẢ: $($failures.Count) lỗi / $($warnings.Count) cảnh b�
 Write-Host ''
 if ($failures.Count -eq 0) { Write-Host $summary -ForegroundColor Green }
 else { Write-Host $summary -ForegroundColor Red }
-if ($warnings.Count -gt 0) { Write-Host 'Cảnh báo không làm thay đổi tính toàn vẹn mật mã; xem chính sách ManagedSigned trong RELEASE-VERIFICATION-v5.0.md.' -ForegroundColor Yellow }
+if ($warnings.Count -gt 0) { Write-Host 'Cảnh báo không làm thay đổi tính toàn vẹn mật mã; xem chính sách OfficialSelfSigned trong RELEASE-VERIFICATION-v5.0.md.' -ForegroundColor Yellow }
 
 if (-not [string]::IsNullOrWhiteSpace($LogPath)) {
     try {

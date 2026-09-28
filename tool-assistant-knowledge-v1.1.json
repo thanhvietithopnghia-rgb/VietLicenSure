@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.11.0",
-   "UpdatedAtUtc": "2026-09-26T00:00:00Z",
+  "KnowledgeVersion": "1.12.0",
+  "UpdatedAtUtc": "2026-09-27T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -28,8 +28,8 @@
       "TitleVi": "Phiên bản hiện tại",
       "TitleEn": "Current version",
       "Keywords": ["phien ban cua vietlicensure", "tool version", "phien ban hien tai", "version hien tai", "dang dung ban nao", "so phien ban", "ban v5.0", "v5.0", "release v5.0"],
-      "AnswerVi": "Phiên bản hiện tại là VietLicenSure v5.0 thuộc kênh phát hành chính thức Official Self-Signed, dùng trust mode kỹ thuật ManagedSigned và chứng thư tự ký được ghim. Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh từ v1.0.0 đến v5.0 để tra cứu Offline, trả nguyên mục thay đổi, đối chiếu hai phiên bản và giải thích chi tiết toàn bộ chức năng được tài liệu hóa—không chỉ Khôi phục key OEM. VietLicenSure có 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm.",
-      "AnswerEn": "The current release is VietLicenSure v5.0 on the official Official Self-Signed channel, using the technical ManagedSigned trust mode and a pinned self-issued certificate. The Assistant indexes the complete Vietnamese/English guides and recorded history from v1.0.0 through v5.0 for Offline lookup, returns full change entries, compares two versions, and explains every documented function—not only OEM key recovery. Coverage includes all ten main functions, four remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions."
+      "AnswerVi": "Phiên bản hiện tại là VietLicenSure v5.0 thuộc kênh phát hành chính thức Official Self-Signed và dùng chứng thư tự ký được ghim. Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh từ v1.0.0 đến v5.0 để tra cứu Offline, trả nguyên mục thay đổi, đối chiếu hai phiên bản và giải thích chi tiết toàn bộ chức năng được tài liệu hóa—không chỉ Khôi phục key OEM. VietLicenSure có 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm.",
+      "AnswerEn": "The current release is VietLicenSure v5.0 on the official Official Self-Signed channel with a pinned self-issued certificate. The Assistant indexes the complete Vietnamese/English guides and recorded history from v1.0.0 through v5.0 for Offline lookup, returns full change entries, compares two versions, and explains every documented function—not only OEM key recovery. Coverage includes all ten main functions, four remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions."
     },
     {
       "Id": "tool-author",
@@ -52,8 +52,8 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 26/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng trust mode ManagedSigned và chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
-      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 25 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using the ManagedSigned trust mode and a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 27/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 27 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
       "Id": "first-release",
@@ -364,8 +364,8 @@
       "TitleVi": "Cảnh báo SmartScreen/antivirus",
       "TitleEn": "SmartScreen or antivirus warning",
       "Keywords": ["virus", "antivirus", "defender", "smartscreen", "unknown publisher", "chu ky so", "ky so", "signpath"],
-      "AnswerVi": "Bản v5.0 ManagedSigned dùng Authenticode tự ký để nhận biết tệp bị sửa và chỉ được tin cậy trên máy đã cài chứng thư quản trị. Chứng thư này không được Windows tin cậy công khai nên SmartScreen vẫn có thể cảnh báo. Không tắt Defender; hãy dùng nguồn chính thức, đối chiếu SHA-256 và xem chứng thư bằng Get-AuthenticodeSignature.",
-      "AnswerEn": "v5.0 ManagedSigned uses a self-signed Authenticode certificate for tamper detection and is trusted only on machines where the administrator certificate is installed. It is not publicly trusted, so SmartScreen may still warn. Do not disable Defender; use the official source, compare SHA-256, and inspect the certificate with Get-AuthenticodeSignature."
+      "AnswerVi": "Bản v5.0 Official Self-Signed dùng Authenticode tự ký để nhận biết tệp bị sửa và chỉ được tin cậy trên máy đã cài chứng thư quản trị. Chứng thư này không được Windows tin cậy công khai nên SmartScreen vẫn có thể cảnh báo. Không tắt Defender; hãy dùng nguồn chính thức, đối chiếu SHA-256 và xem chứng thư bằng Get-AuthenticodeSignature.",
+      "AnswerEn": "v5.0 Official Self-Signed uses a self-signed Authenticode certificate for tamper detection and is trusted only on machines where the administrator certificate is installed. It is not publicly trusted, so SmartScreen may still warn. Do not disable Defender; use the official source, compare SHA-256, and inspect the certificate with Get-AuthenticodeSignature."
     },
     {
       "Id": "manual-review",

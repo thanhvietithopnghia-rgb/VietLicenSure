@@ -1,10 +1,10 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-09-26`
+Ngày build kỹ thuật hiện hành: `2026-09-27`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `26/09/2026`
+Nội dung cập nhật đến: `27/09/2026`
 Phiên bản hiển thị: `v5.0`
-Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `ManagedSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
+Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
 ## Giới thiệu
 
@@ -34,7 +34,10 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 26/09/2026
+## Cập nhật hiện hành ngày 27/09/2026
+
+- Thống nhất trạng thái phát hành thành **Official Self-Signed**; trạng thái nội bộ là `OfficialSelfSigned`, không còn dùng nhãn `ManagedSigned` hoặc `Pilot`.
+- Giữ nguyên chứng thư tự ký đã ghim, Authenticode, RFC 3161 timestamp, provenance CMS và cơ chế fail-closed; không tuyên bố public-CA/EV/Store trust.
 
 - Giữ nguyên tên và phiên bản công khai `VietLicenSure v5.0`; không tạo v5.1 hoặc nhãn bản dựng mới trong giao diện.
 - Tách hai monolith `Giao-Dien.ps1` và `windows-license-compliance-cleanup.ps1` thành chín thư viện chức năng; giữ nguyên entrypoint, tham số CLI và toàn bộ hành vi hiện có, đồng thời bổ sung verifier cấu trúc/source hợp thành.
@@ -44,7 +47,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Hoàn thiện backup/restore fail-closed: scope-lock, HMAC, phát hiện dữ liệu/manifest bị sửa, rollback và hậu kiểm không mở rộng ngoài mục tiêu.
 - Kiểm chứng runtime EXE đóng gói dưới token Medium, Offline, không thay đổi policy; UAC secure desktop được gọi thật bằng `RunAs` và hủy an toàn với mã `1223` trước remediation.
 - Chuỗi Official Self-Signed dùng cùng danh tính ký cho provenance/CMS/Authenticode, có RFC3161 timestamp và checksum đóng; đây là phát hành chính thức self-signed, không phải public-CA/EV/Store-signed.
-- Công bố kênh **Official Self-Signed** theo quyết định của chủ sở hữu; giữ trust mode kỹ thuật `ManagedSigned`, tắt self-update EXE và công bố rõ cảnh báo SmartScreen/trust anchor.
+- Công bố kênh **Official Self-Signed** theo quyết định của chủ sở hữu; giữ trust mode kỹ thuật `OfficialSelfSigned`, tắt self-update EXE và công bố rõ cảnh báo SmartScreen/trust anchor.
 
 ## Chính sách và kênh hỗ trợ của v5.0
 

@@ -2,21 +2,21 @@
 
 > **Nguồn sự thật duy nhất (SSOT) về mức sẵn sàng phát hành.** Khi tài liệu khác mô tả khác với trang này, dùng trạng thái tại đây. Đối với tính nguyên vẹn của từng tệp, metadata có chữ ký, manifest và checksum của chính gói vẫn là căn cứ kỹ thuật bắt buộc.
 
-- **Cập nhật trạng thái:** 26/09/2026
+- **Cập nhật trạng thái:** 27/09/2026
 - **Phiên bản:** `v5.0`
 - **Kênh công khai:** `Official Self-Signed`
-- **Kênh kỹ thuật:** `ManagedSigned`
+- **Kênh kỹ thuật:** `OfficialSelfSigned`
 - **Giai đoạn triển khai:** **phát hành chính thức**
 - **Public-CA/EV/Store trust:** **không áp dụng cho artifact hiện hành**
 
-`Official Self-Signed` là kênh phát hành chính thức do chủ sở hữu phê duyệt, sử dụng trust mode kỹ thuật `ManagedSigned`. Signer vẫn là chứng thư tự ký đã ghim; trạng thái này không được mô tả là public-CA, EV hoặc Microsoft Store-signed. Xem `OFFICIAL-SELF-SIGNED-POLICY-v1.md`.
+`Official Self-Signed` là kênh phát hành chính thức do chủ sở hữu phê duyệt, sử dụng trust mode kỹ thuật `OfficialSelfSigned`. Signer vẫn là chứng thư tự ký đã ghim; trạng thái này không được mô tả là public-CA, EV hoặc Microsoft Store-signed. Xem `OFFICIAL-SELF-SIGNED-POLICY-v1.md`.
 
 ## Danh tính artifact đang công bố
 
 | Trường | Giá trị đang được hồ sơ phát hành khai báo | Căn cứ |
 |---|---|---|
 | Tệp thực thi | `VietLicenSure-v5.0.exe` | Release v5.0 |
-| Build ID | `5.0-production-20260926` | `OFFICIAL-PROVENANCE-v1.json` |
+| Build ID | `5.0-production-20260927` | `OFFICIAL-PROVENANCE-v1.json` |
 | SHA-256 của EXE | Xem `RELEASE-MANIFEST.json` và `RELEASE-SHA256SUMS.txt` của chính gói nhận được | Hash thay đổi khi build/ký/timestamp; không sao chép giá trị từ gói khác |
 | Source snapshot được provenance khai báo | Xem `OFFICIAL-PROVENANCE-v1.json` của chính gói nhận được | Provenance có chữ ký CMS tách rời và phải khớp manifest |
 | Chứng thư ký | Chứng thư tự ký được launcher ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |
@@ -39,7 +39,7 @@ Các giá trị trên mô tả artifact đang công bố; chúng không tự ch�
 
 ## Quyết định hiện hành
 
-**Phê duyệt phát hành chính thức theo kênh `Official Self-Signed`.** Trust mode kỹ thuật vẫn là `ManagedSigned`; provenance, CMS, SHA-256, Authenticode, RFC3161 timestamp và verifier tiếp tục fail-closed. Public self-update EXE vẫn tắt; bản mới được phân phối bằng tải thủ công hoặc triển khai quản trị có xác minh.
+**Phê duyệt phát hành chính thức theo kênh `Official Self-Signed`.** Trust mode kỹ thuật vẫn là `OfficialSelfSigned`; provenance, CMS, SHA-256, Authenticode, RFC3161 timestamp và verifier tiếp tục fail-closed. Public self-update EXE vẫn tắt; bản mới được phân phối bằng tải thủ công hoặc triển khai quản trị có xác minh.
 
 Đánh giá bảo mật độc lập hiện vẫn `NotReviewed`; Code Scanning/dependency coverage phải được báo cáo theo bằng chứng thật. Quyết định phát hành chính thức không tự biến các cổng này thành `Passed` và không cho phép tuyên bố “0 Critical/High” khi chưa có báo cáo tương ứng.
 

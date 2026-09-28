@@ -1,12 +1,12 @@
 VietLicenSure v5.0 - PHAN MEM KIEM TRA VA QUAN LY BAN QUYEN HE THONG
 Release version: 5.0
-Release build date: 2026.09.26
-Release label: 5.0-managed-signed-20260926
+Release build date: 2026.09.27
+Release label: 5.0-official-self-signed-20260927
 Public release channel: Official Self-Signed.
-Technical trust mode: ManagedSigned.
-Release status: ManagedSigned.
+Technical trust mode: OfficialSelfSigned.
+Release status: OfficialSelfSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 23D7225B573660F2657E8D18C8FC2BB82A95A4E17E248EBB7640FCDAABEE3AB4
+SHA-256: 0BA30EF28BBD47CE5A19BAC3CC13A2E80516219F25028F85FCF0035CBB5E9FF9
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.

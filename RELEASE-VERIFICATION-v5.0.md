@@ -1,7 +1,7 @@
 # Xác minh bản phát hành VietLicenSure v5.0
 
-Áp dụng cho: **v5.0 Official Self-Signed** — trust mode kỹ thuật `ManagedSigned`
-Ngày hồ sơ hiện hành: **2026-09-26**
+Áp dụng cho: **v5.0 Official Self-Signed** — trust mode kỹ thuật `OfficialSelfSigned`
+Ngày hồ sơ hiện hành: **2026-09-27**
 
 ## Cách nhanh nhất
 
@@ -67,7 +67,7 @@ Hash phải khớp đồng thời `RELEASE-SHA256SUMS.txt`, artifact trong `RELE
 | Kết quả | Xử lý |
 |---|---|
 | `Valid`, signer và timestamp đúng | Đạt |
-| `UnknownError`/không xây được trust chain trên máy mới | Chỉ là cảnh báo ở kênh ManagedSigned khi EXE không `HashMismatch`, signer khớp cả SHA-1/SHA-256 đã ghim và timestamp tồn tại |
+| `UnknownError`/không xây được trust chain trên máy mới | Chỉ là cảnh báo ở kênh OfficialSelfSigned khi EXE không `HashMismatch`, signer khớp cả SHA-1/SHA-256 đã ghim và timestamp tồn tại |
 | `HashMismatch`, `NotSigned`, sai signer hoặc thiếu timestamp | Không đạt |
 | Revocation/chain không xác định khi Offline | Không tự coi là Valid; ghi cảnh báo và kiểm tra lại trên máy/kênh mạng quản trị |
 | Chứng thư CMS hết hạn | Vẫn kiểm tra được tính nguyên vẹn mật mã, nhưng phải đối chiếu ngày build; không dùng để ký bản mới |

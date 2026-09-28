@@ -2,9 +2,9 @@
     "SchemaVersion":  "2.0",
     "ToolVersion":  "5.0",
     "ReleaseVersion":  "5.0",
-    "ReleaseBuildDate":  "2026.09.26",
-    "ReleaseLabel":  "5.0-managed-signed-20260926",
-    "ReleaseStatus":  "ManagedSigned",
+    "ReleaseBuildDate":  "2026.09.27",
+    "ReleaseLabel":  "5.0-official-self-signed-20260927",
+    "ReleaseStatus":  "OfficialSelfSigned",
     "PrimaryFileName":  "VietLicenSure-v5.0.exe",
     "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
     "Artifacts":  [
@@ -12,7 +12,7 @@
                           "FileName":  "VietLicenSure-v5.0.exe",
                           "Architecture":  "AnyCPU",
                           "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
-                          "Sha256":  "23D7225B573660F2657E8D18C8FC2BB82A95A4E17E248EBB7640FCDAABEE3AB4",
+                          "Sha256":  "0BA30EF28BBD47CE5A19BAC3CC13A2E80516219F25028F85FCF0035CBB5E9FF9",
                           "AuthenticodeStatus":  "Valid",
                           "AuthenticodeSigner":  "CN=Thanh Viet - Tool Kiem Tra v4.9 (Self-Signed Code Signing)",
                           "AuthenticodeThumbprint":  "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA",
@@ -40,7 +40,7 @@
                  "FileName":  "SBOM.cdx.json",
                  "Format":  "CycloneDX",
                  "SpecVersion":  "1.5",
-                 "Sha256":  "D187BAC1D47C03075A5CC64B820A010BBBA3E3BFE394C44BF2F42AC934CCC70C"
+                 "Sha256":  "DFEF1075D27696E98370E88A5FA6C43B1C31E28A29BB7609EA64BD46F8BE45E4"
              },
     "PayloadCount":  68,
     "IntegrityFileCount":  66,
@@ -51,10 +51,10 @@
                                "ResourceCount":  1,
                                "PayloadCount":  68,
                                "HeaderBytes":  568,
-                               "SourceBytes":  3558820,
-                               "BundleBytes":  3559388,
-                               "EmbeddedBytes":  754583,
-                               "SavedBytes":  2804237,
+                               "SourceBytes":  3559121,
+                               "BundleBytes":  3559689,
+                               "EmbeddedBytes":  754604,
+                               "SavedBytes":  2804517,
                                "SavingsPercent":  78.8,
                                "MaximumPayloadBytes":  8388608,
                                "MaximumPayloadDataBytes":  16777216,
@@ -109,7 +109,7 @@
     "ApplicationUpdateVerification":  "Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback",
     "OfficialBuildProvenance":  {
                                     "State":  "Official",
-                                    "BuildId":  "5.0-production-20260926",
+                                    "BuildId":  "5.0-production-20260927",
                                     "ManifestFile":  "OFFICIAL-PROVENANCE-v1.json",
                                     "SignatureFile":  "OFFICIAL-PROVENANCE-v1.json.p7s",
                                     "VerificationUrl":  "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build",
@@ -171,7 +171,7 @@
     "SoftwareLicenseCatalogGeneratedAtUtc":  "2026-08-31T06:05:00Z",
     "SoftwareLicenseCatalogFreshnessStatus":  "Fresh",
     "SoftwareLicenseCatalogFreshForDecisiveEvidence":  true,
-    "SoftwareLicenseCatalogAgeDays":  27.312,
+    "SoftwareLicenseCatalogAgeDays":  27.39,
     "SoftwareLicenseCatalogFreshnessWarningAgeDays":  30,
     "SoftwareLicenseCatalogFreshnessMaximumAgeDays":  45,
     "SoftwareLicenseCatalogProductRules":  94,
@@ -438,5 +438,5 @@
                              "Status":  "NotClaimed",
                              "Reason":  "Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia."
                          },
-    "BuiltAtUtc":  "2026-09-27T13:33:57.6537367Z"
+    "BuiltAtUtc":  "2026-09-27T15:26:17.0407477Z"
 }

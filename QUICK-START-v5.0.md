@@ -3,8 +3,8 @@
 **Tên đầy đủ:** VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 **Phiên bản:** `v5.0`
 **Ngày phát hành lần đầu:** `08/09/2026`
-**Nội dung và gói hiện hành cập nhật đến:** `26/09/2026`
-**Kênh:** `Official Self-Signed` — phát hành chính thức; trust mode kỹ thuật `ManagedSigned`
+**Nội dung và gói hiện hành cập nhật đến:** `27/09/2026`
+**Kênh:** `Official Self-Signed` — phát hành chính thức; trust mode kỹ thuật `OfficialSelfSigned`
 **Trạng thái hiện hành:** `RELEASE-STATUS-v5.0.md`
 
 ## 1. Xác minh trước khi chạy
@@ -36,7 +36,7 @@ Không tắt SmartScreen, Microsoft Defender, không thêm ngoại lệ và khô
 1. Xác nhận tệp đến từ trang Releases chính thức.
 2. Yêu cầu SHA-256, signer, timestamp và verifier của gói cùng đạt theo bước 1.
 3. Nếu hash sai, `HashMismatch`, `NotSigned`, signer không khớp, thiếu timestamp hoặc CMS lỗi: **dừng sử dụng**, xóa bản tải lỗi và tải lại từ nguồn chính thức.
-4. Nếu mọi kiểm tra đều đạt nhưng SmartScreen vẫn cảnh báo do chứng thư ManagedSigned tự ký, trên máy cá nhân bạn có thể chủ động chọn **More info → Run anyway**. Trên máy cơ quan/doanh nghiệp hoặc khi không có tùy chọn này, hãy dừng và liên hệ quản trị viên.
+4. Nếu mọi kiểm tra đều đạt nhưng SmartScreen vẫn cảnh báo do chứng thư OfficialSelfSigned tự ký, trên máy cá nhân bạn có thể chủ động chọn **More info → Run anyway**. Trên máy cơ quan/doanh nghiệp hoặc khi không có tùy chọn này, hãy dừng và liên hệ quản trị viên.
 
 Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo. Xem thêm `FAQ-NGUOI-DUNG-MOI-v5.0.md`.
 

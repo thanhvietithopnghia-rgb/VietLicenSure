@@ -2,7 +2,7 @@
 
 - **Phiên bản áp dụng:** `v5.0`
 - **Kênh:** `Official Self-Signed`
-- **Trạng thái:** phát hành chính thức bằng chứng thư tự ký; trust mode kỹ thuật `ManagedSigned`
+- **Trạng thái:** phát hành chính thức bằng chứng thư tự ký; trust mode kỹ thuật `OfficialSelfSigned`
 - **Nguồn sự thật về trạng thái:** `RELEASE-STATUS-v5.0.md`
 
 Trang này là mục lục chuẩn. Tên hiển thị dùng thống nhất trong README, website và gói bàn giao; hậu tố v4.8/v4.9 trên một số tệp chỉ mốc hình thành tài liệu, không phải phiên bản của EXE v5.0.

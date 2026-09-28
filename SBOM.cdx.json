@@ -3,7 +3,7 @@
     "specVersion":  "1.5",
     "version":  1,
     "metadata":  {
-                     "timestamp":  "2026-09-26T00:00:00Z",
+                     "timestamp":  "2026-09-27T00:00:00Z",
                      "tools":  [
                                    {
                                        "vendor":  "Thanh Viet",
@@ -19,7 +19,7 @@
                                        "hashes":  [
                                                       {
                                                           "alg":  "SHA-256",
-                                                          "content":  "23D7225B573660F2657E8D18C8FC2BB82A95A4E17E248EBB7640FCDAABEE3AB4"
+                                                          "content":  "0BA30EF28BBD47CE5A19BAC3CC13A2E80516219F25028F85FCF0035CBB5E9FF9"
                                                       }
                                                   ],
                                        "licenses":  [
@@ -32,15 +32,15 @@
                                        "properties":  [
                                                           {
                                                               "name":  "tool:buildId",
-                                                              "value":  "5.0-production-20260926"
+                                                              "value":  "5.0-production-20260927"
                                                           },
                                                           {
                                                               "name":  "tool:sourceSnapshotCommit",
-                                                              "value":  "9e1d3d21391da9ee3bb45a6dea4b6b0a23da5fce"
+                                                              "value":  "b0419df750fccfa261a21090bc460ce6f8f33119"
                                                           },
                                                           {
                                                               "name":  "tool:releaseStatus",
-                                                              "value":  "ManagedSigned"
+                                                              "value":  "OfficialSelfSigned"
                                                           }
                                                       ]
                                    }
