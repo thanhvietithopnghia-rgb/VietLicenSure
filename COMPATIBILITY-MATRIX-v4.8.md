@@ -2,7 +2,7 @@
 
 > **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
 
-Mốc rà soát: **2026-08-17 UTC**. Nguồn máy đọc: `compatibility-catalog-v1.0.json`, schema catalog `1.1`, phiên bản `1.1.1.0`.
+Mốc rà soát: **2026-09-29 UTC**. Nguồn máy đọc: `compatibility-catalog-v1.0.json`, schema catalog `1.1`, phiên bản `1.1.2.0`.
 
 Catalog Microsoft này tách biệt với `software-license-catalog-v1.0.json` phiên bản `1.4.0.1`. Catalogue phần mềm có 77 quy tắc sản phẩm duy nhất, metadata phạm vi/chính sách cập nhật và chữ ký CMS tách rời, gồm IObit Driver Booster, WIRIS MathType, PDF editor thương mại, IDM, các nhóm CAD/CAE/BIM, mô phỏng, kết cấu, GIS, EDA, đo lường, rendering và nhiều ứng dụng phổ biến. Các quy tắc bổ sung nhận diện signer/domain/tệp lõi/artifact nhưng không hạ ngưỡng kết luận fail-closed của engine quét sâu; `HashMismatch` đơn lẻ chỉ tạo `IntegrityCompromised`. Mô hình giấy phép được trình bày riêng với bằng chứng can thiệp; mức `Low` không tạo hành động xóa.
 
@@ -14,11 +14,11 @@ Catalog Microsoft này tách biệt với `software-license-catalog-v1.0.json` p
 
 | Release | Build nền | Revision đã biết | Trạng thái catalog |
 | --- | ---: | ---: | --- |
-| Windows 10 22H2 | 19045 | 7663 | End of support hoặc ESU |
-| Windows 11 23H2 | 22631 | 7517 | Còn hỗ trợ tùy edition |
-| Windows 11 24H2 | 26100 | 9168 | Supported |
-| Windows 11 25H2 | 26200 | 9168 | Supported |
-| Windows 11 26H1 | 28000 | 2704 | Supported; phạm vi thiết bị mới |
+| Windows 10 22H2 | 19045 | 7727 | End of support hoặc ESU |
+| Windows 11 23H2 | 22631 | 7584 | Còn hỗ trợ tùy edition |
+| Windows 11 24H2 | 26100 | 9550 | Supported |
+| Windows 11 25H2 | 26200 | 9550 | Supported |
+| Windows 11 26H1 | 28000 | 3086 | Supported; phạm vi thiết bị mới |
 
 Nguồn:
 
@@ -56,9 +56,9 @@ Nhận diện family không đồng nghĩa với xác nhận quyền sở hữu 
 
 | Channel | GUID | Mốc catalog |
 | --- | --- | --- |
-| Current Channel | `492350f6-3a01-4f97-b9c0-c7c6ddf67d60` | `2607` · `16.0.20228.20190` · 2026-08-11 |
-| Monthly Enterprise Channel | `55336b82-a18d-4dd6-b5f6-9e5095c314a6` | `2607` · `16.0.20228.20188` · 2026-08-11 |
-| Semi-Annual Enterprise Channel | `7ffbc6bf-bc32-4f92-8982-f9dd17fd3114` | `2607` · `16.0.20228.20186` · 2026-08-11 |
+| Current Channel | `492350f6-3a01-4f97-b9c0-c7c6ddf67d60` | `2609` · `16.0.20430.20092` · 2026-09-22 |
+| Monthly Enterprise Channel | `55336b82-a18d-4dd6-b5f6-9e5095c314a6` | `2608` · `16.0.20326.20142` · 2026-09-08 |
+| Semi-Annual Enterprise Channel | `7ffbc6bf-bc32-4f92-8982-f9dd17fd3114` | `2608` · `16.0.20326.20140` · 2026-09-08 |
 
 Nguồn:
 
