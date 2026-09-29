@@ -193,6 +193,8 @@ if ($errors.Count -eq 0) {
         @{ Question='pdf không tạo được'; Entry='report-pdf-failure' }
         @{ Question='cách xóa cấu hình máy chủ'; Entry='enterprise-server-management' }
         @{ Question='cách ghép nối máy trạm'; Entry='enterprise-client-management' }
+        @{ Question='server có tự khởi động sau reboot không'; Entry='enterprise-server-management' }
+        @{ Question='agent chạy lại sau sleep và có cần mã ghép nối mới không'; Entry='enterprise-client-management' }
         @{ Question='tạo gói hỗ trợ đã che định danh'; Entry='support-bundle' }
         @{ Question='chưa có chính sách nhà phát hành plugin'; Entry='plugin-management' }
         @{ Question='tool không mở được file exe'; Entry='launch-troubleshooting' }

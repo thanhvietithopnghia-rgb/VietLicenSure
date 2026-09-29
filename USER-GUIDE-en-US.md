@@ -336,7 +336,7 @@ This function includes Local Windows/Office management, Server, and Workstation.
 
 ### Enterprise server and workstation
 
-Network access starts disabled. Enable Online only for authorized LAN use. The server creates enrollment data and receives approved workstation reports; a workstation enrolls with a temporary code. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
+Network access starts disabled. Enable Local LAN only for authorized LAN use. After the administrator successfully starts the Server, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables that task. When enabled, the Workstation agent runs after startup, logon, resume, and every hour; encrypted queued reports retry after connectivity returns. An enrolled workstation retains its ClientId/secret across reboot and does not need a new pairing code. Create new pairing code rotates only the temporary 24-hour enrollment code and does not affect already enrolled workstations. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
 
 ## Advanced inspection
 

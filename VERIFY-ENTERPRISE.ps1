@@ -51,10 +51,12 @@ foreach ($name in $required) {
 $enterpriseUiText = Get-Content -LiteralPath (Join-Path $SourceDirectory 'enterprise-license-manager.ps1') -Raw -Encoding UTF8
 Assert-Enterprise ($enterpriseUiText -match '[$]enterpriseVersionFromLauncher\s*=\s*\[string\][$]env:TOOL_TOOL_VERSION') 'Enterprise UI chưa nhận phiên bản từ launcher.'
 Assert-Enterprise ($enterpriseUiText -match '"5\.0"') 'Enterprise UI thiếu fallback v5.0.'
-Assert-Enterprise ($enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Server' -and
-    $enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Agent') 'Tên Firewall/Task mới chưa theo phiên bản hiện hành.'
-foreach ($legacyInfrastructureName in @('ThanhViet Tool v4.8 Enterprise Server','ThanhViet Tool v4.6 Enterprise Server','ThanhViet Tool v4.8 Enterprise Agent','ThanhViet Tool v4.6 Enterprise Agent')) {
-    Assert-Enterprise ($enterpriseUiText -match [regex]::Escape($legacyInfrastructureName)) "Thiếu dọn tương thích hạ tầng cũ: $legacyInfrastructureName"
+Assert-Enterprise ($enterpriseUiText -match 'function\s+Get-EnterpriseLifecycleTaskName' -and
+    $enterpriseUiText -match 'enterpriseInfrastructureVersion\) Enterprise \$Role' -and
+    $enterpriseUiText -match 'enterpriseInfrastructureVersion.+?Enterprise Server') 'Tên Firewall/Task mới chưa theo phiên bản hiện hành.'
+foreach ($legacyTaskVersion in @('v4.8','v4.6')) {
+    Assert-Enterprise ($enterpriseUiText -match [regex]::Escape("ThanhViet Tool $legacyTaskVersion Enterprise `$Role")) "Thiếu dọn task tương thích hạ tầng cũ: $legacyTaskVersion"
+    Assert-Enterprise ($enterpriseUiText -match [regex]::Escape("ThanhViet Tool $legacyTaskVersion Enterprise Server")) "Thiếu dọn Firewall tương thích hạ tầng cũ: $legacyTaskVersion"
 }
 
 $previousRoot = [string]$env:TOOL_ENTERPRISE_ROOT
@@ -94,6 +96,9 @@ try {
     Assert-Enterprise (-not (Test-ToolEnterpriseAdminCode -AdminCode "Wrong-Admin" -Verifier $server.AdminVerifier)) "Mã quản trị sai lại được chấp nhận."
     $pairing = Get-ToolEnterprisePairingCode -AdminCode "Verify-Admin-4826"
     Assert-Enterprise ($pairing.Length -ge 20) "Mã ghép nối quá ngắn."
+    $rotatedPairing = Reset-ToolEnterprisePairingCode -AdminCode "Verify-Admin-4826" -ValidHours 24
+    Assert-Enterprise ($rotatedPairing.Length -ge 20 -and $rotatedPairing -ne $pairing) "Luân chuyển không tạo mã ghép nối mới."
+    $pairing = $rotatedPairing
 
     $client = Set-ToolEnterpriseClientConfiguration -ServerAddress "127.0.0.1" -Port $enterprisePort -AllowRemoteLicenseChanges:$false
     $clientAgain = Set-ToolEnterpriseClientConfiguration -ServerAddress "127.0.0.1" -Port $enterprisePort -AllowRemoteLicenseChanges:$false
@@ -154,8 +159,11 @@ try {
     Assert-Enterprise ($null -ne $liveDiagnostic -and [bool]$liveDiagnostic.Success) "Listener loopback không sẵn sàng: $diagnosticSummary $hostFailure"
     $registeredClient = Register-ToolEnterpriseClient -ServerAddress "127.0.0.1:$enterprisePort" -Port 49420 -PairingCode $pairing -AllowRemoteLicenseChanges:$false -AutoSend:$true
     Assert-Enterprise ([bool]$registeredClient.Enrolled -and [string]$registeredClient.ClientId -eq [string]$client.ClientId) "Máy trạm không ghép nối được với listener thật."
+    $pairingAfterEnrollment = Reset-ToolEnterprisePairingCode -AdminCode "Verify-Admin-4826" -ValidHours 24
+    Assert-Enterprise ($pairingAfterEnrollment -ne $pairing) "Mã ghép nối không đổi sau yêu cầu tạo mã mới."
     $sendResponse = Send-ToolEnterpriseReport -Report $report
-    Assert-Enterprise ([bool]$sendResponse.Accepted) "Listener thật không nhận báo cáo máy trạm."
+    Assert-Enterprise ([bool]$sendResponse.Accepted) "Máy trạm đã ghép nối bị ảnh hưởng khi luân chuyển mã ghép nối."
+    $pairing = $pairingAfterEnrollment
     $receivedReports = @(Get-ChildItem -LiteralPath (Join-Path $paths.ServerReports $client.ClientId) -Filter "*.json" -File -ErrorAction SilentlyContinue)
     Assert-Enterprise ($receivedReports.Count -ge 1) "Máy chủ không lưu báo cáo nhận qua HTTP."
 
@@ -280,6 +288,42 @@ try {
         $dashboardText -notmatch 'máy chủ/máy trạm bị ẩn') "Dashboard chưa luôn mở đủ trung tâm Mục 8 như v4.2.0.8."
     $enterpriseUiPath = Join-Path $SourceDirectory "enterprise-license-manager.ps1"
     $enterpriseUiText = Get-Content -LiteralPath $enterpriseUiPath -Raw -Encoding UTF8
+    $enterpriseUiTokens = $null
+    $enterpriseUiParseErrors = $null
+    $enterpriseUiAst = [Management.Automation.Language.Parser]::ParseFile($enterpriseUiPath, [ref]$enterpriseUiTokens, [ref]$enterpriseUiParseErrors)
+    Assert-Enterprise (@($enterpriseUiParseErrors).Count -eq 0) 'Giao diện enterprise lỗi cú pháp.'
+    $lifecycleXmlFunction = $enterpriseUiAst.Find({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'New-EnterpriseLifecycleTaskXml'
+    }, $true)
+    Assert-Enterprise ($null -ne $lifecycleXmlFunction) 'Thiếu trình tạo task vòng đời server/agent.'
+    if ($lifecycleXmlFunction) {
+        $lifecycleDefinition = $lifecycleXmlFunction.Extent.Text -replace '^function\s+New-EnterpriseLifecycleTaskXml', 'function script:New-EnterpriseLifecycleTaskXml'
+        Invoke-Expression $lifecycleDefinition
+        $launcherFixture = Join-Path $SourceDirectory 'VietLicenSure-v5.0.exe'
+        $serverTaskXml = [xml](New-EnterpriseLifecycleTaskXml -Role Server -LauncherPath $launcherFixture)
+        $agentTaskXml = [xml](New-EnterpriseLifecycleTaskXml -Role Agent -LauncherPath $launcherFixture)
+        $taskNamespace = New-Object Xml.XmlNamespaceManager($serverTaskXml.NameTable)
+        $taskNamespace.AddNamespace('t', 'http://schemas.microsoft.com/windows/2004/02/mit/task')
+        Assert-Enterprise ($null -ne $serverTaskXml.SelectSingleNode('//t:BootTrigger', $taskNamespace) -and
+            $null -ne $serverTaskXml.SelectSingleNode('//t:LogonTrigger', $taskNamespace) -and
+            $null -eq $serverTaskXml.SelectSingleNode('//t:CalendarTrigger', $taskNamespace) -and
+            [string]$serverTaskXml.SelectSingleNode('//t:Arguments', $taskNamespace).InnerText -eq '--enterprise-server' -and
+            [string]$serverTaskXml.SelectSingleNode('//t:UserId', $taskNamespace).InnerText -eq 'S-1-5-18' -and
+            [string]$serverTaskXml.SelectSingleNode('//t:ExecutionTimeLimit', $taskNamespace).InnerText -eq 'PT0S') 'Task máy chủ không chạy đúng lúc boot/logon dưới SYSTEM hoặc còn giới hạn thời gian.'
+        $agentNamespace = New-Object Xml.XmlNamespaceManager($agentTaskXml.NameTable)
+        $agentNamespace.AddNamespace('t', 'http://schemas.microsoft.com/windows/2004/02/mit/task')
+        $agentSubscription = [string]$agentTaskXml.SelectSingleNode('//t:EventTrigger/t:Subscription', $agentNamespace).InnerText
+        Assert-Enterprise ($null -ne $agentTaskXml.SelectSingleNode('//t:BootTrigger', $agentNamespace) -and
+            $null -ne $agentTaskXml.SelectSingleNode('//t:LogonTrigger', $agentNamespace) -and
+            $null -ne $agentTaskXml.SelectSingleNode('//t:CalendarTrigger', $agentNamespace) -and
+            [string]$agentTaskXml.SelectSingleNode('//t:CalendarTrigger/t:Repetition/t:Interval', $agentNamespace).InnerText -eq 'PT1H' -and
+            $agentSubscription -match 'Power-Troubleshooter' -and $agentSubscription -match 'EventID=1' -and
+            [string]$agentTaskXml.SelectSingleNode('//t:Arguments', $agentNamespace).InnerText -eq '--enterprise-agent') 'Task agent thiếu trigger boot/logon/resume/mỗi giờ.'
+        $expectedWorkingDirectory = [IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($launcherFixture))
+        Assert-Enterprise ([string]$serverTaskXml.SelectSingleNode('//t:WorkingDirectory', $taskNamespace).InnerText -eq $expectedWorkingDirectory -and
+            [string]$agentTaskXml.SelectSingleNode('//t:WorkingDirectory', $agentNamespace).InnerText -eq $expectedWorkingDirectory) 'Task vòng đời còn ghim thư mục payload tạm thay vì thư mục EXE.'
+    }
     Assert-Enterprise ($enterpriseUiText -notmatch '[“”‘’]') "Giao diện enterprise chứa dấu ngoặc kép cong có thể làm PowerShell tách sai tham số."
     Assert-Enterprise ($enterpriseUiText -notmatch '(?<!\$)\(if\s*\(') "Giao diện enterprise chứa biểu thức ngoặc-if không hợp lệ khi chạy; hãy dùng biến trung gian hoặc subexpression PowerShell."
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Fit-EnterpriseWindowToWorkingArea' -and
@@ -299,6 +343,12 @@ try {
     Assert-Enterprise ($enterpriseUiText -match 'Invoke-ServerDeleteConfiguration' -and
         $enterpriseUiText -match 'enterprise\.server\.delete' -and
         $enterpriseUiText -match 'enterprise\.server\.deletePrompt') "Giao diện thiếu luồng xóa cấu hình có xác nhận."
+    Assert-Enterprise ($enterpriseUiText -match 'Reset-ToolEnterprisePairingCode.+?-ValidHours\s+24' -and
+        $enterpriseUiText -match 'function\s+Install-EnterpriseLifecycleTask' -and
+        $enterpriseUiText -match 'function\s+Remove-EnterpriseLifecycleTasks' -and
+        $enterpriseUiText -match 'sddl=D:\(A;;GX;;;\$currentUserSid\)\(A;;GX;;;SY\)' -and
+        $enterpriseUiText.IndexOf('Wait-EnterpriseServerReady', [StringComparison]::Ordinal) -lt $enterpriseUiText.IndexOf('Install-EnterpriseLifecycleTask -Role Server', [StringComparison]::Ordinal) -and
+        $enterpriseUiText -match 'Stop-EnterpriseServer[\s\S]+?Remove-EnterpriseLifecycleTasks\s+-Role\s+Server') 'Vòng đời LAN chưa khóa mã mới, URL ACL SYSTEM hoặc tự khởi động/dừng fail-closed.'
     Assert-Enterprise ($enterpriseUiText -notmatch 'Mục "Trên máy này"|\$localTab' -and
         $enterpriseUiText -match 'enterprise\.status\.choose' -and
         $enterpriseUiText -match 'enterprise\.local\.tab' -and
@@ -329,7 +379,12 @@ try {
         "enterprise.client.enroll",
         "enterprise.client.send",
         "enterprise.client.enableAgent",
-        "enterprise.client.disableAgent"
+        "enterprise.client.disableAgent",
+        "enterprise.server.startedWithAutostart",
+        "enterprise.server.stopRequestedAutostartDisabled",
+        "enterprise.client.scheduleEnabledLifecycle",
+        "enterprise.lifecycle.serverSummary",
+        "enterprise.lifecycle.clientSummary"
     )) {
         Assert-Enterprise ($enterpriseUiText.Contains($preservedKey) -and
             $null -ne $viCatalog.PSObject.Properties[$preservedKey] -and
@@ -430,7 +485,7 @@ Last 5 characters of installed product key: ZZZZZ
         $enterpriseCoreText -match 'DiscoveryMethod' -and
         $enterpriseCoreText -match 'ProbePorts' -and
         $enterpriseCoreText -notmatch 'ToolVersionPattern') "Lõi enterprise thiếu IP:cổng, chẩn đoán từng lớp hoặc quét không phụ thuộc ICMP."
-    Assert-Enterprise ($enterpriseUiText -match 'ThanhViet Tool v4\.8 Enterprise Agent' -and
+    Assert-Enterprise ($enterpriseUiText -match 'ThanhViet Tool v4\.8 Enterprise \$Role' -and
         $enterpriseUiText -match 'Enable-EnterpriseServerListenerAccess' -and
         $enterpriseUiText -match 'Resolve-EnterpriseClientServerAddress') "Giao diện enterprise chưa đồng bộ tác vụ v4.8, URLACL/Firewall hoặc tự dò máy chủ."
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Wait-EnterpriseServerReady' -and

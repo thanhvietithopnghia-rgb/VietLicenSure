@@ -188,6 +188,8 @@ function Disable-EnterpriseNetworkAccess {
     $script:enterpriseNetworkAllowed = $false
 
     try {
+        [void](Remove-EnterpriseLifecycleTasks -Role Server)
+        [void](Remove-EnterpriseLifecycleTasks -Role Agent)
         $paths = Get-ToolEnterprisePaths
         if (Test-Path -LiteralPath $paths.ServerConfig -PathType Leaf) {
             New-Item -ItemType File -Path $paths.ServerStop -Force | Out-Null
@@ -227,6 +229,164 @@ function Get-EnterpriseLauncherPath {
     $candidate = [string]$env:TOOL_LAUNCHER_PATH
     if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { return $candidate }
     return ""
+}
+
+function Get-EnterpriseLifecycleTaskName {
+    param([ValidateSet("Server", "Agent")][string]$Role)
+    return "ThanhViet Tool $($script:enterpriseInfrastructureVersion) Enterprise $Role"
+}
+
+function Get-EnterpriseLegacyLifecycleTaskNames {
+    param([ValidateSet("Server", "Agent")][string]$Role)
+    return @(
+        "ThanhViet Tool v4.8 Enterprise $Role",
+        "ThanhViet Tool v4.6 Enterprise $Role"
+    )
+}
+
+function New-EnterpriseLifecycleTaskXml {
+    param(
+        [ValidateSet("Server", "Agent")][string]$Role,
+        [Parameter(Mandatory = $true)][string]$LauncherPath
+    )
+
+    $launcherFullPath = [IO.Path]::GetFullPath($LauncherPath)
+    $escapedLauncher = [Security.SecurityElement]::Escape($launcherFullPath)
+    # The payload directory is temporary for the one-file EXE and is removed
+    # when the dashboard closes. Persist the launcher's stable directory.
+    $escapedWorkingDirectory = [Security.SecurityElement]::Escape([IO.Path]::GetDirectoryName($launcherFullPath))
+    $arguments = if ($Role -eq "Server") { "--enterprise-server" } else { "--enterprise-agent" }
+    $description = if ($Role -eq "Server") {
+        "VietLicenSure enterprise server: start after Windows boot or logon and restart after a transient failure."
+    } else {
+        "VietLicenSure enterprise agent: run after boot, logon, resume and every hour."
+    }
+    $escapedDescription = [Security.SecurityElement]::Escape($description)
+    $startBoundary = (Get-Date).AddMinutes(2).ToString("s", [Globalization.CultureInfo]::InvariantCulture)
+    $eventSubscription = [Security.SecurityElement]::Escape("<QueryList><Query Id='0' Path='System'><Select Path='System'>*[System[Provider[@Name='Microsoft-Windows-Power-Troubleshooter'] and EventID=1]]</Select></Query></QueryList>")
+    $roleTriggers = if ($Role -eq "Agent") {
+@"
+    <CalendarTrigger>
+      <Repetition><Interval>PT1H</Interval><Duration>P1D</Duration><StopAtDurationEnd>false</StopAtDurationEnd></Repetition>
+      <StartBoundary>$startBoundary</StartBoundary><Enabled>true</Enabled><ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>
+    </CalendarTrigger>
+    <EventTrigger><Enabled>true</Enabled><Subscription>$eventSubscription</Subscription><Delay>PT30S</Delay></EventTrigger>
+"@
+    } else { "" }
+    $executionLimit = if ($Role -eq "Server") { "PT0S" } else { "PT10M" }
+
+    return @"
+<?xml version="1.0" encoding="UTF-8"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Description>$escapedDescription</Description></RegistrationInfo>
+  <Triggers>
+    <BootTrigger><Enabled>true</Enabled><Delay>PT45S</Delay></BootTrigger>
+    <LogonTrigger><Enabled>true</Enabled><Delay>PT30S</Delay></LogonTrigger>
+$roleTriggers  </Triggers>
+  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><LogonType>ServiceAccount</LogonType><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <WakeToRun>false</WakeToRun>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <ExecutionTimeLimit>$executionLimit</ExecutionTimeLimit>
+    <Priority>7</Priority>
+    <RestartOnFailure><Interval>PT5M</Interval><Count>3</Count></RestartOnFailure>
+  </Settings>
+  <Actions Context="Author"><Exec><Command>$escapedLauncher</Command><Arguments>$arguments</Arguments><WorkingDirectory>$escapedWorkingDirectory</WorkingDirectory></Exec></Actions>
+</Task>
+"@
+}
+
+function Install-EnterpriseLifecycleTask {
+    param(
+        [ValidateSet("Server", "Agent")][string]$Role,
+        [Parameter(Mandatory = $true)][string]$LauncherPath
+    )
+
+    $schtasks = Join-Path $env:SystemRoot "System32\schtasks.exe"
+    if (-not (Test-Path -LiteralPath $schtasks -PathType Leaf)) { throw (Get-EnterpriseText "enterprise.error.schtasksMissing") }
+    $taskName = Get-EnterpriseLifecycleTaskName -Role $Role
+    $temporaryXml = Join-Path ([IO.Path]::GetTempPath()) ("VietLicenSure-{0}-{1}.xml" -f $Role, [Guid]::NewGuid().ToString("N"))
+    try {
+        $xml = New-EnterpriseLifecycleTaskXml -Role $Role -LauncherPath $LauncherPath
+        [IO.File]::WriteAllText($temporaryXml, $xml, (New-Object Text.UTF8Encoding($true)))
+        $arguments = "/Create /TN `"$taskName`" /XML `"$temporaryXml`" /F"
+        $process = Start-Process -FilePath $schtasks -ArgumentList $arguments -Verb RunAs -Wait -PassThru -WindowStyle Hidden
+        if ($process.ExitCode -ne 0) { throw (Get-EnterpriseText "enterprise.error.schtasksExit" @($process.ExitCode)) }
+    } finally {
+        if (Test-Path -LiteralPath $temporaryXml -PathType Leaf) { Remove-Item -LiteralPath $temporaryXml -Force -ErrorAction SilentlyContinue }
+    }
+    return $taskName
+}
+
+function Remove-EnterpriseLifecycleTasks {
+    param([ValidateSet("Server", "Agent")][string]$Role)
+
+    $schtasks = Join-Path $env:SystemRoot "System32\schtasks.exe"
+    if (-not (Test-Path -LiteralPath $schtasks -PathType Leaf)) { throw (Get-EnterpriseText "enterprise.error.schtasksMissing") }
+    $taskNames = @((Get-EnterpriseLifecycleTaskName -Role $Role)) + @(Get-EnterpriseLegacyLifecycleTaskNames -Role $Role)
+    $currentTaskExitCode = 0
+    foreach ($taskName in @($taskNames | Select-Object -Unique)) {
+        $queryArguments = "/Query /TN `"$taskName`""
+        $queryProcess = Start-Process -FilePath $schtasks -ArgumentList $queryArguments -Wait -PassThru -WindowStyle Hidden
+        if ($queryProcess.ExitCode -ne 0) { continue }
+        $arguments = "/Delete /TN `"$taskName`" /F"
+        $process = Start-Process -FilePath $schtasks -ArgumentList $arguments -Verb RunAs -Wait -PassThru -WindowStyle Hidden
+        if ($taskName -eq (Get-EnterpriseLifecycleTaskName -Role $Role)) { $currentTaskExitCode = [int]$process.ExitCode }
+    }
+    # schtasks returns 1 when the task does not exist. Disabling an already
+    # disabled lifecycle is idempotent and therefore remains successful.
+    if ($currentTaskExitCode -notin @(0, 1)) { throw (Get-EnterpriseText "enterprise.error.schtasksExit" @($currentTaskExitCode)) }
+    return $currentTaskExitCode
+}
+
+function Test-EnterpriseLifecycleTaskInstalled {
+    param([ValidateSet("Server", "Agent")][string]$Role)
+
+    $schtasks = Join-Path $env:SystemRoot "System32\schtasks.exe"
+    if (-not (Test-Path -LiteralPath $schtasks -PathType Leaf)) { return $false }
+    $taskName = Get-EnterpriseLifecycleTaskName -Role $Role
+    & $schtasks /Query /TN $taskName 1>$null 2>$null
+    return [bool]($LASTEXITCODE -eq 0)
+}
+
+function Update-EnterpriseLifecycleStatus {
+    if (-not $script:enterpriseNetworkAllowed) { return }
+    try {
+        $serverConfig = Get-EnterpriseServerConfigurationSafe
+        if ($serverConfig) {
+            $runningText = Get-EnterpriseText $(if (Test-ToolEnterpriseServerHostRunning) { "common.yes" } else { "common.no" })
+            $scheduledText = Get-EnterpriseText $(if (Test-EnterpriseLifecycleTaskInstalled -Role Server) { "common.yes" } else { "common.no" })
+            Set-EnterpriseStatus (Get-EnterpriseText "enterprise.lifecycle.serverSummary" @($runningText, $scheduledText)) $true
+            return
+        }
+        $clientConfig = Get-ToolEnterpriseClientConfig
+        if ($clientConfig -and [bool]$clientConfig.Enrolled) {
+            $scheduledText = Get-EnterpriseText $(if (Test-EnterpriseLifecycleTaskInstalled -Role Agent) { "common.yes" } else { "common.no" })
+            $paths = Get-ToolEnterprisePaths
+            $lastMessage = Get-EnterpriseText "common.none"
+            foreach ($candidate in @($paths.ClientAgentError, $paths.ClientAgentResult)) {
+                if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+                $record = Read-ToolEnterpriseJson -Path $candidate -MaximumBytes 65536
+                if ($record) {
+                    $lastMessage = if (-not [string]::IsNullOrWhiteSpace([string]$record.Message)) {
+                        ConvertTo-ToolEnterpriseSafeText $record.Message 180
+                    } elseif ($null -ne $record.Success) {
+                        Get-EnterpriseText $(if ([bool]$record.Success) { "common.success" } else { "common.failed" })
+                    } else { Get-EnterpriseText "common.none" }
+                    break
+                }
+            }
+            Set-EnterpriseStatus (Get-EnterpriseText "enterprise.lifecycle.clientSummary" @($scheduledText, $lastMessage)) $true
+        }
+    } catch {}
 }
 
 function Start-EnterpriseChild {
@@ -344,9 +504,10 @@ function Wait-EnterpriseAgentResult {
 
 function Stop-EnterpriseServer {
     try {
+        [void](Remove-EnterpriseLifecycleTasks -Role Server)
         $paths = Get-ToolEnterprisePaths
         New-Item -ItemType File -Path $paths.ServerStop -Force | Out-Null
-        Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.stopRequested") $true
+        Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.stopRequestedAutostartDisabled") $true
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 900) }
 }
 
@@ -475,7 +636,7 @@ function Invoke-ServerCreate {
 function Invoke-ServerPairingCode {
     try {
         $adminCode = $script:serverAdminBox.Text
-        $code = Get-ToolEnterprisePairingCode -AdminCode $adminCode
+        $code = Reset-ToolEnterprisePairingCode -AdminCode $adminCode -ValidHours 24
         $script:pairingOutputBox.Text = $code
         Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.pairCreated") $true
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 900) }
@@ -493,8 +654,13 @@ function Enable-EnterpriseServerListenerAccess {
         throw (Get-EnterpriseText 'enterprise.error.urlAclIdentityMissing')
     }
     $show = & $netsh http show urlacl url=$url 2>$null | Out-String
-    $reservationMatchesCurrentUser = [bool]($show -match [regex]::Escape($url) -and $show -match [regex]::Escape($currentUserSid))
-    if (-not $reservationMatchesCurrentUser) {
+    $systemSid = 'S-1-5-18'
+    $reservationMatchesRequiredPrincipals = [bool](
+        $show -match [regex]::Escape($url) -and
+        $show -match [regex]::Escape($currentUserSid) -and
+        ($show -match [regex]::Escape($systemSid) -or $show -match ';;;SY')
+    )
+    if (-not $reservationMatchesRequiredPrincipals) {
         # The dashboard and host intentionally run without a permanent elevated
         # token. Reserve the exact strong-wildcard URL for the current account,
         # not merely for the Administrators group (deny-only under filtered UAC).
@@ -502,12 +668,17 @@ function Enable-EnterpriseServerListenerAccess {
             $deleteProcess = Start-Process -FilePath $netsh -ArgumentList "http delete urlacl url=$url" -Verb RunAs -Wait -PassThru -WindowStyle Hidden
             if ($deleteProcess.ExitCode -ne 0) { throw (Get-EnterpriseText "enterprise.error.netshExit" @($deleteProcess.ExitCode)) }
         }
-        $aclArgs = "http add urlacl url=$url sddl=D:(A;;GX;;;$currentUserSid)"
+        # The dashboard starts the first listener as the current user; the
+        # persisted boot task starts it as LocalSystem. Grant only these two
+        # principals permission to listen on this exact URL.
+        $aclArgs = "http add urlacl url=$url sddl=D:(A;;GX;;;$currentUserSid)(A;;GX;;;SY)"
         $aclProcess = Start-Process -FilePath $netsh -ArgumentList $aclArgs -Verb RunAs -Wait -PassThru -WindowStyle Hidden
         if ($aclProcess.ExitCode -ne 0) { throw (Get-EnterpriseText "enterprise.error.netshExit" @($aclProcess.ExitCode)) }
     }
     $showAfter = & $netsh http show urlacl url=$url 2>$null | Out-String
-    if ($showAfter -notmatch [regex]::Escape($url) -or $showAfter -notmatch [regex]::Escape($currentUserSid)) {
+    if ($showAfter -notmatch [regex]::Escape($url) -or
+        $showAfter -notmatch [regex]::Escape($currentUserSid) -or
+        ($showAfter -notmatch [regex]::Escape($systemSid) -and $showAfter -notmatch ';;;SY')) {
         throw (Get-EnterpriseText 'enterprise.error.urlAclNotApplied' @($url))
     }
 
@@ -582,6 +753,7 @@ function Invoke-ServerDeleteConfiguration {
         if (-not (Confirm-EnterpriseAction $message)) { return }
 
         Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.deleting") $true
+        [void](Remove-EnterpriseLifecycleTasks -Role Server)
         $result = Remove-ToolEnterpriseServerConfiguration -AdminCode $adminCode -StopTimeoutSeconds 12
         $networkWarnings = @(Remove-EnterpriseServerNetworkAccess -Port ([int]$result.Port))
 
@@ -633,6 +805,8 @@ function Invoke-ServerStart {
         }
         if (-not (Confirm-EnterpriseAction (Get-EnterpriseText "enterprise.server.startPrompt" @($cfg.Port)))) { return }
         Enable-EnterpriseServerListenerAccess -Configuration $cfg
+        $launcher = Get-EnterpriseLauncherPath
+        if (-not $launcher) { throw (Get-EnterpriseText "enterprise.error.oneFileRequired") }
         $paths = Get-ToolEnterprisePaths
         foreach ($stalePath in @($paths.ServerError,$paths.ServerPid,$paths.ServerHeartbeat)) {
             if (Test-Path -LiteralPath $stalePath -PathType Leaf) { Remove-Item -LiteralPath $stalePath -Force -ErrorAction SilentlyContinue }
@@ -640,8 +814,11 @@ function Invoke-ServerStart {
         Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.server.startingVerified' @($cfg.Port)) $true
         $script:serverProcess = Start-EnterpriseChild -Role Server
         $ready = Wait-EnterpriseServerReady -Configuration $cfg -LauncherProcess $script:serverProcess -TimeoutSeconds 18
+        # Persist startup only after the listener has proved ready. A failed
+        # interactive start must never leave a broken boot task behind.
+        $serverTaskName = Install-EnterpriseLifecycleTask -Role Server -LauncherPath $launcher
         $detectedAddress = Update-EnterpriseDetectedServerAddress
-        Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.started" @($detectedAddress, $cfg.Port, $ready.ProcessId)) $true
+        Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.startedWithAutostart" @($detectedAddress, $cfg.Port, $ready.ProcessId, $serverTaskName)) $true
     } catch {
         try {
             $paths = Get-ToolEnterprisePaths
@@ -792,22 +969,13 @@ function Invoke-ClientSchedule {
         if ($Enable -and -not (Confirm-EnterpriseNetworkAccess -ActionKey "enterprise.action.scheduleAgent")) { return }
         $launcher = Get-EnterpriseLauncherPath
         if (-not $launcher) { throw (Get-EnterpriseText "enterprise.error.oneFileRequired") }
-        $taskName = "ThanhViet Tool $($script:enterpriseInfrastructureVersion) Enterprise Agent"
         if ($Enable) {
             if (-not (Confirm-EnterpriseAction (Get-EnterpriseText "enterprise.client.enableSchedulePrompt"))) { return }
-            $taskRun = "`"$launcher`" --enterprise-agent"
-            $arguments = "/Create /TN `"$taskName`" /TR `"$taskRun`" /SC HOURLY /MO 1 /RU SYSTEM /F"
-            $p = Start-Process -FilePath (Join-Path $env:SystemRoot "System32\schtasks.exe") -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
-            if ($p.ExitCode -ne 0) { throw (Get-EnterpriseText "enterprise.error.schtasksExit" @($p.ExitCode)) }
-            Set-EnterpriseStatus (Get-EnterpriseText "enterprise.client.scheduleEnabled") $true
+            $taskName = Install-EnterpriseLifecycleTask -Role Agent -LauncherPath $launcher
+            Set-EnterpriseStatus (Get-EnterpriseText "enterprise.client.scheduleEnabledLifecycle" @($taskName)) $true
         } else {
             if (-not (Confirm-EnterpriseAction (Get-EnterpriseText "enterprise.client.disableSchedulePrompt"))) { return }
-            $exitCode = 0
-            foreach ($scheduledTaskName in @($taskName,"ThanhViet Tool v4.8 Enterprise Agent","ThanhViet Tool v4.6 Enterprise Agent") | Select-Object -Unique) {
-                $arguments = "/Delete /TN `"$scheduledTaskName`" /F"
-                $p = Start-Process -FilePath (Join-Path $env:SystemRoot "System32\schtasks.exe") -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
-                if ($scheduledTaskName -eq $taskName) { $exitCode = $p.ExitCode }
-            }
+            $exitCode = Remove-EnterpriseLifecycleTasks -Role Agent
             Set-EnterpriseStatus (Get-EnterpriseText "enterprise.client.scheduleDisabled" @($exitCode)) $true
         }
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1100) }
@@ -1439,6 +1607,7 @@ $form.Add_Shown({
         }
         Update-ServerClientList
         Update-EnterpriseLayout
+        Update-EnterpriseLifecycleStatus
     } catch {}
 })
 $form.Add_Resize({ Update-EnterpriseLayout })
