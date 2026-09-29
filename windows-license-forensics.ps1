@@ -295,7 +295,7 @@ if (-not $activeLicense) {
     Add-Finding (New-Finding "WIN-LICENSE" (Get-ForensicsText "forensicsReport.category.windows") "Review" 12 (Get-ForensicsText "forensicsReport.windows.unapprovedKms" @($kmsServer)) (Get-ForensicsText "forensicsReport.windows.unapprovedKmsRecommendation"))
 } else {
     $kmsNote = if ($channel -eq "KMS") { Get-ForensicsText "forensicsReport.windows.approvedKms" @($kmsServer) } else { Get-ForensicsText "forensicsReport.windows.channel" @($channel) }
-    Add-Finding (New-Finding "WIN-LICENSE" (Get-ForensicsText "forensicsReport.category.windows") "OK" 0 (Get-ForensicsText "forensicsReport.windows.licensed" @($kmsNote, $partialKey)) (Get-ForensicsText "forensicsReport.windows.licensedRecommendation"))
+    Add-Finding (New-Finding "WIN-LICENSE" (Get-ForensicsText "forensicsReport.category.windows") "Review" 0 (Get-ForensicsText "forensicsReport.windows.licensed" @($kmsNote, $partialKey)) (Get-ForensicsText "forensicsReport.windows.licensedRecommendation"))
 }
 if ($channel -eq 'KMS') {
     $graceMinutes = if ($licenseForAnalysis -and $licenseForAnalysis.PSObject.Properties['GracePeriodRemaining']) { [int]$licenseForAnalysis.GracePeriodRemaining } else { -1 }
@@ -357,40 +357,63 @@ if ($coreBad -gt 0 -or $coreMissing -gt 0) {
     Add-Finding (New-Finding "CORE-INTEGRITY" (Get-ForensicsText "forensicsReport.category.core") "OK" 0 (($coreEvidence -join "`n") + "`n" + (Get-ForensicsText "forensicsReport.core.serviceEvidence" @($sppService.Status, $sppStart))) (Get-ForensicsText "forensicsReport.noChange"))
 }
 
-# 4. Dấu vết activator trong tiến trình, dịch vụ, task và startup.
+# 4. Dấu vết activator: tách cơ chế đang hoạt động khỏi file tồn dư.
 $activatorRegex = "(?i)(kmspico|kmsauto(?:s|[\s._-]*(?:net|lite|portable|plus|\+\+))?|auto[\s._-]*kms|kms[\s._-]*(?:38|vl(?:[\s._-]*all)?)|aact(?:[\s._-]*(?:network|portable))?|sppextcomobj(?:hook|patcher)|spp[\s._-]*(?:hook|patcher)|microsoft[\s_-]+toolkit|hwidgen|massgrave|mas[\s._-]*aio|tsforge|ohook|digital license activation|get\.activated\.win)"
-$artifactRows = New-Object System.Collections.Generic.List[object]
+$activeArtifactRows = New-Object System.Collections.Generic.List[object]
+$residualArtifactRows = New-Object System.Collections.Generic.List[object]
 foreach ($serviceItem in @(Safe-Cim Win32_Service | Where-Object { $_.Name -match $activatorRegex -or $_.DisplayName -match $activatorRegex -or $_.PathName -match $activatorRegex })) {
     $path = Get-ExecutablePath ([string]$serviceItem.PathName)
-    $artifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.service"); Name=$serviceItem.Name; Path=$path; Evidence=(Get-FileEvidence $path) })
+    $activeArtifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.service"); Name=$serviceItem.Name; Path=$path; Evidence=(Get-FileEvidence $path) })
 }
 foreach ($processItem in @(Get-Process | Where-Object { $_.ProcessName -match $activatorRegex })) {
     $path = ""
     try { $path = [string]$processItem.Path } catch {}
-    $artifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.process"); Name=$processItem.ProcessName; Path=$path; Evidence=(Get-FileEvidence $path) })
+    $activeArtifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.process"); Name=$processItem.ProcessName; Path=$path; Evidence=(Get-FileEvidence $path) })
 }
 $taskScanWarning = ""
 try {
     foreach ($task in @(Get-CompatibleScheduledTaskRows | Where-Object { $_.Name -match $activatorRegex -or $_.Actions -match $activatorRegex })) {
-        $artifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.task"); Name=[string]$task.Name; Path=[string]$task.Execute; Evidence=(Get-FileEvidence ([string]$task.Execute)) })
+        $activeArtifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.task"); Name=[string]$task.Name; Path=[string]$task.Execute; Evidence=(Get-FileEvidence ([string]$task.Execute)) })
     }
 } catch { $taskScanWarning = $_.Exception.Message }
 foreach ($startup in @(Safe-Cim Win32_StartupCommand | Where-Object { $_.Name -match $activatorRegex -or $_.Command -match $activatorRegex })) {
     $path = Get-ExecutablePath ([string]$startup.Command)
-    $artifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.startup"); Name=$startup.Name; Path=$path; Evidence=(Get-FileEvidence $path) })
+    $activeArtifactRows.Add([pscustomobject]@{ Type=(Get-ForensicsText "forensicsReport.artifact.startup"); Name=$startup.Name; Path=$path; Evidence=(Get-FileEvidence $path) })
 }
 $artifactFolders = @(
     (Join-Path $env:windir "KMS"), (Join-Path $env:windir "AutoKMS"),
     (Join-Path $env:ProgramData "KMSAutoS"), (Join-Path $env:SystemDrive "KMSpico"),
     (Join-Path $env:SystemDrive "AAct")
 ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
-if ($artifactRows.Count -gt 0 -or $artifactFolders.Count -gt 0) {
-    $artifactText = @($artifactRows | ForEach-Object { Get-ForensicsText "forensicsReport.artifact.evidence" @($_.Type, $_.Name, $_.Evidence) }) + @($artifactFolders | ForEach-Object { Get-ForensicsText "forensicsReport.artifact.folder" @($_) })
+$boundedArtifactRoots = @(
+    [Environment]::GetFolderPath('Desktop'),
+    (Join-Path ([Environment]::GetFolderPath('UserProfile')) 'Downloads')
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
+$scannedArtifactFiles = 0
+foreach ($artifactRoot in $boundedArtifactRoots) {
+    foreach ($file in @(Get-ChildItem -LiteralPath $artifactRoot -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 750)) {
+        $scannedArtifactFiles++
+        if ([string]$file.Name -notmatch $activatorRegex) { continue }
+        $residualArtifactRows.Add([pscustomobject]@{
+            Type=(Get-ForensicsText 'forensicsReport.artifact.file')
+            Name=[string]$file.Name
+            Path=[string]$file.FullName
+            Evidence=(Get-FileEvidence ([string]$file.FullName))
+        })
+        if ($residualArtifactRows.Count -ge 40) { break }
+    }
+    if ($residualArtifactRows.Count -ge 40) { break }
+}
+if ($activeArtifactRows.Count -gt 0) {
+    $artifactText = @($activeArtifactRows | ForEach-Object { Get-ForensicsText "forensicsReport.artifact.evidence" @($_.Type, $_.Name, $_.Evidence) })
     Add-Finding (New-Finding "ACTIVATOR-PERSISTENCE" (Get-ForensicsText "forensicsReport.category.activator") "High" 35 ($artifactText -join "`n") (Get-ForensicsText "forensicsReport.activator.detectedRecommendation"))
+} elseif ($residualArtifactRows.Count -gt 0 -or $artifactFolders.Count -gt 0) {
+    $artifactText = @($residualArtifactRows | ForEach-Object { Get-ForensicsText "forensicsReport.artifact.evidence" @($_.Type, $_.Name, $_.Evidence) }) + @($artifactFolders | ForEach-Object { Get-ForensicsText "forensicsReport.artifact.folder" @($_) })
+    Add-Finding (New-Finding "ACTIVATOR-PERSISTENCE" (Get-ForensicsText "forensicsReport.category.activator") "Review" 0 ($artifactText -join "`n") (Get-ForensicsText "forensicsReport.activator.residualRecommendation"))
 } elseif ($taskScanWarning) {
-    Add-Finding (New-Finding "ACTIVATOR-PERSISTENCE" (Get-ForensicsText "forensicsReport.category.activator") "Review" 8 $taskScanWarning (Get-ForensicsText "deepReport.tasks.errorRecommendation"))
+    Add-Finding (New-Finding "ACTIVATOR-PERSISTENCE" (Get-ForensicsText "forensicsReport.category.activator") "Review" 0 $taskScanWarning (Get-ForensicsText "deepReport.tasks.errorRecommendation"))
 } else {
-    Add-Finding (New-Finding "ACTIVATOR-PERSISTENCE" (Get-ForensicsText "forensicsReport.category.activator") "OK" 0 (Get-ForensicsText "forensicsReport.activator.none") (Get-ForensicsText "deepReport.noAutomaticAction"))
+    Add-Finding (New-Finding "ACTIVATOR-PERSISTENCE" (Get-ForensicsText "forensicsReport.category.activator") "OK" 0 (Get-ForensicsText "forensicsReport.activator.none" @($scannedArtifactFiles)) (Get-ForensicsText "deepReport.noAutomaticAction"))
 }
 
 # 5. Registry, hosts và proxy có thể can thiệp kích hoạt.
@@ -432,22 +455,32 @@ foreach ($provider in @("Software Protection Platform Service", "Microsoft-Windo
 $licensingErrors = @($licensingEvents | Where-Object { $_.Level -in @(1,2) })
 $lastEvent = $licensingEvents | Sort-Object TimeCreated -Descending | Select-Object -First 1
 $lastEventText = if ($lastEvent) { $lastEvent.TimeCreated } else { Get-ForensicsText "common.none" }
-$eventEvidence = Get-ForensicsText "forensicsReport.events.evidence" @($licensingEvents.Count, $licensingErrors.Count, $lastEventText)
+$errorEventSummary = @($licensingErrors | Group-Object ProviderName,Id | Sort-Object Count -Descending | Select-Object -First 5 | ForEach-Object {
+    $sample = $_.Group | Select-Object -First 1
+    "{0}/ID {1} x{2}" -f ([string]$sample.ProviderName), ([int]$sample.Id), ([int]$_.Count)
+}) -join '; '
+if ([string]::IsNullOrWhiteSpace($errorEventSummary)) { $errorEventSummary = Get-ForensicsText 'common.none' }
+$eventEvidence = Get-ForensicsText "forensicsReport.events.evidence" @($licensingEvents.Count, $licensingErrors.Count, $lastEventText, $errorEventSummary)
 if ($licensingErrors.Count -ge 10) {
-    Add-Finding (New-Finding "SPP-EVENTS" (Get-ForensicsText "forensicsReport.category.events") "Review" 10 $eventEvidence (Get-ForensicsText "forensicsReport.events.reviewRecommendation"))
+    Add-Finding (New-Finding "SPP-EVENTS" (Get-ForensicsText "forensicsReport.category.events") "Review" 0 $eventEvidence (Get-ForensicsText "forensicsReport.events.reviewRecommendation"))
 } else {
     Add-Finding (New-Finding "SPP-EVENTS" (Get-ForensicsText "forensicsReport.category.events") "Info" 0 $eventEvidence (Get-ForensicsText "forensicsReport.events.infoRecommendation"))
 }
 
 # 7. Đồng bộ thời gian và múi giờ.
 $timeService = Get-Service -Name W32Time -ErrorAction SilentlyContinue
-$timeStatus = (& $nativeW32tmPath /query /status 2>$null) -join " | "
 if ($timeService -and $timeService.StartType -eq "Disabled") {
-    Add-Finding (New-Finding "TIME-SYNC" (Get-ForensicsText "forensicsReport.category.time") "Review" 6 (Get-ForensicsText "forensicsReport.time.disabled" @([TimeZoneInfo]::Local.Id)) (Get-ForensicsText "forensicsReport.time.disabledRecommendation"))
+    Add-Finding (New-Finding "TIME-SYNC" (Get-ForensicsText "forensicsReport.category.time") "Review" 0 (Get-ForensicsText "forensicsReport.time.disabled" @([TimeZoneInfo]::Local.Id)) (Get-ForensicsText "forensicsReport.time.disabledRecommendation"))
 } else {
-    $timeSummary = ($timeStatus -replace "\s+", " ").Trim()
-    if ($timeSummary.Length -gt 300) { $timeSummary = $timeSummary.Substring(0,300) + "..." }
-    Add-Finding (New-Finding "TIME-SYNC" (Get-ForensicsText "forensicsReport.category.time") "Info" 0 (Get-ForensicsText "forensicsReport.time.evidence" @($timeService.Status, [TimeZoneInfo]::Local.Id, $timeSummary)) (Get-ForensicsText "forensicsReport.time.recommendation"))
+    if ($timeService -and [string]$timeService.Status -eq 'Running') {
+        $timeStatus = (& $nativeW32tmPath /query /status 2>$null) -join " | "
+        $timeSummary = ($timeStatus -replace "\s+", " ").Trim()
+        if ($timeSummary.Length -gt 300) { $timeSummary = $timeSummary.Substring(0,300) + "..." }
+        $timeEvidence = Get-ForensicsText "forensicsReport.time.evidence" @($timeService.Status, [TimeZoneInfo]::Local.Id, $timeSummary)
+    } else {
+        $timeEvidence = Get-ForensicsText 'forensicsReport.time.stoppedNormal' @($(if ($timeService) { [string]$timeService.StartType } else { Get-ForensicsText 'common.unknown' }), [TimeZoneInfo]::Local.Id)
+    }
+    Add-Finding (New-Finding "TIME-SYNC" (Get-ForensicsText "forensicsReport.category.time") "Info" 0 $timeEvidence (Get-ForensicsText "forensicsReport.time.recommendation"))
 }
 
 # 8. Office: trạng thái, kênh và KMS.
@@ -455,21 +488,23 @@ $officeLicenses = @(Safe-Cim SoftwareLicensingProduct | Where-Object { $_.Partia
 $officeActive = @($officeLicenses | Where-Object { [int]$_.LicenseStatus -eq 1 })
 $officeKms = @($officeLicenses | Where-Object { $_.Description -match "KMSCLIENT|VOLUME_KMS" })
 $officeEvidence = @($officeLicenses | ForEach-Object {
-    Get-ForensicsText "forensicsReport.office.evidence" @($_.Name, $_.LicenseStatus, $_.Description, $_.PartialProductKey, $_.KeyManagementServiceMachine)
+    $officeChannel = Get-LicenseChannel $_
+    $officeKmsDisplay = if ($officeChannel -eq 'KMS') { [string]$_.KeyManagementServiceMachine } else { Get-ForensicsText 'forensicsReport.kms.notApplicable' @($officeChannel) }
+    Get-ForensicsText "forensicsReport.office.evidence" @($_.Name, $_.LicenseStatus, $_.Description, $_.PartialProductKey, $officeKmsDisplay)
 })
 if ($officeKms.Count -gt 0) {
     $unapprovedOfficeKms = @($officeKms | Where-Object { -not (Test-ApprovedKms ([string]$_.KeyManagementServiceMachine)) })
     if ($unapprovedOfficeKms.Count -gt 0) {
         Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "Review" 15 ($officeEvidence -join "`n") (Get-ForensicsText "forensicsReport.office.unapprovedRecommendation"))
     } else {
-        Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "OK" 0 ($officeEvidence -join "`n") (Get-ForensicsText "forensicsReport.office.approvedRecommendation"))
+        Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "Review" 0 ((Get-ForensicsText 'forensicsReport.office.activatedUnverified') + "`n" + ($officeEvidence -join "`n")) (Get-ForensicsText "forensicsReport.office.approvedRecommendation"))
     }
 } elseif ($officeLicenses.Count -eq 0) {
     Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "Info" 0 (Get-ForensicsText "forensicsReport.office.none") (Get-ForensicsText "forensicsReport.office.noneRecommendation"))
 } elseif ($officeActive.Count -eq 0) {
     Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "Review" 8 ($officeEvidence -join "`n") (Get-ForensicsText "forensicsReport.office.inactiveRecommendation"))
 } else {
-    Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "OK" 0 ($officeEvidence -join "`n") (Get-ForensicsText "forensicsReport.office.activeRecommendation"))
+    Add-Finding (New-Finding "OFFICE-LICENSE" (Get-ForensicsText "forensicsReport.category.office") "Review" 0 ((Get-ForensicsText 'forensicsReport.office.activatedUnverified') + "`n" + ($officeEvidence -join "`n")) (Get-ForensicsText "forensicsReport.office.activeRecommendation"))
 }
 
 # 9. Phần mềm cài đặt có tên/publisher khớp mẫu đặc hiệu.

@@ -1,22 +1,22 @@
 # Lịch sử phát triển VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại. Nội dung v5.0 được cập nhật đến ngày 27/09/2026; số phiên bản công khai vẫn giữ nguyên là v5.0.
+Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại. Nội dung v5.0 được cập nhật đến ngày 29/09/2026; số phiên bản công khai vẫn giữ nguyên là v5.0.
 
 Trang công khai:
 https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
-## v5.0 — cập nhật 27/09/2026 (phát hành lần đầu 08/09/2026)
+## v5.0 — cập nhật 29/09/2026 (phát hành lần đầu 08/09/2026)
 
 - **Tên gọi và định hướng:** tên chính thức được đổi từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống**; thống nhất một tên phiên bản duy nhất là **v5.0** trên ứng dụng, tài liệu, bộ cập nhật và GitHub.
 - **Nền tảng nâng cấp:** v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9, kế thừa cơ chế kiểm kê và đánh giá bằng chứng rồi mở rộng thành quy trình kiểm tra–quản lý hệ thống thống nhất.
 - **Chính sách mã nguồn:** `SOURCE-POLICY-v5.0` thay thế bản v4.9, tiếp tục mô hình truy cập có kiểm soát và công bố lộ trình dự kiến bốn giai đoạn đến và sau 07/2027; các mốc không phải cam kết cứng và phụ thuộc đánh giá rủi ro.
 - **Tương tác hai chiều:** bổ sung GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho báo cáo lỗ hổng.
 - **Giao diện và trải nghiệm:** khởi động nhanh hơn, bố cục thích ứng DPI 100–200%, hỗ trợ Sáng/Tối/High Contrast, điều hướng rõ ràng; năm thẻ trạng thái dùng nền tint và viền màu bao quanh theo từng chức năng, không còn dải màu riêng bên trái.
-- **Kiểm tra Windows, Office và phần mềm:** ba mức quét Quick, Standard và Deep; mở rộng nguồn kiểm kê; phân biệt kích hoạt, loại giấy phép, lỗi đọc dữ liệu và trường hợp chưa đủ bằng chứng.
+- **Kiểm tra Windows, Office và phần mềm:** ba mức quét Quick, Standard và Deep; mở rộng nguồn kiểm kê; tách trạng thái kích hoạt kỹ thuật khỏi quyền sử dụng, phân biệt MAK/KMS, signer tự ký ghim, timestamp, lỗi đọc dữ liệu, activator đang hoạt động và tệp tồn dư; fleet chỉ giữ Last5 và cảnh báo khi định danh key thay đổi.
 - **Phân tích, quản lý và Trợ lý:** ưu tiên kết quả Cao–Trung bình–Thấp, tìm kiếm, lọc, so sánh lần quét và hỗ trợ quản lý nhiều máy; Trợ lý Offline định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép đáp án sai chủ đề.
 - **Kiến trúc mã nguồn:** tách `Giao-Dien.ps1` và `windows-license-compliance-cleanup.ps1` thành chín thư viện chức năng, giữ nguyên hai entrypoint tương thích; bổ sung verifier khóa số hàm, phụ thuộc đóng gói và nguồn hợp thành để giảm kích thước monolith mà không đổi hành vi.
 - **Khắc phục an toàn:** tách phạm vi Windows, Office và phần mềm khác; bắt buộc xem trước, Dry Run, scope-lock, sao lưu HMAC, xác nhận UAC, hậu kiểm và rollback fail-closed.
-- **Báo cáo, riêng tư và toàn vẹn:** xuất HTML/PDF/JSON/XML/CSV, che dữ liệu nhạy cảm, Offline theo mặc định; gói OfficialSelfSigned được khóa provenance/CMS/SHA-256/Authenticode/RFC3161 và kiểm thử runtime, UAC cancellation, DPI/High Contrast trên VM sạch trước khi bàn giao.
+- **Báo cáo, riêng tư và toàn vẹn:** xuất HTML/PDF/JSON/XML/CSV, che dữ liệu nhạy cảm và đường dẫn, không lưu full product key, không cộng điểm rủi ro từ W32Time/SPP hay file tồn dư khi thiếu bằng chứng hoạt động; Offline theo mặc định; gói OfficialSelfSigned được khóa provenance/CMS/SHA-256/Authenticode/RFC3161 và kiểm thử runtime, UAC cancellation, DPI/High Contrast trên VM sạch trước khi bàn giao.
 - **Kênh phát hành:** thống nhất thành **Official Self-Signed** với mã trạng thái nội bộ `OfficialSelfSigned`, không còn dùng nhãn `ManagedSigned` hoặc `Pilot`; signer tự ký đã ghim, RFC3161 timestamp và verifier fail-closed vẫn giữ nguyên; công bố rõ đây không phải public-CA/EV/Store-signed và SmartScreen vẫn có thể cảnh báo.
 
 ### Tóm tắt cốt lõi giữa hai thế hệ

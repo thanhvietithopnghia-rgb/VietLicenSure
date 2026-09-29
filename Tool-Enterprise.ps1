@@ -1079,7 +1079,7 @@ function Get-ToolEnterpriseLicenseStatusText {
     param([int]$Status)
     switch ($Status) {
         0 { "Unlicensed" }
-        1 { "Licensed" }
+        1 { "Activated" }
         2 { "OOBGrace" }
         3 { "OOTGrace" }
         4 { "NonGenuineGrace" }
@@ -1475,6 +1475,17 @@ function Save-ToolEnterpriseServerReport {
     $windows = @($Report.WindowsLicenses | Select-Object -First 1)
     $office = @($Report.OfficeLicenses | Select-Object -First 1)
     $existingRecord = Read-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId)
+    $windowsLast5 = if ($windows.Count -gt 0) { [string]$windows[0].PartialProductKey } else { "" }
+    $officeLast5 = if ($office.Count -gt 0) { [string]$office[0].PartialProductKey } else { "" }
+    $windowsIdentityChanged = [bool]($existingRecord -and -not [string]::IsNullOrWhiteSpace([string]$existingRecord.WindowsLast5) -and
+        -not [string]::IsNullOrWhiteSpace($windowsLast5) -and [string]$existingRecord.WindowsLast5 -ne $windowsLast5)
+    $officeIdentityChanged = [bool]($existingRecord -and -not [string]::IsNullOrWhiteSpace([string]$existingRecord.OfficeLast5) -and
+        -not [string]::IsNullOrWhiteSpace($officeLast5) -and [string]$existingRecord.OfficeLast5 -ne $officeLast5)
+    $identityChangedAtUtc = if ($windowsIdentityChanged -or $officeIdentityChanged) {
+        [DateTime]::UtcNow.ToString("o")
+    } elseif ($existingRecord -and $existingRecord.PSObject.Properties['LicenseIdentityChangedAtUtc']) {
+        [string]$existingRecord.LicenseIdentityChangedAtUtc
+    } else { "" }
     $record = [pscustomobject][ordered]@{
         SchemaVersion = $script:ToolEnterpriseSchemaVersion
         ClientId = $ClientId
@@ -1486,10 +1497,15 @@ function Save-ToolEnterpriseServerReport {
         AllowRemoteLicenseChanges = if ($existingRecord) { [bool]$existingRecord.AllowRemoteLicenseChanges } else { $false }
         WindowsStatus = if ($windows.Count -gt 0) { [string]$windows[0].LicenseStatusText } else { "NotDetected" }
         WindowsChannel = if ($windows.Count -gt 0) { [string]$windows[0].Channel } else { "" }
-        WindowsLast5 = if ($windows.Count -gt 0) { [string]$windows[0].PartialProductKey } else { "" }
+        WindowsLast5 = $windowsLast5
+        WindowsEntitlementStatus = "NotVerified"
+        WindowsIdentityChanged = $windowsIdentityChanged
         OfficeStatus = if ($office.Count -gt 0) { [string]$office[0].LicenseStatusText } else { "NotDetected" }
         OfficeChannel = if ($office.Count -gt 0) { [string]$office[0].Channel } else { "" }
-        OfficeLast5 = if ($office.Count -gt 0) { [string]$office[0].PartialProductKey } else { "" }
+        OfficeLast5 = $officeLast5
+        OfficeEntitlementStatus = "NotVerified"
+        OfficeIdentityChanged = $officeIdentityChanged
+        LicenseIdentityChangedAtUtc = $identityChangedAtUtc
         LatestReportPath = $latestPath
     }
     Write-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId) -Value $record
@@ -1826,9 +1842,14 @@ function Export-ToolEnterpriseFleetReport {
             WindowsStatus = ConvertTo-ToolEnterpriseSafeText $source.WindowsStatus 100
             WindowsChannel = ConvertTo-ToolEnterpriseSafeText $source.WindowsChannel 120
             WindowsLast5 = if ($RedactSensitive -and -not [string]::IsNullOrWhiteSpace([string]$source.WindowsLast5)) { $redactionMarker } else { ConvertTo-ToolEnterpriseSafeText $source.WindowsLast5 10 }
+            WindowsEntitlementStatus = "NotVerified"
+            WindowsIdentityChanged = [bool]($source.PSObject.Properties['WindowsIdentityChanged'] -and $source.WindowsIdentityChanged)
             OfficeStatus = ConvertTo-ToolEnterpriseSafeText $source.OfficeStatus 100
             OfficeChannel = ConvertTo-ToolEnterpriseSafeText $source.OfficeChannel 120
             OfficeLast5 = if ($RedactSensitive -and -not [string]::IsNullOrWhiteSpace([string]$source.OfficeLast5)) { $redactionMarker } else { ConvertTo-ToolEnterpriseSafeText $source.OfficeLast5 10 }
+            OfficeEntitlementStatus = "NotVerified"
+            OfficeIdentityChanged = [bool]($source.PSObject.Properties['OfficeIdentityChanged'] -and $source.OfficeIdentityChanged)
+            LicenseIdentityChangedAtUtc = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['LicenseIdentityChangedAtUtc']) { $source.LicenseIdentityChangedAtUtc } else { '' }) 80
             AllowRemoteLicenseChanges = [bool]$source.AllowRemoteLicenseChanges
         })
     }
@@ -1890,6 +1911,7 @@ function Export-ToolEnterpriseFleetReport {
     $columnOffice = Get-ToolEnterpriseText "enterpriseReport.column.office"
     $columnOfficeChannel = Get-ToolEnterpriseText "enterpriseReport.column.officeChannel"
     $columnOfficeLast5 = Get-ToolEnterpriseText "enterpriseReport.column.officeLast5"
+    $columnIdentityChange = Get-ToolEnterpriseText "enterpriseReport.column.identityChange"
     $columnRemoteChanges = Get-ToolEnterpriseText "enterpriseReport.column.remoteChanges"
     $valueYes = Get-ToolEnterpriseText "enterpriseReport.value.yes"
     $valueNo = Get-ToolEnterpriseText "enterpriseReport.value.no"
@@ -1906,6 +1928,9 @@ function Export-ToolEnterpriseFleetReport {
         $row[$columnOffice] = [string]$_.OfficeStatus
         $row[$columnOfficeChannel] = [string]$_.OfficeChannel
         $row[$columnOfficeLast5] = [string]$_.OfficeLast5
+        $row[$columnIdentityChange] = if ([bool]$_.WindowsIdentityChanged -or [bool]$_.OfficeIdentityChanged) {
+            Get-ToolEnterpriseText "enterpriseReport.value.changed"
+        } else { Get-ToolEnterpriseText "enterpriseReport.value.unchanged" }
         $row[$columnRemoteChanges] = if ([bool]$_.AllowRemoteLicenseChanges) { $valueYes } else { $valueNo }
         [pscustomobject]$row
     })
@@ -1926,7 +1951,7 @@ function Export-ToolEnterpriseFleetReport {
                 $csvRows | Export-Csv -LiteralPath $csvStagePath -NoTypeInformation -Encoding UTF8
             } else {
                 $emptyRow = [ordered]@{}
-                foreach ($columnName in @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnWindowsChannel,$columnWindowsLast5,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnRemoteChanges)) {
+                foreach ($columnName in @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnWindowsChannel,$columnWindowsLast5,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnIdentityChange,$columnRemoteChanges)) {
                     $emptyRow[$columnName] = ""
                 }
                 $header = @([pscustomobject]$emptyRow | ConvertTo-Csv -NoTypeInformation)[0]
@@ -1959,7 +1984,7 @@ function Export-ToolEnterpriseFleetReport {
                     [pscustomobject]@{Label=(Get-ToolEnterpriseText "enterpriseReport.card.formats");Value=(@($requestedFormats.ToArray()) -join " / ").ToUpperInvariant();Tone="info"}
                 ) `
                 -Sections @(
-                    [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.clientList"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnOffice)) },
+                    [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.clientList"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnOffice,$columnIdentityChange)) },
                     [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.windowsDetails"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnWindows,$columnWindowsChannel,$columnWindowsLast5)) },
                     [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.officeDetails"); BodyHtml=(ConvertTo-ToolHtmlTable -Rows $fleetRows -Columns @($columnComputer,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnRemoteChanges)) },
                     [pscustomobject]@{ Title=(Get-ToolEnterpriseText "enterpriseReport.section.limitations"); BodyHtml="<p class='note'>$(ConvertTo-ToolHtmlText (Get-ToolEnterpriseText "enterpriseReport.limitationsNote"))</p>" }

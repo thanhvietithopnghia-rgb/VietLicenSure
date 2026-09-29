@@ -1,4 +1,5 @@
 *.json text eol=lf
+LICH-SU-PHIEN-BAN.txt text eol=crlf
 update-manifest-v1.json binary
 *.p7s binary
 *.cer binary

@@ -90,9 +90,25 @@ function Protect-AssuranceText {
     if ($null -eq $Value) { return "" }
     $text = [string]$Value
     if (-not $RedactSensitive) { return $text }
-    $profilePath = [Environment]::GetFolderPath("UserProfile")
-    if (-not [string]::IsNullOrWhiteSpace($profilePath)) {
-        $text = [regex]::Replace($text, [regex]::Escape($profilePath), "%USERPROFILE%", [Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $pathMappings = New-Object System.Collections.Generic.List[object]
+    foreach ($mapping in @(
+        @{ Path=[string]$env:TOOL_LAUNCHER_PATH; Token='[TOOL_PATH]'; FileOnly=$true },
+        @{ Path=[Environment]::GetFolderPath('UserProfile'); Token='%USERPROFILE%'; FileOnly=$false },
+        @{ Path=[string]$env:ProgramW6432; Token='%ProgramFiles%'; FileOnly=$false },
+        @{ Path=[string]${env:ProgramFiles(x86)}; Token='%ProgramFiles(x86)%'; FileOnly=$false },
+        @{ Path=[string]$env:ProgramFiles; Token='%ProgramFiles%'; FileOnly=$false },
+        @{ Path=[string]$env:windir; Token='%WINDIR%'; FileOnly=$false }
+    )) {
+        if ([string]::IsNullOrWhiteSpace([string]$mapping.Path)) { continue }
+        try {
+            $resolvedPath = [IO.Path]::GetFullPath([string]$mapping.Path)
+            if ([bool]$mapping.FileOnly) { $resolvedPath = Split-Path -Parent $resolvedPath }
+            if ([string]::IsNullOrWhiteSpace($resolvedPath)) { continue }
+            $pathMappings.Add([pscustomobject]@{ Path=$resolvedPath.TrimEnd([char]92); Token=[string]$mapping.Token })
+        } catch {}
+    }
+    foreach ($mapping in @($pathMappings.ToArray() | Sort-Object { $_.Path.Length } -Descending)) {
+        $text = [regex]::Replace($text, [regex]::Escape([string]$mapping.Path), [string]$mapping.Token, [Text.RegularExpressions.RegexOptions]::IgnoreCase)
     }
     foreach ($secret in @($env:COMPUTERNAME, $env:USERNAME)) {
         if (-not [string]::IsNullOrWhiteSpace([string]$secret)) {
@@ -104,6 +120,50 @@ function Protect-AssuranceText {
     $text = [regex]::Replace($text, '(?<!\d)(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)(?!\d)', (Get-AssuranceText "assurance.text.004"))
     $text = [regex]::Replace($text, '(?i)(?<![0-9A-F])(?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2}(?![0-9A-F])', (Get-AssuranceText "assurance.text.005"))
     return $text
+}
+
+function Resolve-AssuranceCertificateTrust {
+    param(
+        [AllowNull()][string]$SignatureStatus,
+        [bool]$CurrentChainValid,
+        [AllowNull()][string[]]$CurrentChainStatuses,
+        [bool]$HasTimestamp,
+        [bool]$PinnedOfficialSelfSigned
+    )
+
+    $statuses = @($CurrentChainStatuses | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+    $onlyCurrentTimeValidity = $statuses.Count -gt 0 -and
+        @($statuses | Where-Object { [string]$_ -ne 'NotTimeValid' }).Count -eq 0
+    if ($PinnedOfficialSelfSigned -and $HasTimestamp -and $SignatureStatus -in @('Valid','UnknownError')) {
+        return [pscustomobject][ordered]@{ Valid=$true; Code='OfficialSelfSignedPinned'; Severity='Info' }
+    }
+    if ($SignatureStatus -eq 'Valid' -and $CurrentChainValid) {
+        return [pscustomobject][ordered]@{ Valid=$true; Code='Valid'; Severity='OK' }
+    }
+    if ($SignatureStatus -eq 'Valid' -and $HasTimestamp -and $onlyCurrentTimeValidity) {
+        return [pscustomobject][ordered]@{ Valid=$true; Code='ValidTimestampedCurrentCertificateExpired'; Severity='Info' }
+    }
+    return [pscustomobject][ordered]@{ Valid=$false; Code='Review'; Severity='Review' }
+}
+
+function Test-AssurancePinnedOfficialSelfSigned {
+    param(
+        [AllowNull()][Security.Cryptography.X509Certificates.X509Certificate2]$Certificate,
+        [AllowNull()][string]$Product
+    )
+    if (-not $Certificate -or $Product -ne 'Tool' -or [string]$env:TOOL_OFFICIAL_BUILD_STATE -ne 'OfficialSelfSigned') { return $false }
+    if ([string]$Certificate.Subject -cne [string]$Certificate.Issuer) { return $false }
+    $publishedCertificatePath = Join-Path $PSScriptRoot 'CONTENT-SIGNING-CERTIFICATE.cer'
+    if (-not (Test-Path -LiteralPath $publishedCertificatePath -PathType Leaf)) { return $false }
+    try {
+        $publishedCertificate = New-Object -TypeName Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $publishedCertificatePath
+        $sha256 = [Security.Cryptography.SHA256]::Create()
+        try {
+            $actualSha256 = ([BitConverter]::ToString($sha256.ComputeHash($Certificate.RawData))).Replace('-', '')
+            $publishedSha256 = ([BitConverter]::ToString($sha256.ComputeHash($publishedCertificate.RawData))).Replace('-', '')
+        } finally { $sha256.Dispose() }
+        return [string]$Certificate.Thumbprint -ceq [string]$publishedCertificate.Thumbprint -and $actualSha256 -ceq $publishedSha256
+    } catch { return $false }
 }
 
 function ConvertTo-AssuranceRedactedObject {
@@ -248,12 +308,13 @@ function Get-FileCertificateAudit {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         return [pscustomobject][ordered]@{
             Product=$Target.Product; Component=$Target.Component; Path=(Protect-AssuranceText $path); Required=[bool]$Target.Required
-            SignatureStatus="Missing"; Signer=""; Issuer=""; Thumbprint=""; ValidFrom=""; ValidTo=""; TimestampSigner=""; ChainValid=$false; ChainStatus="FileMissing"
+            SignatureStatus="Missing"; EffectiveStatus="Missing"; EffectiveValid=$false; Signer=""; Issuer=""; Thumbprint=""; ValidFrom=""; ValidTo=""; TimestampSigner=""; TimestampPresent=$false; PinnedOfficialSelfSigned=$false; ChainValid=$false; ChainStatus="FileMissing"
         }
     }
     $signature = Get-AuthenticodeSignature -LiteralPath $path
     $certificate = $signature.SignerCertificate
     $chainValid = $false
+    $chainStatuses = @()
     $chainStatus = ""
     if ($certificate) {
         $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
@@ -262,24 +323,33 @@ function Get-FileCertificateAudit {
             $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
             $chain.ChainPolicy.UrlRetrievalTimeout = [TimeSpan]::FromSeconds(2)
             $chainValid = [bool]$chain.Build($certificate)
-            $chainStatus = (@($chain.ChainStatus | ForEach-Object { [string]$_.Status }) -join ",")
+            $chainStatuses = @($chain.ChainStatus | ForEach-Object { [string]$_.Status })
+            $chainStatus = ($chainStatuses -join ",")
             if ([string]::IsNullOrWhiteSpace($chainStatus)) { $chainStatus = "NoError" }
         } finally { $chain.Dispose() }
     } else {
         $chainStatus = "NoSignerCertificate"
     }
+    $timestampPresent = [bool]$signature.TimeStamperCertificate
+    $pinnedOfficialSelfSigned = Test-AssurancePinnedOfficialSelfSigned -Certificate $certificate -Product ([string]$Target.Product)
+    $trust = Resolve-AssuranceCertificateTrust -SignatureStatus ([string]$signature.Status) -CurrentChainValid $chainValid `
+        -CurrentChainStatuses $chainStatuses -HasTimestamp $timestampPresent -PinnedOfficialSelfSigned $pinnedOfficialSelfSigned
     return [pscustomobject][ordered]@{
         Product = [string]$Target.Product
         Component = [string]$Target.Component
         Path = Protect-AssuranceText $path
         Required = [bool]$Target.Required
         SignatureStatus = [string]$signature.Status
+        EffectiveStatus = [string]$trust.Code
+        EffectiveValid = [bool]$trust.Valid
         Signer = if ($certificate) { [string]$certificate.Subject } else { "" }
         Issuer = if ($certificate) { [string]$certificate.Issuer } else { "" }
         Thumbprint = if ($certificate) { [string]$certificate.Thumbprint } else { "" }
         ValidFrom = if ($certificate) { $certificate.NotBefore.ToString("o") } else { "" }
         ValidTo = if ($certificate) { $certificate.NotAfter.ToString("o") } else { "" }
         TimestampSigner = if ($signature.TimeStamperCertificate) { [string]$signature.TimeStamperCertificate.Subject } else { "" }
+        TimestampPresent = $timestampPresent
+        PinnedOfficialSelfSigned = $pinnedOfficialSelfSigned
         ChainValid = $chainValid
         ChainStatus = $chainStatus
     }
@@ -313,8 +383,8 @@ function Complete-AndExportAssuranceReport {
 if ($Operation -eq "CertificateAudit") {
     $targets = @(Get-CertificateAuditTargets)
     $records = @($targets | ForEach-Object { Get-FileCertificateAudit -Target $_ })
-    $validCount = @($records | Where-Object { $_.SignatureStatus -eq "Valid" -and $_.ChainValid }).Count
-    $invalidRecords = @($records | Where-Object { $_.SignatureStatus -ne "Valid" -or -not $_.ChainValid })
+    $validCount = @($records | Where-Object { [bool]$_.EffectiveValid }).Count
+    $invalidRecords = @($records | Where-Object { -not [bool]$_.EffectiveValid })
     $requiredFailures = @($invalidRecords | Where-Object Required)
     $officeCount = @($records | Where-Object Product -eq "Microsoft Office").Count
     $overall = if ($requiredFailures.Count -gt 0) { "ActionRequired" } elseif ($invalidRecords.Count -gt 0) { "Review" } elseif ($officeCount -eq 0) { "PassWithNotice" } else { "Pass" }
@@ -342,8 +412,19 @@ if ($Operation -eq "CertificateAudit") {
     )
     $tableRows = @($records | ForEach-Object {
         $row = [ordered]@{}
-        $row[$certificateColumns[0]]=$_.Product; $row[$certificateColumns[1]]=$_.Component; $row[$certificateColumns[2]]=$_.SignatureStatus
-        $row[$certificateColumns[3]]=$(if ($_.ChainValid) { Get-AssuranceText "assurance.text.009" } else { $_.ChainStatus })
+        $effectiveStatusText = switch ([string]$_.EffectiveStatus) {
+            'OfficialSelfSignedPinned' { Get-AssuranceText 'assurance.trust.pinnedSelfSigned' }
+            'ValidTimestampedCurrentCertificateExpired' { Get-AssuranceText 'assurance.trust.validTimestamped' }
+            'Valid' { Get-AssuranceText 'assurance.text.009' }
+            default { [string]$_.SignatureStatus }
+        }
+        $trustText = switch ([string]$_.EffectiveStatus) {
+            'OfficialSelfSignedPinned' { Get-AssuranceText 'assurance.trust.pinnedSelfSigned' }
+            'ValidTimestampedCurrentCertificateExpired' { Get-AssuranceText 'assurance.trust.currentExpiryNotice' }
+            default { if ($_.ChainValid) { Get-AssuranceText "assurance.text.009" } else { $_.ChainStatus } }
+        }
+        $row[$certificateColumns[0]]=$_.Product; $row[$certificateColumns[1]]=$_.Component; $row[$certificateColumns[2]]=$effectiveStatusText
+        $row[$certificateColumns[3]]=$trustText
         $row[$certificateColumns[4]]=$_.Signer; $row[$certificateColumns[5]]=$_.ValidTo; $row[$certificateColumns[6]]=$_.Path
         [pscustomobject]$row
     })

@@ -418,7 +418,13 @@ function Update-ServerClientList {
         $item = New-Object Windows.Forms.ListViewItem([string]$client.ComputerName)
         [void]$item.SubItems.Add([string]$client.RemoteAddress)
         [void]$item.SubItems.Add([string]$client.LastSeenUtc)
-        [void]$item.SubItems.Add(("{0} / {1}" -f [string]$client.WindowsStatus, [string]$client.OfficeStatus))
+        $activationText = "{0} / {1}" -f [string]$client.WindowsStatus, [string]$client.OfficeStatus
+        $windowsIdentityChanged = [bool]($client.PSObject.Properties['WindowsIdentityChanged'] -and $client.WindowsIdentityChanged)
+        $officeIdentityChanged = [bool]($client.PSObject.Properties['OfficeIdentityChanged'] -and $client.OfficeIdentityChanged)
+        if ($windowsIdentityChanged -or $officeIdentityChanged) {
+            $activationText += " | " + (Get-EnterpriseText "enterprise.server.identityChanged")
+        }
+        [void]$item.SubItems.Add($activationText)
         [void]$item.SubItems.Add([string]$client.ClientId)
         $item.Tag = $client
         [void]$script:serverClientList.Items.Add($item)
@@ -1284,7 +1290,7 @@ $script:scanResultBox.Font = $script:enterpriseSmallFont
 $serverTab.Controls.Add($script:scanResultBox)
 $script:serverClientList = New-Object Windows.Forms.ListView
 $script:serverClientList.Location = New-Object Drawing.Point(18, 400)
-$script:serverClientList.Size = New-Object Drawing.Size(900, 135)
+$script:serverClientList.Size = New-Object Drawing.Size(900, 112)
 $script:serverClientList.View = "Details"
 $script:serverClientList.FullRowSelect = $true
 $script:serverClientList.GridLines = $true
@@ -1293,12 +1299,13 @@ foreach ($column in @(
     @((Get-EnterpriseText "enterprise.server.clientColumn"),150),
     @("IP",120),
     @((Get-EnterpriseText "enterprise.server.lastSeenColumn"),180),
-    @("Windows / Office",190),
+    @((Get-EnterpriseText "enterprise.server.activationColumn"),190),
     @("ClientId",240)
 )) {
     [void]$script:serverClientList.Columns.Add($column[0], [int]$column[1])
 }
 $serverTab.Controls.Add($script:serverClientList)
+$serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.activationNote") 18 516 900 24))
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.job") 18 548 140))
 $script:jobOperationBox = New-Object Windows.Forms.ComboBox
 $script:jobOperationBox.Location = New-Object Drawing.Point(145, 545)

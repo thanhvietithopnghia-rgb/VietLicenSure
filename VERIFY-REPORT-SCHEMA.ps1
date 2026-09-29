@@ -483,6 +483,64 @@ try {
     Add-Failure "Không chạy được fixture ẩn IP/giữ phiên bản: $($_.Exception.Message)"
 }
 
+try {
+    $assurancePath = Join-Path $sourceDirectoryFull 'windows-license-assurance.ps1'
+    $assuranceTokens = $null
+    $assuranceErrors = $null
+    $assuranceAst = [Management.Automation.Language.Parser]::ParseFile($assurancePath, [ref]$assuranceTokens, [ref]$assuranceErrors)
+    $trustFunction = $assuranceAst.Find({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Resolve-AssuranceCertificateTrust'
+    }, $true)
+    if (-not $trustFunction) { throw 'Thiếu hàm Resolve-AssuranceCertificateTrust' }
+    Invoke-Expression ($trustFunction.Extent.Text -replace '^function\s+Resolve-AssuranceCertificateTrust', 'function script:Resolve-AssuranceCertificateTrust')
+
+    $validFixture = Resolve-AssuranceCertificateTrust -SignatureStatus Valid -CurrentChainValid $true -CurrentChainStatuses @() -HasTimestamp $false -PinnedOfficialSelfSigned $false
+    $timestampFixture = Resolve-AssuranceCertificateTrust -SignatureStatus Valid -CurrentChainValid $false -CurrentChainStatuses @('NotTimeValid') -HasTimestamp $true -PinnedOfficialSelfSigned $false
+    $pinnedFixture = Resolve-AssuranceCertificateTrust -SignatureStatus UnknownError -CurrentChainValid $false -CurrentChainStatuses @('UntrustedRoot') -HasTimestamp $true -PinnedOfficialSelfSigned $true
+    $untrustedFixture = Resolve-AssuranceCertificateTrust -SignatureStatus UnknownError -CurrentChainValid $false -CurrentChainStatuses @('UntrustedRoot') -HasTimestamp $true -PinnedOfficialSelfSigned $false
+    if (-not $validFixture.Valid -or $validFixture.Code -ne 'Valid' -or
+        -not $timestampFixture.Valid -or $timestampFixture.Code -ne 'ValidTimestampedCurrentCertificateExpired' -or
+        -not $pinnedFixture.Valid -or $pinnedFixture.Code -ne 'OfficialSelfSignedPinned' -or
+        $untrustedFixture.Valid) {
+        Add-Failure 'Mô hình chứng chỉ chưa phân biệt chữ ký hợp lệ, dấu thời gian, chứng thư ghim và gốc không tin cậy.'
+    }
+
+    $forensicsPath = Join-Path $sourceDirectoryFull 'windows-license-forensics.ps1'
+    $forensicsTokens = $null
+    $forensicsErrors = $null
+    $forensicsAst = [Management.Automation.Language.Parser]::ParseFile($forensicsPath, [ref]$forensicsTokens, [ref]$forensicsErrors)
+    $channelFunction = $forensicsAst.Find({
+        param($node)
+        $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-LicenseChannel'
+    }, $true)
+    if (-not $channelFunction) { throw 'Thiếu hàm Get-LicenseChannel' }
+    Invoke-Expression ($channelFunction.Extent.Text -replace '^function\s+Get-LicenseChannel', 'function script:Get-LicenseChannel')
+    if ((Get-LicenseChannel ([pscustomobject]@{ Description='Office 16, RETAIL(MAK) channel' })) -ne 'MAK' -or
+        (Get-LicenseChannel ([pscustomobject]@{ Description='Office 16, VOLUME_KMSCLIENT channel' })) -ne 'KMS' -or
+        (Get-LicenseChannel ([pscustomobject]@{ Description='Windows Operating System, RETAIL channel' })) -ne 'Retail') {
+        Add-Failure 'Phân loại kênh MAK/KMS/Retail không ổn định.'
+    }
+} catch {
+    Add-Failure "Không chạy được fixture chứng chỉ/kênh cấp phép: $($_.Exception.Message)"
+}
+
+foreach ($truthCheck in @(
+    @{ Name='effective certificate validity'; Text=$assuranceText; Pattern='EffectiveStatus.+EffectiveValid.+TimestampPresent.+PinnedOfficialSelfSigned' },
+    @{ Name='pinned release certificate'; Text=$assuranceText; Pattern='CONTENT-SIGNING-CERTIFICATE\.cer' },
+    @{ Name='privacy-safe certificate paths'; Text=$assuranceText; Pattern='(?s)\[TOOL_PATH\].+%USERPROFILE%.+%ProgramFiles%.+%WINDIR%' },
+    @{ Name='activated Windows entitlement remains unverified'; Text=$forensicsText; Pattern='(?s)WIN-LICENSE.+?"Review" 0.+?windows\.licensed' },
+    @{ Name='bounded residual scan'; Text=$forensicsText; Pattern='(?s)GetFolderPath\(''Desktop''\).+?''Downloads''.+?Select-Object -First 750' },
+    @{ Name='residual artifact is not active'; Text=$forensicsText; Pattern='(?s)residualArtifactRows\.Count.+?"Review" 0.+?activator\.residualRecommendation' },
+    @{ Name='SPP count is not a risk score'; Text=$forensicsText; Pattern='(?s)licensingErrors\.Count -ge 10.+?"Review" 0' },
+    @{ Name='SPP event IDs retained'; Text=$forensicsText; Pattern='Group-Object ProviderName,Id' },
+    @{ Name='W32Time query only while running'; Text=$forensicsText; Pattern='(?s)\[string\]\$timeService\.Status\s+-eq\s+''Running''.+?\$nativeW32tmPath' },
+    @{ Name='MAK does not require KMS'; Text=$forensicsText; Pattern='forensicsReport\.kms\.notApplicable' },
+    @{ Name='activated Office entitlement remains unverified'; Text=$forensicsText; Pattern='(?s)OFFICE-LICENSE.+?"Review" 0.+?office\.activatedUnverified' }
+)) {
+    if ($truthCheck.Text -notmatch $truthCheck.Pattern) { Add-Failure "Hồi quy tính đúng báo cáo thất bại: $($truthCheck.Name)" }
+}
+
 $integrationChecks = @(
     @{ Name='inventory envelope'; Text=$inventoryText; Pattern='New-ToolReportEnvelope\s+-ReportKind\s+"InventoryAndLicense"' },
     @{ Name='cleanup envelope'; Text=$cleanupText; Pattern='New-ToolReportEnvelope\s+-ReportKind\s+"CleanupCompliance"' },

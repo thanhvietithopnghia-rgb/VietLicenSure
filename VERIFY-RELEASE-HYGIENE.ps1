@@ -22,8 +22,8 @@ $discussionsUrl = $repositoryUrl + '/discussions'
 $securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
 $releaseDateVi = '08/09/2026'
-$releaseDateIso = '2026-09-27'
-$currentUpdateDateVi = '27/09/2026'
+$releaseDateIso = '2026-09-29'
+$currentUpdateDateVi = '29/09/2026'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)
@@ -270,7 +270,7 @@ foreach ($legacyDocument in @(
     }
 }
 
-if ($releaseDateIso -ne '2026-09-27') { $failures.Add('Internal ISO update date drifted.') }
+if ($releaseDateIso -ne '2026-09-29') { $failures.Add('Internal ISO update date drifted.') }
 
 if ($failures.Count -gt 0) {
     Write-Host "VERIFY-RELEASE-HYGIENE: $($failures.Count) error(s)." -ForegroundColor Red
