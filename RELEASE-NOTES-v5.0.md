@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-09-27`
+Ngày build kỹ thuật hiện hành: `2026-09-29`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `27/09/2026`
+Nội dung cập nhật đến: `29/09/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -34,7 +34,11 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 27/09/2026
+## Cập nhật hiện hành ngày 29/09/2026
+
+- Báo cáo chứng chỉ dùng Authenticode + timestamp + signer ghim; `NotTimeValid` không tự trở thành lỗi khi chữ ký có timestamp hợp lệ, còn launcher Official Self-Signed đúng pin không bị ghi `UnknownError`.
+- Forensics tách kích hoạt kỹ thuật khỏi quyền sử dụng, không đòi KMS cho MAK, không cộng điểm từ W32Time/SPP hoặc file MAS tồn dư khi thiếu bằng chứng hoạt động.
+- Fleet đổi nhãn `Licensed` thành `Activated`, công bố quyền sử dụng chưa xác minh và phát hiện thay đổi Last5 giữa hai lần inventory mà không lưu full key.
 
 - Thống nhất trạng thái phát hành thành **Official Self-Signed**; trạng thái nội bộ là `OfficialSelfSigned`, không còn dùng nhãn `ManagedSigned` hoặc `Pilot`.
 - Giữ nguyên chứng thư tự ký đã ghim, Authenticode, RFC 3161 timestamp, provenance CMS và cơ chế fail-closed; không tuyên bố public-CA/EV/Store trust.

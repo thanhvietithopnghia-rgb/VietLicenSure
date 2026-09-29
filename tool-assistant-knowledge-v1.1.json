@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.12.0",
-  "UpdatedAtUtc": "2026-09-27T00:00:00Z",
+  "KnowledgeVersion": "1.13.0",
+  "UpdatedAtUtc": "2026-09-29T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -52,8 +52,8 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 27/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
-      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 27 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 29/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 29 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
       "Id": "first-release",
@@ -556,8 +556,8 @@
       "TitleVi": "Kiểm tra chứng chỉ số Windows/Office",
       "TitleEn": "Windows/Office certificate audit",
       "Keywords": ["kiem tra chung chi windows office", "xac minh certificate he thong", "audit authenticode windows", "chu ky tep loi windows", "chung chi so office", "kiem tra chuoi tin cay offline"],
-      "AnswerVi": "Trong chức năng 10, chọn Kiểm tra chứng chỉ số Windows/Office để kiểm tra Authenticode và chuỗi tin cậy Offline của các tệp lõi được hỗ trợ. Kết quả chữ ký hợp lệ chứng minh tệp/chữ ký khớp tại thời điểm kiểm tra, không tự chứng minh giấy phép sử dụng hợp lệ; lỗi chữ ký hoặc HashMismatch phải được đọc cùng nguồn tệp và bằng chứng cấp phép.",
-      "AnswerEn": "In feature 10, select Windows/Office certificate audit to inspect Authenticode and offline trust chains for supported core files. A valid signature shows that the file/signature matches at scan time; it does not itself prove license entitlement. Signature failure or HashMismatch must be reviewed with file source and separate licensing evidence."
+      "AnswerVi": "Trong chức năng 10, chọn Kiểm tra chứng chỉ số Windows/Office để kiểm tra Authenticode, timestamp và chuỗi tin cậy Offline của các tệp lõi. Chứng thư hiện đã hết hạn vẫn có thể tạo kết quả hợp lệ khi tệp được ký trong thời hạn chứng thư và có timestamp hợp lệ. Launcher Official Self-Signed chỉ được công nhận khi chứng thư nhúng khớp signer ghim; UntrustedRoot của chứng thư tự ký không tự biến thành lỗi. Chữ ký hợp lệ không chứng minh quyền sử dụng; lỗi chữ ký hoặc HashMismatch phải được đọc cùng nguồn tệp và bằng chứng cấp phép.",
+      "AnswerEn": "In feature 10, select Windows/Office certificate audit to inspect Authenticode, signed timestamps, and offline trust chains for supported core files. A certificate that is expired now can still yield an effectively valid result when the file was signed within its validity period and has a valid timestamp. An Official Self-Signed launcher is accepted only when the embedded certificate matches the pinned signer; a self-signed UntrustedRoot result is not automatically an error. A valid signature does not prove entitlement; signature failure or HashMismatch must be reviewed with file source and separate licensing evidence."
     },
     {
       "Id": "license-timeline",
