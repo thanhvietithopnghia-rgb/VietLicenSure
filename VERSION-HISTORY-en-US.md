@@ -1,19 +1,19 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through September 27, 2026; the public version remains v5.0.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through September 30, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — updated September 27, 2026 (first released September 8, 2026)
+## v5.0 — updated September 30, 2026 (first released September 8, 2026)
 
 - **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
 - **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
 - **Source policy:** establishes `SOURCE-POLICY-v5.0` as the current SSOT, retains controlled access from v4.9, and publishes a four-stage indicative roadmap through and after July 2027; dates are not firm commitments and remain risk-gated.
 - **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.
 - **Interface and experience:** faster startup, 100–200% DPI-aware layout, Light/Dark/High Contrast support, and clearer navigation; the five status cards now use tinted surfaces and full function-colored borders with no separate left accent strip.
-- **Windows, Office, and software inspection:** Quick, Standard, and Deep modes; broader inventory sources; separate activation, licence type, read failures, and insufficient-evidence results.
-- **Analysis, management, and Assistant:** High–Medium–Low prioritization, search, filters, previous-scan comparison, and multi-device support; the Offline Assistant routes natural questions by intent, follows explicit conversational context, and asks for clarification when a request is ambiguous instead of combining unrelated answers.
+- **Windows, Office, and software inspection:** Quick, Standard, and Deep modes; broader inventory sources; technical activation is separated from entitlement, MAK/KMS, pinned self-signed signers, timestamps, read failures, active activators, and residual files; fleet data retains Last5 only and warns when key identity changes.
+- **Analysis, management, and Assistant:** High–Medium–Low prioritization, search, filters, previous-scan comparison, and multi-device support; an enabled LAN Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and enrollment survives reboot; the Offline Assistant routes by intent, follows explicit context, and asks for clarification instead of combining unrelated answers.
 - **Source architecture:** split `Giao-Dien.ps1` and `windows-license-compliance-cleanup.ps1` into nine functional libraries while retaining both compatible entrypoints; new gates lock function counts, packaging dependencies, and composed-source behaviour so the monoliths shrink without changing functionality.
 - **Safe remediation:** separate Windows, Office, and third-party scopes with mandatory preview, Dry Run, scope locking, HMAC backup, UAC consent, post-checks, and fail-closed rollback.
 - **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, and a OfficialSelfSigned chain bound by provenance/CMS/SHA-256/Authenticode/RFC3161 plus clean-VM runtime, UAC-cancellation, DPI, and High Contrast evidence.

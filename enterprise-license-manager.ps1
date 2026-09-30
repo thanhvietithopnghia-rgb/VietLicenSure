@@ -276,14 +276,14 @@ function New-EnterpriseLifecycleTaskXml {
     $executionLimit = if ($Role -eq "Server") { "PT0S" } else { "PT10M" }
 
     return @"
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo><Description>$escapedDescription</Description></RegistrationInfo>
   <Triggers>
     <BootTrigger><Enabled>true</Enabled><Delay>PT45S</Delay></BootTrigger>
     <LogonTrigger><Enabled>true</Enabled><Delay>PT30S</Delay></LogonTrigger>
 $roleTriggers  </Triggers>
-  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><LogonType>ServiceAccount</LogonType><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
+  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
     <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
@@ -316,7 +316,7 @@ function Install-EnterpriseLifecycleTask {
     $temporaryXml = Join-Path ([IO.Path]::GetTempPath()) ("VietLicenSure-{0}-{1}.xml" -f $Role, [Guid]::NewGuid().ToString("N"))
     try {
         $xml = New-EnterpriseLifecycleTaskXml -Role $Role -LauncherPath $LauncherPath
-        [IO.File]::WriteAllText($temporaryXml, $xml, (New-Object Text.UTF8Encoding($true)))
+        [IO.File]::WriteAllText($temporaryXml, $xml, [Text.Encoding]::Unicode)
         $arguments = "/Create /TN `"$taskName`" /XML `"$temporaryXml`" /F"
         $process = Start-Process -FilePath $schtasks -ArgumentList $arguments -Verb RunAs -Wait -PassThru -WindowStyle Hidden
         if ($process.ExitCode -ne 0) { throw (Get-EnterpriseText "enterprise.error.schtasksExit" @($process.ExitCode)) }

@@ -30,7 +30,7 @@ $script:ToolProvenanceExpectedValues = [ordered]@{
     # compiled launcher and the elevated bridge reads it at runtime. Keep the
     # release identity here so a date cannot drift independently in source,
     # payload, provenance, or the final executable.
-    BuildId = '5.0-production-20260929'
+    BuildId = '5.0-production-20260930'
     BuildTime = '2026-09-29'
     SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'
     VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'

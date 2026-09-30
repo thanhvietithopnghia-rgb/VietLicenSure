@@ -2472,8 +2472,10 @@ function Convert-GuideSourceToSections {
             # The preamble after the document title is already the overview.
             # When the first explicit heading is also Overview/Tổng quan, keep
             # both bodies in one section instead of emitting duplicate TOC rows.
+            $normalizedCurrentTitle = ([string]$currentTitle).Trim().Normalize([Text.NormalizationForm]::FormKC)
+            $normalizedHeadingText = ([string]$headingText).Trim().Normalize([Text.NormalizationForm]::FormKC)
             if ($groups.Count -eq 0 -and
-                [string]::Equals([string]$currentTitle, [string]$headingText, [StringComparison]::OrdinalIgnoreCase)) {
+                [string]::Equals($normalizedCurrentTitle, $normalizedHeadingText, [StringComparison]::OrdinalIgnoreCase)) {
                 $currentTitle = [string]$headingText
                 continue
             }
@@ -2524,7 +2526,9 @@ function Open-ToolEmbeddedDocument {
         Start-ProgressDisplay $documentAction (Get-ToolText -Key $ExportingDetailKey -Culture $script:dashboardCulture) $false
         [System.Windows.Forms.Application]::DoEvents()
 
-        $documentRendererRevision = "3"
+        # Revision 4 invalidates renderer-3 caches that could retain a duplicate
+        # Overview/Tổng quan row even after the source parser was corrected.
+        $documentRendererRevision = "4"
         $sourceHash = Get-ToolSha256Hex -Path $SourceFile
         $documentDirectory = Join-Path $reportRoot "TaiLieu"
         if (-not (Test-Path -LiteralPath $documentDirectory -PathType Container)) {

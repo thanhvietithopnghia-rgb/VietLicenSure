@@ -223,7 +223,7 @@
   "about.card.report.title": "REPORTS & ASSURANCE",
   "about.card.report.body": "Export HTML/PDF/JSON/XML/CSV; audit certificates, signed plugins, timeline, checksums, and redacted support bundles.",
   "about.card.assurance.title": "OFFLINE, ASSISTANT & ENTERPRISE",
-  "about.card.assurance.body": "Offline by default; local Assistant; catalog/version checks only after Online consent; Local, Server, and Workstation management.",
+  "about.card.assurance.body": "Offline by default; local Assistant; signed catalog then version checks only after Online consent; Server autostart and Agent startup/logon/resume/hourly runs preserve enrollment across reboot.",
   "about.note": "One AnyCPU EXE · Windows 7 SP1–11 · local data processing · conclusions are technical evidence, not a substitute for legal records.",
   "about.openGuide": "Open guide",
   "about.openGuideDescription": "Open the complete bundled user guide, processed locally.",

@@ -223,7 +223,7 @@
   "about.card.report.title": "BÁO CÁO & BẢO ĐẢM",
   "about.card.report.body": "Xuất HTML/PDF/JSON/XML/CSV; kiểm chứng chỉ, plugin ký số, timeline, checksum và gói hỗ trợ đã che định danh.",
   "about.card.assurance.title": "OFFLINE, TRỢ LÝ & DOANH NGHIỆP",
-  "about.card.assurance.body": "Offline mặc định; Trợ lý cục bộ; catalog/phiên bản chỉ kiểm tra sau khi bật Online; quản lý Cục bộ, Máy chủ và Máy trạm.",
+  "about.card.assurance.body": "Offline mặc định; Trợ lý cục bộ; catalog rồi phiên bản chỉ kiểm tra sau khi bật Online; Máy chủ tự chạy lại, Agent chạy sau boot/đăng nhập/thức dậy và mỗi giờ, giữ nguyên ghép nối qua reboot.",
   "about.note": "Một EXE AnyCPU · Windows 7 SP1–11 · dữ liệu xử lý cục bộ · kết luận là bằng chứng kỹ thuật, không thay thế hồ sơ pháp lý.",
   "about.openGuide": "Mở hướng dẫn",
   "about.openGuideDescription": "Mở hướng dẫn sử dụng đầy đủ được tích hợp và xử lý cục bộ.",

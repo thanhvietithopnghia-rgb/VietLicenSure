@@ -303,6 +303,8 @@ try {
         $launcherFixture = Join-Path $SourceDirectory 'VietLicenSure-v5.0.exe'
         $serverTaskXml = [xml](New-EnterpriseLifecycleTaskXml -Role Server -LauncherPath $launcherFixture)
         $agentTaskXml = [xml](New-EnterpriseLifecycleTaskXml -Role Agent -LauncherPath $launcherFixture)
+        Assert-Enterprise ($serverTaskXml.FirstChild.Encoding -eq 'UTF-16' -and
+            $agentTaskXml.FirstChild.Encoding -eq 'UTF-16') 'Task XML phải khai báo UTF-16 để khớp byte ghi cho schtasks.exe.'
         $taskNamespace = New-Object Xml.XmlNamespaceManager($serverTaskXml.NameTable)
         $taskNamespace.AddNamespace('t', 'http://schemas.microsoft.com/windows/2004/02/mit/task')
         Assert-Enterprise ($null -ne $serverTaskXml.SelectSingleNode('//t:BootTrigger', $taskNamespace) -and
@@ -310,6 +312,7 @@ try {
             $null -eq $serverTaskXml.SelectSingleNode('//t:CalendarTrigger', $taskNamespace) -and
             [string]$serverTaskXml.SelectSingleNode('//t:Arguments', $taskNamespace).InnerText -eq '--enterprise-server' -and
             [string]$serverTaskXml.SelectSingleNode('//t:UserId', $taskNamespace).InnerText -eq 'S-1-5-18' -and
+            $null -eq $serverTaskXml.SelectSingleNode('//t:LogonType', $taskNamespace) -and
             [string]$serverTaskXml.SelectSingleNode('//t:ExecutionTimeLimit', $taskNamespace).InnerText -eq 'PT0S') 'Task máy chủ không chạy đúng lúc boot/logon dưới SYSTEM hoặc còn giới hạn thời gian.'
         $agentNamespace = New-Object Xml.XmlNamespaceManager($agentTaskXml.NameTable)
         $agentNamespace.AddNamespace('t', 'http://schemas.microsoft.com/windows/2004/02/mit/task')
@@ -324,6 +327,9 @@ try {
         Assert-Enterprise ([string]$serverTaskXml.SelectSingleNode('//t:WorkingDirectory', $taskNamespace).InnerText -eq $expectedWorkingDirectory -and
             [string]$agentTaskXml.SelectSingleNode('//t:WorkingDirectory', $agentNamespace).InnerText -eq $expectedWorkingDirectory) 'Task vòng đời còn ghim thư mục payload tạm thay vì thư mục EXE.'
     }
+    Assert-Enterprise ($enterpriseUiText -match '\[Text\.Encoding\]::Unicode' -and
+        $enterpriseUiText -notmatch 'Text\.UTF8Encoding\(\$true\)' -and
+        $enterpriseUiText -notmatch '<LogonType>ServiceAccount</LogonType>') 'Trình cài task chưa ghi XML UTF-16 hợp lệ cho Task Scheduler hoặc còn LogonType không hợp lệ.'
     Assert-Enterprise ($enterpriseUiText -notmatch '[“”‘’]') "Giao diện enterprise chứa dấu ngoặc kép cong có thể làm PowerShell tách sai tham số."
     Assert-Enterprise ($enterpriseUiText -notmatch '(?<!\$)\(if\s*\(') "Giao diện enterprise chứa biểu thức ngoặc-if không hợp lệ khi chạy; hãy dùng biến trung gian hoặc subexpression PowerShell."
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Fit-EnterpriseWindowToWorkingArea' -and
