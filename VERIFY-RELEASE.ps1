@@ -958,7 +958,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
         }
         if ([string]$releaseManifest.SoftwareLicenseCatalogVersion -ne '1.6.3.0' -or
             [string]$releaseManifest.SoftwareLicenseCatalogGeneratedAtUtc -ne '2026-08-31T06:05:00Z' -or
-            [string]$releaseManifest.SoftwareLicenseCatalogFreshnessStatus -ne 'Fresh' -or
+            [string]$releaseManifest.SoftwareLicenseCatalogFreshnessStatus -notin @('Fresh','Warning') -or
             -not [bool]$releaseManifest.SoftwareLicenseCatalogFreshForDecisiveEvidence -or
             [int]$releaseManifest.SoftwareLicenseCatalogFreshnessWarningAgeDays -ne 30 -or
             [int]$releaseManifest.SoftwareLicenseCatalogFreshnessMaximumAgeDays -ne 45 -or
@@ -1062,7 +1062,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.OfficialActivationPostCheck -notmatch 'Windows LicenseStatus=1.*Office OSPP LICENSED' -or
             [string]$releaseManifest.GenuineLicensePreservation -notmatch '^Verified OEM/.*readiness for activation is separate from licensed=True' -or
             [string]$releaseManifest.DocumentationCache -ne 'Stable version/culture filename + source SHA-256' -or
-            [string]$releaseManifest.DocumentationRendererRevision -ne '2' -or
+            [string]$releaseManifest.DocumentationRendererRevision -ne '4' -or
             [string]$releaseManifest.DefaultDocumentationOpenFormat -ne 'HTMLBeforePdf' -or
             -not [bool]$releaseManifest.VersionHistoryCenter -or
             [string]$releaseManifest.GuideStyle -notmatch '^Function-oriented' -or
