@@ -1,6 +1,6 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.13.0",
+  "KnowledgeVersion": "1.15.0",
   "UpdatedAtUtc": "2026-09-29T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
@@ -52,8 +52,8 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 29/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
-      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 29 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 30/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 30 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
       "Id": "first-release",
@@ -300,8 +300,8 @@
       "TitleVi": "Quản trị doanh nghiệp",
       "TitleEn": "Enterprise management",
       "Keywords": ["doanh nghiep", "enterprise", "lan", "agent", "may tram", "quan tri", "chuc nang 8", "chuc nang so 8", "muc 8", "nut 8"],
-      "AnswerVi": "Chức năng 8 là nhóm quản lý Doanh nghiệp, gồm ba phần: Quản lý cục bộ Windows/Office trên máy hiện tại, Máy chủ nhận/quản lý báo cáo trong LAN, và Máy trạm ghép nối/gửi báo cáo. Cách dùng: mở Quản lý giấy phép hợp lệ → chọn đúng tab; với Máy chủ/Máy trạm phải chủ động bật LAN nội bộ, tạo hoặc tìm máy chủ, dùng mã ghép nối rồi kiểm tra kết nối. Quyền gửi lệnh thay đổi từ xa và agent tự gửi đều mặc định tắt; đây không phải dịch vụ cloud công cộng.",
-      "AnswerEn": "Feature 8 has three parts: local Windows/Office management, a LAN Server that receives/manages reports, and a Workstation that pairs and sends reports. Open Valid-license management and choose the correct tab; Server/Workstation use requires explicitly enabling Local LAN, creating or finding the server, entering a pairing code, and testing the connection. Remote-change and automatic-agent permissions default off; this is not a public cloud service."
+      "AnswerVi": "Chức năng 8 là nhóm quản lý Doanh nghiệp, gồm Quản lý cục bộ Windows/Office, Máy chủ nhận/quản lý báo cáo trong LAN và Máy trạm ghép nối/gửi báo cáo. Người dùng phải chủ động bật LAN nội bộ và ghép nối lần đầu; sau đó Máy chủ đã bật sẽ tự chạy lại cùng Windows, Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, còn ClientId/secret được giữ qua reboot nên không cần mã mới. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy; quyền thay đổi giấy phép từ xa vẫn mặc định tắt và đây không phải dịch vụ cloud công cộng.",
+      "AnswerEn": "Feature 8 covers local Windows/Office management, a LAN Server for reports, and paired Workstations. Local LAN and first enrollment require explicit user action; afterward an enabled Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and the stored ClientId/secret survives reboot without a new code. Stopping the Server or disabling Local LAN removes autostart; remote license changes remain disabled by default and this is not a public cloud service."
     },
     {
       "Id": "deep-scan",
@@ -515,17 +515,17 @@
       "Id": "enterprise-server-management",
       "TitleVi": "Tạo, chạy hoặc xóa cấu hình Máy chủ",
       "TitleEn": "Create, run, or delete Server configuration",
-      "Keywords": ["tao cau hinh may chu", "xoa cau hinh may chu", "khoi dong may chu doanh nghiep", "dung server noi bo", "tao ma ghep noi tam thoi", "cap url acl cho server"],
-      "AnswerVi": "Trong chức năng 8, mở tab Máy chủ và bật LAN nội bộ. Để tạo: nhập tên/phạm vi và mã quản trị, chọn Tạo cấu hình, lưu mã quản trị, chuẩn bị URL ACL/Firewall khi được xác nhận rồi Khởi động máy chủ. Để xóa: chọn Xóa cấu hình, nhập đúng mã quản trị và đọc xác nhận cuối; VietLicenSure dừng dịch vụ, xóa danh tính/secret ghép nối/tác vụ chờ nhưng giữ báo cáo, kết quả đã hoàn tất và nhật ký. Máy trạm cũ phải ghép nối lại với cấu hình mới.",
-      "AnswerEn": "In feature 8, open Server and enable Local LAN. To create it, enter the server scope/admin code, create the configuration, preserve the admin code, approve URL ACL/Firewall setup when appropriate, then start the server. To delete it, choose Delete configuration, enter the correct admin code, and review the final confirmation; server identity, pairing secrets, and queued jobs are removed while reports, completed results, and audit logs remain. Old workstations must pair again."
+      "Keywords": ["tao cau hinh may chu", "xoa cau hinh may chu", "khoi dong may chu doanh nghiep", "dung server noi bo", "tao ma ghep noi tam thoi", "cap url acl cho server", "server tu khoi dong sau reboot", "may chu khoi dong cung windows"],
+      "AnswerVi": "Trong chức năng 8, mở tab Máy chủ và bật LAN nội bộ. Nhập tên/phạm vi và mã quản trị, tạo cấu hình, chuẩn bị URL ACL/Firewall rồi Khởi động máy chủ. Sau khi listener sẵn sàng, VietLicenSure tạo lịch chạy lại cùng Windows; Dừng máy chủ hoặc tắt LAN nội bộ cũng tắt lịch này. Nút Tạo mã ghép nối mới luân chuyển mã tạm 24 giờ nhưng không ảnh hưởng máy trạm đã ghép nối. Xóa cấu hình sẽ xóa danh tính/secret ghép nối/tác vụ chờ nhưng giữ báo cáo, kết quả đã hoàn tất và nhật ký; khi đó máy trạm cũ mới phải ghép nối lại.",
+      "AnswerEn": "In feature 8, open Server and enable Local LAN. Enter the server scope/admin code, create the configuration, prepare URL ACL/Firewall, and start the Server. After the listener is ready, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables it. Create new pairing code rotates the temporary 24-hour code without affecting enrolled workstations. Deleting the configuration removes server identity, enrollment secrets, and queued jobs while preserving reports, completed results, and audit logs; only then must old workstations enroll again."
     },
     {
       "Id": "enterprise-client-management",
       "TitleVi": "Ghép nối và gửi báo cáo từ Máy trạm",
       "TitleEn": "Pair a Workstation and send reports",
-      "Keywords": ["ghep noi may tram", "gui bao cao may tram", "chay agent may tram", "ma ghep noi client", "tu tim server tu client", "hang doi bao cao may tram"],
-      "AnswerVi": "Trong chức năng 8, mở tab Máy trạm và bật LAN nội bộ. Để ghép nối: để trống địa chỉ rồi Tự tìm máy chủ hoặc nhập IP/tên máy chủ, nhập mã ghép nối tạm thời và chọn Ghép nối; sau đó Kiểm tra kết nối và Gửi báo cáo ngay. Nếu mất mạng, báo cáo mã hóa được giữ trong hàng đợi để agent thử lại. Quyền nhận lệnh thay đổi giấy phép và tự gửi định kỳ đều mặc định tắt, chỉ bật khi chính sách quản trị cho phép.",
-      "AnswerEn": "In feature 8, open Workstation and enable Local LAN. Leave the address blank to discover a server or enter its IP/name, enter the temporary pairing code, and pair; then test the connection and send the report. During outages, encrypted reports stay queued for agent retry. Remote-license-change and periodic-auto-send permissions default off and should be enabled only by policy."
+      "Keywords": ["ghep noi may tram", "gui bao cao may tram", "chay agent may tram", "ma ghep noi client", "tu tim server tu client", "hang doi bao cao may tram", "agent sau reboot", "agent sau sleep", "co can ma ghep noi moi"],
+      "AnswerVi": "Trong chức năng 8, mở tab Máy trạm và bật LAN nội bộ. Tự tìm hoặc nhập IP/tên máy chủ, nhập mã ghép nối tạm thời rồi Ghép nối; sau đó Kiểm tra kết nối và Gửi báo cáo ngay. Máy đã ghép nối giữ nguyên ClientId/secret qua reboot, không cần mã mới. Khi bật agent tự động, agent chạy sau khởi động, đăng nhập, thức dậy và mỗi giờ; nếu mất mạng, báo cáo mã hóa nằm trong hàng đợi để thử lại. Quyền nhận lệnh thay đổi giấy phép vẫn mặc định tắt.",
+      "AnswerEn": "In feature 8, open Workstation and enable Local LAN. Discover or enter the Server address, enter the temporary pairing code, and enroll; then test the connection and send a report. An enrolled workstation retains its ClientId/secret across reboot and needs no new code. When enabled, the automatic agent runs after startup, logon, resume, and every hour; encrypted reports remain queued during outages and retry later. Remote license changes remain disabled by default."
     },
     {
       "Id": "support-bundle",

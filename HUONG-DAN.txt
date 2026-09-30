@@ -395,6 +395,9 @@ Chức năng này gồm Quản lý cục bộ Windows/Office, Máy chủ và Má
 - Mạng doanh nghiệp mặc định tắt. Chỉ bật Online khi cần kết nối trong LAN.
 - Máy chủ tạo cấu hình, mã ghép nối và nhận báo cáo từ máy trạm được phép.
 - Máy trạm dùng mã ghép nối, kiểm tra kết nối và gửi báo cáo theo chính sách quản trị.
+- Sau khi quản trị viên khởi động máy chủ thành công, VietLicenSure tạo lịch để máy chủ chạy lại cùng Windows. Nút Dừng máy chủ hoặc tắt LAN nội bộ cũng tắt lịch này.
+- Khi bật agent tự động, máy trạm chạy sau khi Windows khởi động, người dùng đăng nhập, máy thức dậy và mỗi giờ. Mất mạng thì báo cáo mã hóa được giữ trong hàng đợi để thử lại.
+- Máy trạm đã ghép nối giữ nguyên ClientId/secret sau reboot và không cần mã mới. Nút Tạo mã ghép nối mới chỉ luân chuyển mã tạm 24 giờ cho máy chưa ghép nối; máy đã ghép nối không bị ảnh hưởng.
 - Việc cho phép máy chủ gửi tác vụ thay đổi giấy phép trên máy trạm mặc định tắt và phải được bật chủ động.
 - Khi hoàn tất, chuyển trung tâm doanh nghiệp về Offline.
 
