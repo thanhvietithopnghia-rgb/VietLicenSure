@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <title>VietLicenSure v5.0 Troubleshooting</title>
+  <meta name="description" content="Troubleshoot SmartScreen, LAN Agent, server startup, pairing, Online catalog, and VietLicenSure reports.">
+  <link rel="canonical" href="https://thanhvietithopnghia-rgb.github.io/VietLicenSure/troubleshooting-en.html">
+  <link rel="alternate" hreflang="vi" href="https://thanhvietithopnghia-rgb.github.io/VietLicenSure/troubleshooting.html">
+  <link rel="alternate" hreflang="en" href="https://thanhvietithopnghia-rgb.github.io/VietLicenSure/troubleshooting-en.html">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip navigation</a>
+  <header class="wrap topbar"><a class="brand" href="en.html"><img src="logo.svg" width="42" height="42" alt=""><span>VietLicenSure<small>Troubleshooting</small></span></a><nav class="nav" aria-label="Navigation"><a href="en.html">Home</a><a href="guide-en.html">Guide</a><a class="language" href="troubleshooting.html" lang="vi">Tiếng Việt</a></nav></header>
+  <main id="content" class="wrap">
+    <div class="page-hero"><div class="eyebrow">Quick recovery</div><h1>Identify the cause before changing the system</h1><p>Do not disable protection or delete licensing data based on a single warning.</p></div>
+    <div class="article">
+      <section class="article-section"><h2>SmartScreen or self-signed warnings</h2><ol><li>Confirm the file came from the official Release.</li><li>Compare SHA-256 and run the package verifier.</li><li>Check Authenticode, signer, and timestamp.</li><li>If every check passes, a personal user may intentionally select <strong>More info → Run anyway</strong>.</li><li>On managed systems, contact IT when AppLocker/WDAC blocks execution.</li></ol><div class="notice">Do not disable SmartScreen/Defender or install a Trusted Root merely to suppress a warning.</div></section>
+      <section class="article-section"><h2>The Agent has not submitted a report</h2><ol><li>Confirm the endpoint is awake and connected to the LAN.</li><li>Wait for boot/logon/resume triggers or the hourly schedule.</li><li>Check last-seen time and the latest error in the enterprise interface.</li><li>Confirm the server is listening on the configured IP/port and allowed by Firewall.</li><li>Pair again only when the stored configuration or key was removed or changed.</li></ol><p>An already paired endpoint <strong>does not need a new code after reboot</strong>.</p></section>
+      <section class="article-section"><h2>The LAN server did not start after reboot</h2><ol><li>Open Enterprise features and check server status.</li><li>Confirm the VietLicenSure Enterprise Server startup task still exists.</li><li>Recheck URL ACL, port, and Firewall through the application controls.</li><li>If you intentionally stopped the server or disabled LAN, the auto-start task is removed; configure/start it again.</li></ol></section>
+      <section class="article-section"><h2>The pairing code expired</h2><p>The code is only for enrolling a new endpoint and has a limited lifetime. Generate a new code for an unregistered endpoint. Existing clients continue using their stored ClientId/secret and do not rotate the code after reboot.</p></section>
+      <section class="article-section"><h2>Online or catalog checks fail</h2><ol><li>VietLicenSure always starts Offline.</li><li>Enable Online only with explicit user intent.</li><li>The signed catalog is verified before the version manifest is checked.</li><li>A signer/hash/schema mismatch blocks the update fail-closed.</li></ol><p>Online mode does not upload inventory or product keys; runtime telemetry is disabled.</p></section>
+      <section class="article-section"><h2>“Licensed” appears but entitlement is unclear</h2><p><strong>Licensed/Activated is a technical state.</strong> Also verify invoices, agreements, accounts, or portals. MAK does not require a KMS host; an empty KMS value for MAK is not an error.</p></section>
+      <section class="article-section"><h2>Still unresolved?</h2><p>Export a redacted support bundle and include Build ID, reproduction steps, and screenshots. Do not share full keys, pairing secrets, or personal data.</p><div class="actions"><a class="button primary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose">Report a bug</a><a class="button secondary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions">Ask the community</a></div></section>
+    </div>
+  </main>
+  <footer><div class="wrap footer-grid"><div><strong>VietLicenSure · Thanh Viet</strong><br><a href="en.html">Home</a> · <a href="troubleshooting.html" lang="vi">Tiếng Việt</a></div><div class="fine">Prefer read-only diagnosis first. Change the system only after the cause is identified and a backup exists.</div></div></footer>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <title>Xử lý sự cố VietLicenSure v5.0</title>
+  <meta name="description" content="Cách xử lý SmartScreen, Agent LAN, máy chủ, ghép nối, Online/catalog và báo cáo VietLicenSure.">
+  <link rel="canonical" href="https://thanhvietithopnghia-rgb.github.io/VietLicenSure/troubleshooting.html">
+  <link rel="alternate" hreflang="vi" href="https://thanhvietithopnghia-rgb.github.io/VietLicenSure/troubleshooting.html">
+  <link rel="alternate" hreflang="en" href="https://thanhvietithopnghia-rgb.github.io/VietLicenSure/troubleshooting-en.html">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#content">Bỏ qua điều hướng</a>
+  <header class="wrap topbar"><a class="brand" href="index.html"><img src="logo.svg" width="42" height="42" alt=""><span>VietLicenSure<small>Xử lý sự cố</small></span></a><nav class="nav" aria-label="Điều hướng"><a href="index.html">Trang chủ</a><a href="huong-dan.html">Hướng dẫn</a><a class="language" href="troubleshooting-en.html" lang="en">English</a></nav></header>
+  <main id="content" class="wrap">
+    <div class="page-hero"><div class="eyebrow">Khắc phục nhanh</div><h1>Tìm đúng nguyên nhân trước khi thay đổi hệ thống</h1><p>Không tắt bảo vệ hoặc xóa dữ liệu cấp phép chỉ dựa trên một cảnh báo đơn lẻ.</p></div>
+    <div class="article">
+      <section class="article-section"><h2>SmartScreen hoặc chữ ký tự ký</h2><ol><li>Xác nhận tải từ Release chính thức.</li><li>Đối chiếu SHA-256 và chạy verifier của gói.</li><li>Kiểm tra Authenticode, signer và timestamp.</li><li>Nếu mọi kiểm tra đạt, người dùng cá nhân có thể chủ động chọn <strong>More info → Run anyway</strong>.</li><li>Trong doanh nghiệp, nếu AppLocker/WDAC chặn, liên hệ quản trị viên.</li></ol><div class="notice">Không tắt SmartScreen/Defender và không cài chứng thư vào Trusted Root chỉ để bỏ cảnh báo.</div></section>
+      <section class="article-section"><h2>Agent chưa gửi báo cáo</h2><ol><li>Kiểm tra máy trạm đã bật và có mạng LAN.</li><li>Đợi trigger boot/logon/resume hoặc chu kỳ mỗi giờ.</li><li>Kiểm tra thời điểm báo cáo cuối và lỗi gần nhất trong giao diện doanh nghiệp.</li><li>Xác nhận máy chủ đang nghe đúng IP/cổng và Firewall cho phép.</li><li>Chỉ ghép nối lại khi cấu hình/khóa cũ đã bị xóa hoặc thay đổi.</li></ol><p>Máy đã ghép nối <strong>không cần mã mới sau reboot</strong>.</p></section>
+      <section class="article-section"><h2>Máy chủ LAN không hoạt động sau reboot</h2><ol><li>Mở chức năng doanh nghiệp và kiểm tra trạng thái máy chủ.</li><li>Xác nhận tác vụ tự khởi động VietLicenSure Enterprise Server còn tồn tại.</li><li>Kiểm tra URL ACL, cổng và quy tắc Firewall từ nút cấu hình trong ứng dụng.</li><li>Nếu bạn chủ động bấm Dừng máy chủ hoặc tắt LAN, lịch tự khởi động sẽ được gỡ; hãy khởi động/cấu hình lại.</li></ol></section>
+      <section class="article-section"><h2>Mã ghép nối hết hạn</h2><p>Mã chỉ dùng để đăng ký máy trạm mới và có thời hạn. Tạo mã mới trên máy chủ rồi ghép máy chưa đăng ký. Các máy đã ghép nối tiếp tục dùng ClientId/secret đã lưu; không luân chuyển mã của chúng khi reboot.</p></section>
+      <section class="article-section"><h2>Online hoặc catalog không cập nhật</h2><ol><li>VietLicenSure luôn mở ở Offline.</li><li>Chỉ bật Online khi bạn chủ động cho phép.</li><li>Ứng dụng xác minh catalog ký số trước, sau đó mới kiểm tra manifest phiên bản.</li><li>Nếu signer/hash/schema không đạt, cập nhật bị chặn fail-closed.</li></ol><p>Online không tự tải inventory hoặc product key lên Internet; runtime telemetry bị tắt.</p></section>
+      <section class="article-section"><h2>Kết quả “Licensed” nhưng chưa rõ bản quyền</h2><p><strong>Licensed/Activated là trạng thái kỹ thuật.</strong> Hãy đối chiếu thêm hóa đơn, hợp đồng, tài khoản hoặc portal. MAK không cần KMS host; KMS trống ở kênh MAK không phải lỗi.</p></section>
+      <section class="article-section"><h2>Vẫn chưa giải quyết được?</h2><p>Xuất support bundle đã che định danh, ghi Build ID, bước tái hiện và ảnh chụp. Không gửi full key, secret ghép nối hoặc dữ liệu cá nhân.</p><div class="actions"><a class="button primary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose">Mở báo lỗi</a><a class="button secondary" href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions">Hỏi cộng đồng</a></div></section>
+    </div>
+  </main>
+  <footer><div class="wrap footer-grid"><div><strong>VietLicenSure · Thanh Việt</strong><br><a href="index.html">Trang chủ</a> · <a href="troubleshooting-en.html" lang="en">English</a></div><div class="fine">Ưu tiên kiểm tra read-only trước; chỉ sửa đổi hệ thống khi đã xác định đúng nguyên nhân và có backup.</div></div></footer>
+</body>
+</html>
