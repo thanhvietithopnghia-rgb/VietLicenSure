@@ -1,18 +1,18 @@
 VietLicenSure v5.0 - PHAN MEM KIEM TRA VA QUAN LY BAN QUYEN HE THONG
 Release version: 5.0
-Release build date: 2026.09.30
-Release label: 5.0-official-self-signed-20260930
+Release build date: 2026.10.01
+Release label: 5.0-official-self-signed-20261001
 Public release channel: Official Self-Signed.
 Technical trust mode: OfficialSelfSigned.
 Release status: OfficialSelfSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 47A562A53B26729B91A9C78DC300DB8F3982F6D13022062BD47AFEABEA171AA2
+SHA-256: A0F6575CC420510E2156696CAC3D236651E41A81405447B4026DDFEA7DA16E4E
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
 Dashboard mo bang quyen nguoi dung hien tai; UAC chi duoc yeu cau theo nhu cau khi thay doi he thong, cap nhat ung dung hoac quan tri doanh nghiep.
 Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.
-Payload nhung duoc toi uu SolidDeflateBundle-v1: 68 tep trong mot resource Deflate co header fail-closed; giam 78.78% va van doi chieu SHA-256 tung tep sau giai nen.
+Payload nhung duoc toi uu SolidDeflateBundle-v1: 68 tep trong mot resource Deflate co header fail-closed; giam 78.73% va van doi chieu SHA-256 tung tep sau giai nen.
 Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.
 Dashboard schema 2.0: WinForms hien dai, theo Light/Dark cua he thong, cho phep ghi nho tuy chon va co fallback DPI tu PerMonitorV2 den Win7.
 Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.
@@ -33,7 +33,7 @@ Ket noi online chi chay sau khi nguoi dung xac nhan, tai catalog JSON HTTPS tu h
 Tu dong kiem tra phien ban moi chi khi Online da duoc cho phep; khong co service nen, telemetry hay cap nhat im lang.
 Khi co ban moi, VietLicenSure hoi 3 lua chon: Cap nhat ngay, De sau, Bo qua lan nay. De sau hoi lai sau tac vu ke tiep hoac 2 gio.
 Cap nhat ngay chi tai EXE tu GitHub HTTPS co dinh, doi chieu dung luong/SHA-256/chu ky neu bat buoc, backup ban cu va rollback neu ban moi loi.
-Compatibility catalog 1.1.2.0, schema 1.1, ra soat 2026-09-29T00:00:00.0000000Z; canh bao 30 ngay va het han 45 ngay.
+Compatibility catalog 1.1.3.0, schema 1.1, ra soat 2026-10-01T00:00:00.0000000Z; canh bao 30 ngay va het han 45 ngay.
 Nhan dien theo catalog: Windows 10 22H2 build 19045, Windows 11 23H2 build 22631, Windows 11 24H2 build 26100, Windows 11 25H2 build 26200, Windows 11 26H1 build 28000; build moi/chua biet chuyen sang ReadOnlyManualReview.
 Nhan dien Office theo catalog: Office 2021 / LTSC 2021, Office 2024 / LTSC 2024, Microsoft 365 Apps; Product ID/kenh moi chua biet khong duoc tu suy dien tuong thich.
 Enterprise: may chu quet CIDR/IP, ghep noi bang ma tam thoi, quan ly fleet, xuat JSON/CSV/HTML/PDF va gui tac vu license da ma hoa.

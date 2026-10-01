@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.15.0",
-  "UpdatedAtUtc": "2026-09-29T00:00:00Z",
+  "KnowledgeVersion": "1.16.0",
+  "UpdatedAtUtc": "2026-10-01T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -52,8 +52,8 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 30/09/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
-      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 30 September 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 01/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 1 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
       "Id": "first-release",
@@ -300,8 +300,16 @@
       "TitleVi": "Quản trị doanh nghiệp",
       "TitleEn": "Enterprise management",
       "Keywords": ["doanh nghiep", "enterprise", "lan", "agent", "may tram", "quan tri", "chuc nang 8", "chuc nang so 8", "muc 8", "nut 8"],
-      "AnswerVi": "Chức năng 8 là nhóm quản lý Doanh nghiệp, gồm Quản lý cục bộ Windows/Office, Máy chủ nhận/quản lý báo cáo trong LAN và Máy trạm ghép nối/gửi báo cáo. Người dùng phải chủ động bật LAN nội bộ và ghép nối lần đầu; sau đó Máy chủ đã bật sẽ tự chạy lại cùng Windows, Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, còn ClientId/secret được giữ qua reboot nên không cần mã mới. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy; quyền thay đổi giấy phép từ xa vẫn mặc định tắt và đây không phải dịch vụ cloud công cộng.",
-      "AnswerEn": "Feature 8 covers local Windows/Office management, a LAN Server for reports, and paired Workstations. Local LAN and first enrollment require explicit user action; afterward an enabled Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and the stored ClientId/secret survives reboot without a new code. Stopping the Server or disabling Local LAN removes autostart; remote license changes remain disabled by default and this is not a public cloud service."
+      "AnswerVi": "Chức năng 8 là nhóm quản lý Doanh nghiệp, gồm Quản lý cục bộ Windows/Office, Máy chủ nhận/quản lý báo cáo trong LAN, Máy trạm ghép nối/gửi báo cáo và Central Dashboard MVP Preview chỉ đọc. Người dùng phải chủ động bật LAN nội bộ và ghép nối lần đầu; sau đó Máy chủ đã bật sẽ tự chạy lại cùng Windows, Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, còn ClientId/secret được giữ qua reboot nên không cần mã mới. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy; quyền thay đổi giấy phép từ xa vẫn mặc định tắt và đây không phải dịch vụ cloud công cộng.",
+      "AnswerEn": "Feature 8 covers local Windows/Office management, a LAN Server for reports, paired Workstations, and a read-only Central Dashboard MVP Preview. Local LAN and first enrollment require explicit user action; afterward an enabled Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and the stored ClientId/secret survives reboot without a new code. Stopping the Server or disabling Local LAN removes autostart; remote license changes remain disabled by default and this is not a public cloud service."
+    },
+    {
+      "Id": "central-dashboard-mvp",
+      "TitleVi": "Central Dashboard MVP Preview",
+      "TitleEn": "Central Dashboard MVP Preview",
+      "Keywords": ["central dashboard", "web dashboard", "dashboard lan", "online offline may tram", "fleet dashboard", "giam sat may tram", "trang thai may tram", "canh bao fleet", "open dashboard", "read only dashboard"],
+      "AnswerVi": "Central Dashboard MVP Preview nằm trong tab Máy chủ của chức năng 8 và chỉ mở sau khi listener LAN sẵn sàng. Quản trị viên nhập mã quản trị rồi chọn Mở Dashboard; VietLicenSure tạo phiên ngắn hạn, chuyển token qua URL fragment, xóa token khỏi thanh địa chỉ khi trang tải và khóa phiên theo địa chỉ truy cập đầu tiên. Dashboard Việt/Anh tự làm mới mỗi 60 giây, hiển thị Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Đây là giao diện chỉ đọc: không nhập key, không tạo lệnh, không điều khiển máy trạm, không cloud/CDN/telemetry và API không trả full key, ClientId đầy đủ, secret hay đường dẫn báo cáo. Activated/Licensed không đồng nghĩa quyền sở hữu; entitlement vẫn là NotVerified cho tới khi kiểm chứng từ hoặc portal.",
+      "AnswerEn": "Central Dashboard MVP Preview is available from the Server tab in feature 8 after the LAN listener is ready. The administrator enters the admin code and selects Open Dashboard; VietLicenSure creates a short-lived session, passes its token in a URL fragment, removes the token from the address bar after load, and binds the session to the first source address. The Vietnamese/English dashboard refreshes every 60 seconds and shows Online/Stale/Offline presence, last report time, technical Windows/Office status, and license-identity change alerts. It is read-only: no key entry, command creation, endpoint control, cloud/CDN/telemetry, full keys, full ClientIds, secrets, or report paths. Activated/Licensed is not entitlement; entitlement remains NotVerified until documents or a licensing portal are checked."
     },
     {
       "Id": "deep-scan",

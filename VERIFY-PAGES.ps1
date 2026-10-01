@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
-$expectedHash = '47A562A53B26729B91A9C78DC300DB8F3982F6D13022062BD47AFEABEA171AA2'
-$expectedBuild = '5.0-production-20260930'
+$expectedHash = 'A0F6575CC420510E2156696CAC3D236651E41A81405447B4026DDFEA7DA16E4E'
+$expectedBuild = '5.0-production-20261001'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
@@ -77,8 +77,8 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
-if ($viHome -notmatch 'status-label[^>]*>[^<]*v5\.0') { $errors.Add('Vietnamese roadmap does not mark Central Dashboard as unreleased') }
-if ($enHome -notmatch 'Not included in the current v5\.0 release') { $errors.Add('English roadmap does not mark Central Dashboard as unreleased') }
+if ($viHome -notmatch 'C\u00F3 trong b\u1EA3n c\u1EADp nh\u1EADt 01/10/2026') { $errors.Add('Vietnamese page does not mark Central Dashboard MVP as released') }
+if ($enHome -notmatch 'Included in the 1 October 2026 update') { $errors.Add('English page does not mark Central Dashboard MVP as released') }
 
 foreach ($requiredUrl in @('en.html', 'huong-dan.html', 'guide-en.html', 'troubleshooting.html', 'troubleshooting-en.html')) {
     if ($sitemap -notmatch [regex]::Escape($requiredUrl)) { $errors.Add("sitemap.xml: missing '$requiredUrl'") }
