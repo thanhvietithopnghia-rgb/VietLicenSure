@@ -23,6 +23,32 @@ function Get-AvailableLoopbackPort {
     }
 }
 
+function Get-EnterpriseVerifierHttpStatus {
+    param(
+        [Parameter(Mandatory = $true)][string]$Uri,
+        [ValidateSet('GET','POST')][string]$Method = 'GET',
+        [hashtable]$Headers = @{}
+    )
+    try {
+        $request = @{
+            Uri = $Uri
+            Method = $Method
+            Headers = $Headers
+            UseBasicParsing = $true
+            TimeoutSec = 10
+            ErrorAction = 'Stop'
+        }
+        if ($Method -eq 'POST') {
+            $request.Body = '{}'
+            $request.ContentType = 'application/json'
+        }
+        return [int](Invoke-WebRequest @request).StatusCode
+    } catch {
+        if ($_.Exception.Response) { return [int]$_.Exception.Response.StatusCode }
+        throw
+    }
+}
+
 $required = @(
     "Tool-Enterprise.ps1",
     "Tool-EnterpriseHost.ps1",
@@ -69,6 +95,7 @@ $temporaryBase = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd("\") +
 $testRoot = Join-Path $temporaryBase ("ThanhViet-v48-enterprise-test-" + [Guid]::NewGuid().ToString("N"))
 $exportRoot = Join-Path $temporaryBase ("ThanhViet-v48-enterprise-export-" + [Guid]::NewGuid().ToString("N"))
 $separateClientRoot = Join-Path $temporaryBase ("ThanhViet-v48-enterprise-client-test-" + [Guid]::NewGuid().ToString("N"))
+$dashboardFixtureRoot = Join-Path $temporaryBase ("ThanhViet-v50-dashboard-test-" + [Guid]::NewGuid().ToString("N"))
 $hostProcess = $null
 $enterprisePort = Get-AvailableLoopbackPort
 try {
@@ -167,6 +194,92 @@ try {
     $receivedReports = @(Get-ChildItem -LiteralPath (Join-Path $paths.ServerReports $client.ClientId) -Filter "*.json" -File -ErrorAction SilentlyContinue)
     Assert-Enterprise ($receivedReports.Count -ge 1) "Máy chủ không lưu báo cáo nhận qua HTTP."
 
+    # Central Dashboard MVP: static assets are public but contain no fleet
+    # data; the read-only API requires a short-lived bearer token created by
+    # an administrator and bound to the first source address.
+    $wrongDashboardAdminRejected = $false
+    try { [void](New-ToolEnterpriseDashboardSession -AdminCode 'Wrong-Admin' -ValidMinutes 30) }
+    catch { $wrongDashboardAdminRejected = $true }
+    Assert-Enterprise $wrongDashboardAdminRejected 'Mã quản trị sai lại tạo được phiên Dashboard.'
+
+    $dashboardSession = New-ToolEnterpriseDashboardSession -AdminCode 'Verify-Admin-4826' -ValidMinutes 30
+    Assert-Enterprise ([string]$dashboardSession.AccessToken -match '^[A-Za-z0-9_-]{43}$') 'Token Dashboard không đủ 256 bit/base64url.'
+    $dashboardSessionText = Get-Content -LiteralPath $paths.ServerDashboardSession -Raw -Encoding UTF8
+    Assert-Enterprise ($dashboardSessionText -notmatch [regex]::Escape([string]$dashboardSession.AccessToken)) 'Dashboard lưu access token rõ trên đĩa.'
+    Assert-Enterprise ($dashboardSessionText -notmatch 'AdminVerifier|Pairing|ClientSecret') 'Bản ghi phiên Dashboard chứa dữ liệu xác thực ngoài allow-list.'
+
+    $dashboardBaseUri = "http://127.0.0.1:$enterprisePort/tool/v1/dashboard"
+    $dashboardStatic = Invoke-WebRequest -Uri ($dashboardBaseUri + '/') -Method Get -UseBasicParsing -TimeoutSec 10
+    Assert-Enterprise ([int]$dashboardStatic.StatusCode -eq 200 -and $dashboardStatic.Content -match 'VietLicenSure Central') 'Trang Dashboard tĩnh không được listener phục vụ.'
+    Assert-Enterprise ([string]$dashboardStatic.Headers['Content-Security-Policy'] -match "default-src 'none'" -and
+        [string]$dashboardStatic.Headers['X-Frame-Options'] -eq 'DENY' -and
+        [string]$dashboardStatic.Headers['Cache-Control'] -eq 'no-store') 'Dashboard thiếu CSP/frame/cache header fail-closed.'
+    Assert-Enterprise ($dashboardStatic.Content -notmatch '(?i)https?://|innerHTML|document\.write|eval\(') 'Dashboard tĩnh tải tài nguyên ngoài hoặc dùng DOM sink không an toàn.'
+
+    Assert-Enterprise ((Get-EnterpriseVerifierHttpStatus -Uri ($dashboardBaseUri + '/api/snapshot')) -eq 401) 'API Dashboard không token không trả 401.'
+    Assert-Enterprise ((Get-EnterpriseVerifierHttpStatus -Uri ($dashboardBaseUri + '/api/snapshot') -Headers @{ Authorization=('Bearer ' + 'A'.PadRight(43, 'A')) }) -eq 401) 'API Dashboard chấp nhận token sai.'
+    Assert-Enterprise ((Get-EnterpriseVerifierHttpStatus -Uri ($dashboardBaseUri + '/api/snapshot') -Method POST -Headers @{ Authorization=('Bearer ' + [string]$dashboardSession.AccessToken) }) -eq 404) 'Dashboard có endpoint POST hoặc thay đổi trạng thái ngoài phạm vi chỉ đọc.'
+
+    $dashboardHeaders = @{ Authorization=('Bearer ' + [string]$dashboardSession.AccessToken) }
+    $dashboardApi = Invoke-WebRequest -Uri ($dashboardBaseUri + '/api/snapshot') -Method Get -Headers $dashboardHeaders -UseBasicParsing -TimeoutSec 10
+    Assert-Enterprise ([int]$dashboardApi.StatusCode -eq 200) 'API Dashboard không trả dữ liệu với token đúng.'
+    $dashboardSnapshot = $dashboardApi.Content | ConvertFrom-Json
+    Assert-Enterprise ([int]$dashboardSnapshot.Summary.Total -ge 1 -and @($dashboardSnapshot.Clients).Count -ge 1) 'API Dashboard không trả fleet hiện có.'
+    $expectedDashboardServerFields = @('Name','ProtocolVersion','ToolVersion')
+    $actualDashboardServerFields = @($dashboardSnapshot.Server.PSObject.Properties.Name | Sort-Object)
+    Assert-Enterprise (@(Compare-Object ($expectedDashboardServerFields | Sort-Object) $actualDashboardServerFields).Count -eq 0) 'API Dashboard trả thêm trường Server ngoài allow-list.'
+    $expectedDashboardClientFields = @(
+        'AgeMinutes','Alerts','ClientReference','ComputerName','LastSeenUtc','LicenseIdentityChangedAtUtc',
+        'OfficeChannel','OfficeEntitlementStatus','OfficeStatus','Presence','RemoteAddress',
+        'WindowsChannel','WindowsEntitlementStatus','WindowsStatus'
+    )
+    $actualDashboardClientFields = @($dashboardSnapshot.Clients[0].PSObject.Properties.Name | Sort-Object)
+    Assert-Enterprise (@(Compare-Object ($expectedDashboardClientFields | Sort-Object) $actualDashboardClientFields).Count -eq 0) 'API Dashboard trả thêm trường máy trạm ngoài allow-list.'
+    Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].WindowsEntitlementStatus -eq 'NotVerified' -and
+        [string]$dashboardSnapshot.Clients[0].OfficeEntitlementStatus -eq 'NotVerified') 'Dashboard trộn trạng thái kỹ thuật với quyền sở hữu.'
+    foreach ($forbiddenDashboardField in @('ClientId','WindowsLast5','OfficeLast5','LatestReportPath','AdminVerifier','AccessToken','TokenHash')) {
+        Assert-Enterprise ($dashboardApi.Content -notmatch ('"' + [regex]::Escape($forbiddenDashboardField) + '"')) "API Dashboard làm lộ trường cấm: $forbiddenDashboardField"
+    }
+    Assert-Enterprise ($dashboardApi.Content -notmatch [regex]::Escape([string]$client.ClientId)) 'API Dashboard làm lộ ClientId đầy đủ.'
+    Assert-Enterprise ($dashboardApi.Content -notmatch '(?i)[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}') 'API Dashboard làm lộ chuỗi giống full product key.'
+    Assert-Enterprise (-not (Test-ToolEnterpriseDashboardSession -AccessToken ([string]$dashboardSession.AccessToken) -RemoteAddress '127.0.0.2')) 'Token Dashboard dùng được từ IP khác sau khi đã khóa địa chỉ.'
+
+    $expiredDashboardSession = New-ToolEnterpriseDashboardSession -AdminCode 'Verify-Admin-4826' -ValidMinutes 5
+    $expiredDashboardRecord = Read-ToolEnterpriseJson -Path $paths.ServerDashboardSession -MaximumBytes 65536
+    $expiredDashboardRecord.ExpiresAtUtc = [DateTime]::UtcNow.AddMinutes(-1).ToString('o')
+    Write-ToolEnterpriseJson -Path $paths.ServerDashboardSession -Value $expiredDashboardRecord
+    Assert-Enterprise (-not (Test-ToolEnterpriseDashboardSession -AccessToken ([string]$expiredDashboardSession.AccessToken) -RemoteAddress '127.0.0.1')) 'Token Dashboard hết hạn vẫn được chấp nhận.'
+
+    # Status classification uses a dedicated fixture root so exact counts are
+    # deterministic and cannot interfere with the live listener test above.
+    try {
+        $env:TOOL_ENTERPRISE_ROOT = $dashboardFixtureRoot
+        $env:TOOL_ENTERPRISE_NETWORK_SETTINGS_PATH = Join-Path $dashboardFixtureRoot 'enterprise-network-settings.json'
+        [void](New-ToolEnterpriseServerConfiguration -ServerName 'DashboardFixture' -AdminCode 'Dashboard-Fixture-4826' -BindAddress '127.0.0.1' -Port (Get-AvailableLoopbackPort) -AllowedCidrs @('127.0.0.0/8'))
+        $dashboardPaths = Get-ToolEnterprisePaths
+        $dashboardNow = [DateTime]::UtcNow
+        $dashboardRecords = @(
+            [ordered]@{ ClientId=[Guid]::NewGuid().ToString('N'); ComputerName='DASH-ONLINE AAAAA-BBBBB-CCCCC-DDDDD-EEEEE'; RemoteAddress='10.0.0.10'; LastSeenUtc=$dashboardNow.AddMinutes(-20).ToString('o'); WindowsStatus='Licensed'; WindowsChannel='Retail'; OfficeStatus='Licensed'; OfficeChannel='MAK'; WindowsIdentityChanged=$false; OfficeIdentityChanged=$false; LicenseIdentityChangedAtUtc=$dashboardNow.AddDays(-1).ToString('o') },
+            [ordered]@{ ClientId=[Guid]::NewGuid().ToString('N'); ComputerName='DASH-STALE'; RemoteAddress='10.0.0.11'; LastSeenUtc=$dashboardNow.AddHours(-2).ToString('o'); WindowsStatus='Notification'; WindowsChannel='Retail'; OfficeStatus='NotDetected'; OfficeChannel=''; WindowsIdentityChanged=$false; OfficeIdentityChanged=$false; LicenseIdentityChangedAtUtc='' },
+            [ordered]@{ ClientId=[Guid]::NewGuid().ToString('N'); ComputerName='DASH-OFFLINE'; RemoteAddress='10.0.0.12'; LastSeenUtc=$dashboardNow.AddHours(-25).ToString('o'); WindowsStatus='Licensed'; WindowsChannel='OEM'; OfficeStatus='Licensed'; OfficeChannel='Retail'; WindowsIdentityChanged=$false; OfficeIdentityChanged=$false; LicenseIdentityChangedAtUtc='' }
+        )
+        foreach ($dashboardRecord in $dashboardRecords) {
+            Write-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId ([string]$dashboardRecord.ClientId)) -Value $dashboardRecord
+        }
+        $classifiedDashboard = Get-ToolEnterpriseDashboardSnapshot
+        Assert-Enterprise ([int]$classifiedDashboard.Summary.Total -eq 3 -and [int]$classifiedDashboard.Summary.Online -eq 1 -and
+            [int]$classifiedDashboard.Summary.Stale -eq 1 -and [int]$classifiedDashboard.Summary.Offline -eq 1 -and
+            [int]$classifiedDashboard.Summary.NeedsReview -eq 3) 'Dashboard phân loại Online/Stale/Offline/Cần xem lại sai.'
+        Assert-Enterprise ((@($classifiedDashboard.Clients)[0].Alerts -contains 'LicenseIdentityChanged')) 'Dashboard làm mất cảnh báo đổi Last5 đã lưu.'
+        $classifiedDashboardJson = $classifiedDashboard | ConvertTo-Json -Depth 12 -Compress
+        Assert-Enterprise ($classifiedDashboardJson -notmatch '(?i)[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}' -and
+            $classifiedDashboardJson -notmatch 'LatestReportPath|WindowsLast5|OfficeLast5|"ClientId"') 'Dashboard fixture làm lộ dữ liệu ngoài allow-list.'
+    } finally {
+        $env:TOOL_ENTERPRISE_ROOT = $testRoot
+        $env:TOOL_ENTERPRISE_NETWORK_SETTINGS_PATH = Join-Path $testRoot 'enterprise-network-settings.json'
+    }
+    $paths = Get-ToolEnterprisePaths
+
     # Mô phỏng đúng hai máy: tiến trình máy chủ vẫn dùng $testRoot, còn mọi
     # cấu hình/secret/outbox của máy trạm nằm ở một root hoàn toàn độc lập.
     $separateClientId = ''
@@ -252,7 +365,7 @@ try {
     $reset = Remove-ToolEnterpriseServerConfiguration -AdminCode "Verify-Admin-4826" -StopTimeoutSeconds 1
     Assert-Enterprise ([bool]$reset.Removed) "Hàm xóa cấu hình không trả trạng thái thành công."
     Assert-Enterprise ([bool]$reset.AuditWritten) "Xóa cấu hình không ghi được audit hoàn tất."
-    foreach ($removedPath in @($paths.ServerConfig,$paths.ServerMasterSecret,$paths.ServerPairingSecret,$paths.ServerPid,$paths.ServerHeartbeat,$paths.ServerStop,$paths.ServerError)) {
+    foreach ($removedPath in @($paths.ServerConfig,$paths.ServerMasterSecret,$paths.ServerPairingSecret,$paths.ServerDashboardSession,$paths.ServerPid,$paths.ServerHeartbeat,$paths.ServerStop,$paths.ServerError)) {
         Assert-Enterprise (-not (Test-Path -LiteralPath $removedPath -PathType Leaf)) "Xóa cấu hình còn sót tệp: $removedPath"
     }
     foreach ($clearedDirectory in @($paths.ServerClients,$paths.ServerClientSecrets,$paths.ServerJobs)) {
@@ -376,6 +489,7 @@ try {
         "enterprise.server.firewall",
         "enterprise.server.refresh",
         "enterprise.server.export",
+        "enterprise.server.dashboard",
         "enterprise.server.scan",
         "enterprise.server.scanResultLine",
         "enterprise.server.scanHostUnknown",
@@ -568,7 +682,7 @@ Last 5 characters of installed product key: ZZZZZ
     $env:TOOL_ENTERPRISE_NETWORK_ALLOWED = $previousEnterpriseNetworkAllowed
     $env:TOOL_ENTERPRISE_NETWORK_SETTINGS_PATH = $previousEnterpriseNetworkSettings
     $env:TOOL_UI_CULTURE = $previousUiCulture
-    foreach ($target in @($testRoot,$exportRoot,$separateClientRoot)) {
+    foreach ($target in @($testRoot,$exportRoot,$separateClientRoot,$dashboardFixtureRoot)) {
         try {
             $full = [IO.Path]::GetFullPath($target)
             if ($full.StartsWith($temporaryBase, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $full)) {

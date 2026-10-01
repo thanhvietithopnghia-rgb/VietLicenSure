@@ -34,6 +34,11 @@ function Write-ToolEnterpriseHostJsonResponse {
     $Response.ContentType = "application/json; charset=utf-8"
     $Response.ContentEncoding = [Text.Encoding]::UTF8
     $Response.KeepAlive = $false
+    $Response.Headers["Cache-Control"] = "no-store"
+    $Response.Headers["Pragma"] = "no-cache"
+    $Response.Headers["X-Content-Type-Options"] = "nosniff"
+    $Response.Headers["X-Frame-Options"] = "DENY"
+    $Response.Headers["Referrer-Policy"] = "no-referrer"
     $json = if ($null -eq $Value) { "" } else { $Value | ConvertTo-Json -Depth 16 -Compress }
     $bytes = [Text.Encoding]::UTF8.GetBytes($json)
     $Response.ContentLength64 = $bytes.Length
@@ -43,6 +48,41 @@ function Write-ToolEnterpriseHostJsonResponse {
         try { $Response.OutputStream.Close() } catch {}
         [Array]::Clear($bytes, 0, $bytes.Length)
     }
+}
+
+function Write-ToolEnterpriseHostTextResponse {
+    param(
+        [Parameter(Mandatory = $true)][Net.HttpListenerResponse]$Response,
+        [Parameter(Mandatory = $true)][int]$StatusCode,
+        [Parameter(Mandatory = $true)][string]$ContentType,
+        [AllowEmptyString()][string]$Text = "",
+        [string]$ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    )
+    $Response.StatusCode = $StatusCode
+    $Response.ContentType = $ContentType
+    $Response.ContentEncoding = [Text.Encoding]::UTF8
+    $Response.KeepAlive = $false
+    $Response.Headers["Cache-Control"] = "no-store"
+    $Response.Headers["Pragma"] = "no-cache"
+    $Response.Headers["X-Content-Type-Options"] = "nosniff"
+    $Response.Headers["X-Frame-Options"] = "DENY"
+    $Response.Headers["Referrer-Policy"] = "no-referrer"
+    $Response.Headers["Content-Security-Policy"] = $ContentSecurityPolicy
+    $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+    $Response.ContentLength64 = $bytes.Length
+    try {
+        if ($bytes.Length -gt 0) { $Response.OutputStream.Write($bytes, 0, $bytes.Length) }
+    } finally {
+        try { $Response.OutputStream.Close() } catch {}
+        [Array]::Clear($bytes, 0, $bytes.Length)
+    }
+}
+
+function Get-ToolEnterpriseHostBearerToken {
+    param([Parameter(Mandatory = $true)][Net.HttpListenerRequest]$Request)
+    $authorization = [string]$Request.Headers["Authorization"]
+    if ($authorization -match '^Bearer\s+([A-Za-z0-9_-]{43})$') { return [string]$Matches[1] }
+    return ""
 }
 
 function Read-ToolEnterpriseHostRequestBody {
@@ -145,6 +185,11 @@ function Start-ToolEnterpriseHost {
     if (Test-Path -LiteralPath $paths.ServerStop -PathType Leaf) {
         Remove-Item -LiteralPath $paths.ServerStop -Force -ErrorAction SilentlyContinue
     }
+    # Dashboard access sessions are deliberately process-bound. A reboot or
+    # server restart must require the administrator to create a new session.
+    if (Test-Path -LiteralPath $paths.ServerDashboardSession -PathType Leaf) {
+        Remove-Item -LiteralPath $paths.ServerDashboardSession -Force -ErrorAction SilentlyContinue
+    }
 
     $created = $false
     $mutex = New-Object Threading.Mutex($false, "Global\ThanhViet.VietLicenSure.v5.0.EnterpriseServer", [ref]$created)
@@ -221,6 +266,30 @@ function Start-ToolEnterpriseHost {
                 $method = $context.Request.HttpMethod.ToUpperInvariant()
                 $body = if ($method -eq "POST") { Read-ToolEnterpriseHostRequestBody -Request $context.Request } else { $null }
                 $responseValue = $null
+
+                if ($method -eq "GET" -and $path -eq "/tool/v1/dashboard") {
+                    $dashboardCulture = if ([string]$context.Request.QueryString['lang'] -eq 'en') { 'en-US' } else { 'vi-VN' }
+                    Write-ToolEnterpriseHostTextResponse -Response $context.Response -StatusCode 200 -ContentType "text/html; charset=utf-8" -Text (Get-ToolEnterpriseDashboardHtml -Culture $dashboardCulture) -ContentSecurityPolicy "default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+                    continue
+                }
+                if ($method -eq "GET" -and $path -eq "/tool/v1/dashboard/app.css") {
+                    Write-ToolEnterpriseHostTextResponse -Response $context.Response -StatusCode 200 -ContentType "text/css; charset=utf-8" -Text (Get-ToolEnterpriseDashboardCss)
+                    continue
+                }
+                if ($method -eq "GET" -and $path -eq "/tool/v1/dashboard/app.js") {
+                    Write-ToolEnterpriseHostTextResponse -Response $context.Response -StatusCode 200 -ContentType "application/javascript; charset=utf-8" -Text (Get-ToolEnterpriseDashboardJs)
+                    continue
+                }
+                if ($method -eq "GET" -and $path -eq "/tool/v1/dashboard/api/snapshot") {
+                    $accessToken = Get-ToolEnterpriseHostBearerToken -Request $context.Request
+                    if ([string]::IsNullOrWhiteSpace($accessToken) -or
+                        -not (Test-ToolEnterpriseDashboardSession -AccessToken $accessToken -RemoteAddress $remoteAddress)) {
+                        Write-ToolEnterpriseHostJsonResponse -Response $context.Response -StatusCode 401 -Value ([ordered]@{ Accepted=$false; Message=(Get-ToolEnterpriseText "enterpriseDashboard.response.unauthorized") })
+                        continue
+                    }
+                    Write-ToolEnterpriseHostJsonResponse -Response $context.Response -StatusCode 200 -Value (Get-ToolEnterpriseDashboardSnapshot)
+                    continue
+                }
 
                 if ($method -eq "GET" -and $path -eq "/tool/v1/status") {
                     $responseValue = Get-ToolEnterpriseHostStatus -Configuration $configuration -StartedAtUtc $startedAt
@@ -331,6 +400,7 @@ function Start-ToolEnterpriseHost {
         try { Remove-Item -LiteralPath $paths.ServerPid -Force -ErrorAction SilentlyContinue } catch {}
         try { Remove-Item -LiteralPath $paths.ServerHeartbeat -Force -ErrorAction SilentlyContinue } catch {}
         try { Remove-Item -LiteralPath $paths.ServerStop -Force -ErrorAction SilentlyContinue } catch {}
+        try { Remove-Item -LiteralPath $paths.ServerDashboardSession -Force -ErrorAction SilentlyContinue } catch {}
         try { Write-ToolEnterpriseAudit -Scope Server -Event "Server.Stopped" -Message (Get-ToolEnterpriseText "enterpriseHost.audit.stopped") } catch {}
         try { $mutex.ReleaseMutex() } catch {}
         $mutex.Dispose()

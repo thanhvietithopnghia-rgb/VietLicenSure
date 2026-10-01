@@ -1,6 +1,6 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 30/09/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 01/10/2026
 - **Trạng thái:** `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; **phát hành chính thức bằng chứng thư tự ký**
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
@@ -76,6 +76,10 @@ Fingerprint chứng thư công bố trong `CONTENT-SIGNING-CERTIFICATE.cer`:
 8. Quản lý giấy phép hợp lệ cục bộ hoặc trong LAN được cho phép.
 9. Kiểm tra chuyên sâu dành cho quản trị viên.
 10. Trung tâm báo cáo bảo đảm, timeline, plugin và tài liệu.
+
+### Central Dashboard MVP Preview
+
+Trong chức năng 8, quản trị viên có thể mở **Central Dashboard** từ tab Máy chủ sau khi listener LAN đã sẵn sàng. Dashboard chạy nội bộ, chỉ đọc và hỗ trợ Việt/Anh; nó tổng hợp Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Phiên truy cập tồn tại trong thời gian ngắn, yêu cầu mã quản trị và khóa theo địa chỉ truy cập đầu tiên. API không trả full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo; quyền sở hữu luôn là `NotVerified` cho đến khi đối chiếu chứng từ/portal. MVP không có điều khiển từ xa, telemetry, CDN hoặc cloud.
 
 ## Cách hiểu kết quả khắc phục
 

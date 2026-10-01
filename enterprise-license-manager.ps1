@@ -886,6 +886,27 @@ function Invoke-ServerExport {
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
 }
 
+function Invoke-ServerDashboard {
+    $session = $null
+    try {
+        if (-not (Confirm-EnterpriseNetworkAccess -ActionKey "enterprise.action.dashboard")) { return }
+        $configuration = Get-EnterpriseServerConfigurationSafe
+        if (-not $configuration) { throw (Get-EnterpriseText "enterprise.error.noServerConfiguration") }
+        $diagnostic = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "127.0.0.1" -Port ([int]$configuration.Port) -TimeoutMs 1200
+        if (-not $diagnostic.Success) { throw (Get-EnterpriseText "enterprise.dashboard.startServerFirst") }
+        $adminCode = [string]$script:serverAdminBox.Text
+        $session = New-ToolEnterpriseDashboardSession -AdminCode $adminCode -ValidMinutes 30
+        $language = if ($script:enterpriseCulture -eq "en-US") { "en" } else { "vi" }
+        $dashboardUrl = "http://127.0.0.1:$([int]$configuration.Port)/tool/v1/dashboard/?lang=$language#token=$([Uri]::EscapeDataString([string]$session.AccessToken))"
+        Start-Process -FilePath $dashboardUrl | Out-Null
+        Set-EnterpriseStatus (Get-EnterpriseText "enterprise.dashboard.opened" @([string]$session.ExpiresAtUtc)) $true
+    } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+    finally {
+        if ($script:serverAdminBox) { $script:serverAdminBox.Clear() }
+        $session = $null
+    }
+}
+
 function Invoke-ServerJob {
     try {
         $client = Get-SelectedEnterpriseClient
@@ -1208,6 +1229,7 @@ function Update-EnterpriseLayout {
             $networkButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.firewall")
             $refreshButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.refresh")
             $exportButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.export")
+            $dashboardButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.dashboard")
             $scanButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.scan")
             $createJobButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.createJob")
 
@@ -1276,7 +1298,10 @@ function Update-EnterpriseLayout {
             $clientHeaderY = $scanResultY + 49
             $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton)))
             $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton)))
-            Set-EnterpriseBounds $script:clientCountLabel $margin $clientHeaderY ($contentWidth - $refreshWidth - $exportWidth - (2 * $gap)) 30
+            $dashboardWidth = [Math]::Min(190, [Math]::Max(145, (Get-ToolUiButtonRequiredWidth -Button $dashboardButton)))
+            $clientCountWidth = [Math]::Max(80, ($contentWidth - $dashboardWidth - $refreshWidth - $exportWidth - (3 * $gap)))
+            Set-EnterpriseBounds $script:clientCountLabel $margin $clientHeaderY $clientCountWidth 30
+            Set-EnterpriseBounds $dashboardButton ($margin + $contentWidth - $dashboardWidth - $refreshWidth - $exportWidth - (2 * $gap)) $clientHeaderY $dashboardWidth 30
             Set-EnterpriseBounds $refreshButton ($margin + $contentWidth - $refreshWidth - $exportWidth - $gap) $clientHeaderY $refreshWidth 30
             Set-EnterpriseBounds $exportButton ($margin + $contentWidth - $exportWidth) $clientHeaderY $exportWidth 30
 
@@ -1447,6 +1472,7 @@ $script:clientCountLabel = New-EnterpriseLabel (Get-EnterpriseText "enterprise.s
 $serverTab.Controls.Add($script:clientCountLabel)
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.refresh") 510 195 160 32 { Update-ServerClientList }))
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.export") 680 195 170 32 { Invoke-ServerExport }))
+$serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.dashboard") 850 195 145 32 { Invoke-ServerDashboard }))
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.scanLabel") 18 242 250))
 $script:scanInputBox = New-EnterpriseTextBox 18 270 270
 $script:scanInputBox.Text = ""
@@ -1677,6 +1703,7 @@ if ($SmokeTest) {
         (Get-EnterpriseText "enterprise.server.scan"),
         (Get-EnterpriseText "enterprise.server.refresh"),
         (Get-EnterpriseText "enterprise.server.export"),
+        (Get-EnterpriseText "enterprise.server.dashboard"),
         (Get-EnterpriseText "enterprise.server.createJob")
     )) {
         $button = Find-EnterpriseDirectControl $serverTab $buttonText

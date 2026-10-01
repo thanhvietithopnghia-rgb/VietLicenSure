@@ -38,6 +38,25 @@ function Get-ToolEnterpriseText {
     return "[$Key]"
 }
 
+function Get-ToolEnterpriseCultureText {
+    param(
+        [Parameter(Mandatory = $true)][string]$Key,
+        [ValidateSet('vi-VN','en-US')][string]$Culture,
+        [AllowNull()][object[]]$Arguments = @()
+    )
+
+    if (Get-Command Get-ToolText -ErrorAction SilentlyContinue) {
+        return (Get-ToolText -Key $Key -Culture $Culture -FormatArguments $Arguments)
+    }
+    $previousCulture = [string]$env:TOOL_UI_CULTURE
+    try {
+        $env:TOOL_UI_CULTURE = $Culture
+        return (Get-ToolEnterpriseText -Key $Key -Arguments $Arguments)
+    } finally {
+        $env:TOOL_UI_CULTURE = $previousCulture
+    }
+}
+
 $script:ToolEnterpriseSchemaVersion = "1.0"
 $script:ToolEnterpriseProtocolVersion = "1.0"
 $script:ToolEnterpriseToolVersion = "5.0"
@@ -121,6 +140,7 @@ function Get-ToolEnterprisePaths {
         ServerHeartbeat = Join-Path $root "server\server-heartbeat.json"
         ServerStop = Join-Path $root "server\server.stop"
         ServerError = Join-Path $root "server\server-error.json"
+        ServerDashboardSession = Join-Path $root "server\dashboard-session.json"
         Client = Join-Path $root "client"
         ClientConfig = Join-Path $root "client\client.json"
         ClientSecret = Join-Path $root "client\client-secret.bin"
@@ -942,7 +962,7 @@ function Remove-ToolEnterpriseServerConfiguration {
         Assert-ToolEnterpriseDirectoryTreeSafe -Directory $directory
     }
     foreach ($file in @(
-        $paths.ServerMasterSecret, $paths.ServerPairingSecret, $paths.ServerError,
+        $paths.ServerMasterSecret, $paths.ServerPairingSecret, $paths.ServerDashboardSession, $paths.ServerError,
         $paths.ServerPid, $paths.ServerHeartbeat, $paths.ServerConfig, $paths.ServerStop
     )) {
         $full = Assert-ToolEnterprisePath -Path $file
@@ -956,7 +976,7 @@ function Remove-ToolEnterpriseServerConfiguration {
     $removedPendingJobs = [int](Clear-ToolEnterpriseDirectoryContent -Directory $paths.ServerJobs)
 
     foreach ($file in @(
-        $paths.ServerMasterSecret, $paths.ServerPairingSecret, $paths.ServerError,
+        $paths.ServerMasterSecret, $paths.ServerPairingSecret, $paths.ServerDashboardSession, $paths.ServerError,
         $paths.ServerPid, $paths.ServerHeartbeat
     )) {
         [void](Remove-ToolEnterpriseFileSafe -Path $file)
@@ -1522,6 +1542,304 @@ function Get-ToolEnterpriseServerClients {
         } catch {}
     }
     return @($clients.ToArray() | Sort-Object ComputerName, ClientId)
+}
+
+function New-ToolEnterpriseDashboardSession {
+    param(
+        [Parameter(Mandatory = $true)][string]$AdminCode,
+        [ValidateRange(5, 120)][int]$ValidMinutes = 30
+    )
+
+    $paths = Initialize-ToolEnterpriseStorage
+    $configuration = Get-ToolEnterpriseServerConfig
+    if (-not $configuration -or [string]$configuration.Role -ne "Server") {
+        throw (Get-ToolEnterpriseText "enterpriseCore.error.serverNotInitialized")
+    }
+    if (-not (Test-ToolEnterpriseAdminCode -AdminCode $AdminCode -Verifier $configuration.AdminVerifier)) {
+        throw (Get-ToolEnterpriseText "enterpriseCore.error.adminCodeInvalid")
+    }
+
+    $tokenBytes = New-ToolEnterpriseRandomBytes -Length 32
+    try {
+        $token = ConvertTo-ToolEnterpriseBase64Url -Bytes $tokenBytes
+        $tokenTextBytes = [Text.Encoding]::UTF8.GetBytes($token)
+        try { $tokenHash = Get-ToolEnterpriseSha256Bytes -Bytes $tokenTextBytes }
+        finally { [Array]::Clear($tokenTextBytes, 0, $tokenTextBytes.Length) }
+        try {
+            $now = [DateTime]::UtcNow
+            $record = [pscustomobject][ordered]@{
+                SchemaVersion = $script:ToolEnterpriseSchemaVersion
+                ToolVersion = $script:ToolEnterpriseToolVersion
+                SessionId = [Guid]::NewGuid().ToString("N")
+                TokenHash = ConvertTo-ToolEnterpriseBase64Url -Bytes $tokenHash
+                CreatedAtUtc = $now.ToString("o")
+                ExpiresAtUtc = $now.AddMinutes($ValidMinutes).ToString("o")
+                BoundAddress = ""
+            }
+            Write-ToolEnterpriseJson -Path $paths.ServerDashboardSession -Value $record
+            Write-ToolEnterpriseAudit -Scope Server -Event "Dashboard.SessionCreated" -Message (Get-ToolEnterpriseText "enterpriseDashboard.audit.sessionCreated") -Data ([ordered]@{
+                SessionId=$record.SessionId; ExpiresAtUtc=$record.ExpiresAtUtc
+            })
+            return [pscustomobject][ordered]@{
+                AccessToken = $token
+                ExpiresAtUtc = $record.ExpiresAtUtc
+                DashboardPath = "/tool/v1/dashboard/"
+            }
+        } finally { [Array]::Clear($tokenHash, 0, $tokenHash.Length) }
+    } finally { [Array]::Clear($tokenBytes, 0, $tokenBytes.Length) }
+}
+
+function Test-ToolEnterpriseDashboardSession {
+    param(
+        [Parameter(Mandatory = $true)][string]$AccessToken,
+        [Parameter(Mandatory = $true)][string]$RemoteAddress
+    )
+
+    if ($AccessToken -notmatch '^[A-Za-z0-9_-]{43}$') { return $false }
+    $paths = Initialize-ToolEnterpriseStorage
+    $record = Read-ToolEnterpriseJson -Path $paths.ServerDashboardSession -MaximumBytes 65536
+    if (-not $record) { return $false }
+
+    $expires = [DateTime]::MinValue
+    if (-not [DateTime]::TryParse(
+        [string]$record.ExpiresAtUtc,
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind,
+        [ref]$expires)) { return $false }
+    if ($expires.ToUniversalTime() -le [DateTime]::UtcNow) { return $false }
+
+    try { $expectedHash = ConvertFrom-ToolEnterpriseBase64Url -Text ([string]$record.TokenHash) }
+    catch { return $false }
+    $tokenTextBytes = [Text.Encoding]::UTF8.GetBytes($AccessToken)
+    try { $actualHash = Get-ToolEnterpriseSha256Bytes -Bytes $tokenTextBytes }
+    finally { [Array]::Clear($tokenTextBytes, 0, $tokenTextBytes.Length) }
+    try {
+        if (-not (Test-ToolEnterpriseFixedTimeEquals -Left $expectedHash -Right $actualHash)) { return $false }
+    } finally {
+        [Array]::Clear($expectedHash, 0, $expectedHash.Length)
+        [Array]::Clear($actualHash, 0, $actualHash.Length)
+    }
+
+    $safeAddress = ConvertTo-ToolEnterpriseSafeText $RemoteAddress 80
+    if ([string]::IsNullOrWhiteSpace($safeAddress)) { return $false }
+    $boundAddress = [string]$record.BoundAddress
+    if ([string]::IsNullOrWhiteSpace($boundAddress)) {
+        $record.BoundAddress = $safeAddress
+        Write-ToolEnterpriseJson -Path $paths.ServerDashboardSession -Value $record
+        Write-ToolEnterpriseAudit -Scope Server -Event "Dashboard.SessionBound" -Message (Get-ToolEnterpriseText "enterpriseDashboard.audit.sessionBound") -Data ([ordered]@{
+            SessionId=ConvertTo-ToolEnterpriseSafeText $record.SessionId 80; RemoteAddress=$safeAddress
+        })
+    } elseif (-not [string]::Equals($boundAddress, $safeAddress, [StringComparison]::OrdinalIgnoreCase)) {
+        return $false
+    }
+    return $true
+}
+
+function Get-ToolEnterpriseDashboardSnapshot {
+    param(
+        [ValidateRange(5, 1440)][int]$OnlineAfterMinutes = 90,
+        [ValidateRange(2, 720)][int]$OfflineAfterHours = 24
+    )
+
+    $configuration = Get-ToolEnterpriseServerConfig
+    if (-not $configuration) { throw (Get-ToolEnterpriseText "enterpriseCore.error.serverNotInitialized") }
+    $clients = New-Object System.Collections.Generic.List[object]
+    $onlineCount = 0
+    $staleCount = 0
+    $offlineCount = 0
+    $reviewCount = 0
+
+    foreach ($source in @(Get-ToolEnterpriseServerClients)) {
+        $ageHours = Get-ToolEnterpriseClientAgeHours -LastSeenUtc $source.LastSeenUtc
+        $presence = if ([double]::IsPositiveInfinity([double]$ageHours) -or $ageHours -gt $OfflineAfterHours) {
+            "Offline"
+        } elseif (($ageHours * 60) -le $OnlineAfterMinutes) {
+            "Online"
+        } else {
+            "Stale"
+        }
+        switch ($presence) {
+            "Online" { $onlineCount++ }
+            "Stale" { $staleCount++ }
+            default { $offlineCount++ }
+        }
+
+        $alerts = New-Object System.Collections.Generic.List[string]
+        if ($presence -eq "Stale") { [void]$alerts.Add("Stale") }
+        if ($presence -eq "Offline") { [void]$alerts.Add("Offline") }
+        $windowsStatus = ConvertTo-ToolEnterpriseSafeText $source.WindowsStatus 80
+        $officeStatus = ConvertTo-ToolEnterpriseSafeText $source.OfficeStatus 80
+        if ($windowsStatus -notin @("Activated", "Licensed") -and $windowsStatus -ne "NotDetected") { [void]$alerts.Add("WindowsNeedsReview") }
+        if ($officeStatus -notin @("Activated", "Licensed") -and $officeStatus -ne "NotDetected") { [void]$alerts.Add("OfficeNeedsReview") }
+        $identityChangedAtUtc = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['LicenseIdentityChangedAtUtc']) { $source.LicenseIdentityChangedAtUtc } else { '' }) 80
+        $windowsChanged = [bool]($source.PSObject.Properties['WindowsIdentityChanged'] -and $source.WindowsIdentityChanged)
+        $officeChanged = [bool]($source.PSObject.Properties['OfficeIdentityChanged'] -and $source.OfficeIdentityChanged)
+        if ($windowsChanged -or $officeChanged -or -not [string]::IsNullOrWhiteSpace($identityChangedAtUtc)) { [void]$alerts.Add("LicenseIdentityChanged") }
+        if ($alerts.Count -gt 0) { $reviewCount++ }
+
+        $rawClientId = [string]$source.ClientId
+        $clientReference = if ([string]::IsNullOrWhiteSpace($rawClientId)) { "CLIENT-UNKNOWN" } else { Get-ToolEnterpriseStableClientReference -ClientId $rawClientId }
+        [void]$clients.Add([pscustomobject][ordered]@{
+            ClientReference = $clientReference
+            ComputerName = ConvertTo-ToolEnterpriseSafeText $source.ComputerName 100
+            RemoteAddress = ConvertTo-ToolEnterpriseSafeText $source.RemoteAddress 80
+            LastSeenUtc = ConvertTo-ToolEnterpriseSafeText $source.LastSeenUtc 80
+            AgeMinutes = if ([double]::IsPositiveInfinity([double]$ageHours)) { $null } else { [Math]::Round(($ageHours * 60), 1) }
+            Presence = $presence
+            WindowsStatus = $windowsStatus
+            WindowsChannel = ConvertTo-ToolEnterpriseSafeText $source.WindowsChannel 120
+            WindowsEntitlementStatus = "NotVerified"
+            OfficeStatus = $officeStatus
+            OfficeChannel = ConvertTo-ToolEnterpriseSafeText $source.OfficeChannel 120
+            OfficeEntitlementStatus = "NotVerified"
+            LicenseIdentityChangedAtUtc = $identityChangedAtUtc
+            Alerts = $alerts.ToArray()
+        })
+    }
+
+    return [pscustomobject][ordered]@{
+        SchemaVersion = "1.0"
+        GeneratedAtUtc = [DateTime]::UtcNow.ToString("o")
+        RefreshSeconds = 60
+        Thresholds = [ordered]@{ OnlineAfterMinutes=$OnlineAfterMinutes; OfflineAfterHours=$OfflineAfterHours }
+        Server = [ordered]@{
+            Name = ConvertTo-ToolEnterpriseSafeText $configuration.ServerName 100
+            ToolVersion = $script:ToolEnterpriseToolVersion
+            ProtocolVersion = $script:ToolEnterpriseProtocolVersion
+        }
+        Summary = [ordered]@{
+            Total = $clients.Count
+            Online = $onlineCount
+            Stale = $staleCount
+            Offline = $offlineCount
+            NeedsReview = $reviewCount
+        }
+        Clients = @($clients.ToArray() | Sort-Object @{Expression={ switch ($_.Presence) { 'Online' {0}; 'Stale' {1}; default {2} } }}, ComputerName, ClientReference)
+        TechnicalStatusDisclaimer = "Activation status is technical only; entitlement remains NotVerified until invoices, agreements, accounts, or licensing portals are checked."
+    }
+}
+
+function Get-ToolEnterpriseDashboardHtml {
+    param([ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN')
+
+    $languageCode = if ($Culture -eq 'en-US') { 'en' } else { 'vi' }
+    $tokens = [ordered]@{
+        '{{LANG}}' = $languageCode
+        '{{SKIP}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.skip' -Culture $Culture
+        '{{REFRESH}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.refresh' -Culture $Culture
+        '{{LANGUAGE_BUTTON}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.languageButton' -Culture $Culture
+        '{{EYEBROW}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.eyebrow' -Culture $Culture
+        '{{TITLE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.title' -Culture $Culture
+        '{{INTRO}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.intro' -Culture $Culture
+        '{{CONNECTING}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.connecting' -Culture $Culture
+        '{{CONNECTED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.connected' -Culture $Culture
+        '{{FAILED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.failed' -Culture $Culture
+        '{{ACCESS_TITLE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.accessTitle' -Culture $Culture
+        '{{ACCESS_BODY}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.accessBody' -Culture $Culture
+        '{{SUMMARY_ARIA}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.summaryAria' -Culture $Culture
+        '{{TOTAL}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.total' -Culture $Culture
+        '{{ONLINE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.online' -Culture $Culture
+        '{{STALE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.stale' -Culture $Culture
+        '{{OFFLINE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.offline' -Culture $Culture
+        '{{REVIEW}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.review' -Culture $Culture
+        '{{FLEET}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.fleet' -Culture $Culture
+        '{{FLEET_CAPTION}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.fleetCaption' -Culture $Culture
+        '{{FLEET_HELP}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.fleetHelp' -Culture $Culture
+        '{{FILTER}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.filter' -Culture $Culture
+        '{{FILTER_PLACEHOLDER}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.filterPlaceholder' -Culture $Culture
+        '{{DEVICE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.device' -Culture $Culture
+        '{{PRESENCE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.presence' -Culture $Culture
+        '{{LAST_SEEN}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.lastSeen' -Culture $Culture
+        '{{ALERTS}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alerts' -Culture $Culture
+        '{{IMPORTANT}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.important' -Culture $Culture
+        '{{DISCLAIMER}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.disclaimer' -Culture $Culture
+        '{{FOOTER}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.footer' -Culture $Culture
+        '{{EMPTY}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.empty' -Culture $Culture
+        '{{NONE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.none' -Culture $Culture
+        '{{NOT_DETECTED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.notDetected' -Culture $Culture
+        '{{ENTITLEMENT}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.entitlement' -Culture $Culture
+        '{{ALERT_STALE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.stale' -Culture $Culture
+        '{{ALERT_OFFLINE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.offline' -Culture $Culture
+        '{{ALERT_WINDOWS}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.windows' -Culture $Culture
+        '{{ALERT_OFFICE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.office' -Culture $Culture
+        '{{ALERT_IDENTITY}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.identityChanged' -Culture $Culture
+    }
+    $html = @'
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>VietLicenSure Central Dashboard</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-connecting="{{CONNECTING}}" data-connected="{{CONNECTED}}" data-failed="{{FAILED}}" data-empty="{{EMPTY}}" data-none="{{NONE}}" data-not-detected="{{NOT_DETECTED}}" data-entitlement="{{ENTITLEMENT}}" data-alert-stale="{{ALERT_STALE}}" data-alert-offline="{{ALERT_OFFLINE}}" data-alert-windows="{{ALERT_WINDOWS}}" data-alert-office="{{ALERT_OFFICE}}" data-alert-identity="{{ALERT_IDENTITY}}">
+  <a class="skip" href="#main">{{SKIP}}</a>
+  <header class="topbar">
+    <div><strong>VietLicenSure Central</strong><span class="preview">MVP</span></div>
+    <div class="toolbar"><span id="server-name">--</span><button id="language" type="button">{{LANGUAGE_BUTTON}}</button><button id="refresh" type="button">{{REFRESH}}</button></div>
+  </header>
+  <main id="main" class="wrap">
+    <section class="hero">
+      <div><p class="eyebrow">{{EYEBROW}}</p><h1>{{TITLE}}</h1><p>{{INTRO}}</p></div>
+      <div class="connection" role="status" aria-live="polite"><span id="connection-dot" class="dot waiting"></span><span id="connection-text">{{CONNECTING}}</span><small id="generated-at"></small></div>
+    </section>
+    <section id="access-warning" class="notice" hidden><strong>{{ACCESS_TITLE}}</strong><p>{{ACCESS_BODY}}</p></section>
+    <div id="dashboard" hidden>
+      <section class="cards" aria-label="{{SUMMARY_ARIA}}">
+        <article><span>{{TOTAL}}</span><strong id="count-total">0</strong></article>
+        <article class="ok"><span>{{ONLINE}}</span><strong id="count-online">0</strong></article>
+        <article class="warn"><span>{{STALE}}</span><strong id="count-stale">0</strong></article>
+        <article class="muted"><span>{{OFFLINE}}</span><strong id="count-offline">0</strong></article>
+        <article class="danger"><span>{{REVIEW}}</span><strong id="count-review">0</strong></article>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><h2>{{FLEET}}</h2><p>{{FLEET_HELP}}</p></div><label><span>{{FILTER}}</span><input id="filter" type="search" autocomplete="off" placeholder="{{FILTER_PLACEHOLDER}}"></label></div>
+        <div class="table-wrap"><table><caption class="sr-only">{{FLEET_CAPTION}}</caption><thead><tr><th scope="col">{{DEVICE}}</th><th scope="col">{{PRESENCE}}</th><th scope="col">{{LAST_SEEN}}</th><th scope="col">Windows</th><th scope="col">Office</th><th scope="col">{{ALERTS}}</th></tr></thead><tbody id="client-rows"></tbody></table></div>
+      </section>
+      <section class="disclaimer"><strong>{{IMPORTANT}}</strong> <span>{{DISCLAIMER}}</span></section>
+    </div>
+  </main>
+  <footer>{{FOOTER}}</footer>
+</body>
+</html>
+'@
+    foreach ($token in $tokens.Keys) {
+        $html = $html.Replace([string]$token, [Net.WebUtility]::HtmlEncode([string]$tokens[$token]))
+    }
+    return $html
+}
+
+function Get-ToolEnterpriseDashboardCss {
+    return @'
+:root{color-scheme:light;--ink:#172033;--muted:#667085;--line:#d6dee8;--paper:#fff;--canvas:#edf3f8;--brand:#123b74;--brand2:#2563a7;--ok:#147a4b;--warn:#a35b00;--bad:#b42318;--shadow:0 8px 24px rgba(16,24,40,.08)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#e8f0f8,var(--canvas) 360px);color:var(--ink);font-family:"Segoe UI",Arial,sans-serif;line-height:1.45}.sr-only{height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;clip:rect(0 0 0 0);white-space:nowrap}.skip{position:absolute;left:-9999px;top:0}.skip:focus{left:12px;top:12px;background:#fff;padding:8px;z-index:10}.topbar{align-items:center;background:#0f315e;color:#fff;display:flex;justify-content:space-between;padding:13px max(18px,calc((100vw - 1240px)/2));position:sticky;top:0;z-index:5}.topbar>div{align-items:center;display:flex;gap:10px}.preview{background:#e85d1e;border-radius:999px;font-size:11px;font-weight:800;padding:3px 8px}.toolbar{flex-wrap:wrap;justify-content:flex-end}.toolbar button{background:#fff;border:0;border-radius:7px;color:#123b74;cursor:pointer;font-weight:700;padding:8px 11px}.wrap{margin:0 auto;max-width:1240px;padding:22px}.hero{align-items:center;background:linear-gradient(135deg,#0d2e5c,#2563a7);border-radius:17px;color:#fff;display:flex;gap:28px;justify-content:space-between;padding:27px 30px;box-shadow:var(--shadow)}h1{font-size:30px;line-height:1.18;margin:6px 0}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.09em;margin:0;opacity:.82;text-transform:uppercase}.hero p:not(.eyebrow){margin:8px 0;max-width:760px}.connection{align-items:center;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);border-radius:12px;display:grid;grid-template-columns:auto 1fr;min-width:220px;padding:12px 14px}.connection small{grid-column:2;color:#dbeafe;margin-top:3px}.dot{background:#98a2b3;border-radius:50%;display:inline-block;height:10px;margin-right:8px;width:10px}.dot.online{background:#54d68b}.dot.stale{background:#f3ad45}.dot.offline{background:#98a2b3}.dot.waiting{background:#89b4ea}.notice,.disclaimer{background:#fff7e8;border:1px solid #f2d29a;border-left:5px solid var(--warn);border-radius:9px;margin-top:16px;padding:13px 15px}.cards{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr));margin:16px 0}.cards article{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--brand2);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow)}.cards article.ok{border-top-color:var(--ok)}.cards article.warn{border-top-color:var(--warn)}.cards article.danger{border-top-color:var(--bad)}.cards article.muted{border-top-color:#8292a8}.cards span{color:var(--muted);display:block;font-size:12px;font-weight:700;text-transform:uppercase}.cards strong{display:block;font-size:28px;margin-top:5px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:17px}.panel-head{align-items:end;display:flex;gap:16px;justify-content:space-between;margin-bottom:12px}.panel-head h2{color:var(--brand);margin:0}.panel-head p{color:var(--muted);margin:4px 0 0}.panel-head label{color:var(--muted);font-size:12px;font-weight:700}.panel-head input{border:1px solid #b8c4d2;border-radius:7px;display:block;margin-top:4px;min-width:260px;padding:8px 9px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;font-size:13px;width:100%}th,td{border:1px solid #dfe6ee;padding:8px 9px;text-align:left;vertical-align:top}th{background:#e8f0f8;color:#183b66}tbody tr:nth-child(even) td{background:#f8fafc}.device strong,.device small,.status-main,.status-sub{display:block}.device small,.status-sub{color:var(--muted);font-size:11px;margin-top:2px}.pill{border-radius:999px;display:inline-block;font-size:11px;font-weight:800;padding:3px 8px}.pill.online,.pill.good{background:#eaf8f0;color:var(--ok)}.pill.stale,.pill.review{background:#fff3df;color:var(--warn)}.pill.offline{background:#eef1f4;color:#475467}.alert-list{display:flex;flex-wrap:wrap;gap:4px}.alert{background:#feeceb;border-radius:999px;color:var(--bad);font-size:10px;font-weight:800;padding:3px 7px}.alert.neutral{background:#eef1f4;color:#475467}.empty{color:var(--muted);padding:24px;text-align:center}.disclaimer{font-size:13px}.disclaimer strong{color:#6b4300}footer{color:var(--muted);font-size:12px;padding:20px;text-align:center}@media(max-width:850px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.hero,.panel-head{align-items:stretch;flex-direction:column}.connection{min-width:0}.panel-head input{min-width:0;width:100%}}@media(max-width:520px){.topbar{align-items:flex-start;flex-direction:column}.toolbar{justify-content:flex-start}.wrap{padding:12px}.hero{border-radius:12px;padding:20px}h1{font-size:24px}.cards{grid-template-columns:1fr 1fr}.panel{padding:10px}.panel-head input{width:100%}}
+'@
+}
+
+function Get-ToolEnterpriseDashboardJs {
+    return @'
+(function(){
+  'use strict';
+  var query=new URLSearchParams(window.location.search);var lang=query.get('lang')==='en'?'en':'vi';document.documentElement.lang=lang;
+  var body=document.body;var strings={connecting:body.getAttribute('data-connecting')||'Connecting',connected:body.getAttribute('data-connected')||'Connected',failed:body.getAttribute('data-failed')||'Unable to load data',empty:body.getAttribute('data-empty')||'No matching endpoints',none:body.getAttribute('data-none')||'None',notDetected:body.getAttribute('data-not-detected')||'Not detected',entitlement:body.getAttribute('data-entitlement')||'Entitlement: not verified',Stale:body.getAttribute('data-alert-stale')||'Stale',Offline:body.getAttribute('data-alert-offline')||'Offline',WindowsNeedsReview:body.getAttribute('data-alert-windows')||'Windows needs review',OfficeNeedsReview:body.getAttribute('data-alert-office')||'Office needs review',LicenseIdentityChanged:body.getAttribute('data-alert-identity')||'Last5 changed'};
+  function t(key){return Object.prototype.hasOwnProperty.call(strings,key)?strings[key]:key;}
+  var languageButton=document.getElementById('language');
+  languageButton.addEventListener('click',function(){query.set('lang',lang==='vi'?'en':'vi');window.location.search=query.toString();});
+  var fragment=new URLSearchParams(window.location.hash.replace(/^#/,''));var fragmentToken=fragment.get('token');if(fragmentToken){sessionStorage.setItem('vls-dashboard-token',fragmentToken);history.replaceState(null,'',window.location.pathname+window.location.search);}var token=sessionStorage.getItem('vls-dashboard-token')||'';
+  var dashboard=document.getElementById('dashboard');var warning=document.getElementById('access-warning');var rows=document.getElementById('client-rows');var latestClients=[];
+  function setConnection(kind,label){var dot=document.getElementById('connection-dot');dot.className='dot '+kind;document.getElementById('connection-text').textContent=label;}
+  function cell(row,text,className){var td=document.createElement('td');if(className){td.className=className;}td.textContent=text;row.appendChild(td);return td;}
+  function statusCell(row,status,channel){var td=document.createElement('td');var main=document.createElement('span');main.className='status-main';main.textContent=status||t('notDetected');var sub=document.createElement('span');sub.className='status-sub';sub.textContent=(channel||'--')+' / '+t('entitlement');td.appendChild(main);td.appendChild(sub);row.appendChild(td);}
+  function renderClients(){var needle=document.getElementById('filter').value.trim().toLowerCase();rows.textContent='';var shown=0;latestClients.forEach(function(client){var hay=[client.ComputerName,client.RemoteAddress,client.ClientReference,client.Presence,client.WindowsStatus,client.OfficeStatus].join(' ').toLowerCase();if(needle&&hay.indexOf(needle)<0){return;}shown++;var row=document.createElement('tr');var device=document.createElement('td');device.className='device';var name=document.createElement('strong');name.textContent=client.ComputerName||client.ClientReference;var ref=document.createElement('small');ref.textContent=client.ClientReference+(client.RemoteAddress?' / '+client.RemoteAddress:'');device.appendChild(name);device.appendChild(ref);row.appendChild(device);var presence=document.createElement('td');var badge=document.createElement('span');badge.className='pill '+String(client.Presence||'offline').toLowerCase();badge.textContent=client.Presence||'Offline';presence.appendChild(badge);row.appendChild(presence);var seen=client.LastSeenUtc?new Date(client.LastSeenUtc):null;var seenText=seen&&!isNaN(seen.getTime())?new Intl.DateTimeFormat(lang==='vi'?'vi-VN':'en-US',{dateStyle:'short',timeStyle:'short'}).format(seen):'--';var last=cell(row,seenText);last.title=client.AgeMinutes===null?'':String(client.AgeMinutes)+' min';statusCell(row,client.WindowsStatus,client.WindowsChannel);statusCell(row,client.OfficeStatus,client.OfficeChannel);var alertCell=document.createElement('td');var list=document.createElement('div');list.className='alert-list';var alerts=Array.isArray(client.Alerts)?client.Alerts:[];if(!alerts.length){var none=document.createElement('span');none.className='alert neutral';none.textContent=t('none');list.appendChild(none);}else{alerts.forEach(function(code){var alert=document.createElement('span');alert.className='alert';alert.textContent=t(code);list.appendChild(alert);});}alertCell.appendChild(list);row.appendChild(alertCell);rows.appendChild(row);});if(!shown){var row=document.createElement('tr');var td=cell(row,t('empty'),'empty');td.colSpan=6;rows.appendChild(row);}}
+  function render(data){document.getElementById('server-name').textContent=data.Server&&data.Server.Name?data.Server.Name:'VietLicenSure';document.getElementById('count-total').textContent=data.Summary.Total;document.getElementById('count-online').textContent=data.Summary.Online;document.getElementById('count-stale').textContent=data.Summary.Stale;document.getElementById('count-offline').textContent=data.Summary.Offline;document.getElementById('count-review').textContent=data.Summary.NeedsReview;document.getElementById('generated-at').textContent=new Intl.DateTimeFormat(lang==='vi'?'vi-VN':'en-US',{dateStyle:'short',timeStyle:'medium'}).format(new Date(data.GeneratedAtUtc));latestClients=Array.isArray(data.Clients)?data.Clients:[];renderClients();warning.hidden=true;dashboard.hidden=false;setConnection('online',t('connected'));}
+  async function load(){if(!token){warning.hidden=false;dashboard.hidden=true;setConnection('offline',t('failed'));return;}setConnection('waiting',t('connecting'));try{var response=await fetch('api/snapshot',{method:'GET',headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'});if(response.status===401){sessionStorage.removeItem('vls-dashboard-token');token='';throw new Error('unauthorized');}if(!response.ok){throw new Error('http '+response.status);}render(await response.json());}catch(error){warning.hidden=false;dashboard.hidden=true;setConnection('offline',t('failed'));}}
+  document.getElementById('refresh').addEventListener('click',load);document.getElementById('filter').addEventListener('input',renderClients);load();window.setInterval(load,60000);
+}());
+'@
 }
 
 function Normalize-ToolEnterpriseProductKey {

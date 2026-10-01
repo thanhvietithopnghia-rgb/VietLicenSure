@@ -1,8 +1,8 @@
 {
   "SchemaVersion": "1.1",
-  "CatalogVersion": "1.1.2.0",
+  "CatalogVersion": "1.1.3.0",
   "ToolVersion": "4.6",
-  "ReviewedAtUtc": "2026-09-29T00:00:00Z",
+  "ReviewedAtUtc": "2026-10-01T00:00:00Z",
   "ReviewWarningAgeDays": 30,
   "MaximumReviewAgeDays": 45,
   "UpdatePolicy": {
@@ -171,7 +171,7 @@
       "Name": "Current Channel",
       "Id": "492350f6-3a01-4f97-b9c0-c7c6ddf67d60",
       "LatestKnownVersion": "2609",
-      "LatestKnownBuild": "16.0.20430.20092",
+      "LatestKnownBuild": "16.0.20430.20118",
       "LatestKnownReleaseDate": "2026-09-22"
     },
     {

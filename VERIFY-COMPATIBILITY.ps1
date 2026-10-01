@@ -111,11 +111,11 @@ if ($failures.Count -eq 0) {
             if (-not $futureOffice.RequiresCatalogReview -or @($futureOffice.UnknownProductIds).Count -ne 1) {
                 Fail "Product ID Office tương lai không chuyển sang trạng thái chưa xác minh."
             }
-            if ((Compare-ToolOfficeBuild "16.0.20430.20092" "16.0.20430.20092") -ne "MatchesCatalog") { Fail "So sánh build Office sai." }
-            if ((Compare-ToolOfficeBuild "16.0.20000.10000" "16.0.20430.20092") -ne "OlderThanCatalog") { Fail "Không nhận ra build Office cũ." }
+            if ((Compare-ToolOfficeBuild "16.0.20430.20118" "16.0.20430.20118") -ne "MatchesCatalog") { Fail "So sánh build Office sai." }
+            if ((Compare-ToolOfficeBuild "16.0.20000.10000" "16.0.20430.20118") -ne "OlderThanCatalog") { Fail "Không nhận ra build Office cũ." }
 
             $metadata = Get-ToolCompatibilityMetadata
-            if ([string]$metadata.CatalogSchemaVersion -ne "1.1" -or [string]$metadata.CatalogVersion -ne "1.1.2.0" -or
+            if ([string]$metadata.CatalogSchemaVersion -ne "1.1" -or [string]$metadata.CatalogVersion -ne "1.1.3.0" -or
                 [int]$metadata.WindowsReleaseCount -lt 5 -or [int]$metadata.OfficeFamilyCount -lt 3 -or
                 [string]$metadata.FutureCompatibilityMode -ne "ReadOnlyManualReview" -or [bool]$metadata.AutomaticRuntimeUpdateCheck) {
                 Fail "Metadata vòng đời catalog/tương thích tương lai chưa đầy đủ."

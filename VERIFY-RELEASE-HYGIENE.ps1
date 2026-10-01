@@ -23,7 +23,7 @@ $securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
 $releaseDateVi = '08/09/2026'
 $releaseDateIso = '2026-09-29'
-$currentUpdateDateVi = '30/09/2026'
+$currentUpdateDateVi = '01/10/2026'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)
@@ -121,11 +121,12 @@ foreach ($document in @(
     @{ Name='LICH-SU-PHIEN-BAN.txt'; Text=$historyVi },
     @{ Name='QUICK-START-v5.0.md'; Text=$quickStart },
     @{ Name='RELEASE-HYGIENE-v5.0.md'; Text=$hygiene },
-    @{ Name='RELEASE-STATUS-v5.0.md'; Text=$releaseStatus },
-    @{ Name='docs\\index.html'; Text=$website }
+    @{ Name='RELEASE-STATUS-v5.0.md'; Text=$releaseStatus }
 )) {
     Assert-HygieneContains $document.Name $document.Text $currentUpdateDateVi
 }
+# The public page remains bound to the last released EXE until artifact QA is
+# complete. Its date and digests are updated only in the post-QA Pages commit.
 foreach ($document in @(
     @{ Name='RELEASE-NOTES-v5.0.md'; Text=$releaseNotes },
     @{ Name='QUICK-START-v5.0.md'; Text=$quickStart },
