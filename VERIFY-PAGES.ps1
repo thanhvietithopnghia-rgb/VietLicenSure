@@ -24,6 +24,16 @@ foreach ($page in $pages) {
     if ($html -notmatch '<meta\s+name=["'']description["'']') { $errors.Add("$($page.Name): missing description") }
     if ($html -notmatch '<link\s+rel=["'']canonical["'']') { $errors.Add("$($page.Name): missing canonical URL") }
     if ([regex]::Matches($html, '<h1\b', 'IgnoreCase').Count -ne 1) { $errors.Add("$($page.Name): expected exactly one h1") }
+    $navTargets = if ($html -match '<html\s+lang=["'']en["'']') {
+        @('en.html', 'gallery-en.html', 'documentation-en.html', 'security-privacy-en.html', 'author-en.html')
+    } else {
+        @('index.html', 'giao-dien.html', 'tai-lieu.html', 'bao-mat-rieng-tu.html', 'tac-gia.html')
+    }
+    foreach ($navTarget in $navTargets) {
+        if ($html -notmatch ('<nav\b[\s\S]*?href=["'']' + [regex]::Escape($navTarget) + '["''][\s\S]*?</nav>')) {
+            $errors.Add("$($page.Name): navigation is missing '$navTarget'")
+        }
+    }
     foreach ($imageTag in [regex]::Matches($html, '<img\b[^>]*>', 'IgnoreCase')) {
         if ($imageTag.Value -notmatch '\balt=["''][^"'']*["'']') { $errors.Add("$($page.Name): image missing alt") }
     }
@@ -80,8 +90,34 @@ foreach ($content in @($viHome, $enHome)) {
 if ($viHome -notmatch 'C\u00F3 trong b\u1EA3n c\u1EADp nh\u1EADt 01/10/2026') { $errors.Add('Vietnamese page does not mark Central Dashboard MVP as released') }
 if ($enHome -notmatch 'Included in the 1 October 2026 update') { $errors.Add('English page does not mark Central Dashboard MVP as released') }
 
-foreach ($requiredUrl in @('en.html', 'huong-dan.html', 'guide-en.html', 'troubleshooting.html', 'troubleshooting-en.html')) {
+foreach ($requiredUrl in @(
+    'en.html', 'huong-dan.html', 'guide-en.html', 'troubleshooting.html', 'troubleshooting-en.html',
+    'giao-dien.html', 'gallery-en.html', 'tai-lieu.html', 'documentation-en.html',
+    'bao-mat-rieng-tu.html', 'security-privacy-en.html', 'tac-gia.html', 'author-en.html'
+)) {
     if ($sitemap -notmatch [regex]::Escape($requiredUrl)) { $errors.Add("sitemap.xml: missing '$requiredUrl'") }
+}
+
+$viPolicy = Get-Content -LiteralPath (Join-Path $DocsRoot 'bao-mat-rieng-tu.html') -Raw -Encoding UTF8
+$enPolicy = Get-Content -LiteralPath (Join-Path $DocsRoot 'security-privacy-en.html') -Raw -Encoding UTF8
+$viAuthor = Get-Content -LiteralPath (Join-Path $DocsRoot 'tac-gia.html') -Raw -Encoding UTF8
+$enAuthor = Get-Content -LiteralPath (Join-Path $DocsRoot 'author-en.html') -Raw -Encoding UTF8
+foreach ($content in @($viHome, $enHome, $viPolicy, $enPolicy)) {
+    if ($content -notmatch 'Official Self-Signed') { $errors.Add('A trust-status page is missing Official Self-Signed') }
+}
+foreach ($content in @($viPolicy, $enPolicy)) {
+    if ($content -notmatch '(?i)telemetry') { $errors.Add('A privacy page is missing the telemetry disclosure') }
+    if ($content -notmatch '(?i)product key') { $errors.Add('A privacy page is missing the full-key protection disclosure') }
+    if ($content -match '(?i)ISO 27001 certified|SOC 2 certified|GDPR certified') { $errors.Add('A privacy page contains an unsupported certification claim') }
+}
+if ($viAuthor -notmatch 'Thanh Vi\u1EC7t' -or $enAuthor -notmatch 'Thanh Viet') { $errors.Add('Author pages are missing the public author identity') }
+
+$galleryAssets = @('assets/vietlicensure-v5-ui.png', 'assets/runtime-dashboard-windows11.png', 'assets/environment-safety-warning.png')
+foreach ($asset in $galleryAssets) {
+    $assetPath = Join-Path $DocsRoot $asset
+    if (-not (Test-Path -LiteralPath $assetPath) -or (Get-Item -LiteralPath $assetPath).Length -le 0) {
+        $errors.Add("Gallery asset is missing or empty: '$asset'")
+    }
 }
 
 if ($errors.Count -gt 0) {
