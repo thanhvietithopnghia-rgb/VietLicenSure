@@ -51,6 +51,7 @@ function Get-EnterpriseVerifierHttpStatus {
 
 $required = @(
     "Tool-Enterprise.ps1",
+    "Tool-LicenseCompliance.ps1",
     "Tool-EnterpriseHost.ps1",
     "Tool-EnterpriseAgent.ps1",
     "enterprise-license-manager.ps1",
@@ -229,15 +230,16 @@ try {
     $actualDashboardServerFields = @($dashboardSnapshot.Server.PSObject.Properties.Name | Sort-Object)
     Assert-Enterprise (@(Compare-Object ($expectedDashboardServerFields | Sort-Object) $actualDashboardServerFields).Count -eq 0) 'API Dashboard trả thêm trường Server ngoài allow-list.'
     $expectedDashboardClientFields = @(
-        'AgeMinutes','Alerts','ClientReference','ComputerName','LastSeenUtc','LicenseIdentityChangedAtUtc',
-        'OfficeChannel','OfficeEntitlementStatus','OfficeStatus','Presence','RemoteAddress',
-        'WindowsChannel','WindowsEntitlementStatus','WindowsStatus'
+        'AgeMinutes','Alerts','ClientReference','ComplianceStatus','ComputerName','LastSeenUtc','LicenseIdentityChangedAtUtc',
+        'OfficeAdvisor','OfficeChannel','OfficeEntitlementStatus','OfficeStatus','Presence','RemoteAddress','SoftwareSummary',
+        'WindowsAdvisor','WindowsChannel','WindowsEntitlementStatus','WindowsStatus'
     )
     $actualDashboardClientFields = @($dashboardSnapshot.Clients[0].PSObject.Properties.Name | Sort-Object)
     Assert-Enterprise (@(Compare-Object ($expectedDashboardClientFields | Sort-Object) $actualDashboardClientFields).Count -eq 0) 'API Dashboard trả thêm trường máy trạm ngoài allow-list.'
     Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].WindowsEntitlementStatus -eq 'NotVerified' -and
         [string]$dashboardSnapshot.Clients[0].OfficeEntitlementStatus -eq 'NotVerified') 'Dashboard trộn trạng thái kỹ thuật với quyền sở hữu.'
-    foreach ($forbiddenDashboardField in @('ClientId','WindowsLast5','OfficeLast5','LatestReportPath','AdminVerifier','AccessToken','TokenHash')) {
+    Assert-Enterprise ($null -ne $dashboardSnapshot.Compliance -and $null -ne $dashboardSnapshot.Compliance.Summary -and $null -ne $dashboardSnapshot.Summary.AssuranceScore) 'API Dashboard thiếu compliance summary.'
+    foreach ($forbiddenDashboardField in @('ClientId','WindowsLast5','OfficeLast5','LatestReportPath','AdminVerifier','AccessToken','TokenHash','StoredName','DocumentId')) {
         Assert-Enterprise ($dashboardApi.Content -notmatch ('"' + [regex]::Escape($forbiddenDashboardField) + '"')) "API Dashboard làm lộ trường cấm: $forbiddenDashboardField"
     }
     Assert-Enterprise ($dashboardApi.Content -notmatch [regex]::Escape([string]$client.ClientId)) 'API Dashboard làm lộ ClientId đầy đủ.'

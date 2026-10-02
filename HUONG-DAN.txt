@@ -403,6 +403,16 @@ Chức năng này gồm Quản lý cục bộ Windows/Office, Máy chủ và Má
 
 Chỉ quản trị viên có thẩm quyền nên cấu hình máy chủ, firewall, CIDR/IP hoặc tác vụ giấy phép từ xa.
 
+**Chứng từ, quyền sử dụng và License Advisor**
+
+1. Trong tab Máy chủ, chọn **Chứng từ và quyền sử dụng**.
+2. Tạo hồ sơ theo sản phẩm/phạm vi, mô hình giấy phép, metric, số lượng đã mua và thời hạn nếu có.
+3. Thêm chứng từ hoặc hóa đơn; VietLicenSure sao chép tệp vào kho quản trị cục bộ, đặt tên nội bộ ngẫu nhiên, giới hạn loại/kích thước và lưu SHA-256 để kiểm tra. Tệp không được tải lên cloud hoặc trả qua Dashboard web.
+4. Cấp quyền cho đúng máy hoặc người dùng rồi xem Purchased, Assigned, Installed và Available.
+5. Mở Central Dashboard để xem điểm License Assurance, trạng thái Compliant/Cần kiểm tra/Nghiêm trọng và khuyến nghị của License Advisor.
+
+License Advisor trình bày Phát hiện, Giải thích, Rủi ro, Khuyến nghị và Giới hạn. Kết quả dựa trên dữ liệu kỹ thuật cùng hồ sơ do quản trị viên nhập; không tự chứng minh quyền sở hữu, tính xác thực của hóa đơn hoặc tuân thủ pháp lý. Dashboard web chỉ đọc và không hiển thị đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret.
+
 ## Kiểm tra chuyên sâu
 
 Có hai chế độ chỉ đọc và đều cần quyền Administrator.

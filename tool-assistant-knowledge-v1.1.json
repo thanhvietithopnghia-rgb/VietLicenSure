@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.16.0",
-  "UpdatedAtUtc": "2026-10-01T00:00:00Z",
+  "KnowledgeVersion": "1.17.0",
+  "UpdatedAtUtc": "2026-10-02T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -52,8 +52,8 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 01/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
-      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 1 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 02/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 2 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
       "Id": "first-release",
@@ -582,6 +582,23 @@
       "Keywords": ["mo huong dan su dung chi tiet", "xem lich su phien ban", "hdsd html pdf", "tai lieu nhung trong tool", "phien ban va cap nhat o dau", "mo user guide", "open user guide", "where version and updates", "see version and updates"],
       "AnswerVi": "Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ Lịch sử phiên bản Việt–Anh được nhúng trong đúng bản VietLicenSure, nên có thể tra cứu Offline theo tên của mọi chức năng, quy trình hoặc số phiên bản. Phạm vi lịch sử chạy từ v1.0.0 đến v5.0 hiện tại; cụm 'bản hiện tại' hoặc 'mới nhất' được hiểu là v5.0. Với một phiên bản có hồ sơ, Trợ lý trả đúng toàn bộ mục thay đổi; khi hỏi so sánh hai phiên bản, Trợ lý đặt hai mục cạnh nhau và không suy diễn ngoài tài liệu. Nếu số phiên bản không tồn tại, ví dụ v2.0, Trợ lý nói rõ không có mốc được ghi nhận thay vì tự tạo câu trả lời. Mọi mục chức năng trong HDSD đều có thể được gọi theo tên. Để mở tài liệu gốc, vào Trung tâm báo cáo & bảo đảm (chức năng 10), chọn Mở hướng dẫn sử dụng để xem HDSD HTML/PDF, hoặc chọn Phiên bản và cập nhật để xem thông tin bản đang dùng và cập nhật.",
       "AnswerEn": "The Assistant indexes the complete Vietnamese/English user guides and Version histories bundled with VietLicenSure, so every documented function, workflow, and version can be looked up Offline. Recorded history runs from v1.0.0 through the current v5.0 release, and 'current' or 'latest' resolves to v5.0. For one recorded version it returns the complete entry; for a two-version comparison it places both entries side by side without inferring undocumented changes. If a requested number does not exist—for example v2.0—the Assistant states that no milestone is recorded instead of inventing an answer. Every named guide function is retrievable. To open the original documents, open Reports & Assurance (feature 10), choose Open user guide for the HTML/PDF guide, or choose Version and updates for the installed-version and update view."
+    },
+    {
+      "Id": "license-compliance-mvp",
+      "TitleVi": "License Advisor và đối chiếu quyền sử dụng",
+      "TitleEn": "License Advisor and entitlement reconciliation",
+      "Keywords": [
+        "license advisor",
+        "quan ly chung tu ban quyen",
+        "purchased assigned installed available",
+        "doi chieu so luong license",
+        "license assurance",
+        "compliance dashboard",
+        "evidence and entitlements",
+        "software asset management"
+      ],
+      "AnswerVi": "Trong chức năng 8, mở Chứng từ và quyền sử dụng để lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available, cảnh báo vượt số lượng hoặc hết hạn và tạo License Advisor theo chuỗi Phát hiện–Giải thích–Rủi ro–Khuyến nghị–Giới hạn. Central Dashboard chỉ đọc hiển thị điểm License Assurance và kết quả đã rút gọn; API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Đây là bằng chứng hỗ trợ quản trị/SAM, không tự xác minh tính thật của hóa đơn và không phải chứng nhận pháp lý về quyền sở hữu.",
+      "AnswerEn": "In feature 8, open Evidence and entitlements to store local entitlement records, invoice/evidence references, and endpoint or user assignments. VietLicenSure reconciles Purchased–Assigned–Installed–Available quantities, flags over-allocation or expiry, and produces a Finding–Explanation–Risk–Recommendation–Limitation License Advisor. The read-only Central Dashboard exposes License Assurance and a redacted result; its API returns no evidence paths, full keys, full ClientIds, or secrets. This supports administration/SAM review, does not authenticate an invoice, and is not legal certification of ownership."
     },
     {
       "Id": "report-formats",

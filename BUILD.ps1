@@ -169,6 +169,7 @@ $payloadFiles = @(
     'Tool-Assistant.ps1',
     'tool-assistant-knowledge-v1.1.json',
     'Tool-SoftwareInventory.ps1',
+    'Tool-LicenseCompliance.ps1',
     'software-license-catalog-v1.0.json',
     'software-license-catalog-v1.0.json.p7s',
     'software-license-online-update.ps1',
@@ -239,6 +240,7 @@ $integrityFiles = @(
     'Tool-Assistant.ps1',
     'tool-assistant-knowledge-v1.1.json',
     'Tool-SoftwareInventory.ps1',
+    'Tool-LicenseCompliance.ps1',
     'software-license-catalog-v1.0.json',
     'software-license-catalog-v1.0.json.p7s',
     'software-license-online-update.ps1',
@@ -334,6 +336,7 @@ $sourceFiles = @(
     'VERIFY-RESULT-CENTER.ps1'
     'VERIFY-EXTENSIONS.ps1'
     'VERIFY-ENTERPRISE.ps1'
+    'VERIFY-LICENSE-COMPLIANCE.ps1'
     'VERIFY-COMPATIBILITY.ps1'
     'VERIFY-MICROSOFT-CATALOG-SOURCES.ps1'
     'VERIFY-OFFLINE-I18N.ps1'
@@ -576,6 +579,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-RESULT-CENTER.ps1',
     'VERIFY-EXTENSIONS.ps1',
     'VERIFY-ENTERPRISE.ps1',
+    'VERIFY-LICENSE-COMPLIANCE.ps1',
     'VERIFY-COMPATIBILITY.ps1',
     'VERIFY-OFFLINE-I18N.ps1',
     'VERIFY-LOCALIZATION-COVERAGE.ps1',
@@ -1616,6 +1620,8 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-LOCALIZATION-COVERAGE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-ENTERPRISE.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-ENTERPRISE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+    & (Join-Path $sourceDirectory 'VERIFY-LICENSE-COMPLIANCE.ps1') -SourceDirectory $sourceDirectory
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-LICENSE-COMPLIANCE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-PERFORMANCE.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-PERFORMANCE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-APPLICATION-UPDATE.ps1') -SourceDirectory $sourceDirectory

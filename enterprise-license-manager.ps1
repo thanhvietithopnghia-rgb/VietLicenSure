@@ -886,6 +886,91 @@ function Invoke-ServerExport {
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
 }
 
+function Invoke-ServerCompliance {
+    try {
+        $selectedClient = Get-SelectedEnterpriseClient
+        $dialog = New-Object Windows.Forms.Form
+        $dialog.Text = Get-EnterpriseText 'enterprise.compliance.title'
+        $dialog.StartPosition = 'CenterParent'
+        $dialog.Size = New-Object Drawing.Size(980,700)
+        $dialog.MinimumSize = New-Object Drawing.Size(860,620)
+        $dialog.BackColor = [Drawing.Color]::White
+        $dialog.Font = $script:enterpriseUiFont
+
+        $list = New-Object Windows.Forms.ListView
+        $list.Location = New-Object Drawing.Point(14,14)
+        $list.Size = New-Object Drawing.Size(405,570)
+        $list.View = 'Details'; $list.FullRowSelect = $true; $list.GridLines = $true
+        foreach ($column in @(@((Get-EnterpriseText 'enterprise.compliance.product'),180),@((Get-EnterpriseText 'enterprise.compliance.scope'),75),@((Get-EnterpriseText 'enterprise.compliance.quantity'),75),@((Get-EnterpriseText 'enterpriseDashboard.ui.assigned'),70))) { [void]$list.Columns.Add($column[0],[int]$column[1]) }
+        $dialog.Controls.Add($list)
+
+        $labels = @(
+            @('enterprise.compliance.product',440,18),@('enterprise.compliance.vendor',440,58),@('enterprise.compliance.scope',440,98),
+            @('enterprise.compliance.model',690,98),@('enterprise.compliance.quantity',440,138),@('enterprise.compliance.metric',690,138),
+            @('enterprise.compliance.invoice',440,178),@('enterprise.compliance.purchaseDate',690,178),
+            @('enterprise.compliance.startDate',440,218),@('enterprise.compliance.expiryDate',690,218),@('enterprise.compliance.notes',440,258),
+            @('enterprise.compliance.documents',440,524)
+        )
+        foreach($entry in $labels){ $label=New-Object Windows.Forms.Label; $label.Text=Get-EnterpriseText $entry[0]; $label.Location=New-Object Drawing.Point([int]$entry[1],[int]$entry[2]); $label.AutoSize=$true; $dialog.Controls.Add($label) }
+        $product = New-EnterpriseTextBox 440 38 490
+        $vendor = New-EnterpriseTextBox 440 78 490
+        $scope = New-Object Windows.Forms.ComboBox; $scope.Location=New-Object Drawing.Point(440,118); $scope.Size=New-Object Drawing.Size(220,25); $scope.DropDownStyle='DropDownList'; [void]$scope.Items.AddRange([object[]]@('Windows','Office','Software')); $scope.SelectedIndex=0
+        $model = New-Object Windows.Forms.ComboBox; $model.Location=New-Object Drawing.Point(690,118); $model.Size=New-Object Drawing.Size(240,25); $model.DropDownStyle='DropDownList'; [void]$model.Items.AddRange([object[]]@('OEM','Retail','VolumeMAK','VolumeKMS','Perpetual','Subscription','Commercial','Free','OpenSource','Unknown')); $model.SelectedItem='Commercial'
+        $quantity = New-Object Windows.Forms.NumericUpDown; $quantity.Location=New-Object Drawing.Point(440,158); $quantity.Size=New-Object Drawing.Size(220,25); $quantity.Maximum=1000000
+        $metric = New-Object Windows.Forms.ComboBox; $metric.Location=New-Object Drawing.Point(690,158); $metric.Size=New-Object Drawing.Size(240,25); $metric.DropDownStyle='DropDownList'; [void]$metric.Items.AddRange([object[]]@('Device','User','Concurrent','Organization','Unknown')); $metric.SelectedItem='Device'
+        $invoice = New-EnterpriseTextBox 440 198 220
+        $purchaseDate = New-EnterpriseTextBox 690 198 240
+        $startDate = New-EnterpriseTextBox 440 238 220
+        $expiryDate = New-EnterpriseTextBox 690 238 240
+        $notes = New-EnterpriseTextBox 440 278 490 145 $true
+        $documents = New-Object Windows.Forms.ComboBox; $documents.Location=New-Object Drawing.Point(440,544); $documents.Size=New-Object Drawing.Size(300,25); $documents.DropDownStyle='DropDownList'
+        foreach($control in @($product,$vendor,$scope,$model,$quantity,$metric,$invoice,$purchaseDate,$startDate,$expiryDate,$notes,$documents)){ $dialog.Controls.Add($control) }
+
+        $state = [pscustomobject]@{ EntitlementId=''; Records=@() }
+        $refresh = {
+            $state.Records = @(Get-ToolLicenseEntitlements)
+            $list.Items.Clear()
+            foreach($record in $state.Records){
+                $assigned=[int](Get-ToolLicenseComplianceIntegerSum -Items @($record.Assignments) -PropertyName Quantity)
+                $item=New-Object Windows.Forms.ListViewItem([string]$record.ProductName)
+                [void]$item.SubItems.Add([string]$record.ProductScope); [void]$item.SubItems.Add([string]$record.PurchasedQuantity); [void]$item.SubItems.Add([string]$assigned)
+                $item.Tag=[string]$record.EntitlementId; [void]$list.Items.Add($item)
+                if([string]$state.EntitlementId -eq [string]$record.EntitlementId){ $item.Selected=$true; $item.Focused=$true }
+            }
+        }
+        $clear = { $state.EntitlementId=''; $product.Clear(); $vendor.Clear(); $scope.SelectedIndex=0; $model.SelectedItem='Commercial'; $metric.SelectedItem='Device'; $quantity.Value=0; $invoice.Clear(); $purchaseDate.Clear(); $startDate.Clear(); $expiryDate.Clear(); $notes.Clear(); $documents.Items.Clear(); $documents.Tag=[object[]]@() }
+        $list.Add_SelectedIndexChanged({
+            if($list.SelectedItems.Count -ne 1){ return }
+            $id=[string]$list.SelectedItems[0].Tag; $record=@($state.Records | Where-Object EntitlementId -eq $id | Select-Object -First 1)
+            if($record.Count -eq 0){ return }
+            $state.EntitlementId=$id; $product.Text=[string]$record[0].ProductName; $vendor.Text=[string]$record[0].Vendor; $scope.SelectedItem=[string]$record[0].ProductScope; $model.SelectedItem=[string]$record[0].LicenseModel; $metric.SelectedItem=[string]$record[0].Metric; $quantity.Value=[decimal]$record[0].PurchasedQuantity; $invoice.Text=[string]$record[0].InvoiceNumber; $purchaseDate.Text=[string]$record[0].PurchaseDate; $startDate.Text=[string]$record[0].ValidFrom; $expiryDate.Text=[string]$record[0].ExpiresAt; $notes.Text=[string]$record[0].Notes
+            $documents.Items.Clear(); $documents.Tag=[object[]]@($record[0].Documents); foreach($document in @($record[0].Documents)){ [void]$documents.Items.Add(([string]$document.OriginalName+' - '+[string]$document.Kind)) }; if($documents.Items.Count -gt 0){ $documents.SelectedIndex=0 }
+        })
+        $newButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.new') 440 438 100 32 { & $clear }
+        $saveButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.save') 550 438 100 32 {
+            try { $saved=Set-ToolLicenseEntitlement -EntitlementId $state.EntitlementId -ProductScope ([string]$scope.SelectedItem) -ProductName $product.Text -Vendor $vendor.Text -LicenseModel ([string]$model.SelectedItem) -Metric ([string]$metric.SelectedItem) -PurchasedQuantity ([int]$quantity.Value) -Provider $vendor.Text -InvoiceNumber $invoice.Text -PurchaseDate $purchaseDate.Text -ValidFrom $startDate.Text -ExpiresAt $expiryDate.Text -Notes $notes.Text; $state.EntitlementId=[string]$saved.EntitlementId; & $refresh; Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.compliance.saved' @($saved.ProductName)) $true } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $deleteButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.delete') 660 438 100 32 {
+            try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; [void](Remove-ToolLicenseEntitlement -EntitlementId $state.EntitlementId); & $clear; & $refresh } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $documentButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.addDocument') 770 438 160 32 {
+            try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; $picker=New-Object Windows.Forms.OpenFileDialog; $picker.Filter='Supported evidence|*.pdf;*.png;*.jpg;*.jpeg;*.txt;*.eml;*.msg;*.docx;*.xlsx'; if($picker.ShowDialog($dialog) -eq [Windows.Forms.DialogResult]::OK){ $doc=Add-ToolLicenseEntitlementDocument -EntitlementId $state.EntitlementId -Path $picker.FileName; Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.compliance.documentAdded' @($doc.OriginalName)) $true; & $refresh } } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $assignButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.assign') 440 480 235 34 {
+            try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; if(-not $selectedClient){ throw (Get-EnterpriseText 'enterprise.compliance.selectClient') }; [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $state.EntitlementId -ClientId ([string]$selectedClient.ClientId) -Quantity 1); & $refresh } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $unassignButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.unassign') 690 480 240 34 {
+            try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; if(-not $selectedClient){ throw (Get-EnterpriseText 'enterprise.compliance.selectClient') }; [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $state.EntitlementId -ClientId ([string]$selectedClient.ClientId) -Quantity 0); & $refresh } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $removeDocumentButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.removeDocument') 750 542 180 30 {
+            try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; if($documents.SelectedIndex -lt 0 -or @($documents.Tag).Count -le $documents.SelectedIndex){ throw (Get-EnterpriseText 'enterprise.compliance.selectDocument') }; $selectedDocument=@($documents.Tag)[$documents.SelectedIndex]; [void](Remove-ToolLicenseEntitlementDocument -EntitlementId $state.EntitlementId -DocumentId ([string]$selectedDocument.DocumentId)); Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.compliance.documentRemoved' @($selectedDocument.OriginalName)) $true; & $refresh } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        foreach($button in @($newButton,$saveButton,$deleteButton,$documentButton,$assignButton,$unassignButton,$removeDocumentButton)){ $dialog.Controls.Add($button) }
+        & $refresh
+        [void]$dialog.ShowDialog($form)
+    } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1200) }
+}
+
 function Invoke-ServerDashboard {
     $session = $null
     try {
@@ -1229,6 +1314,7 @@ function Update-EnterpriseLayout {
             $networkButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.firewall")
             $refreshButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.refresh")
             $exportButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.export")
+            $complianceButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.compliance")
             $dashboardButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.dashboard")
             $scanButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.scan")
             $createJobButton = Find-EnterpriseDirectControl $serverTab (Get-EnterpriseText "enterprise.server.createJob")
@@ -1298,10 +1384,12 @@ function Update-EnterpriseLayout {
             $clientHeaderY = $scanResultY + 49
             $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton)))
             $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton)))
+            $complianceWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $complianceButton)))
             $dashboardWidth = [Math]::Min(190, [Math]::Max(145, (Get-ToolUiButtonRequiredWidth -Button $dashboardButton)))
-            $clientCountWidth = [Math]::Max(80, ($contentWidth - $dashboardWidth - $refreshWidth - $exportWidth - (3 * $gap)))
+            $clientCountWidth = [Math]::Max(80, ($contentWidth - $dashboardWidth - $complianceWidth - $refreshWidth - $exportWidth - (4 * $gap)))
             Set-EnterpriseBounds $script:clientCountLabel $margin $clientHeaderY $clientCountWidth 30
-            Set-EnterpriseBounds $dashboardButton ($margin + $contentWidth - $dashboardWidth - $refreshWidth - $exportWidth - (2 * $gap)) $clientHeaderY $dashboardWidth 30
+            Set-EnterpriseBounds $dashboardButton ($margin + $contentWidth - $dashboardWidth - $complianceWidth - $refreshWidth - $exportWidth - (3 * $gap)) $clientHeaderY $dashboardWidth 30
+            Set-EnterpriseBounds $complianceButton ($margin + $contentWidth - $complianceWidth - $refreshWidth - $exportWidth - (2 * $gap)) $clientHeaderY $complianceWidth 30
             Set-EnterpriseBounds $refreshButton ($margin + $contentWidth - $refreshWidth - $exportWidth - $gap) $clientHeaderY $refreshWidth 30
             Set-EnterpriseBounds $exportButton ($margin + $contentWidth - $exportWidth) $clientHeaderY $exportWidth 30
 
@@ -1472,6 +1560,7 @@ $script:clientCountLabel = New-EnterpriseLabel (Get-EnterpriseText "enterprise.s
 $serverTab.Controls.Add($script:clientCountLabel)
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.refresh") 510 195 160 32 { Update-ServerClientList }))
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.export") 680 195 170 32 { Invoke-ServerExport }))
+$serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.compliance") 680 230 170 32 { Invoke-ServerCompliance }))
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.dashboard") 850 195 145 32 { Invoke-ServerDashboard }))
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.scanLabel") 18 242 250))
 $script:scanInputBox = New-EnterpriseTextBox 18 270 270
