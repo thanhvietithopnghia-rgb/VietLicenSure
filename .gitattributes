@@ -1,14 +1,16 @@
 *.json text eol=lf
 LICH-SU-PHIEN-BAN.txt text eol=crlf
+update-manifest-v1.json binary
 OFFICIAL-PROVENANCE-v1.json binary
+software-license-catalog-v1.0.json binary
+tool-assistant-knowledge-v1.1.json binary
 RELEASE-MANIFEST.json binary
 RELEASE-SHA256SUMS.txt binary
+RELEASE-NOTES-v4.9.md text eol=lf
+RELEASE-NOTES-v5.0.md binary
 RELEASE-STATUS-v5.0.md binary
 SBOM.cdx.json binary
 THONG-TIN-PHAT-HANH-v5.0.txt binary
-software-license-catalog-v1.0.json binary
-tool-assistant-knowledge-v1.1.json binary
-update-manifest-v1.json binary
 *.p7s binary
 *.cer binary
 *.ico binary

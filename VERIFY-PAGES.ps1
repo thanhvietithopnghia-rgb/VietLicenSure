@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
-$expectedHash = 'A0F6575CC420510E2156696CAC3D236651E41A81405447B4026DDFEA7DA16E4E'
-$expectedBuild = '5.0-production-20261001'
+$expectedHash = '654F60860DB1311F994EF9C611E7F71B3DC3E2B73A07546548F2C8FD898D0AD2'
+$expectedBuild = '5.0-production-20261002'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
@@ -24,6 +24,7 @@ foreach ($page in $pages) {
     if ($html -notmatch '<meta\s+name=["'']description["'']') { $errors.Add("$($page.Name): missing description") }
     if ($html -notmatch '<link\s+rel=["'']canonical["'']') { $errors.Add("$($page.Name): missing canonical URL") }
     if ([regex]::Matches($html, '<h1\b', 'IgnoreCase').Count -ne 1) { $errors.Add("$($page.Name): expected exactly one h1") }
+    if ($html -match '(?i)\bMVP\b|\bpilot\b|th\u1EED nghi\u1EC7m') { $errors.Add("$($page.Name): contains a public pilot/testing status label") }
     $navTargets = if ($html -match '<html\s+lang=["'']en["'']') {
         @('en.html', 'gallery-en.html', 'documentation-en.html', 'security-privacy-en.html', 'author-en.html')
     } else {
@@ -87,8 +88,8 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
-if ($viHome -notmatch 'C\u00F3 trong b\u1EA3n c\u1EADp nh\u1EADt 01/10/2026') { $errors.Add('Vietnamese page does not mark Central Dashboard MVP as released') }
-if ($enHome -notmatch 'Included in the 1 October 2026 update') { $errors.Add('English page does not mark Central Dashboard MVP as released') }
+if ($viHome -notmatch 'C\u00F3 trong b\u1EA3n c\u1EADp nh\u1EADt 02/10/2026') { $errors.Add('Vietnamese page does not mark the official Central Dashboard update') }
+if ($enHome -notmatch 'Included in the 2 October 2026 update') { $errors.Add('English page does not mark the official Central Dashboard update') }
 
 foreach ($requiredUrl in @(
     'en.html', 'huong-dan.html', 'guide-en.html', 'troubleshooting.html', 'troubleshooting-en.html',
@@ -108,6 +109,8 @@ foreach ($content in @($viHome, $enHome, $viPolicy, $enPolicy)) {
 foreach ($content in @($viPolicy, $enPolicy)) {
     if ($content -notmatch '(?i)telemetry') { $errors.Add('A privacy page is missing the telemetry disclosure') }
     if ($content -notmatch '(?i)product key') { $errors.Add('A privacy page is missing the full-key protection disclosure') }
+    if ($content -notmatch '(?i)Purchased\s*/\s*Assigned\s*/\s*Installed') { $errors.Add('A privacy page is missing the software entitlement reconciliation policy') }
+    if ($content -notmatch '(?i)License Advisor') { $errors.Add('A privacy page is missing the License Advisor boundary') }
     if ($content -match '(?i)ISO 27001 certified|SOC 2 certified|GDPR certified') { $errors.Add('A privacy page contains an unsupported certification claim') }
 }
 if ($viAuthor -notmatch 'Thanh Vi\u1EC7t' -or $enAuthor -notmatch 'Thanh Viet') { $errors.Add('Author pages are missing the public author identity') }
@@ -125,4 +128,4 @@ if ($errors.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Pages verification PASS: $($pages.Count) HTML pages; local links, anchors, IDs, CSP, UTF-8, release identity, bilingual roadmap, and sitemap." -ForegroundColor Green
+Write-Host "Pages verification PASS: $($pages.Count) HTML pages; local links, anchors, IDs, CSP, UTF-8, official release identity, software policy, full-border styling, and sitemap." -ForegroundColor Green

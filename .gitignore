@@ -1,1 +1,12 @@
-qa-pages-enterprise/
+# Signing secrets must never enter source control or release payloads.
+*.pfx
+*.p12
+*.pvk
+*.snk
+*.key
+signing-secrets/
+
+# Local build/test output.
+dist/
+dist-*/
+.vm-test-results/

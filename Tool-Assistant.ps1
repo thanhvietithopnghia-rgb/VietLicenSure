@@ -1,0 +1,2293 @@
+﻿$script:ToolAssistantSchemaVersion = "1.1"
+$script:ToolAssistantToolVersion = "5.0"
+$script:ToolAssistantMinimumKnowledgeVersion = [Version]"1.4.0"
+$script:ToolAssistantKnowledgeFileName = "tool-assistant-knowledge-v1.1.json"
+$script:ToolAssistantKnowledgeUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json"
+$script:ToolAssistantKnowledgeSignatureFileName = "tool-assistant-knowledge-v1.1.json.p7s"
+$script:ToolAssistantKnowledgeSignatureUrl = "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json.p7s"
+$script:ToolAssistantReleaseHistoryUrl = "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases"
+$script:ToolAssistantSignerCertificateSha256 = "A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9"
+$script:ToolAssistantMaxKnowledgeBytes = 2097152
+$script:ToolAssistantMaxSignatureBytes = 65536
+$script:ToolAssistantMaxReportBytes = 10485760
+$script:ToolAssistantDocumentCache = @{}
+$script:ToolAssistantAutoSyncAttempted = $false
+
+function Get-ToolAssistantMetadata {
+    return [pscustomobject][ordered]@{
+        SchemaVersion = $script:ToolAssistantSchemaVersion
+        ToolVersion = $script:ToolAssistantToolVersion
+        Scope = "VietLicenSure"
+        Engine = "LocalKnowledge"
+        PaidApiRequired = $false
+        CodexRequired = $false
+        DefaultNetworkMode = "Offline"
+        OnlineTransfer = "DownloadOnlySignedKnowledgePackage"
+        ReportUpload = $false
+        QuestionUpload = $false
+        AutomaticRemediation = $false
+        PortableEveryMachine = $true
+        CentralServerRequired = $false
+        KnowledgeStorage = "BundledAndSignedPerUserLocalCache"
+        ReportContextSource = "CurrentDeviceLocalReportOnly"
+        CoverageMode = "KnowledgePlusBundledDocumentation"
+        CompleteBundledGuideIndexed = $true
+        CompleteVersionHistoryIndexed = $true
+        CurrentTechnicalVersionIndexed = $true
+        CompleteFeatureGuideCoverage = $true
+        MainFeatureCount = 10
+        RemediationWorkflowCount = 4
+        AssuranceActionCount = 8
+        BundledDocumentFiles = @('HUONG-DAN.txt','USER-GUIDE-en-US.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md')
+        VersionComparisonUsesRecordedHistoryOnly = $true
+        ContextAwareFollowUp = $true
+        ContextualOutOfScope = $true
+        KnowledgeCompatibilityEnforced = $true
+        KnowledgeUpdateVerification = "DetachedCmsSha256PinnedCertificate"
+        KnowledgeRollbackProtection = $true
+        UnboundedSelfTraining = $false
+        ExternalTopicLearning = $false
+        KnowledgeFileName = $script:ToolAssistantKnowledgeFileName
+        KnowledgeSignatureFileName = $script:ToolAssistantKnowledgeSignatureFileName
+    }
+}
+
+function ConvertTo-ToolAssistantSearchKey {
+    param([AllowNull()][string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace([string]$Value)) { return "" }
+    $decomposed = ([string]$Value).Normalize([Text.NormalizationForm]::FormD)
+    $builder = New-Object Text.StringBuilder
+    foreach ($character in $decomposed.ToCharArray()) {
+        if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($character) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
+            [void]$builder.Append($character)
+        }
+    }
+    $plain = $builder.ToString().Replace([char]0x0111, 'd').Replace([char]0x0110, 'D').ToLowerInvariant()
+    $key = ([regex]::Replace($plain, '[^a-z0-9]+', ' ')).Trim()
+    $replacements = [ordered]@{
+        'k'='khong'; 'ko'='khong'; 'kh'='khong'; 'dc'='duoc'; 'dk'='duoc'
+        'tl'='tra loi'; 'pm'='phan mem'; 'app'='phan mem'; 'bc'='bao cao'; 'csdl'='co so du lieu'
+        'pb'='phien ban'; 'cn'='chuc nang'; 'hd'='huong dan'; 'sd'='su dung'
+        'hdsd'='huong dan su dung'; 'pfd'='pdf'; 'ofline'='offline'; 'offine'='offline'
+        'fixx'='sua'; 'fix'='sua'; 'kt'='kiem tra'; 'ktra'='kiem tra'; 'kieu'='kieu'
+        'repo'='repository'; 'ngun'='nguon'; 'khaio'='khai o'; 'srouce'='source'
+        'phii'='phi'; 'mnih'='minh'; 'unverifed'='unverified'; 'suspicous'='suspicious'
+        'crak'='crack'; 'frist'='first'; 'relase'='release'; 'relased'='released'
+    }
+    $tokens = @($key -split ' ' | Where-Object { $_ })
+    $expanded = New-Object System.Collections.Generic.List[string]
+    foreach ($token in $tokens) {
+        if ($replacements.Contains($token)) {
+            foreach ($replacementToken in ([string]$replacements[$token] -split ' ')) { [void]$expanded.Add($replacementToken) }
+        } else { [void]$expanded.Add($token) }
+    }
+    return ($expanded -join ' ').Trim()
+}
+
+function Get-ToolAssistantCacheDirectory {
+    $localAppData = [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)
+    if ([string]::IsNullOrWhiteSpace($localAppData)) { $localAppData = [string]$env:LOCALAPPDATA }
+    if ([string]::IsNullOrWhiteSpace($localAppData)) { return "" }
+    return Join-Path $localAppData "ThanhViet-VietLicenSure\assistant"
+}
+
+function Get-ToolAssistantCachePath {
+    $directory = Get-ToolAssistantCacheDirectory
+    if ([string]::IsNullOrWhiteSpace($directory)) { return "" }
+    return Join-Path $directory $script:ToolAssistantKnowledgeFileName
+}
+
+function Get-ToolAssistantCacheSignaturePath {
+    $directory = Get-ToolAssistantCacheDirectory
+    if ([string]::IsNullOrWhiteSpace($directory)) { return "" }
+    return Join-Path $directory $script:ToolAssistantKnowledgeSignatureFileName
+}
+
+function Test-ToolAssistantKnowledge {
+    param([AllowNull()][object]$Knowledge)
+
+    if ($null -eq $Knowledge) { return $false }
+    if ([string]$Knowledge.SchemaVersion -ne $script:ToolAssistantSchemaVersion) { return $false }
+    try {
+        if ([Version]([string]$Knowledge.KnowledgeVersion) -lt $script:ToolAssistantMinimumKnowledgeVersion) { return $false }
+    } catch { return $false }
+    if ([string]$Knowledge.Scope -ne "VietLicenSure") { return $false }
+    try {
+        $toolVersion = [Version]$script:ToolAssistantToolVersion
+        $minimumToolVersion = [Version]([string]$Knowledge.ToolVersionMin)
+        $maximumToolVersion = [Version]([string]$Knowledge.ToolVersionMax)
+        $releasedWithToolVersion = [Version]([string]$Knowledge.ReleasedWithToolVersion)
+        if ($toolVersion -lt $minimumToolVersion -or $toolVersion -gt $maximumToolVersion) { return $false }
+        if ($releasedWithToolVersion -lt $minimumToolVersion -or $releasedWithToolVersion -gt $maximumToolVersion) { return $false }
+    } catch { return $false }
+    $updatedAt = [DateTime]::MinValue
+    if (-not [DateTime]::TryParse(
+        [string]$Knowledge.UpdatedAtUtc,
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind,
+        [ref]$updatedAt)) { return $false }
+    if ($updatedAt.ToUniversalTime() -gt [DateTime]::UtcNow.AddDays(2)) { return $false }
+    $entries = @($Knowledge.Entries)
+    if ($entries.Count -lt 20 -or $entries.Count -gt 500) { return $false }
+    $seen = @{}
+    foreach ($entry in $entries) {
+        $id = [string]$entry.Id
+        if ([string]::IsNullOrWhiteSpace($id) -or $id -notmatch '^[a-z0-9-]{2,64}$' -or $seen.ContainsKey($id)) { return $false }
+        if ([string]::IsNullOrWhiteSpace([string]$entry.TitleVi) -or [string]::IsNullOrWhiteSpace([string]$entry.TitleEn)) { return $false }
+        if ([string]::IsNullOrWhiteSpace([string]$entry.AnswerVi) -or [string]::IsNullOrWhiteSpace([string]$entry.AnswerEn)) { return $false }
+        if ([string]$entry.TitleVi -match '[\x00-\x08\x0B\x0C\x0E-\x1F]' -or [string]$entry.TitleEn -match '[\x00-\x08\x0B\x0C\x0E-\x1F]') { return $false }
+        if ([string]$entry.AnswerVi -match '[\x00-\x08\x0B\x0C\x0E-\x1F]' -or [string]$entry.AnswerEn -match '[\x00-\x08\x0B\x0C\x0E-\x1F]') { return $false }
+        if (([string]$entry.AnswerVi).Length -gt 6000 -or ([string]$entry.AnswerEn).Length -gt 6000) { return $false }
+        if (@($entry.Keywords).Count -lt 2 -or @($entry.Keywords).Count -gt 80) { return $false }
+        if ([string]$entry.AnswerVi -match '(?i)<script|powershell\s+-|cmd\.exe|javascript:') { return $false }
+        if ([string]$entry.AnswerEn -match '(?i)<script|powershell\s+-|cmd\.exe|javascript:') { return $false }
+        foreach ($keyword in @($entry.Keywords)) {
+            if ([string]::IsNullOrWhiteSpace([string]$keyword) -or ([string]$keyword).Length -gt 160 -or [string]$keyword -match '[\x00-\x1F]') { return $false }
+        }
+        $seen[$id] = $true
+    }
+    return $true
+}
+
+function Get-ToolAssistantSha256Hex {
+    param([Parameter(Mandatory = $true)][byte[]]$Bytes)
+
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($algorithm.ComputeHash($Bytes))).Replace('-', '') }
+    finally { $algorithm.Dispose() }
+}
+
+function Test-ToolAssistantKnowledgeSignature {
+    param(
+        [Parameter(Mandatory = $true)][byte[]]$ContentBytes,
+        [Parameter(Mandatory = $true)][byte[]]$SignatureBytes
+    )
+
+    try {
+        if ($ContentBytes.Length -le 16 -or $ContentBytes.Length -gt $script:ToolAssistantMaxKnowledgeBytes) { return $false }
+        if ($SignatureBytes.Length -le 64 -or $SignatureBytes.Length -gt $script:ToolAssistantMaxSignatureBytes) { return $false }
+        Add-Type -AssemblyName System.Security -ErrorAction Stop
+        $contentInfo = New-Object Security.Cryptography.Pkcs.ContentInfo -ArgumentList (,$ContentBytes)
+        $signedCms = New-Object Security.Cryptography.Pkcs.SignedCms -ArgumentList @($contentInfo, $true)
+        $signedCms.Decode($SignatureBytes)
+        if ($signedCms.SignerInfos.Count -ne 1) { return $false }
+        $signerInfo = $signedCms.SignerInfos[0]
+        if ($null -eq $signerInfo.Certificate -or $signerInfo.DigestAlgorithm.Value -ne '2.16.840.1.101.3.4.2.1') { return $false }
+        if ($signerInfo.Certificate.PublicKey.Oid.Value -ne '1.2.840.113549.1.1.1') { return $false }
+        if ((Get-ToolAssistantSha256Hex -Bytes $signerInfo.Certificate.RawData) -ne $script:ToolAssistantSignerCertificateSha256) { return $false }
+        $signedCms.CheckSignature($true)
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function ConvertFrom-ToolAssistantKnowledgeBytes {
+    param([Parameter(Mandatory = $true)][byte[]]$Bytes)
+
+    try {
+        if ($Bytes.Length -le 16 -or $Bytes.Length -gt $script:ToolAssistantMaxKnowledgeBytes) { return $null }
+        $utf8 = New-Object Text.UTF8Encoding -ArgumentList @($false, $true)
+        $json = $utf8.GetString($Bytes)
+        if ($json.Length -gt 0 -and $json[0] -eq [char]0xFEFF) { $json = $json.Substring(1) }
+        $knowledge = $json | ConvertFrom-Json -ErrorAction Stop
+        if (-not (Test-ToolAssistantKnowledge -Knowledge $knowledge)) { return $null }
+        return $knowledge
+    } catch {
+        return $null
+    }
+}
+
+function Read-ToolAssistantKnowledgeFile {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [string]$SignaturePath = '',
+        [switch]$RequireSignature
+    )
+
+    try {
+        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+        $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+        if ($item.Length -le 16 -or $item.Length -gt $script:ToolAssistantMaxKnowledgeBytes) { return $null }
+        $bytes = [IO.File]::ReadAllBytes($item.FullName)
+        if ($RequireSignature) {
+            if ([string]::IsNullOrWhiteSpace($SignaturePath) -or -not (Test-Path -LiteralPath $SignaturePath -PathType Leaf)) { return $null }
+            $signatureItem = Get-Item -LiteralPath $SignaturePath -Force -ErrorAction Stop
+            if ($signatureItem.Length -le 64 -or $signatureItem.Length -gt $script:ToolAssistantMaxSignatureBytes) { return $null }
+            $signatureBytes = [IO.File]::ReadAllBytes($signatureItem.FullName)
+            if (-not (Test-ToolAssistantKnowledgeSignature -ContentBytes $bytes -SignatureBytes $signatureBytes)) { return $null }
+        }
+        return ConvertFrom-ToolAssistantKnowledgeBytes -Bytes $bytes
+    } catch {
+        return $null
+    }
+}
+
+function Get-ToolAssistantKnowledge {
+    $best = Read-ToolAssistantKnowledgeFile -Path (Join-Path $PSScriptRoot $script:ToolAssistantKnowledgeFileName)
+    $bestVersion = if ($best) { [Version]([string]$best.KnowledgeVersion) } else { [Version]'0.0' }
+    $cachePath = Get-ToolAssistantCachePath
+    $signaturePath = Get-ToolAssistantCacheSignaturePath
+    if (-not [string]::IsNullOrWhiteSpace($cachePath) -and -not [string]::IsNullOrWhiteSpace($signaturePath)) {
+        $cachePairs = @(
+            [pscustomobject]@{ Knowledge=$cachePath; Signature=$signaturePath },
+            [pscustomobject]@{ Knowledge=($cachePath + '.previous'); Signature=($signaturePath + '.previous') }
+        )
+        foreach ($pair in $cachePairs) {
+            $cached = Read-ToolAssistantKnowledgeFile -Path $pair.Knowledge -SignaturePath $pair.Signature -RequireSignature
+            if ($cached -and [Version]([string]$cached.KnowledgeVersion) -gt $bestVersion) {
+                $best = $cached
+                $bestVersion = [Version]([string]$cached.KnowledgeVersion)
+            }
+        }
+    }
+    return $best
+}
+
+function Get-ToolAssistantSyncText {
+    param(
+        [Parameter(Mandatory = $true)][string]$Key,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    $english = [bool]($Culture -eq "en-US")
+    switch ($Key) {
+        "Offline" { if ($english) { return "Assistant is Offline; local knowledge remains available." }; return "Trợ lý đang Offline; bộ tri thức cục bộ vẫn sẵn sàng." }
+        "InvalidAddress" { if ($english) { return "The synchronization address is invalid." }; return "Địa chỉ đồng bộ không hợp lệ." }
+        "TooLarge" { if ($english) { return "The knowledge file exceeds the safety limit." }; return "Tệp tri thức vượt giới hạn an toàn." }
+        "InvalidKnowledge" { if ($english) { return "The knowledge file has an invalid structure or unsafe content." }; return "Tệp tri thức không đúng cấu trúc hoặc chứa nội dung không an toàn." }
+        "InvalidSignature" { if ($english) { return "The knowledge package signature is invalid or not from the pinned publisher." }; return "Chữ ký gói tri thức không hợp lệ hoặc không đúng nhà phát hành đã khóa." }
+        "Downgrade" { if ($english) { return "An older knowledge package was rejected." }; return "Đã từ chối gói tri thức cũ hơn để chống hạ phiên bản." }
+        "Current" { if ($english) { return "Assistant already has the latest signed compatible knowledge." }; return "Trợ lý đang dùng bộ tri thức tương thích có chữ ký mới nhất." }
+        "NoDataFolder" { if ($english) { return "The user data folder could not be determined." }; return "Không xác định được thư mục dữ liệu người dùng." }
+        "Updated" { if ($english) { return "Assistant knowledge has been securely synchronized." }; return "Đã đồng bộ an toàn bộ tri thức Trợ lý." }
+        "Failed" { if ($english) { return "Synchronization failed; Assistant continues with local knowledge." }; return "Không đồng bộ được; Trợ lý tiếp tục dùng bộ tri thức cục bộ." }
+        default { return $Key }
+    }
+}
+
+function Test-ToolAssistantFixedOnlineAddress {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('Knowledge','Signature')][string]$Kind,
+        [AllowNull()][string]$Address = ''
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Address)) {
+        $Address = if ($Kind -eq 'Knowledge') { $script:ToolAssistantKnowledgeUrl } else { $script:ToolAssistantKnowledgeSignatureUrl }
+    }
+    $expectedPath = if ($Kind -eq 'Knowledge') {
+        '/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json'
+    } else {
+        '/thanhvietithopnghia-rgb/VietLicenSure/main/tool-assistant-knowledge-v1.1.json.p7s'
+    }
+    try { $uri = New-Object Uri($Address) } catch { return $false }
+    return [bool](
+        $uri.IsAbsoluteUri -and $uri.Scheme -ceq 'https' -and
+        $uri.DnsSafeHost -ceq 'raw.githubusercontent.com' -and
+        $uri.AbsolutePath -ceq $expectedPath -and $uri.IsDefaultPort -and
+        [string]::IsNullOrWhiteSpace($uri.UserInfo) -and
+        [string]::IsNullOrWhiteSpace($uri.Query) -and
+        [string]::IsNullOrWhiteSpace($uri.Fragment)
+    )
+}
+
+function Read-ToolAssistantFixedOnlineBytes {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('Knowledge','Signature')][string]$Kind,
+        [Parameter(Mandatory = $true)][int]$MaximumBytes
+    )
+
+    $address = if ($Kind -eq 'Knowledge') { $script:ToolAssistantKnowledgeUrl } else { $script:ToolAssistantKnowledgeSignatureUrl }
+    if (-not (Test-ToolAssistantFixedOnlineAddress -Kind $Kind -Address $address)) { throw 'InvalidAddress' }
+    $uri = New-Object Uri($address)
+    $request = [Net.HttpWebRequest]::Create($uri)
+    $request.Method = 'GET'
+    $request.Timeout = 8000
+    $request.ReadWriteTimeout = 8000
+    $request.AllowAutoRedirect = $false
+    $request.UserAgent = "ThanhViet-VietLicenSure/$($script:ToolAssistantToolVersion)"
+    $response = $request.GetResponse()
+    try {
+        if ([int]$response.StatusCode -ne 200) { throw "HTTP $([int]$response.StatusCode)" }
+        if ($response.ContentLength -gt $MaximumBytes) { throw 'TooLarge' }
+        $input = $response.GetResponseStream()
+        $memory = New-Object IO.MemoryStream
+        try {
+            $buffer = New-Object byte[] 8192
+            while (($read = $input.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                if (($memory.Length + $read) -gt $MaximumBytes) { throw 'TooLarge' }
+                $memory.Write($buffer, 0, $read)
+            }
+            return $memory.ToArray()
+        } finally {
+            $memory.Dispose()
+            $input.Dispose()
+        }
+    } finally {
+        $response.Dispose()
+    }
+}
+
+function Save-ToolAssistantSignedKnowledgeCache {
+    param(
+        [Parameter(Mandatory = $true)][byte[]]$KnowledgeBytes,
+        [Parameter(Mandatory = $true)][byte[]]$SignatureBytes
+    )
+
+    $directory = Get-ToolAssistantCacheDirectory
+    if ([string]::IsNullOrWhiteSpace($directory)) { throw 'NoDataFolder' }
+    if (-not (Test-Path -LiteralPath $directory -PathType Container)) { New-Item -ItemType Directory -Path $directory -Force | Out-Null }
+    $cachePath = Get-ToolAssistantCachePath
+    $signaturePath = Get-ToolAssistantCacheSignaturePath
+    $temporaryId = [Guid]::NewGuid().ToString('N')
+    $temporaryKnowledge = Join-Path $directory ('.assistant-knowledge-' + $temporaryId + '.tmp')
+    $temporarySignature = Join-Path $directory ('.assistant-signature-' + $temporaryId + '.tmp')
+    $previousKnowledge = $cachePath + '.previous'
+    $previousSignature = $signaturePath + '.previous'
+    try {
+        [IO.File]::WriteAllBytes($temporaryKnowledge, $KnowledgeBytes)
+        [IO.File]::WriteAllBytes($temporarySignature, $SignatureBytes)
+        if (-not (Read-ToolAssistantKnowledgeFile -Path $temporaryKnowledge -SignaturePath $temporarySignature -RequireSignature)) {
+            throw 'InvalidSignature'
+        }
+        if (Read-ToolAssistantKnowledgeFile -Path $cachePath -SignaturePath $signaturePath -RequireSignature) {
+            Copy-Item -LiteralPath $cachePath -Destination $previousKnowledge -Force
+            Copy-Item -LiteralPath $signaturePath -Destination $previousSignature -Force
+        }
+        Move-Item -LiteralPath $temporarySignature -Destination $signaturePath -Force
+        Move-Item -LiteralPath $temporaryKnowledge -Destination $cachePath -Force
+        if (-not (Read-ToolAssistantKnowledgeFile -Path $cachePath -SignaturePath $signaturePath -RequireSignature)) {
+            throw 'InvalidSignature'
+        }
+    } catch {
+        if (Read-ToolAssistantKnowledgeFile -Path $previousKnowledge -SignaturePath $previousSignature -RequireSignature) {
+            Copy-Item -LiteralPath $previousKnowledge -Destination $cachePath -Force
+            Copy-Item -LiteralPath $previousSignature -Destination $signaturePath -Force
+        }
+        throw
+    } finally {
+        foreach ($temporaryPath in @($temporaryKnowledge, $temporarySignature)) {
+            if (Test-Path -LiteralPath $temporaryPath -PathType Leaf) { Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue }
+        }
+    }
+}
+
+function Sync-ToolAssistantKnowledge {
+    param(
+        [Parameter(Mandatory = $true)][bool]$OnlineMode,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    if (-not $OnlineMode) {
+        return [pscustomobject]@{ Success=$false; Updated=$false; Code="Offline"; Message=(Get-ToolAssistantSyncText -Key "Offline" -Culture $Culture) }
+    }
+    try {
+        $knowledgeBytes = Read-ToolAssistantFixedOnlineBytes -Kind Knowledge -MaximumBytes $script:ToolAssistantMaxKnowledgeBytes
+        $signatureBytes = Read-ToolAssistantFixedOnlineBytes -Kind Signature -MaximumBytes $script:ToolAssistantMaxSignatureBytes
+        if (-not (Test-ToolAssistantKnowledgeSignature -ContentBytes $knowledgeBytes -SignatureBytes $signatureBytes)) {
+            throw (Get-ToolAssistantSyncText -Key 'InvalidSignature' -Culture $Culture)
+        }
+        $knowledge = ConvertFrom-ToolAssistantKnowledgeBytes -Bytes $knowledgeBytes
+        if (-not $knowledge) { throw (Get-ToolAssistantSyncText -Key 'InvalidKnowledge' -Culture $Culture) }
+        $current = Get-ToolAssistantKnowledge
+        $remoteVersion = [Version]([string]$knowledge.KnowledgeVersion)
+        $currentVersion = if ($current) { [Version]([string]$current.KnowledgeVersion) } else { [Version]'0.0' }
+        if ($remoteVersion -lt $currentVersion) { throw (Get-ToolAssistantSyncText -Key 'Downgrade' -Culture $Culture) }
+        if ($remoteVersion -eq $currentVersion) {
+            return [pscustomobject]@{ Success=$true; Updated=$false; Code='Current'; KnowledgeVersion=$remoteVersion.ToString(); Message=(Get-ToolAssistantSyncText -Key 'Current' -Culture $Culture) }
+        }
+        Save-ToolAssistantSignedKnowledgeCache -KnowledgeBytes $knowledgeBytes -SignatureBytes $signatureBytes
+        return [pscustomobject]@{ Success=$true; Updated=$true; Code='Updated'; KnowledgeVersion=$remoteVersion.ToString(); Message=(Get-ToolAssistantSyncText -Key 'Updated' -Culture $Culture) }
+    } catch {
+        $failure = Get-ToolAssistantSyncText -Key "Failed" -Culture $Culture
+        return [pscustomobject]@{ Success=$false; Updated=$false; Code="SyncFailed"; Message="$failure $($_.Exception.Message)" }
+    }
+}
+
+function Get-ToolAssistantTokenDistance {
+    param([string]$Left, [string]$Right)
+
+    if ($Left -eq $Right) { return 0 }
+    if ([string]::IsNullOrEmpty($Left)) { return $Right.Length }
+    if ([string]::IsNullOrEmpty($Right)) { return $Left.Length }
+    if ([Math]::Abs($Left.Length - $Right.Length) -gt 1) { return 99 }
+    $previous = New-Object 'int[]' ($Right.Length + 1)
+    $current = New-Object 'int[]' ($Right.Length + 1)
+    for ($j = 0; $j -le $Right.Length; $j++) { $previous[$j] = $j }
+    for ($i = 1; $i -le $Left.Length; $i++) {
+        $current[0] = $i
+        for ($j = 1; $j -le $Right.Length; $j++) {
+            $cost = if ($Left[$i - 1] -eq $Right[$j - 1]) { 0 } else { 1 }
+            $current[$j] = [Math]::Min([Math]::Min(($current[$j - 1] + 1), ($previous[$j] + 1)), ($previous[$j - 1] + $cost))
+        }
+        $swap = $previous; $previous = $current; $current = $swap
+    }
+    return $previous[$Right.Length]
+}
+
+function Test-ToolAssistantFollowUpQuery {
+    param([Parameter(Mandatory = $true)][string]$QueryKey)
+
+    if ([string]::IsNullOrWhiteSpace($QueryKey)) { return $false }
+    if ($QueryKey -match '^(?:con|the con|vay|vay con|no|cai nay|cai do|muc nay|muc do|chuc nang nay|chuc nang do|truong hop nay|truong hop do)\b') { return $true }
+    if ($QueryKey -match '^(?:trang thai|loi|ma loi|chuc nang|muc|nut|ket qua|bao cao|thong bao) (?:nay|do)\b') { return $true }
+    if ($QueryKey -match '^(?:cach dung no|su dung no|lam sao dung|noi ro hon|chi tiet hon|giai thich them|tai sao vay|sao nua|tiep theo)\b') { return $true }
+    if ($QueryKey -match '^(?:o dau|link dau|link nao|where|where exactly)$') { return $true }
+    $tokens = @($QueryKey -split ' ' | Where-Object { $_ })
+    return [bool]($tokens.Count -le 4 -and $QueryKey -match '\b(?:no|nay|do|them|tiep|con)\b')
+}
+
+function Expand-ToolAssistantContextQuery {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [AllowNull()][string]$PreviousQuestion
+    )
+
+    if ([string]::IsNullOrWhiteSpace([string]$PreviousQuestion) -or -not (Test-ToolAssistantFollowUpQuery -QueryKey $QueryKey)) {
+        return $QueryKey
+    }
+    $previousKey = ConvertTo-ToolAssistantSearchKey -Value $PreviousQuestion
+    if ([string]::IsNullOrWhiteSpace($previousKey)) { return $QueryKey }
+    return ($QueryKey + ' ' + $previousKey).Trim()
+}
+
+function Test-ToolAssistantRelatedQuery {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [AllowNull()][string]$PreviousQuestion
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace((Get-ToolAssistantPriorityEntryId -QueryKey $QueryKey))) { return $true }
+    if ($QueryKey -match '\b(?:tool|cong cu|tro ly|dashboard|bao cao|quet|scan|windows|office|phan mem|software|ung dung|may chu|may tram|server|client|pdf|json|html|xml|docx|kms|activator|crack|crackconfirmed|mas|pmas|kmspico|repack|backup|sao luu|khoi phuc|khac phuc|remediation|cap nhat|loi|uac|administrator|catalog|catalogue|oem|oa3|oa3xoriginalproductkey|firmware|ban quyen|giay phep|license|mien phi|tra phi|gia tool|freeware|free|paid|open source|nguon mo|ma nguon|source code|repository|github|kich hoat|nghi van|suspicious|dau hieu|evidence|tampering|artifact|third party|smartscreen|defender|sha256|hash|chu ky|chung chi|certificate|signing|signature|release|chinh sach|policy|dieu khoan|quy dinh|plugin|timeline|offline|online|dry run|forensic|giao dien|cai dat|chuc nang|tinh nang|tac vu|function|functions|feature|features|capability|capabilities|nut|muc|tri thuc|kien thuc|hoc hoi|dung luong exe|dung luong file exe|cache tri thuc|goi tri thuc|confidence|tin cay|chua xac dinh|chua xac minh|unknown|undetermined|unverified|v1 0|first version|first release|winrar|mathtype)\b') { return $true }
+    if ($QueryKey -match '^(?:chua du bang chung|thieu bang chung|du bang chung chua)$') { return $true }
+    if ($QueryKey -match '^(?:phien ban|version|do ai phat trien|ai phat trien|tac gia|ngay phat hanh|ngay build|tom tat|noi dung chinh|muc dich|nguyen tac|cong nghe|yeu cau he thong|cach chay|cach cai|tai o dau)\b') { return $true }
+    if (-not [string]::IsNullOrWhiteSpace([string]$PreviousQuestion) -and (Test-ToolAssistantFollowUpQuery -QueryKey $QueryKey)) {
+        $previousKey = ConvertTo-ToolAssistantSearchKey -Value $PreviousQuestion
+        return Test-ToolAssistantRelatedQuery -QueryKey $previousKey -PreviousQuestion $null
+    }
+    return $false
+}
+
+function ConvertTo-ToolAssistantPlainDocumentLine {
+    param([AllowNull()][string]$Line)
+
+    $text = ([string]$Line).Trim()
+    if ([string]::IsNullOrWhiteSpace($text) -or $text -match '^```') { return '' }
+    $text = $text -replace '!\[[^\]]*\]\([^\)]*\)', ''
+    $text = $text -replace '\[([^\]]+)\]\([^\)]+\)', '$1'
+    $text = $text -replace '\*\*([^\*]+)\*\*', '$1'
+    $text = $text -replace '`([^`]+)`', '$1'
+    $text = $text -replace '^[-*]\s+', '- '
+    return $text.Trim()
+}
+
+function Get-ToolAssistantDocumentDefinitions {
+    param([ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN')
+
+    if ($Culture -eq 'en-US') {
+        return @(
+            [pscustomobject]@{ Kind='Guide'; FileName='USER-GUIDE-en-US.md'; Label='User guide' },
+            [pscustomobject]@{ Kind='History'; FileName='VERSION-HISTORY-en-US.md'; Label='Version history' }
+        )
+    }
+    return @(
+        [pscustomobject]@{ Kind='Guide'; FileName='HUONG-DAN.txt'; Label='Hướng dẫn sử dụng' },
+        [pscustomobject]@{ Kind='History'; FileName='LICH-SU-PHIEN-BAN.txt'; Label='Lịch sử phiên bản' }
+    )
+}
+
+function ConvertTo-ToolAssistantVersionKey {
+    param([AllowNull()][string]$Value)
+
+    $text = ([string]$Value).Trim().ToLowerInvariant()
+    $text = $text -replace '^v\s*', ''
+    $text = $text -replace '\s+', ''
+    if ($text -notmatch '^\d+(?:\.\d+){0,3}$') { return '' }
+    $parts = New-Object System.Collections.Generic.List[string]
+    foreach ($part in $text.Split('.')) {
+        try { $normalizedPart = ([int]$part).ToString() } catch { return '' }
+        [void]$parts.Add($normalizedPart)
+    }
+    if ($parts.Count -eq 1) { [void]$parts.Add('0') }
+    while ($parts.Count -gt 2 -and $parts[$parts.Count - 1] -eq '0') { $parts.RemoveAt($parts.Count - 1) }
+    return ($parts -join '.')
+}
+
+function ConvertTo-ToolAssistantDocumentBody {
+    param([AllowNull()][string]$Body, [int]$MaximumCharacters = 4600)
+
+    $selected = New-Object System.Collections.Generic.List[string]
+    $previousBlank = $true
+    foreach ($rawLine in ([string]$Body -split '\r?\n')) {
+        $line = ConvertTo-ToolAssistantPlainDocumentLine -Line $rawLine
+        if ([string]::IsNullOrWhiteSpace($line)) {
+            if (-not $previousBlank -and $selected.Count -gt 0) { [void]$selected.Add('') }
+            $previousBlank = $true
+            continue
+        }
+        $candidateLength = (($selected -join "`r`n").Length + $line.Length + 2)
+        if ($candidateLength -gt $MaximumCharacters) {
+            [void]$selected.Add('...')
+            break
+        }
+        [void]$selected.Add($line)
+        $previousBlank = $false
+    }
+    while ($selected.Count -gt 0 -and [string]::IsNullOrWhiteSpace($selected[$selected.Count - 1])) {
+        $selected.RemoveAt($selected.Count - 1)
+    }
+    return ($selected -join "`r`n")
+}
+
+function Get-ToolAssistantDocumentSections {
+    param([ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN')
+
+    if ($script:ToolAssistantDocumentCache.ContainsKey($Culture)) {
+        return @($script:ToolAssistantDocumentCache[$Culture])
+    }
+    $sections = New-Object System.Collections.Generic.List[object]
+    foreach ($definition in @(Get-ToolAssistantDocumentDefinitions -Culture $Culture)) {
+        $path = Join-Path $PSScriptRoot ([string]$definition.FileName)
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
+        try { $raw = Get-Content -LiteralPath $path -Raw -Encoding UTF8 -ErrorAction Stop } catch { continue }
+        $matches = [regex]::Matches($raw, '(?ms)^(?<Hashes>#{1,4})[ \t]+(?<Heading>[^\r\n]+)\r?\n(?<Body>.*?)(?=^#{1,4}[ \t]+|\z)')
+        $sectionOrder = 0
+        foreach ($match in $matches) {
+            $heading = ConvertTo-ToolAssistantPlainDocumentLine -Line ([string]$match.Groups['Heading'].Value)
+            $body = [string]$match.Groups['Body'].Value
+            if ([string]::IsNullOrWhiteSpace($heading) -or [string]::IsNullOrWhiteSpace($body)) { continue }
+            $versionRaw = ''
+            $versionKey = ''
+            if ([string]$definition.Kind -eq 'History') {
+                $versionMatch = [regex]::Match($heading, '(?i)(?:^|\s)v(?<Version>\d+(?:\.\d+){0,3})(?:\b|\s|$)')
+                if ($versionMatch.Success) {
+                    $versionRaw = [string]$versionMatch.Groups['Version'].Value
+                    $versionKey = ConvertTo-ToolAssistantVersionKey -Value $versionRaw
+                }
+            }
+            $searchKey = ConvertTo-ToolAssistantSearchKey -Value ($heading + ' ' + $body)
+            [void]$sections.Add([pscustomobject]@{
+                SourceKind=[string]$definition.Kind
+                SourceFile=[string]$definition.FileName
+                SourceLabel=[string]$definition.Label
+                Heading=$heading
+                HeadingLevel=([string]$match.Groups['Hashes'].Value).Length
+                SectionOrder=$sectionOrder
+                Body=$body
+                HeadingKey=(ConvertTo-ToolAssistantSearchKey -Value $heading)
+                SearchKey=$searchKey
+                VersionRaw=$versionRaw
+                VersionKey=$versionKey
+            })
+            $sectionOrder++
+        }
+    }
+    $result = @($sections.ToArray())
+    $script:ToolAssistantDocumentCache[$Culture] = $result
+    return $result
+}
+
+function Get-ToolAssistantDocumentSectionBody {
+    param(
+        [Parameter(Mandatory = $true)][object]$Section,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN',
+        [int]$MaximumCharacters = 7200,
+        [switch]$IncludeChildren
+    )
+
+    $parts = New-Object System.Collections.Generic.List[string]
+    [void]$parts.Add([string]$Section.Body)
+    if ($IncludeChildren -and $Section.PSObject.Properties['HeadingLevel'] -and $Section.PSObject.Properties['SectionOrder']) {
+        $parentLevel = [int]$Section.HeadingLevel
+        foreach ($candidate in @(Get-ToolAssistantDocumentSections -Culture $Culture | Where-Object {
+            [string]$_.SourceFile -eq [string]$Section.SourceFile -and [int]$_.SectionOrder -gt [int]$Section.SectionOrder
+        } | Sort-Object SectionOrder)) {
+            if ([int]$candidate.HeadingLevel -le $parentLevel) { break }
+            [void]$parts.Add("$([string]$candidate.Heading):`r`n$([string]$candidate.Body)")
+        }
+    }
+    return ConvertTo-ToolAssistantDocumentBody -Body ($parts -join "`r`n`r`n") -MaximumCharacters $MaximumCharacters
+}
+
+function Get-ToolAssistantDocumentAnswer {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN',
+        [ValidateSet('Any','Guide','History')][string]$SourceKind = 'Guide'
+    )
+
+    $stopTokens = @('bo','cua','cho','voi','nay','kia','mot','nhung','cac','the','nao','gi','la','va','theo','all','duoc','khong','co','hay','minh','toi','ban','tool','cong','cu')
+    $queryTokens = @($QueryKey -split ' ' | Where-Object { ($_.Length -ge 2 -or $_ -match '^\d+$') -and $_ -notin $stopTokens } | Select-Object -Unique)
+    if ($queryTokens.Count -eq 0) { return '' }
+    $best = $null
+    $bestScore = 0
+    foreach ($section in @(Get-ToolAssistantDocumentSections -Culture $Culture)) {
+        if ($SourceKind -ne 'Any' -and [string]$section.SourceKind -ne $SourceKind) { continue }
+        $score = 0
+        if ($QueryKey.Contains([string]$section.HeadingKey) -or ([string]$section.HeadingKey).Contains($QueryKey)) { $score += 90 }
+        foreach ($token in $queryTokens) {
+            if ($token -match '^\d+$' -and (([string]$section.HeadingKey -split ' ') -contains $token)) { $score += 60 }
+            elseif (([string]$section.HeadingKey -split ' ') -contains $token) { $score += 14 }
+            elseif (([string]$section.SearchKey -split ' ') -contains $token) { $score += 3 }
+            elseif ($token.Length -ge 5 -and ([string]$section.HeadingKey).Contains($token)) { $score += 7 }
+        }
+        if ($QueryKey -match '\b(?:cach|huong dan|su dung|thao tac|cac buoc|lam sao)\b' -and [string]$section.Body -match '(?m)^\s*1\.') { $score += 8 }
+        if ($score -gt $bestScore) { $bestScore = $score; $best = $section }
+    }
+    if ($null -eq $best -or $bestScore -lt 24) { return '' }
+
+    $body = Get-ToolAssistantDocumentSectionBody -Section $best -Culture $Culture -IncludeChildren
+    if ([string]::IsNullOrWhiteSpace($body)) { return '' }
+    $prefix = if ($Culture -eq 'en-US') {
+        "$([string]$best.SourceLabel) — $([string]$best.Heading):"
+    } else {
+        "$([string]$best.SourceLabel) — $([string]$best.Heading):"
+    }
+    return ($prefix + "`r`n" + $body)
+}
+
+function Get-ToolAssistantNamedGuideAnswer {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN'
+    )
+
+    $helpIntent = $QueryKey -match '(?:hoat dong|cach dung|cach su dung|huong dan|(?:cac )?buoc|quy trinh|lam sao|lam the nao|dung the nao|(?:de )?lam gi|what does|what is|how (?:does|do|to)|steps|workflow|works?|operate|use it|used for)'
+    if (-not $helpIntent) { return '' }
+
+    $queryNameTokens = @($QueryKey -split ' ' | Where-Object { $_ -notin @('va','and','the','cua','of') })
+    if ($queryNameTokens -contains 'quet' -and $queryNameTokens -notcontains 'kiem') {
+        $queryNameTokens += @('kiem','tra')
+    }
+    $queryNameKey = $queryNameTokens -join ' '
+    $matches = New-Object System.Collections.Generic.List[object]
+    foreach ($section in @(Get-ToolAssistantDocumentSections -Culture $Culture)) {
+        if ([string]$section.SourceKind -ne 'Guide') { continue }
+        $headingKey = [string]$section.HeadingKey
+        $headingTokens = @($headingKey -split ' ' | Where-Object { $_ -notin @('va','and','the','cua','of') })
+        if ($headingKey.Length -lt 4) { continue }
+        $headingNameKey = $headingTokens -join ' '
+        $primaryHeading = ([string]$section.Heading -split '\s+[—–-]\s+', 2)[0]
+        $primaryHeadingKey = ConvertTo-ToolAssistantSearchKey -Value $primaryHeading
+        $matchedTokens = @($headingTokens | Where-Object { $queryNameTokens -contains $_ }).Count
+        $coverage = if ($headingTokens.Count -gt 0) { [double]$matchedTokens / [double]$headingTokens.Count } else { 0.0 }
+        $exactPrimaryName = $primaryHeadingKey.Length -ge 4 -and $queryNameKey.Contains($primaryHeadingKey)
+        $exactName = $queryNameKey.Contains($headingNameKey) -or $exactPrimaryName
+        if ($headingTokens.Count -eq 1) {
+            $subjectTokens = @($queryNameTokens | Where-Object { $_ -notin @('how','does','do','to','this','work','works','what','is','hoat','dong','ra','sao','cach','dung','su','the','nao','lam','gi') })
+            if ($subjectTokens.Count -ne 1 -or [string]$subjectTokens[0] -ne $headingNameKey) { continue }
+            $exactName = $true
+        }
+        if (-not $exactName -and ($matchedTokens -lt 2 -or $coverage -le 0.75)) { continue }
+        $matchScore = if ($exactName) { 10000 + $(if ($exactPrimaryName) { $primaryHeadingKey.Length } else { $headingNameKey.Length }) } else { [int]($coverage * 1000) + ($matchedTokens * 10) + $headingNameKey.Length }
+        [void]$matches.Add([pscustomobject]@{ Section=$section; Score=$matchScore })
+    }
+    if ($matches.Count -eq 0) { return '' }
+
+    $best = @($matches | Sort-Object Score -Descending | Select-Object -First 1)
+    if ($best.Count -ne 1) { return '' }
+    $bestSection = $best[0].Section
+    $body = Get-ToolAssistantDocumentSectionBody -Section $bestSection -Culture $Culture -IncludeChildren
+    if ([string]::IsNullOrWhiteSpace($body)) { return '' }
+    return "$([string]$bestSection.SourceLabel) — $([string]$bestSection.Heading):`r`n$body"
+}
+
+function Get-ToolAssistantQuestionVersions {
+    param([AllowNull()][string]$Question)
+
+    $text = [string]$Question
+    $candidates = New-Object System.Collections.Generic.List[object]
+    $patterns = @(
+        '(?i)(?<![A-Za-z0-9])v\s*(?<Version>\d+(?:\s*\.\s*\d+){0,3})(?![A-Za-z0-9])',
+        '(?i)(?:phi[eê]n\s*b[aả]n|version)\s*v?\s*(?<Version>\d+(?:\s*\.\s*\d+){0,3})(?![A-Za-z0-9])'
+    )
+    foreach ($pattern in $patterns) {
+        foreach ($match in [regex]::Matches($text, $pattern)) {
+            $raw = ([string]$match.Groups['Version'].Value) -replace '\s+', ''
+            $key = ConvertTo-ToolAssistantVersionKey -Value $raw
+            if ([string]::IsNullOrWhiteSpace($key)) { continue }
+            [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$match.Index })
+        }
+    }
+    $currentPatterns = @(
+        '(?i)(?:phi[eê]n\s*b[aả]n|b[aả]n)\s+(?:hi[eệ]n\s*t[aạ]i|m[oớ]i\s*nh[aấ]t)',
+        '(?i)\b(?:current|latest)\s+(?:tool\s+)?(?:version|release)\b'
+    )
+    foreach ($pattern in $currentPatterns) {
+        foreach ($match in [regex]::Matches($text, $pattern)) {
+            $raw = [string]$script:ToolAssistantToolVersion
+            $key = ConvertTo-ToolAssistantVersionKey -Value $raw
+            [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$match.Index })
+        }
+    }
+    $questionKey = ConvertTo-ToolAssistantSearchKey -Value $text
+    $bareCurrentHistoryAlias = $questionKey -match '^(?:(?:moi nhat|hien tai) (?:cap nhat (?:nhung )?gi|thay doi (?:nhung )?gi|cai tien (?:nhung )?gi|co gi moi)|(?:latest|current) (?:changes?|improvements?|new features?))$'
+    if ($candidates.Count -eq 0 -and $bareCurrentHistoryAlias) {
+        $aliasMatch = [regex]::Match($text, '(?i)m[oớ]i\s*nh[aấ]t|hi[eệ]n\s*t[aạ]i|\blatest\b|\bcurrent\b')
+        $raw = [string]$script:ToolAssistantToolVersion
+        $key = ConvertTo-ToolAssistantVersionKey -Value $raw
+        [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$aliasMatch.Index })
+    }
+    $hasNumericVersion = @($candidates | Where-Object { [string]$_.Raw -ne [string]$script:ToolAssistantToolVersion }).Count -gt 0
+    if ($hasNumericVersion -and $questionKey -match '(?:so sanh|doi chieu|khac|versus|\bvs\b|compare|difference|different)') {
+        foreach ($match in [regex]::Matches($text, '(?i)hi[eệ]n\s*t[aạ]i|m[oớ]i\s*nh[aấ]t|\bcurrent\b|\blatest\b')) {
+            $raw = [string]$script:ToolAssistantToolVersion
+            $key = ConvertTo-ToolAssistantVersionKey -Value $raw
+            [void]$candidates.Add([pscustomobject]@{ Raw=$raw; Key=$key; Display=('v' + $raw); Index=[int]$match.Index })
+        }
+    }
+    $results = New-Object System.Collections.Generic.List[object]
+    $seen = @{}
+    foreach ($candidate in @($candidates | Sort-Object Index)) {
+        if ($seen.ContainsKey([string]$candidate.Key)) { continue }
+        $seen[[string]$candidate.Key] = $true
+        [void]$results.Add([pscustomobject]@{ Raw=[string]$candidate.Raw; Key=[string]$candidate.Key; Display=[string]$candidate.Display })
+    }
+    return @($results.ToArray())
+}
+
+function Get-ToolAssistantHistorySection {
+    param(
+        [Parameter(Mandatory = $true)][object]$Version,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN'
+    )
+
+    $history = @(Get-ToolAssistantDocumentSections -Culture $Culture | Where-Object {
+        [string]$_.SourceKind -eq 'History' -and -not [string]::IsNullOrWhiteSpace([string]$_.VersionKey)
+    })
+    $exact = @($history | Where-Object { [string]$_.VersionRaw -eq [string]$Version.Raw } | Select-Object -First 1)
+    if ($exact.Count -eq 1) { return $exact[0] }
+    $normalized = @($history | Where-Object { [string]$_.VersionKey -eq [string]$Version.Key } | Select-Object -First 1)
+    if ($normalized.Count -eq 1) { return $normalized[0] }
+    $currentKey = ConvertTo-ToolAssistantVersionKey -Value $script:ToolAssistantToolVersion
+    if ([string]$Version.Key -eq $currentKey) {
+        try {
+            $currentVersion = [Version]$script:ToolAssistantToolVersion
+            $familyKey = ConvertTo-ToolAssistantVersionKey -Value ("$($currentVersion.Major).$($currentVersion.Minor)")
+            $family = @($history | Where-Object { [string]$_.VersionKey -eq $familyKey } | Select-Object -First 1)
+            if ($family.Count -eq 1) { return $family[0] }
+        } catch {}
+    }
+    return $null
+}
+
+function Get-ToolAssistantMissingVersionGuidance {
+    param(
+        [Parameter(Mandatory = $true)][object]$Version,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN'
+    )
+
+    $major = ([string]$Version.Key -split '\.')[0]
+    $sameMajor = @(Get-ToolAssistantDocumentSections -Culture $Culture | Where-Object {
+        [string]$_.SourceKind -eq 'History' -and [string]$_.VersionKey -match ('^' + [regex]::Escape($major) + '\.')
+    })
+    $firstRecorded = @($sameMajor | Sort-Object { try { [Version]([string]$_.VersionRaw) } catch { [Version]'9999.0' } } | Select-Object -First 1)
+    if ($Culture -eq 'en-US') {
+        $message = "The bundled Version history has no recorded entry for $([string]$Version.Display), so the Assistant will not invent its changes or claim a comparison."
+        if ($firstRecorded.Count -eq 1) { $message += " The first recorded v$major.x milestone is v$([string]$firstRecorded[0].VersionRaw)." }
+        return $message + ' Use a version number that appears in Version history.'
+    }
+    $message = "Lịch sử phiên bản nhúng không có mục được ghi nhận cho $([string]$Version.Display), nên Trợ lý không tự suy diễn thay đổi hoặc dựng nội dung so sánh."
+    if ($firstRecorded.Count -eq 1) { $message += " Mốc v$major.x đầu tiên được ghi là v$([string]$firstRecorded[0].VersionRaw)." }
+    return $message + ' Hãy dùng số phiên bản có trong Lịch sử phiên bản.'
+}
+
+function Get-ToolAssistantHistoryAnswer {
+    param(
+        [Parameter(Mandatory = $true)][string]$Question,
+        [ValidateSet('vi-VN','en-US')][string]$Culture = 'vi-VN'
+    )
+
+    $queryKey = ConvertTo-ToolAssistantSearchKey -Value $Question
+    $versions = @(Get-ToolAssistantQuestionVersions -Question $Question)
+    $historySections = @(Get-ToolAssistantDocumentSections -Culture $Culture | Where-Object {
+        [string]$_.SourceKind -eq 'History' -and -not [string]::IsNullOrWhiteSpace([string]$_.VersionKey)
+    })
+    if ($versions.Count -eq 0) {
+        if ($queryKey -notmatch '(?:(?:toan bo|tat ca|danh sach|complete|full|all|list).*(?:lich su|phien ban|version history|versions)|(?:lich su|phien ban|version history|versions).*(?:toan bo|tat ca|danh sach|complete|full|all|list))') { return '' }
+        $labels = @($historySections | ForEach-Object { 'v' + [string]$_.VersionRaw })
+        if ($labels.Count -eq 0) { return '' }
+        if ($Culture -eq 'en-US') { return 'Recorded milestones indexed from the complete bundled Version history through the current release: ' + ($labels -join ', ') + '.' }
+        return 'Các mốc đã ghi nhận được lập chỉ mục từ toàn bộ Lịch sử phiên bản nhúng đến bản phát hành hiện tại: ' + ($labels -join ', ') + '.'
+    }
+
+    $startsWithVersion = ([string]$Question).Trim() -match '(?i)^v\s*\d'
+    $capabilityInventoryIntent = $queryKey -match '(?:(?:tat ca|toan bo|danh sach|liet ke|nhung|cac|what|which|all|list|every|available).*(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities)|(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities).*(?:gi|nao|gom|co|tat ca|toan bo|danh sach|what|which|all|list|have|available))'
+    $changeIntent = $queryKey -match '(?:cap nhat|thay doi|cai tien|khac|so sanh|so voi|doi chieu|co gi moi|them gi|moi them|what changed|what s new|whats new|what is new|changes?|updates?|improv|difference|different|compare|compared to|versus|\bvs\b|introduced|new features?)'
+    if ($capabilityInventoryIntent -and -not $changeIntent) { return '' }
+    $currentKey = ConvertTo-ToolAssistantVersionKey -Value $script:ToolAssistantToolVersion
+    $onlyCurrentReference = $versions.Count -eq 1 -and [string]$versions[0].Key -eq $currentKey
+    if ($onlyCurrentReference -and -not $changeIntent -and $queryKey -notmatch '(?:lich su|history|release notes?|nhat ky phien ban)') { return '' }
+    $hasHistoryIntent = $versions.Count -ge 2 -or $queryKey -match '(?:lich su|phien ban|version|release|relased|phat hanh|ra mat|ngay|date|when|cap nhat|thay doi|cai tien|khac|so sanh|so voi|doi chieu|co gi|co gi moi|them gi|moi them|what changed|what s new|whats new|what is new|change|update|improve|difference|different|compare|compared to|versus|\bvs\b|introduced|new feature)'
+    $foreignProductVersion = ($queryKey -match '(?:^|\b)(?:windows|powershell|dotnet|net(?: framework)?|office)\s+v?\d+(?:\s+\d+){0,3}') -or
+        ($queryKey -match '(?:^|\b)v?\d+(?:\s+\d+){0,3}\s+(?:windows|powershell|dotnet|net(?: framework)?|office)\b')
+    $explicitToolHistory = $queryKey -match '(?:tool|cong cu).*(?:lich su|phien ban|version|release)|(?:lich su|phien ban|version|release).*(?:tool|cong cu)'
+    if ((-not $startsWithVersion -and -not $hasHistoryIntent) -or ($foreignProductVersion -and -not $explicitToolHistory)) { return '' }
+
+    $resolved = New-Object System.Collections.Generic.List[object]
+    foreach ($version in $versions) {
+        $section = Get-ToolAssistantHistorySection -Version $version -Culture $Culture
+        if ($null -eq $section) { return Get-ToolAssistantMissingVersionGuidance -Version $version -Culture $Culture }
+        [void]$resolved.Add($section)
+    }
+
+    if ($resolved.Count -eq 1) {
+        $section = $resolved[0]
+        $body = ConvertTo-ToolAssistantDocumentBody -Body ([string]$section.Body)
+        if ($Culture -eq 'en-US') { return "According to the complete bundled Version history — $([string]$section.Heading):`r`n$body" }
+        return "Theo toàn bộ Lịch sử phiên bản nhúng — $([string]$section.Heading):`r`n$body"
+    }
+
+    $blocks = New-Object System.Collections.Generic.List[string]
+    foreach ($section in $resolved) {
+        $body = ConvertTo-ToolAssistantDocumentBody -Body ([string]$section.Body) -MaximumCharacters 3000
+        [void]$blocks.Add("$([string]$section.Heading):`r`n$body")
+    }
+    if ($Culture -eq 'en-US') {
+        return "Direct comparison from the recorded Version history (without inferring undocumented changes):`r`n`r`n" + ($blocks -join "`r`n`r`n")
+    }
+        return "Đối chiếu trực tiếp từ Lịch sử phiên bản đã ghi nhận (không suy diễn thay đổi ngoài tài liệu):`r`n`r`n" + ($blocks -join "`r`n`r`n")
+}
+
+function Get-ToolAssistantPolicyEntryId {
+    param([Parameter(Mandatory = $true)][string]$QueryKey)
+
+    if ($QueryKey -notmatch '\b(?:chinh sach|policy|dieu khoan|quy dinh)\b') { return '' }
+    if ($QueryKey -match '\b(?:plugin|nha phat hanh|publisher)\b') { return 'plugin-management' }
+    if ($QueryKey -match '\b(?:ma nguon|source code|open source|nguon mo|repository|repo|github|sao chep|copy|sua doi|modify|dong ma nguon|mo ma nguon)\b' -or
+        $QueryKey -match '(?:tai sao|ly do|why).*(?:thay doi|doi|change).*(?:v4(?:[ .]?9)?|ma nguon|source)' -or
+        $QueryKey -match '(?:v4(?:[ .]?9)?).*(?:thay doi|doi|change|chinh sach|policy)') { return 'source-code-license' }
+    if ($QueryKey -match '\b(?:online|offline|internet|network|mang|catalog|catalogue|danh muc|telemetry|gui du lieu|tai du lieu)\b') { return 'software-catalog' }
+    if ($QueryKey -match '\b(?:ky so|chu ky|signing|signature|phat hanh|release|certificate|chung thu|smartscreen|authenticode)\b') { return 'signature-warning' }
+    if ($QueryKey -match '\b(?:cap nhat|update|phien ban moi|version check|tai ban moi|download version)\b') { return 'update' }
+    if ($QueryKey -match '\b(?:an toan|bao mat|security|nguyen tac|triet ly|privacy|rieng tu|du lieu)\b') { return 'tool-principles' }
+    return ''
+}
+
+function Get-ToolAssistantPolicyClarification {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    if ($QueryKey -notmatch '\b(?:chinh sach|policy|dieu khoan|quy dinh)\b') { return '' }
+    if ($QueryKey -match '\b(?:how does|how do|hoat dong ra sao|hoat dong the nao)\b') { return '' }
+    if (-not [string]::IsNullOrWhiteSpace((Get-ToolAssistantPolicyEntryId -QueryKey $QueryKey))) { return '' }
+    if ($Culture -eq 'en-US') {
+        return 'Which VietLicenSure policy do you mean: (1) source code and permitted use; (2) Online/Offline, catalog, and data; (3) signing and official releases; (4) updates; or (5) plugins and enterprise use? Add the topic or paste the exact message.'
+    }
+    return 'Bạn muốn hỏi chính sách nào của VietLicenSure: (1) mã nguồn và quyền sử dụng; (2) Online/Offline, catalog và dữ liệu; (3) ký số và phát hành chính thức; (4) cập nhật phiên bản; hay (5) plugin và doanh nghiệp? Hãy thêm chủ đề hoặc gửi nguyên thông báo.'
+}
+
+function Get-ToolAssistantEntryScore {
+    param([Parameter(Mandatory = $true)][string]$QueryKey, [Parameter(Mandatory = $true)][object]$Entry)
+
+    $stopTokens = @('bo','cua','cho','voi','nay','kia','mot','nhung','cac','the','nao','gi','la','va','theo','all','duoc','khong','co','hay','minh','toi','ban')
+    $queryTokens = @($QueryKey -split ' ' | Where-Object { $_.Length -ge 2 -and $_ -notin $stopTokens } | Select-Object -Unique)
+    $keywordTokenSet = @{}
+    $phraseScore = 0
+    $weakKeywords = @('phan mem','software','ung dung','application','thay doi','change','hien tai','current','moi nhat','latest','cap nhat','update','bao cao','report','ket qua','result','tool','cong cu')
+    foreach ($keywordValue in @($Entry.Keywords)) {
+        $keyword = ConvertTo-ToolAssistantSearchKey -Value ([string]$keywordValue)
+        if ([string]::IsNullOrWhiteSpace($keyword)) { continue }
+        if ($QueryKey -eq $keyword) { return (10000 + $keyword.Length) }
+        if ($QueryKey.Contains($keyword)) {
+            $candidateScore = if ($keyword -in $weakKeywords) { 10 } elseif ($keyword.Contains(' ')) { 220 + $keyword.Length } elseif ($keyword.Length -ge 4) { 48 + $keyword.Length } else { 12 }
+            if ($candidateScore -gt $phraseScore) { $phraseScore = $candidateScore }
+        }
+        $keywordTokens = @($keyword -split ' ' | Where-Object { $_.Length -ge 2 -and $_ -notin $stopTokens })
+        foreach ($keywordToken in $keywordTokens) { $keywordTokenSet[$keywordToken] = $true }
+    }
+    $score = $phraseScore
+    foreach ($queryToken in $queryTokens) {
+        if ($keywordTokenSet.ContainsKey($queryToken)) {
+            $score += 7
+            continue
+        }
+        if ($queryToken.Length -ge 4) {
+            foreach ($keywordToken in @($keywordTokenSet.Keys)) {
+                if ($keywordToken.Length -ge 4 -and (Get-ToolAssistantTokenDistance -Left $queryToken -Right $keywordToken) -le 1) {
+                    $score += 1
+                    break
+                }
+            }
+        }
+    }
+    return $score
+}
+
+function Get-ToolAssistantPriorityEntryId {
+    param([Parameter(Mandatory = $true)][string]$QueryKey)
+
+    if ($QueryKey -match '(?:(?:vietlicensure).*(?:nghia|meaning|ten gi|name|doi ten|rebrand)|(?:y nghia|meaning|ten|name|doi ten|rebrand).*(?:vietlicensure))') { return 'brand-name' }
+    if ($QueryKey -match '(?:(?:phien ban|version|ban).*(?:dau tien|first)|(?:dau tien|first).*(?:phien ban|version|ban)|\bv1(?: 0)?\b.*(?:phat hanh|ra mat|release|ngay|date)|(?:phat hanh|ra mat|release).*\bv1(?: 0)?\b)') { return 'first-release' }
+    if ($QueryKey -match '(?:(?:tool|cong cu|san pham).*(?:mien phi|free|tra phi|paid|gia|chi phi|phi su dung|ton tien|mat tien)|(?:mien phi|free|tra phi|paid).*(?:tool|cong cu|hay|khong)|^(?:mien phi|free|tra phi|paid)(?: hay (?:mien phi|free|tra phi|paid))?$|^(?:co )?(?:ton tien|mat tien|mat phi)(?: khong)?$|^is it (?:free|paid)$)') { return 'tool-pricing' }
+    if ($QueryKey -match '\b(?:ma nguon|source code|public source|code cong khai|repository)\b' -or
+        $QueryKey -match '(?:\bgithub\b.*\b(?:ma nguon|source|code|open source|nguon mo)\b|\b(?:ma nguon|source|code|open source|nguon mo)\b.*\bgithub\b)') {
+        return 'source-code-license'
+    }
+    if ($QueryKey -match '^(?:chua xac dinh|undetermined|unknown|chua xac minh|unverified|nghi van|suspicious|crack confirmed|crackconfirmed|crack)(?: nghia la gi| la sao| la gi| meaning| means?)$' -or
+        $QueryKey -match '^(?:what does|what is) (?:undetermined|unknown|unverified|suspicious|crack confirmed|crackconfirmed|crack)(?: mean)?$' -or
+        $QueryKey -match '(?:(?:chua xac dinh|undetermined|unknown).*(?:chua xac minh|unverified)|(?:chua xac minh|unverified).*(?:chua xac dinh|undetermined|unknown))') {
+        return 'status-terms'
+    }
+    $statusTermMatches = [regex]::Matches($QueryKey, '\b(?:chua xac dinh|undetermined|unknown|chua xac minh|unverified|nghi van|suspicious|crack confirmed|crackconfirmed|crack)\b')
+    if ($statusTermMatches.Count -ge 2 -and $QueryKey -match '(?:khac|phan biet|nghia|meaning|mean|difference|different|compare|versus|\bvs\b|what do)') { return 'status-terms' }
+    if ($QueryKey -match '(?:(?:tat ca|toan bo|10|tung|danh sach|liet ke|all|every|list|what|which).*(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities)|(?:chuc nang|tinh nang|tac vu|functions?|features?|capabilities).*(?:gom nhung gi|co gi|danh sach|tong hop|tom tat|nao|what|which|all|have|available))') { return 'feature-overview' }
+    if ($QueryKey -match '(?:powershell|dotnet|net framework|\.net).*(?:version|phien ban|support|ho tro|require|yeu cau)|(?:version|phien ban).*(?:powershell|dotnet|net framework|\.net)') { return 'system-requirements' }
+    if ($QueryKey -match '(?:windows|office).*(?:version|phien ban).*(?:support|ho tro|require|yeu cau).*(?:tool|cong cu)|(?:tool|cong cu).*(?:support|ho tro|require|yeu cau).*(?:windows|office).*(?:version|phien ban)') { return 'system-requirements' }
+    if ($QueryKey -match '(?:phien ban|version).*(?:windows)|(?:windows).*(?:phien ban|version)') { return 'windows-license' }
+    if ($QueryKey -match '(?:phien ban|version).*(?:office)|(?:office).*(?:phien ban|version)') { return 'office-license' }
+    if ($QueryKey -match '(?:tool|cong cu).*(?:phien ban|version)|(?:phien ban|version).*(?:tool|cong cu|hien tai|dang dung|moi nhat|bay gio)|^(?:phien ban|version)(?: hien tai| moi nhat)?$') { return 'tool-version' }
+    if ($QueryKey -match '(?:tac gia|author|nguoi phat trien|developer)|(?:do ai|ai).*(?:phat trien|viet|tao ra|lam ra)') { return 'tool-author' }
+    if ($QueryKey -match '(?:ngay|thoi diem).*(?:phat hanh|ra mat|build)|(?:phat hanh|ra mat|build).*(?:ngay nao|khi nao|luc nao)|(?:build|release).*(?:date|when)|(?:date|when).*(?:build|release)') { return 'release-date' }
+    if ($QueryKey -match '(?:tom tat|noi dung chinh|gioi thieu ngan|tong quan|tool lam gi|cong cu lam gi|muc dich cua tool)') { return 'tool-overview' }
+    if ($QueryKey -match '(?:nguyen tac|triet ly|tieu chi).*(?:tool|cong cu|hoat dong|an toan)|^(?:nguyen tac|triet ly|tieu chi)(?: cua tool)?$') { return 'tool-principles' }
+    if ($QueryKey -match '(?:cach chay|khoi dong tool|bat tool|mo tool|bat dau su dung|lan dau su dung|huong dan nhanh|getting started)') { return 'getting-started' }
+    if ($QueryKey -match '(?:yeu cau he thong|cau hinh toi thieu|windows nao chay duoc|he dieu hanh ho tro|tuong thich windows|32 bit|64 bit|powershell may|\.net framework|(?:windows|powershell|\.net|net framework) v?\d[^ ]*.*(?:chay|ho tro|support|require|tuong thich).*(?:tool|cong cu)|(?:tool|cong cu).*(?:chay|ho tro|support|require|tuong thich).*(?:windows|powershell|\.net|net framework) v?\d)') { return 'system-requirements' }
+    if ($QueryKey -match '(?:cong nghe|ngon ngu lap trinh|viet bang gi|nen tang|winforms|anycpu|kien truc cua tool)') { return 'technology' }
+    if ($QueryKey -match '(?:doi ngon ngu|tieng viet|english|sang toi|light dark|giao dien|cai dat).*(?:tool|chuyen|doi|chon|mau|ngon ngu)|(?:cach doc man hinh chinh)') { return 'interface-settings' }
+    if ($QueryKey -match '(?:dung tac vu|huy tac vu|nut dung|quet bi lau|quet bi treo|khac phuc bi dung)') { return 'stop-task' }
+    if ($QueryKey -match '(?:(?:khoi phuc|phuc hoi|restore|ap dung|apply).*(?:key )?oem|(?:key )?oem.*(?:hoat dong|cach dung|quy trinh|khoi phuc|phuc hoi|restore|ap dung|apply)|(?:oa3|oa3xoriginalproductkey|firmware key|bios key).*(?:hoat dong|cach dung|khoi phuc|restore|la gi|la sao|nghia|meaning|means)|^(?:oa3|oa3xoriginalproductkey|firmware key|bios key)$)') { return 'oem' }
+    if ($QueryKey -match '(?:sao luu|backup|khoi phuc backup|restore backup|phuc hoi backup)') { return 'backup-restore' }
+    if ($QueryKey -match '(?:quan ly giay phep hop le|manage (?:valid|legitimate) licenses?)') { return 'enterprise' }
+    if ($QueryKey -match '(?:kiem tra chuyen sau|advanced inspection|deep inspection|deep scan|forensic scan)') { return 'deep-scan' }
+    if ($QueryKey -match '(?:trung tam bao cao|trung tam bao dam|reports? (?:and|&) assurance|assurance report center)') { return 'report-center' }
+    if ($QueryKey -match '(?:kiem tra.*(?:chung chi|certificate)|(?:certificate|chung chi).*(?:audit|check|kiem tra|xac minh))') { return 'certificate-audit' }
+    if ($QueryKey -match '(?:khong mo duoc|khong chay duoc|khong khoi dong duoc).*(?:exe|tool|cong cu)|(?:exe|tool|cong cu).*(?:bi chan|khong mo|khong chay|khong khoi dong)') { return 'launch-troubleshooting' }
+    if ($QueryKey -match '(?:khong thay|thieu|bo sot).*(?:phan mem|ung dung)|(?:phan mem|ung dung).*(?:khong hien|khong duoc tim thay|bi thieu)') { return 'software-not-found' }
+    if ($QueryKey -match '(?:khong tao duoc|tao that bai|bi loi).*(?:pdf)|(?:pdf).*(?:khong tao|that bai|bi loi)') { return 'report-pdf-failure' }
+    if ($QueryKey -match '(?:catalog|catalogue|danh muc).*(?:update|cap nhat).*(?:fail|failed|error|loi|that bai|khong)|(?:update|cap nhat).*(?:catalog|catalogue|danh muc).*(?:fail|failed|error|loi|that bai|khong)') { return 'online-troubleshooting' }
+    if ($QueryKey -match '(?:online).*(?:loi|that bai|khong ket noi|khong cap nhat|khong dong bo)|(?:khong ket noi|khong cap nhat|khong dong bo).*(?:online|internet)') { return 'online-troubleshooting' }
+    if ($QueryKey -match '(?:may chu|server).*(?:tao cau hinh|xoa cau hinh|khoi dong|dung may chu|ma ghep noi|url acl|firewall|reboot|tu khoi dong|cung windows)|(?:tao|xoa|khoi dong|dung|reboot|tu khoi dong).*(?:cau hinh may chu|server)') { return 'enterprise-server-management' }
+    if ($QueryKey -match '(?:may tram|client|workstation|agent).*(?:ghep noi|gui bao cao|agent|tu tim|reboot|sleep|thuc day|ma moi)|(?:ghep noi|gui bao cao|chay agent|reboot|sleep|thuc day).*(?:may tram|client|agent)') { return 'enterprise-client-management' }
+    if ($QueryKey -match '(?:goi ho tro|support bundle).*(?:tao|create|generate|xem truoc|preview|zip|che|redact|redacted|gui|send|bao mat|privacy)|(?:tao|create|generate|xem truoc|preview).*(?:goi ho tro|support bundle)') { return 'support-bundle' }
+    if ($QueryKey -match '(?:kenh ho tro|lien he tac gia|email ho tro|zalo ho tro|can ho tro tool)') { return 'support-channel' }
+    if ($QueryKey -match '(?:plugin|quy tac mo rong).*(?:cai|install|kiem tra|check|danh gia|evaluate|review|json|thu muc|folder|an toan|safe|chinh sach|policy|nha phat hanh|publisher|chu ky|signature|fingerprint|bi chan|blocked|khong cai duoc)|(?:cai|install|danh gia|evaluate|review|chinh sach|policy|publisher|open|mo).*(?:plugin)') { return 'plugin-management' }
+    if ($QueryKey -match '(?:chung chi|certificate|authenticode).*(?:windows|office|kiem tra|xac minh)|(?:kiem tra).*(?:chung chi so|certificate)') { return 'certificate-audit' }
+    if ($QueryKey -match '(?:(?:mien phi|freeware|nguon mo|open source).*(?:hoa don|chung tu|giay phep|license|ban quyen)|(?:hoa don|chung tu|giay phep|license).*(?:mien phi|freeware|nguon mo|open source)|(?:mo hinh giay phep|license model).*(?:bang chung|dau hieu|evidence|trang thai)|(?:doi chieu).*(?:mo hinh).*(?:trang thai|bang chung).*(?:ban quyen|phan mem))') { return 'license-model-evidence' }
+    if ($QueryKey -match '\b(?:winrar|mathtype)\b') { return 'commercial-software-review' }
+    if ($QueryKey -match '(?:(?:dieu kien|du dieu kien|chua du dieu kien).*(?:khac phuc|remediation).*(?:phan mem|nghi van|crack|activator)|(?:nghi van|dau hieu).*(?:dieu kien khac phuc|duoc khac phuc|khac phuc duoc)|(?:remediation eligibility|remediation condition).*(?:software|suspicious|finding|artifact)|(?:suspicious software).*(?:remediation|eligible)|(?:khac phuc|remediation).*(?:nghi van|low confidence|tin cay thap|giu ung dung|giu phan mem)|(?:co lap|isolate).*(?:crack|activator|tac vu|dich vu).*(?:giu|ung dung|phan mem))') { return 'software-finding-remediation' }
+    if ($QueryKey -match '(?:(?:low|thap|confidence|tin cay).*(?:xoa|go|khac phuc|bloat|phan mem|nghi van)|(?:xoa|go|khac phuc).*(?:low|tin cay thap)|(?:co dau hieu nghi van|trang thai nghi van).*(?:nghia la gi|co phai|xoa|go))') { return 'software-finding-confidence' }
+    if ($QueryKey -match '(?:(?:tach|phan biet|khac nhau|rieng|separate|distinguish).*(?:windows).*(?:office).*(?:phan mem|ben thu ba|third party|software)|(?:windows|office).*(?:phan mem ben thu ba|third party).*(?:xu ly|khac phuc|danh gia|pham vi|remediation|review|scope)|(?:windows).*(?:yen|khong co|khong thay|sach).*(?:office).*(?:canh bao|activator|kms|dau hieu|thi sao))') { return 'license-scope-separation' }
+    if ($QueryKey -match '(?:timeline|dong thoi gian|lich su thay doi).*(?:ban quyen|license|xac minh|verify|xuat|export)|(?:xac minh|verify|xuat|export).*(?:timeline)') { return 'license-timeline' }
+    if ($QueryKey -match '(?:huong dan su dung|tai lieu huong dan|lich su phien ban|user guide|version(?:s)? and updates?|updates? and versions?).*(?:mo|xem|o dau|html|pdf|open|view|see|find|where)|(?:mo|xem|open|view|see|find|where).*(?:huong dan chi tiet|huong dan su dung|user guide|lich su phien ban|version(?:s)? and updates?|updates? and versions?)') { return 'embedded-documents' }
+    if ($QueryKey -match '(?:dinh dang|loai tep|file nao|docx|word).*(?:bao cao|xuat)|(?:bao cao).*(?:json|xml|html|pdf|docx|dinh dang)') { return 'report-formats' }
+    $functionRoutes = [ordered]@{
+        '10'='report-center'; '9'='deep-scan'; '8'='enterprise'; '7'='oem'; '6'='remediation'
+        '5'='software'; '4'='office-license'; '3'='windows-license'; '2'='hardware'; '1'='scan-all'
+    }
+    foreach ($number in $functionRoutes.Keys) {
+        if ($QueryKey -match "\b(?:chuc nang|muc|nut|function)(?: so)? $number\b") { return [string]$functionRoutes[$number] }
+    }
+    if ($QueryKey -match '(?:bo qua|vo hieu|tat|lach).*(?:ban quyen|kich hoat|defender|antivirus)|(?:crack|keygen).*(?:cach lam|huong dan|tai o dau)') { return 'safe-boundary' }
+    if ($QueryKey -match '(?:co so du lieu|kho tri thuc|du lieu tro ly).*(?:cap nhat|dong bo|phien ban|tuong thich)|(?:cap nhat|dong bo).*(?:co so du lieu|kho tri thuc|du lieu tro ly)') { return 'assistant-knowledge-update' }
+    if ($QueryKey -match '(?:(?:install|download|check|get|tai|kiem tra|cai).*(?:latest |new |ban )?(?:update|cap nhat)|(?:update|cap nhat).*(?:install|download|check|get|tai|kiem tra|cai))') { return 'update' }
+    if ($QueryKey -match '(?:pdf|bao cao).*(?:mat dong|khuyet dong|cat chu|be chu|gian dong|khoang cach dong|chieu cao hang|bang rong|bo cuc)|(?:mat dong|khuyet dong|cat chu).*(?:pdf|bao cao)') { return 'report-pdf' }
+    if ($QueryKey -match '(?:phan mem he thong|phan mem mac dinh|system software|system component).*(?:an|hien|show|danh sach|pdf)|(?:an|hien).*(?:phan mem he thong|phan mem mac dinh)') { return 'software-system-filter' }
+    if ($QueryKey -match '(?:mot thu muc|thu muc chung|khong tao thu muc con|gom.*bao cao|json.*html.*pdf|html.*pdf.*json)') { return 'report-shared-folder' }
+    if ($QueryKey -match '(?:catalog|catalogue|danh muc phan mem|nhan dien phan mem).*(?:mo rong|cap nhat|them|quet|nhieu)|(?:quet|nhan dien).*(?:nhieu phan mem|danh muc phan mem)') { return 'software-catalog' }
+    if ($QueryKey -match '(?:trung|lap|duplicate|nhieu dong).*(?:phan mem|ung dung)|(?:gop|hop nhat).*(?:phan mem|ket qua)') { return 'duplicate-software' }
+    if ($QueryKey -match '(?:hashmismatch|hash mismatch|chu ky sai|toan ven tep|tep bi sua|file integrity)') { return 'integrity-compromised' }
+    if ($QueryKey -match '(?:may chu|may tram|server|client).*(?:timeout|khong ket noi|loi ket noi|cong bi chan|firewall|dich vu chua chay|ma ghep noi)') { return 'enterprise-connection-errors' }
+    if ($QueryKey -match '(?:tu tim may chu|tim may chu|do may|quet may|khong thay may|discovery|scan lan)') { return 'enterprise-discovery' }
+    if ($QueryKey -match '(?:online|offline).*(?:lan|may chu noi bo|internet)|(?:lan|may chu noi bo).*(?:online|offline)') { return 'enterprise-network-mode' }
+    if ($QueryKey -match '\b0xc004d302\b|chua xac dinh|khong the xac minh|khong doc duoc du lieu cap phep|du lieu cap phep loi') { return 'unverifiable' }
+    if ($QueryKey -match '\b0x[0-9a-f]{4,}\b|\bma loi\b|\berror code\b') { return 'error-codes' }
+    if ($QueryKey -match 'chua du bang chung|kiem tra thu cong|manual review|can xem lai|chua chac chan') { return 'manual-review' }
+    if ($QueryKey -match '(?:bao cao|ket qua).*(?:khang dinh|ket luan chac|chung minh|hop phap|chinh hang|ban quyen)|(?:khang dinh|chung minh).*(?:bao cao|ket qua)') { return 'report-legal-limit' }
+    if ($QueryKey -match 'doc bao cao|cach doc|giai thich ket luan|hieu ket luan|muc rui ro|bang chung.*bao cao|report evidence') { return 'report-evidence' }
+    if ($QueryKey -match 'bao cao luu o dau|thu muc bao cao|tim bao cao|mo bao cao|report folder|where.*report') { return 'report-center' }
+    if ($QueryKey -match 'khac phuc.*(?:kms|activator|crack)|xoa.*(?:kms|activator|crack)|go.*(?:kms|activator|crack)') { return 'remediation' }
+    if ($QueryKey -match '\b(?:kms|activator|autokms|rearm|hwidgen|mas|pmas|kmspico|repack)\b|activation program') { return 'kms-activator' }
+    return ''
+}
+
+function Resolve-ToolAssistantEntry {
+    param(
+        [Parameter(Mandatory = $true)][string]$QueryKey,
+        [Parameter(Mandatory = $true)][object]$Knowledge
+    )
+
+    $policyId = Get-ToolAssistantPolicyEntryId -QueryKey $QueryKey
+    if (-not [string]::IsNullOrWhiteSpace($policyId)) {
+        $policyEntry = @($Knowledge.Entries | Where-Object { [string]$_.Id -eq $policyId } | Select-Object -First 1)
+        if ($policyEntry.Count -gt 0) {
+            return [pscustomobject]@{ Entry=$policyEntry[0]; Score=9750; Route='PolicyIntent' }
+        }
+    }
+
+    $priorityId = Get-ToolAssistantPriorityEntryId -QueryKey $QueryKey
+    if ($priorityId -in @('first-release','tool-pricing','source-code-license','status-terms')) {
+        $directEntry = @($Knowledge.Entries | Where-Object { [string]$_.Id -eq $priorityId } | Select-Object -First 1)
+        if ($directEntry.Count -gt 0) {
+            return [pscustomobject]@{ Entry=$directEntry[0]; Score=9500; Route='FocusedIntent' }
+        }
+    }
+    foreach ($entry in @($Knowledge.Entries)) {
+        foreach ($keywordValue in @($entry.Keywords)) {
+            if ($QueryKey -eq (ConvertTo-ToolAssistantSearchKey -Value ([string]$keywordValue))) {
+                return [pscustomobject]@{ Entry=$entry; Score=(10000 + $QueryKey.Length); Route='ExactKeyword' }
+            }
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($priorityId)) {
+        $priorityEntry = @($Knowledge.Entries | Where-Object { [string]$_.Id -eq $priorityId } | Select-Object -First 1)
+        if ($priorityEntry.Count -gt 0) {
+            return [pscustomobject]@{ Entry=$priorityEntry[0]; Score=9000; Route='SpecificIntent' }
+        }
+    }
+    $bestEntry = $null
+    $bestScore = 0
+    $secondEntry = $null
+    $secondScore = 0
+    foreach ($entry in @($Knowledge.Entries)) {
+        $score = Get-ToolAssistantEntryScore -QueryKey $QueryKey -Entry $entry
+        if ($score -gt $bestScore) {
+            $secondScore = $bestScore; $secondEntry = $bestEntry
+            $bestScore = $score; $bestEntry = $entry
+        } elseif ($score -gt $secondScore) {
+            $secondScore = $score; $secondEntry = $entry
+        }
+    }
+    return [pscustomobject]@{
+        Entry=$bestEntry; Score=$bestScore; Route='ScoredKeywords'
+        SecondEntry=$secondEntry; SecondScore=$secondScore; Margin=($bestScore - $secondScore)
+    }
+}
+
+function Resolve-ToolAssistantReportJsonPath {
+    param([AllowNull()][string]$Path)
+
+    try {
+        if ([string]::IsNullOrWhiteSpace($Path)) { return "" }
+        $fullPath = [IO.Path]::GetFullPath($Path)
+        if ($fullPath.StartsWith('\\', [StringComparison]::Ordinal)) { return "" }
+        $pathRoot = [IO.Path]::GetPathRoot($fullPath)
+        if (-not [string]::IsNullOrWhiteSpace($pathRoot)) {
+            try {
+                if ((New-Object IO.DriveInfo($pathRoot)).DriveType -eq [IO.DriveType]::Network) { return "" }
+            } catch {}
+        }
+        if (Test-Path -LiteralPath $fullPath -PathType Container) {
+            $candidate = Get-ChildItem -LiteralPath $fullPath -Filter "*.json" -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Length -le $script:ToolAssistantMaxReportBytes } |
+                Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+            if ($candidate) { return [string]$candidate.FullName }
+            return ""
+        }
+        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { return "" }
+        if ([IO.Path]::GetExtension($fullPath) -ieq ".json") { return $fullPath }
+        $directory = Split-Path -Parent $fullPath
+        $baseName = [IO.Path]::GetFileNameWithoutExtension($fullPath)
+        $sameName = Join-Path $directory ($baseName + ".json")
+        if (Test-Path -LiteralPath $sameName -PathType Leaf) { return $sameName }
+        return Resolve-ToolAssistantReportJsonPath -Path $directory
+    } catch {
+        return ""
+    }
+}
+
+function Get-ToolAssistantReportContext {
+    param([AllowNull()][string]$ReportPath)
+
+    $jsonPath = Resolve-ToolAssistantReportJsonPath -Path $ReportPath
+    if ([string]::IsNullOrWhiteSpace($jsonPath)) { return $null }
+    try {
+        $item = Get-Item -LiteralPath $jsonPath -Force -ErrorAction Stop
+        if ($item.Length -le 2 -or $item.Length -gt $script:ToolAssistantMaxReportBytes) { return $null }
+        $report = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ([string]::IsNullOrWhiteSpace([string]$report.SchemaVersion) -or
+            [string]::IsNullOrWhiteSpace([string]$report.ReportKind) -or
+            [string]::IsNullOrWhiteSpace([string]$report.CreatedAt)) { return $null }
+        return [pscustomobject][ordered]@{
+            Path = $jsonPath
+            CreatedAt = [string]$report.CreatedAt
+            Mode = [string]$report.Mode
+            OfflineMode = [bool]$report.OfflineMode
+            WindowsStatus = [string]$report.WindowsStatus
+            WindowsChannel = [string]$report.WindowsChannel
+            WindowsConclusionCode = [string]$report.WindowsConclusionCode
+            WindowsConclusion = [string]$report.WindowsConclusion
+            OfficeDetected = [bool]$report.OfficeDetected
+            OfficeStatus = [string]$report.OfficeStatus
+            OfficeConclusionCode = [string]$report.OfficeConclusionCode
+            OfficeConclusion = [string]$report.OfficeConclusion
+            SuspiciousFindingCount = [int]$report.SuspiciousFindingCount
+            ManualReviewFindingCount = [int]$report.ManualReviewFindingCount
+            ThirdPartyApplicationCount = [int]$report.ThirdPartyApplicationCount
+            ThirdPartyHighSeverityCount = [int]$report.ThirdPartyHighSeverityCount
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Get-ToolAssistantLocalizedConclusion {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet("Windows", "Office")][string]$Product,
+        [AllowNull()][string]$Code,
+        [AllowNull()][string]$Fallback,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    $english = [bool]($Culture -eq "en-US")
+    $isWindows = [bool]($Product -eq "Windows")
+    switch ([string]$Code) {
+        "NotScanned" { if ($english) { return "Not scanned in this report." }; return "Không được quét trong báo cáo này." }
+        "NotDetected" { if ($english) { return "Microsoft Office was not detected." }; return "Không phát hiện Microsoft Office." }
+        "Unverifiable" { if ($english) { return "Undetermined — licensing data could not be read." }; return "Chưa xác định — không đọc được dữ liệu cấp phép." }
+        "NotLicensed" {
+            if ($english) { return $(if ($isWindows) { "Windows is not licensed." } else { "Microsoft Office is not licensed." }) }
+            return $(if ($isWindows) { "Windows chưa được cấp phép." } else { "Microsoft Office chưa được cấp phép." })
+        }
+        "KmsApprovedHost" { if ($english) { return "KMS activation was found on an approved host; entitlement records still need review." }; return "Phát hiện kích hoạt KMS qua máy chủ đã duyệt; vẫn cần đối chiếu hồ sơ quyền sử dụng." }
+        "KmsUnapprovedHost" { if ($english) { return "KMS activation points to a host outside the approved list." }; return "Kích hoạt KMS đang trỏ tới máy chủ ngoài danh sách được duyệt." }
+        "KmsEntitlementUnverified" { if ($english) { return "KMS activation is present, but licensing entitlement has not been verified." }; return "Có kích hoạt KMS nhưng chưa xác minh được quyền sử dụng." }
+        "ActivatedEntitlementUnverified" { if ($english) { return "Activation is present, but licensing entitlement has not been verified." }; return "Đã kích hoạt nhưng chưa xác minh được quyền sử dụng." }
+        "Undetermined" { if ($english) { return "Undetermined." }; return "Chưa xác định." }
+        default {
+            if (-not [string]::IsNullOrWhiteSpace([string]$Fallback)) { return [string]$Fallback }
+            if ($english) { return "No conclusion is available." }
+            return "Chưa có kết luận."
+        }
+    }
+}
+
+function Format-ToolAssistantReportContext {
+    param([AllowNull()][object]$Context, [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN")
+
+    if ($null -eq $Context) {
+        if ($Culture -eq "en-US") { return "No current JSON report is available. Run a scan and ask again." }
+        return "Chưa có báo cáo JSON hiện tại. Hãy chạy một lượt kiểm tra rồi hỏi lại."
+    }
+    $windowsConclusion = Get-ToolAssistantLocalizedConclusion -Product Windows -Code ([string]$Context.WindowsConclusionCode) -Fallback ([string]$Context.WindowsConclusion) -Culture $Culture
+    $officeConclusion = Get-ToolAssistantLocalizedConclusion -Product Office -Code ([string]$Context.OfficeConclusionCode) -Fallback ([string]$Context.OfficeConclusion) -Culture $Culture
+    $suspiciousCount = [int]$Context.SuspiciousFindingCount
+    $manualReviewCount = [int]$Context.ManualReviewFindingCount
+    $thirdPartyHighCount = [int]$Context.ThirdPartyHighSeverityCount
+    if ($Culture -eq "en-US") {
+        $nextAction = if ($suspiciousCount -gt 0 -or $thirdPartyHighCount -gt 0) {
+            "Next: open the exact evidence and keep Windows, Office, and third-party scopes separate. Preview and back up before isolating only a confirmed activator, task, service, or modified file; do not remove the main application from a Low-confidence signal."
+        } elseif ($manualReviewCount -gt 0) {
+            "Next: keep the applications unchanged and compare each finding with its license model, publisher/source, and detailed evidence. Manual review is not remediation approval."
+        } else {
+            "No suspicious or manual-review signal appears in this summary. That is a technical scan result, not a legal entitlement verdict."
+        }
+        return "Current report summary:`r`n- Windows: $windowsConclusion`r`n- Office: $officeConclusion`r`n- Third-party software: $($Context.ThirdPartyApplicationCount) inventoried; high-severity findings: $thirdPartyHighCount`r`n- All scopes: suspicious findings $suspiciousCount; manual review $manualReviewCount`r`n$nextAction`r`nThe Assistant never remediates automatically."
+    }
+    $nextAction = if ($suspiciousCount -gt 0 -or $thirdPartyHighCount -gt 0) {
+        "Bước tiếp theo: mở đúng bằng chứng và tách riêng phạm vi Windows, Office, phần mềm bên thứ ba. Chỉ sau khi xem trước và sao lưu mới cô lập đúng activator, tác vụ, dịch vụ hoặc tệp bị sửa đã xác nhận; không gỡ ứng dụng chính chỉ vì Tin cậy Low."
+    } elseif ($manualReviewCount -gt 0) {
+        "Bước tiếp theo: giữ nguyên ứng dụng, đối chiếu từng mục với mô hình giấy phép, nhà phát hành/nguồn cài và bằng chứng chi tiết. Kiểm tra thủ công không phải là điều kiện cho phép khắc phục."
+    } else {
+        "Phần tóm tắt không có tín hiệu nghi vấn hoặc mục cần kiểm tra thủ công. Đây vẫn chỉ là kết quả kỹ thuật, không phải phán quyết quyền sử dụng hợp pháp."
+    }
+    return "Tóm tắt báo cáo hiện tại:`r`n- Windows: $windowsConclusion`r`n- Office: $officeConclusion`r`n- Phần mềm bên thứ ba: $($Context.ThirdPartyApplicationCount) ứng dụng; mức nghiêm trọng cao: $thirdPartyHighCount`r`n- Toàn bộ phạm vi: $suspiciousCount dấu hiệu nghi vấn; $manualReviewCount mục cần kiểm tra thủ công`r`n$nextAction`r`nTrợ lý không bao giờ tự khắc phục."
+}
+
+function Get-ToolAssistantVariantIndex {
+    param([AllowNull()][string]$Text, [ValidateRange(1, 20)][int]$Count)
+
+    $sum = 0
+    foreach ($character in ([string]$Text).ToCharArray()) { $sum = ($sum + [int]$character) % 2147483000 }
+    return [int]($sum % $Count)
+}
+
+function Get-ToolAssistantFallbackAnswer {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('Outside','Ambiguous','Insufficient','Unsafe','Missing')][string]$Kind,
+        [AllowNull()][string]$Question,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    $english = [bool]($Culture -eq 'en-US')
+    $variants = switch ($Kind) {
+        'Unsafe' {
+            if ($english) { @(
+                'I cannot help bypass licensing or security controls. I can explain the finding and the safe, official remediation path in VietLicenSure.',
+                'That would weaken licensing or security controls, so I cannot guide it. I can help review the evidence, back up state, and use an official repair path.'
+            ) } else { @(
+                'Trợ lý không hướng dẫn lách bản quyền hoặc vô hiệu hóa lớp bảo vệ. Nếu cần, tôi có thể giải thích bằng chứng và hướng khắc phục an toàn, chính thức trong VietLicenSure.',
+                'Nội dung này có thể làm yếu kiểm soát bản quyền hoặc bảo mật nên Trợ lý không thể hướng dẫn. Tôi có thể hỗ trợ đọc bằng chứng, sao lưu và chọn cách xử lý chính thức.'
+            ) }
+        }
+        'Ambiguous' {
+            if ($english) { @(
+                'I understand the topic, but the question is still broad. Please name the button, report section, error code, or the result you want explained.',
+                'There are several possible meanings here. Add the feature name or exact report/error text so I can answer the right one.'
+            ) } else { @(
+                'Tôi đã nhận ra chủ đề nhưng câu hỏi còn khá rộng. Bạn hãy thêm tên nút, mục báo cáo, mã lỗi hoặc kết quả cần giải thích để Trợ lý trả lời đúng ý.',
+                'Câu này có thể hiểu theo vài hướng. Bạn chỉ cần gửi thêm tên chức năng hoặc nguyên dòng lỗi/kết luận trong báo cáo.'
+            ) }
+        }
+        'Missing' {
+            if ($english) { @('The local knowledge base is unavailable, so I cannot give a reliable answer yet.') }
+            else { @('Không đọc được bộ tri thức tương thích của phiên bản VietLicenSure này nên Trợ lý chưa thể trả lời đáng tin cậy.') }
+        }
+        'Insufficient' {
+            if ($english) { @(
+                'This is related to VietLicenSure, but the local data does not contain enough verified detail for a reliable conclusion. Add the exact feature, status, error line, or current report evidence.',
+                'I can identify this as a VietLicenSure topic, but the available VietLicenSure data is not specific enough to answer safely. Send the button name, complete message, or matching report section.'
+            ) } else { @(
+                'Câu hỏi có liên quan đến VietLicenSure, nhưng dữ liệu cục bộ chưa đủ chi tiết đã kiểm chứng để kết luận đáng tin cậy. Bạn hãy thêm tên chức năng, trạng thái, nguyên dòng lỗi hoặc bằng chứng trong báo cáo hiện tại.',
+                'Trợ lý nhận ra đây là nội dung của VietLicenSure nhưng dữ liệu sẵn có chưa đủ cụ thể để trả lời an toàn. Hãy gửi tên nút, thông báo đầy đủ hoặc đúng mục báo cáo liên quan.'
+            ) }
+        }
+        default {
+            $outsideKey = ConvertTo-ToolAssistantSearchKey -Value $Question
+            if ($outsideKey -match '\b(?:nau|mon an|bun|pho|com|banh|cong thuc nau)\b') {
+                if ($english) { @('Cooking is outside VietLicenSure, so I do not have VietLicenSure data to answer that recipe. I can still help with running or interpreting the VietLicenSure.') }
+                else { @('Câu hỏi về nấu ăn nằm ngoài phạm vi VietLicenSure nên Trợ lý không có dữ liệu VietLicenSure để trả lời công thức này. Trợ lý vẫn có thể hỗ trợ cách chạy hoặc đọc kết quả của VietLicenSure.') }
+            } elseif ($outsideKey -match '\b(?:thoi tiet|du bao|mua nang|tin tuc|the thao|ty so)\b') {
+                if ($english) { @('Live weather, news, and sports are outside VietLicenSure and are not present in its local data. Ask about a VietLicenSure status, scan, or report instead.') }
+                else { @('Thời tiết, tin tức hoặc tỷ số trực tiếp nằm ngoài phạm vi VietLicenSure và không có trong dữ liệu cục bộ của VietLicenSure. Bạn có thể hỏi về trạng thái, lượt quét hoặc báo cáo của VietLicenSure.') }
+            } elseif ($outsideKey -match '\b(?:benh|thuoc|suc khoe|bac si|luat|dau tu|chung khoan)\b') {
+                if ($english) { @('That professional topic is outside VietLicenSure. This assistant will not substitute VietLicenSure data for medical, legal, or financial guidance.') }
+                else { @('Chủ đề chuyên môn này nằm ngoài phạm vi VietLicenSure. Trợ lý không dùng dữ liệu của VietLicenSure để thay cho tư vấn y tế, pháp lý hoặc tài chính.') }
+            } elseif ($outsideKey -match '\b(?:viet bai|lam tho|dich van ban|ke chuyen|sang tac)\b') {
+                if ($english) { @('Writing or translation unrelated to the product is outside VietLicenSure. I can explain VietLicenSure text, labels, reports, and workflows when those are the subject.') }
+                else { @('Viết bài, làm thơ hoặc dịch nội dung không liên quan đến sản phẩm nằm ngoài phạm vi VietLicenSure. Nếu đó là nhãn, báo cáo hay quy trình của VietLicenSure, Trợ lý có thể giải thích.') }
+            } elseif ($english) { @(
+                'That topic is outside VietLicenSure, so its local knowledge does not provide an answer. Questions about any VietLicenSure feature, state, report, error, or workflow remain in scope.',
+                'I cannot connect this question to VietLicenSure data. If it concerns the product, include the screen, button, status, or message so I can use the right VietLicenSure context.',
+                'This request is unrelated to VietLicenSure. The assistant remains available for the product, its operation, its evidence, and its supported Windows/Office/software workflows.'
+            ) } else { @(
+                'Chủ đề này không liên quan đến VietLicenSure nên nằm ngoài phạm vi dữ liệu của Trợ lý. Mọi câu hỏi về sản phẩm, chức năng, trạng thái, báo cáo, lỗi hoặc quy trình của VietLicenSure vẫn được hỗ trợ.',
+                'Trợ lý chưa liên hệ được câu hỏi này với dữ liệu của VietLicenSure. Nếu câu hỏi thực sự nói về VietLicenSure, bạn hãy thêm tên màn hình, nút, trạng thái hoặc thông báo để xác định đúng ngữ cảnh.',
+                'Yêu cầu này không thuộc VietLicenSure. Trợ lý vẫn trả lời các nội dung liên quan đến cách vận hành, bằng chứng và quy trình Windows, Office hoặc phần mềm mà VietLicenSure hỗ trợ.'
+            ) }
+        }
+    }
+    $variants = @($variants)
+    if ($variants.Count -eq 0) { return '' }
+    return [string]$variants[(Get-ToolAssistantVariantIndex -Text $Question -Count $variants.Count)]
+}
+
+function Add-ToolAssistantNaturalLead {
+    param(
+        [Parameter(Mandatory = $true)][string]$Answer,
+        [AllowNull()][string]$Question,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN"
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Answer)) { return $Answer }
+    $questionText = [string]$Question
+    if ($questionText.Trim().Length -lt 42) { return $Answer }
+    $leads = if ($Culture -eq 'en-US') {
+        @('', 'In short: ', 'The key point is: ', 'For this situation: ')
+    } else {
+        @('', 'Nói ngắn gọn: ', 'Điểm chính là: ', 'Trong trường hợp này: ')
+    }
+    return ([string]$leads[(Get-ToolAssistantVariantIndex -Text $Question -Count $leads.Count)] + $Answer)
+}
+
+function Get-ToolAssistantAnswer {
+    param(
+        [Parameter(Mandatory = $true)][string]$Question,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN",
+        [AllowNull()][object]$Knowledge = $null,
+        [AllowNull()][object]$ReportContext = $null,
+        [AllowNull()][string]$PreviousQuestion = $null,
+        [AllowNull()][object]$OnlineMode = $null
+    )
+
+    $originalQueryKey = ConvertTo-ToolAssistantSearchKey -Value $Question
+    if ([string]::IsNullOrWhiteSpace($originalQueryKey)) {
+        if ($Culture -eq "en-US") { return "Please enter a question about VietLicenSure." }
+        return "Vui lòng nhập câu hỏi về VietLicenSure."
+    }
+    $queryKey = Expand-ToolAssistantContextQuery -QueryKey $originalQueryKey -PreviousQuestion $PreviousQuestion
+    if ($queryKey -match '(?:bo qua|vo hieu|tat|lach).*(?:ban quyen|kich hoat|defender|antivirus)|(?:crack|keygen).*(?:cach lam|huong dan|tai o dau)') {
+        return Get-ToolAssistantFallbackAnswer -Kind Unsafe -Question $Question -Culture $Culture
+    }
+    if ($originalQueryKey -match '^(xin chao|chao|hello|hi|alo|hey)\b') {
+        if ($Culture -eq "en-US") { return "Hello. I am the Assistant. Ask me about a button, report result, error code or workflow." }
+        return "Xin chào. Đây là Trợ lý. Bạn có thể hỏi về nút chức năng, kết quả báo cáo, mã lỗi hoặc cách sử dụng phần mềm."
+    }
+    if ($null -ne $OnlineMode -and $originalQueryKey -match '(?:(?:tool|cong cu|che do|trang thai mang|trang thai).*(?:online|offline).*(?:hien tai|luc nay|bay gio|dang)|(?:trang thai|che do).*(?:online|offline).*(?:hien tai|luc nay|bay gio)|(?:dang|hien tai).*(?:online|offline)|^online hay offline$)') {
+        $isOnline = [bool]$OnlineMode
+        if ($Culture -eq 'en-US') {
+            if ($isOnline) { return 'The VietLicenSure is Online for this session. Network access is allowed only for actions you explicitly start; reopening the VietLicenSure returns to Offline.' }
+            return 'The VietLicenSure is currently Offline. Local scans, reports, and the bundled Assistant knowledge remain available without Internet access.'
+        }
+        if ($isOnline) { return 'VietLicenSure đang Online trong phiên hiện tại. Quyền mạng chỉ được dùng cho thao tác bạn chủ động chạy; đóng rồi mở lại VietLicenSure sẽ trở về Offline.' }
+        return 'VietLicenSure hiện đang Offline. Các lượt quét cục bộ, báo cáo và kho tri thức nhúng của Trợ lý vẫn dùng được mà không cần Internet.'
+    }
+    if ($originalQueryKey -match '(bao cao hien tai|bao cao vua|ket qua hien tai|ket qua vua|trang thai hien tai cua may|may nay dang the nao|scan result|current report|current status|explain (?:the )?current report)') {
+        return Format-ToolAssistantReportContext -Context $ReportContext -Culture $Culture
+    }
+    $policyClarification = Get-ToolAssistantPolicyClarification -QueryKey $queryKey -Culture $Culture
+    if (-not [string]::IsNullOrWhiteSpace($policyClarification)) {
+        return $policyClarification
+    }
+    $missingReferenceContext = [string]::IsNullOrWhiteSpace([string]$PreviousQuestion) -and (
+        $originalQueryKey -match '^(?:cai nay|cai do|no)\b' -or
+        $originalQueryKey -match '\b(?:trang thai|loi|ma loi|chuc nang|muc|nut|ket qua|bao cao|thong bao) (?:nay|do)\b')
+    if ($missingReferenceContext) {
+        if ($Culture -eq 'en-US') {
+            return 'I do not yet know what "this/that" refers to. Please paste the exact status, error message, button name, or screen you are asking about.'
+        }
+        return 'Trợ lý chưa biết "này/đó" đang chỉ nội dung nào. Hãy gửi nguyên trạng thái, thông báo lỗi, tên nút hoặc màn hình bạn muốn hỏi.'
+    }
+    $namedGuideAnswer = Get-ToolAssistantNamedGuideAnswer -QueryKey $queryKey -Culture $Culture
+    if (-not [string]::IsNullOrWhiteSpace($namedGuideAnswer)) {
+        return Add-ToolAssistantNaturalLead -Answer $namedGuideAnswer -Question $Question -Culture $Culture
+    }
+    $historyAnswer = Get-ToolAssistantHistoryAnswer -Question $Question -Culture $Culture
+    if (-not [string]::IsNullOrWhiteSpace($historyAnswer)) {
+        return Add-ToolAssistantNaturalLead -Answer $historyAnswer -Question $Question -Culture $Culture
+    }
+    $preDocumentAnswer = Get-ToolAssistantDocumentAnswer -QueryKey $queryKey -Culture $Culture -SourceKind Guide
+    $explicitGuideSection = $originalQueryKey -match '(?:(?:lua chon|choice)\s+\d|(?:trong|theo).*(?:hdsd|huong dan su dung|user guide)|(?:hdsd|huong dan su dung|user guide).*(?:muc|phan|section))'
+    if ($explicitGuideSection -and -not [string]::IsNullOrWhiteSpace($preDocumentAnswer)) {
+        return Add-ToolAssistantNaturalLead -Answer $preDocumentAnswer -Question $Question -Culture $Culture
+    }
+    $toolRelated = Test-ToolAssistantRelatedQuery -QueryKey $originalQueryKey -PreviousQuestion $PreviousQuestion
+    if (-not $toolRelated) {
+        if (-not [string]::IsNullOrWhiteSpace($preDocumentAnswer)) { return Add-ToolAssistantNaturalLead -Answer $preDocumentAnswer -Question $Question -Culture $Culture }
+        return Get-ToolAssistantFallbackAnswer -Kind Outside -Question $Question -Culture $Culture
+    }
+    if ($null -eq $Knowledge) { $Knowledge = Get-ToolAssistantKnowledge }
+    if ($null -eq $Knowledge) {
+        if (-not [string]::IsNullOrWhiteSpace($preDocumentAnswer)) { return Add-ToolAssistantNaturalLead -Answer $preDocumentAnswer -Question $Question -Culture $Culture }
+        return Get-ToolAssistantFallbackAnswer -Kind Missing -Question $Question -Culture $Culture
+    }
+    $resolved = Resolve-ToolAssistantEntry -QueryKey $queryKey -Knowledge $Knowledge
+    $bestEntry = $resolved.Entry
+    $contentTokens = @($queryKey -split ' ' | Where-Object { $_.Length -ge 2 -and $_ -notin @('co','la','gi','duoc','khong','the','nao','hay','va') })
+    if ($null -eq $bestEntry -or [int]$resolved.Score -lt 14) {
+        if ($toolRelated) {
+            $documentAnswer = Get-ToolAssistantDocumentAnswer -QueryKey $queryKey -Culture $Culture
+            if (-not [string]::IsNullOrWhiteSpace($documentAnswer)) { return Add-ToolAssistantNaturalLead -Answer $documentAnswer -Question $Question -Culture $Culture }
+            return Get-ToolAssistantFallbackAnswer -Kind Insufficient -Question $Question -Culture $Culture
+        }
+        return Get-ToolAssistantFallbackAnswer -Kind Outside -Question $Question -Culture $Culture
+    }
+    if ([string]$resolved.Route -eq 'ScoredKeywords' -and $contentTokens.Count -le 1) {
+        if ($toolRelated) {
+            $documentAnswer = Get-ToolAssistantDocumentAnswer -QueryKey $queryKey -Culture $Culture
+            if (-not [string]::IsNullOrWhiteSpace($documentAnswer)) { return Add-ToolAssistantNaturalLead -Answer $documentAnswer -Question $Question -Culture $Culture }
+            return Get-ToolAssistantFallbackAnswer -Kind Insufficient -Question $Question -Culture $Culture
+        }
+        return Get-ToolAssistantFallbackAnswer -Kind Outside -Question $Question -Culture $Culture
+    }
+    if ([string]$resolved.Route -eq 'ScoredKeywords' -and
+        $resolved.PSObject.Properties['SecondScore'] -and [int]$resolved.SecondScore -ge 18 -and [int]$resolved.Margin -lt 5) {
+        $firstTitle = if ($Culture -eq 'en-US') { [string]$bestEntry.TitleEn } else { [string]$bestEntry.TitleVi }
+        $secondTitle = if ($Culture -eq 'en-US') { [string]$resolved.SecondEntry.TitleEn } else { [string]$resolved.SecondEntry.TitleVi }
+        $explicitMultiPart = $queryKey -match '\b(?:va|dong thoi|kem theo|them nua|and|also|plus)\b'
+        if (-not $explicitMultiPart) {
+            if ($Culture -eq 'en-US') {
+                return ('Your question may refer to either "{0}" or "{1}". Which one do you mean? Add the feature, screen, status, or exact error message.' -f $firstTitle, $secondTitle)
+            }
+            return ('Câu hỏi có thể nói về "{0}" hoặc "{1}". Bạn muốn hỏi mục nào? Hãy thêm tên chức năng, màn hình, trạng thái hoặc nguyên thông báo lỗi.' -f $firstTitle, $secondTitle)
+        }
+    }
+    $answer = if ($Culture -eq "en-US") { [string]$bestEntry.AnswerEn } else { [string]$bestEntry.AnswerVi }
+    if ($queryKey -match '\b(va|dong thoi|kem theo|them nua)\b' -and
+        $resolved.PSObject.Properties['SecondEntry'] -and $null -ne $resolved.SecondEntry -and
+        [int]$resolved.SecondScore -ge 24 -and [string]$resolved.SecondEntry.Id -ne [string]$bestEntry.Id) {
+        $secondAnswer = if ($Culture -eq 'en-US') { [string]$resolved.SecondEntry.AnswerEn } else { [string]$resolved.SecondEntry.AnswerVi }
+        $separator = if ($Culture -eq 'en-US') { "`r`n`r`nFor the second part: " } else { "`r`n`r`nVới ý thứ hai: " }
+        $answer += $separator + $secondAnswer
+    }
+    return Add-ToolAssistantNaturalLead -Answer $answer -Question $Question -Culture $Culture
+}
+
+function Get-ToolAssistantUiText {
+    param([string]$Key, [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN")
+
+    $english = [bool]($Culture -eq "en-US")
+    switch ($Key) {
+        "Title" { if ($english) { return "Assistant" }; return "Trợ lý" }
+        "Scope" { if ($english) { return "Answers questions about VietLicenSure using local knowledge, guides, version history, and available report data." }; return "Giải đáp về VietLicenSure bằng tri thức cục bộ, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
+        "Offline" { if ($english) { return "OFFLINE · local knowledge" }; return "OFFLINE · tri thức cục bộ" }
+        "Online" { if ($english) { return "ONLINE · knowledge sync allowed" }; return "ONLINE · cho phép đồng bộ tri thức" }
+        "Input" { if ($english) { return "Ask anything related to VietLicenSure..." }; return "Hỏi mọi nội dung liên quan đến VietLicenSure..." }
+        "Send" { if ($english) { return "Send" }; return "Gửi" }
+        "Copy" { if ($english) { return "Copy" }; return "Sao chép" }
+        "Clear" { if ($english) { return "Clear" }; return "Xóa hội thoại" }
+        "Sync" { if ($english) { return "Sync knowledge" }; return "Đồng bộ tri thức" }
+        "ConnectOnline" { if ($english) { return "Connect Online" }; return "Kết nối Online" }
+        "OtherVersions" { if ($english) { return "Other versions" }; return "Các phiên bản khác" }
+        "OtherVersionsTip" { if ($english) { return "Open the official GitHub Releases page to view and download other VietLicenSure versions." }; return "Mở trang GitHub Releases chính thức để xem và tải các phiên bản VietLicenSure khác." }
+        "OpenLinkFailed" { if ($english) { return "The GitHub Releases page could not be opened. Please check your default browser." }; return "Không mở được trang GitHub Releases. Hãy kiểm tra trình duyệt mặc định." }
+        "OnlineConnected" { if ($english) { return "Online connected" }; return "Đã Online" }
+        "ConnectOnlineTip" { if ($english) { return "Allow network access for this session so the Assistant can synchronize knowledge. Restarting the application returns to Offline." }; return "Cho phép mạng trong phiên này để Trợ lý đồng bộ tri thức. Mở lại VietLicenSure vẫn trở về Offline." }
+        "OnlineConnectedTip" { if ($english) { return "Online is allowed for this session. Signed VietLicenSure knowledge can now be synchronized." }; return "Online đã được cho phép trong phiên này. VietLicenSure có thể đồng bộ gói tri thức đã ký." }
+        "SyncTip" { if ($english) { return "Downloads only the signed VietLicenSure knowledge package; questions, reports and device data are never sent." }; return "Chỉ tải gói tri thức VietLicenSure đã ký; không gửi câu hỏi, báo cáo hoặc dữ liệu máy." }
+        "OnlineEnabled" { if ($english) { return "Online is now allowed for this session. Signed VietLicenSure knowledge will be checked." }; return "Đã cho phép Online trong phiên này. VietLicenSure sẽ kiểm tra gói tri thức đã ký." }
+        "OnlineNotEnabled" { if ($english) { return "Online was not enabled. Assistant continues with local knowledge." }; return "Chưa bật Online. Trợ lý tiếp tục dùng tri thức cục bộ." }
+        "Close" { if ($english) { return "Close" }; return "Đóng" }
+        "Welcome" { if ($english) { return "The Assistant supports lookup, answers, and guidance based on its knowledge base, user guides, version history, and available report data." }; return "Trợ lý hỗ trợ tra cứu, giải đáp và hướng dẫn dựa trên kho tri thức, HDSD, lịch sử phiên bản và dữ liệu báo cáo hiện có." }
+        "You" { if ($english) { return "You" }; return "Bạn" }
+        "Assistant" { if ($english) { return "Assistant" }; return "Trợ lý" }
+        default { return $Key }
+    }
+}
+
+function Test-ToolAssistantReleaseHistoryAddress {
+    param([AllowNull()][string]$Address = '')
+
+    if ([string]::IsNullOrWhiteSpace($Address)) { $Address = [string]$script:ToolAssistantReleaseHistoryUrl }
+    try { $uri = New-Object Uri($Address) } catch { return $false }
+    return [bool](
+        $uri.IsAbsoluteUri -and $uri.Scheme -ceq 'https' -and
+        $uri.DnsSafeHost -ceq 'github.com' -and
+        $uri.AbsolutePath.TrimEnd('/') -ceq '/thanhvietithopnghia-rgb/VietLicenSure/releases' -and
+        $uri.IsDefaultPort -and [string]::IsNullOrWhiteSpace($uri.UserInfo) -and
+        [string]::IsNullOrWhiteSpace($uri.Query) -and [string]::IsNullOrWhiteSpace($uri.Fragment)
+    )
+}
+
+function Open-ToolAssistantReleaseHistory {
+    param(
+        [AllowNull()][scriptblock]$PrimaryLauncher = $null,
+        [AllowNull()][scriptblock]$FallbackLauncher = $null
+    )
+
+    $address = [string]$script:ToolAssistantReleaseHistoryUrl
+    if (-not (Test-ToolAssistantReleaseHistoryAddress -Address $address)) { return $false }
+    if ($null -eq $PrimaryLauncher) {
+        $PrimaryLauncher = {
+            param([string]$TargetAddress)
+            $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $startInfo.FileName = $TargetAddress
+            $startInfo.Verb = 'open'
+            $startInfo.UseShellExecute = $true
+            [void][System.Diagnostics.Process]::Start($startInfo)
+            return $true
+        }
+    }
+    try {
+        if ((& $PrimaryLauncher $address) -ne $false) { return $true }
+    } catch { }
+
+    if ($null -eq $FallbackLauncher) {
+        $FallbackLauncher = {
+            param([string]$TargetAddress)
+            $explorerPath = if ([string]::IsNullOrWhiteSpace([string]$env:WINDIR)) { 'explorer.exe' } else { Join-Path ([string]$env:WINDIR) 'explorer.exe' }
+            $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $startInfo.FileName = $explorerPath
+            $startInfo.Arguments = '"' + $TargetAddress + '"'
+            $startInfo.UseShellExecute = $false
+            [void][System.Diagnostics.Process]::Start($startInfo)
+            return $true
+        }
+    }
+    try { return [bool]((& $FallbackLauncher $address) -ne $false) } catch { return $false }
+}
+
+function Set-ToolAssistantMessageBubbleBounds {
+    param(
+        [Parameter(Mandatory = $true)][object]$State,
+        [Parameter(Mandatory = $true)][object]$Wrapper
+    )
+
+    $metadata = $Wrapper.Tag
+    if ($null -eq $metadata -or $null -eq $metadata.Bubble -or $null -eq $metadata.MessageLabel) { return }
+    $chatPadding = $State.Chat.Padding
+    $availableWidth = [Math]::Max(180, [int]$State.Chat.ClientSize.Width - $chatPadding.Left - $chatPadding.Right - 20)
+    $maximumBubbleWidth = [Math]::Max(200, [Math]::Min(560, [int]($availableWidth * 0.72)))
+    $minimumBubbleWidth = [Math]::Min(210, $maximumBubbleWidth)
+    $maximumTextWidth = [Math]::Max(160, $maximumBubbleWidth - 20)
+    $measureFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::TextBoxControl -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+    $preferredMessage = [Windows.Forms.TextRenderer]::MeasureText(
+        [string]$metadata.MessageLabel.Text,
+        $metadata.MessageLabel.Font,
+        (New-Object Drawing.Size($maximumTextWidth, 10000)),
+        $measureFlags
+    )
+    $preferredSpeaker = [Windows.Forms.TextRenderer]::MeasureText(
+        [string]$metadata.SpeakerLabel.Text,
+        $metadata.SpeakerLabel.Font,
+        (New-Object Drawing.Size($maximumTextWidth, 40)),
+        ([Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix)
+    )
+    $contentWidth = [Math]::Max($preferredMessage.Width, $preferredSpeaker.Width)
+    $bubbleWidth = [Math]::Max($minimumBubbleWidth, [Math]::Min($maximumBubbleWidth, $contentWidth + 20))
+    $textWidth = [Math]::Max(160, $bubbleWidth - 20)
+    $preferredMessage = [Windows.Forms.TextRenderer]::MeasureText(
+        [string]$metadata.MessageLabel.Text,
+        $metadata.MessageLabel.Font,
+        (New-Object Drawing.Size($textWidth, 10000)),
+        $measureFlags
+    )
+    $messageHeight = [Math]::Max(20, $preferredMessage.Height)
+    $metadata.MessageLabel.MaximumSize = New-Object Drawing.Size($textWidth, 0)
+    $metadata.Bubble.Size = New-Object Drawing.Size($bubbleWidth, ($messageHeight + 39))
+    $metadata.SpeakerLabel.Location = New-Object Drawing.Point(10, 7)
+    $metadata.SpeakerLabel.Size = New-Object Drawing.Size($textWidth, 18)
+    $metadata.MessageLabel.Location = New-Object Drawing.Point(10, 27)
+    $metadata.MessageLabel.Size = New-Object Drawing.Size($textWidth, $messageHeight)
+    $Wrapper.Width = $availableWidth
+    $Wrapper.Height = $metadata.Bubble.Height + 3
+    $metadata.Bubble.Left = if ([string]$metadata.Role -eq 'User') { $availableWidth - $bubbleWidth } else { 0 }
+    $metadata.Bubble.Top = 0
+    $metadata.Bubble.Invalidate()
+}
+
+function Resize-ToolAssistantChatBubbles {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    if ($null -eq $State.Chat) { return }
+    foreach ($wrapper in @($State.Chat.Controls)) {
+        Set-ToolAssistantMessageBubbleBounds -State $State -Wrapper $wrapper
+    }
+}
+
+function Complete-ToolAssistantConversationLayout {
+    param(
+        [Parameter(Mandatory = $true)][object]$State,
+        [AllowNull()][object]$LatestControl = $null
+    )
+
+    $chat = $State.Chat
+    if ($null -eq $chat -or $chat.IsDisposed) { return }
+    try {
+        $chat.SuspendLayout()
+        try { Resize-ToolAssistantChatBubbles -State $State }
+        finally { $chat.ResumeLayout($true) }
+        $chat.PerformLayout()
+        $scrollOffsetY = [Math]::Abs([int]$chat.AutoScrollPosition.Y)
+        $contentBottom = [int]$chat.Padding.Top
+        foreach ($control in @($chat.Controls)) {
+            $virtualBottom = [int]$control.Bottom + $scrollOffsetY + [int]$control.Margin.Bottom
+            $contentBottom = [Math]::Max($contentBottom, $virtualBottom)
+        }
+        $chat.AutoScrollMinSize = New-Object Drawing.Size(0, ($contentBottom + [int]$chat.Padding.Bottom))
+        $chat.PerformLayout()
+        if ($null -ne $LatestControl -and -not $LatestControl.IsDisposed) {
+            if (-not $LatestControl.IsHandleCreated) { [void]$LatestControl.CreateControl() }
+            $chat.ScrollControlIntoView($LatestControl)
+        }
+        $targetY = [Math]::Max(0, $contentBottom - [int]$chat.ClientSize.Height + [int]$chat.Padding.Bottom + 4)
+        $chat.AutoScrollPosition = New-Object Drawing.Point(0, $targetY)
+        $chat.Invalidate($true)
+        $chat.Update()
+
+        if ($chat.IsHandleCreated) {
+            [Windows.Forms.Application]::DoEvents()
+            $chat.PerformLayout()
+            if ($null -ne $LatestControl -and -not $LatestControl.IsDisposed) {
+                $chat.ScrollControlIntoView($LatestControl)
+            }
+            $chat.AutoScrollPosition = New-Object Drawing.Point(0, $targetY)
+            try {
+                if ($chat.VerticalScroll.Visible) {
+                    $maximumValue = [Math]::Max($chat.VerticalScroll.Minimum, $chat.VerticalScroll.Maximum - $chat.VerticalScroll.LargeChange + 1)
+                    $chat.VerticalScroll.Value = $maximumValue
+                }
+            } catch {}
+            $chat.Update()
+        }
+    } catch {
+    }
+}
+
+function Update-ToolAssistantConversationUi {
+    param(
+        [Parameter(Mandatory = $true)][object]$State,
+        [AllowNull()][object]$LatestControl = $null
+    )
+
+    Complete-ToolAssistantConversationLayout -State $State -LatestControl $LatestControl
+
+    if ($State.PSObject.Properties['PendingRevealControl']) { $State.PendingRevealControl = $LatestControl }
+    if (-not $State.PSObject.Properties['RevealQueued']) {
+        $State | Add-Member -NotePropertyName RevealQueued -NotePropertyValue $false
+    }
+    if (-not [bool]$State.RevealQueued -and $State.Chat.IsHandleCreated) {
+        $State.RevealQueued = $true
+        $queuedState = $State
+        $revealCallback = [Action]{
+            try {
+                $queuedState.RevealQueued = $false
+                $latest = $queuedState.PendingRevealControl
+                $queuedState.PendingRevealControl = $null
+                Complete-ToolAssistantConversationLayout -State $queuedState -LatestControl $latest
+            } catch {
+                $queuedState.RevealQueued = $false
+            }
+        }.GetNewClosure()
+        try { [void]$State.Chat.BeginInvoke($revealCallback) }
+        catch { $State.RevealQueued = $false }
+    }
+    if ($State.PSObject.Properties['RenderTimer'] -and $null -ne $State.RenderTimer) {
+        try {
+            $State.RenderTimer.Stop()
+            $State.RenderTimer.Start()
+        } catch [ObjectDisposedException] {
+        }
+    }
+}
+
+function Add-ToolAssistantChatMessage {
+    param(
+        [Parameter(Mandatory = $true)][object]$State,
+        [Parameter(Mandatory = $true)][ValidateSet('User','Assistant')][string]$Role,
+        [AllowEmptyString()][string]$Message = ""
+    )
+
+    $chat = $State.Chat
+    if ($null -eq $chat) { return $null }
+    $speaker = Get-ToolAssistantUiText $(if ($Role -eq 'User') { 'You' } else { 'Assistant' }) $State.Culture
+    if ($State.PSObject.Properties['Transcript'] -and $null -ne $State.Transcript) {
+        if ($State.Transcript.Length -gt 0) { [void]$State.Transcript.Append("`r`n`r`n") }
+        [void]$State.Transcript.Append($speaker).Append("`r`n").Append([string]$Message)
+    }
+
+    $chat.SuspendLayout()
+    $wrapper = New-Object Windows.Forms.Panel
+    $wrapper.BackColor = $chat.BackColor
+    $wrapper.Margin = New-Object Windows.Forms.Padding(0, 0, 0, 9)
+    $bubble = New-Object Windows.Forms.Panel
+    $bubble.BorderStyle = 'None'
+    $bubble.BackColor = if ($Role -eq 'User') { $State.UserBubbleColor } else { $State.AssistantBubbleColor }
+    $bubble.Tag = if ($Role -eq 'User') { $State.UserBubbleBorderColor } else { $State.AssistantBubbleBorderColor }
+    $bubble.Add_Paint({
+        param($sender, $eventArgs)
+        if ($sender.ClientSize.Width -le 1 -or $sender.ClientSize.Height -le 1) { return }
+        $pen = New-Object Drawing.Pen([Drawing.Color]$sender.Tag, 1)
+        try { $eventArgs.Graphics.DrawRectangle($pen, 0, 0, $sender.ClientSize.Width - 1, $sender.ClientSize.Height - 1) }
+        finally { $pen.Dispose() }
+    })
+    $speakerLabel = New-Object Windows.Forms.Label
+    $speakerLabel.Text = $speaker
+    $speakerLabel.Font = $State.SpeakerFont
+    $speakerLabel.ForeColor = if ($Role -eq 'User') { $State.UserTextColor } else { $State.AssistantHeaderColor }
+    $speakerLabel.BackColor = [Drawing.Color]::Transparent
+    $speakerLabel.Location = New-Object Drawing.Point(10, 7)
+    $messageLabel = New-Object Windows.Forms.Label
+    $messageLabel.Text = [string]$Message
+    $messageLabel.Font = $State.MessageFont
+    $messageLabel.ForeColor = if ($Role -eq 'User') { $State.UserTextColor } else { $State.AssistantTextColor }
+    $messageLabel.BackColor = [Drawing.Color]::Transparent
+    $messageLabel.Location = New-Object Drawing.Point(10, 27)
+    $messageLabel.AutoEllipsis = $false
+    $messageLabel.UseCompatibleTextRendering = $false
+    $bubble.Controls.Add($speakerLabel)
+    $bubble.Controls.Add($messageLabel)
+    $wrapper.Controls.Add($bubble)
+    $wrapper.Tag = [pscustomobject]@{
+        Role = $Role
+        Bubble = $bubble
+        SpeakerLabel = $speakerLabel
+        MessageLabel = $messageLabel
+    }
+    Set-ToolAssistantMessageBubbleBounds -State $State -Wrapper $wrapper
+    [void]$chat.Controls.Add($wrapper)
+    $chat.ResumeLayout($true)
+    Update-ToolAssistantConversationUi -State $State -LatestControl $wrapper
+    return $wrapper
+}
+
+function Clear-ToolAssistantConversation {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    foreach ($control in @($State.Chat.Controls)) {
+        $State.Chat.Controls.Remove($control)
+        $control.Dispose()
+    }
+    if ($State.PSObject.Properties['Transcript'] -and $null -ne $State.Transcript) { [void]$State.Transcript.Clear() }
+    if ($State.PSObject.Properties['LastQuestionKey']) { $State.LastQuestionKey = "" }
+    if ($State.PSObject.Properties['LastQuestionText']) { $State.LastQuestionText = "" }
+    if ($State.PSObject.Properties['LastAnswer']) { $State.LastAnswer = "" }
+}
+
+function Invoke-ToolAssistantQuestion {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    if ($State.PSObject.Properties['IsSubmitting'] -and [bool]$State.IsSubmitting) { return "" }
+    $question = [string]$State.Input.Text
+    if ([string]::IsNullOrWhiteSpace($question)) { return "" }
+    $question = $question.Trim()
+    $answer = ""
+    $questionKey = ConvertTo-ToolAssistantSearchKey -Value $question
+    $previousQuestion = if ($State.PSObject.Properties['LastQuestionText']) { [string]$State.LastQuestionText } else { '' }
+    $State.IsSubmitting = $true
+    if ($State.PSObject.Properties['SendButton'] -and $null -ne $State.SendButton) { $State.SendButton.Enabled = $false }
+    $State.Input.Enabled = $false
+    try {
+        $State.Input.Clear()
+        [void](Add-ToolAssistantChatMessage -State $State -Role User -Message $question)
+        if ($State.PSObject.Properties['LastQuestionKey'] -and
+            -not [string]::IsNullOrWhiteSpace([string]$State.LastQuestionKey) -and
+            [string]$State.LastQuestionKey -eq $questionKey) {
+            $answer = if ($State.Culture -eq 'en-US') {
+                "This is the same question as the previous turn. The answer above is still current; add the exact error, report line, or a different detail if you want me to go deeper."
+            } else {
+                "Câu này trùng với lượt ngay trước. Nội dung phía trên vẫn còn hiệu lực; bạn hãy thêm mã lỗi, dòng báo cáo hoặc chi tiết khác nếu muốn Trợ lý phân tích sâu hơn."
+            }
+        } else {
+            $currentOnlineMode = if ($State.PSObject.Properties['OnlineMode']) { [bool]$State.OnlineMode } else { $null }
+            $answer = Get-ToolAssistantAnswer -Question $question -Culture $State.Culture -Knowledge $State.Knowledge -ReportContext $State.ReportContext -PreviousQuestion $previousQuestion -OnlineMode $currentOnlineMode
+        }
+        [void](Add-ToolAssistantChatMessage -State $State -Role Assistant -Message $answer)
+        if ($State.PSObject.Properties['LastQuestionKey']) { $State.LastQuestionKey = $questionKey }
+        if ($State.PSObject.Properties['LastQuestionText']) { $State.LastQuestionText = $question }
+        if ($State.PSObject.Properties['LastAnswer']) { $State.LastAnswer = [string]$answer }
+    } finally {
+        $State.IsSubmitting = $false
+        $State.Input.Enabled = $true
+        if ($State.PSObject.Properties['SendButton'] -and $null -ne $State.SendButton) { $State.SendButton.Enabled = $true }
+        $State.Input.Focus()
+    }
+    return [string]$answer
+}
+
+function Queue-ToolAssistantQuestion {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    if ([bool]$State.IsSubmitting -or
+        ($State.PSObject.Properties['SubmissionQueued'] -and [bool]$State.SubmissionQueued) -or
+        [string]::IsNullOrWhiteSpace([string]$State.Input.Text)) { return }
+    if (-not $State.PSObject.Properties['Window'] -or $null -eq $State.Window -or $State.Window.IsDisposed) {
+        [void](Invoke-ToolAssistantQuestion -State $State)
+        return
+    }
+    $State.SubmissionQueued = $true
+    $State.SendButton.Enabled = $false
+    $State.Input.Enabled = $false
+    $callbackScript = {
+        try {
+            $State.SubmissionQueued = $false
+            $State.Input.Enabled = $true
+            $State.SendButton.Enabled = $true
+            [void](Invoke-ToolAssistantQuestion -State $State)
+        } catch {
+            $State.SubmissionQueued = $false
+            $State.Input.Enabled = $true
+            $State.SendButton.Enabled = $true
+        }
+    }.GetNewClosure()
+    $callback = [Action]$callbackScript
+    try { [void]$State.Window.BeginInvoke($callback) }
+    catch {
+        $State.SubmissionQueued = $false
+        $State.Input.Enabled = $true
+        $State.SendButton.Enabled = $true
+    }
+}
+
+function Update-ToolAssistantConnectionUi {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    $online = [bool]$State.OnlineMode
+    $State.ModeLabel.Text = Get-ToolAssistantUiText $(if ($online) { "Online" } else { "Offline" }) $State.Culture
+    $State.ModeLabel.ForeColor = if ($online) { $State.OnlineColor } else { $State.OfflineColor }
+    if ($State.PSObject.Properties['OnlineBadgeBackColor'] -and $State.PSObject.Properties['OfflineBadgeBackColor']) {
+        $State.ModeLabel.BackColor = if ($online) { $State.OnlineBadgeBackColor } else { $State.OfflineBadgeBackColor }
+    }
+    if ($State.PSObject.Properties['Header'] -and $State.PSObject.Properties['TitleLabel'] -and $State.PSObject.Properties['ScopeLabel']) {
+        Set-ToolAssistantHeaderBounds -Header $State.Header -TitleLabel $State.TitleLabel -ScopeLabel $State.ScopeLabel -ModeLabel $State.ModeLabel
+    }
+    $State.OnlineButton.Text = Get-ToolAssistantUiText $(if ($online) { "OnlineConnected" } else { "ConnectOnline" }) $State.Culture
+    if ($State.PSObject.Properties['ToolTip'] -and $null -ne $State.ToolTip) {
+        $State.ToolTip.SetToolTip($State.ModeLabel, [string]$State.ModeLabel.Text)
+    }
+    $syncBusy = [bool]($State.PSObject.Properties['SyncInProgress'] -and $State.SyncInProgress)
+    $State.OnlineButton.Enabled = -not $online -and -not $syncBusy
+    $State.SyncButton.Enabled = $online -and -not $syncBusy
+    $State.ToolTip.SetToolTip($State.OnlineButton, (Get-ToolAssistantUiText $(if ($online) { "OnlineConnectedTip" } else { "ConnectOnlineTip" }) $State.Culture))
+    $State.ToolTip.SetToolTip($State.SyncButton, (Get-ToolAssistantUiText "SyncTip" $State.Culture))
+}
+
+function Set-ToolAssistantHeaderBounds {
+    param(
+        [Parameter(Mandatory = $true)][object]$Header,
+        [Parameter(Mandatory = $true)][object]$TitleLabel,
+        [Parameter(Mandatory = $true)][object]$ScopeLabel,
+        [Parameter(Mandatory = $true)][object]$ModeLabel,
+        [ValidateRange(0.0, 4.0)][double]$DpiScale = 0.0
+    )
+
+    $clientWidth = [int]$Header.ClientSize.Width
+    if ($clientWidth -le 0) { return }
+    if ($DpiScale -le 0.0) {
+        $DpiScale = try { [Math]::Max(1.0, ([double]$Header.DeviceDpi / 96.0)) } catch { 1.0 }
+    }
+    $rightMargin = [int][Math]::Round(18 * $DpiScale)
+    $modeMinimumWidth = [int][Math]::Round(220 * $DpiScale)
+    $modeMaximumWidth = [int][Math]::Round(380 * $DpiScale)
+    $modeHeight = [int][Math]::Round(32 * $DpiScale)
+    $modeTop = [int][Math]::Round(14 * $DpiScale)
+    $titleMinimumWidth = [int][Math]::Round(220 * $DpiScale)
+    $titleFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+    [Drawing.Size]$measuredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$TitleLabel.Text, $TitleLabel.Font, [Drawing.Size]::Empty, $titleFlags)
+    $titleHeight = [Math]::Max([int][Math]::Round(44 * $DpiScale), [int]$measuredTitle.Height + [int][Math]::Round(10 * $DpiScale))
+    $scopeLeft = [int][Math]::Round(20 * $DpiScale)
+    $scopeTop = [int]$TitleLabel.Top + $titleHeight + [int][Math]::Round(6 * $DpiScale)
+    $scopeBottomMargin = [int][Math]::Round(6 * $DpiScale)
+    $modeFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
+    [Drawing.Size]$measuredMode = [Windows.Forms.TextRenderer]::MeasureText([string]$ModeLabel.Text, $ModeLabel.Font, [Drawing.Size]::Empty, $modeFlags)
+    $modeTextWidth = [int]$measuredMode.Width + [int]$ModeLabel.Padding.Horizontal + [int][Math]::Round(16 * $DpiScale)
+    $modeWidth = [Math]::Min($modeMaximumWidth, [Math]::Max($modeMinimumWidth, $modeTextWidth))
+    $ModeLabel.Size = New-Object Drawing.Size($modeWidth, $modeHeight)
+    $ModeLabel.Location = New-Object Drawing.Point([Math]::Max([int][Math]::Round(390 * $DpiScale), $clientWidth - $modeWidth - $rightMargin), $modeTop)
+    $leftContentRight = [Math]::Max([int][Math]::Round(250 * $DpiScale), [int]$ModeLabel.Left - [int][Math]::Round(14 * $DpiScale))
+    $TitleLabel.Size = New-Object Drawing.Size([Math]::Max($titleMinimumWidth, $leftContentRight - [int]$TitleLabel.Left), $titleHeight)
+    $ScopeLabel.Location = New-Object Drawing.Point($scopeLeft, $scopeTop)
+    $ScopeLabel.Size = New-Object Drawing.Size(
+        [Math]::Max($titleMinimumWidth, $clientWidth - (2 * $scopeLeft)),
+        [Math]::Max([int][Math]::Round(42 * $DpiScale), [int]$Header.ClientSize.Height - $scopeTop - $scopeBottomMargin))
+}
+
+function Set-ToolAssistantInputFrameState {
+    param(
+        [Parameter(Mandatory = $true)][object]$State,
+        [bool]$Focused
+    )
+
+    if (-not $State.PSObject.Properties['InputFrame'] -or $null -eq $State.InputFrame -or $State.InputFrame.IsDisposed) { return }
+    $State.InputFrame.BackColor = if ($Focused) { $State.InputFocusBorderColor } else { $State.InputIdleBorderColor }
+    $State.InputFrame.Invalidate($true)
+}
+
+function Invoke-ToolAssistantKnowledgeSyncUi {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    if (-not [bool]$State.OnlineMode -or [bool]$State.SyncInProgress) { return $false }
+    $State.SyncInProgress = $true
+    Update-ToolAssistantConnectionUi -State $State
+    try {
+        $result = Sync-ToolAssistantKnowledge -OnlineMode $true -Culture ([string]$State.Culture)
+        if ($result.Success) { $State.Knowledge = Get-ToolAssistantKnowledge }
+        [void](Add-ToolAssistantChatMessage -State $State -Role Assistant -Message ([string]$result.Message))
+        return [bool]$result.Success
+    } finally {
+        $State.SyncInProgress = $false
+        Update-ToolAssistantConnectionUi -State $State
+    }
+}
+
+function Enable-ToolAssistantOnline {
+    param([Parameter(Mandatory = $true)][object]$State)
+
+    if ([bool]$State.OnlineMode) { return $true }
+    $allowed = $false
+    if ($State.RequestOnline -is [scriptblock]) {
+        try { $allowed = [bool](& $State.RequestOnline) } catch { $allowed = $false }
+    }
+    if ($allowed) {
+        $State.OnlineMode = $true
+        Update-ToolAssistantConnectionUi -State $State
+        [void](Add-ToolAssistantChatMessage -State $State -Role Assistant -Message (Get-ToolAssistantUiText "OnlineEnabled" $State.Culture))
+        $script:ToolAssistantAutoSyncAttempted = $true
+        [void](Invoke-ToolAssistantKnowledgeSyncUi -State $State)
+        return $true
+    }
+    [void](Add-ToolAssistantChatMessage -State $State -Role Assistant -Message (Get-ToolAssistantUiText "OnlineNotEnabled" $State.Culture))
+    return $false
+}
+
+function Show-ToolAssistantWindow {
+    param(
+        [AllowNull()][object]$Owner,
+        [ValidateSet("vi-VN", "en-US")][string]$Culture = "vi-VN",
+        [bool]$OnlineMode = $false,
+        [AllowNull()][string]$CurrentReportPath = "",
+        [ValidateSet("Light", "Dark")][string]$Theme = "Light",
+        [AllowNull()][scriptblock]$RequestOnline = $null,
+        [switch]$SmokeTest
+    )
+
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+    $knowledge = Get-ToolAssistantKnowledge
+    $reportContext = Get-ToolAssistantReportContext -ReportPath $CurrentReportPath
+    $dark = [bool]($Theme -eq "Dark")
+    $background = if ($dark) { [Drawing.Color]::FromArgb(17, 22, 30) } else { [Drawing.Color]::FromArgb(244, 247, 251) }
+    $surface = if ($dark) { [Drawing.Color]::FromArgb(29, 36, 48) } else { [Drawing.Color]::White }
+    $text = if ($dark) { [Drawing.Color]::FromArgb(229, 234, 242) } else { [Drawing.Color]::FromArgb(37, 48, 66) }
+    $muted = if ($dark) { [Drawing.Color]::FromArgb(166, 177, 194) } else { [Drawing.Color]::FromArgb(102, 112, 133) }
+    $primary = if ($dark) { [Drawing.Color]::FromArgb(137, 190, 255) } else { [Drawing.Color]::FromArgb(0, 98, 218) }
+    $onlineColor = if ($dark) { [Drawing.Color]::FromArgb(255, 196, 104) } else { [Drawing.Color]::FromArgb(140, 78, 0) }
+    $offlineColor = if ($dark) { [Drawing.Color]::FromArgb(128, 226, 174) } else { [Drawing.Color]::FromArgb(14, 112, 70) }
+    $onlineBadgeBackColor = if ($dark) { [Drawing.Color]::FromArgb(67, 45, 19) } else { [Drawing.Color]::FromArgb(255, 243, 219) }
+    $offlineBadgeBackColor = if ($dark) { [Drawing.Color]::FromArgb(24, 63, 49) } else { [Drawing.Color]::FromArgb(226, 247, 238) }
+    $inputSurface = if ($dark) { [Drawing.Color]::FromArgb(22, 29, 40) } else { [Drawing.Color]::FromArgb(250, 252, 255) }
+    $inputIdleBorder = if ($dark) { [Drawing.Color]::FromArgb(94, 111, 137) } else { [Drawing.Color]::FromArgb(118, 136, 162) }
+
+    $dialog = New-Object Windows.Forms.Form
+    $dialog.Text = Get-ToolAssistantUiText "Title" $Culture
+    $dialog.StartPosition = "CenterParent"
+    $dialog.Size = New-Object Drawing.Size(820, 620)
+    $dialog.MinimumSize = New-Object Drawing.Size(680, 500)
+    $dialog.AutoScaleMode = [Windows.Forms.AutoScaleMode]::Dpi
+    $dialog.BackColor = $background
+    $dialog.Font = New-Object Drawing.Font("Segoe UI", 9)
+    $assistantToolTip = New-Object Windows.Forms.ToolTip
+    $assistantToolTip.AutoPopDelay = 12000
+    $assistantToolTip.InitialDelay = 350
+    $assistantToolTip.ReshowDelay = 100
+
+    $assistantLayout = New-Object Windows.Forms.TableLayoutPanel
+    $assistantLayout.Dock = 'Fill'
+    $assistantLayout.ColumnCount = 1
+    $assistantLayout.RowCount = 4
+    $assistantLayout.Margin = New-Object Windows.Forms.Padding(0)
+    $assistantLayout.Padding = New-Object Windows.Forms.Padding(0)
+    [void]$assistantLayout.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent, 100)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 112)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 42)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Percent, 100)))
+    [void]$assistantLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute, 150)))
+    $dialog.Controls.Add($assistantLayout)
+
+    $header = New-Object Windows.Forms.Panel
+    $header.Dock = "Fill"
+    $header.Margin = New-Object Windows.Forms.Padding(0)
+    $header.BackColor = $surface
+    $assistantLayout.Controls.Add($header, 0, 0)
+    $title = New-Object Windows.Forms.Label
+    $title.Text = Get-ToolAssistantUiText "Title" $Culture
+    $title.Font = New-Object Drawing.Font("Segoe UI Semibold", 17)
+    $title.ForeColor = $primary
+    $title.Location = New-Object Drawing.Point(18, 6)
+    $title.Size = New-Object Drawing.Size(460, 44)
+    $title.AutoEllipsis = $false
+    $title.UseCompatibleTextRendering = $true
+    $header.Controls.Add($title)
+    $scope = New-Object Windows.Forms.Label
+    $scope.Text = Get-ToolAssistantUiText "Scope" $Culture
+    $scope.ForeColor = $muted
+    $scope.Location = New-Object Drawing.Point(20, 50)
+    $scope.Size = New-Object Drawing.Size(570, 54)
+    $scope.AutoEllipsis = $false
+    $header.Controls.Add($scope)
+    $mode = New-Object Windows.Forms.Label
+    $mode.TextAlign = "MiddleCenter"
+    $mode.AutoEllipsis = $false
+    $mode.Anchor = "Top,Right"
+    $mode.Font = New-Object Drawing.Font("Segoe UI Semibold", 9)
+    $mode.Padding = New-Object Windows.Forms.Padding(10, 0, 10, 0)
+    $mode.BorderStyle = 'FixedSingle'
+    $mode.Location = New-Object Drawing.Point(510, 14)
+    $mode.Size = New-Object Drawing.Size(272, 32)
+    $header.Controls.Add($mode)
+    $headerLayout = {
+        param($sender, $eventArgs)
+        Set-ToolAssistantHeaderBounds -Header $sender -TitleLabel $title -ScopeLabel $scope -ModeLabel $mode
+    }.GetNewClosure()
+    $header.Add_SizeChanged($headerLayout)
+
+    $suggestions = New-Object Windows.Forms.FlowLayoutPanel
+    $suggestions.Dock = "Fill"
+    $suggestions.Margin = New-Object Windows.Forms.Padding(0)
+    $suggestions.Padding = New-Object Windows.Forms.Padding(12, 5, 8, 3)
+    $suggestions.WrapContents = $false
+    $suggestions.AutoScroll = $true
+    $suggestions.BackColor = $background
+    $assistantLayout.Controls.Add($suggestions, 0, 1)
+
+    $chat = New-Object Windows.Forms.FlowLayoutPanel
+    $chat.Dock = "Fill"
+    $chat.Margin = New-Object Windows.Forms.Padding(10, 4, 10, 4)
+    $chat.BorderStyle = "FixedSingle"
+    $chat.BackColor = $background
+    $chat.FlowDirection = [Windows.Forms.FlowDirection]::TopDown
+    $chat.WrapContents = $false
+    $chat.AutoScroll = $true
+    $chat.Padding = New-Object Windows.Forms.Padding(10, 9, 6, 9)
+    $assistantLayout.Controls.Add($chat, 0, 2)
+
+    $composer = New-Object Windows.Forms.Panel
+    $composer.Dock = "Fill"
+    $composer.Margin = New-Object Windows.Forms.Padding(0)
+    $composer.BackColor = $surface
+    $assistantLayout.Controls.Add($composer, 0, 3)
+    $inputFrame = New-Object Windows.Forms.Panel
+    $inputFrame.Anchor = "Top,Left,Right"
+    $inputFrame.Location = New-Object Drawing.Point(14, 10)
+    $inputFrame.Size = New-Object Drawing.Size(650, 54)
+    $inputFrame.BackColor = $inputIdleBorder
+    $composer.Controls.Add($inputFrame)
+    $input = New-Object Windows.Forms.TextBox
+    $input.Multiline = $true
+    $input.AcceptsReturn = $true
+    $input.ScrollBars = "Vertical"
+    $input.ForeColor = $text
+    $input.BackColor = $inputSurface
+    $input.BorderStyle = 'None'
+    $input.Anchor = "Top,Left,Right,Bottom"
+    $input.Location = New-Object Drawing.Point(7, 6)
+    $input.Size = New-Object Drawing.Size(636, 42)
+    $input.Tag = Get-ToolAssistantUiText "Input" $Culture
+    $inputFrame.Controls.Add($input)
+    $send = New-Object Windows.Forms.Button
+    $send.Text = Get-ToolAssistantUiText "Send" $Culture
+    $send.Anchor = "Top,Right"
+    $send.Location = New-Object Drawing.Point(676, 10)
+    $send.Size = New-Object Drawing.Size(126, 54)
+    $send.BackColor = $primary
+    $send.ForeColor = [Drawing.Color]::White
+    $send.FlatStyle = "Flat"
+    $send.FlatAppearance.BorderSize = 0
+    $composer.Controls.Add($send)
+    $actions = New-Object Windows.Forms.FlowLayoutPanel
+    $actions.Anchor = 'Top,Left,Right,Bottom'
+    $actions.Location = New-Object Drawing.Point(14, 72)
+    $actions.Size = New-Object Drawing.Size(788, 70)
+    $actions.Margin = New-Object Windows.Forms.Padding(0)
+    $actions.Padding = New-Object Windows.Forms.Padding(0)
+    $actions.WrapContents = $true
+    $actions.AutoScroll = $false
+    $actions.FlowDirection = [Windows.Forms.FlowDirection]::LeftToRight
+    $actions.BackColor = $surface
+    $composer.Controls.Add($actions)
+    $copy = New-Object Windows.Forms.Button
+    $copy.Text = Get-ToolAssistantUiText "Copy" $Culture
+    $copy.Size = New-Object Drawing.Size(100, 30)
+    $copy.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $actions.Controls.Add($copy)
+    $clear = New-Object Windows.Forms.Button
+    $clear.Text = Get-ToolAssistantUiText "Clear" $Culture
+    $clear.Size = New-Object Drawing.Size(126, 30)
+    $clear.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $actions.Controls.Add($clear)
+    $sync = New-Object Windows.Forms.Button
+    $sync.Text = Get-ToolAssistantUiText "Sync" $Culture
+    $sync.Size = New-Object Drawing.Size(134, 30)
+    $sync.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $actions.Controls.Add($sync)
+    $online = New-Object Windows.Forms.Button
+    $online.Size = New-Object Drawing.Size(126, 30)
+    $online.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $online.FlatStyle = "Flat"
+    $online.FlatAppearance.BorderSize = 1
+    $online.ForeColor = $primary
+    $online.BackColor = $surface
+    $actions.Controls.Add($online)
+    $versions = New-Object Windows.Forms.Button
+    $versions.Text = Get-ToolAssistantUiText "OtherVersions" $Culture
+    $versions.Size = New-Object Drawing.Size(142, 30)
+    $versions.Margin = New-Object Windows.Forms.Padding(0, 0, 8, 6)
+    $versions.FlatStyle = "Flat"
+    $versions.FlatAppearance.BorderSize = 1
+    $versions.ForeColor = $primary
+    $versions.BackColor = $surface
+    $assistantToolTip.SetToolTip($versions, (Get-ToolAssistantUiText "OtherVersionsTip" $Culture))
+    $actions.Controls.Add($versions)
+    $close = New-Object Windows.Forms.Button
+    $close.Text = Get-ToolAssistantUiText "Close" $Culture
+    $close.Size = New-Object Drawing.Size(104, 30)
+    $close.Margin = New-Object Windows.Forms.Padding(0, 0, 0, 6)
+    $actions.Controls.Add($close)
+
+    $assistantInputControl = $input
+    $composerLayout = {
+        param($sender, $eventArgs)
+        $clientWidth = [int]$sender.ClientSize.Width
+        if ($clientWidth -le 0) { return }
+        $send.Left = [Math]::Max(228, $clientWidth - $send.Width - 14)
+        $inputFrame.Width = [Math]::Max(190, $send.Left - $inputFrame.Left - 10)
+        $assistantInputControl.Width = [Math]::Max(176, [int]$inputFrame.ClientSize.Width - 14)
+        $assistantInputControl.Height = [Math]::Max(36, [int]$inputFrame.ClientSize.Height - 12)
+        $actions.Width = [Math]::Max(190, $clientWidth - 28)
+        $actions.Height = [Math]::Max(64, [int]$sender.ClientSize.Height - $actions.Top - 6)
+    }.GetNewClosure()
+    $composer.Add_SizeChanged($composerLayout)
+
+    $speakerFont = New-Object Drawing.Font("Segoe UI Semibold", 9)
+    $messageFont = New-Object Drawing.Font("Segoe UI", 10)
+    $assistantState = [pscustomobject]@{
+        Window = $dialog
+        LayoutRoot = $assistantLayout
+        Composer = $composer
+        Input = $input
+        InputFrame = $inputFrame
+        Chat = $chat
+        SendButton = $send
+        Culture = $Culture
+        Knowledge = $knowledge
+        ReportContext = $reportContext
+        OnlineMode = [bool]$OnlineMode
+        RequestOnline = $RequestOnline
+        Header = $header
+        TitleLabel = $title
+        ScopeLabel = $scope
+        ModeLabel = $mode
+        OnlineButton = $online
+        SyncButton = $sync
+        SyncInProgress = $false
+        ToolTip = $assistantToolTip
+        PrimaryColor = $primary
+        TextColor = $text
+        OnlineColor = $onlineColor
+        OfflineColor = $offlineColor
+        OnlineBadgeBackColor = $onlineBadgeBackColor
+        OfflineBadgeBackColor = $offlineBadgeBackColor
+        InputIdleBorderColor = $inputIdleBorder
+        InputFocusBorderColor = $primary
+        SpeakerFont = $speakerFont
+        MessageFont = $messageFont
+        Transcript = New-Object Text.StringBuilder
+        IsSubmitting = $false
+        SubmissionQueued = $false
+        LastQuestionKey = ""
+        LastQuestionText = ""
+        LastAnswer = ""
+        PendingRevealControl = $null
+        RevealQueued = $false
+        RenderTimer = $null
+        UserBubbleColor = $(if ($dark) { [Drawing.Color]::FromArgb(35, 105, 190) } else { [Drawing.Color]::FromArgb(0, 98, 218) })
+        UserBubbleBorderColor = $(if ($dark) { [Drawing.Color]::FromArgb(151, 204, 255) } else { [Drawing.Color]::FromArgb(0, 72, 164) })
+        UserTextColor = [Drawing.Color]::White
+        AssistantBubbleColor = $(if ($dark) { [Drawing.Color]::FromArgb(38, 47, 61) } else { [Drawing.Color]::FromArgb(232, 241, 252) })
+        AssistantBubbleBorderColor = $(if ($dark) { [Drawing.Color]::FromArgb(83, 106, 139) } else { [Drawing.Color]::FromArgb(143, 174, 211) })
+        AssistantTextColor = $text
+        AssistantHeaderColor = $primary
+    }
+    $renderTimer = New-Object Windows.Forms.Timer
+    $renderTimer.Interval = 25
+    $renderTimer.Tag = $assistantState
+    $renderTimer.Add_Tick({
+        param($sender, $eventArgs)
+        $sender.Stop()
+        $state = $sender.Tag
+        if ($null -eq $state -or $null -eq $state.Chat -or $state.Chat.IsDisposed) { return }
+        $latest = $state.PendingRevealControl
+        $state.PendingRevealControl = $null
+        Complete-ToolAssistantConversationLayout -State $state -LatestControl $latest
+    })
+    $assistantState.RenderTimer = $renderTimer
+    $chat.Tag = $assistantState
+    $chat.Add_SizeChanged({ param($sender, $eventArgs); Resize-ToolAssistantChatBubbles -State $sender.Tag })
+    Update-ToolAssistantConnectionUi -State $assistantState
+    [void](Add-ToolAssistantChatMessage -State $assistantState -Role Assistant -Message (Get-ToolAssistantUiText "Welcome" $Culture))
+
+    $send.Tag = $assistantState
+    $send.Add_Click({
+        param($sender, $eventArgs)
+        Queue-ToolAssistantQuestion -State $sender.Tag
+    })
+    $input.Tag = $assistantState
+    $input.Add_Enter({ param($sender, $eventArgs); Set-ToolAssistantInputFrameState -State $sender.Tag -Focused $true })
+    $input.Add_Leave({ param($sender, $eventArgs); Set-ToolAssistantInputFrameState -State $sender.Tag -Focused $false })
+    $input.Add_KeyDown({
+        param($sender, $eventArgs)
+        if ($eventArgs.KeyCode -eq [Windows.Forms.Keys]::Enter -and -not $eventArgs.Shift) {
+            $eventArgs.SuppressKeyPress = $true
+            $eventArgs.Handled = $true
+            Queue-ToolAssistantQuestion -State $sender.Tag
+        }
+    })
+    $copy.Tag = $assistantState
+    $copy.Add_Click({
+        param($sender, $eventArgs)
+        if ($sender.Tag.Transcript.Length -gt 0) { [Windows.Forms.Clipboard]::SetText($sender.Tag.Transcript.ToString()) }
+    })
+    $clear.Tag = $assistantState
+    $clear.Add_Click({
+        param($sender, $eventArgs)
+        Clear-ToolAssistantConversation -State $sender.Tag
+        [void](Add-ToolAssistantChatMessage -State $sender.Tag -Role Assistant -Message (Get-ToolAssistantUiText "Welcome" $sender.Tag.Culture))
+    })
+    $sync.Tag = $assistantState
+    $sync.Add_Click({
+        param($sender, $eventArgs)
+        [void](Invoke-ToolAssistantKnowledgeSyncUi -State $sender.Tag)
+    })
+    $online.Tag = $assistantState
+    $online.Add_Click({
+        param($sender, $eventArgs)
+        [void](Enable-ToolAssistantOnline -State $sender.Tag)
+    })
+    $versions.Tag = $assistantState
+    $versions.Add_Click({
+        param($sender, $eventArgs)
+        $state = $sender.Tag
+        if (-not (Open-ToolAssistantReleaseHistory)) {
+            [void][Windows.Forms.MessageBox]::Show(
+                (Get-ToolAssistantUiText "OpenLinkFailed" $state.Culture),
+                (Get-ToolAssistantUiText "Title" $state.Culture),
+                [Windows.Forms.MessageBoxButtons]::OK,
+                [Windows.Forms.MessageBoxIcon]::Warning
+            )
+        }
+    })
+    $close.Tag = $dialog
+    $close.Add_Click({ param($sender, $eventArgs); $sender.Tag.Close() })
+    $dialog.CancelButton = $close
+
+    $suggestedQuestions = if ($Culture -eq "en-US") {
+        @("What does Undetermined mean?", "How does Offline mode work?", "Explain the current report")
+    } else {
+        @("CHƯA XÁC ĐỊNH nghĩa là gì?", "Chế độ Offline hoạt động thế nào?", "Giải thích báo cáo hiện tại")
+    }
+    foreach ($question in $suggestedQuestions) {
+        $suggestion = New-Object Windows.Forms.Button
+        $suggestion.Text = $question
+        $suggestion.AutoSize = $true
+        $suggestion.Height = 28
+        $suggestion.FlatStyle = "Flat"
+        $suggestion.ForeColor = $primary
+        $suggestion.BackColor = $surface
+        $suggestion.Tag = [pscustomobject]@{ State=$assistantState; Question=$question }
+        $suggestion.Add_Click({
+            param($sender, $eventArgs)
+            $state = $sender.Tag.State
+            $state.Input.Text = [string]$sender.Tag.Question
+            $state.Input.Focus()
+            $state.Input.SelectionStart = $state.Input.TextLength
+        })
+        [void]$suggestions.Controls.Add($suggestion)
+    }
+    $dialog.Add_Shown({
+        $assistantLayout.PerformLayout()
+        Set-ToolAssistantHeaderBounds -Header $header -TitleLabel $title -ScopeLabel $scope -ModeLabel $mode
+        $composerLayout.Invoke($composer, [EventArgs]::Empty)
+        Set-ToolAssistantInputFrameState -State $assistantState -Focused $true
+        Complete-ToolAssistantConversationLayout -State $assistantState -LatestControl $assistantState.PendingRevealControl
+        $input.Focus()
+        if ([bool]$assistantState.OnlineMode -and -not [bool]$script:ToolAssistantAutoSyncAttempted) {
+            $script:ToolAssistantAutoSyncAttempted = $true
+            [void](Invoke-ToolAssistantKnowledgeSyncUi -State $assistantState)
+        }
+    }.GetNewClosure())
+    if ($SmokeTest) {
+        [void]$dialog.CreateControl()
+        [void]$assistantLayout.CreateControl()
+        [void]$header.CreateControl()
+        [void]$composer.CreateControl()
+        $assistantLayout.PerformLayout()
+        Set-ToolAssistantHeaderBounds -Header $header -TitleLabel $title -ScopeLabel $scope -ModeLabel $mode
+        & $composerLayout $composer ([EventArgs]::Empty)
+        $header.PerformLayout()
+        $composer.PerformLayout()
+        $actions.PerformLayout()
+        $singleLineFlags = [Windows.Forms.TextFormatFlags]::SingleLine -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+        $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix
+        [Drawing.Size]$requiredTitle = [Windows.Forms.TextRenderer]::MeasureText([string]$title.Text, $title.Font, [Drawing.Size]::Empty, $singleLineFlags)
+        [Drawing.Size]$requiredScope = [Windows.Forms.TextRenderer]::MeasureText([string]$scope.Text, $scope.Font, (New-Object Drawing.Size($scope.Width, 200)), $wrappedFlags)
+        [Drawing.Size]$requiredMode = [Windows.Forms.TextRenderer]::MeasureText([string]$mode.Text, $mode.Font, [Drawing.Size]::Empty, $singleLineFlags)
+        if ($title.Width -lt [int]$requiredTitle.Width -or $title.Height -lt [int]$requiredTitle.Height) { throw "Assistant title is clipped: $($title.Text)" }
+        if ($scope.Height -lt [int]$requiredScope.Height) { throw "Assistant scope is clipped: $($scope.Text)" }
+        if ($mode.Width -lt ([int]$requiredMode.Width + [int]$mode.Padding.Horizontal + 8)) { throw "Assistant connection status is clipped: $($mode.Text)" }
+        foreach ($button in @($send,$copy,$clear,$sync,$online,$versions,$close)) {
+            [Drawing.Size]$requiredButton = [Windows.Forms.TextRenderer]::MeasureText([string]$button.Text, $button.Font, [Drawing.Size]::Empty, $singleLineFlags)
+            $buttonHost = if ($button.Parent -eq $actions) { $actions } else { $composer }
+            if ($button.Width -lt ([int]$requiredButton.Width + 18) -or $button.Right -gt ($buttonHost.ClientSize.Width + 1) -or $button.Bottom -gt ($buttonHost.ClientSize.Height + 1)) {
+                throw "Assistant button is clipped: $($button.Text)"
+            }
+        }
+        $renderTimer.Stop()
+        $renderTimer.Dispose()
+        $assistantToolTip.Dispose()
+        $speakerFont.Dispose()
+        $messageFont.Dispose()
+        $dialog.Dispose()
+        Write-Output "Assistant UI smoke passed: $Culture/$Theme"
+        return
+    }
+    if ($Owner) { [void]$dialog.ShowDialog($Owner) } else { [void]$dialog.ShowDialog() }
+    $renderTimer.Stop()
+    $renderTimer.Dispose()
+    $assistantToolTip.Dispose()
+    $speakerFont.Dispose()
+    $messageFont.Dispose()
+    $dialog.Dispose()
+}

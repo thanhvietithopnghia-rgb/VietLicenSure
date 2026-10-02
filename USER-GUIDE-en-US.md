@@ -325,6 +325,10 @@ Do not use an OEM key from another computer or force an unsupported edition chan
 
 This function includes Local Windows/Office management, Server, and Workstation. In local mode, select the exact Windows or Office action, enter a legitimate key when required, and review confirmation before installing a key, changing edition, or activating. In enterprise mode, an administrator explicitly enables LAN access, creates a Server, pairs Workstations with temporary codes, and receives reports under policy; remote license-changing actions remain disabled by default. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
 
+**Evidence, entitlements, and License Advisor**
+
+On the Server tab, select **Evidence and entitlements** to create locally stored entitlement records, copy bounded evidence files into the managed local store, and assign seats to an endpoint or user. Stored evidence receives an internal random name and SHA-256; it is not uploaded to a cloud service or returned through the web dashboard. VietLicenSure reconciles Purchased, Assigned, Installed, and Available quantities, flags over-allocation or expiry, and presents a License Advisor with Finding, Explanation, Risk, Recommendation, and Limitation fields. The read-only Central Dashboard shows License Assurance and a redacted compliance summary; it does not expose evidence paths, full keys, full ClientIds, or secrets. These records support administration/SAM review and are not legal certification of ownership or invoice authenticity.
+
 ### Local management
 
 1. Select Manage legitimate licenses.
