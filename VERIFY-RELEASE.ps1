@@ -752,7 +752,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
         } elseif (-not $unsignedExecutableManifest) {
             $failures.Add("$targetFileName dùng chứng thư tự ký; public Stable yêu cầu signer CA-issued.")
         } else {
-            $warnings.Add("$targetFileName dùng chứng thư tự ký; chỉ phù hợp thử nghiệm có kiểm soát khi chứng thư đã được phân phối qua kênh tin cậy.")
+            $warnings.Add("$targetFileName dùng chứng thư tự ký ngoài kênh Official Self-Signed; chỉ phù hợp môi trường nội bộ đã phân phối chứng thư qua kênh tin cậy.")
         }
     }
 

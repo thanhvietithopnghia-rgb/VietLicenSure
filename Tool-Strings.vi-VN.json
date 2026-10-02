@@ -3361,7 +3361,7 @@
   "cleanupReport.dryRun.action.removeOfficeKmsHost": "Sẽ gỡ KMS host override theo đúng OSPP path sau khi xử lý các key đã chọn",
   "officialBuild.banner.title": "Kiểm tra bản đang dùng",
   "officialBuild.banner.body": "VietLicenSure chưa thể kiểm tra đầy đủ bản đang dùng. Bạn vẫn có thể xem kết quả, nhưng việc xử lý tạm thời bị khóa. Hãy tải lại VietLicenSure tại {1}.",
-  "officialBuild.banner.developmentTitle": "Bản dùng để thử nghiệm",
+  "officialBuild.banner.developmentTitle": "Bản phát triển — không phát hành",
   "officialBuild.banner.developmentBody": "Bản này chỉ dùng để kiểm tra và thử tính năng. Bạn có thể xem kết quả, nhưng việc xử lý đang bị khóa.",
   "officialBuild.banner.selfSignedTitle": "Kết quả kiểm tra gần nhất",
   "officialBuild.banner.selfSignedBody": "VietLicenSure đã sẵn sàng. Hãy chạy kiểm tra để xem số mục cần chú ý và thời gian thực hiện gần nhất.",

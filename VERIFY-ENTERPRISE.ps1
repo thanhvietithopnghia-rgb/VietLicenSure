@@ -195,7 +195,7 @@ try {
     $receivedReports = @(Get-ChildItem -LiteralPath (Join-Path $paths.ServerReports $client.ClientId) -Filter "*.json" -File -ErrorAction SilentlyContinue)
     Assert-Enterprise ($receivedReports.Count -ge 1) "Máy chủ không lưu báo cáo nhận qua HTTP."
 
-    # Central Dashboard MVP: static assets are public but contain no fleet
+    # Central Dashboard: static assets are public but contain no fleet
     # data; the read-only API requires a short-lived bearer token created by
     # an administrator and bound to the first source address.
     $wrongDashboardAdminRejected = $false
@@ -216,6 +216,12 @@ try {
         [string]$dashboardStatic.Headers['X-Frame-Options'] -eq 'DENY' -and
         [string]$dashboardStatic.Headers['Cache-Control'] -eq 'no-store') 'Dashboard thiếu CSP/frame/cache header fail-closed.'
     Assert-Enterprise ($dashboardStatic.Content -notmatch '(?i)https?://|innerHTML|document\.write|eval\(') 'Dashboard tĩnh tải tài nguyên ngoài hoặc dùng DOM sink không an toàn.'
+    Assert-Enterprise ($dashboardStatic.Content -notmatch '(?i)>\s*(?:MVP|Pilot|Preview)\s*<') 'Dashboard chính thức vẫn hiển thị nhãn pilot/preview.'
+    $dashboardCssResponse = Invoke-WebRequest -Uri ($dashboardBaseUri + '/app.css') -Method Get -UseBasicParsing -TimeoutSec 10
+    Assert-Enterprise ([int]$dashboardCssResponse.StatusCode -eq 200 -and
+        $dashboardCssResponse.Content -match '(?s)\.cards article\{[^}]*border:2px solid var\(--brand2\)' -and
+        $dashboardCssResponse.Content -match '(?s)\.notice,\.disclaimer\{[^}]*border:2px solid var\(--warn\)' -and
+        $dashboardCssResponse.Content -notmatch 'border-(?:left|top):(?:4|5)px') 'Dashboard chưa dùng viền màu bao quanh đầy đủ.'
 
     Assert-Enterprise ((Get-EnterpriseVerifierHttpStatus -Uri ($dashboardBaseUri + '/api/snapshot')) -eq 401) 'API Dashboard không token không trả 401.'
     Assert-Enterprise ((Get-EnterpriseVerifierHttpStatus -Uri ($dashboardBaseUri + '/api/snapshot') -Headers @{ Authorization=('Bearer ' + 'A'.PadRight(43, 'A')) }) -eq 401) 'API Dashboard chấp nhận token sai.'

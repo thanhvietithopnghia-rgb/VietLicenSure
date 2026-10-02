@@ -3361,7 +3361,7 @@
   "cleanupReport.dryRun.action.removeOfficeKmsHost": "Would remove the KMS host override from the exact OSPP path after selected keys are processed",
   "officialBuild.banner.title": "Checking the current copy",
   "officialBuild.banner.body": "The VietLicenSure could not fully check this copy. You can still view results, but actions are temporarily locked. Download the VietLicenSure again from {1}.",
-  "officialBuild.banner.developmentTitle": "Test copy",
+  "officialBuild.banner.developmentTitle": "Development build — not for release",
   "officialBuild.banner.developmentBody": "This copy is only for testing features. You can view results, but actions are locked.",
   "officialBuild.banner.selfSignedTitle": "Latest scan summary",
   "officialBuild.banner.selfSignedBody": "The VietLicenSure is ready. Run a scan to see the latest duration and the number of items that need attention.",

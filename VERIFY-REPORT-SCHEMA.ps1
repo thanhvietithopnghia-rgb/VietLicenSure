@@ -107,6 +107,9 @@ try {
     foreach ($requiredCssToken in @(
         '@page{size:A4 portrait;margin:12mm}',
         ':root{color-scheme:light',
+        '.note{background:#f5f8fc;border:2px solid #8292a8',
+        '.pdf-guide{background:#f4f8fd;border:2px solid var(--brand2)',
+        '.license-warning{background:#fff7e8;border:2px solid #f0a000',
         '.hero{background:#fff!important;border:2px solid #123b74;border-radius:0',
         '.cards.cards-count-5{grid-template-columns:repeat(5,minmax(0,1fr))}',
         '.card,section,.toc{background:#fff!important;border-color:#b9c3cf;border-radius:0;box-shadow:none}',
@@ -116,6 +119,9 @@ try {
         if ($professionalCss -notlike "*$requiredCssToken*") {
             Add-Failure "CSS PDF thiếu đặc trưng giao diện v4.8: $requiredCssToken"
         }
+    }
+    if ($professionalCss -match '(?s)\.(?:note|summary-alert|pdf-guide|license-warning)\{[^}]*border-left') {
+        Add-Failure 'Khung thông tin/cảnh báo vẫn dùng dải màu bên trái thay vì viền màu bao quanh.'
     }
     $compatibilityCss = Get-ToolV48PdfCompatibilityCss
     foreach ($requiredCompatibilityToken in @(

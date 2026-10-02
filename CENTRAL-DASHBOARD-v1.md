@@ -1,10 +1,10 @@
-# Central Dashboard MVP v1
+# Central Dashboard v1
 
 ## Mục tiêu
 
-Central Dashboard là giao diện web chỉ đọc chạy trên máy chủ VietLicenSure trong LAN. MVP dùng dữ liệu Agent/Server hiện có để IT Manager xem nhanh tình trạng fleet mà không phải kiểm tra từng máy bằng dòng lệnh.
+Central Dashboard là giao diện web chính thức, chỉ đọc, chạy trên máy chủ VietLicenSure trong LAN. Dashboard dùng dữ liệu Agent/Server hiện có để IT Manager xem nhanh tình trạng fleet mà không phải kiểm tra từng máy bằng dòng lệnh.
 
-## Phạm vi MVP
+## Phạm vi chính thức
 
 - Hiển thị tổng số máy, Online, Stale, Offline và Cần xem lại.
 - Hiển thị máy trạm, IP báo cáo gần nhất, lần kết nối cuối, trạng thái kỹ thuật Windows/Office và kênh kích hoạt.
@@ -19,7 +19,7 @@ Central Dashboard là giao diện web chỉ đọc chạy trên máy chủ VietL
 - Không CDN, telemetry hoặc cloud; HTML/CSS/JS được phục vụ bởi listener nội bộ.
 - API cần bearer token ngẫu nhiên, thời hạn ngắn, lưu trên server dưới dạng SHA-256 và khóa theo IP ở lần dùng đầu.
 - Token được chuyển cho trình duyệt bằng URL fragment, xóa khỏi thanh địa chỉ ngay khi trang tải và chỉ giữ trong `sessionStorage`.
-- HTTP nội bộ chưa thay thế TLS; MVP chỉ dùng trên LAN tin cậy. Hỗ trợ HTTPS/reverse proxy là giai đoạn sau.
+- HTTP nội bộ chưa thay thế TLS; Dashboard chỉ dùng trên LAN tin cậy. Hỗ trợ HTTPS/reverse proxy là giới hạn hiện hành.
 
 ## Tiêu chí PASS
 
@@ -32,7 +32,7 @@ Central Dashboard là giao diện web chỉ đọc chạy trên máy chủ VietL
 7. Regression Enterprise, Safety, Offline/i18n, localization và payload đều PASS.
 8. Windows VM chứng minh listener sau reboot vẫn phục vụ Dashboard, token/API hoạt động và cleanup trả lab về checkpoint sạch.
 
-## Ngoài phạm vi MVP
+## Ngoài phạm vi hiện hành
 
 - Điều khiển từ xa, tự sửa hoặc triển khai key.
 - RBAC nhiều vai trò, SSO/AD, HTTPS tích hợp và truy cập Internet.

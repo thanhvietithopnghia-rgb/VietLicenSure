@@ -36,8 +36,8 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 
 ## Cập nhật hiện hành ngày 02/10/2026
 
-- Bổ sung **Central Dashboard MVP Preview** Việt/Anh chỉ đọc trong LAN: Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key; phiên ngắn hạn yêu cầu mã quản trị, khóa theo địa chỉ truy cập đầu tiên và API chỉ trả allow-list không chứa full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo.
-- Bổ sung **License Compliance MVP**: License Advisor, hồ sơ quyền sử dụng/tham chiếu chứng từ lưu cục bộ, cấp phát máy/người dùng và đối chiếu Purchased–Assigned–Installed–Available; cảnh báo vượt số lượng/hết hạn và Dashboard chỉ đọc hiển thị License Assurance mà không lộ đường dẫn chứng từ hoặc định danh nhạy cảm.
+- Bổ sung **Central Dashboard** Việt/Anh chính thức, chỉ đọc trong LAN: Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key; phiên ngắn hạn yêu cầu mã quản trị, khóa theo địa chỉ truy cập đầu tiên và API chỉ trả allow-list không chứa full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo.
+- Bổ sung **License Compliance** chính thức: License Advisor, hồ sơ quyền sử dụng/tham chiếu chứng từ lưu cục bộ, cấp phát máy/người dùng và đối chiếu Purchased–Assigned–Installed–Available; cảnh báo vượt số lượng/hết hạn và Dashboard chỉ đọc hiển thị License Assurance mà không lộ đường dẫn chứng từ hoặc định danh nhạy cảm.
 
 - Báo cáo chứng chỉ dùng Authenticode + timestamp + signer ghim; `NotTimeValid` không tự trở thành lỗi khi chữ ký có timestamp hợp lệ, còn launcher Official Self-Signed đúng pin không bị ghi `UnknownError`.
 - Forensics tách kích hoạt kỹ thuật khỏi quyền sử dụng, không đòi KMS cho MAK, không cộng điểm từ W32Time/SPP hoặc file MAS tồn dư khi thiếu bằng chứng hoạt động.

@@ -77,11 +77,11 @@ Fingerprint chứng thư công bố trong `CONTENT-SIGNING-CERTIFICATE.cer`:
 9. Kiểm tra chuyên sâu dành cho quản trị viên.
 10. Trung tâm báo cáo bảo đảm, timeline, plugin và tài liệu.
 
-### Central Dashboard MVP Preview
+### Central Dashboard
 
-Trong chức năng 8, quản trị viên có thể mở **Central Dashboard** từ tab Máy chủ sau khi listener LAN đã sẵn sàng. Dashboard chạy nội bộ, chỉ đọc và hỗ trợ Việt/Anh; nó tổng hợp Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Phiên truy cập tồn tại trong thời gian ngắn, yêu cầu mã quản trị và khóa theo địa chỉ truy cập đầu tiên. API không trả full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo; quyền sở hữu luôn là `NotVerified` cho đến khi đối chiếu chứng từ/portal. MVP không có điều khiển từ xa, telemetry, CDN hoặc cloud.
+Trong chức năng 8, quản trị viên có thể mở **Central Dashboard** từ tab Máy chủ sau khi listener LAN đã sẵn sàng. Dashboard chạy nội bộ, chỉ đọc và hỗ trợ Việt/Anh; nó tổng hợp Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Phiên truy cập tồn tại trong thời gian ngắn, yêu cầu mã quản trị và khóa theo địa chỉ truy cập đầu tiên. API không trả full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo; quyền sở hữu luôn là `NotVerified` cho đến khi đối chiếu chứng từ/portal. Dashboard không có điều khiển từ xa, telemetry, CDN hoặc cloud.
 
-### License Compliance MVP
+### License Compliance
 
 Trong chức năng 8, cửa sổ **Chứng từ và quyền sử dụng** cho phép quản trị viên lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available, cảnh báo vượt số lượng/hết hạn và tạo License Advisor theo chuỗi Phát hiện–Giải thích–Rủi ro–Khuyến nghị–Giới hạn. Central Dashboard chỉ đọc hiển thị điểm License Assurance và kết quả đối chiếu đã rút gọn; API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Đây là bằng chứng hỗ trợ quản trị/SAM, không phải chứng nhận pháp lý về quyền sở hữu.
 
