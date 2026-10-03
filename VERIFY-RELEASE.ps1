@@ -228,7 +228,7 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 66 } else { 67 }
 $expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 179 } else { 181 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 208 } else { 210 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
