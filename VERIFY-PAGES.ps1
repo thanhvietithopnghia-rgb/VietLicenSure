@@ -114,16 +114,19 @@ if ($viHome -match '<div class="notice"><strong>Central Dashboard:' -or $enHome 
 foreach ($requiredUrl in @(
     'en.html', 'huong-dan.html', 'guide-en.html', 'troubleshooting.html', 'troubleshooting-en.html',
     'giao-dien.html', 'gallery-en.html', 'tai-lieu.html', 'documentation-en.html',
-    'bao-mat-rieng-tu.html', 'security-privacy-en.html', 'tac-gia.html', 'author-en.html'
+    'bao-mat-rieng-tu.html', 'security-privacy-en.html', 'chinh-sach-phan-mem.html', 'software-policy-en.html',
+    'tac-gia.html', 'author-en.html'
 )) {
     if ($sitemap -notmatch [regex]::Escape($requiredUrl)) { $errors.Add("sitemap.xml: missing '$requiredUrl'") }
 }
 
 $viPolicy = Get-Content -LiteralPath (Join-Path $DocsRoot 'bao-mat-rieng-tu.html') -Raw -Encoding UTF8
 $enPolicy = Get-Content -LiteralPath (Join-Path $DocsRoot 'security-privacy-en.html') -Raw -Encoding UTF8
+$viSoftwarePolicy = Get-Content -LiteralPath (Join-Path $DocsRoot 'chinh-sach-phan-mem.html') -Raw -Encoding UTF8
+$enSoftwarePolicy = Get-Content -LiteralPath (Join-Path $DocsRoot 'software-policy-en.html') -Raw -Encoding UTF8
 $viAuthor = Get-Content -LiteralPath (Join-Path $DocsRoot 'tac-gia.html') -Raw -Encoding UTF8
 $enAuthor = Get-Content -LiteralPath (Join-Path $DocsRoot 'author-en.html') -Raw -Encoding UTF8
-foreach ($content in @($viHome, $enHome, $viPolicy, $enPolicy)) {
+foreach ($content in @($viHome, $enHome, $viPolicy, $enPolicy, $viSoftwarePolicy, $enSoftwarePolicy)) {
     if ($content -notmatch 'Official Self-Signed') { $errors.Add('A trust-status page is missing Official Self-Signed') }
 }
 foreach ($content in @($viPolicy, $enPolicy)) {
@@ -131,10 +134,19 @@ foreach ($content in @($viPolicy, $enPolicy)) {
     if ($content -notmatch '(?i)product key') { $errors.Add('A privacy page is missing the full-key protection disclosure') }
     if ($content -notmatch '(?i)Purchased\s*/\s*Assigned\s*/\s*Installed') { $errors.Add('A privacy page is missing the software entitlement reconciliation policy') }
     if ($content -notmatch '(?i)License Advisor') { $errors.Add('A privacy page is missing the License Advisor boundary') }
-    if ($content -notmatch 'data-software-policy="lifecycle"') { $errors.Add('A privacy page is missing the software lifecycle policy') }
+    if ($content -notmatch 'data-software-policy="summary"') { $errors.Add('A privacy page is missing the software policy summary') }
     if ($content -notmatch '(?i)Freeware.*Open Source.*Commercial.*Subscription.*Unknown') { $errors.Add('A privacy page is missing the software classification policy') }
     if ($content -notmatch '(?i)backup') { $errors.Add('A privacy page is missing the controlled-remediation policy') }
+    if ($content -notmatch '(?i)(chinh-sach-phan-mem|software-policy-en)\.html') { $errors.Add('A privacy page is missing the dedicated software-policy link') }
     if ($content -match '(?i)ISO 27001 certified|SOC 2 certified|GDPR certified') { $errors.Add('A privacy page contains an unsupported certification claim') }
+}
+foreach ($content in @($viSoftwarePolicy, $enSoftwarePolicy)) {
+    if ($content -notmatch 'SOURCE-POLICY-v5\.0') { $errors.Add('A software-policy page is missing the current canonical policy identity') }
+    if ($content -notmatch 'v4\.9') { $errors.Add('A software-policy page is missing the v4.9 transition boundary') }
+    if ($content -notmatch '(?i)(mã nguồn có kiểm soát|controlled source)') { $errors.Add('A software-policy page is missing the controlled-source model') }
+    if ($content -notmatch '(?i)written approval') { $errors.Add('A software-policy page is missing the written-approval boundary') }
+    if ($content -notmatch '(?i)not[- ]open[- ]source(?: software)?') { $errors.Add('A software-policy page is missing the not-open-source disclosure') }
+    if ($content -match '(?i)publicly trusted|public-trust certificate|chứng thư tin cậy công cộng') { $errors.Add('A software-policy page contains an unsupported public-trust claim') }
 }
 if ($viAuthor -notmatch 'Thanh Vi\u1EC7t' -or $enAuthor -notmatch 'Thanh Viet') { $errors.Add('Author pages are missing the public author identity') }
 

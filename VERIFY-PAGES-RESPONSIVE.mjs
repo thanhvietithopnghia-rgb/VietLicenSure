@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 const edge = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const base = process.argv[2] || 'http://127.0.0.1:8765';
-const pages = ['index.html', 'en.html', 'giao-dien.html', 'gallery-en.html', 'bao-mat-rieng-tu.html', 'security-privacy-en.html', 'tai-lieu.html', 'documentation-en.html'];
+const pages = ['index.html', 'en.html', 'giao-dien.html', 'gallery-en.html', 'bao-mat-rieng-tu.html', 'security-privacy-en.html', 'chinh-sach-phan-mem.html', 'software-policy-en.html', 'tai-lieu.html', 'documentation-en.html'];
 const profile = await mkdtemp(join(tmpdir(), 'vietlicensure-pages-'));
 const browser = spawn(edge, ['--headless=new', '--disable-gpu', '--disable-breakpad', '--disable-crash-reporter', '--noerrdialogs', '--no-first-run', '--remote-debugging-port=9223', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
 
