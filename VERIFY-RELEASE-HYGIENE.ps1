@@ -23,7 +23,7 @@ $securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
 $releaseDateVi = '08/09/2026'
 $releaseDateIso = '2026-09-29'
-$currentUpdateDateVi = '02/10/2026'
+$currentUpdateDateVi = '03/10/2026'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)
@@ -232,6 +232,9 @@ if ($storeIdentityText.Length -gt 0) {
 
 $legacyIdentifierAllowList = @(
     'BUILD.ps1',
+    # Generated release metadata legitimately records the pinned legacy
+    # certificate subject and compatibility migration paths.
+    'RELEASE-MANIFEST.json',
     'VietLicenSure-v5.0-OneFile.cs',
     'Tool-DataLifecycle.ps1',
     'Tool-LicenseTimeline.ps1',

@@ -12,4 +12,11 @@
       });
     });
   });
+
+  document.querySelectorAll(".contact-email[data-user][data-domain]").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      event.preventDefault();
+      window.location.href = "mailto:" + link.getAttribute("data-user") + "@" + link.getAttribute("data-domain");
+    });
+  });
 }());

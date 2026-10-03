@@ -33,7 +33,7 @@
 
   <div id="top" class="wrap hero">
     <div>
-      <div class="eyebrow">v5.0 · cập nhật 02/10/2026 · Official Self-Signed</div>
+      <div class="eyebrow">v5.0 · cập nhật 03/10/2026 · Official Self-Signed</div>
       <h1>Kiểm tra rõ ràng.<br>Quản lý chủ động.</h1>
       <p class="lead"><strong>VietLicenSure</strong> tập hợp trạng thái Windows, Office/Microsoft 365, phần mềm đã cài và bằng chứng hệ thống vào một giao diện dễ đọc. Công cụ chạy <strong>Offline mặc định</strong>, không telemetry và tạo báo cáo đã che định danh.</p>
       <div class="badges"><span class="badge">Offline mặc định</span><span class="badge">Không telemetry</span><span class="badge">Catalog ký số</span><span class="badge">Backup &amp; hậu kiểm</span></div>
@@ -42,7 +42,7 @@
     <aside class="release-card" aria-labelledby="release-title">
       <h2 id="release-title">Bản phát hành hiện hành</h2>
       <p>Đối chiếu thông tin này trước khi chạy tệp tải về.</p>
-      <div class="release-grid"><div class="release-item"><span>Phiên bản</span><strong>v5.0</strong></div><div class="release-item"><span>Build</span><strong>5.0-production-20261002</strong></div><div class="release-item"><span>Kênh ký</span><strong>Official Self-Signed</strong></div><div class="release-item"><span>Trạng thái QA</span><strong>0 lỗi phát hành</strong></div></div>
+      <div class="release-grid"><div class="release-item"><span>Phiên bản</span><strong>v5.0</strong></div><div class="release-item"><span>Build</span><strong>5.0-production-20261003</strong></div><div class="release-item"><span>Kênh ký</span><strong>Official Self-Signed</strong></div><div class="release-item"><span>Trạng thái QA</span><strong>Chờ QA artifact mới</strong></div></div>
       <div class="hash"><div class="hash-head"><span>SHA-256 của EXE</span><button class="copy" type="button" data-copy="release-hash" data-copied-label="Đã sao chép">Sao chép</button></div><code id="release-hash">654F60860DB1311F994EF9C611E7F71B3DC3E2B73A07546548F2C8FD898D0AD2</code></div>
       <p><strong>Source:</strong> <code>3a909e98bd469283c1fc84d9bd00fd6549034af7</code><br><strong>Bundle:</strong> <code>f3f192a6352d67889d1fcae99a0e1dccec362a6c</code></p>
       <p><a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/blob/main/RELEASE-VERIFICATION-v5.0.md">Quy trình xác minh đầy đủ</a></p>
@@ -76,13 +76,13 @@
         <article class="card tone-green"><div class="icon">📊</div><h3>Báo cáo và bằng chứng</h3><p>Xuất HTML, PDF, JSON, XML và CSV; che dữ liệu nhạy cảm, kèm checksum và ranh giới kết luận rõ ràng.</p></article>
         <article class="card tone-blue"><div class="icon">💬</div><h3>Trợ lý Offline Việt–Anh</h3><p>Giải thích kết quả, hướng dẫn chức năng và tra cứu lịch sử phiên bản từ tri thức cục bộ đã ký số.</p></article>
         <article class="card tone-amber"><div class="icon">🏢</div><h3>Doanh nghiệp và LAN</h3><p>Máy chủ, Agent và Central Dashboard chỉ đọc giúp theo dõi nhiều máy; giữ ghép nối sau reboot và không gửi inventory lên cloud.</p></article>
-        <article class="card tone-green"><div class="icon">✅</div><h3>Toàn vẹn và cập nhật</h3><p>Offline mặc định; khi người dùng bật Online, phần mềm xác minh catalog ký số rồi kiểm tra manifest phiên bản mới.</p></article>
+        <article class="card tone-green"><div class="icon">✅</div><h3>Toàn vẹn và cập nhật</h3><p>Offline mặc định; khi người dùng bật Online, phần mềm chỉ xác minh/cập nhật catalog ký số rồi dừng, không tự quét hoặc tạo báo cáo.</p></article>
       </div>
     </section>
 
     <section id="start" class="wrap">
       <div class="section-head"><div class="kicker">Bắt đầu</div><h2>Từ tải về đến kết quả trong ba bước</h2></div>
-      <ol class="steps"><li><strong>Tải từ nguồn chính thức</strong>Dùng liên kết Release và không sử dụng EXE đã bị đổi tên hoặc đóng gói lại.</li><li><strong>Xác minh trước khi chạy</strong>Đối chiếu SHA-256, Authenticode, timestamp và chạy <code>VERIFY-RELEASE.cmd</code> nếu có gói đầy đủ.</li><li><strong>Chạy Offline trước</strong>Mở bằng tài khoản thường; chỉ bật Online khi chủ động kiểm tra catalog/cập nhật hoặc sử dụng LAN được phép.</li></ol>
+      <ol class="steps"><li><strong>Tải từ nguồn chính thức</strong>Dùng liên kết Release và không sử dụng EXE đã bị đổi tên hoặc đóng gói lại.</li><li><strong>Xác minh trước khi chạy</strong>Đối chiếu SHA-256, Authenticode, timestamp và chạy <code>VERIFY-RELEASE.cmd</code> nếu có gói đầy đủ.</li><li><strong>Chạy Offline trước</strong>Mở bằng tài khoản thường; chỉ bật Online khi chủ động cập nhật danh mục ký số. Quyền LAN và các tác vụ cập nhật khác dùng điều khiển riêng.</li></ol>
       <div class="actions"><a class="button primary" href="huong-dan.html">Đọc hướng dẫn đầy đủ</a><a class="button secondary" href="troubleshooting.html">Xử lý sự cố</a></div>
     </section>
 
@@ -97,6 +97,6 @@
     </section>
   </main>
 
-  <footer><div class="wrap footer-grid"><div><strong>VietLicenSure · Thanh Việt</strong><br><a href="tai-lieu.html">Tài liệu</a> · <a href="bao-mat-rieng-tu.html">Bảo mật &amp; Riêng tư</a> · <a href="tac-gia.html">Tác giả</a> · <a href="en.html" lang="en">English</a></div><div class="fine">© 2026 Thanh Việt. Official Self-Signed không phải public-CA/EV/Store-signed. Chỉ chia sẻ liên kết tải chính thức.</div></div></footer>
+  <footer><div class="wrap footer-grid"><div><strong>VietLicenSure · Thanh Việt</strong><br><a href="tai-lieu.html">Tài liệu</a> · <a href="bao-mat-rieng-tu.html">Bảo mật &amp; Riêng tư</a> · <a href="tac-gia.html">Tác giả</a> · <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases">Các bản phát hành</a> · <a href="#" class="contact-email" data-user="thanhvietit.hopnghia" data-domain="gmail.com">Email hỗ trợ</a> · <a href="en.html" lang="en">English</a></div><div class="fine">© 2026 Thanh Việt. Official Self-Signed không phải public-CA/EV/Store-signed. Chỉ chia sẻ liên kết tải chính thức.</div></div></footer>
 </body>
 </html>

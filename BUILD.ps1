@@ -1140,6 +1140,10 @@ $releaseManifest = [ordered]@{
     OfflineResetOnEveryLaunch = $true
     OfflineBlockedScopes = @($offlinePolicyMetadata.BlockedScopes)
     RuntimeTelemetry = [string]$offlinePolicyMetadata.Telemetry
+    AutomaticCatalogRefresh = [bool]$offlinePolicyMetadata.AutomaticCatalogRefresh
+    AutomaticCatalogRefreshTrigger = [string]$offlinePolicyMetadata.AutomaticCatalogRefreshTrigger
+    OnlineRefreshOrder = @($offlinePolicyMetadata.OnlineRefreshOrder)
+    OnlineActionBehavior = 'Signed catalog refresh only; no scan, report, privacy prompt, or application update check'
     AutomaticUpdateCheck = [bool]$offlinePolicyMetadata.AutomaticUpdateCheck
     AutomaticUpdateCheckTrigger = [string]$offlinePolicyMetadata.AutomaticUpdateCheckTrigger
     BackgroundUpdateService = [bool]$offlinePolicyMetadata.BackgroundUpdateService
@@ -1151,7 +1155,7 @@ $releaseManifest = [ordered]@{
     ApplicationUpdateManifestUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json'
     ApplicationUpdateManifestSignatureUrl = 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s'
     ApplicationUpdateChoices = @('UpdateNow','Later','DismissForSession')
-    ApplicationUpdateDeferral = 'After next completed task or 2 hours; next launch rechecks only when Online is allowed'
+    ApplicationUpdateDeferral = 'Explicit update action only; enabling Online does not check or apply an application update'
     ApplicationUpdateVerification = 'Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback'
     OfficialBuildProvenance = [ordered]@{
         State = $releaseProvenanceState
@@ -1513,7 +1517,7 @@ $infoLines = @(
     'Backup HMAC luu kiem ke va cach ly truoc thay doi; activator va token cap phep da loai bo khong duoc khoi phuc.',
     'Offline toan ung dung mac dinh; trung tam doanh nghiep co cong tac mang rieng mac dinh tat, co the bat/tat lai ma khong an chuc nang hoac xoa cau hinh.',
     'Ket noi online chi chay sau khi nguoi dung xac nhan, tai catalog JSON HTTPS tu host allowlist; khong gui inventory, duong dan, khoa hoac token va khong doi preference Offline.',
-    'Tu dong kiem tra phien ban moi chi khi Online da duoc cho phep; khong co service nen, telemetry hay cap nhat im lang.',
+    'Bat Online chi cap nhat catalog ky so roi dung; khong tu quet, tao bao cao, hoi muc rieng tu hoac kiem tra/cai phien ban ung dung.',
     'Khi co ban moi, VietLicenSure hoi 3 lua chon: Cap nhat ngay, De sau, Bo qua lan nay. De sau hoi lai sau tac vu ke tiep hoac 2 gio.',
     'Cap nhat ngay chi tai EXE tu GitHub HTTPS co dinh, doi chieu dung luong/SHA-256/chu ky neu bat buoc, backup ban cu va rollback neu ban moi loi.',
     "Compatibility catalog $($compatibilityMetadata.CatalogVersion), schema $($compatibilityMetadata.CatalogSchemaVersion), ra soat $($compatibilityMetadata.ReviewedAtUtc); canh bao $($compatibilityMetadata.ReviewWarningAgeDays) ngay va het han $($compatibilityMetadata.MaximumReviewAgeDays) ngay.",

@@ -8,7 +8,7 @@ VietLicenSure is a Windows application for reviewing computer configuration, Win
 
 The workflow has four steps: select an inspection scope, review results and evidence, preview a remediation plan when needed, then confirm and perform post-verification. Inspection and reporting are read-only by default; system-changing actions always provide a preview, backup, confirmation, and an appropriate privilege request.
 
-VietLicenSure is Offline by default and does not automatically upload inventory or reports. Only after the user explicitly enables Online for the current session does VietLicenSure download and validate the signed catalog and then check the signed new-version manifest; it never silently downloads/installs an EXE, and the next launch returns to Offline. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page. The current acceptance state is maintained only in `RELEASE-STATUS-v5.0.md`.
+VietLicenSure is Offline by default and does not automatically upload inventory or reports. Only after the user explicitly enables Online for the current session does VietLicenSure download and validate the signed catalog and then stop; it does not start a scan, create a report, show a report-privacy prompt, or check/install an application version, and the next launch returns to Offline. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page. The current acceptance state is maintained only in `RELEASE-STATUS-v5.0.md`.
 
 ## Author information
 
@@ -36,7 +36,7 @@ The project aims to provide a reliable, clear, and cautious technical inspection
 3. Close Word, Excel, Outlook, and any application that may be remediated.
 4. Prepare a valid account or product key if you expect to change licensing.
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
-6. Keep Offline enabled by default. Explicitly enabling Online for the current session automatically refreshes the signed catalog and checks for a newer version; enterprise LAN access still uses its separate permission switch.
+6. Keep Offline enabled by default. Explicitly enabling Online for the current session only refreshes the signed catalog and then stops; scans/reports remain user-started, and enterprise LAN access still uses its separate permission switch.
 
 The `Official Self-Signed` single-file EXE uses the technical `OfficialSelfSigned` trust mode and carries a signature plus provenance manifest for tamper detection. It is an official release signed with a pinned self-issued certificate; it is not public-CA, EV, or Microsoft Store signed. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download it directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender.
 
@@ -395,9 +395,9 @@ HashMismatch, a known activator hash, or a replaced licensing module can be stro
 
 If Incomplete coverage is reported, check for missing Administrator rights, scan timeout, locked files, or failed WMI/Task Scheduler sources before evaluating the application.
 
-## Enable Online for catalog and version checks
+## Enable Online only for catalog refresh
 
-Every VietLicenSure launch begins Offline. When the user explicitly switches the dashboard network control to **Online** and confirms, the application queues two read-only tasks for the current session: download/validate the signed recognition catalog, then check the signed new-version manifest. There is no background update service, no silent EXE download/install, and the next launch defaults to Offline again.
+Every VietLicenSure launch begins Offline. When the user explicitly switches the dashboard network control to **Online** and confirms, the application only downloads/validates the signed recognition catalog and then stops. It does not start a machine scan, create a report, show a report-privacy prompt, or check/install an application version. There is no background update service, and the next launch defaults to Offline again.
 
 The manual catalog action remains available under **Remediate other software** or the combined Overview remediation tile, on the Inspect and return to original state screen:
 
@@ -405,9 +405,9 @@ The manual catalog action remains available under **Remediate other software** o
 2. Select Inspect and return to original state.
 3. Select Online connection.
 4. Read the privacy notice and consent if you want to continue.
-5. Wait for completion, then continue with the other-software scope.
+5. Wait for completion. Start a scan or report separately only when you choose that task.
 
-These Online tasks issue GET requests only to fixed HTTPS sources and do not upload software inventory, paths, product keys, tokens, or reports. A catalog is accepted only after allowlist, signature, schema, and anti-downgrade checks. If refresh fails, VietLicenSure keeps the trusted bundled/cached catalog and remains fully usable Offline. When a newer application version is found, the user must still choose whether to download/install it; updates are never silent.
+This Online task issues GET requests only to fixed catalog HTTPS sources and does not upload software inventory, paths, product keys, tokens, or reports. A catalog is accepted only after allowlist, signature, schema, and anti-downgrade checks. If refresh fails, VietLicenSure keeps the trusted bundled/cached catalog and remains fully usable Offline.
 
 ## Reports and saved files
 

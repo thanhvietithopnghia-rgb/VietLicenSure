@@ -33,38 +33,25 @@ function Enable-DashboardOnlineForCurrentCatalogSession {
         [void](Write-ToolLog -Level 'AUDIT' -Event 'OnlineMode.CatalogSessionEnabled' -Message (Get-DashboardText 'offline.networkAllowedLog') -Data ([ordered]@{
             Source='SoftwareCatalog'; SessionOnly=$true; UploadedInventory=$false; SentLicenseKeys=$false
         }))
-        if (Test-ApplicationSelfUpdateAllowed) {
-            $script:applicationUpdateCheckPending = $true
-        }
     }
     return [bool](Test-ToolNetworkActionAllowed -Scope Internet)
 }
 
 function Start-SoftwareCatalogOnlineUpdate {
     param(
-        [ValidateSet("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")]
-        [string]$ScanScope = "ThirdParty",
         [switch]$ConsentAlreadyGranted,
-        [switch]$CatalogOnly,
         [switch]$BackgroundSync
     )
 
-    $script:softwareCatalogAutoScan = $false
-    $script:softwareCatalogAutoScanScope = "ThirdParty"
     $script:softwareCatalogBackgroundSync = $false
     if (-not (Enable-DashboardOnlineForCurrentCatalogSession -ConsentAlreadyGranted:$ConsentAlreadyGranted)) {
         return
     }
-    $script:softwareCatalogAutoScan = -not [bool]$CatalogOnly
-    $script:softwareCatalogAutoScanScope = if ($CatalogOnly) { "ThirdParty" } else { $ScanScope }
     $script:softwareCatalogBackgroundSync = [bool]$BackgroundSync
     try {
         Start-ProgressDisplay (Get-DashboardText "software.online.action") (Get-DashboardText "software.online.connecting") $false
         Write-ProgressLog (Get-DashboardText "software.online.privacyLog")
-        Write-ProgressLog (Get-DashboardText "cleanup.scan.scopeLog" @((Get-CleanupScopeLabel -Scope $ScanScope)))
         $script:softwareCatalogUpdateResultFile = New-SecureRuntimePath "tool-software-catalog-update-"
-        $script:softwareCatalogAutoScan = $true
-        $script:softwareCatalogAutoScanScope = $ScanScope
         $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$softwareCatalogUpdateScript`" -ResultFile `"$script:softwareCatalogUpdateResultFile`" -ConsentGranted -Culture `"$script:dashboardCulture`""
         [void](Start-ToolModuleProcess -ModuleId "software.catalog.update" -Arguments $arguments -Action (Get-DashboardText "software.online.action") -Hidden)
         $status.Text = Get-DashboardText "software.online.running"
@@ -73,8 +60,6 @@ function Start-SoftwareCatalogOnlineUpdate {
         $timer.Start()
     } catch {
         $wasBackgroundSync = [bool]$script:softwareCatalogBackgroundSync
-        $script:softwareCatalogAutoScan = $false
-        $script:softwareCatalogAutoScanScope = "ThirdParty"
         $script:softwareCatalogBackgroundSync = $false
         if ($script:softwareCatalogUpdateResultFile -and (Test-Path -LiteralPath $script:softwareCatalogUpdateResultFile -PathType Leaf)) {
             Remove-Item -LiteralPath $script:softwareCatalogUpdateResultFile -Force -ErrorAction SilentlyContinue
@@ -134,21 +119,14 @@ function Show-SoftwareCatalogFailureDialog {
     $retry = New-Object System.Windows.Forms.Button
     $retry.Text = Get-DashboardText 'software.online.retry'
     $retry.Size = New-Object System.Drawing.Size(160, 38)
-    $retry.Location = New-Object System.Drawing.Point(132, 174)
+    $retry.Location = New-Object System.Drawing.Point(190, 174)
     $retry.Add_Click({ $dialog.Tag='Retry'; $dialog.Close() })
     $dialog.Controls.Add($retry)
-
-    $offline = New-Object System.Windows.Forms.Button
-    $offline.Text = Get-DashboardText 'software.online.scanOffline'
-    $offline.Size = New-Object System.Drawing.Size(176, 38)
-    $offline.Location = New-Object System.Drawing.Point(300, 174)
-    $offline.Add_Click({ $dialog.Tag='Offline'; $dialog.Close() })
-    $dialog.Controls.Add($offline)
 
     $close = New-Object System.Windows.Forms.Button
     $close.Text = Get-DashboardText 'app.close'
     $close.Size = New-Object System.Drawing.Size(120, 38)
-    $close.Location = New-Object System.Drawing.Point(484, 174)
+    $close.Location = New-Object System.Drawing.Point(370, 174)
     $close.Add_Click({ $dialog.Close() })
     $dialog.CancelButton = $close
     $dialog.AcceptButton = $retry
@@ -161,14 +139,7 @@ function Show-SoftwareCatalogFailureDialog {
 
 function Complete-SoftwareCatalogOnlineUpdate {
     Set-ButtonsEnabled $true
-    $shouldScan = [bool]$script:softwareCatalogAutoScan
     $wasBackgroundSync = [bool]$script:softwareCatalogBackgroundSync
-    $requestedScanScope = [string]$script:softwareCatalogAutoScanScope
-    if ($requestedScanScope -notin @("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")) {
-        $requestedScanScope = "ThirdParty"
-    }
-    $script:softwareCatalogAutoScan = $false
-    $script:softwareCatalogAutoScanScope = "ThirdParty"
     $script:softwareCatalogBackgroundSync = $false
     $result = $null
     try {
@@ -215,11 +186,6 @@ function Complete-SoftwareCatalogOnlineUpdate {
             [System.Windows.Forms.MessageBox]::Show(
                 $successMessage, $successTitle, "OK", "Information") | Out-Null
         }
-        if ($shouldScan) {
-            Start-Cleanup -ScanScope $requestedScanScope
-        } else {
-            Invoke-PendingOnlineSessionWork
-        }
         return
     }
 
@@ -233,9 +199,7 @@ function Complete-SoftwareCatalogOnlineUpdate {
     }
     $fallback = Show-SoftwareCatalogFailureDialog -Detail (Get-DashboardText "software.online.fallbackPrompt" @($failureDetail))
     if ($fallback -eq 'Retry') {
-        Start-SoftwareCatalogOnlineUpdate -ScanScope $requestedScanScope -ConsentAlreadyGranted
-    } elseif ($shouldScan -and $fallback -eq 'Offline') {
-        Start-Cleanup -ScanScope $requestedScanScope
+        Start-SoftwareCatalogOnlineUpdate -ConsentAlreadyGranted
     }
 }
 
@@ -246,14 +210,12 @@ function Request-OnlineSessionRefresh {
     }
 
     # A fresh launch remains Offline.  This queue is populated only after the
-    # user explicitly enables Online for the current session.  Catalog data is
-    # refreshed first; the signed application manifest is checked afterwards.
+    # user explicitly enables Online for the current session.  This action is
+    # catalog-only: it never starts a scan, report, privacy prompt, application
+    # update check, or any other follow-up task.
     $script:softwareCatalogRefreshPending = $true
-    if (Test-ApplicationSelfUpdateAllowed) {
-        $script:applicationUpdateCheckPending = $true
-    }
     [void](Write-ToolLog -Level "AUDIT" -Event "OnlineMode.RefreshQueued" -Message (Get-DashboardText "online.refresh.queued") -Data ([ordered]@{
-        Catalog=$true; ApplicationVersion=[bool](Test-ApplicationSelfUpdateAllowed); SessionOnly=$true; SilentInstall=$false
+        Catalog=$true; ApplicationVersion=$false; Scan=$false; Report=$false; SessionOnly=$true; SilentInstall=$false
     }))
     Invoke-PendingOnlineSessionWork
 }
@@ -270,10 +232,9 @@ function Invoke-PendingOnlineSessionWork {
     }
     if ($script:softwareCatalogRefreshPending) {
         $script:softwareCatalogRefreshPending = $false
-        Start-SoftwareCatalogOnlineUpdate -ScanScope "ThirdParty" -ConsentAlreadyGranted -CatalogOnly -BackgroundSync
+        Start-SoftwareCatalogOnlineUpdate -ConsentAlreadyGranted -BackgroundSync
         return
     }
-    Invoke-PendingApplicationUpdateWork
 }
 
 function Get-ApplicationUpdateFileSha256 {

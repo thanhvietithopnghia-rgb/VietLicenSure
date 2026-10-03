@@ -1,11 +1,11 @@
 # Lịch sử phát triển VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại. Nội dung v5.0 được cập nhật đến ngày 02/10/2026; số phiên bản công khai vẫn giữ nguyên là v5.0.
+Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại. Nội dung v5.0 được cập nhật đến ngày 03/10/2026; số phiên bản công khai vẫn giữ nguyên là v5.0.
 
 Trang công khai:
 https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
-## v5.0 — cập nhật 02/10/2026 (phát hành lần đầu 08/09/2026)
+## v5.0 — cập nhật 03/10/2026 (phát hành lần đầu 08/09/2026)
 
 - **Tên gọi và định hướng:** tên chính thức được đổi từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống**; thống nhất một tên phiên bản duy nhất là **v5.0** trên ứng dụng, tài liệu, bộ cập nhật và GitHub.
 - **Nền tảng nâng cấp:** v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9, kế thừa cơ chế kiểm kê và đánh giá bằng chứng rồi mở rộng thành quy trình kiểm tra–quản lý hệ thống thống nhất.
@@ -22,7 +22,7 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
 ### Tóm tắt cốt lõi giữa hai thế hệ
 
-**v4.9** tập trung làm chính xác nền nhận diện: hợp nhất nhiều nguồn kiểm kê, phân tầng bằng chứng, chống kết luận nhầm và khóa chặt thao tác gỡ/khắc phục theo đúng đối tượng. **v5.0** kế thừa nền đó và hợp nhất thành dashboard kiểm tra–khắc phục–báo cáo–quản lý hoàn chỉnh, hỗ trợ DPI/Light/Dark/High Contrast, Trợ lý Offline và quản lý Cục bộ/Máy chủ/Máy trạm. Khắc phục tách rõ Windows, Office và phần mềm khác, có Dry Run, scope-lock, backup, UAC, hậu kiểm và rollback fail-closed; báo cáo mở rộng sang HTML/PDF/JSON/XML/CSV, plugin ký số và timeline bảo vệ. Offline vẫn là mặc định; chỉ khi người dùng chủ động bật Online cho phiên hiện tại, v5.0 mới xác minh catalog ký số rồi kiểm tra manifest phiên bản mới, không upload inventory, không tải/cài EXE ngầm và lần mở sau trở lại Offline.
+**v4.9** tập trung làm chính xác nền nhận diện: hợp nhất nhiều nguồn kiểm kê, phân tầng bằng chứng, chống kết luận nhầm và khóa chặt thao tác gỡ/khắc phục theo đúng đối tượng. **v5.0** kế thừa nền đó và hợp nhất thành dashboard kiểm tra–khắc phục–báo cáo–quản lý hoàn chỉnh, hỗ trợ DPI/Light/Dark/High Contrast, Trợ lý Offline và quản lý Cục bộ/Máy chủ/Máy trạm. Khắc phục tách rõ Windows, Office và phần mềm khác, có Dry Run, scope-lock, backup, UAC, hậu kiểm và rollback fail-closed; báo cáo mở rộng sang HTML/PDF/JSON/XML/CSV, plugin ký số và timeline bảo vệ. Offline vẫn là mặc định; khi người dùng chủ động bật Online cho phiên hiện tại, v5.0 chỉ xác minh/cập nhật catalog ký số rồi dừng, không tự quét, không tạo báo cáo, không hỏi mức riêng tư, không kiểm tra/cài phiên bản ứng dụng và lần mở sau trở lại Offline.
 
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
 

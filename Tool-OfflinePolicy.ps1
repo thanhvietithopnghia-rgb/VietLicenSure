@@ -147,9 +147,9 @@ function Get-ToolOfflinePolicyMetadata {
         Telemetry = "Disabled"
         AutomaticCatalogRefresh = $true
         AutomaticCatalogRefreshTrigger = "UserEnabledOnline"
-        AutomaticUpdateCheck = $true
-        AutomaticUpdateCheckTrigger = "UserEnabledOnline"
-        OnlineRefreshOrder = @("SignedCatalog", "SignedApplicationManifest")
+        AutomaticUpdateCheck = $false
+        AutomaticUpdateCheckTrigger = "ExplicitUpdateActionOnly"
+        OnlineRefreshOrder = @("SignedCatalog")
         BackgroundUpdateService = $false
         SilentUpdate = $false
     }

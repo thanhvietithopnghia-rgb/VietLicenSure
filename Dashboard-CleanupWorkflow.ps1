@@ -3519,6 +3519,13 @@ function Show-CleanupFunctionScreen {
             return
         }
 
+        if ($Mode -eq "Cleanup" -and $Choice -eq "Online") {
+            Start-SoftwareCatalogOnlineUpdate
+            $screen.Tag = "Started"
+            $screen.Close()
+            return
+        }
+
         $scopeMode = if ($Mode -eq "Cleanup") { "Cleanup" } elseif ($Mode -eq "Backup") { "Backup" } else { "Restore" }
         $selectedScope = if ([string]::IsNullOrWhiteSpace($FixedScope)) {
             Show-LicenseScopeChooser -Mode $scopeMode
@@ -3536,9 +3543,7 @@ function Show-CleanupFunctionScreen {
         }
 
         $started = $true
-        if ($Mode -eq "Cleanup" -and $Choice -eq "Online") {
-            Start-SoftwareCatalogOnlineUpdate -ScanScope $selectedScope
-        } elseif ($Mode -eq "Backup") {
+        if ($Mode -eq "Backup") {
             Start-CleanupBackup -Scope $selectedScope
         } elseif ($Mode -eq "Cleanup") {
             Start-Cleanup -ScanScope $selectedScope -DryRunMode:([bool]($Choice -eq "DryRun"))

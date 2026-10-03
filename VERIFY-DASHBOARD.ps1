@@ -981,12 +981,15 @@ Assert-SourcePattern $text 'function\s+Show-CleanupScopeChecklist' 'Khắc phụ
 Assert-SourcePattern $text 'Name="Windows";\s*TextKey="cleanup\.scope\.scanWindows"' 'Khắc phục thiếu ô tích Windows.'
 Assert-SourcePattern $text 'Name="Office";\s*TextKey="cleanup\.scope\.scanOffice"' 'Khắc phục thiếu ô tích Office.'
 Assert-SourcePattern $text 'Name="ThirdParty";\s*TextKey="cleanup\.scope\.scanThirdParty"' 'Khắc phục thiếu ô tích Phần mềm khác.'
-Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]selectedScope' 'Kết nối Online chưa dùng cùng phạm vi người dùng đã tích.'
+Assert-SourcePattern $text 'if\s*\([$]Mode\s+-eq\s+"Cleanup"\s+-and\s+[$]Choice\s+-eq\s+"Online"\)\s*\{\s*Start-SoftwareCatalogOnlineUpdate' 'Nút Online chưa cập nhật catalog độc lập trước bước chọn phạm vi.'
 Assert-SourcePattern $text 'function\s+Request-OnlineSessionRefresh' 'Dashboard thiếu hàng đợi đồng bộ sau khi người dùng chủ động bật Online.'
-Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+"ThirdParty"\s+-ConsentAlreadyGranted\s+-CatalogOnly\s+-BackgroundSync' 'Bật Online chưa tự cập nhật catalog ký số ở chế độ nền/không quét.'
-Assert-SourcePattern $text '[$]script:applicationUpdateCheckPending\s*=\s*[$]true' 'Bật Online chưa xếp hàng kiểm tra manifest phiên bản mới.'
-Assert-SourcePattern $text 'if\s*\(-not\s+[$]script:offlineMode\)\s*\{\s*Request-OnlineSessionRefresh\s*\}' 'Khởi tạo Online được cho phép chưa dùng cùng hàng đợi catalog + phiên bản.'
-Assert-SourcePattern $text 'Invoke-PendingOnlineSessionWork' 'Dashboard chưa điều phối tuần tự catalog và kiểm tra phiên bản.'
+Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ConsentAlreadyGranted\s+-BackgroundSync' 'Bật Online chưa tự cập nhật catalog ký số ở chế độ nền.'
+Assert-SourcePattern $text 'Catalog=[$]true;\s*ApplicationVersion=[$]false;\s*Scan=[$]false;\s*Report=[$]false' 'Audit Online chưa khẳng định catalog-only, không quét và không báo cáo.'
+Assert-SourcePattern $text 'if\s*\(-not\s+[$]script:offlineMode\)\s*\{\s*Request-OnlineSessionRefresh\s*\}' 'Khởi tạo Online được cho phép chưa dùng hàng đợi catalog-only.'
+Assert-SourcePattern $text 'Invoke-PendingOnlineSessionWork' 'Dashboard chưa điều phối hàng đợi catalog.'
+if ($text -match 'softwareCatalogAutoScan' -or $text -match 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope') {
+    Add-Failure 'Luồng Online vẫn giữ trạng thái hoặc lời gọi tự quét sau khi cập nhật catalog.'
+}
 Assert-SourcePattern $text 'Start-CleanupBackup\s+-Scope\s+[$]selectedScope' 'Backup chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-CleanupRestore\s+-Scope\s+[$]selectedScope' 'Khôi phục chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-Cleanup\s+-ScanScope\s+[$]selectedScope' 'Quét khắc phục chưa nhận phạm vi người dùng chọn.'
@@ -1074,10 +1077,10 @@ if ([string]$viCatalog.'menu.7.description' -ne 'Kiểm tra key firmware; chỉ 
 if ([string]$viCatalog.'about.card.config.body' -notmatch 'Quick, Standard và Deep' -or
     [string]$viCatalog.'about.card.remediation.body' -notmatch 'Dry Run' -or
     [string]$viCatalog.'about.card.report.body' -notmatch 'HTML/PDF/JSON/XML/CSV' -or
-    [string]$viCatalog.'about.card.assurance.body' -notmatch 'chỉ kiểm tra sau khi bật Online' -or
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'bật Online chỉ cập nhật danh mục ký số rồi dừng' -or
     [string]$viCatalog.'about.card.assurance.body' -notmatch 'Máy chủ tự chạy lại' -or
     [string]$viCatalog.'about.card.assurance.body' -notmatch 'giữ nguyên ghép nối qua reboot' -or
-    [string]$enCatalog.'about.card.assurance.body' -notmatch 'only after Online consent' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'Online only refreshes the signed catalog and then stops' -or
     [string]$enCatalog.'about.card.assurance.body' -notmatch 'preserve enrollment across reboot') {
     Add-Failure 'Ô Năng lực trong Giới thiệu chưa phản ánh đúng chức năng v5.0 hiện tại.'
 }
@@ -1270,7 +1273,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+cập nhật\s+02/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$' -or
+    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+cập nhật\s+03/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$' -or
         $historyText -notmatch 'tên chính thức' -or
         $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
         $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
@@ -1279,13 +1282,13 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyText -notmatch 'Chính sách mã nguồn') {
         Add-Failure 'Tài liệu lịch sử chưa ghi đúng danh tính v5.0, chính sách mã nguồn, kênh phản hồi hoặc các nâng cấp cốt lõi.'
     }
-    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+cập nhật\s+02/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$.*?(?=^##\s+v4\.9)').Value
+    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+cập nhật\s+03/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$.*?(?=^##\s+v4\.9)').Value
     if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 12 -or
         $v5HistorySection -match 'Tên\s+\*\*VietLicenSure\*\*\s+ghép từ|kiểm thử UI tự động') {
         Add-Failure 'Mục lịch sử v5.0 chưa được rút gọn về danh tính, chính sách, phản hồi, kênh phát hành và các nhóm nâng cấp cốt lõi.'
     }
     $requiredHistoryHeadings = @(
-        '## v5.0 — cập nhật 02/10/2026 (phát hành lần đầu 08/09/2026)',
+        '## v5.0 — cập nhật 03/10/2026 (phát hành lần đầu 08/09/2026)',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',

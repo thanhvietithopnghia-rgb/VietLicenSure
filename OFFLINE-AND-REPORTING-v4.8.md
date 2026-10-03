@@ -19,7 +19,7 @@ Trong Offline mode, tool chặn:
 - mở URL hỗ trợ/release;
 - mọi telemetry, kiểm tra phiên bản và tải cập nhật ứng dụng.
 
-Khi người dùng chủ động cho phép Online, ba luồng Internet mới có thể chạy: `software.catalog.update` tải catalog sau xác nhận riêng; `application.update.check` chỉ đọc manifest phiên bản GitHub; Trợ lý VietLicenSure chỉ tải JSON tri thức và chữ ký CMS rời từ hai URL GitHub cố định. Cả ba fail-closed khi Offline và không tải inventory, đường dẫn, khóa, token, báo cáo hay nội dung trò chuyện lên mạng. Enterprise UI là `LocalOnly`; server và agent khai báo `NetworkScope=Lan` và cần công tắc mạng riêng của Mục 8.
+Khi người dùng chủ động bật Online bằng công tắc giao diện, chỉ `software.catalog.update` tải/xác minh catalog sau xác nhận riêng rồi dừng; công tắc này không tự gọi `application.update.check`, không quét máy, không tạo báo cáo và không mở hộp chọn riêng tư. Trợ lý VietLicenSure chỉ tải JSON tri thức và chữ ký CMS rời khi người dùng chủ động dùng chức năng đồng bộ riêng. Mọi luồng đều fail-closed khi Offline và không tải inventory, đường dẫn, khóa, token, báo cáo hay nội dung trò chuyện lên mạng. Enterprise UI là `LocalOnly`; server và agent khai báo `NetworkScope=Lan` và cần công tắc mạng riêng của Mục 8.
 
 ## Những gì vẫn hoạt động
 
@@ -52,9 +52,9 @@ Mục 8 dùng preference riêng, mặc định `Allowed=false`, độc lập v�
 - Catalog tải về phải qua kiểm tra schema/quy tắc trước khi ghi cache. Nếu tải lỗi, người dùng có thể tiếp tục quét bằng catalog cục bộ/cache hợp lệ.
 - Chỉ catalog tích hợp hoặc cache online có chữ ký CMS hợp lệ từ signer đã ghim, qua schema và chống rollback mới được đóng góp bằng chứng hash/tên activator. GUI, worker và module catalog đều tự chặn ở network boundary khi Offline, kể cả khi module bị gọi trực tiếp. Dù vậy, Tool vẫn cần bằng chứng crack trực tiếp gắn đúng ứng dụng trước khi cho phép cách ly đúng artifact; không có kết nối mạng nào được dùng để tải inventory lên hoặc hỏi trạng thái giấy phép tài khoản.
 
-## Kiểm tra và cài phiên bản mới
+## Kiểm tra và cài phiên bản mới — tách khỏi công tắc Online
 
-- Chỉ kiểm tra manifest khi Online đã được người dùng cho phép trong phiên hiện tại. Lần mở tiếp theo trở lại Offline; chuyển về Offline hủy kiểm tra đang chờ và không tải gì.
+- Bật Online trên giao diện không tự kiểm tra manifest phiên bản. Thành phần kiểm tra/cài phiên bản được tách khỏi thao tác cập nhật catalog; lần mở tiếp theo vẫn trở lại Offline.
 - Khi có bản mới, Tool chỉ hiển thị **Cập nhật ngay**, **Để sau**, **Bỏ qua lần này**. Không lựa chọn nào được tự giả định.
 - **Để sau** hỏi lại sau tác vụ kế tiếp hoặc khoảng 2 giờ. **Bỏ qua lần này** chỉ áp dụng cho phiên ứng dụng hiện tại; lần mở sau vẫn Offline cho tới khi người dùng chủ động bật Online.
 - Chỉ **Cập nhật ngay** tải EXE từ asset GitHub HTTPS đúng repository/tag. Tệp phải khớp kích thước, SHA-256 và signer Authenticode nếu manifest yêu cầu trước khi thay thế.

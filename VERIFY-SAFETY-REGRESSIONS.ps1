@@ -1235,18 +1235,19 @@ if ($gui) {
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Show-CleanupFunctionScreen'
         }, $true)
-        if (-not $onlineStartAst -or $onlineStartAst.Extent.Text -notmatch '\[string\]\$ScanScope' -or
-            $onlineStartAst.Extent.Text -notmatch '\$script:softwareCatalogAutoScanScope\s*=\s*\$ScanScope' -or
+        if (-not $onlineStartAst -or
             $onlineStartAst.Extent.Text -notmatch 'Enable-DashboardOnlineForCurrentCatalogSession' -or
+            $onlineStartAst.Extent.Text -match 'Start-Cleanup|Show-ReportPrivacyChooser|softwareCatalogAutoScan' -or
             -not $onlineEnableAst -or $onlineEnableAst.Extent.Text -notmatch 'Set-ToolOfflineModePreference\s+-OfflineMode\s+\$false' -or
             $onlineEnableAst.Extent.Text -notmatch 'NextLaunchMode=Offline' -or
-            -not $onlineCompleteAst -or $onlineCompleteAst.Extent.Text -notmatch 'Start-Cleanup\s+-ScanScope\s+\$requestedScanScope' -or
+            $onlineEnableAst.Extent.Text -match 'applicationUpdateCheckPending\s*=\s*\$true' -or
+            -not $onlineCompleteAst -or $onlineCompleteAst.Extent.Text -match 'Start-Cleanup|Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork' -or
             -not $cleanupScreenAst -or $cleanupScreenAst.Extent.Text -notmatch '"Online"' -or
             $cleanupScreenAst.Extent.Text -notmatch 'Show-LicenseScopeChooser\s+-Mode\s+\$scopeMode' -or
             $cleanupScreenAst.Extent.Text -notmatch '\$selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
             $cleanupScreenAst.Extent.Text -notmatch '\$autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
-            $cleanupScreenAst.Extent.Text -notmatch 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+\$selectedScope') {
-            Fail 'Luồng Online chưa dùng cùng hộp ba phạm vi và chưa giữ lựa chọn đến bước quét.'
+            $cleanupScreenAst.Extent.Text -notmatch '(?s)\$Mode\s+-eq\s+"Cleanup"\s+-and\s+\$Choice\s+-eq\s+"Online".+?Start-SoftwareCatalogOnlineUpdate.+?return') {
+            Fail 'Luồng Online chưa giới hạn ở cập nhật catalog hoặc vẫn tự quét/báo cáo/kiểm tra phiên bản.'
         }
     } catch {
         Fail "Không chạy được fixture ánh xạ ba ô tích phạm vi: $($_.Exception.Message)"

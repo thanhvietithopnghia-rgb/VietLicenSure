@@ -36,9 +36,10 @@ if ($failures.Count -eq 0) {
 
         if (-not (Get-ToolOfflineMode)) { Fail "Offline không phải mặc định." }
         $offlineMetadata = Get-ToolOfflinePolicyMetadata
-        if (-not [bool]$offlineMetadata.AutomaticUpdateCheck -or [string]$offlineMetadata.AutomaticUpdateCheckTrigger -ne "UserEnabledOnline" -or
-            [bool]$offlineMetadata.BackgroundUpdateService -or [bool]$offlineMetadata.SilentUpdate) {
-            Fail "Chính sách cập nhật không khóa đúng vào Online do người dùng cho phép."
+        if ([bool]$offlineMetadata.AutomaticUpdateCheck -or [string]$offlineMetadata.AutomaticUpdateCheckTrigger -ne "ExplicitUpdateActionOnly" -or
+            [bool]$offlineMetadata.BackgroundUpdateService -or [bool]$offlineMetadata.SilentUpdate -or
+            (@($offlineMetadata.OnlineRefreshOrder) -join ',') -ne 'SignedCatalog') {
+            Fail "Chính sách Online không còn catalog-only hoặc vẫn cho phép kiểm tra/cập nhật ứng dụng tự động."
         }
         if (Test-ToolNetworkActionAllowed -Scope Internet) { Fail "Offline vẫn cho phép Internet." }
         if (Test-ToolNetworkActionAllowed -Scope Lan) { Fail "Offline vẫn cho phép LAN." }

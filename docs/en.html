@@ -33,7 +33,7 @@
 
   <div id="top" class="wrap hero">
     <div>
-      <div class="eyebrow">v5.0 · updated 2026-10-02 · Official Self-Signed</div>
+      <div class="eyebrow">v5.0 · updated 2026-10-03 · Official Self-Signed</div>
       <h1>Clear assessment.<br>Proactive management.</h1>
       <p class="lead"><strong>VietLicenSure</strong> brings Windows, Office/Microsoft 365, installed-software, and system evidence into one readable interface. It is <strong>Offline by default</strong>, sends no telemetry, and creates privacy-redacted reports.</p>
       <div class="badges"><span class="badge">Offline by default</span><span class="badge">No telemetry</span><span class="badge">Signed catalog</span><span class="badge">Backup &amp; verification</span></div>
@@ -41,7 +41,7 @@
     </div>
     <aside class="release-card" aria-labelledby="release-title">
       <h2 id="release-title">Current release</h2><p>Match these values before running a downloaded file.</p>
-      <div class="release-grid"><div class="release-item"><span>Version</span><strong>v5.0</strong></div><div class="release-item"><span>Build</span><strong>5.0-production-20261002</strong></div><div class="release-item"><span>Signing channel</span><strong>Official Self-Signed</strong></div><div class="release-item"><span>QA status</span><strong>0 release errors</strong></div></div>
+      <div class="release-grid"><div class="release-item"><span>Version</span><strong>v5.0</strong></div><div class="release-item"><span>Build</span><strong>5.0-production-20261003</strong></div><div class="release-item"><span>Signing channel</span><strong>Official Self-Signed</strong></div><div class="release-item"><span>QA status</span><strong>New artifact QA pending</strong></div></div>
       <div class="hash"><div class="hash-head"><span>EXE SHA-256</span><button class="copy" type="button" data-copy="release-hash" data-copied-label="Copied">Copy</button></div><code id="release-hash">654F60860DB1311F994EF9C611E7F71B3DC3E2B73A07546548F2C8FD898D0AD2</code></div>
       <p><strong>Source:</strong> <code>3a909e98bd469283c1fc84d9bd00fd6549034af7</code><br><strong>Bundle:</strong> <code>f3f192a6352d67889d1fcae99a0e1dccec362a6c</code></p><p><a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/blob/main/RELEASE-VERIFICATION-v5.0.md">Full verification procedure</a></p>
     </aside>
@@ -69,13 +69,13 @@
         <article class="card tone-green"><div class="icon">📊</div><h3>Reports and evidence</h3><p>Export HTML, PDF, JSON, XML, and CSV with redaction, checksums, and clearly stated conclusion boundaries.</p></article>
         <article class="card tone-blue"><div class="icon">💬</div><h3>Offline VI/EN Assistant</h3><p>Explain results, guide product features, and search version history using locally bundled, signed knowledge.</p></article>
         <article class="card tone-amber"><div class="icon">🏢</div><h3>Enterprise and LAN</h3><p>Server, Agent, and the read-only Central Dashboard support fleet visibility, preserve pairing across reboot, and do not upload inventory to a cloud service.</p></article>
-        <article class="card tone-green"><div class="icon">✅</div><h3>Integrity and updates</h3><p>Offline remains the default. After the user enables Online, VietLicenSure verifies the signed catalog before checking the signed version manifest.</p></article>
+        <article class="card tone-green"><div class="icon">✅</div><h3>Integrity and updates</h3><p>Offline remains the default. After the user enables Online, VietLicenSure only validates/refreshes the signed catalog and then stops; no scan or report starts automatically.</p></article>
       </div>
     </section>
 
     <section id="start" class="wrap">
       <div class="section-head"><div class="kicker">Get started</div><h2>From download to results in three steps</h2></div>
-      <ol class="steps"><li><strong>Download from the official source</strong>Use the release link and do not run a renamed or repackaged EXE.</li><li><strong>Verify before launch</strong>Check SHA-256, Authenticode, and timestamp. Run <code>VERIFY-RELEASE.cmd</code> when using the full package.</li><li><strong>Start Offline</strong>Run as a standard user. Enable Online only for an intentional catalog/update check or an authorized LAN workflow.</li></ol>
+      <ol class="steps"><li><strong>Download from the official source</strong>Use the release link and do not run a renamed or repackaged EXE.</li><li><strong>Verify before launch</strong>Check SHA-256, Authenticode, and timestamp. Run <code>VERIFY-RELEASE.cmd</code> when using the full package.</li><li><strong>Start Offline</strong>Run as a standard user. Enable Online only to intentionally refresh the signed catalog. LAN permission and other update actions use separate controls.</li></ol>
       <div class="actions"><a class="button primary" href="guide-en.html">Read the full guide</a><a class="button secondary" href="troubleshooting-en.html">Troubleshooting</a></div>
     </section>
 
@@ -90,6 +90,6 @@
     </section>
   </main>
 
-  <footer><div class="wrap footer-grid"><div><strong>VietLicenSure · Thanh Viet</strong><br><a href="documentation-en.html">Documentation</a> · <a href="security-privacy-en.html">Security &amp; Privacy</a> · <a href="author-en.html">Author</a> · <a href="index.html" lang="vi">Tiếng Việt</a></div><div class="fine">© 2026 Thanh Viet. Official Self-Signed is not public-CA, EV, or Store signing. Share only the official download link.</div></div></footer>
+  <footer><div class="wrap footer-grid"><div><strong>VietLicenSure · Thanh Viet</strong><br><a href="documentation-en.html">Documentation</a> · <a href="security-privacy-en.html">Security &amp; Privacy</a> · <a href="author-en.html">Author</a> · <a href="https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases">All releases</a> · <a href="#" class="contact-email" data-user="thanhvietit.hopnghia" data-domain="gmail.com">Support email</a> · <a href="index.html" lang="vi">Tiếng Việt</a></div><div class="fine">© 2026 Thanh Viet. Official Self-Signed is not public-CA, EV, or Store signing. Share only the official download link.</div></div></footer>
 </body>
 </html>

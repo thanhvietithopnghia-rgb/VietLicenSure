@@ -191,8 +191,8 @@ try {
     . (Join-Path $root 'Tool-ModuleContract.ps1')
     $offlineMetadata = Get-ToolOfflinePolicyMetadata
     Assert-UpdateTest ([bool]$offlineMetadata.AutomaticCatalogRefresh -and $offlineMetadata.AutomaticCatalogRefreshTrigger -eq 'UserEnabledOnline') 'Offline metadata does not gate catalog refresh on user-enabled Online mode.'
-    Assert-UpdateTest ([bool]$offlineMetadata.AutomaticUpdateCheck -and $offlineMetadata.AutomaticUpdateCheckTrigger -eq 'UserEnabledOnline') 'Offline metadata does not gate update checks on user-enabled Online mode.'
-    Assert-UpdateTest ((@($offlineMetadata.OnlineRefreshOrder) -join ',') -eq 'SignedCatalog,SignedApplicationManifest') 'Online refresh order is not catalog-first then signed application manifest.'
+    Assert-UpdateTest (-not [bool]$offlineMetadata.AutomaticUpdateCheck -and $offlineMetadata.AutomaticUpdateCheckTrigger -eq 'ExplicitUpdateActionOnly') 'Online mode still queues an automatic application update check.'
+    Assert-UpdateTest ((@($offlineMetadata.OnlineRefreshOrder) -join ',') -eq 'SignedCatalog') 'Online refresh is not catalog-only.'
     Assert-UpdateTest (-not [bool]$offlineMetadata.BackgroundUpdateService -and -not [bool]$offlineMetadata.SilentUpdate) 'Metadata permits a background service or silent update.'
     $updateDescriptor = Get-ToolModuleDescriptor -ModuleId 'application.update.check'
     Assert-UpdateTest ($updateDescriptor.NetworkScope -eq 'Internet' -and $updateDescriptor.AccessMode -eq 'ReadOnly') 'Update module contract is invalid.'
@@ -207,7 +207,7 @@ try {
         'Test-ApplicationSelfUpdateAllowed', 'TOOL_SELF_UPDATE_ALLOWED',
         'Start-DetachedToolModuleProcess -ModuleId "application.update.apply" -Arguments $arguments -Elevate -Hidden',
         'if (-not $script:offlineMode) { Request-OnlineSessionRefresh }',
-        'Start-SoftwareCatalogOnlineUpdate -ScanScope "ThirdParty" -ConsentAlreadyGranted -CatalogOnly -BackgroundSync',
+        'Start-SoftwareCatalogOnlineUpdate -ConsentAlreadyGranted -BackgroundSync',
         'Invoke-PendingOnlineSessionWork'
     )) {
         Assert-UpdateTest ($dashboardText.Contains($pattern)) "GUI is missing required update flow: $pattern"
@@ -217,6 +217,16 @@ try {
     $dashboardParseErrors = $null
     $dashboardAst = Get-VietLicenSureComposedSourceAst -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1' -Tokens ([ref]$dashboardTokens) -ParseErrors ([ref]$dashboardParseErrors)
     Assert-UpdateTest ($dashboardParseErrors.Count -eq 0) 'Dashboard cannot be parsed for update handoff verification.'
+    $onlineRefreshFunction = $dashboardAst.Find({
+        param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Request-OnlineSessionRefresh'
+    }, $true)
+    Assert-UpdateTest ($onlineRefreshFunction -and $onlineRefreshFunction.Extent.Text -notmatch 'applicationUpdateCheckPending\s*=\s*\$true') 'Enabling Online still queues an application update check.'
+    $onlineCompleteFunction = $dashboardAst.Find({
+        param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Complete-SoftwareCatalogOnlineUpdate'
+    }, $true)
+    Assert-UpdateTest ($onlineCompleteFunction -and $onlineCompleteFunction.Extent.Text -notmatch 'Start-Cleanup|Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork') 'Catalog completion still starts a scan, report/privacy flow, or application update work.'
     $applyFunctionAst = $dashboardAst.Find({
         param($node)
         $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Start-ApplicationUpdateApply'

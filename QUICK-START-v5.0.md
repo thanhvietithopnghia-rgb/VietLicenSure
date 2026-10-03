@@ -3,7 +3,7 @@
 **Tên đầy đủ:** VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 **Phiên bản:** `v5.0`
 **Ngày phát hành lần đầu:** `08/09/2026`
-**Nội dung và gói hiện hành cập nhật đến:** `02/10/2026`
+**Nội dung và gói hiện hành cập nhật đến:** `03/10/2026`
 **Kênh:** `Official Self-Signed` — phát hành chính thức; trust mode kỹ thuật `OfficialSelfSigned`
 **Trạng thái hiện hành:** `RELEASE-STATUS-v5.0.md`
 
@@ -46,7 +46,7 @@ Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo. X
 2. Chọn **Kiểm tra toàn bộ** nếu cần bức tranh tổng quan, hoặc mở trực tiếp một trong mười chức năng chính.
 3. Dùng Quick cho kiểm tra nhanh, Standard cho kiểm tra thông thường và Deep khi cần bằng chứng sâu hơn.
 4. Đọc thẻ tổng quan trước, sau đó mở HTML/PDF hoặc JSON chi tiết nếu cần đối chiếu.
-5. Chỉ bật Online khi chủ động cho phép kết nối trong phiên hiện tại. Sau xác nhận, VietLicenSure tự cập nhật catalog ký số rồi kiểm tra manifest phiên bản mới; không tải/cài EXE ngầm, và lần mở sau vẫn Offline. LAN doanh nghiệp dùng công tắc riêng.
+5. Chỉ bật Online khi chủ động cho phép kết nối trong phiên hiện tại. Sau xác nhận, VietLicenSure chỉ cập nhật catalog ký số rồi dừng; không tự chạy kiểm tra/báo cáo, không hỏi mức riêng tư, không kiểm tra/cài phiên bản ứng dụng và lần mở sau vẫn Offline. LAN doanh nghiệp dùng công tắc riêng.
 
 ## 4. Trước mọi thao tác khắc phục
 

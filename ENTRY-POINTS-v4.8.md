@@ -78,6 +78,6 @@ Kết quả chuẩn gồm `Status`, `ExitCode`, `DurationMs`, `Summary`, `Output
 
 - `LocalOnly`: chạy được trong Offline mode.
 - `Lan`: chỉ chạy sau khi người dùng bật công tắc mạng riêng của Mục 8; có thể tắt lại mà không xóa cấu hình.
-- `Internet`: `software.catalog.update` chỉ chạy sau xác nhận riêng để tải catalog HTTPS. `application.update.check` chỉ chạy khi người dùng đã cho phép Online; nó chỉ lấy manifest phiên bản. Thiếu consent hoặc đang Offline trả mã `2` trước mọi thao tác mạng. Không mô-đun nào tải inventory, đường dẫn, khóa hoặc token lên mạng.
+- `Internet`: bật Online chỉ gọi `software.catalog.update` sau xác nhận riêng để tải/xác minh catalog HTTPS rồi dừng; không tự quét, tạo báo cáo hoặc gọi `application.update.check`. Mô-đun kiểm tra phiên bản được tách khỏi công tắc Online. Thiếu consent hoặc đang Offline trả mã `2` trước mọi thao tác mạng. Không mô-đun nào tải inventory, đường dẫn, khóa hoặc token lên mạng.
 
 Module mới phải khai báo `NetworkScope` và được thêm vào verifier trước khi phát hành.

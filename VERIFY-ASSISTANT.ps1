@@ -250,7 +250,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='02/10/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='03/10/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -410,12 +410,13 @@ if ($errors.Count -eq 0) {
 
     $coreCompareVi = Get-ToolAssistantAnswer -Question 'v4.9 so với v5.0 khác gì cốt lõi' -Culture 'vi-VN' -Knowledge $knowledge
     $coreCompareEn = Get-ToolAssistantAnswer -Question 'what are the core changes from v4.9 to v5.0' -Culture 'en-US' -Knowledge $knowledge
-    $onlinePolicyVi = Get-ToolAssistantAnswer -Question 'bật online thì catalog và phiên bản cập nhật thế nào' -Culture 'vi-VN' -Knowledge $knowledge
+    $onlinePolicyVi = Get-ToolAssistantAnswer -Question 'bật online thì phần mềm làm gì' -Culture 'vi-VN' -Knowledge $knowledge
     $onlinePolicyEn = Get-ToolAssistantAnswer -Question 'what happens when I enable Online' -Culture 'en-US' -Knowledge $knowledge
     if ($coreCompareVi -notmatch 'v4\.9' -or $coreCompareVi -notmatch 'v5\.0' -or $coreCompareVi -notmatch 'Offline' -or
         $coreCompareEn -notmatch 'v4\.9' -or $coreCompareEn -notmatch 'v5\.0' -or $coreCompareEn -notmatch 'Offline' -or
-        $onlinePolicyVi -notmatch 'catalog ký số' -or $onlinePolicyVi -notmatch 'manifest phiên bản mới' -or $onlinePolicyVi -notmatch 'không tự tải(?: hoặc |/)cài EXE' -or
-        $onlinePolicyEn -notmatch 'signed catalog' -or $onlinePolicyEn -notmatch 'new-version manifest' -or $onlinePolicyEn -notmatch 'no silent EXE') {
+        $onlinePolicyVi -notmatch 'catalog ký số' -or $onlinePolicyVi -notmatch 'không tự (?:kiểm tra máy|quét)' -or $onlinePolicyVi -notmatch 'không.*(?:tạo )?báo cáo' -or
+        $onlinePolicyEn -notmatch 'signed catalog' -or $onlinePolicyEn -notmatch 'does not start a machine scan' -or $onlinePolicyEn -notmatch 'create a report' -or
+        $onlinePolicyVi -match 'manifest phiên bản mới' -or $onlinePolicyEn -match 'new-version manifest') {
         Add-AssistantVerificationError 'Assistant knowledge is not synchronized with the v4.9→v5.0 summary or explicit-Online refresh policy.'
     }
 
@@ -502,7 +503,7 @@ if ($errors.Count -eq 0) {
         @{ Culture='vi-VN'; Question='mở hướng dẫn sử dụng ở đâu'; Expected='HDSD HTML/PDF' },
         @{ Culture='vi-VN'; Question='xem phiên bản và cập nhật ở đâu'; Expected='Phiên bản và cập nhật' },
         @{ Culture='vi-VN'; Question='tạo gói hỗ trợ đã che định danh ra sao'; Expected='bản xem trước' },
-        @{ Culture='vi-VN'; Question='bật online để cập nhật catalog và kiểm tra phiên bản hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bật Online để cập nhật catalog và kiểm tra phiên bản:' },
+        @{ Culture='vi-VN'; Question='bật online chỉ để cập nhật catalog hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bật Online chỉ để cập nhật catalog:' },
         @{ Culture='vi-VN'; Question='đồng bộ tri thức hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Đồng bộ tri thức:' },
         @{ Culture='vi-VN'; Question='nút Gửi và Enter hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Nút Gửi và Enter:' },
         @{ Culture='vi-VN'; Question='quyền riêng tư báo cáo hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quyền riêng tư báo cáo:' },
@@ -555,7 +556,7 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
-        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*02/10/2026' -or
+        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*03/10/2026' -or
         $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*2 October 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or

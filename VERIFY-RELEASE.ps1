@@ -500,7 +500,9 @@ if ($offlinePolicyText -notmatch 'ToolOfflinePolicySchemaVersion\s*=\s*"1\.0"' -
     $offlinePolicyText -notmatch 'Assert-ToolNetworkActionAllowed' -or
     $offlinePolicyText -notmatch 'Internet.+LAN.+Loopback' -or
     $offlinePolicyText -notmatch 'Telemetry\s*=\s*"Disabled"' -or
-    $offlinePolicyText -notmatch 'AutomaticUpdateCheckTrigger\s*=\s*"UserEnabledOnline"' -or
+    $offlinePolicyText -notmatch 'AutomaticUpdateCheck\s*=\s*\$false' -or
+    $offlinePolicyText -notmatch 'AutomaticUpdateCheckTrigger\s*=\s*"ExplicitUpdateActionOnly"' -or
+    $offlinePolicyText -notmatch 'OnlineRefreshOrder\s*=\s*@\("SignedCatalog"\)' -or
     $offlinePolicyText -notmatch 'SilentUpdate\s*=\s*\$false') {
     $failures.Add('Offline policy thiếu mặc định fail-closed, network gate hoặc telemetry disabled.')
 }
@@ -992,8 +994,12 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.OfflineDefault -ne 'Offline' -or
             @($releaseManifest.OfflineBlockedScopes).Count -ne 3 -or
             [string]$releaseManifest.RuntimeTelemetry -ne 'Disabled' -or
-            -not [bool]$releaseManifest.AutomaticUpdateCheck -or
-            [string]$releaseManifest.AutomaticUpdateCheckTrigger -ne 'UserEnabledOnline' -or
+            -not [bool]$releaseManifest.AutomaticCatalogRefresh -or
+            [string]$releaseManifest.AutomaticCatalogRefreshTrigger -ne 'UserEnabledOnline' -or
+            (@($releaseManifest.OnlineRefreshOrder) -join ',') -ne 'SignedCatalog' -or
+            [string]$releaseManifest.OnlineActionBehavior -notmatch 'no scan, report, privacy prompt, or application update check' -or
+            [bool]$releaseManifest.AutomaticUpdateCheck -or
+            [string]$releaseManifest.AutomaticUpdateCheckTrigger -ne 'ExplicitUpdateActionOnly' -or
             [bool]$releaseManifest.BackgroundUpdateService -or [bool]$releaseManifest.SilentUpdate -or
             [string]$releaseManifest.ApplicationUpdateSchemaVersion -ne '1.0' -or
             [bool]$releaseManifest.ApplicationSelfUpdateAllowed -ne $expectedApplicationSelfUpdateAllowed -or
@@ -1002,7 +1008,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.ApplicationUpdateManifestSignatureUrl -ne 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json.p7s' -or
             [string]$releaseManifest.ApplicationUpdateVerification -notmatch 'Pinned detached-CMS manifest' -or
             -not [bool]$releaseManifest.OfflineResetOnEveryLaunch -or
-            @($releaseManifest.ApplicationUpdateChoices).Count -ne 3) { throw 'Thiếu metadata Offline mặc định/cập nhật theo quyền Online.' }
+            @($releaseManifest.ApplicationUpdateChoices).Count -ne 3) { throw 'Thiếu metadata Offline mặc định/Online catalog-only/cập nhật ứng dụng tường minh.' }
         if ([string]$releaseManifest.EnterpriseNetworkDefault -ne 'Blocked' -or
             -not [bool]$releaseManifest.EnterpriseNetworkToggle -or
             -not [bool]$releaseManifest.EnterpriseNetworkIndependentFromGlobalOffline) {
