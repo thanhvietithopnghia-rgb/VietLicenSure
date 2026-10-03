@@ -88,8 +88,28 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
-if ($viHome -notmatch 'C\u00F3 trong b\u1EA3n c\u1EADp nh\u1EADt 02/10/2026') { $errors.Add('Vietnamese page does not mark the official Central Dashboard update') }
-if ($enHome -notmatch 'Included in the 2 October 2026 update') { $errors.Add('English page does not mark the official Central Dashboard update') }
+foreach ($requiredViCapability in @(
+    'H\u1EC7 sinh th\u00E1i ch\u1EE9c n\u0103ng', 'Windows v\u00E0 Office', 'Ki\u1EC3m k\u00EA ph\u1EA7n m\u1EC1m',
+    'License Compliance', 'Kh\u1EAFc ph\u1EE5c an to\u00E0n', 'B\u00E1o c\u00E1o v\u00E0 b\u1EB1ng ch\u1EE9ng',
+    'Tr\u1EE3 l\u00FD Offline Vi\u1EC7t', 'Doanh nghi\u1EC7p v\u00E0 LAN', 'To\u00E0n v\u1EB9n v\u00E0 c\u1EADp nh\u1EADt'
+)) {
+    if ($viHome -notmatch $requiredViCapability) { $errors.Add("Vietnamese home page is missing capability: $requiredViCapability") }
+}
+foreach ($requiredEnCapability in @(
+    'Feature ecosystem', 'Windows and Office', 'Software inventory', 'License Compliance',
+    'Safe remediation', 'Reports and evidence', 'Offline VI/EN Assistant', 'Enterprise and LAN', 'Integrity and updates'
+)) {
+    if ($enHome -notmatch [regex]::Escape($requiredEnCapability)) { $errors.Add("English home page is missing capability: $requiredEnCapability") }
+}
+if ($viHome -notmatch 'Central Dashboard l\u00E0 m\u1ED9t ch\u1EE9c n\u0103ng thu\u1ED9c nh\u00F3m qu\u1EA3n l\u00FD doanh nghi\u1EC7p v\u00E0 LAN') {
+    $errors.Add('Vietnamese home page does not place Central Dashboard under enterprise and LAN management')
+}
+if ($enHome -notmatch 'Central Dashboard is one component of enterprise and LAN management') {
+    $errors.Add('English home page does not place Central Dashboard under enterprise and LAN management')
+}
+if ($viHome -match 'Central Web Dashboard cho \u0111\u1ED9i ng\u0169 IT' -or $enHome -match 'Central Web Dashboard for IT teams') {
+    $errors.Add('A home page still presents Central Dashboard as the featured product section')
+}
 
 foreach ($requiredUrl in @(
     'en.html', 'huong-dan.html', 'guide-en.html', 'troubleshooting.html', 'troubleshooting-en.html',

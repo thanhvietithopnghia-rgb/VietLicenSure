@@ -25,6 +25,7 @@ body {
   color: var(--ink);
   font: 16px/1.65 "Segoe UI", Arial, sans-serif;
 }
+code { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
 img { max-width: 100%; height: auto; }
 a { color: var(--blue); }
 button { font: inherit; }

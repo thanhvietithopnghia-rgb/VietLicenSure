@@ -55,8 +55,13 @@ try {
       }).slice(0, 8).map(el => el.tagName.toLowerCase() + (el.className ? '.' + String(el.className).trim().replace(/\\s+/g,'.') : ''));
       return { width, scrollWidth: document.documentElement.scrollWidth, offenders, h1: document.querySelectorAll('h1').length, title: document.title };
       })()` });
-      value = result.result.value;
-      if (value.h1 === 1 && value.title.includes('VietLicenSure')) break;
+      value = result?.result?.value;
+      if (value && value.h1 === 1 && value.title.includes('VietLicenSure')) break;
+    }
+    if (!value) {
+      console.error(`${page}: no document metrics were returned by Edge CDP`);
+      failures.push(page);
+      continue;
     }
     console.log(`${page}: viewport=${value.width}, scroll=${value.scrollWidth}, overflow=${value.offenders.join(',') || 'none'}, h1=${value.h1}, title=${JSON.stringify(value.title)}`);
     if (value.scrollWidth > value.width + 1 || value.offenders.length || value.h1 !== 1 || !value.title.includes('VietLicenSure')) failures.push(page);
