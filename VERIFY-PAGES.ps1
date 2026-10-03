@@ -101,14 +101,14 @@ foreach ($requiredEnCapability in @(
 )) {
     if ($enHome -notmatch [regex]::Escape($requiredEnCapability)) { $errors.Add("English home page is missing capability: $requiredEnCapability") }
 }
-if ($viHome -notmatch 'Central Dashboard l\u00E0 m\u1ED9t ch\u1EE9c n\u0103ng thu\u1ED9c nh\u00F3m qu\u1EA3n l\u00FD doanh nghi\u1EC7p v\u00E0 LAN') {
-    $errors.Add('Vietnamese home page does not place Central Dashboard under enterprise and LAN management')
-}
-if ($enHome -notmatch 'Central Dashboard is one component of enterprise and LAN management') {
-    $errors.Add('English home page does not place Central Dashboard under enterprise and LAN management')
-}
 if ($viHome -match 'Central Web Dashboard cho \u0111\u1ED9i ng\u0169 IT' -or $enHome -match 'Central Web Dashboard for IT teams') {
     $errors.Add('A home page still presents Central Dashboard as the featured product section')
+}
+if ($viHome -match 'kh\u00F4ng \u0111\u1EA1i di\u1EC7n cho to\u00E0n b\u1ED9 ph\u1EA7n m\u1EC1m' -or $enHome -match 'does not represent the whole product') {
+    $errors.Add('A home page still contains the redundant Central Dashboard scope explanation')
+}
+if ($viHome -match '<div class="notice"><strong>Central Dashboard:' -or $enHome -match '<div class="notice"><strong>Central Dashboard:') {
+    $errors.Add('A home page still contains the redundant Central Dashboard note')
 }
 
 foreach ($requiredUrl in @(
@@ -131,6 +131,9 @@ foreach ($content in @($viPolicy, $enPolicy)) {
     if ($content -notmatch '(?i)product key') { $errors.Add('A privacy page is missing the full-key protection disclosure') }
     if ($content -notmatch '(?i)Purchased\s*/\s*Assigned\s*/\s*Installed') { $errors.Add('A privacy page is missing the software entitlement reconciliation policy') }
     if ($content -notmatch '(?i)License Advisor') { $errors.Add('A privacy page is missing the License Advisor boundary') }
+    if ($content -notmatch 'data-software-policy="lifecycle"') { $errors.Add('A privacy page is missing the software lifecycle policy') }
+    if ($content -notmatch '(?i)Freeware.*Open Source.*Commercial.*Subscription.*Unknown') { $errors.Add('A privacy page is missing the software classification policy') }
+    if ($content -notmatch '(?i)backup') { $errors.Add('A privacy page is missing the controlled-remediation policy') }
     if ($content -match '(?i)ISO 27001 certified|SOC 2 certified|GDPR certified') { $errors.Add('A privacy page contains an unsupported certification claim') }
 }
 if ($viAuthor -notmatch 'Thanh Vi\u1EC7t' -or $enAuthor -notmatch 'Thanh Viet') { $errors.Add('Author pages are missing the public author identity') }
