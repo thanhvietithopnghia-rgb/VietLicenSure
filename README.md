@@ -1,6 +1,6 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 03/10/2026
+- **Bản phát hành hiện tại:** VietLicenSure v5.0 · phát hành lần đầu 08/09/2026 · cập nhật hiện hành 04/10/2026
 - **Trạng thái:** `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; **phát hành chính thức bằng chứng thư tự ký**
 - **Tác giả và phát triển:** Thanh Việt
 - **Trang phát hành công khai:** <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
@@ -83,7 +83,7 @@ Trong chức năng 8, quản trị viên có thể mở **Central Dashboard** t�
 
 ### License Compliance
 
-Trong chức năng 8, cửa sổ **Chứng từ và quyền sử dụng** cho phép quản trị viên lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available, cảnh báo vượt số lượng/hết hạn và tạo License Advisor theo chuỗi Phát hiện–Giải thích–Rủi ro–Khuyến nghị–Giới hạn. Central Dashboard chỉ đọc hiển thị điểm License Assurance và kết quả đối chiếu đã rút gọn; API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Đây là bằng chứng hỗ trợ quản trị/SAM, không phải chứng nhận pháp lý về quyền sở hữu.
+Trong chức năng 8, cửa sổ **Chứng từ và quyền sử dụng** cho phép quản trị viên lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available và cảnh báo vượt số lượng/hết hạn. License Advisor chuẩn hóa phát hiện bằng Rule ID, nguồn bằng chứng, confidence và correlation; tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Central Dashboard chỉ đọc có mục **Giải thích phát hiện** để xem bằng chứng, khuyến nghị và giới hạn; API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Một dấu hiệu hoặc KMS riêng lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. Đây là bằng chứng hỗ trợ quản trị/SAM, không phải chứng nhận pháp lý về quyền sở hữu.
 
 ## Cách hiểu kết quả khắc phục
 

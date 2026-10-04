@@ -6,6 +6,8 @@ $script:ToolLicenseComplianceAllowedModels = @('OEM','Retail','VolumeMAK','Volum
 $script:ToolLicenseComplianceAllowedMetrics = @('Device','User','Concurrent','Organization','Unknown')
 $script:ToolLicenseComplianceAllowedDocumentKinds = @('Invoice','Agreement','Certificate','LicenseEmail','PortalExport','Other')
 $script:ToolLicenseComplianceAllowedDocumentExtensions = @('.pdf','.png','.jpg','.jpeg','.txt','.eml','.msg','.docx','.xlsx')
+$script:ToolLicenseAdvisorSchemaVersion = '1.0'
+$script:ToolLicenseAdvisorAllowedConfidence = @('Confirmed','High','Medium','Low','Informational')
 
 function ConvertTo-ToolLicenseComplianceSafeText {
     param([AllowNull()][object]$Value, [ValidateRange(1,4096)][int]$MaximumLength = 512)
@@ -473,12 +475,32 @@ function Get-ToolLicenseComplianceReconciliation {
     return [pscustomobject][ordered]@{ Rows=$rows.ToArray(); Uncovered=$uncovered.ToArray(); Observations=$observations }
 }
 
+function New-ToolLicenseAdvisorEvidence {
+    param(
+        [Parameter(Mandatory=$true)][string]$EvidenceId,
+        [Parameter(Mandatory=$true)][ValidateSet('EndpointReport','ComplianceStore','SignedCatalog','SoftwareInventory')][string]$SourceCode,
+        [Parameter(Mandatory=$true)][ValidateSet('TechnicalActivation','ActivationChannel','CatalogClassification','CommercialEntitlement')][string]$Scope,
+        [Parameter(Mandatory=$true)][ValidateSet('Direct','Corroborating','Informational')][string]$Strength,
+        [AllowNull()][object]$Value
+    )
+    return [pscustomobject][ordered]@{
+        EvidenceId = ConvertTo-ToolLicenseComplianceSafeText $EvidenceId 80
+        SourceCode = $SourceCode
+        Scope = $Scope
+        Strength = $Strength
+        Value = ConvertTo-ToolLicenseComplianceSafeText $Value 160
+    }
+}
+
 function Get-ToolLicenseAdvisorResult {
     param(
         [Parameter(Mandatory=$true)][ValidateSet('Windows','Office','Software')][string]$ProductScope,
         [string]$TechnicalStatus = '', [string]$Channel = '', [string]$LicenseModel = 'Unknown',
         [ValidateSet('Compliant','NeedsReview','Critical','NotVerified')][string]$EntitlementStatus = 'NotVerified'
     )
+    $safeTechnicalStatus = ConvertTo-ToolLicenseComplianceSafeText $TechnicalStatus 80
+    $safeChannel = ConvertTo-ToolLicenseComplianceSafeText $Channel 100
+    $safeLicenseModel = ConvertTo-ToolLicenseComplianceSafeText $LicenseModel 80
     $technicalGood = [bool]($TechnicalStatus -in @('Activated','Licensed','FreeOrIncluded','GenuineVerified'))
     $risk = if ($EntitlementStatus -eq 'Critical') { 'High' }
         elseif (-not $technicalGood -and $TechnicalStatus -notin @('InventoryOnly','NotDetected','')) { 'High' }
@@ -496,13 +518,57 @@ function Get-ToolLicenseAdvisorResult {
         elseif ($EntitlementStatus -eq 'NeedsReview' -or $EntitlementStatus -eq 'NotVerified') { 'Attach authoritative purchase evidence and assign the entitlement to the correct device or user.' }
         elseif (-not $technicalGood -and $ProductScope -in @('Windows','Office')) { 'Use the official vendor activation workflow and then collect a fresh report.' }
         else { 'Retain the supporting evidence and review it at renewal or when the device assignment changes.' }
+    $findingCode = if ($ProductScope -in @('Windows','Office')) {
+        if ($technicalGood) { 'TechnicalActivationPresent' } else { 'TechnicalActivationNotConfirmed' }
+    } elseif ($LicenseModel -in @('Free','OpenSource')) { 'FreeOrOpenSourceClassification' } else { 'CommercialEntitlementRequired' }
+    $recommendationCode = if ($EntitlementStatus -eq 'Critical') { 'ReconcileImmediately' }
+        elseif ($EntitlementStatus -in @('NeedsReview','NotVerified')) { 'AttachEvidenceAndAssign' }
+        elseif (-not $technicalGood -and $ProductScope -in @('Windows','Office')) { 'UseOfficialActivation' }
+        else { 'RetainEvidence' }
+    $ruleId = switch ($findingCode) {
+        'TechnicalActivationPresent' { if ($ProductScope -eq 'Windows') { 'VLS-WIN-ACT-001' } else { 'VLS-OFF-ACT-001' } }
+        'TechnicalActivationNotConfirmed' { if ($ProductScope -eq 'Windows') { 'VLS-WIN-ACT-002' } else { 'VLS-OFF-ACT-002' } }
+        'FreeOrOpenSourceClassification' { 'VLS-SW-CAT-001' }
+        default { 'VLS-SW-ENT-001' }
+    }
+
+    $evidence = New-Object System.Collections.Generic.List[object]
+    if (-not [string]::IsNullOrWhiteSpace($safeTechnicalStatus)) {
+        [void]$evidence.Add((New-ToolLicenseAdvisorEvidence -EvidenceId 'VLS-EV-TECH-STATUS' -SourceCode EndpointReport -Scope TechnicalActivation -Strength Direct -Value $safeTechnicalStatus))
+    }
+    if (-not [string]::IsNullOrWhiteSpace($safeChannel)) {
+        [void]$evidence.Add((New-ToolLicenseAdvisorEvidence -EvidenceId 'VLS-EV-ACT-CHANNEL' -SourceCode EndpointReport -Scope ActivationChannel -Strength Corroborating -Value $safeChannel))
+    }
+    if ($ProductScope -eq 'Software' -and -not [string]::IsNullOrWhiteSpace($safeLicenseModel)) {
+        $modelSource = if ($LicenseModel -ne 'Unknown') { 'SignedCatalog' } else { 'SoftwareInventory' }
+        [void]$evidence.Add((New-ToolLicenseAdvisorEvidence -EvidenceId 'VLS-EV-LICENSE-MODEL' -SourceCode $modelSource -Scope CatalogClassification -Strength $(if ($modelSource -eq 'SignedCatalog') { 'Direct' } else { 'Informational' }) -Value $safeLicenseModel))
+    }
+    [void]$evidence.Add((New-ToolLicenseAdvisorEvidence -EvidenceId 'VLS-EV-ENTITLEMENT' -SourceCode ComplianceStore -Scope CommercialEntitlement -Strength $(if ($EntitlementStatus -eq 'NotVerified') { 'Informational' } else { 'Direct' }) -Value $EntitlementStatus))
+
+    $sourceCount = @($evidence | ForEach-Object SourceCode | Select-Object -Unique).Count
+    $correlationCode = if ($sourceCount -ge 2) { 'CrossSource' } else { 'SingleSource' }
+    $confidence = if ($EntitlementStatus -eq 'Critical') { 'High' }
+        elseif ($findingCode -eq 'FreeOrOpenSourceClassification') { 'High' }
+        elseif ($technicalGood -and -not [string]::IsNullOrWhiteSpace($safeChannel)) { 'High' }
+        elseif ($evidence.Count -ge 2) { 'Medium' }
+        else { 'Informational' }
+    if ($script:ToolLicenseAdvisorAllowedConfidence -notcontains $confidence) { throw 'Advisor confidence is invalid.' }
+
+    $technicalConclusion = if ($ProductScope -in @('Windows','Office')) {
+        if ($technicalGood) { 'TechnicalActivationPresent' } else { 'TechnicalActivationNotConfirmed' }
+    } else { 'InventoryOnly' }
+    $overallVerdict = if ($EntitlementStatus -eq 'Critical') { 'ActionRequired' }
+        elseif ($EntitlementStatus -in @('NeedsReview','NotVerified')) { 'ReviewRequired' }
+        elseif (-not $technicalGood -and $ProductScope -in @('Windows','Office')) { 'ReviewRequired' }
+        else { 'NoImmediateIssue' }
+
     return [pscustomobject][ordered]@{
-        ProductScope=$ProductScope; TechnicalStatus=ConvertTo-ToolLicenseComplianceSafeText $TechnicalStatus 80
-        Channel=ConvertTo-ToolLicenseComplianceSafeText $Channel 100; LicenseModel=ConvertTo-ToolLicenseComplianceSafeText $LicenseModel 80
-        EntitlementStatus=$EntitlementStatus; Risk=$risk
-        FindingCode=$(if ($ProductScope -in @('Windows','Office')) { if ($technicalGood) {'TechnicalActivationPresent'} else {'TechnicalActivationNotConfirmed'} } elseif ($LicenseModel -in @('Free','OpenSource')) {'FreeOrOpenSourceClassification'} else {'CommercialEntitlementRequired'})
-        RecommendationCode=$(if ($EntitlementStatus -eq 'Critical') {'ReconcileImmediately'} elseif ($EntitlementStatus -in @('NeedsReview','NotVerified')) {'AttachEvidenceAndAssign'} elseif (-not $technicalGood -and $ProductScope -in @('Windows','Office')) {'UseOfficialActivation'} else {'RetainEvidence'})
-        LimitationCode='LegalEntitlementNotProven'
+        SchemaVersion=$script:ToolLicenseAdvisorSchemaVersion; RuleId=$ruleId; RuleRevision=1
+        ProductScope=$ProductScope; TechnicalStatus=$safeTechnicalStatus; Channel=$safeChannel; LicenseModel=$safeLicenseModel
+        EntitlementStatus=$EntitlementStatus; Risk=$risk; Confidence=$confidence; ConfidenceScope='FindingOnly'
+        FindingCode=$findingCode; RecommendationCode=$recommendationCode; LimitationCode='LegalEntitlementNotProven'
+        TechnicalConclusion=$technicalConclusion; TamperingConclusion='NotAssessed'; EntitlementConclusion=$EntitlementStatus; OverallVerdict=$overallVerdict
+        CorrelationCode=$correlationCode; EvidenceSourceCount=$sourceCount; Evidence=[object[]]@($evidence.ToArray())
         Explanation=$explanation; Recommendation=$recommendation
         Limitation='No result in this advisor independently proves legal ownership or authenticity.'
     }

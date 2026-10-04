@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-03`
+Ngày build kỹ thuật hiện hành: `2026-10-04`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `03/10/2026`
+Nội dung cập nhật đến: `04/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -34,12 +34,13 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 03/10/2026
+## Cập nhật hiện hành ngày 04/10/2026
 
 - Công tắc **Online** giờ chỉ tải/xác minh danh mục ký số mới nhất rồi dừng; không tự quét máy, tạo báo cáo, hỏi mức riêng tư hoặc kiểm tra/cài phiên bản ứng dụng.
 
 - Bổ sung **Central Dashboard** Việt/Anh chính thức, chỉ đọc trong LAN: Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key; phiên ngắn hạn yêu cầu mã quản trị, khóa theo địa chỉ truy cập đầu tiên và API chỉ trả allow-list không chứa full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo.
 - Bổ sung **License Compliance** chính thức: License Advisor, hồ sơ quyền sử dụng/tham chiếu chứng từ lưu cục bộ, cấp phát máy/người dùng và đối chiếu Purchased–Assigned–Installed–Available; cảnh báo vượt số lượng/hết hạn và Dashboard chỉ đọc hiển thị License Assurance mà không lộ đường dẫn chứng từ hoặc định danh nhạy cảm.
+- Chuẩn hóa License Advisor bằng **Rule ID ổn định, nguồn bằng chứng, confidence và correlation**; tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Mục **Giải thích phát hiện** trình bày bằng chứng, khuyến nghị và giới hạn mà không thêm nguồn quét hay kết luận vi phạm chỉ từ KMS/một dấu hiệu đơn lẻ.
 
 - Báo cáo chứng chỉ dùng Authenticode + timestamp + signer ghim; `NotTimeValid` không tự trở thành lỗi khi chữ ký có timestamp hợp lệ, còn launcher Official Self-Signed đúng pin không bị ghi `UnknownError`.
 - Forensics tách kích hoạt kỹ thuật khỏi quyền sử dụng, không đòi KMS cho MAK, không cộng điểm từ W32Time/SPP hoặc file MAS tồn dư khi thiếu bằng chứng hoạt động.

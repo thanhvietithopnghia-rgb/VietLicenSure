@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.19.0",
-  "UpdatedAtUtc": "2026-10-03T00:00:00Z",
+  "KnowledgeVersion": "1.20.0",
+  "UpdatedAtUtc": "2026-10-04T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -52,7 +52,7 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 03/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 04/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
       "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 2 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
@@ -597,8 +597,8 @@
         "evidence and entitlements",
         "software asset management"
       ],
-      "AnswerVi": "Trong chức năng 8, mở Chứng từ và quyền sử dụng để lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available, cảnh báo vượt số lượng hoặc hết hạn và tạo License Advisor theo chuỗi Phát hiện–Giải thích–Rủi ro–Khuyến nghị–Giới hạn. Central Dashboard chỉ đọc hiển thị điểm License Assurance và kết quả đã rút gọn; API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Đây là bằng chứng hỗ trợ quản trị/SAM, không tự xác minh tính thật của hóa đơn và không phải chứng nhận pháp lý về quyền sở hữu.",
-      "AnswerEn": "In feature 8, open Evidence and entitlements to store local entitlement records, invoice/evidence references, and endpoint or user assignments. VietLicenSure reconciles Purchased–Assigned–Installed–Available quantities, flags over-allocation or expiry, and produces a Finding–Explanation–Risk–Recommendation–Limitation License Advisor. The read-only Central Dashboard exposes License Assurance and a redacted result; its API returns no evidence paths, full keys, full ClientIds, or secrets. This supports administration/SAM review, does not authenticate an invoice, and is not legal certification of ownership."
+      "AnswerVi": "Trong chức năng 8, mở Chứng từ và quyền sử dụng để lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available và cảnh báo vượt số lượng hoặc hết hạn. License Advisor chuẩn hóa mỗi phát hiện bằng Rule ID, nguồn bằng chứng, mức tin cậy và tương quan; đồng thời tách kích hoạt kỹ thuật, dấu hiệu can thiệp, quyền sử dụng và kết luận tổng hợp. Trong Central Dashboard chỉ đọc, mở Giải thích phát hiện để xem Rule ID, confidence, bằng chứng, khuyến nghị và giới hạn. KMS hoặc một dấu hiệu đơn lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Đây là bằng chứng hỗ trợ quản trị/SAM, không tự xác minh tính thật của hóa đơn và không phải chứng nhận pháp lý về quyền sở hữu.",
+      "AnswerEn": "In feature 8, open Evidence and entitlements to store local entitlement records, invoice/evidence references, and endpoint or user assignments. VietLicenSure reconciles Purchased–Assigned–Installed–Available quantities and flags over-allocation or expiry. License Advisor normalizes each finding with a stable Rule ID, evidence sources, confidence, and correlation while keeping technical activation, tampering assessment, entitlement, and the overall verdict separate. In the read-only Central Dashboard, open Explain this finding to review the Rule ID, confidence, evidence, recommendation, and limitation. KMS or a single indicator doesn't independently prove cracking or unlawful entitlement. The API returns no evidence paths, full keys, full ClientIds, or secrets. This supports administration/SAM review, does not authenticate an invoice, and is not legal certification of ownership."
     },
     {
       "Id": "report-formats",

@@ -242,6 +242,17 @@ try {
     )
     $actualDashboardClientFields = @($dashboardSnapshot.Clients[0].PSObject.Properties.Name | Sort-Object)
     Assert-Enterprise (@(Compare-Object ($expectedDashboardClientFields | Sort-Object) $actualDashboardClientFields).Count -eq 0) 'API Dashboard trả thêm trường máy trạm ngoài allow-list.'
+    $expectedAdvisorFields = @(
+        'Channel','Confidence','ConfidenceScope','CorrelationCode','EntitlementConclusion','EntitlementStatus','Evidence','EvidenceSourceCount',
+        'Explanation','FindingCode','LicenseModel','Limitation','LimitationCode','OverallVerdict','ProductScope','Recommendation','RecommendationCode',
+        'Risk','RuleId','RuleRevision','SchemaVersion','TamperingConclusion','TechnicalConclusion','TechnicalStatus'
+    )
+    foreach($advisorName in @('WindowsAdvisor','OfficeAdvisor')) {
+        $advisorFields = @($dashboardSnapshot.Clients[0].$advisorName.PSObject.Properties.Name | Sort-Object)
+        Assert-Enterprise (@(Compare-Object ($expectedAdvisorFields | Sort-Object) $advisorFields).Count -eq 0) "API Dashboard advisor ngoài schema chuẩn hóa: $advisorName"
+        Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].$advisorName.RuleId -match '^VLS-(?:WIN|OFF)-ACT-00[12]$') "API Dashboard advisor thiếu Rule ID ổn định: $advisorName"
+        Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].$advisorName.TamperingConclusion -eq 'NotAssessed') "API Dashboard advisor suy diễn dấu hiệu can thiệp khi chưa đánh giá: $advisorName"
+    }
     Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].WindowsEntitlementStatus -eq 'NotVerified' -and
         [string]$dashboardSnapshot.Clients[0].OfficeEntitlementStatus -eq 'NotVerified') 'Dashboard trộn trạng thái kỹ thuật với quyền sở hữu.'
     Assert-Enterprise ($null -ne $dashboardSnapshot.Compliance -and $null -ne $dashboardSnapshot.Compliance.Summary -and $null -ne $dashboardSnapshot.Summary.AssuranceScore) 'API Dashboard thiếu compliance summary.'

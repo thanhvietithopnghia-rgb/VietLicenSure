@@ -55,6 +55,23 @@ try {
     Assert-Compliance ([string]$advisor.Risk -eq 'Review') 'Advisor risk is incorrect.'
     Assert-Compliance ([string]$advisor.Explanation -match 'Technical activation' -and [string]$advisor.Limitation -match 'legal ownership') 'Advisor did not separate technical activation from legal entitlement.'
     Assert-Compliance ([string]$advisor.FindingCode -eq 'TechnicalActivationPresent' -and [string]$advisor.RecommendationCode -eq 'AttachEvidenceAndAssign' -and [string]$advisor.LimitationCode -eq 'LegalEntitlementNotProven') 'Advisor stable codes are incomplete.'
+    Assert-Compliance ([string]$advisor.SchemaVersion -eq '1.0' -and [string]$advisor.RuleId -eq 'VLS-WIN-ACT-001' -and [int]$advisor.RuleRevision -eq 1) 'Advisor rule identity is incomplete.'
+    Assert-Compliance ([string]$advisor.Confidence -eq 'High' -and [string]$advisor.ConfidenceScope -eq 'FindingOnly') 'Advisor confidence is incorrect or over-broad.'
+    Assert-Compliance ([string]$advisor.TechnicalConclusion -eq 'TechnicalActivationPresent' -and [string]$advisor.TamperingConclusion -eq 'NotAssessed' -and [string]$advisor.EntitlementConclusion -eq 'NotVerified' -and [string]$advisor.OverallVerdict -eq 'ReviewRequired') 'Advisor did not separate technical, tampering, entitlement and verdict layers.'
+    Assert-Compliance ([string]$advisor.CorrelationCode -eq 'CrossSource' -and [int]$advisor.EvidenceSourceCount -eq 2 -and @($advisor.Evidence).Count -eq 3) 'Advisor evidence correlation is incomplete.'
+    foreach($item in @($advisor.Evidence)) {
+        Assert-Compliance ([string]$item.EvidenceId -match '^VLS-EV-[A-Z-]+$' -and [string]$item.SourceCode -in @('EndpointReport','ComplianceStore','SignedCatalog','SoftwareInventory')) 'Advisor evidence identity or source is invalid.'
+        Assert-Compliance ([string]$item.Value -notmatch '(?i)[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}') 'Advisor evidence leaked a full product key.'
+    }
+
+    $kmsAdvisor = Get-ToolLicenseAdvisorResult -ProductScope Windows -TechnicalStatus Activated -Channel VolumeKMS -LicenseModel VolumeKMS -EntitlementStatus NotVerified
+    Assert-Compliance ([string]$kmsAdvisor.Risk -eq 'Review' -and [string]$kmsAdvisor.TamperingConclusion -eq 'NotAssessed' -and [string]$kmsAdvisor.OverallVerdict -eq 'ReviewRequired') 'KMS alone was incorrectly treated as tampering or an illegal entitlement.'
+    $unknownAdvisor = Get-ToolLicenseAdvisorResult -ProductScope Windows -TechnicalStatus '' -Channel '' -LicenseModel Unknown -EntitlementStatus NotVerified
+    Assert-Compliance ([string]$unknownAdvisor.Confidence -eq 'Informational' -and [string]$unknownAdvisor.CorrelationCode -eq 'SingleSource') 'Insufficient evidence did not remain informational.'
+    $criticalAdvisor = Get-ToolLicenseAdvisorResult -ProductScope Office -TechnicalStatus Licensed -Channel Retail -LicenseModel Retail -EntitlementStatus Critical
+    Assert-Compliance ([string]$criticalAdvisor.RuleId -eq 'VLS-OFF-ACT-001' -and [string]$criticalAdvisor.Confidence -eq 'High' -and [string]$criticalAdvisor.OverallVerdict -eq 'ActionRequired') 'Critical entitlement evidence was not classified correctly.'
+    $freeAdvisor = Get-ToolLicenseAdvisorResult -ProductScope Software -TechnicalStatus InventoryOnly -LicenseModel OpenSource -EntitlementStatus Compliant
+    Assert-Compliance ([string]$freeAdvisor.RuleId -eq 'VLS-SW-CAT-001' -and @($freeAdvisor.Evidence | Where-Object SourceCode -eq 'SignedCatalog').Count -eq 1) 'Signed catalog evidence was not normalized.'
 
     $snapshot = Get-ToolLicenseComplianceSnapshot | ConvertTo-Json -Depth 12 -Compress
     Assert-Compliance ($snapshot -notmatch '(?i)ClientId|StoredName|documents\\|[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}') 'Dashboard snapshot leaked restricted data.'
@@ -72,6 +89,7 @@ try {
 
     $dashboardJs = Get-ToolEnterpriseDashboardJs
     Assert-Compliance ($dashboardJs -match 'item\.Purchased' -and $dashboardJs -match 'item\.Assigned' -and $dashboardJs -match 'RecommendationCode') 'Dashboard does not render reconciliation or advisor fields.'
+    Assert-Compliance ($dashboardJs -match "createElement\('details'\)" -and $dashboardJs -match 'advisor\.RuleId' -and $dashboardJs -match 'advisor\.Confidence' -and $dashboardJs -match 'advisor\.Evidence') 'Dashboard does not provide the Explain this finding view.'
     Assert-Compliance ($dashboardJs -notmatch 'innerHTML|document\.write|eval\(') 'Dashboard uses an unsafe DOM sink.'
 
     $documentForEntitlementRemoval = Add-ToolLicenseEntitlementDocument -EntitlementId $record.EntitlementId -Path $documentPath -Kind Agreement
