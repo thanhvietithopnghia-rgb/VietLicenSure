@@ -689,9 +689,9 @@ $profile = $null
 if (-not (Test-Path -LiteralPath $exePath -PathType Leaf)) {
     $failures.Add("Thiếu EXE phát hành: $targetFileName")
 } else {
-if ([int64](Get-Item -LiteralPath $exePath).Length -gt 911024) {
-    $failures.Add("$targetFileName vượt ngân sách 911024 byte của bản cập nhật tại chỗ.")
-    }
+if ([int64](Get-Item -LiteralPath $exePath).Length -gt 917504) {
+    $failures.Add("$targetFileName vượt ngân sách 917504 byte của bản cập nhật tại chỗ.")
+}
     try {
         $profile = Get-PeSecurityProfile -Path $exePath
         if ($profile.ManagedPlatform -ne 'AnyCPU' -or $profile.Architecture -ne 'x86' -or
