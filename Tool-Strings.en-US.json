@@ -1113,7 +1113,7 @@
   "cleanup.menu.autoTitle": "Automatic safe cleanup",
   "cleanup.menu.autoFullTitle": "Automatically remediate every verified, supported item",
   "cleanup.menu.backupDescription": "Choose All, Windows, Office, or Other software. An HMAC-protected ProgramData backup must complete before any change; complete product keys and tokens are never stored.",
-  "cleanup.menu.cleanupDescription": "Execute or Dry Run opens the Windows, Office, and Other software checkboxes so only selected scopes are scanned/processed; a backup is mandatory before any change. Online only downloads/validates the signed catalog and then stops, without opening scope selection, scanning, or creating a report.",
+  "cleanup.menu.cleanupDescription": "Choose Windows, Office, or Other software. When Online is enabled here, VietLicenSure downloads and validates the signed catalog, rescans the selected scope, and shows a preview; remediation requires a separate confirmation and no report is created automatically.",
   "cleanup.menu.restoreDescription": "Choose Windows, Office, or Software, then select a directory containing RESTORE-MANIFEST.json. Only safe data is restored; cracks, activators, and invalid tokens are not reintroduced.",
   "cleanup.menu.autoDescription": "Scan everything, create a backup, and process only decisive evidence with a scope-locked safe action. The VietLicenSure never uninstalls applications; reinstall cases are guidance-only.",
   "cleanup.menu.backupAction": "Choose backup scope",

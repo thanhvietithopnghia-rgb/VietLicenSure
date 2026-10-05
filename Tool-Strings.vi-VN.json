@@ -1113,7 +1113,7 @@
   "cleanup.menu.autoTitle": "Tự động làm sạch an toàn",
   "cleanup.menu.autoFullTitle": "Tự động xử lý tất cả mục đã xác minh và được hỗ trợ",
   "cleanup.menu.backupDescription": "Chọn sao lưu Toàn bộ, Windows, Office hoặc Phần mềm khác. Backup được ký HMAC trong ProgramData và phải hoàn tất trước khi có thay đổi; product key/token đầy đủ không được lưu.",
-  "cleanup.menu.cleanupDescription": "Thực hiện hoặc Chạy thử sẽ mở 3 ô tích Windows, Office và Phần mềm khác để chọn đúng phạm vi quét/xử lý; backup là bắt buộc trước mọi thay đổi. Kết nối online chỉ tải/xác minh danh mục ký số rồi dừng, không mở chọn phạm vi, không quét và không tạo báo cáo.",
+  "cleanup.menu.cleanupDescription": "Chọn phạm vi Windows, Office hoặc Phần mềm khác. Nếu bật Online tại đây, VietLicenSure tải và xác minh danh mục ký số, quét lại đúng phạm vi rồi hiển thị bản xem trước; chỉ khắc phục sau một lần xác nhận riêng, không tự tạo báo cáo.",
   "cleanup.menu.restoreDescription": "Chọn phạm vi Windows, Office hoặc Phần mềm rồi chọn thư mục có RESTORE-MANIFEST.json. Chỉ dữ liệu an toàn được khôi phục; crack, activator và token không hợp lệ không được đưa trở lại.",
   "cleanup.menu.autoDescription": "Quét toàn bộ, tự backup và chỉ xử lý mục có bằng chứng quyết định cùng hành động an toàn đã khóa phạm vi. VietLicenSure tuyệt đối không gỡ ứng dụng; mục cần cài lại chỉ hiển thị hướng dẫn thủ công.",
   "cleanup.menu.backupAction": "Chọn phạm vi sao lưu",

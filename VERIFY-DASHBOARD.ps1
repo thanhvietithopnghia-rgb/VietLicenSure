@@ -981,14 +981,16 @@ Assert-SourcePattern $text 'function\s+Show-CleanupScopeChecklist' 'Khắc phụ
 Assert-SourcePattern $text 'Name="Windows";\s*TextKey="cleanup\.scope\.scanWindows"' 'Khắc phục thiếu ô tích Windows.'
 Assert-SourcePattern $text 'Name="Office";\s*TextKey="cleanup\.scope\.scanOffice"' 'Khắc phục thiếu ô tích Office.'
 Assert-SourcePattern $text 'Name="ThirdParty";\s*TextKey="cleanup\.scope\.scanThirdParty"' 'Khắc phục thiếu ô tích Phần mềm khác.'
-Assert-SourcePattern $text 'if\s*\([$]Mode\s+-eq\s+"Cleanup"\s+-and\s+[$]Choice\s+-eq\s+"Online"\)\s*\{\s*Start-SoftwareCatalogOnlineUpdate' 'Nút Online chưa cập nhật catalog độc lập trước bước chọn phạm vi.'
+Assert-SourcePattern $text 'if\s*\([$]Choice\s+-eq\s+"Online"\)\s*\{\s*Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]selectedScope\s+-ResumeCleanup' 'Nút Online trong Khắc phục chưa giữ phạm vi để cập nhật catalog rồi quét lại.'
 Assert-SourcePattern $text 'function\s+Request-OnlineSessionRefresh' 'Dashboard thiếu hàng đợi đồng bộ sau khi người dùng chủ động bật Online.'
 Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ConsentAlreadyGranted\s+-BackgroundSync' 'Bật Online chưa tự cập nhật catalog ký số ở chế độ nền.'
 Assert-SourcePattern $text 'Catalog=[$]true;\s*ApplicationVersion=[$]false;\s*Scan=[$]false;\s*Report=[$]false' 'Audit Online chưa khẳng định catalog-only, không quét và không báo cáo.'
 Assert-SourcePattern $text 'if\s*\(-not\s+[$]script:offlineMode\)\s*\{\s*Request-OnlineSessionRefresh\s*\}' 'Khởi tạo Online được cho phép chưa dùng hàng đợi catalog-only.'
 Assert-SourcePattern $text 'Invoke-PendingOnlineSessionWork' 'Dashboard chưa điều phối hàng đợi catalog.'
-if ($text -match 'softwareCatalogAutoScan' -or $text -match 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope') {
-    Add-Failure 'Luồng Online vẫn giữ trạng thái hoặc lời gọi tự quét sau khi cập nhật catalog.'
+Assert-SourcePattern $text 'if\s*\([$]resumeCleanup\)\s*\{(?s:.*?)Start-Cleanup\s+-ScanScope\s+[$]resumeScope' 'Cập nhật catalog từ Khắc phục chưa tiếp tục quét lại phạm vi đang chờ.'
+Assert-SourcePattern $text 'PreviewRequired=[$]true;\s*SeparateConfirmationRequired=[$]true;\s*AutoRemediation=[$]false;\s*Report=[$]false' 'Luồng tiếp tục sau catalog chưa khóa xem trước, xác nhận riêng và không tự khắc phục/báo cáo.'
+if ($text -match 'softwareCatalogAutoScan') {
+    Add-Failure 'Luồng Online vẫn giữ trạng thái tự quét cũ thay vì context Khắc phục tường minh.'
 }
 Assert-SourcePattern $text 'Start-CleanupBackup\s+-Scope\s+[$]selectedScope' 'Backup chưa nhận phạm vi người dùng chọn.'
 Assert-SourcePattern $text 'Start-CleanupRestore\s+-Scope\s+[$]selectedScope' 'Khôi phục chưa nhận phạm vi người dùng chọn.'

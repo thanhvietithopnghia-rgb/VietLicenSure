@@ -39,15 +39,22 @@ function Enable-DashboardOnlineForCurrentCatalogSession {
 
 function Start-SoftwareCatalogOnlineUpdate {
     param(
+        [ValidateSet("Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty", "All")]
+        [string]$ScanScope = "ThirdParty",
+        [switch]$ResumeCleanup,
         [switch]$ConsentAlreadyGranted,
         [switch]$BackgroundSync
     )
 
     $script:softwareCatalogBackgroundSync = $false
+    $script:softwareCatalogResumeCleanup = $false
+    $script:softwareCatalogResumeCleanupScope = "ThirdParty"
     if (-not (Enable-DashboardOnlineForCurrentCatalogSession -ConsentAlreadyGranted:$ConsentAlreadyGranted)) {
         return
     }
     $script:softwareCatalogBackgroundSync = [bool]$BackgroundSync
+    $script:softwareCatalogResumeCleanup = [bool]$ResumeCleanup
+    $script:softwareCatalogResumeCleanupScope = $ScanScope
     try {
         Start-ProgressDisplay (Get-DashboardText "software.online.action") (Get-DashboardText "software.online.connecting") $false
         Write-ProgressLog (Get-DashboardText "software.online.privacyLog")
@@ -61,6 +68,8 @@ function Start-SoftwareCatalogOnlineUpdate {
     } catch {
         $wasBackgroundSync = [bool]$script:softwareCatalogBackgroundSync
         $script:softwareCatalogBackgroundSync = $false
+        $script:softwareCatalogResumeCleanup = $false
+        $script:softwareCatalogResumeCleanupScope = "ThirdParty"
         if ($script:softwareCatalogUpdateResultFile -and (Test-Path -LiteralPath $script:softwareCatalogUpdateResultFile -PathType Leaf)) {
             Remove-Item -LiteralPath $script:softwareCatalogUpdateResultFile -Force -ErrorAction SilentlyContinue
         }
@@ -140,7 +149,11 @@ function Show-SoftwareCatalogFailureDialog {
 function Complete-SoftwareCatalogOnlineUpdate {
     Set-ButtonsEnabled $true
     $wasBackgroundSync = [bool]$script:softwareCatalogBackgroundSync
+    $resumeCleanup = [bool]$script:softwareCatalogResumeCleanup
+    $resumeScope = if ([string]::IsNullOrWhiteSpace([string]$script:softwareCatalogResumeCleanupScope)) { "ThirdParty" } else { [string]$script:softwareCatalogResumeCleanupScope }
     $script:softwareCatalogBackgroundSync = $false
+    $script:softwareCatalogResumeCleanup = $false
+    $script:softwareCatalogResumeCleanupScope = "ThirdParty"
     $result = $null
     try {
         if (-not $script:softwareCatalogUpdateResultFile -or -not (Test-Path -LiteralPath $script:softwareCatalogUpdateResultFile -PathType Leaf)) {
@@ -186,6 +199,12 @@ function Complete-SoftwareCatalogOnlineUpdate {
             [System.Windows.Forms.MessageBox]::Show(
                 $successMessage, $successTitle, "OK", "Information") | Out-Null
         }
+        if ($resumeCleanup) {
+            [void](Write-ToolLog -Level "AUDIT" -Event "OnlineMode.PendingCleanupResumed" -Message "Signed catalog updated; resuming the user-requested remediation scan." -Data ([ordered]@{
+                Scope=$resumeScope; CatalogUpdated=$true; Rescan=$true; PreviewRequired=$true; SeparateConfirmationRequired=$true; AutoRemediation=$false; Report=$false
+            }))
+            Start-Cleanup -ScanScope $resumeScope
+        }
         return
     }
 
@@ -199,7 +218,7 @@ function Complete-SoftwareCatalogOnlineUpdate {
     }
     $fallback = Show-SoftwareCatalogFailureDialog -Detail (Get-DashboardText "software.online.fallbackPrompt" @($failureDetail))
     if ($fallback -eq 'Retry') {
-        Start-SoftwareCatalogOnlineUpdate -ConsentAlreadyGranted
+        Start-SoftwareCatalogOnlineUpdate -ScanScope $resumeScope -ResumeCleanup:$resumeCleanup -ConsentAlreadyGranted
     }
 }
 

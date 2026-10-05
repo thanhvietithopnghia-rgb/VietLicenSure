@@ -1241,13 +1241,16 @@ if ($gui) {
             -not $onlineEnableAst -or $onlineEnableAst.Extent.Text -notmatch 'Set-ToolOfflineModePreference\s+-OfflineMode\s+\$false' -or
             $onlineEnableAst.Extent.Text -notmatch 'NextLaunchMode=Offline' -or
             $onlineEnableAst.Extent.Text -match 'applicationUpdateCheckPending\s*=\s*\$true' -or
-            -not $onlineCompleteAst -or $onlineCompleteAst.Extent.Text -match 'Start-Cleanup|Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork' -or
+            -not $onlineCompleteAst -or
+            $onlineCompleteAst.Extent.Text -notmatch '(?s)if\s*\(\$resumeCleanup\).+?Start-Cleanup\s+-ScanScope\s+\$resumeScope' -or
+            $onlineCompleteAst.Extent.Text -notmatch 'PreviewRequired=\$true;\s*SeparateConfirmationRequired=\$true;\s*AutoRemediation=\$false;\s*Report=\$false' -or
+            $onlineCompleteAst.Extent.Text -match 'Start-CleanupRemediation|Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork' -or
             -not $cleanupScreenAst -or $cleanupScreenAst.Extent.Text -notmatch '"Online"' -or
             $cleanupScreenAst.Extent.Text -notmatch 'Show-LicenseScopeChooser\s+-Mode\s+\$scopeMode' -or
             $cleanupScreenAst.Extent.Text -notmatch '\$selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
             $cleanupScreenAst.Extent.Text -notmatch '\$autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
-            $cleanupScreenAst.Extent.Text -notmatch '(?s)\$Mode\s+-eq\s+"Cleanup"\s+-and\s+\$Choice\s+-eq\s+"Online".+?Start-SoftwareCatalogOnlineUpdate.+?return') {
-            Fail 'Luồng Online chưa giới hạn ở cập nhật catalog hoặc vẫn tự quét/báo cáo/kiểm tra phiên bản.'
+            $cleanupScreenAst.Extent.Text -notmatch 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+\$selectedScope\s+-ResumeCleanup') {
+            Fail 'Luồng Online chưa tách đúng: công tắc chung catalog-only; Khắc phục cập nhật catalog rồi quét lại/xem trước, không tự xử lý hoặc báo cáo.'
         }
     } catch {
         Fail "Không chạy được fixture ánh xạ ba ô tích phạm vi: $($_.Exception.Message)"
