@@ -226,7 +226,22 @@ try {
         param($node)
         $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Complete-SoftwareCatalogOnlineUpdate'
     }, $true)
-    Assert-UpdateTest ($onlineCompleteFunction -and $onlineCompleteFunction.Extent.Text -notmatch 'Start-Cleanup|Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork') 'Catalog completion still starts a scan, report/privacy flow, or application update work.'
+    Assert-UpdateTest ($onlineCompleteFunction -and $onlineCompleteFunction.Extent.Text -notmatch 'Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork') 'Catalog completion still starts a report/privacy flow or application update work.'
+    $catalogCompletionCleanupCalls = @($onlineCompleteFunction.Body.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'Start-Cleanup'
+    }, $true))
+    $catalogCompletionCleanupIsGuarded = $catalogCompletionCleanupCalls.Count -eq 1
+    if ($catalogCompletionCleanupIsGuarded) {
+        $cleanupAncestor = $catalogCompletionCleanupCalls[0].Parent
+        while ($cleanupAncestor -and $cleanupAncestor -isnot [System.Management.Automation.Language.IfStatementAst]) {
+            $cleanupAncestor = $cleanupAncestor.Parent
+        }
+        $catalogCompletionCleanupIsGuarded = [bool]($cleanupAncestor -and
+            $cleanupAncestor.Extent.Text -match '(?s)^\s*if\s*\(\s*\$resumeCleanup\s*\)' -and
+            $catalogCompletionCleanupCalls[0].Extent.Text -eq 'Start-Cleanup -ScanScope $resumeScope')
+    }
+    Assert-UpdateTest $catalogCompletionCleanupIsGuarded 'Catalog completion may resume cleanup only behind the explicit ResumeCleanup guard and preserved scan scope.'
     $applyFunctionAst = $dashboardAst.Find({
         param($node)
         $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Start-ApplicationUpdateApply'
