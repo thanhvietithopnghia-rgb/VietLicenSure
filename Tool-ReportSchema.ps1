@@ -1,6 +1,5 @@
-﻿$script:ToolReportSchemaVersion = "1.5"
+﻿$script:ToolReportSchemaVersion = "1.6" # v1.6 adds build identity and explainable evidence fields.
 $script:ToolReportSchemaToolVersion = "5.0"
-$script:ToolReportSchemaVersion = "1.6" # v1.6 adds build identity and explainable evidence fields.
 $script:ToolReportKinds = @(
     "InventoryAndLicense",
     "CleanupCompliance",

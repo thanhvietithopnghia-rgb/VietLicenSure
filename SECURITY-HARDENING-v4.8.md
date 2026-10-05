@@ -111,7 +111,7 @@ HTTP transport không tự cung cấp TLS; bảo mật nội dung dựa trên en
 
 ## Report hardening
 
-- report envelope schema 1.5;
+- report envelope schema 1.6;
 - HTML CSP `default-src 'none'`;
 - no script/iframe/remote CSS/font/image;
 - PDF browser flags tắt background networking/DNS;

@@ -565,11 +565,11 @@ if ($backupText -match 'Items\s*=\s*@\(\$items\)' -or $backupText -match 'Values
     $failures.Add('Còn mẫu @() trực tiếp trên List[object], có thể gây lỗi Argument types do not match trong Windows PowerShell 5.1.')
 }
 if ($cleanupText -notmatch 'HandlingGuidance' -or $guiText -notmatch 'cleanup\.result\.guidanceHeading') { $failures.Add('Kết luận cleanup chưa kèm hướng xử lý đề xuất.') }
-if ($reportSchemaText -notmatch 'ToolReportSchemaVersion\s*=\s*"1\.5"' -or
+if ($reportSchemaText -notmatch 'ToolReportSchemaVersion\s*=\s*"1\.6"' -or
     $reportText -notmatch 'New-ToolReportEnvelope\s+-ReportKind\s+"InventoryAndLicense"' -or
     $cleanupText -notmatch 'New-ToolReportEnvelope\s+-ReportKind\s+"CleanupCompliance"' -or
     $moduleContractText -notmatch 'ToolModuleContractSchemaVersion') {
-    $failures.Add('Schema báo cáo v4.3 chưa đồng bộ.')
+    $failures.Add('Schema báo cáo 1.6 chưa đồng bộ.')
 }
 if ($safetyPolicyText -notmatch 'ToolSafetyPolicySchemaVersion\s*=\s*"1\.0"' -or
     $safetyPolicyText -notmatch 'NoGenTicket' -or $safetyPolicyText -notmatch 'AllowStartupTypeChange=\$false') {
@@ -1215,7 +1215,7 @@ if ($profile) {
 
 if (Test-Path -LiteralPath $reportSchemaVerifierPath -PathType Leaf) {
     & $reportSchemaVerifierPath -SourceDirectory $sourceDirectoryFull
-    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra schema báo cáo v4.3 thất bại.') }
+    if ($LASTEXITCODE -ne 0) { $failures.Add('Kiểm tra schema báo cáo 1.6 thất bại.') }
 }
 if (Test-Path -LiteralPath $modularizationVerifierPath -PathType Leaf) {
     & $modularizationVerifierPath -SourceDirectory $sourceDirectoryFull

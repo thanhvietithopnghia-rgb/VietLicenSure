@@ -37,7 +37,7 @@ VietLicenSure-v4.8.exe
        │   ├─ software-license-catalog-v1.0.json      catalog 1.4
        │   └─ software-license-catalog-v1.0.json.p7s  detached CMS signature
        ├─ Tool-ModuleContract.ps1          contract/result schema 1.0
-       ├─ Tool-ReportSchema.ps1            report schema 1.5
+       ├─ Tool-ReportSchema.ps1            report schema 1.6
        │   └─ Tool-ReportExport.ps1        export schema 1.4 (HTML summary / detailed PDF)
        ├─ Tool-SafetyPolicy.ps1            safety schema 1.0
        └─ các entry point nghiệp vụ
@@ -167,7 +167,7 @@ Luồng báo cáo:
 
 ```text
 module data
-  → New-ToolReportEnvelope (schema 1.5)
+  → New-ToolReportEnvelope (schema 1.6)
   → schema validation
   → HTML + JSON + XML
   → offline HTML safety validation

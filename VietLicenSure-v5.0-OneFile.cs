@@ -1346,7 +1346,7 @@ namespace ThanhViet.VietLicenSure
                 startInfo.EnvironmentVariables["TOOL_CORRELATION_ID"] = correlationId;
                 startInfo.EnvironmentVariables["TOOL_CAPABILITY_SCHEMA"] = "1.1";
                 startInfo.EnvironmentVariables["TOOL_MODULE_CONTRACT_SCHEMA"] = "1.0";
-                startInfo.EnvironmentVariables["TOOL_REPORT_SCHEMA"] = "1.5";
+                startInfo.EnvironmentVariables["TOOL_REPORT_SCHEMA"] = "1.6";
                 startInfo.EnvironmentVariables["TOOL_SAFETY_POLICY_SCHEMA"] = "1.0";
                 startInfo.EnvironmentVariables["TOOL_DASHBOARD_SCHEMA"] = "2.0";
                 startInfo.EnvironmentVariables["TOOL_ENTERPRISE_SCHEMA"] = "1.0";

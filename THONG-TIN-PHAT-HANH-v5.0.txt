@@ -49,7 +49,7 @@ Dark mode theo he thong hoac tuy chon ghi nho, phu dashboard, cua so con, chuc n
 May tram tu dong gui bao cao hoac xep hang DPAPI khi mat route; thay doi license tu xa mac dinh tat va phai duoc may tram cho phep.
 Cleanup Action Center co vung cuon/nut xu ly tiep; Office KMS dung OSPP /dstatusall va rang buoc lua chon theo tung SKU/Last5.
 Kich hoat chinh hang tach sach crack khoi da cap phep: Windows chi TRUE khi LicenseStatus=1 dung Last5; Office chi TRUE khi OSPP /dstatusall bao LICENSED dung Last5; neu chua dat thi FALSE va mo luong chinh thuc.
-Report schema 1.5: 9 loai bao cao; safety policy schema 1.0; quick repair khong doi StartupType.
+Report schema 1.6: 9 loai bao cao; safety policy schema 1.0; quick repair khong doi StartupType.
 Bao cao HTML la ban tong quan gon, khong con bang dai; chi giu cau hinh chinh, ket luan, canh bao va nut mo PDF day du.
 PDF la ban chi tiet A4 gom toan bo bang cau hinh, phan mem, bang chung va du lieu ky thuat; moi lan xuat van gom HTML/PDF/JSON/XML/checksum trong mot thu muc va chi tu mo HTML.
 Ket luan ban quyen tach ro trang thai kich hoat voi quyen su dung; du lieu cap phep khong doc duoc ghi CHUA XAC DINH va khong tu chung minh hop le/khong hop le.

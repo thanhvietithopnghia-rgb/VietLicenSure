@@ -1,11 +1,11 @@
-# Report Schema 1.5 — VietLicenSure v5.0
+# Report Schema 1.6 — VietLicenSure v5.0
 
 `Tool-ReportSchema.ps1` là nguồn chuẩn. JSON và XML dùng chung một envelope; mọi báo cáo phải qua `Test-ToolReportEnvelope`.
 
 ## Trường chung
 
-- `SchemaVersion`: `1.5`
-- `ReportSchemaVersion`: `1.5`
+- `SchemaVersion`: `1.6`
+- `ReportSchemaVersion`: `1.6`
 - `ReportKind`: một trong chín loại bên dưới
 - `ToolVersion`: phiên bản VietLicenSure tạo báo cáo, hiện tại `5.0`
 - `ToolName`
@@ -63,7 +63,7 @@ Schema 1.4 dùng ngắt trang A4 an toàn cho PDF và metadata `HtmlPresentation
 
 ## Artifact quản trị v5 ngoài envelope ReportKind
 
-Các artifact dưới đây có hợp đồng riêng và **không** được gắn giả một trong chín `ReportKind` của schema 1.5. Consumer phải chọn parser theo loại artifact, không dựa vào phần mở rộng hoặc parse HTML thay JSON.
+Các artifact dưới đây có hợp đồng riêng và **không** được gắn giả một trong chín `ReportKind` của schema 1.6. Consumer phải chọn parser theo loại artifact, không dựa vào phần mở rộng hoặc parse HTML thay JSON.
 
 ### Fleet export schema 1.0
 
@@ -99,7 +99,7 @@ Tóm tắt public-safe không mang `OutputTail`, raw stdout/stderr, đường d�
 
 ## Integrity package của report envelope 1.5
 
-Với package thuộc một trong chín `ReportKind`, `*-SHA256SUMS.txt` liệt kê mọi artefact tạo thành công, trừ chính manifest. Fleet export dùng hợp đồng/manifest riêng đã mô tả ở trên. Consumer của report envelope 1.5:
+Với package thuộc một trong chín `ReportKind`, `*-SHA256SUMS.txt` liệt kê mọi artefact tạo thành công, trừ chính manifest. Fleet export dùng hợp đồng/manifest riêng đã mô tả ở trên. Consumer của report envelope 1.6:
 
 1. xác minh SHA-256;
 2. kiểm tra `SchemaVersion`, `ReportSchemaVersion`, `ReportKind`, `ToolVersion`;

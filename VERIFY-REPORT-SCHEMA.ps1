@@ -37,6 +37,23 @@ if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) {
     . $helperPath
 }
 
+$reportSchemaSourceText = if (Test-Path -LiteralPath $helperPath -PathType Leaf) {
+    Get-Content -LiteralPath $helperPath -Raw -Encoding UTF8
+} else { '' }
+$launcherSourcePath = Join-Path $sourceDirectoryFull 'VietLicenSure-v5.0-OneFile.cs'
+$launcherSourceText = if (Test-Path -LiteralPath $launcherSourcePath -PathType Leaf) {
+    Get-Content -LiteralPath $launcherSourcePath -Raw -Encoding UTF8
+} else {
+    Add-Failure 'Thiếu nguồn launcher VietLicenSure-v5.0-OneFile.cs.'
+    ''
+}
+if ($reportSchemaSourceText -notmatch '(?m)^\s*\$script:ToolReportSchemaVersion\s*=\s*"1\.6"') {
+    Add-Failure 'Tool-ReportSchema.ps1 chưa khai báo schema 1.6.'
+}
+if ($launcherSourceText -notmatch 'EnvironmentVariables\["TOOL_REPORT_SCHEMA"\]\s*=\s*"1\.6"') {
+    Add-Failure 'Launcher chưa truyền TOOL_REPORT_SCHEMA=1.6 cho payload.'
+}
+
 if (Get-Command Get-ToolReportSchemaMetadata -ErrorAction SilentlyContinue) {
     $metadata = Get-ToolReportSchemaMetadata
 if ([string]$metadata.SchemaVersion -ne '1.6' -or [string]$metadata.ToolVersion -ne '5.0') {

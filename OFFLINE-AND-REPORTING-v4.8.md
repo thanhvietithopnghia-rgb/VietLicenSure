@@ -99,7 +99,7 @@ Mỗi package có:
 
 - HTML tổng quan kèm hướng dẫn mở bản đầy đủ;
 - PDF chi tiết nếu engine khả dụng;
-- JSON theo report schema 1.5;
+- JSON theo report schema 1.6;
 - XML kiểu hóa;
 - `*-SHA256SUMS.txt`.
 
