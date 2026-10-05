@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.20.0",
-  "UpdatedAtUtc": "2026-10-04T00:00:00Z",
+  "KnowledgeVersion": "1.21.0",
+  "UpdatedAtUtc": "2026-10-05T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -52,7 +52,7 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 04/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 05/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: đây là bản phát hành chính thức dùng chứng thư tự ký được launcher ghim, nên Windows vẫn có thể hiện Unknown publisher hoặc SmartScreen. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
       "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 2 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: it is an official release using a launcher-pinned self-issued certificate, so Windows can still show Unknown publisher or SmartScreen. It is not described as public-CA, EV, or Store signed."
     },
     {
@@ -412,8 +412,8 @@
       "TitleVi": "Bố cục báo cáo PDF",
       "TitleEn": "PDF report layout",
       "Keywords": ["pdf bi mat dong", "pdf cat chu", "pdf khuyet dong", "khoang cach hang pdf", "bang pdf qua rong", "bo cuc pdf"],
-      "AnswerVi": "PDF dùng bảng tổng quan gọn ở phần chính và chuyển bảng rộng sang phần bằng chứng chi tiết. Dòng chữ được phép xuống hàng, chiều cao hàng tự giãn và các hàng quan trọng không bị cắt giữa hai trang. Danh sách phần mềm hệ thống được đưa xuống phụ lục để phần chính dễ đọc.",
-      "AnswerEn": "PDF uses compact overview tables in the main section and moves wide evidence into detailed sections. Text wraps, rows grow naturally, and important rows avoid page splits. System software is placed in an appendix to keep the main report readable."
+      "AnswerVi": "Report Schema 1.6 đưa Build ID, Rule ID, mức tin cậy, tương quan, bốn lớp kết luận, bằng chứng và khuyến nghị vào PDF. Báo cáo Office nêu rõ build đang cài so với catalog và giấy phép đang dùng; OSPP/SKU thô vẫn nằm trong JSON/XML để kiểm toán nhưng không chiếm nhiều trang PDF. Dòng chữ được xuống hàng, chiều cao hàng tự giãn và hàng quan trọng không bị cắt giữa hai trang.",
+      "AnswerEn": "Report Schema 1.6 puts the Build ID, Rule ID, confidence, correlation, four conclusion layers, evidence, and recommendation in the PDF. The Office report clearly compares the installed build with the catalog and shows the license in use; raw OSPP/SKU data remains in JSON/XML for audit without filling the PDF. Text wraps, rows grow naturally, and important rows avoid page splits."
     },
     {
       "Id": "software-system-filter",

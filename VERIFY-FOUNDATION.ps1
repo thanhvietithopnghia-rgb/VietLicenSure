@@ -44,7 +44,7 @@ if ([string]$profile.SchemaVersion -ne "1.1" -or [string]$profile.ToolVersion -n
     }
 
     $reportMetadata = Get-ToolReportSchemaMetadata
-if ([string]$reportMetadata.SchemaVersion -ne "1.5" -or [string]$reportMetadata.ToolVersion -ne "5.0" -or @($reportMetadata.ReportKinds).Count -ne 9) {
+if ([string]$reportMetadata.SchemaVersion -ne "1.6" -or [string]$reportMetadata.ToolVersion -ne "5.0" -or @($reportMetadata.ReportKinds).Count -ne 9) {
         throw "Report schema foundation không hợp lệ."
     }
     $safetyMetadata = Get-ToolSafetyPolicyMetadata

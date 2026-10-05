@@ -39,13 +39,13 @@ if (-not (Test-Path -LiteralPath $helperPath -PathType Leaf)) {
 
 if (Get-Command Get-ToolReportSchemaMetadata -ErrorAction SilentlyContinue) {
     $metadata = Get-ToolReportSchemaMetadata
-if ([string]$metadata.SchemaVersion -ne '1.5' -or [string]$metadata.ToolVersion -ne '5.0') {
-        Add-Failure 'Metadata schema báo cáo không phải 1.5 / tool 5.0.'
+if ([string]$metadata.SchemaVersion -ne '1.6' -or [string]$metadata.ToolVersion -ne '5.0') {
+        Add-Failure 'Metadata schema báo cáo không phải 1.6 / tool 5.0.'
     }
     if (@($metadata.ReportKinds).Count -ne 9) { Add-Failure 'Schema phải khai báo đúng 9 ReportKind.' }
 
     $fixtures = [ordered]@{
-        InventoryAndLicense = [ordered]@{ ToolName='Fixture'; CreatedAt='2026-07-23T00:00:00.0000000Z'; Mode='All' }
+        InventoryAndLicense = [ordered]@{ ToolName='Fixture'; BuildId='5.0-production-fixture'; CreatedAt='2026-07-23T00:00:00.0000000Z'; Mode='All'; WindowsAdvisor=$null; OfficeAdvisor=$null; OfficeVersionAssessment=[ordered]@{ StatusCode='NotDetected' } }
         CleanupCompliance = [ordered]@{ ReadyForOfficialActivation=$false; ScanWarningCount=1; HandlingGuidance=@('Quét lại') }
         LicenseForensics = [ordered]@{ Overall='Cần xác minh'; RiskScore=20; HighCount=0; ReviewCount=1 }
         DeepScanDecision = [ordered]@{ AccessDenied=$false; Overall='Không phát hiện rủi ro cao'; HighCount=0; ReviewCount=0; ReportPath='fixture.html' }
@@ -62,8 +62,8 @@ if ([string]$metadata.SchemaVersion -ne '1.5' -or [string]$metadata.ToolVersion 
             $roundTrip = $fixture | ConvertTo-Json -Depth 8 | ConvertFrom-Json
     $validation = Test-ToolReportEnvelope -Report $roundTrip -ExpectedReportKind $kind -ExpectedToolVersion '5.0'
             if (-not $validation.Valid) { Add-Failure "Fixture $kind không đạt sau JSON round-trip: $($validation.Errors -join '; ')" }
-            if ([string]$roundTrip.SchemaVersion -ne '1.5' -or [string]$roundTrip.ReportSchemaVersion -ne '1.5') {
-                Add-Failure "Fixture $kind mất trường schema 1.5 sau round-trip."
+            if ([string]$roundTrip.SchemaVersion -ne '1.6' -or [string]$roundTrip.ReportSchemaVersion -ne '1.6') {
+                Add-Failure "Fixture $kind mất trường schema 1.6 sau round-trip."
             }
         } catch { Add-Failure "Không tạo/kiểm tra được fixture ${kind}: $($_.Exception.Message)" }
     }
@@ -96,6 +96,26 @@ $deepScanText = Read-SourceText 'windows-license-deep-scan.ps1'
 $assuranceText = Read-SourceText 'windows-license-assurance.ps1'
 $guiText = Read-SourceText 'Giao-Dien.ps1'
 $reportExportText = Read-SourceText 'Tool-ReportExport.ps1'
+
+foreach ($requiredInventoryToken in @(
+    'function Test-ReportIgnoredArtifactPath',
+    '\\Tool-Software-DeepScan-Fixture-[0-9a-f]{32}\\',
+    '\\node_modules\\ssh2\\lib\\keygen\.js$',
+    'if (Test-ReportIgnoredArtifactPath ([string]$path)) { continue }',
+    'Get-ReportAdvisorCorrelationText',
+    'Get-ReportAdvisorScopeText',
+    'Get-ReportAdvisorStrengthText',
+    'Get-ReportAdvisorEvidenceValueText',
+    '$officePresentationLicenses = @($officeCimLicenses | Where-Object { [int]$_.LicenseStatus -eq 1 })',
+    'RawOsppStatus = @($officeRawStatus)',
+    "Get-ReportText 'report.officeLicense.title'"
+    "Get-ReportText 'report.officeLicense.clickToRunSource'"
+    "Get-ReportText 'report.officeLicense.licensingSource'"
+)) {
+    if (-not $inventoryText.Contains($requiredInventoryToken)) {
+        Add-Failure "Báo cáo 1.6 thiếu chốt giải thích/loại cảnh báo giả: $requiredInventoryToken"
+    }
+}
 
 try {
     . (Join-Path $sourceDirectoryFull 'Tool-ReportExport.ps1')

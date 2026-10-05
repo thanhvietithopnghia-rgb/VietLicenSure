@@ -1,5 +1,6 @@
 ﻿$script:ToolReportSchemaVersion = "1.5"
 $script:ToolReportSchemaToolVersion = "5.0"
+$script:ToolReportSchemaVersion = "1.6" # v1.6 adds build identity and explainable evidence fields.
 $script:ToolReportKinds = @(
     "InventoryAndLicense",
     "CleanupCompliance",
@@ -12,7 +13,7 @@ $script:ToolReportKinds = @(
     "EnterpriseInventory"
 )
 $script:ToolReportRequiredFieldsByKind = [ordered]@{
-    InventoryAndLicense = @("ToolName", "CreatedAt", "Mode")
+    InventoryAndLicense = @("ToolName", "BuildId", "CreatedAt", "Mode", "WindowsAdvisor", "OfficeAdvisor", "OfficeVersionAssessment")
     CleanupCompliance = @("ReadyForOfficialActivation", "ScanWarningCount", "HandlingGuidance")
     LicenseForensics = @("Overall", "RiskScore", "HighCount", "ReviewCount")
     DeepScanDecision = @("AccessDenied", "Overall", "HighCount", "ReviewCount", "ReportPath")

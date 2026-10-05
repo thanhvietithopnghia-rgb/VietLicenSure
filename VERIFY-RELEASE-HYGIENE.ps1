@@ -23,7 +23,7 @@ $securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
 $releaseDateVi = '08/09/2026'
 $releaseDateIso = '2026-09-29'
-$currentUpdateDateVi = '04/10/2026'
+$currentUpdateDateVi = '05/10/2026'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)

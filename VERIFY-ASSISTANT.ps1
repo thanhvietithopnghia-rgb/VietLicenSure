@@ -250,7 +250,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='04/10/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='05/10/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -556,7 +556,7 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
-        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*04/10/2026' -or
+        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*05/10/2026' -or
         $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*2 October 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
@@ -677,7 +677,7 @@ if ($errors.Count -eq 0) {
             Add-AssistantVerificationError 'Assistant accepted JSON that was not generated as a Tool report.'
         }
         $validReportPath = Join-Path $reportFixtureRoot 'report.json'
-        $validReportJson = '{"SchemaVersion":"1.5","ReportKind":"InventoryAndLicense","CreatedAt":"2026-08-08T00:00:00Z","Mode":"Windows","OfflineMode":true,"WindowsStatus":"Unknown","WindowsChannel":"Unknown","WindowsConclusionCode":"Undetermined","WindowsConclusion":"Test Windows","OfficeDetected":false,"OfficeStatus":"NotDetected","OfficeConclusionCode":"NotDetected","OfficeConclusion":"Test Office","SuspiciousFindingCount":1,"ManualReviewFindingCount":2,"ThirdPartyApplicationCount":3,"ThirdPartyHighSeverityCount":0}'
+        $validReportJson = '{"SchemaVersion":"1.6","ReportKind":"InventoryAndLicense","CreatedAt":"2026-08-08T00:00:00Z","Mode":"Windows","OfflineMode":true,"WindowsStatus":"Unknown","WindowsChannel":"Unknown","WindowsConclusionCode":"Undetermined","WindowsConclusion":"Test Windows","OfficeDetected":false,"OfficeStatus":"NotDetected","OfficeConclusionCode":"NotDetected","OfficeConclusion":"Test Office","SuspiciousFindingCount":1,"ManualReviewFindingCount":2,"ThirdPartyApplicationCount":3,"ThirdPartyHighSeverityCount":0}'
         [IO.File]::WriteAllText($validReportPath, $validReportJson, (New-Object Text.UTF8Encoding($false)))
         $validReportContext = Get-ToolAssistantReportContext -ReportPath $validReportPath
         if ($null -eq $validReportContext -or [string]$validReportContext.WindowsConclusion -ne 'Test Windows') {

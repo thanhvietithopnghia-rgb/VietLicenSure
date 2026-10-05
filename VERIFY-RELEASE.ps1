@@ -1045,7 +1045,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             [string]$releaseManifest.EnterpriseBatchExportPrivacy -notmatch 'Redacted by default' -or
             [string]$releaseManifest.EnterpriseCentralAdministration -notmatch 'Intune/MDM' -or
             @($releaseManifest.ClientVmMatrix).Count -ne 3) { throw 'Thiếu metadata enterprise server/client/governance v5.' }
-        if ([string]$releaseManifest.ReportSchemaVersion -ne '1.5' -or [int]$releaseManifest.ReportKinds -ne 9 -or
+        if ([string]$releaseManifest.ReportSchemaVersion -ne '1.6' -or [int]$releaseManifest.ReportKinds -ne 9 -or
             @($releaseManifest.ReportFormats).Count -ne 4 -or [string]$releaseManifest.PluginSchemaVersion -ne '1.0' -or
             [string]$releaseManifest.ThirdPartyPluginCatalogSchemaVersion -ne '1.0' -or
             [int]$releaseManifest.ThirdPartyPluginCatalogMaximumEntries -ne 256 -or
