@@ -207,6 +207,8 @@ if ($failures.Count -eq 0) {
                 'bundle commit' = ([string]$identity.BundleCommit -ceq ([string]$qa.bundleCommit).ToLowerInvariant())
                 'QA PASS' = ([string]$qa.result -ceq 'PASS' -and [int]$qa.exitCode -eq 0 -and [int]$qa.errors -eq 0)
                 'QA artifact/build' = ([string]$qa.artifactSha256 -ceq $artifactHash -and [string]$qa.buildId -ceq [string]$identity.BuildId)
+                'VM artifact-bound evidence' = ([string]$identity.VmArtifactBound -ceq [string]$qa.vmArtifactBound -and [string]$qa.vmArtifactBound -ceq 'PASS')
+                'independent review disclosure' = ([string]$identity.IndependentReview -ceq [string]$qa.independentReview)
                 'QA evidence hash' = ([string]$identity.QaEvidenceFile -ceq 'QA-EVIDENCE.json' -and [string]$identity.QaEvidenceSha256 -ceq (Get-HandoffSha256 $qaPath))
                 'release manifest hash' = ([string]$identity.ReleaseManifestSha256 -ceq (Get-HandoffSha256 (Join-Path $releaseRoot 'RELEASE-MANIFEST.json')))
                 'SBOM hash' = ([string]$identity.SbomSha256 -ceq (Get-HandoffSha256 (Join-Path $releaseRoot 'SBOM.cdx.json')))

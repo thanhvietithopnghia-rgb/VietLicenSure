@@ -163,9 +163,13 @@ Copy-RegularFile $qaEvidenceFullPath (Join-Path $outputRoot 'QA-EVIDENCE.json')
 
 $authenticode = Get-AuthenticodeSignature -LiteralPath $primaryPath
 $timestampThumbprint = if ($authenticode.TimeStamperCertificate) { ([string]$authenticode.TimeStamperCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant() } else { '' }
+$holdReasons = New-Object System.Collections.Generic.List[string]
+if ([string]$qaEvidence.vmArtifactBound -cne 'PASS') { $holdReasons.Add('ExactHashVmQaMissing') }
+$releaseState = if ($holdReasons.Count -eq 0) { 'ReadyForPromotion' } else { 'HOLD' }
 $releaseIdentity = [ordered]@{
     SchemaVersion = '1.0'
-    State = 'ReadyForPromotion'
+    State = $releaseState
+    HoldReasons = @($holdReasons)
     Product = 'VietLicenSure'
     Version = [string]$releaseManifest.ReleaseVersion
     BuildId = [string]$provenance.BuildId
