@@ -296,10 +296,10 @@ $sourceFiles = @(
     'AUDIT-SCOPE-v1.md'
     'BUILD.ps1'
     'CODE-SIGNING-POLICY-v1.md'
-    'DANH-GIA-VA-NANG-CAP-v4.8.md'
+    'docs\archive\v4.x\DANH-GIA-VA-NANG-CAP-v4.8.md'
     'LICENSE-NOTICE.txt'
     'SOURCE-POLICY-v5.0.md'
-    'RELEASE-NOTES-v4.9.md'
+    'docs\archive\v4.x\RELEASE-NOTES-v4.9.md'
     'RELEASE-NOTES-v5.0.md'
     'README.md'
     'QUICK-START-v5.0.md'
@@ -311,11 +311,13 @@ $sourceFiles = @(
     'MODULE-CONTRACT-v1.0.md'
     'REPORT-SCHEMA-v1.6.md'
     'ROADMAP-v5.0.md'
-    'SECURITY-HARDENING-v4.8.md'
-    'TECHNICAL-ARCHITECTURE-v4.8.md'
-    'ENTRY-POINTS-v4.8.md'
-    'COMPATIBILITY-MATRIX-v4.8.md'
-    'OFFLINE-AND-REPORTING-v4.8.md'
+    'CURRENT-SECURITY-BASELINE-v5.0.md'
+    'docs\archive\v4.x\README.md'
+    'docs\archive\v4.x\SECURITY-HARDENING-v4.8.md'
+    'docs\archive\v4.x\TECHNICAL-ARCHITECTURE-v4.8.md'
+    'docs\archive\v4.x\ENTRY-POINTS-v4.8.md'
+    'docs\archive\v4.x\COMPATIBILITY-MATRIX-v4.8.md'
+    'docs\archive\v4.x\OFFLINE-AND-REPORTING-v4.8.md'
     'LOCALIZATION-v1.0.md'
     'Manage-ToolEnterpriseDeployment.ps1'
     'New-ClientVmTestSummary.ps1'
@@ -542,10 +544,10 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'AUDIT-SCOPE-v1.md',
     'BUILD.ps1',
     'CODE-SIGNING-POLICY-v1.md',
-    'DANH-GIA-VA-NANG-CAP-v4.8.md',
+    'docs\archive\v4.x\DANH-GIA-VA-NANG-CAP-v4.8.md',
     'LICENSE-NOTICE.txt',
     'SOURCE-POLICY-v5.0.md',
-    'RELEASE-NOTES-v4.9.md',
+    'docs\archive\v4.x\RELEASE-NOTES-v4.9.md',
     'RELEASE-NOTES-v5.0.md',
     'README.md',
     'QUICK-START-v5.0.md',
@@ -557,11 +559,13 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'MODULE-CONTRACT-v1.0.md',
     'REPORT-SCHEMA-v1.6.md',
     'ROADMAP-v5.0.md',
-    'SECURITY-HARDENING-v4.8.md',
-    'TECHNICAL-ARCHITECTURE-v4.8.md',
-    'ENTRY-POINTS-v4.8.md',
-    'COMPATIBILITY-MATRIX-v4.8.md',
-    'OFFLINE-AND-REPORTING-v4.8.md',
+    'CURRENT-SECURITY-BASELINE-v5.0.md',
+    'docs\archive\v4.x\README.md',
+    'docs\archive\v4.x\SECURITY-HARDENING-v4.8.md',
+    'docs\archive\v4.x\TECHNICAL-ARCHITECTURE-v4.8.md',
+    'docs\archive\v4.x\ENTRY-POINTS-v4.8.md',
+    'docs\archive\v4.x\COMPATIBILITY-MATRIX-v4.8.md',
+    'docs\archive\v4.x\OFFLINE-AND-REPORTING-v4.8.md',
     'LOCALIZATION-v1.0.md',
     'Manage-ToolEnterpriseDeployment.ps1',
     'New-ClientVmTestSummary.ps1',
@@ -979,11 +983,11 @@ $releaseSidecars = @(
     'SOURCE-POLICY-v5.0.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.6.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
-    'DOCUMENTATION-MAP-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
+    'DOCUMENTATION-MAP-v5.0.md', 'CURRENT-SECURITY-BASELINE-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
     'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
-    'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
-    'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
+    'docs\archive\v4.x\README.md', 'docs\archive\v4.x\TECHNICAL-ARCHITECTURE-v4.8.md', 'docs\archive\v4.x\ENTRY-POINTS-v4.8.md', 'docs\archive\v4.x\COMPATIBILITY-MATRIX-v4.8.md',
+    'docs\archive\v4.x\OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'docs\archive\v4.x\SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s'
 )
 if ($AllowUnsignedDevelopmentBuild) {
@@ -994,7 +998,12 @@ if ($AllowUnsignedDevelopmentBuild) {
     }
 }
 foreach ($sidecar in $releaseSidecars) {
-    Copy-Item -LiteralPath (Join-Path $sourceDirectory $sidecar) -Destination (Join-Path $OutputDirectory $sidecar) -Force
+    $sidecarDestination = Join-Path $OutputDirectory $sidecar
+    $sidecarParent = Split-Path -Parent $sidecarDestination
+    if (-not (Test-Path -LiteralPath $sidecarParent -PathType Container)) {
+        New-Item -ItemType Directory -Path $sidecarParent -Force | Out-Null
+    }
+    Copy-Item -LiteralPath (Join-Path $sourceDirectory $sidecar) -Destination $sidecarDestination -Force
 }
 
 $manifestArtifacts = @($artifactResults.ToArray() | ForEach-Object {
@@ -1574,7 +1583,7 @@ $infoLines = @(
     "Module contract schema $($moduleContractMetadata.ContractSchemaVersion): $($moduleContractMetadata.EntryPointCount) entry point / $($moduleContractMetadata.ModuleCount) module; co capability gate va ModuleResult thong nhat.",
     'Log JSON Lines cua dashboard nam trong LocalAppData theo tai khoan; che do nang quyen va doanh nghiep dung ProgramData co ACL Administrators/SYSTEM; khong ghi product key day du.',
     'PE: HIGH_ENTROPY_VA, ASLR, NX, NO_SEH, Terminal Server Aware.',
-    'CFG/load configuration native chua duoc tuyen bo; xem SECURITY-HARDENING-v4.8.md.',
+    'CFG/load configuration native chua duoc tuyen bo; xem docs/archive/v4.x/SECURITY-HARDENING-v4.8.md.',
     'Pham vi runtime: Windows 7 SP1 den Windows 11 desktop x64/x86; catalog hien tai theo doi Windows 10 22H2 va Windows 11 23H2/24H2/25H2/26H1.',
     $authenticodeInfo,
     $authenticodeTrustInfo,
@@ -1587,11 +1596,11 @@ $releaseHashFiles = @($targets.OutputName) + @(
     'SOURCE-POLICY-v5.0.md', 'RELEASE-NOTES-v5.0.md', 'QUICK-START-v5.0.md', 'KNOWN-LIMITATIONS-v5.0.md', 'RELEASE-HYGIENE-v5.0.md', 'SUPPORT.md', 'CONTRIBUTING.md', 'OFFICIAL-PROVENANCE-v1.json',
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.6.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
-    'DOCUMENTATION-MAP-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
+    'DOCUMENTATION-MAP-v5.0.md', 'CURRENT-SECURITY-BASELINE-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
     'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md',
-    'TECHNICAL-ARCHITECTURE-v4.8.md', 'ENTRY-POINTS-v4.8.md', 'COMPATIBILITY-MATRIX-v4.8.md',
-    'OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'SECURITY-HARDENING-v4.8.md',
+    'docs\archive\v4.x\README.md', 'docs\archive\v4.x\TECHNICAL-ARCHITECTURE-v4.8.md', 'docs\archive\v4.x\ENTRY-POINTS-v4.8.md', 'docs\archive\v4.x\COMPATIBILITY-MATRIX-v4.8.md',
+    'docs\archive\v4.x\OFFLINE-AND-REPORTING-v4.8.md', 'LOCALIZATION-v1.0.md', 'docs\archive\v4.x\SECURITY-HARDENING-v4.8.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s', 'RELEASE-MANIFEST.json', 'SBOM.cdx.json', 'update-manifest-v1.json', $infoName
 )
 if (Test-Path -LiteralPath (Join-Path $OutputDirectory $provenanceSignatureName) -PathType Leaf) {

@@ -80,7 +80,7 @@ Certificate audit kiem tra Authenticode va chuoi tin cay offline cua tep Windows
 Module contract schema 1.0: 24 entry point / 28 module; co capability gate va ModuleResult thong nhat.
 Log JSON Lines cua dashboard nam trong LocalAppData theo tai khoan; che do nang quyen va doanh nghiep dung ProgramData co ACL Administrators/SYSTEM; khong ghi product key day du.
 PE: HIGH_ENTROPY_VA, ASLR, NX, NO_SEH, Terminal Server Aware.
-CFG/load configuration native chua duoc tuyen bo; xem SECURITY-HARDENING-v4.8.md.
+CFG/load configuration native chua duoc tuyen bo; xem docs/archive/v4.x/SECURITY-HARDENING-v4.8.md.
 Pham vi runtime: Windows 7 SP1 den Windows 11 desktop x64/x86; catalog hien tai theo doi Windows 10 22H2 va Windows 11 23H2/24H2/25H2/26H1.
 Authenticode signer: CN=Thanh Viet - Tool Kiem Tra v4.9 (Self-Signed Code Signing); thumbprint ABE70696679B1D8987A2D5B1F6C1C6909D364CEA; status Valid.
 Chu ky Authenticode tu ky duoc ghim bang SHA-1 va SHA-256. Ban v5.0 chay tren may moi ma khong can cai chung thu truoc; Windows van co the bao Unknown publisher/SmartScreen.

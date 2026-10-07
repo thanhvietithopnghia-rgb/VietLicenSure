@@ -229,8 +229,8 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 155 } else { 156 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 211 } else { 213 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 157 } else { 158 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 213 } else { 215 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -814,7 +814,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 917504) {
 }
 
 if ($profile -and -not $profile.ControlFlowGuardHeader) {
-    $warnings.Add('CFG/load configuration native chưa được tuyên bố cho launcher managed IL; SECURITY-HARDENING-v4.8.md ghi rõ giới hạn này.')
+        $warnings.Add('CFG/load configuration native chưa được tuyên bố cho launcher managed IL; docs/archive/v4.x/SECURITY-HARDENING-v4.8.md ghi rõ giới hạn này.')
 }
 
 $releaseManifestPath = Join-Path $distributionDirectoryFull 'RELEASE-MANIFEST.json'

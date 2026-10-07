@@ -1,6 +1,6 @@
 # Entry points nền v4.8
 
-> **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
+> **Trạng thái tài liệu:** Baseline/lịch sử, không phải hồ sơ nghiệm thu v5.0. Xem [`CURRENT-SECURITY-BASELINE-v5.0.md`](../../../CURRENT-SECURITY-BASELINE-v5.0.md), [`DOCUMENTATION-MAP-v5.0.md`](../../../DOCUMENTATION-MAP-v5.0.md) và [`RELEASE-STATUS-v5.0.md`](../../../RELEASE-STATUS-v5.0.md) để biết trạng thái hiện hành.
 
 Nguồn chuẩn là `Tool-ModuleContract.ps1`. Catalog có 27 descriptor, trong đó 24 entry point công khai và ba nguồn kiểm kê nội bộ.
 

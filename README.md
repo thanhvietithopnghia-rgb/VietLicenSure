@@ -125,7 +125,7 @@ Chính sách v5.0 công bố lộ trình dự kiến theo bốn giai đoạn: ki
 - [Lịch sử phiên bản](LICH-SU-PHIEN-BAN.txt)
 - [English version history](VERSION-HISTORY-en-US.md)
 - [Release notes v5.0](RELEASE-NOTES-v5.0.md)
-- [Release notes v4.9 — hồ sơ lịch sử](RELEASE-NOTES-v4.9.md)
+- [Release notes v4.9 — hồ sơ lịch sử](docs/archive/v4.x/RELEASE-NOTES-v4.9.md)
 - [Chính sách an toàn](SAFETY-POLICY-v1.0.md)
 - [Report schema và artifact quản trị](REPORT-SCHEMA-v1.6.md)
 - [Chính sách trình xem báo cáo/fallback](REPORT-VIEWER-POLICY-v1.md)

@@ -25,13 +25,13 @@ Một số chuỗi tên cũ được giữ có chủ đích và chỉ được p
 - Đoạn lịch sử mô tả lần đổi tên và tên artifact cũ trong các mốc trước v5.0.
 - Đường dẫn dữ liệu, entropy và mutex legacy dùng để đọc/migrate dữ liệu cũ mà không làm mất backup, timeline hoặc cấu hình.
 - `PackageIdentityName`, package family và reserved name do Microsoft Partner Center đã cấp. MSIX hiển thị `VietLicenSure`, còn các giá trị identity legacy chỉ phục vụ tương thích Store.
-- `RELEASE-NOTES-v4.9.md` là hồ sơ lịch sử nguyên bản, không phải tên sản phẩm hiện hành.
+- `docs/archive/v4.x/RELEASE-NOTES-v4.9.md` là hồ sơ lịch sử nguyên bản, không phải tên sản phẩm hiện hành.
 
 Không được mở rộng ngoại lệ này sang tiêu đề giao diện, báo cáo mới, URL tải, tên EXE hoặc mô tả phát hành hiện tại.
 
 ## Tài liệu mang hậu tố cũ
 
-Các tệp `*-v4.8.md` và `SOURCE-POLICY-v5.0.md` giữ tên theo mốc hình thành để truy vết lịch sử. Mỗi tệp có thông báo trạng thái ở đầu trang; nội dung nền vẫn áp dụng cho VietLicenSure v5.0 trừ khi một mục ghi rõ chỉ dành cho phiên bản cũ. Tài liệu phát hành hiện hành là `README.md`, `QUICK-START-v5.0.md`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và hai tệp lịch sử phiên bản.
+Các tệp `*-v4.8.md`, `RELEASE-NOTES-v4.9.md` và `SOURCE-POLICY-v4.9.md` được lưu trong `docs/archive/v4.x/` để truy vết lịch sử. Chúng không phải baseline hiện hành và không được dùng riêng để tuyên bố trạng thái QA v5.0. Tài liệu hiện hành gồm `CURRENT-SECURITY-BASELINE-v5.0.md`, `README.md`, `QUICK-START-v5.0.md`, `KNOWN-LIMITATIONS-v5.0.md`, `RELEASE-NOTES-v5.0.md` và hai tệp lịch sử phiên bản.
 
 ## Cổng kiểm tra
 

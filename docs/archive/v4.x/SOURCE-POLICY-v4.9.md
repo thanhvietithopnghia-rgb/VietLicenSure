@@ -1,8 +1,8 @@
 # Chính sách mã nguồn từ v4.9 — tài liệu lịch sử
 
-> **Đã được thay thế:** Từ ngày 24/09/2026, chính sách hiện hành là [`SOURCE-POLICY-v5.0.md`](SOURCE-POLICY-v5.0.md).
+> **Đã được thay thế:** Từ ngày 24/09/2026, chính sách hiện hành là [`SOURCE-POLICY-v5.0.md`](../../../SOURCE-POLICY-v5.0.md).
 
-Xem `DOCUMENTATION-MAP-v5.0.md` để tìm tài liệu hiện hành và `RELEASE-STATUS-v5.0.md` để xem trạng thái phát hành.
+Xem [`CURRENT-SECURITY-BASELINE-v5.0.md`](../../../CURRENT-SECURITY-BASELINE-v5.0.md), [`DOCUMENTATION-MAP-v5.0.md`](../../../DOCUMENTATION-MAP-v5.0.md) và [`RELEASE-STATUS-v5.0.md`](../../../RELEASE-STATUS-v5.0.md) để biết trạng thái hiện hành.
 
 Tệp này chỉ được giữ để bảo toàn liên kết và truy vết thời điểm VietLicenSure chuyển sang mô hình **phát triển cùng cộng đồng với mã nguồn có kiểm soát** từ v4.9.
 

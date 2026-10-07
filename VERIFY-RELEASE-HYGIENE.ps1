@@ -51,6 +51,7 @@ $requiredCurrentFiles = @(
     'KNOWN-LIMITATIONS-v5.0.md',
     'RELEASE-HYGIENE-v5.0.md'
     'DOCUMENTATION-MAP-v5.0.md'
+    'CURRENT-SECURITY-BASELINE-v5.0.md'
     'RELEASE-STATUS-v5.0.md'
     'FAQ-NGUOI-DUNG-MOI-v5.0.md'
     'FIRST-RUN-FAQ-v5.0.md'
@@ -93,6 +94,7 @@ $historyVi = Read-HygieneText 'LICH-SU-PHIEN-BAN.txt'
 $historyEn = Read-HygieneText 'VERSION-HISTORY-en-US.md'
 $quickStart = Read-HygieneText 'QUICK-START-v5.0.md'
 $limitations = Read-HygieneText 'KNOWN-LIMITATIONS-v5.0.md'
+$currentSecurityBaseline = Read-HygieneText 'CURRENT-SECURITY-BASELINE-v5.0.md'
 $releaseStatus = Read-HygieneText 'RELEASE-STATUS-v5.0.md'
 $firstRunFaq = Read-HygieneText 'FAQ-NGUOI-DUNG-MOI-v5.0.md'
 $firstRunFaqEn = Read-HygieneText 'FIRST-RUN-FAQ-v5.0.md'
@@ -148,6 +150,9 @@ Assert-HygieneContains 'docs\index.html' $website 'Official Self-Signed'
 Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'Nguồn sự thật duy nhất'
 Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'phát hành chính thức'
 Assert-HygieneContains 'RELEASE-STATUS-v5.0.md' $releaseStatus 'NotReviewed'
+Assert-HygieneContains 'CURRENT-SECURITY-BASELINE-v5.0.md' $currentSecurityBaseline 'Status | Current'
+Assert-HygieneContains 'CURRENT-SECURITY-BASELINE-v5.0.md' $currentSecurityBaseline 'Enterprise transport hiện dùng HTTP'
+Assert-HygieneContains 'CURRENT-SECURITY-BASELINE-v5.0.md' $currentSecurityBaseline 'Independent security review vẫn là `NotReviewed`'
 Assert-HygieneContains 'OFFICIAL-SELF-SIGNED-POLICY-v1.md' (Get-Content -LiteralPath (Join-Path $SourceDirectory 'OFFICIAL-SELF-SIGNED-POLICY-v1.md') -Raw -Encoding UTF8) 'Official Self-Signed'
 Assert-HygieneContains 'FAQ-NGUOI-DUNG-MOI-v5.0.md' $firstRunFaq 'SmartScreen'
 Assert-HygieneContains 'FAQ-NGUOI-DUNG-MOI-v5.0.md' $firstRunFaq 'Trusted Root'
@@ -259,18 +264,33 @@ foreach ($file in @(Get-ChildItem -LiteralPath $sourceRoot -Recurse -File -Force
 }
 
 foreach ($legacyDocument in @(
+    'docs\archive\v4.x\ENTRY-POINTS-v4.8.md',
+    'docs\archive\v4.x\OFFLINE-AND-REPORTING-v4.8.md',
+    'docs\archive\v4.x\SECURITY-HARDENING-v4.8.md',
+    'docs\archive\v4.x\TECHNICAL-ARCHITECTURE-v4.8.md',
+    'docs\archive\v4.x\COMPATIBILITY-MATRIX-v4.8.md',
+    'docs\archive\v4.x\DANH-GIA-VA-NANG-CAP-v4.8.md',
+    'docs\archive\v4.x\SOURCE-POLICY-v4.9.md'
+)) {
+    $legacyText = Read-HygieneText $legacyDocument
+    if ($legacyText -notmatch 'DOCUMENTATION-MAP-v5\.0\.md' -or
+        $legacyText -notmatch 'RELEASE-STATUS-v5\.0\.md') {
+        $failures.Add("Legacy-suffixed document lacks current applicability notice: $legacyDocument")
+    }
+}
+
+foreach ($legacyRootDocument in @(
     'ENTRY-POINTS-v4.8.md',
     'OFFLINE-AND-REPORTING-v4.8.md',
     'SECURITY-HARDENING-v4.8.md',
     'TECHNICAL-ARCHITECTURE-v4.8.md',
     'COMPATIBILITY-MATRIX-v4.8.md',
     'DANH-GIA-VA-NANG-CAP-v4.8.md',
+    'RELEASE-NOTES-v4.9.md',
     'SOURCE-POLICY-v4.9.md'
 )) {
-    $legacyText = Read-HygieneText $legacyDocument
-    if ($legacyText -notmatch 'DOCUMENTATION-MAP-v5\.0\.md' -or
-        $legacyText -notmatch 'RELEASE-STATUS-v5\.0\.md') {
-        $failures.Add("Legacy-suffixed document lacks current applicability notice: $legacyDocument")
+    if (Test-Path -LiteralPath (Join-Path $sourceRoot $legacyRootDocument)) {
+        $failures.Add("Legacy document must be archived under docs/archive/v4.x: $legacyRootDocument")
     }
 }
 

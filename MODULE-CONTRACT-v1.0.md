@@ -74,7 +74,7 @@ Plugin assurance vẫn read-only; thao tác cài plugin là hành động riêng
 
 ## Danh sách entry point
 
-Danh sách đầy đủ, script/operation, quyền và network scope nằm trong `ENTRY-POINTS-v4.8.md`. Verifier yêu cầu đúng 27 descriptor/24 entry point, ID duy nhất, script tồn tại, schema đúng và `OfflineCapable` khớp `NetworkScope`.
+Danh sách đầy đủ, script/operation, quyền và network scope lịch sử nằm trong `docs/archive/v4.x/ENTRY-POINTS-v4.8.md`. Nguồn thực thi hiện hành là `Tool-ModuleContract.ps1`; verifier yêu cầu đúng 27 descriptor/24 entry point, ID duy nhất, script tồn tại, schema đúng và `OfflineCapable` khớp `NetworkScope`.
 
 ## Quy tắc mở rộng
 

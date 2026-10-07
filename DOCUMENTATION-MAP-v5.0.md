@@ -12,6 +12,7 @@ Trang này là mục lục chuẩn. Tên hiển thị dùng thống nhất trong
 | Nhu cầu | Tên tài liệu chuẩn | Tệp |
 |---|---|---|
 | Trạng thái phát hành và cổng nghiệm thu | **Trạng thái phát hành v5.0** | `RELEASE-STATUS-v5.0.md` |
+| Baseline bảo mật hiện hành và giới hạn assurance | **Current Security Baseline v5.0** | `CURRENT-SECURITY-BASELINE-v5.0.md` |
 | Dùng trong vài phút | **Bắt đầu nhanh với VietLicenSure v5.0** | `QUICK-START-v5.0.md` |
 | Câu hỏi lần đầu, SmartScreen và UAC | **Câu hỏi thường gặp cho người dùng lần đầu / First-run FAQ — VietLicenSure v5.0** | `FAQ-NGUOI-DUNG-MOI-v5.0.md`, `FIRST-RUN-FAQ-v5.0.md` |
 | Hướng dẫn đầy đủ bằng tiếng Việt | **Hướng dẫn sử dụng VietLicenSure** | `HUONG-DAN.txt` |
@@ -28,24 +29,24 @@ Trang này là mục lục chuẩn. Tên hiển thị dùng thống nhất trong
 ## Vòng đời tài liệu
 
 - **Hiện hành:** tài liệu v5.0 trong bảng trên; được cập nhật cho hành vi và trạng thái hiện tại.
-- **Baseline hỗ trợ:** hợp đồng kỹ thuật hình thành ở v4.8/v4.9 và vẫn được v5.0 kế thừa; chỉ đọc cùng tài liệu v5.0.
+- **Baseline hỗ trợ:** hợp đồng kỹ thuật hình thành ở v4.8/v4.9 và vẫn được v5.0 kế thừa; bản lịch sử nằm trong `docs/archive/v4.x/` và chỉ đọc cùng tài liệu v5.0.
 - **Lịch sử:** release notes/lịch sử của bản cũ; giữ để truy vết, không dùng làm hướng dẫn vận hành hiện tại.
 - **Thay thế:** nội dung có tài liệu hiện hành mới hơn; tệp cũ chỉ giữ một chỉ dẫn tới tài liệu thay thế nếu không còn giá trị truy vết chi tiết.
 
-Không xóa tài liệu legacy chỉ để làm gọn kho. Gắn thông báo vòng đời ở đầu tệp và trỏ về bản đồ này; tránh sao chép lại trạng thái QA, checksum hoặc hướng dẫn vận hành dễ lỗi thời.
+Không xóa tài liệu legacy chỉ để làm gọn kho. Lưu chúng trong `docs/archive/v4.x/`, gắn thông báo vòng đời và trỏ về bản đồ này; tránh sao chép lại trạng thái QA, checksum hoặc hướng dẫn vận hành dễ lỗi thời.
 
 ## Tài liệu legacy và điểm thay thế
 
 | Tệp legacy | Vòng đời | Dùng thế nào trong v5.0 |
 |---|---|---|
-| `TECHNICAL-ARCHITECTURE-v4.8.md` | Baseline hỗ trợ | Kiến trúc nền; đọc thêm `MODULE-CONTRACT-v1.0.md` và hồ sơ v5.0. |
-| `ENTRY-POINTS-v4.8.md` | Baseline hỗ trợ | Điểm vào lịch sử; danh sách thực tế phải lấy từ gói/build hiện hành. |
-| `COMPATIBILITY-MATRIX-v4.8.md` | Baseline hỗ trợ | Tiêu chí tương thích nền; kết quả nghiệm thu hiện tại chỉ xem trong `RELEASE-STATUS-v5.0.md`. |
-| `OFFLINE-AND-REPORTING-v4.8.md` | Baseline hỗ trợ | Nguyên tắc Offline/reporting; hành vi người dùng xem `HUONG-DAN.txt`. |
-| `SECURITY-HARDENING-v4.8.md` | Baseline hỗ trợ | Hardening nền; không dùng riêng để tuyên bố v5.0 đã đạt. |
-| `DANH-GIA-VA-NANG-CAP-v4.8.md` | Lịch sử | Đánh giá tại mốc v4.8; roadmap hiện hành nằm trong `RELEASE-STATUS-v5.0.md` và `ROADMAP-v5.0.md`. |
-| `RELEASE-NOTES-v4.9.md` | Lịch sử | Chỉ dùng truy vết thay đổi v4.9; xem `RELEASE-NOTES-v5.0.md` cho bản hiện tại. |
-| `SOURCE-POLICY-v4.9.md` | Lịch sử/chuyển hướng | Chính sách cũ bắt đầu từ v4.9; đã được thay thế bởi `SOURCE-POLICY-v5.0.md` từ 24/09/2026. |
+| `docs/archive/v4.x/TECHNICAL-ARCHITECTURE-v4.8.md` | Baseline hỗ trợ | Kiến trúc nền; đọc thêm `MODULE-CONTRACT-v1.0.md` và hồ sơ v5.0. |
+| `docs/archive/v4.x/ENTRY-POINTS-v4.8.md` | Baseline hỗ trợ | Điểm vào lịch sử; danh sách thực tế phải lấy từ gói/build hiện hành. |
+| `docs/archive/v4.x/COMPATIBILITY-MATRIX-v4.8.md` | Baseline hỗ trợ | Tiêu chí tương thích nền; kết quả nghiệm thu hiện tại chỉ xem trong `RELEASE-STATUS-v5.0.md`. |
+| `docs/archive/v4.x/OFFLINE-AND-REPORTING-v4.8.md` | Baseline hỗ trợ | Nguyên tắc Offline/reporting; hành vi người dùng xem `HUONG-DAN.txt`. |
+| `docs/archive/v4.x/SECURITY-HARDENING-v4.8.md` | Baseline hỗ trợ | Hardening nền; không dùng riêng để tuyên bố v5.0 đã đạt. |
+| `docs/archive/v4.x/DANH-GIA-VA-NANG-CAP-v4.8.md` | Lịch sử | Đánh giá tại mốc v4.8; roadmap hiện hành nằm trong `RELEASE-STATUS-v5.0.md` và `ROADMAP-v5.0.md`. |
+| `docs/archive/v4.x/RELEASE-NOTES-v4.9.md` | Lịch sử | Chỉ dùng truy vết thay đổi v4.9; xem `RELEASE-NOTES-v5.0.md` cho bản hiện tại. |
+| `docs/archive/v4.x/SOURCE-POLICY-v4.9.md` | Lịch sử/chuyển hướng | Chính sách cũ bắt đầu từ v4.9; đã được thay thế bởi `SOURCE-POLICY-v5.0.md` từ 24/09/2026. |
 
 Thông báo chuẩn ở đầu tài liệu legacy:
 
@@ -57,7 +58,7 @@ Thông báo chuẩn ở đầu tài liệu legacy:
 2. `RELEASE-MANIFEST.json`, provenance và SBOM của cùng gói.
 3. `RELEASE-STATUS-v5.0.md` cho trạng thái nghiệm thu và cổng phát hành.
 4. Tài liệu vận hành v5.0 gắn đúng Build ID/artifact.
-5. Baseline v4.8/v4.9.
+5. `CURRENT-SECURITY-BASELINE-v5.0.md`, sau đó mới tới hồ sơ v4.8/v4.9 trong `docs/archive/v4.x/`.
 6. Nội dung giới thiệu trên website và hồ sơ lịch sử.
 
 Nếu các nguồn mâu thuẫn, dừng chức năng thay đổi hệ thống và báo lỗi qua kênh chính thức. Không chọn nguồn “gần đúng” và không tự suy diễn Official Self-Signed thành public-CA/EV/Store-signed.
@@ -67,4 +68,4 @@ Nếu các nguồn mâu thuẫn, dừng chức năng thay đổi hệ thống v�
 1. Mỗi chủ đề chỉ có một tài liệu hiện hành chính; tài liệu khác tóm tắt và liên kết.
 2. Mọi kết quả QA mới cập nhật trước vào `RELEASE-STATUS-v5.0.md` rồi mới thay phần tóm tắt trên website/release notes.
 3. Không ghi kết quả Harness4 mới nếu chưa có log gắn đúng source snapshot và hash EXE.
-4. Khi đổi tên hiển thị, cập nhật bảng **Tài liệu hiện hành nên đọc trước** và các liên kết; không đổi tên tệp legacy nếu việc đó làm mất truy vết.
+4. Khi đổi tên hiển thị, cập nhật bảng **Tài liệu hiện hành nên đọc trước** và các liên kết; tài liệu legacy chỉ được di chuyển trong khu archive bằng Git để bảo toàn lịch sử.
