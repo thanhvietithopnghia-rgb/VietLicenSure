@@ -244,12 +244,20 @@ try {
     Assert-Enterprise (@(Compare-Object ($expectedDashboardClientFields | Sort-Object) $actualDashboardClientFields).Count -eq 0) 'API Dashboard trả thêm trường máy trạm ngoài allow-list.'
     $expectedAdvisorFields = @(
         'Channel','Confidence','ConfidenceScope','CorrelationCode','EntitlementConclusion','EntitlementStatus','Evidence','EvidenceSourceCount',
-        'Explanation','FindingCode','LicenseModel','Limitation','LimitationCode','OverallVerdict','ProductScope','Recommendation','RecommendationCode',
+        'Explanation','Finding','FindingCode','LicenseModel','Limitation','LimitationCode','OverallVerdict','ProductScope','Recommendation','RecommendationCode',
         'Risk','RuleId','RuleRevision','SchemaVersion','TamperingConclusion','TechnicalConclusion','TechnicalStatus'
     )
     foreach($advisorName in @('WindowsAdvisor','OfficeAdvisor')) {
         $advisorFields = @($dashboardSnapshot.Clients[0].$advisorName.PSObject.Properties.Name | Sort-Object)
         Assert-Enterprise (@(Compare-Object ($expectedAdvisorFields | Sort-Object) $advisorFields).Count -eq 0) "API Dashboard advisor ngoài schema chuẩn hóa: $advisorName"
+        $findingFields = @($dashboardSnapshot.Clients[0].$advisorName.Finding.PSObject.Properties.Name | Sort-Object)
+        $expectedFindingFields = @(
+            'Confidence','ConfidenceScope','CorrelationCode','EntitlementConclusion','Evidence','EvidenceSourceCount','Explanation','FindingCode',
+            'Limitation','OverallVerdict','ProductScope','Recommendation','Risk','RuleId','RuleRevision','SchemaVersion','SourceCoverage','State',
+            'TamperingConclusion','TechnicalConclusion'
+        )
+        Assert-Enterprise (@(Compare-Object ($expectedFindingFields | Sort-Object) $findingFields).Count -eq 0) "API Dashboard Finding ngoài schema canonical: $advisorName"
+        Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].$advisorName.Finding.RuleId -eq [string]$dashboardSnapshot.Clients[0].$advisorName.RuleId) "API Dashboard Finding lệch Rule ID legacy: $advisorName"
         Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].$advisorName.RuleId -match '^VLS-(?:WIN|OFF)-ACT-00[12]$') "API Dashboard advisor thiếu Rule ID ổn định: $advisorName"
         Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].$advisorName.TamperingConclusion -eq 'NotAssessed') "API Dashboard advisor suy diễn dấu hiệu can thiệp khi chưa đánh giá: $advisorName"
     }
