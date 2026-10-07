@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
 $expectedHash = '3C24243A2C69414E43BD8CBAD97097F353DE3290ED1FEF39C4FC1F2C195D010C'
-$expectedBuild = '5.0-production-20261005'
+$expectedBuild = '5.0-production-20261007'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
