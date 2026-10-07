@@ -169,6 +169,8 @@ $payloadFiles = @(
     'Tool-OfflinePolicy.ps1',
     'Tool-Assistant.ps1',
     'tool-assistant-knowledge-v1.1.json',
+    'Tool-DetectionEngine.ps1',
+    'detection-finding-schema-v1.0.json',
     'Tool-SoftwareInventory.ps1',
     'Tool-LicenseCompliance.ps1',
     'software-license-catalog-v1.0.json',
@@ -240,6 +242,8 @@ $integrityFiles = @(
     'Tool-OfflinePolicy.ps1',
     'Tool-Assistant.ps1',
     'tool-assistant-knowledge-v1.1.json',
+    'Tool-DetectionEngine.ps1',
+    'detection-finding-schema-v1.0.json',
     'Tool-SoftwareInventory.ps1',
     'Tool-LicenseCompliance.ps1',
     'software-license-catalog-v1.0.json',
@@ -337,6 +341,7 @@ $sourceFiles = @(
     'VERIFY-RESULT-CENTER.ps1'
     'VERIFY-EXTENSIONS.ps1'
     'VERIFY-ENTERPRISE.ps1'
+    'VERIFY-DETECTION-ENGINE.ps1'
     'VERIFY-LICENSE-COMPLIANCE.ps1'
     'VERIFY-COMPATIBILITY.ps1'
     'VERIFY-MICROSOFT-CATALOG-SOURCES.ps1'
@@ -580,6 +585,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-RESULT-CENTER.ps1',
     'VERIFY-EXTENSIONS.ps1',
     'VERIFY-ENTERPRISE.ps1',
+    'VERIFY-DETECTION-ENGINE.ps1',
     'VERIFY-LICENSE-COMPLIANCE.ps1',
     'VERIFY-COMPATIBILITY.ps1',
     'VERIFY-OFFLINE-I18N.ps1',
@@ -1625,6 +1631,8 @@ if (-not $SkipVerification) {
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-LOCALIZATION-COVERAGE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-ENTERPRISE.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-ENTERPRISE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
+    & (Join-Path $sourceDirectory 'VERIFY-DETECTION-ENGINE.ps1') -SourceDirectory $sourceDirectory
+    if ($LASTEXITCODE -ne 0) { throw "VERIFY-DETECTION-ENGINE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-LICENSE-COMPLIANCE.ps1') -SourceDirectory $sourceDirectory
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-LICENSE-COMPLIANCE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     & (Join-Path $sourceDirectory 'VERIFY-PERFORMANCE.ps1') -SourceDirectory $sourceDirectory

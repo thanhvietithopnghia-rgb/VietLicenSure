@@ -8,6 +8,11 @@ $script:ToolLicenseComplianceAllowedDocumentKinds = @('Invoice','Agreement','Cer
 $script:ToolLicenseComplianceAllowedDocumentExtensions = @('.pdf','.png','.jpg','.jpeg','.txt','.eml','.msg','.docx','.xlsx')
 $script:ToolLicenseAdvisorSchemaVersion = '1.0'
 $script:ToolLicenseAdvisorAllowedConfidence = @('Confirmed','High','Medium','Low','Informational')
+$toolDetectionEnginePath = Join-Path $PSScriptRoot 'Tool-DetectionEngine.ps1'
+if (-not (Get-Command New-ToolDetectionFinding -ErrorAction SilentlyContinue)) {
+    if (-not (Test-Path -LiteralPath $toolDetectionEnginePath -PathType Leaf)) { throw 'Missing Tool-DetectionEngine.ps1.' }
+    . $toolDetectionEnginePath
+}
 
 function ConvertTo-ToolLicenseComplianceSafeText {
     param([AllowNull()][object]$Value, [ValidateRange(1,4096)][int]$MaximumLength = 512)
@@ -562,7 +567,7 @@ function Get-ToolLicenseAdvisorResult {
         elseif (-not $technicalGood -and $ProductScope -in @('Windows','Office')) { 'ReviewRequired' }
         else { 'NoImmediateIssue' }
 
-    return [pscustomobject][ordered]@{
+    $legacyResult = [pscustomobject][ordered]@{
         SchemaVersion=$script:ToolLicenseAdvisorSchemaVersion; RuleId=$ruleId; RuleRevision=1
         ProductScope=$ProductScope; TechnicalStatus=$safeTechnicalStatus; Channel=$safeChannel; LicenseModel=$safeLicenseModel
         EntitlementStatus=$EntitlementStatus; Risk=$risk; Confidence=$confidence; ConfidenceScope='FindingOnly'
@@ -572,6 +577,8 @@ function Get-ToolLicenseAdvisorResult {
         Explanation=$explanation; Recommendation=$recommendation
         Limitation='No result in this advisor independently proves legal ownership or authenticity.'
     }
+    $legacyResult | Add-Member -NotePropertyName Finding -NotePropertyValue (ConvertTo-ToolDetectionFindingFromLicenseAdvisor -Advisor $legacyResult)
+    return $legacyResult
 }
 
 function Get-ToolLicenseComplianceSnapshot {

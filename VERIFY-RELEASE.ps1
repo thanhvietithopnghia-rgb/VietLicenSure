@@ -162,6 +162,7 @@ $dashboardVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-DASHBOARD.ps1'
 $resultCenterVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-RESULT-CENTER.ps1'
 $extensionsVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-EXTENSIONS.ps1'
 $enterpriseVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-ENTERPRISE.ps1'
+$detectionEngineVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-DETECTION-ENGINE.ps1'
 $compatibilityVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-COMPATIBILITY.ps1'
 $offlineI18nVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-OFFLINE-I18N.ps1'
 $localizationVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-LOCALIZATION-COVERAGE.ps1'
@@ -191,6 +192,7 @@ if (-not (Test-Path -LiteralPath $dashboardVerifierPath -PathType Leaf)) { $fail
 if (-not (Test-Path -LiteralPath $resultCenterVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-RESULT-CENTER.ps1.') }
 if (-not (Test-Path -LiteralPath $extensionsVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-EXTENSIONS.ps1.') }
 if (-not (Test-Path -LiteralPath $enterpriseVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-ENTERPRISE.ps1.') }
+if (-not (Test-Path -LiteralPath $detectionEngineVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-DETECTION-ENGINE.ps1.') }
 if (-not (Test-Path -LiteralPath $compatibilityVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-COMPATIBILITY.ps1.') }
 if (-not (Test-Path -LiteralPath $offlineI18nVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-OFFLINE-I18N.ps1.') }
 if (-not (Test-Path -LiteralPath $localizationVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-LOCALIZATION-COVERAGE.ps1.') }
@@ -226,9 +228,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 66 } else { 67 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 208 } else { 210 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 155 } else { 156 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 211 } else { 213 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -673,7 +675,7 @@ $payloadFiles = @(
     'Tool-ScanOptimization.ps1',
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-DashboardPresentation.ps1','Tool-Localization.ps1',
     'Tool-Strings.vi-VN.json','Tool-Strings.en-US.json','Tool-OfflinePolicy.ps1','Tool-Assistant.ps1','tool-assistant-knowledge-v1.1.json',
-    'Tool-SoftwareInventory.ps1','Tool-LicenseCompliance.ps1','software-license-catalog-v1.0.json','software-license-catalog-v1.0.json.p7s','software-license-online-update.ps1','Tool-UpdateManager.ps1',
+    'Tool-DetectionEngine.ps1','detection-finding-schema-v1.0.json','Tool-SoftwareInventory.ps1','Tool-LicenseCompliance.ps1','software-license-catalog-v1.0.json','software-license-catalog-v1.0.json.p7s','software-license-online-update.ps1','Tool-UpdateManager.ps1',
     'Tool-ReportSchema.ps1','Tool-ResultCenter.ps1','Tool-ReportExport.ps1','Tool-PluginEngine.ps1','Tool-LicenseTimeline.ps1',
     'Tool-SafetyPolicy.ps1','Tool-Enterprise.ps1','Tool-EnterpriseCli.ps1','Tool-EnterpriseHost.ps1','Tool-EnterpriseAgent.ps1',
     'enterprise-license-manager.ps1','TOOL-SHA256SUMS.txt','windows-license-backup.ps1',
@@ -902,7 +904,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
         $expectedPayloadCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 66 } else { 67 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
@@ -1292,6 +1294,10 @@ if (Test-Path -LiteralPath $remediationV49VerifierPath -PathType Leaf) {
 if (Test-Path -LiteralPath $softwareDetectionV49VerifierPath -PathType Leaf) {
     & $softwareDetectionV49VerifierPath
     if ($LASTEXITCODE -ne 0) { $failures.Add('VERIFY-SOFTWARE-DETECTION-V4.9.ps1 không đạt.') }
+}
+if (Test-Path -LiteralPath $detectionEngineVerifierPath -PathType Leaf) {
+    & $detectionEngineVerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('VERIFY-DETECTION-ENGINE.ps1 không đạt.') }
 }
 if (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf) {
     if ($AllowDevelopmentManifest) {
