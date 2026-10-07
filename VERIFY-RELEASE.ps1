@@ -814,7 +814,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 921600) {
 }
 
 if ($profile -and -not $profile.ControlFlowGuardHeader) {
-        $warnings.Add('CFG/load configuration native chưa được tuyên bố cho launcher managed IL; docs/archive/v4.x/SECURITY-HARDENING-v4.8.md ghi rõ giới hạn này.')
+        $warnings.Add('CFG/load configuration native chưa được tuyên bố cho launcher managed IL; CURRENT-SECURITY-BASELINE-v5.0.md ghi rõ giới hạn này.')
 }
 
 $releaseManifestPath = Join-Path $distributionDirectoryFull 'RELEASE-MANIFEST.json'
