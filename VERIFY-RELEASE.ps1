@@ -229,9 +229,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 157 } else { 158 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 149 } else { 150 }
 $expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 213 } else { 215 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 51 } elseif ($AllowStoreManifest) { 52 } else { 53 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 47 } elseif ($AllowStoreManifest) { 48 } else { 49 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -903,7 +903,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
         $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
