@@ -47,7 +47,7 @@ function New-ToolDetectionSourceCoverage {
     foreach ($source in $sources) {
         $count = [int]@($Evidence | Where-Object { [string]$_.SourceCode -eq $source }).Count
         $status = if ($StatusOverrides.ContainsKey($source)) { [string]$StatusOverrides[$source] } elseif ($count -gt 0) { 'Collected' } else { 'Unavailable' }
-        if ($script:ToolDetectionAllowedCoverageStatus -notcontains $status) { throw ('Invalid source coverage status: ' + $status) }
+        if (@('Collected','Denied','Unavailable','NotApplicable','Error','Timeout','Rejected') -notcontains $status) { throw ('Invalid source coverage status: ' + $status) }
         $coverage.Add([pscustomobject][ordered]@{ SourceCode=$source; Status=$status; EvidenceCount=$count })
     }
     return @($coverage.ToArray())
@@ -69,12 +69,12 @@ function New-ToolDetectionFinding {
     $normalizedEvidence = @(ConvertTo-ToolDetectionEvidence -Evidence $Evidence)
     $coverage = @($SourceCoverage)
     foreach ($item in $coverage) {
-        if ($null -eq $item -or [string]::IsNullOrWhiteSpace([string]$item.SourceCode) -or $script:ToolDetectionAllowedCoverageStatus -notcontains [string]$item.Status) {
+        if ($null -eq $item -or [string]::IsNullOrWhiteSpace([string]$item.SourceCode) -or @('Collected','Denied','Unavailable','NotApplicable','Error','Timeout','Rejected') -notcontains [string]$item.Status) {
             throw 'Finding source coverage is invalid.'
         }
     }
     return [pscustomobject][ordered]@{
-        SchemaVersion=$script:ToolDetectionFindingSchemaVersion; RuleId=$RuleId; RuleRevision=$RuleRevision
+        SchemaVersion='1.0'; RuleId=$RuleId; RuleRevision=$RuleRevision
         ProductScope=$ProductScope; FindingCode=(ConvertTo-ToolDetectionSafeText $FindingCode 100); State=$State
         Confidence=$Confidence; ConfidenceScope='FindingOnly'; Risk=(ConvertTo-ToolDetectionSafeText $Risk 40)
         TechnicalConclusion=(ConvertTo-ToolDetectionSafeText $TechnicalConclusion 100)
@@ -119,7 +119,7 @@ function ConvertTo-ToolDetectionFindingFromSoftwareAssessment {
         elseif ($presence -in @('InstalledConfirmed','RegisteredInstallation','VendorRegisteredProduct','PackagePresent','PortableApplication')) { 'Active' }
         elseif ($code -in @('FreeOrIncluded','GenuineVerified')) { 'Informational' } else { 'Unknown' }
     $confidence = [string](Get-ToolDetectionPropertyValue $Assessment 'Confidence' 'Informational')
-    if ($script:ToolDetectionAllowedConfidence -notcontains $confidence) { $confidence = 'Informational' }
+    if (@('Confirmed','High','Medium','Low','Informational') -notcontains $confidence) { $confidence = 'Informational' }
     $attention = [string](Get-ToolDetectionPropertyValue $Assessment 'AttentionLevel' 'Medium')
     $risk = if ($attention -eq 'High') { 'High' } elseif ($attention -eq 'Low') { 'Low' } else { 'Review' }
     $evidence = @(ConvertTo-ToolDetectionEvidence -Evidence @(Get-ToolDetectionPropertyValue $Assessment 'Evidence' @()))
