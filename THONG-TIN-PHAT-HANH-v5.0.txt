@@ -1,18 +1,18 @@
 VietLicenSure v5.0 - PHAN MEM KIEM TRA VA QUAN LY BAN QUYEN HE THONG
 Release version: 5.0
-Release build date: 2026.10.02
-Release label: 5.0-official-self-signed-20261002
+Release build date: 2026.10.07
+Release label: 5.0-official-self-signed-20261007
 Public release channel: Official Self-Signed.
 Technical trust mode: OfficialSelfSigned.
 Release status: OfficialSelfSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 654F60860DB1311F994EF9C611E7F71B3DC3E2B73A07546548F2C8FD898D0AD2
+SHA-256: 5BFEB6072A92D1CD54D4401A2DF4000C9CFE05752B6D2FEB6862C5B14CE6B2DA
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
 Dashboard mo bang quyen nguoi dung hien tai; UAC chi duoc yeu cau theo nhu cau khi thay doi he thong, cap nhat ung dung hoac quan tri doanh nghiep.
 Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.
-Payload nhung duoc toi uu SolidDeflateBundle-v1: 69 tep trong mot resource Deflate co header fail-closed; giam 78.75% va van doi chieu SHA-256 tung tep sau giai nen.
+Payload nhung duoc toi uu SolidDeflateBundle-v1: 71 tep trong mot resource Deflate co header fail-closed; giam 78.77% va van doi chieu SHA-256 tung tep sau giai nen.
 Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.
 Dashboard schema 2.0: WinForms hien dai, theo Light/Dark cua he thong, cho phep ghi nho tuy chon va co fallback DPI tu PerMonitorV2 den Win7.
 Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.
@@ -30,7 +30,7 @@ Khac phuc ben thu ba: chi bang chung CrackConfirmed truc tiep moi mo quyen chon;
 Backup HMAC luu kiem ke va cach ly truoc thay doi; activator va token cap phep da loai bo khong duoc khoi phuc.
 Offline toan ung dung mac dinh; trung tam doanh nghiep co cong tac mang rieng mac dinh tat, co the bat/tat lai ma khong an chuc nang hoac xoa cau hinh.
 Ket noi online chi chay sau khi nguoi dung xac nhan, tai catalog JSON HTTPS tu host allowlist; khong gui inventory, duong dan, khoa hoac token va khong doi preference Offline.
-Tu dong kiem tra phien ban moi chi khi Online da duoc cho phep; khong co service nen, telemetry hay cap nhat im lang.
+Bat Online chi cap nhat catalog ky so roi dung; khong tu quet, tao bao cao, hoi muc rieng tu hoac kiem tra/cai phien ban ung dung.
 Khi co ban moi, VietLicenSure hoi 3 lua chon: Cap nhat ngay, De sau, Bo qua lan nay. De sau hoi lai sau tac vu ke tiep hoac 2 gio.
 Cap nhat ngay chi tai EXE tu GitHub HTTPS co dinh, doi chieu dung luong/SHA-256/chu ky neu bat buoc, backup ban cu va rollback neu ban moi loi.
 Compatibility catalog 1.1.3.0, schema 1.1, ra soat 2026-10-01T00:00:00.0000000Z; canh bao 30 ngay va het han 45 ngay.
@@ -80,7 +80,7 @@ Certificate audit kiem tra Authenticode va chuoi tin cay offline cua tep Windows
 Module contract schema 1.0: 24 entry point / 28 module; co capability gate va ModuleResult thong nhat.
 Log JSON Lines cua dashboard nam trong LocalAppData theo tai khoan; che do nang quyen va doanh nghiep dung ProgramData co ACL Administrators/SYSTEM; khong ghi product key day du.
 PE: HIGH_ENTROPY_VA, ASLR, NX, NO_SEH, Terminal Server Aware.
-CFG/load configuration native chua duoc tuyen bo; xem docs/archive/v4.x/SECURITY-HARDENING-v4.8.md.
+CFG/load configuration native chua duoc tuyen bo; xem CURRENT-SECURITY-BASELINE-v5.0.md.
 Pham vi runtime: Windows 7 SP1 den Windows 11 desktop x64/x86; catalog hien tai theo doi Windows 10 22H2 va Windows 11 23H2/24H2/25H2/26H1.
 Authenticode signer: CN=Thanh Viet - Tool Kiem Tra v4.9 (Self-Signed Code Signing); thumbprint ABE70696679B1D8987A2D5B1F6C1C6909D364CEA; status Valid.
 Chu ky Authenticode tu ky duoc ghim bang SHA-1 va SHA-256. Ban v5.0 chay tren may moi ma khong can cai chung thu truoc; Windows van co the bao Unknown publisher/SmartScreen.
