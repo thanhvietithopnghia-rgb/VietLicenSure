@@ -45,6 +45,7 @@ namespace ThanhViet.VietLicenSure
         private const int MaximumPayloadDataBytes = 16 * 1024 * 1024;
         private const int MaximumSinglePayloadBytes = 8 * 1024 * 1024;
         private const string PayloadBundleFailureCode = "PAYLOAD_BUNDLE_INVALID";
+        private const string ElevatedBrokerLauncherMissingCode = "ElevatedBrokerLauncherMissing";
         private const string OfficialSignerThumbprint = "0000000000000000000000000000000000000000";
         private const string OfficialSignerCertificateSha256 = "0000000000000000000000000000000000000000000000000000000000000000";
         private const uint CertificateUntrustedRootStatus = 0x800B0109u;
@@ -948,7 +949,7 @@ namespace ThanhViet.VietLicenSure
                         throw;
                 }
             }
-            throw new InvalidDataException("ElevatedBrokerLauncherMissing");
+            throw new InvalidDataException(ElevatedBrokerLauncherMissingCode);
         }
 
         private static string GetCurrentLauncherPath()
