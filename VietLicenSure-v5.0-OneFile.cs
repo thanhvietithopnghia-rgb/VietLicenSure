@@ -926,6 +926,56 @@ namespace ThanhViet.VietLicenSure
                 mode == LaunchMode.LocalLicenseManager || mode == LaunchMode.RepairUserDataAcl;
         }
 
+        private static string ResolveLauncherPath(string processPath, string assemblyPath)
+        {
+            string[] candidates = new string[] { processPath, assemblyPath };
+            foreach (string candidate in candidates)
+            {
+                if (String.IsNullOrWhiteSpace(candidate)) continue;
+                try
+                {
+                    string fullPath = Path.GetFullPath(candidate);
+                    if (!Path.IsPathRooted(fullPath) || !File.Exists(fullPath) ||
+                        !String.Equals(Path.GetExtension(fullPath), ".exe", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    FileInfo info = new FileInfo(fullPath);
+                    if ((info.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                    return fullPath;
+                }
+                catch (Exception ex)
+                {
+                    if (ex is OutOfMemoryException || ex is StackOverflowException || ex is ThreadAbortException)
+                        throw;
+                }
+            }
+            throw new InvalidDataException("ElevatedBrokerLauncherMissing");
+        }
+
+        private static string GetCurrentLauncherPath()
+        {
+            string processPath = String.Empty;
+            string assemblyPath = String.Empty;
+            try
+            {
+                using (Process current = Process.GetCurrentProcess())
+                {
+                    if (current.MainModule != null) processPath = current.MainModule.FileName;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is OutOfMemoryException || ex is StackOverflowException || ex is ThreadAbortException)
+                    throw;
+            }
+            try { assemblyPath = Assembly.GetExecutingAssembly().Location; }
+            catch (Exception ex)
+            {
+                if (ex is OutOfMemoryException || ex is StackOverflowException || ex is ThreadAbortException)
+                    throw;
+            }
+            return ResolveLauncherPath(processPath, assemblyPath);
+        }
+
         private static void ShowMessage(LaunchMode mode, string message, MessageBoxIcon icon)
         {
             if (IsInteractiveMode(mode))
@@ -1341,7 +1391,7 @@ namespace ThanhViet.VietLicenSure
                 startInfo.EnvironmentVariables["TOOL_TIMELINE_PATH"] = timelinePath;
                 startInfo.EnvironmentVariables["TOOL_TIMELINE_KEY_PATH"] = timelineKeyPath;
                 startInfo.EnvironmentVariables["TOOL_ENTERPRISE_ROOT"] = enterpriseDirectory;
-                startInfo.EnvironmentVariables["TOOL_LAUNCHER_PATH"] = Assembly.GetExecutingAssembly().Location;
+                startInfo.EnvironmentVariables["TOOL_LAUNCHER_PATH"] = GetCurrentLauncherPath();
                 startInfo.EnvironmentVariables["TOOL_LAUNCHER_PID"] = Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture);
                 startInfo.EnvironmentVariables["TOOL_LAUNCH_MODE"] = mode.ToString();
                 startInfo.EnvironmentVariables["TOOL_AGENT_FORCE"] = mode == LaunchMode.EnterpriseAgentForce ? "1" : "0";

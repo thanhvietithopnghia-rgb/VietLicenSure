@@ -1,13 +1,14 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 4, 2026; the public version remains v5.0.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 8, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — updated October 4, 2026 (first released September 8, 2026)
+## v5.0 — updated October 8, 2026 (first released September 8, 2026)
 
 - **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
+- **Elevated Broker fix:** the launcher now passes the real process executable path instead of a missing assembly path, restoring Valid License Management under UAC while remaining fail-closed when the launcher cannot be verified.
 - **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
 - **Source policy:** establishes `SOURCE-POLICY-v5.0` as the current SSOT, retains controlled access from v4.9, and publishes a four-stage indicative roadmap through and after July 2027; dates are not firm commitments and remain risk-gated.
 - **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.

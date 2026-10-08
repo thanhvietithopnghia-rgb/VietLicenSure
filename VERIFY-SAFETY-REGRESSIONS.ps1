@@ -1278,7 +1278,12 @@ if ($gui) {
         }
         $launcherText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
         if ($launcherText -notmatch 'ElevatedModuleBroker' -or $launcherText -notmatch '--elevated-module-broker' -or
-            $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or $launcherText -notmatch 'case LaunchMode\.ElevatedModuleBroker: return "Tool-ElevatedBridge\.ps1"') {
+            $launcherText -notmatch 'TOOL_ELEVATION_BROKER' -or $launcherText -notmatch 'case LaunchMode\.ElevatedModuleBroker: return "Tool-ElevatedBridge\.ps1"' -or
+            $launcherText -notmatch 'GetCurrentLauncherPath\(\)' -or
+            $launcherText -notmatch 'Process\.GetCurrentProcess\(\)' -or
+            $launcherText -notmatch 'current\.MainModule\.FileName' -or
+            $launcherText -notmatch 'ResolveLauncherPath\(string processPath, string assemblyPath\)' -or
+            $launcherText -match 'EnvironmentVariables\["TOOL_LAUNCHER_PATH"\]\s*=\s*Assembly\.GetExecutingAssembly\(\)\.Location') {
             Fail 'Launcher chưa triển khai broker nâng quyền từ payload nhúng.'
         }
         if ($elevatedBridge.Text -notmatch 'ElevatedBrokerCompiledLauncherRequired' -or

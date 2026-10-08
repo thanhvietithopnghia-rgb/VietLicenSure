@@ -96,9 +96,18 @@ try {
     $parseLaunchMode = $launcherType.GetMethod('ParseLaunchMode', $bindingFlags)
     $requiresTrustedBuild = $launcherType.GetMethod('RequiresTrustedBuild', $bindingFlags)
     $getScriptName = $launcherType.GetMethod('GetScriptName', $bindingFlags)
-    if (-not $parseLaunchMode -or -not $requiresTrustedBuild -or -not $getScriptName) {
+    $resolveLauncherPath = $launcherType.GetMethod('ResolveLauncherPath', $bindingFlags)
+    if (-not $parseLaunchMode -or -not $requiresTrustedBuild -or -not $getScriptName -or -not $resolveLauncherPath) {
         throw 'Launcher thiếu broker nâng quyền đã biên dịch.'
     }
+    $resolvedLauncher = [string]$resolveLauncherPath.Invoke($null, @([IO.Path]::GetFullPath($ExePath), ''))
+    if (-not [string]::Equals($resolvedLauncher, [IO.Path]::GetFullPath($ExePath), [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Launcher không ưu tiên đường dẫn tiến trình thực tế cho broker nâng quyền.'
+    }
+    $missingLauncherBlocked = $false
+    try { [void]$resolveLauncherPath.Invoke($null, @('', '')) }
+    catch { $missingLauncherBlocked = $true }
+    if (-not $missingLauncherBlocked) { throw 'Launcher không fail-closed khi không có đường dẫn EXE hợp lệ.' }
     $brokerFixtureJson = '{"SchemaVersion":"2.0"}'
     $brokerFixtureBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($brokerFixtureJson))
     $brokerMode = $parseLaunchMode.Invoke($null, [object[]]@(,[string[]]@('--elevated-module-broker',$brokerFixtureBase64)))
