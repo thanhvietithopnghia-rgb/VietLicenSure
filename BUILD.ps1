@@ -171,6 +171,8 @@ $payloadFiles = @(
     'tool-assistant-knowledge-v1.1.json',
     'Tool-DetectionEngine.ps1',
     'detection-finding-schema-v1.0.json',
+    'Tool-AssetRegistry.ps1',
+    'asset-registry-schema-v1.0.json',
     'Tool-SoftwareInventory.ps1',
     'Tool-LicenseCompliance.ps1',
     'software-license-catalog-v1.0.json',
@@ -244,6 +246,8 @@ $integrityFiles = @(
     'tool-assistant-knowledge-v1.1.json',
     'Tool-DetectionEngine.ps1',
     'detection-finding-schema-v1.0.json',
+    'Tool-AssetRegistry.ps1',
+    'asset-registry-schema-v1.0.json',
     'Tool-SoftwareInventory.ps1',
     'Tool-LicenseCompliance.ps1',
     'software-license-catalog-v1.0.json',
@@ -336,6 +340,7 @@ $sourceFiles = @(
     'VERIFY-EXTENSIONS.ps1'
     'VERIFY-ENTERPRISE.ps1'
     'VERIFY-DETECTION-ENGINE.ps1'
+    'VERIFY-ASSET-REGISTRY.ps1'
     'VERIFY-LICENSE-COMPLIANCE.ps1'
     'VERIFY-COMPATIBILITY.ps1'
     'VERIFY-MICROSOFT-CATALOG-SOURCES.ps1'
@@ -582,6 +587,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'VERIFY-EXTENSIONS.ps1',
     'VERIFY-ENTERPRISE.ps1',
     'VERIFY-DETECTION-ENGINE.ps1',
+    'VERIFY-ASSET-REGISTRY.ps1',
     'VERIFY-LICENSE-COMPLIANCE.ps1',
     'VERIFY-COMPATIBILITY.ps1',
     'VERIFY-OFFLINE-I18N.ps1',
@@ -654,6 +660,7 @@ if ($RequireAuthenticode) {
 . (Join-Path $sourceDirectory 'Tool-OfflinePolicy.ps1')
 . (Join-Path $sourceDirectory 'Tool-Provenance.ps1')
 . (Join-Path $sourceDirectory 'Tool-Assistant.ps1')
+. (Join-Path $sourceDirectory 'Tool-AssetRegistry.ps1')
 . (Join-Path $sourceDirectory 'Tool-SoftwareInventory.ps1')
 . (Join-Path $sourceDirectory 'Tool-PluginEngine.ps1')
 $moduleContractMetadata = Get-ToolModuleContractMetadata
@@ -663,6 +670,7 @@ $safetyPolicyMetadata = Get-ToolSafetyPolicyMetadata
 $compatibilityMetadata = Get-ToolCompatibilityMetadata
 $localizationMetadata = Get-ToolLocalizationMetadata
 $offlinePolicyMetadata = Get-ToolOfflinePolicyMetadata
+$assetRegistryMetadata = Get-ToolAssetRegistryMetadata
 $provenanceManifestPath = Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json'
 $provenanceSignaturePath = Join-Path $sourceDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s'
 if ($AllowUnsignedDevelopmentBuild) {
@@ -1344,6 +1352,10 @@ $releaseManifest = [ordered]@{
     ModuleCount = [int]$moduleContractMetadata.ModuleCount
     ModuleEntryPointCount = [int]$moduleContractMetadata.EntryPointCount
     DataSchemaVersion = '2.0'
+    AssetRegistrySchemaVersion = [string]$assetRegistryMetadata.SchemaVersion
+    AssetRegistryDeviceIdVersion = [string]$assetRegistryMetadata.DeviceIdVersion
+    AssetRegistryMatchingPolicyVersion = [string]$assetRegistryMetadata.MatchingPolicyVersion
+    AssetRegistryAssignmentHistoryMode = [string]$assetRegistryMetadata.AssignmentHistoryMode
     DataProducerVersion = $releaseVersion
     DataStorageGeneration = 'v4.6'
     LegacyDataStorageGeneration = 'v4.6'

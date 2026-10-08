@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/schemas/asset-registry-v1.0.json",
+  "title": "VietLicenSure Asset Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["SchemaVersion", "RegistryId", "CreatedAtUtc", "UpdatedAtUtc", "Devices", "Assets", "Assignments"],
+  "properties": {
+    "SchemaVersion": { "const": "1.0" },
+    "RegistryId": { "type": "string", "pattern": "^VLS-REG-[A-F0-9]{32}$" },
+    "CreatedAtUtc": { "type": "string", "format": "date-time" },
+    "UpdatedAtUtc": { "type": "string", "format": "date-time" },
+    "Devices": { "type": "array", "items": { "$ref": "#/definitions/device" } },
+    "Assets": { "type": "array", "items": { "$ref": "#/definitions/asset" } },
+    "Assignments": { "type": "array", "items": { "$ref": "#/definitions/assignmentEvent" } }
+  },
+  "definitions": {
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["DeviceId", "IdentityConfidence", "IdentifierDigests", "CreatedAtUtc", "LastSeenUtc", "ObservationCount", "LastKnownComputerName", "Manufacturer", "Model"],
+      "properties": {
+        "DeviceId": { "type": "string", "pattern": "^VLS-DEV-[A-F0-9]{32}$" },
+        "IdentityConfidence": { "enum": ["High", "Medium", "Low"] },
+        "IdentifierDigests": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string", "pattern": "^[A-F0-9]{64}$" } },
+        "CreatedAtUtc": { "type": "string", "format": "date-time" },
+        "LastSeenUtc": { "type": "string", "format": "date-time" },
+        "ObservationCount": { "type": "integer", "minimum": 1 },
+        "LastKnownComputerName": { "type": "string", "maxLength": 120 },
+        "Manufacturer": { "type": "string", "maxLength": 120 },
+        "Model": { "type": "string", "maxLength": 120 }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["AssetId", "DeviceId", "ExternalAssetTag", "InventoryNumber", "Status", "CreatedAtUtc", "UpdatedAtUtc"],
+      "properties": {
+        "AssetId": { "type": "string", "pattern": "^VLS-AST-[A-F0-9]{32}$" },
+        "DeviceId": { "type": "string", "pattern": "^VLS-DEV-[A-F0-9]{32}$" },
+        "ExternalAssetTag": { "type": "string", "maxLength": 120 },
+        "InventoryNumber": { "type": "string", "maxLength": 120 },
+        "Status": { "enum": ["Active", "Repair", "Retired", "Disposed", "Lost"] },
+        "CreatedAtUtc": { "type": "string", "format": "date-time" },
+        "UpdatedAtUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "assignmentEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["EventId", "AssetId", "DeviceId", "Sequence", "Action", "AssignmentId", "PreviousAssignmentId", "AssigneeType", "AssigneeReference", "DisplayName", "EffectiveAtUtc", "RecordedAtUtc", "RecordedBy", "Reason"],
+      "properties": {
+        "EventId": { "type": "string", "pattern": "^VLS-AEV-[A-F0-9]{32}$" },
+        "AssetId": { "type": "string", "pattern": "^VLS-AST-[A-F0-9]{32}$" },
+        "DeviceId": { "type": "string", "pattern": "^VLS-DEV-[A-F0-9]{32}$" },
+        "Sequence": { "type": "integer", "minimum": 1 },
+        "Action": { "enum": ["Assign", "Reassign", "Release"] },
+        "AssignmentId": { "type": "string", "pattern": "^VLS-ASN-[A-F0-9]{32}$" },
+        "PreviousAssignmentId": { "type": "string", "pattern": "^(|VLS-ASN-[A-F0-9]{32})$" },
+        "AssigneeType": { "type": "string", "pattern": "^(|User|Department|Location|Custodian)$" },
+        "AssigneeReference": { "type": "string", "maxLength": 200 },
+        "DisplayName": { "type": "string", "maxLength": 200 },
+        "EffectiveAtUtc": { "type": "string", "format": "date-time" },
+        "RecordedAtUtc": { "type": "string", "format": "date-time" },
+        "RecordedBy": { "type": "string", "maxLength": 120 },
+        "Reason": { "type": "string", "maxLength": 500 }
+      }
+    }
+  }
+}

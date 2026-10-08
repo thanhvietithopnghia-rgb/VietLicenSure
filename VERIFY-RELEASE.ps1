@@ -163,6 +163,7 @@ $resultCenterVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-RESULT-CENTER
 $extensionsVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-EXTENSIONS.ps1'
 $enterpriseVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-ENTERPRISE.ps1'
 $detectionEngineVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-DETECTION-ENGINE.ps1'
+$assetRegistryVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-ASSET-REGISTRY.ps1'
 $compatibilityVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-COMPATIBILITY.ps1'
 $offlineI18nVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-OFFLINE-I18N.ps1'
 $localizationVerifierPath = Join-Path $sourceDirectoryFull 'VERIFY-LOCALIZATION-COVERAGE.ps1'
@@ -193,6 +194,7 @@ if (-not (Test-Path -LiteralPath $resultCenterVerifierPath -PathType Leaf)) { $f
 if (-not (Test-Path -LiteralPath $extensionsVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-EXTENSIONS.ps1.') }
 if (-not (Test-Path -LiteralPath $enterpriseVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-ENTERPRISE.ps1.') }
 if (-not (Test-Path -LiteralPath $detectionEngineVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-DETECTION-ENGINE.ps1.') }
+if (-not (Test-Path -LiteralPath $assetRegistryVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-ASSET-REGISTRY.ps1.') }
 if (-not (Test-Path -LiteralPath $compatibilityVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-COMPATIBILITY.ps1.') }
 if (-not (Test-Path -LiteralPath $offlineI18nVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-OFFLINE-I18N.ps1.') }
 if (-not (Test-Path -LiteralPath $localizationVerifierPath -PathType Leaf)) { $failures.Add('Thiếu VERIFY-LOCALIZATION-COVERAGE.ps1.') }
@@ -228,9 +230,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 149 } else { 150 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 213 } else { 215 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 216 } else { 218 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 47 } elseif ($AllowStoreManifest) { 48 } else { 49 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
@@ -675,7 +677,7 @@ $payloadFiles = @(
     'Tool-ScanOptimization.ps1',
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-DashboardPresentation.ps1','Tool-Localization.ps1',
     'Tool-Strings.vi-VN.json','Tool-Strings.en-US.json','Tool-OfflinePolicy.ps1','Tool-Assistant.ps1','tool-assistant-knowledge-v1.1.json',
-    'Tool-DetectionEngine.ps1','detection-finding-schema-v1.0.json','Tool-SoftwareInventory.ps1','Tool-LicenseCompliance.ps1','software-license-catalog-v1.0.json','software-license-catalog-v1.0.json.p7s','software-license-online-update.ps1','Tool-UpdateManager.ps1',
+    'Tool-DetectionEngine.ps1','detection-finding-schema-v1.0.json','Tool-AssetRegistry.ps1','asset-registry-schema-v1.0.json','Tool-SoftwareInventory.ps1','Tool-LicenseCompliance.ps1','software-license-catalog-v1.0.json','software-license-catalog-v1.0.json.p7s','software-license-online-update.ps1','Tool-UpdateManager.ps1',
     'Tool-ReportSchema.ps1','Tool-ResultCenter.ps1','Tool-ReportExport.ps1','Tool-PluginEngine.ps1','Tool-LicenseTimeline.ps1',
     'Tool-SafetyPolicy.ps1','Tool-Enterprise.ps1','Tool-EnterpriseCli.ps1','Tool-EnterpriseHost.ps1','Tool-EnterpriseAgent.ps1',
     'enterprise-license-manager.ps1','TOOL-SHA256SUMS.txt','windows-license-backup.ps1',
@@ -903,8 +905,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 68 } else { 69 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 72 } else { 73 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
@@ -1017,6 +1019,10 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             throw 'Thiếu metadata công tắc mạng riêng bật/tắt của Mục 8.'
         }
         if ([string]$releaseManifest.DataSchemaVersion -ne '2.0' -or
+            [string]$releaseManifest.AssetRegistrySchemaVersion -ne '1.0' -or
+            [string]$releaseManifest.AssetRegistryDeviceIdVersion -ne '1' -or
+            [string]$releaseManifest.AssetRegistryMatchingPolicyVersion -ne '1' -or
+            [string]$releaseManifest.AssetRegistryAssignmentHistoryMode -ne 'AppendOnly' -or
             [string]$releaseManifest.DataStorageGeneration -ne 'v4.6' -or
             [string]$releaseManifest.LegacyDataStorageGeneration -ne 'v4.6' -or
             [string]$releaseManifest.DataMigrationPolicy -ne 'Verified staging copy + transactional commit + rollback' -or
@@ -1298,6 +1304,10 @@ if (Test-Path -LiteralPath $softwareDetectionV49VerifierPath -PathType Leaf) {
 if (Test-Path -LiteralPath $detectionEngineVerifierPath -PathType Leaf) {
     & $detectionEngineVerifierPath -SourceDirectory $sourceDirectoryFull
     if ($LASTEXITCODE -ne 0) { $failures.Add('VERIFY-DETECTION-ENGINE.ps1 không đạt.') }
+}
+if (Test-Path -LiteralPath $assetRegistryVerifierPath -PathType Leaf) {
+    & $assetRegistryVerifierPath -SourceDirectory $sourceDirectoryFull
+    if ($LASTEXITCODE -ne 0) { $failures.Add('VERIFY-ASSET-REGISTRY.ps1 không đạt.') }
 }
 if (Test-Path -LiteralPath $provenanceVerifierPath -PathType Leaf) {
     if ($AllowDevelopmentManifest) {
