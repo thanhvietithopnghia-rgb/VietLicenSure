@@ -26,6 +26,12 @@ if (-not (Get-Command Get-ToolLicenseComplianceSnapshot -ErrorAction SilentlyCon
     . $toolEnterpriseCompliancePath
 }
 
+$toolEnterpriseAssetRegistryPath = Join-Path $PSScriptRoot "Tool-AssetRegistry.ps1"
+if (-not (Get-Command Get-ToolDeviceIdentitySnapshot -ErrorAction SilentlyContinue) -and
+    (Test-Path -LiteralPath $toolEnterpriseAssetRegistryPath -PathType Leaf)) {
+    . $toolEnterpriseAssetRegistryPath
+}
+
 function Get-ToolEnterpriseText {
     param(
         [Parameter(Mandatory = $true)][string]$Key,
@@ -141,6 +147,7 @@ function Get-ToolEnterprisePaths {
         ServerReports = Join-Path $root "server\reports"
         ServerJobs = Join-Path $root "server\jobs"
         ServerResults = Join-Path $root "server\results"
+        ServerAssets = Join-Path $root "server\assets"
         ServerAudit = Join-Path $root "server\enterprise-audit.jsonl"
         ServerPid = Join-Path $root "server\server.pid.json"
         ServerHeartbeat = Join-Path $root "server\server-heartbeat.json"
@@ -209,7 +216,7 @@ function Initialize-ToolEnterpriseStorage {
     $rootExisted = Test-Path -LiteralPath $paths.Root -PathType Container
     $directories = @(
         $paths.Root, $paths.Server, $paths.ServerClients, $paths.ServerClientSecrets,
-        $paths.ServerReports, $paths.ServerJobs, $paths.ServerResults,
+        $paths.ServerReports, $paths.ServerJobs, $paths.ServerResults, $paths.ServerAssets,
         $paths.Client, $paths.ClientOutbox, $paths.ClientProcessed, $paths.Bin
     )
     foreach ($directory in $directories) {
@@ -1156,6 +1163,65 @@ function ConvertTo-ToolEnterpriseLicenseRecord {
     }
 }
 
+function Get-ToolEnterpriseAssetIdentitySnapshot {
+    if (-not (Get-Command Get-ToolDeviceIdentitySnapshot -ErrorAction SilentlyContinue)) { return $null }
+    try {
+        $computerProduct = Get-WmiObject -Class Win32_ComputerSystemProduct -ErrorAction SilentlyContinue | Select-Object -First 1
+        $computerSystem = Get-WmiObject -Class Win32_ComputerSystem -ErrorAction SilentlyContinue | Select-Object -First 1
+        $bios = Get-WmiObject -Class Win32_BIOS -ErrorAction SilentlyContinue | Select-Object -First 1
+        $baseboard = Get-WmiObject -Class Win32_BaseBoard -ErrorAction SilentlyContinue | Select-Object -First 1
+        $enclosure = Get-WmiObject -Class Win32_SystemEnclosure -ErrorAction SilentlyContinue | Select-Object -First 1
+        $machineGuid = ''
+        try { $machineGuid = [string](Get-ItemPropertyValue -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Cryptography' -Name MachineGuid -ErrorAction Stop) } catch {}
+        $observation = [pscustomobject][ordered]@{
+            SystemUuid = if ($computerProduct) { [string]$computerProduct.UUID } else { '' }
+            SystemSerialNumber = if ($computerProduct) { [string]$computerProduct.IdentifyingNumber } else { '' }
+            BiosSerialNumber = if ($bios) { [string]$bios.SerialNumber } else { '' }
+            BaseboardSerialNumber = if ($baseboard) { [string]$baseboard.SerialNumber } else { '' }
+            ChassisSerialNumber = if ($enclosure) { [string](@($enclosure.SerialNumber) | Select-Object -First 1) } else { '' }
+            MachineGuid = $machineGuid
+            Manufacturer = if ($computerSystem) { [string]$computerSystem.Manufacturer } elseif ($computerProduct) { [string]$computerProduct.Vendor } else { '' }
+            Model = if ($computerSystem) { [string]$computerSystem.Model } elseif ($computerProduct) { [string]$computerProduct.Name } else { '' }
+            ComputerName = [Environment]::MachineName
+        }
+        return (Get-ToolDeviceIdentitySnapshot -Observation $observation)
+    } catch {
+        return $null
+    }
+}
+
+function Update-ToolEnterpriseAssetRegistryFromReport {
+    param([Parameter(Mandatory=$true)][object]$Report)
+    if (-not (Get-Command Register-ToolAssetIdentitySnapshot -ErrorAction SilentlyContinue) -or
+        -not $Report.PSObject.Properties['AssetIdentity'] -or $null -eq $Report.AssetIdentity) {
+        return [pscustomobject][ordered]@{ Status='Missing'; DeviceId=''; AssetId=''; CurrentAssignment=$null; HistoryCount=0 }
+    }
+    $paths = Initialize-ToolEnterpriseStorage
+    $store = Read-ToolAssetRegistryStore -RootPath $paths.ServerAssets -CreateIfMissing
+    $result = Register-ToolAssetIdentitySnapshot -Store $store -IdentitySnapshot $Report.AssetIdentity -ObservedAtUtc $Report.CreatedAt
+    if ([bool]$result.Changed) { [void](Write-ToolAssetRegistryStore -Store $store -RootPath $paths.ServerAssets) }
+    $current = $null
+    $historyCount = 0
+    if (-not [string]::IsNullOrWhiteSpace([string]$result.AssetId)) {
+        $current = Get-ToolCurrentAssetAssignment -Store $store -AssetId ([string]$result.AssetId)
+        $historyCount = @(Get-ToolAssetAssignmentHistory -Store $store -AssetId ([string]$result.AssetId)).Count
+    }
+    return [pscustomobject][ordered]@{
+        Status=[string]$result.Status; DeviceId=[string]$result.DeviceId; AssetId=[string]$result.AssetId
+        CurrentAssignment=$current; HistoryCount=$historyCount
+    }
+}
+
+function Get-ToolEnterpriseAssetReference {
+    param([AllowNull()][object]$Asset)
+    if ($null -eq $Asset) { return '' }
+    if (-not [string]::IsNullOrWhiteSpace([string]$Asset.ExternalAssetTag)) { return (ConvertTo-ToolEnterpriseSafeText $Asset.ExternalAssetTag 120) }
+    if (-not [string]::IsNullOrWhiteSpace([string]$Asset.InventoryNumber)) { return (ConvertTo-ToolEnterpriseSafeText $Asset.InventoryNumber 120) }
+    $assetId = [string]$Asset.AssetId
+    if ($assetId.Length -ge 8) { return ('ASSET-' + $assetId.Substring($assetId.Length - 8)) }
+    return 'ASSET'
+}
+
 function Get-ToolEnterpriseLicenseSnapshot {
     param([string]$ClientId = "")
 
@@ -1186,6 +1252,7 @@ function Get-ToolEnterpriseLicenseSnapshot {
     $softwareInventory = if (Get-Command Get-ToolLicenseComplianceSoftwareInventory -ErrorAction SilentlyContinue) {
         @(Get-ToolLicenseComplianceSoftwareInventory -MaximumItems 300)
     } else { @() }
+    $assetIdentity = Get-ToolEnterpriseAssetIdentitySnapshot
     $data = [ordered]@{
         CreatedAt = [DateTime]::UtcNow.ToString("o")
         ClientId = $ClientId
@@ -1203,6 +1270,7 @@ function Get-ToolEnterpriseLicenseSnapshot {
         WindowsLicenses = $windowsLicenses
         OfficeLicenses = $officeLicenses
         SoftwareInventory = $softwareInventory
+        AssetIdentity = $assetIdentity
         OfficeInstallation = [ordered]@{
             ProductReleaseIds = ConvertTo-ToolEnterpriseSafeText $(if ($officeConfiguration -and $officeConfiguration.PSObject.Properties['ProductReleaseIds']) { $officeConfiguration.ProductReleaseIds } else { '' }) 400
             Version = ConvertTo-ToolEnterpriseSafeText $(if ($officeConfiguration -and $officeConfiguration.PSObject.Properties['VersionToReport']) { $officeConfiguration.VersionToReport } else { '' }) 80
@@ -1214,6 +1282,8 @@ function Get-ToolEnterpriseLicenseSnapshot {
             MacAddressIncluded = $false
             SoftwarePathsIncluded = $false
             SoftwareLicenseKeysIncluded = $false
+            RawHardwareIdentifiersIncluded = $false
+            HashedAssetIdentityIncluded = [bool]($null -ne $assetIdentity)
         }
     }
     if (Get-Command New-ToolReportEnvelope -ErrorAction SilentlyContinue) {
@@ -1513,6 +1583,8 @@ function Save-ToolEnterpriseServerReport {
         -not [string]::IsNullOrWhiteSpace($windowsLast5) -and [string]$existingRecord.WindowsLast5 -ne $windowsLast5)
     $officeIdentityChanged = [bool]($existingRecord -and -not [string]::IsNullOrWhiteSpace([string]$existingRecord.OfficeLast5) -and
         -not [string]::IsNullOrWhiteSpace($officeLast5) -and [string]$existingRecord.OfficeLast5 -ne $officeLast5)
+    $assetRegistration = Update-ToolEnterpriseAssetRegistryFromReport -Report $Report
+    $assetAssignment = $assetRegistration.CurrentAssignment
     $identityChangedAtUtc = if ($windowsIdentityChanged -or $officeIdentityChanged) {
         [DateTime]::UtcNow.ToString("o")
     } elseif ($existingRecord -and $existingRecord.PSObject.Properties['LicenseIdentityChangedAtUtc']) {
@@ -1538,6 +1610,12 @@ function Save-ToolEnterpriseServerReport {
         OfficeEntitlementStatus = "NotVerified"
         OfficeIdentityChanged = $officeIdentityChanged
         LicenseIdentityChangedAtUtc = $identityChangedAtUtc
+        AssetMatchStatus = ConvertTo-ToolEnterpriseSafeText $assetRegistration.Status 40
+        DeviceId = ConvertTo-ToolEnterpriseSafeText $assetRegistration.DeviceId 80
+        AssetId = ConvertTo-ToolEnterpriseSafeText $assetRegistration.AssetId 80
+        AssignmentType = if ($assetAssignment) { ConvertTo-ToolEnterpriseSafeText $assetAssignment.AssigneeType 40 } else { '' }
+        AssignmentDisplayName = if ($assetAssignment) { ConvertTo-ToolEnterpriseSafeText $assetAssignment.DisplayName 200 } else { '' }
+        AssignmentHistoryCount = [int]$assetRegistration.HistoryCount
         LatestReportPath = $latestPath
     }
     Write-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId) -Value $record
@@ -1667,6 +1745,21 @@ function Get-ToolEnterpriseDashboardSnapshot {
     }
     $complianceEntitlements = if (Get-Command Get-ToolLicenseEntitlements -ErrorAction SilentlyContinue) { @(Get-ToolLicenseEntitlements) } else { @() }
     $complianceObservations = if (Get-Command Get-ToolLicenseComplianceFleetObservations -ErrorAction SilentlyContinue) { @(Get-ToolLicenseComplianceFleetObservations) } else { @() }
+    $assetStore = $null
+    try {
+        if (Get-Command Read-ToolAssetRegistryStore -ErrorAction SilentlyContinue) {
+            $assetStore = Read-ToolAssetRegistryStore -RootPath (Initialize-ToolEnterpriseStorage).ServerAssets
+        }
+    } catch { $assetStore = $null }
+    $assetById = @{}
+    $assignedAssetIds = @{}
+    if ($assetStore) {
+        foreach ($assetItem in @($assetStore.Assets)) { $assetById[[string]$assetItem.AssetId] = $assetItem }
+        foreach ($assetItem in @($assetStore.Assets)) {
+            if ($null -ne (Get-ToolCurrentAssetAssignment -Store $assetStore -AssetId ([string]$assetItem.AssetId))) { $assignedAssetIds[[string]$assetItem.AssetId] = $true }
+        }
+    }
+    $assetConflictCount = 0
 
     foreach ($source in @(Get-ToolEnterpriseServerClients)) {
         $ageHours = Get-ToolEnterpriseClientAgeHours -LastSeenUtc $source.LastSeenUtc
@@ -1694,6 +1787,13 @@ function Get-ToolEnterpriseDashboardSnapshot {
         $windowsChanged = [bool]($source.PSObject.Properties['WindowsIdentityChanged'] -and $source.WindowsIdentityChanged)
         $officeChanged = [bool]($source.PSObject.Properties['OfficeIdentityChanged'] -and $source.OfficeIdentityChanged)
         if ($windowsChanged -or $officeChanged -or -not [string]::IsNullOrWhiteSpace($identityChangedAtUtc)) { [void]$alerts.Add("LicenseIdentityChanged") }
+        $assetMatchStatus = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['AssetMatchStatus']) { $source.AssetMatchStatus } else { 'Missing' }) 40
+        if ($assetMatchStatus -in @('Conflict','Ambiguous')) { [void]$alerts.Add('AssetIdentityConflict'); $assetConflictCount++ }
+        $assetId = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['AssetId']) { $source.AssetId } else { '' }) 80
+        $assetRecord = if ($assetId -and $assetById.ContainsKey($assetId)) { $assetById[$assetId] } else { $null }
+        $currentAssignment = if ($assetStore -and $assetRecord) { Get-ToolCurrentAssetAssignment -Store $assetStore -AssetId $assetId } else { $null }
+        $assetReference = Get-ToolEnterpriseAssetReference -Asset $assetRecord
+        $assignmentHistoryCount = if ($assetStore -and $assetRecord) { @(Get-ToolAssetAssignmentHistory -Store $assetStore -AssetId $assetId).Count } else { 0 }
         $rawClientId = [string]$source.ClientId
         $clientReference = if ([string]::IsNullOrWhiteSpace($rawClientId)) { "CLIENT-UNKNOWN" } else { Get-ToolEnterpriseStableClientReference -ClientId $rawClientId }
         $assignedEntitlements = @($complianceEntitlements | Where-Object {
@@ -1730,6 +1830,12 @@ function Get-ToolEnterpriseDashboardSnapshot {
         [void]$clients.Add([pscustomobject][ordered]@{
             ClientReference = $clientReference
             ComputerName = ConvertTo-ToolEnterpriseSafeText $source.ComputerName 100
+            AssetReference = $assetReference
+            AssetStatus = if ($assetRecord) { ConvertTo-ToolEnterpriseSafeText $assetRecord.Status 40 } else { '' }
+            AssetMatchStatus = $assetMatchStatus
+            AssignmentType = if ($currentAssignment) { ConvertTo-ToolEnterpriseSafeText $currentAssignment.AssigneeType 40 } else { '' }
+            AssignmentDisplayName = if ($currentAssignment) { ConvertTo-ToolEnterpriseSafeText $currentAssignment.DisplayName 200 } else { '' }
+            AssignmentHistoryCount = [int]$assignmentHistoryCount
             RemoteAddress = ConvertTo-ToolEnterpriseSafeText $source.RemoteAddress 80
             LastSeenUtc = ConvertTo-ToolEnterpriseSafeText $source.LastSeenUtc 80
             AgeMinutes = if ([double]::IsPositiveInfinity([double]$ageHours)) { $null } else { [Math]::Round(($ageHours * 60), 1) }
@@ -1768,6 +1874,10 @@ function Get-ToolEnterpriseDashboardSnapshot {
             AssuranceScore = [int]$compliance.Summary.AssuranceScore
             Compliant = [int]$compliance.Summary.Compliant
             Critical = [int]$compliance.Summary.Critical
+            Assets = if ($assetStore) { @($assetStore.Assets).Count } else { 0 }
+            AssignedAssets = $assignedAssetIds.Count
+            UnassignedAssets = if ($assetStore) { @($assetStore.Assets).Count - $assignedAssetIds.Count } else { 0 }
+            AssetConflicts = $assetConflictCount
         }
         Compliance = $compliance
         Clients = @($clients.ToArray() | Sort-Object @{Expression={ switch ($_.Presence) { 'Online' {0}; 'Stale' {1}; default {2} } }}, ComputerName, ClientReference)
@@ -1816,6 +1926,13 @@ function Get-ToolEnterpriseDashboardHtml {
         '{{FILTER}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.filter' -Culture $Culture
         '{{FILTER_PLACEHOLDER}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.filterPlaceholder' -Culture $Culture
         '{{DEVICE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.device' -Culture $Culture
+        '{{ASSETS}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.assets' -Culture $Culture
+        '{{ASSET_ASSIGNED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.assetAssigned' -Culture $Culture
+        '{{ASSET_UNASSIGNED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.assetUnassigned' -Culture $Culture
+        '{{ASSET_CONFLICTS}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.assetConflicts' -Culture $Culture
+        '{{ASSET_LABEL}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.assetLabel' -Culture $Culture
+        '{{ASSIGNED_TO}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.assignedTo' -Culture $Culture
+        '{{UNASSIGNED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.unassigned' -Culture $Culture
         '{{PRESENCE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.presence' -Culture $Culture
         '{{LAST_SEEN}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.lastSeen' -Culture $Culture
         '{{ALERTS}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alerts' -Culture $Culture
@@ -1832,6 +1949,7 @@ function Get-ToolEnterpriseDashboardHtml {
         '{{ALERT_OFFICE}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.office' -Culture $Culture
         '{{ALERT_IDENTITY}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.identityChanged' -Culture $Culture
         '{{ALERT_ENTITLEMENT}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.entitlement' -Culture $Culture
+        '{{ALERT_ASSET_CONFLICT}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.alert.assetConflict' -Culture $Culture
         '{{STATUS_NOT_VERIFIED}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.status.notVerified' -Culture $Culture
         '{{STATUS_NEEDS_REVIEW}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.status.needsReview' -Culture $Culture
         '{{STATUS_COMPLIANT}}' = Get-ToolEnterpriseCultureText -Key 'enterpriseDashboard.ui.status.compliant' -Culture $Culture
@@ -1877,7 +1995,7 @@ function Get-ToolEnterpriseDashboardHtml {
   <link rel="stylesheet" href="app.css">
   <script src="app.js" defer></script>
 </head>
-<body data-connecting="{{CONNECTING}}" data-connected="{{CONNECTED}}" data-failed="{{FAILED}}" data-empty="{{EMPTY}}" data-none="{{NONE}}" data-not-detected="{{NOT_DETECTED}}" data-entitlement="{{ENTITLEMENT}}" data-alert-stale="{{ALERT_STALE}}" data-alert-offline="{{ALERT_OFFLINE}}" data-alert-windows="{{ALERT_WINDOWS}}" data-alert-office="{{ALERT_OFFICE}}" data-alert-identity="{{ALERT_IDENTITY}}" data-alert-entitlement="{{ALERT_ENTITLEMENT}}" data-status-not-verified="{{STATUS_NOT_VERIFIED}}" data-status-needs-review="{{STATUS_NEEDS_REVIEW}}" data-status-compliant="{{STATUS_COMPLIANT}}" data-status-critical="{{STATUS_CRITICAL}}" data-advisor-risk-high="{{ADVISOR_RISK_HIGH}}" data-advisor-risk-review="{{ADVISOR_RISK_REVIEW}}" data-advisor-risk-low="{{ADVISOR_RISK_LOW}}" data-advisor-finding-active="{{ADVISOR_FINDING_ACTIVE}}" data-advisor-finding-inactive="{{ADVISOR_FINDING_INACTIVE}}" data-advisor-finding-free="{{ADVISOR_FINDING_FREE}}" data-advisor-finding-commercial="{{ADVISOR_FINDING_COMMERCIAL}}" data-advisor-recommend-reconcile="{{ADVISOR_RECOMMEND_RECONCILE}}" data-advisor-recommend-attach="{{ADVISOR_RECOMMEND_ATTACH}}" data-advisor-recommend-activate="{{ADVISOR_RECOMMEND_ACTIVATE}}" data-advisor-recommend-retain="{{ADVISOR_RECOMMEND_RETAIN}}" data-advisor-limitation="{{ADVISOR_LIMITATION}}" data-advisor-explain="{{ADVISOR_EXPLAIN}}" data-advisor-rule-id="{{ADVISOR_RULE_ID}}" data-advisor-confidence="{{ADVISOR_CONFIDENCE}}" data-advisor-finding-label="{{ADVISOR_FINDING_LABEL}}" data-advisor-evidence="{{ADVISOR_EVIDENCE}}" data-advisor-recommendation="{{ADVISOR_RECOMMENDATION}}" data-advisor-limitation-heading="{{ADVISOR_LIMITATION_HEADING}}" data-advisor-confirmed="{{ADVISOR_CONFIRMED}}" data-advisor-confidence-high="{{ADVISOR_CONFIDENCE_HIGH}}" data-advisor-confidence-medium="{{ADVISOR_CONFIDENCE_MEDIUM}}" data-advisor-confidence-low="{{ADVISOR_CONFIDENCE_LOW}}" data-advisor-informational="{{ADVISOR_INFORMATIONAL}}" data-advisor-source-endpoint="{{ADVISOR_SOURCE_ENDPOINT}}" data-advisor-source-compliance="{{ADVISOR_SOURCE_COMPLIANCE}}" data-advisor-source-catalog="{{ADVISOR_SOURCE_CATALOG}}" data-advisor-source-inventory="{{ADVISOR_SOURCE_INVENTORY}}">
+<body data-connecting="{{CONNECTING}}" data-connected="{{CONNECTED}}" data-failed="{{FAILED}}" data-empty="{{EMPTY}}" data-none="{{NONE}}" data-not-detected="{{NOT_DETECTED}}" data-entitlement="{{ENTITLEMENT}}" data-asset-label="{{ASSET_LABEL}}" data-assigned-to="{{ASSIGNED_TO}}" data-unassigned="{{UNASSIGNED}}" data-alert-stale="{{ALERT_STALE}}" data-alert-offline="{{ALERT_OFFLINE}}" data-alert-windows="{{ALERT_WINDOWS}}" data-alert-office="{{ALERT_OFFICE}}" data-alert-identity="{{ALERT_IDENTITY}}" data-alert-entitlement="{{ALERT_ENTITLEMENT}}" data-alert-asset-conflict="{{ALERT_ASSET_CONFLICT}}" data-status-not-verified="{{STATUS_NOT_VERIFIED}}" data-status-needs-review="{{STATUS_NEEDS_REVIEW}}" data-status-compliant="{{STATUS_COMPLIANT}}" data-status-critical="{{STATUS_CRITICAL}}" data-advisor-risk-high="{{ADVISOR_RISK_HIGH}}" data-advisor-risk-review="{{ADVISOR_RISK_REVIEW}}" data-advisor-risk-low="{{ADVISOR_RISK_LOW}}" data-advisor-finding-active="{{ADVISOR_FINDING_ACTIVE}}" data-advisor-finding-inactive="{{ADVISOR_FINDING_INACTIVE}}" data-advisor-finding-free="{{ADVISOR_FINDING_FREE}}" data-advisor-finding-commercial="{{ADVISOR_FINDING_COMMERCIAL}}" data-advisor-recommend-reconcile="{{ADVISOR_RECOMMEND_RECONCILE}}" data-advisor-recommend-attach="{{ADVISOR_RECOMMEND_ATTACH}}" data-advisor-recommend-activate="{{ADVISOR_RECOMMEND_ACTIVATE}}" data-advisor-recommend-retain="{{ADVISOR_RECOMMEND_RETAIN}}" data-advisor-limitation="{{ADVISOR_LIMITATION}}" data-advisor-explain="{{ADVISOR_EXPLAIN}}" data-advisor-rule-id="{{ADVISOR_RULE_ID}}" data-advisor-confidence="{{ADVISOR_CONFIDENCE}}" data-advisor-finding-label="{{ADVISOR_FINDING_LABEL}}" data-advisor-evidence="{{ADVISOR_EVIDENCE}}" data-advisor-recommendation="{{ADVISOR_RECOMMENDATION}}" data-advisor-limitation-heading="{{ADVISOR_LIMITATION_HEADING}}" data-advisor-confirmed="{{ADVISOR_CONFIRMED}}" data-advisor-confidence-high="{{ADVISOR_CONFIDENCE_HIGH}}" data-advisor-confidence-medium="{{ADVISOR_CONFIDENCE_MEDIUM}}" data-advisor-confidence-low="{{ADVISOR_CONFIDENCE_LOW}}" data-advisor-informational="{{ADVISOR_INFORMATIONAL}}" data-advisor-source-endpoint="{{ADVISOR_SOURCE_ENDPOINT}}" data-advisor-source-compliance="{{ADVISOR_SOURCE_COMPLIANCE}}" data-advisor-source-catalog="{{ADVISOR_SOURCE_CATALOG}}" data-advisor-source-inventory="{{ADVISOR_SOURCE_INVENTORY}}">
   <a class="skip" href="#main">{{SKIP}}</a>
   <header class="topbar">
     <div><strong>VietLicenSure Central</strong><span class="release-badge">v5.0</span></div>
@@ -1896,6 +2014,12 @@ function Get-ToolEnterpriseDashboardHtml {
         <article class="warn"><span>{{STALE}}</span><strong id="count-stale">0</strong></article>
         <article class="muted"><span>{{OFFLINE}}</span><strong id="count-offline">0</strong></article>
         <article class="danger"><span>{{REVIEW}}</span><strong id="count-review">0</strong></article>
+      </section>
+      <section class="cards asset-cards" aria-label="{{ASSETS}}">
+        <article><span>{{ASSETS}}</span><strong id="count-assets">0</strong></article>
+        <article class="ok"><span>{{ASSET_ASSIGNED}}</span><strong id="count-assets-assigned">0</strong></article>
+        <article class="muted"><span>{{ASSET_UNASSIGNED}}</span><strong id="count-assets-unassigned">0</strong></article>
+        <article class="danger"><span>{{ASSET_CONFLICTS}}</span><strong id="count-assets-conflicts">0</strong></article>
       </section>
       <section class="cards compliance-cards" aria-label="{{COMPLIANCE}}">
         <article class="score"><span>{{ASSURANCE_SCORE}}</span><strong id="count-score">0</strong></article>
@@ -1931,9 +2055,9 @@ function Get-ToolEnterpriseDashboardCss {
     return @'
 :root{color-scheme:light;--ink:#172033;--muted:#667085;--line:#d6dee8;--paper:#fff;--canvas:#edf3f8;--brand:#123b74;--brand2:#2563a7;--ok:#147a4b;--warn:#a35b00;--bad:#b42318;--shadow:0 8px 24px rgba(16,24,40,.08)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#e8f0f8,var(--canvas) 360px);color:var(--ink);font-family:"Segoe UI",Arial,sans-serif;line-height:1.45}.sr-only{height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;clip:rect(0 0 0 0);white-space:nowrap}.skip{position:absolute;left:-9999px;top:0}.skip:focus{left:12px;top:12px;background:#fff;padding:8px;z-index:10}.topbar{align-items:center;background:#0f315e;color:#fff;display:flex;justify-content:space-between;padding:13px max(18px,calc((100vw - 1240px)/2));position:sticky;top:0;z-index:5}.topbar>div{align-items:center;display:flex;gap:10px}.release-badge{background:#dff8e9;border:1px solid #7ed7a5;border-radius:999px;color:#0d633d;font-size:11px;font-weight:800;padding:3px 8px}.toolbar{flex-wrap:wrap;justify-content:flex-end}.toolbar button{background:#fff;border:0;border-radius:7px;color:#123b74;cursor:pointer;font-weight:700;padding:8px 11px}.wrap{margin:0 auto;max-width:1240px;padding:22px}.hero{align-items:center;background:linear-gradient(135deg,#0d2e5c,#2563a7);border-radius:17px;color:#fff;display:flex;gap:28px;justify-content:space-between;padding:27px 30px;box-shadow:var(--shadow)}h1{font-size:30px;line-height:1.18;margin:6px 0}.eyebrow{font-size:12px;font-weight:800;letter-spacing:.09em;margin:0;opacity:.82;text-transform:uppercase}.hero p:not(.eyebrow){margin:8px 0;max-width:760px}.connection{align-items:center;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);border-radius:12px;display:grid;grid-template-columns:auto 1fr;min-width:220px;padding:12px 14px}.connection small{grid-column:2;color:#dbeafe;margin-top:3px}.dot{background:#98a2b3;border-radius:50%;display:inline-block;height:10px;margin-right:8px;width:10px}.dot.online{background:#54d68b}.dot.stale{background:#f3ad45}.dot.offline{background:#98a2b3}.dot.waiting{background:#89b4ea}.notice,.disclaimer{background:#fff7e8;border:2px solid var(--warn);border-radius:9px;margin-top:16px;padding:13px 15px}.cards{display:grid;gap:10px;grid-template-columns:repeat(5,minmax(0,1fr));margin:16px 0}.cards article{background:var(--paper);border:2px solid var(--brand2);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow)}.cards article.ok{border-color:var(--ok)}.cards article.warn{border-color:var(--warn)}.cards article.danger{border-color:var(--bad)}.cards article.muted{border-color:#8292a8}.cards span{color:var(--muted);display:block;font-size:12px;font-weight:700;text-transform:uppercase}.cards strong{display:block;font-size:28px;margin-top:5px}.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:17px}.panel-head{align-items:end;display:flex;gap:16px;justify-content:space-between;margin-bottom:12px}.panel-head h2{color:var(--brand);margin:0}.panel-head p{color:var(--muted);margin:4px 0 0}.panel-head label{color:var(--muted);font-size:12px;font-weight:700}.panel-head input{border:1px solid #b8c4d2;border-radius:7px;display:block;margin-top:4px;min-width:260px;padding:8px 9px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;font-size:13px;width:100%}th,td{border:1px solid #dfe6ee;padding:8px 9px;text-align:left;vertical-align:top}th{background:#e8f0f8;color:#183b66}tbody tr:nth-child(even) td{background:#f8fafc}.device strong,.device small,.status-main,.status-sub{display:block}.device small,.status-sub{color:var(--muted);font-size:11px;margin-top:2px}.pill{border-radius:999px;display:inline-block;font-size:11px;font-weight:800;padding:3px 8px}.pill.online,.pill.good{background:#eaf8f0;color:var(--ok)}.pill.stale,.pill.review{background:#fff3df;color:var(--warn)}.pill.offline{background:#eef1f4;color:#475467}.alert-list{display:flex;flex-wrap:wrap;gap:4px}.alert{background:#feeceb;border-radius:999px;color:var(--bad);font-size:10px;font-weight:800;padding:3px 7px}.alert.neutral{background:#eef1f4;color:#475467}.empty{color:var(--muted);padding:24px;text-align:center}.disclaimer{font-size:13px}.disclaimer strong{color:#6b4300}footer{color:var(--muted);font-size:12px;padding:20px;text-align:center}@media(max-width:850px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.hero,.panel-head{align-items:stretch;flex-direction:column}.connection{min-width:0}.panel-head input{min-width:0;width:100%}}@media(max-width:520px){.topbar{align-items:flex-start;flex-direction:column}.toolbar{justify-content:flex-start}.wrap{padding:12px}.hero{border-radius:12px;padding:20px}h1{font-size:24px}.cards{grid-template-columns:1fr 1fr}.panel{padding:10px}.panel-head input{width:100%}}
-.compliance-cards{grid-template-columns:repeat(7,minmax(0,1fr))}.compliance-cards article.score{border-color:#6b46c1}.portfolio-panel{margin-bottom:16px}.pill.critical{background:#feeceb;color:var(--bad)}.pill.needsreview,.pill.notverified{background:#fff3df;color:var(--warn)}.pill.compliant{background:#eaf8f0;color:var(--ok)}
+.asset-cards{grid-template-columns:repeat(4,minmax(0,1fr))}.compliance-cards{grid-template-columns:repeat(7,minmax(0,1fr))}.compliance-cards article.score{border-color:#6b46c1}.portfolio-panel{margin-bottom:16px}.pill.critical{background:#feeceb;color:var(--bad)}.pill.needsreview,.pill.notverified{background:#fff3df;color:var(--warn)}.pill.compliant{background:#eaf8f0;color:var(--ok)}
 .advisor-details{border:1px solid #c7d5e5;border-radius:7px;margin-top:5px;max-width:330px;padding:4px 6px}.advisor-details summary{color:var(--brand);cursor:pointer;font-size:11px;font-weight:700}.advisor-explain{display:grid;gap:5px;margin-top:7px}.advisor-explain p{font-size:11px;margin:0;overflow-wrap:anywhere}.advisor-explain strong{color:#334155}.advisor-evidence{margin:0;padding-left:17px}.advisor-evidence li{font-size:11px;margin:2px 0;overflow-wrap:anywhere}
-@media(max-width:1050px){.compliance-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:620px){.compliance-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.compliance-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:620px){.asset-cards,.compliance-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 '@
 }
 
@@ -1942,7 +2066,7 @@ function Get-ToolEnterpriseDashboardJs {
 (function(){
   'use strict';
   var query=new URLSearchParams(window.location.search);var lang=query.get('lang')==='en'?'en':'vi';document.documentElement.lang=lang;
-  var body=document.body;var strings={connecting:body.getAttribute('data-connecting')||'Connecting',connected:body.getAttribute('data-connected')||'Connected',failed:body.getAttribute('data-failed')||'Unable to load data',empty:body.getAttribute('data-empty')||'No matching endpoints',none:body.getAttribute('data-none')||'None',notDetected:body.getAttribute('data-not-detected')||'Not detected',entitlement:body.getAttribute('data-entitlement')||'Entitlement: not verified',NotVerified:body.getAttribute('data-status-not-verified')||'Not verified',NeedsReview:body.getAttribute('data-status-needs-review')||'Needs review',Compliant:body.getAttribute('data-status-compliant')||'Compliant',Critical:body.getAttribute('data-status-critical')||'Critical',Stale:body.getAttribute('data-alert-stale')||'Stale',Offline:body.getAttribute('data-alert-offline')||'Offline',WindowsNeedsReview:body.getAttribute('data-alert-windows')||'Windows needs review',OfficeNeedsReview:body.getAttribute('data-alert-office')||'Office needs review',LicenseIdentityChanged:body.getAttribute('data-alert-identity')||'Last5 changed',EntitlementNeedsReview:body.getAttribute('data-alert-entitlement')||'Entitlement needs review'};
+  var body=document.body;var strings={connecting:body.getAttribute('data-connecting')||'Connecting',connected:body.getAttribute('data-connected')||'Connected',failed:body.getAttribute('data-failed')||'Unable to load data',empty:body.getAttribute('data-empty')||'No matching endpoints',none:body.getAttribute('data-none')||'None',notDetected:body.getAttribute('data-not-detected')||'Not detected',entitlement:body.getAttribute('data-entitlement')||'Entitlement: not verified',AssetLabel:body.getAttribute('data-asset-label')||'Asset',AssignedTo:body.getAttribute('data-assigned-to')||'Assigned to',Unassigned:body.getAttribute('data-unassigned')||'Unassigned',NotVerified:body.getAttribute('data-status-not-verified')||'Not verified',NeedsReview:body.getAttribute('data-status-needs-review')||'Needs review',Compliant:body.getAttribute('data-status-compliant')||'Compliant',Critical:body.getAttribute('data-status-critical')||'Critical',Stale:body.getAttribute('data-alert-stale')||'Stale',Offline:body.getAttribute('data-alert-offline')||'Offline',WindowsNeedsReview:body.getAttribute('data-alert-windows')||'Windows needs review',OfficeNeedsReview:body.getAttribute('data-alert-office')||'Office needs review',LicenseIdentityChanged:body.getAttribute('data-alert-identity')||'Last5 changed',EntitlementNeedsReview:body.getAttribute('data-alert-entitlement')||'Entitlement needs review',AssetIdentityConflict:body.getAttribute('data-alert-asset-conflict')||'Asset identity needs review'};
   strings.High=body.getAttribute('data-advisor-risk-high')||'High risk';strings.Review=body.getAttribute('data-advisor-risk-review')||'Review';strings.Low=body.getAttribute('data-advisor-risk-low')||'Low risk';strings.TechnicalActivationPresent=body.getAttribute('data-advisor-finding-active')||'Technical activation is present';strings.TechnicalActivationNotConfirmed=body.getAttribute('data-advisor-finding-inactive')||'Technical activation is not confirmed';strings.FreeOrOpenSourceClassification=body.getAttribute('data-advisor-finding-free')||'Free or open-source classification';strings.CommercialEntitlementRequired=body.getAttribute('data-advisor-finding-commercial')||'Commercial entitlement may be required';strings.ReconcileImmediately=body.getAttribute('data-advisor-recommend-reconcile')||'Reconcile immediately';strings.AttachEvidenceAndAssign=body.getAttribute('data-advisor-recommend-attach')||'Attach evidence and assign entitlement';strings.UseOfficialActivation=body.getAttribute('data-advisor-recommend-activate')||'Use the official activation workflow';strings.RetainEvidence=body.getAttribute('data-advisor-recommend-retain')||'Retain supporting evidence';strings.LegalEntitlementNotProven=body.getAttribute('data-advisor-limitation')||'Technical status does not independently prove legal entitlement';
   strings.AdvisorExplain=body.getAttribute('data-advisor-explain')||'Explain this finding';strings.AdvisorRuleId=body.getAttribute('data-advisor-rule-id')||'Rule ID';strings.AdvisorConfidence=body.getAttribute('data-advisor-confidence')||'Confidence';strings.AdvisorFinding=body.getAttribute('data-advisor-finding-label')||'Finding';strings.AdvisorEvidence=body.getAttribute('data-advisor-evidence')||'Evidence';strings.AdvisorRecommendation=body.getAttribute('data-advisor-recommendation')||'Recommendation';strings.AdvisorLimitation=body.getAttribute('data-advisor-limitation-heading')||'Conclusion limit';strings.ConfidenceConfirmed=body.getAttribute('data-advisor-confirmed')||'Confirmed';strings.ConfidenceHigh=body.getAttribute('data-advisor-confidence-high')||'High';strings.ConfidenceMedium=body.getAttribute('data-advisor-confidence-medium')||'Medium';strings.ConfidenceLow=body.getAttribute('data-advisor-confidence-low')||'Low';strings.ConfidenceInformational=body.getAttribute('data-advisor-informational')||'Informational';strings.SourceEndpointReport=body.getAttribute('data-advisor-source-endpoint')||'Endpoint report';strings.SourceComplianceStore=body.getAttribute('data-advisor-source-compliance')||'Entitlement records';strings.SourceSignedCatalog=body.getAttribute('data-advisor-source-catalog')||'Signed catalog';strings.SourceSoftwareInventory=body.getAttribute('data-advisor-source-inventory')||'Software inventory';
   function t(key){return Object.prototype.hasOwnProperty.call(strings,key)?strings[key]:key;}
@@ -1958,8 +2082,8 @@ function Get-ToolEnterpriseDashboardJs {
   function statusCell(row,status,channel,entitlementStatus){var td=document.createElement('td');var main=document.createElement('span');main.className='status-main';main.textContent=status||t('notDetected');var sub=document.createElement('span');sub.className='status-sub';sub.textContent=(channel||'--')+' / '+t(entitlementStatus||'NotVerified');td.appendChild(main);td.appendChild(sub);row.appendChild(td);}
   function renderEntitlements(compliance){entitlementRows.textContent='';var entries=compliance&&Array.isArray(compliance.Entitlements)?compliance.Entitlements.slice():[];var uncovered=compliance&&Array.isArray(compliance.Uncovered)?compliance.Uncovered:[];uncovered.forEach(function(item){entries.push({ProductName:item.ProductName,LicenseModel:item.LicenseModel,Purchased:0,Assigned:0,Installed:item.InstalledClients||0,Available:0,ComplianceState:item.ComplianceState||'NeedsReview'});});if(!entries.length){var emptyRow=document.createElement('tr');var emptyCell=cell(emptyRow,t('empty'),'empty');emptyCell.colSpan=7;entitlementRows.appendChild(emptyRow);return;}entries.forEach(function(item){var row=document.createElement('tr');cell(row,item.ProductName||item.ProductScope||'--');cell(row,item.LicenseModel||'--');cell(row,String(item.Purchased||0));cell(row,String(item.Assigned||0));cell(row,String(item.Installed||0));cell(row,String(item.Available||0));var state=document.createElement('td');state.appendChild(complianceBadge(item.ComplianceState));row.appendChild(state);entitlementRows.appendChild(row);});}
   function appendAdvisor(parent,label,advisor){if(!advisor){return;}var details=document.createElement('details');details.className='advisor-details';var summary=document.createElement('summary');summary.textContent=label+': '+t(advisor.Risk||'Review')+' - '+strings.AdvisorExplain;details.appendChild(summary);var box=document.createElement('div');box.className='advisor-explain';function addLine(caption,value){var line=document.createElement('p');var strong=document.createElement('strong');strong.textContent=caption+': ';line.appendChild(strong);line.appendChild(document.createTextNode(String(value||'--')));box.appendChild(line);}addLine(strings.AdvisorRuleId,advisor.RuleId);addLine(strings.AdvisorConfidence,confidenceText(advisor.Confidence));addLine(strings.AdvisorFinding,t(advisor.FindingCode||'CommercialEntitlementRequired'));var items=document.createElement('ul');items.className='advisor-evidence';var evidence=Array.isArray(advisor.Evidence)?advisor.Evidence:[];evidence.forEach(function(item){var li=document.createElement('li');li.textContent=sourceText(item.SourceCode)+': '+String(item.Value||'--');items.appendChild(li);});if(!evidence.length){var li=document.createElement('li');li.textContent=t('none');items.appendChild(li);}var evidenceLine=document.createElement('p');var evidenceStrong=document.createElement('strong');evidenceStrong.textContent=strings.AdvisorEvidence+':';evidenceLine.appendChild(evidenceStrong);box.appendChild(evidenceLine);box.appendChild(items);addLine(strings.AdvisorRecommendation,t(advisor.RecommendationCode||'AttachEvidenceAndAssign'));addLine(strings.AdvisorLimitation,t(advisor.LimitationCode||'LegalEntitlementNotProven'));details.appendChild(box);parent.appendChild(details);}
-  function renderClients(){var needle=document.getElementById('filter').value.trim().toLowerCase();rows.textContent='';var shown=0;latestClients.forEach(function(client){var hay=[client.ComputerName,client.RemoteAddress,client.ClientReference,client.Presence,client.WindowsStatus,client.OfficeStatus,client.ComplianceStatus].join(' ').toLowerCase();if(needle&&hay.indexOf(needle)<0){return;}shown++;var row=document.createElement('tr');var device=document.createElement('td');device.className='device';var name=document.createElement('strong');name.textContent=client.ComputerName||client.ClientReference;var ref=document.createElement('small');ref.textContent=client.ClientReference+(client.RemoteAddress?' / '+client.RemoteAddress:'');device.appendChild(name);device.appendChild(ref);row.appendChild(device);var presence=document.createElement('td');var badge=document.createElement('span');badge.className='pill '+String(client.Presence||'offline').toLowerCase();badge.textContent=client.Presence||'Offline';presence.appendChild(badge);row.appendChild(presence);var seen=client.LastSeenUtc?new Date(client.LastSeenUtc):null;var seenText=seen&&!isNaN(seen.getTime())?new Intl.DateTimeFormat(lang==='vi'?'vi-VN':'en-US',{dateStyle:'short',timeStyle:'short'}).format(seen):'--';var last=cell(row,seenText);last.title=client.AgeMinutes===null?'':String(client.AgeMinutes)+' min';statusCell(row,client.WindowsStatus,client.WindowsChannel,client.WindowsEntitlementStatus);statusCell(row,client.OfficeStatus,client.OfficeChannel,client.OfficeEntitlementStatus);var complianceCell=document.createElement('td');complianceCell.appendChild(complianceBadge(client.ComplianceStatus));appendAdvisor(complianceCell,'Windows',client.WindowsAdvisor);appendAdvisor(complianceCell,'Office',client.OfficeAdvisor);row.appendChild(complianceCell);var alertCell=document.createElement('td');var list=document.createElement('div');list.className='alert-list';var alerts=Array.isArray(client.Alerts)?client.Alerts:[];if(!alerts.length){var none=document.createElement('span');none.className='alert neutral';none.textContent=t('none');list.appendChild(none);}else{alerts.forEach(function(code){var alert=document.createElement('span');alert.className='alert';alert.textContent=t(code);list.appendChild(alert);});}alertCell.appendChild(list);row.appendChild(alertCell);rows.appendChild(row);});if(!shown){var row=document.createElement('tr');var td=cell(row,t('empty'),'empty');td.colSpan=7;rows.appendChild(row);}}
-  function render(data){var summary=data.Summary||{};var compliance=data.Compliance||{};var complianceSummary=compliance.Summary||{};document.getElementById('server-name').textContent=data.Server&&data.Server.Name?data.Server.Name:'VietLicenSure';document.getElementById('count-total').textContent=summary.Total||0;document.getElementById('count-online').textContent=summary.Online||0;document.getElementById('count-stale').textContent=summary.Stale||0;document.getElementById('count-offline').textContent=summary.Offline||0;document.getElementById('count-review').textContent=summary.NeedsReview||0;document.getElementById('count-score').textContent=summary.AssuranceScore||0;document.getElementById('count-compliant').textContent=summary.Compliant||0;document.getElementById('count-critical').textContent=summary.Critical||0;document.getElementById('count-purchased').textContent=complianceSummary.Purchased||0;document.getElementById('count-assigned').textContent=complianceSummary.Assigned||0;document.getElementById('count-installed').textContent=complianceSummary.Installed||0;document.getElementById('count-available').textContent=complianceSummary.Available||0;document.getElementById('generated-at').textContent=new Intl.DateTimeFormat(lang==='vi'?'vi-VN':'en-US',{dateStyle:'short',timeStyle:'medium'}).format(new Date(data.GeneratedAtUtc));latestClients=Array.isArray(data.Clients)?data.Clients:[];renderEntitlements(compliance);renderClients();warning.hidden=true;dashboard.hidden=false;setConnection('online',t('connected'));}
+  function renderClients(){var needle=document.getElementById('filter').value.trim().toLowerCase();rows.textContent='';var shown=0;latestClients.forEach(function(client){var hay=[client.ComputerName,client.RemoteAddress,client.ClientReference,client.AssetReference,client.AssignmentDisplayName,client.Presence,client.WindowsStatus,client.OfficeStatus,client.ComplianceStatus].join(' ').toLowerCase();if(needle&&hay.indexOf(needle)<0){return;}shown++;var row=document.createElement('tr');var device=document.createElement('td');device.className='device';var name=document.createElement('strong');name.textContent=client.ComputerName||client.ClientReference;var ref=document.createElement('small');ref.textContent=client.ClientReference+(client.RemoteAddress?' / '+client.RemoteAddress:'');var asset=document.createElement('small');asset.textContent=strings.AssetLabel+': '+(client.AssetReference||'--');var assignment=document.createElement('small');assignment.textContent=strings.AssignedTo+': '+(client.AssignmentDisplayName||strings.Unassigned);device.appendChild(name);device.appendChild(ref);device.appendChild(asset);device.appendChild(assignment);row.appendChild(device);var presence=document.createElement('td');var badge=document.createElement('span');badge.className='pill '+String(client.Presence||'offline').toLowerCase();badge.textContent=client.Presence||'Offline';presence.appendChild(badge);row.appendChild(presence);var seen=client.LastSeenUtc?new Date(client.LastSeenUtc):null;var seenText=seen&&!isNaN(seen.getTime())?new Intl.DateTimeFormat(lang==='vi'?'vi-VN':'en-US',{dateStyle:'short',timeStyle:'short'}).format(seen):'--';var last=cell(row,seenText);last.title=client.AgeMinutes===null?'':String(client.AgeMinutes)+' min';statusCell(row,client.WindowsStatus,client.WindowsChannel,client.WindowsEntitlementStatus);statusCell(row,client.OfficeStatus,client.OfficeChannel,client.OfficeEntitlementStatus);var complianceCell=document.createElement('td');complianceCell.appendChild(complianceBadge(client.ComplianceStatus));appendAdvisor(complianceCell,'Windows',client.WindowsAdvisor);appendAdvisor(complianceCell,'Office',client.OfficeAdvisor);row.appendChild(complianceCell);var alertCell=document.createElement('td');var list=document.createElement('div');list.className='alert-list';var alerts=Array.isArray(client.Alerts)?client.Alerts:[];if(!alerts.length){var none=document.createElement('span');none.className='alert neutral';none.textContent=t('none');list.appendChild(none);}else{alerts.forEach(function(code){var alert=document.createElement('span');alert.className='alert';alert.textContent=t(code);list.appendChild(alert);});}alertCell.appendChild(list);row.appendChild(alertCell);rows.appendChild(row);});if(!shown){var row=document.createElement('tr');var td=cell(row,t('empty'),'empty');td.colSpan=7;rows.appendChild(row);}}
+  function render(data){var summary=data.Summary||{};var compliance=data.Compliance||{};var complianceSummary=compliance.Summary||{};document.getElementById('server-name').textContent=data.Server&&data.Server.Name?data.Server.Name:'VietLicenSure';document.getElementById('count-total').textContent=summary.Total||0;document.getElementById('count-online').textContent=summary.Online||0;document.getElementById('count-stale').textContent=summary.Stale||0;document.getElementById('count-offline').textContent=summary.Offline||0;document.getElementById('count-review').textContent=summary.NeedsReview||0;document.getElementById('count-assets').textContent=summary.Assets||0;document.getElementById('count-assets-assigned').textContent=summary.AssignedAssets||0;document.getElementById('count-assets-unassigned').textContent=summary.UnassignedAssets||0;document.getElementById('count-assets-conflicts').textContent=summary.AssetConflicts||0;document.getElementById('count-score').textContent=summary.AssuranceScore||0;document.getElementById('count-compliant').textContent=summary.Compliant||0;document.getElementById('count-critical').textContent=summary.Critical||0;document.getElementById('count-purchased').textContent=complianceSummary.Purchased||0;document.getElementById('count-assigned').textContent=complianceSummary.Assigned||0;document.getElementById('count-installed').textContent=complianceSummary.Installed||0;document.getElementById('count-available').textContent=complianceSummary.Available||0;document.getElementById('generated-at').textContent=new Intl.DateTimeFormat(lang==='vi'?'vi-VN':'en-US',{dateStyle:'short',timeStyle:'medium'}).format(new Date(data.GeneratedAtUtc));latestClients=Array.isArray(data.Clients)?data.Clients:[];renderEntitlements(compliance);renderClients();warning.hidden=true;dashboard.hidden=false;setConnection('online',t('connected'));}
   async function load(){if(!token){warning.hidden=false;dashboard.hidden=true;setConnection('offline',t('failed'));return;}setConnection('waiting',t('connecting'));try{var response=await fetch('api/snapshot',{method:'GET',headers:{Authorization:'Bearer '+token},cache:'no-store',credentials:'omit'});if(response.status===401){sessionStorage.removeItem('vls-dashboard-token');token='';throw new Error('unauthorized');}if(!response.ok){throw new Error('http '+response.status);}render(await response.json());}catch(error){warning.hidden=false;dashboard.hidden=true;setConnection('offline',t('failed'));}}
   document.getElementById('refresh').addEventListener('click',load);document.getElementById('filter').addEventListener('input',renderClients);load();window.setInterval(load,60000);
 }());

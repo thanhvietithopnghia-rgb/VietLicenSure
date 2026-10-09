@@ -146,6 +146,15 @@ try {
     Assert-Enterprise $tamperRejected "Envelope bị sửa HMAC không bị từ chối."
 
     $report = Get-ToolEnterpriseLicenseSnapshot -ClientId $client.ClientId
+    $assetRawUuid = 'F38D7701-6F5F-4F5E-8D10-123456789ABC'
+    $assetRawSerial = 'VERIFY-ASSET-SERIAL-001'
+    $assetIdentity = Get-ToolDeviceIdentitySnapshot -Observation ([pscustomobject]@{
+        UUID=$assetRawUuid; SystemSerialNumber=$assetRawSerial; MachineGuid='11111111-2222-3333-4444-555555555555'
+        Manufacturer='Contoso'; Model='Enterprise Test Device'; ComputerName='VERIFY-ASSET-CLIENT'
+    })
+    $report.AssetIdentity = $assetIdentity
+    $report.Privacy.RawHardwareIdentifiersIncluded = $false
+    $report.Privacy.HashedAssetIdentityIncluded = $true
     $queuedReportPath = Add-ToolEnterpriseOutboxReport -Report $report
     Assert-Enterprise (Test-Path -LiteralPath $queuedReportPath -PathType Leaf) "Mất kết nối không tạo được hàng đợi báo cáo."
     Assert-Enterprise ((Get-Content -LiteralPath $queuedReportPath -Raw) -notmatch 'EnterpriseInventory') "Hàng đợi báo cáo lưu dữ liệu rõ thay vì bảo vệ bằng DPAPI."
@@ -154,6 +163,9 @@ try {
     Assert-Enterprise (-not [bool]$report.Privacy.FullProductKeyIncluded) "Báo cáo khai báo chứa full product key."
     $reportJson = $report | ConvertTo-Json -Depth 14
     Assert-Enterprise ($reportJson -notmatch '(?i)[A-Z0-9]{5}(?:-[A-Z0-9]{5}){4}') "Báo cáo chứa chuỗi giống full product key."
+    Assert-Enterprise ([string]$report.AssetIdentity.DeviceId -match '^VLS-DEV-[A-F0-9]{32}$' -and
+        -not [bool]$report.Privacy.RawHardwareIdentifiersIncluded -and [bool]$report.Privacy.HashedAssetIdentityIncluded) 'Báo cáo Enterprise thiếu định danh tài sản đã băm.'
+    Assert-Enterprise ($reportJson -notmatch [regex]::Escape($assetRawUuid) -and $reportJson -notmatch [regex]::Escape($assetRawSerial)) 'Báo cáo Enterprise làm lộ định danh phần cứng thô.'
 
     # Chạy listener thật trên loopback để kiểm tra toàn bộ đường đi từng bị lỗi
     # GetRequestStream: chẩn đoán TCP/dịch vụ, ghép nối và gửi báo cáo.
@@ -194,6 +206,14 @@ try {
     $pairing = $pairingAfterEnrollment
     $receivedReports = @(Get-ChildItem -LiteralPath (Join-Path $paths.ServerReports $client.ClientId) -Filter "*.json" -File -ErrorAction SilentlyContinue)
     Assert-Enterprise ($receivedReports.Count -ge 1) "Máy chủ không lưu báo cáo nhận qua HTTP."
+    $assetStore = Read-ToolAssetRegistryStore -RootPath $paths.ServerAssets
+    Assert-Enterprise ($null -ne $assetStore -and @($assetStore.Devices).Count -eq 1 -and @($assetStore.Assets).Count -eq 1) 'Máy chủ không đăng ký đúng một Device/Asset từ báo cáo Agent.'
+    $serverClientRecord = Read-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $client.ClientId) -MaximumBytes 1048576
+    Assert-Enterprise ([string]$serverClientRecord.AssetMatchStatus -eq 'Created' -and
+        [string]$serverClientRecord.DeviceId -eq [string]$assetIdentity.DeviceId -and
+        -not [string]::IsNullOrWhiteSpace([string]$serverClientRecord.AssetId)) 'Bản ghi máy trạm không liên kết Asset Registry.'
+    [void](Add-ToolAssetAssignmentEvent -Store $assetStore -AssetId ([string]$serverClientRecord.AssetId) -Action Assign -AssigneeType Department -AssigneeReference 'department:finance' -DisplayName 'Finance' -Reason 'Enterprise regression' -RecordedBy 'verifier')
+    [void](Write-ToolAssetRegistryStore -Store $assetStore -RootPath $paths.ServerAssets)
 
     # Central Dashboard: static assets are public but contain no fleet
     # data; the read-only API requires a short-lived bearer token created by
@@ -236,7 +256,7 @@ try {
     $actualDashboardServerFields = @($dashboardSnapshot.Server.PSObject.Properties.Name | Sort-Object)
     Assert-Enterprise (@(Compare-Object ($expectedDashboardServerFields | Sort-Object) $actualDashboardServerFields).Count -eq 0) 'API Dashboard trả thêm trường Server ngoài allow-list.'
     $expectedDashboardClientFields = @(
-        'AgeMinutes','Alerts','ClientReference','ComplianceStatus','ComputerName','LastSeenUtc','LicenseIdentityChangedAtUtc',
+        'AgeMinutes','Alerts','AssetMatchStatus','AssetReference','AssetStatus','AssignmentDisplayName','AssignmentHistoryCount','AssignmentType','ClientReference','ComplianceStatus','ComputerName','LastSeenUtc','LicenseIdentityChangedAtUtc',
         'OfficeAdvisor','OfficeChannel','OfficeEntitlementStatus','OfficeStatus','Presence','RemoteAddress','SoftwareSummary',
         'WindowsAdvisor','WindowsChannel','WindowsEntitlementStatus','WindowsStatus'
     )
@@ -264,7 +284,10 @@ try {
     Assert-Enterprise ([string]$dashboardSnapshot.Clients[0].WindowsEntitlementStatus -eq 'NotVerified' -and
         [string]$dashboardSnapshot.Clients[0].OfficeEntitlementStatus -eq 'NotVerified') 'Dashboard trộn trạng thái kỹ thuật với quyền sở hữu.'
     Assert-Enterprise ($null -ne $dashboardSnapshot.Compliance -and $null -ne $dashboardSnapshot.Compliance.Summary -and $null -ne $dashboardSnapshot.Summary.AssuranceScore) 'API Dashboard thiếu compliance summary.'
-    foreach ($forbiddenDashboardField in @('ClientId','WindowsLast5','OfficeLast5','LatestReportPath','AdminVerifier','AccessToken','TokenHash','StoredName','DocumentId')) {
+    Assert-Enterprise ([int]$dashboardSnapshot.Summary.Assets -eq 1 -and [int]$dashboardSnapshot.Summary.AssignedAssets -eq 1 -and
+        [int]$dashboardSnapshot.Summary.UnassignedAssets -eq 0 -and [string]$dashboardSnapshot.Clients[0].AssignmentDisplayName -eq 'Finance' -and
+        [int]$dashboardSnapshot.Clients[0].AssignmentHistoryCount -eq 1) 'Dashboard read-only không phản ánh đúng Asset/Assignment.'
+    foreach ($forbiddenDashboardField in @('ClientId','DeviceId','AssetId','IdentifierDigests','WindowsLast5','OfficeLast5','LatestReportPath','AdminVerifier','AccessToken','TokenHash','StoredName','DocumentId')) {
         Assert-Enterprise ($dashboardApi.Content -notmatch ('"' + [regex]::Escape($forbiddenDashboardField) + '"')) "API Dashboard làm lộ trường cấm: $forbiddenDashboardField"
     }
     Assert-Enterprise ($dashboardApi.Content -notmatch [regex]::Escape([string]$client.ClientId)) 'API Dashboard làm lộ ClientId đầy đủ.'
@@ -536,6 +559,14 @@ try {
         Assert-Enterprise ($enterpriseUiText.Contains($preservedKey) -and
             $null -ne $viCatalog.PSObject.Properties[$preservedKey] -and
             $null -ne $enCatalog.PSObject.Properties[$preservedKey]) "Mục 8 làm mất hoặc chưa dịch chức năng: $preservedKey"
+    }
+    foreach ($assetDashboardKey in @(
+        'enterpriseDashboard.ui.assets','enterpriseDashboard.ui.assetAssigned','enterpriseDashboard.ui.assetUnassigned',
+        'enterpriseDashboard.ui.assetConflicts','enterpriseDashboard.ui.assetLabel','enterpriseDashboard.ui.assignedTo',
+        'enterpriseDashboard.ui.unassigned','enterpriseDashboard.ui.alert.assetConflict'
+    )) {
+        Assert-Enterprise ($null -ne $viCatalog.PSObject.Properties[$assetDashboardKey] -and
+            $null -ne $enCatalog.PSObject.Properties[$assetDashboardKey]) "Dashboard Asset Registry thiếu bản dịch: $assetDashboardKey"
     }
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Enable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Disable-EnterpriseNetworkAccess' -and

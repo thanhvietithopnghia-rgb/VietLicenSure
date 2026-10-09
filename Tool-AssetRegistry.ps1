@@ -149,9 +149,23 @@ function Get-ToolAssetRegistryDigestMap {
     return $map
 }
 
-function Resolve-ToolAssetDeviceMatch {
-    param([Parameter(Mandatory=$true)][object]$Store, [Parameter(Mandatory=$true)][object]$Observation)
-    $identity = Get-ToolDeviceIdentitySnapshot -Observation $Observation
+function Assert-ToolAssetIdentitySnapshot {
+    param([Parameter(Mandatory=$true)][object]$Identity)
+    if ([string]$Identity.SchemaVersion -ne $script:ToolAssetRegistrySchemaVersion) { throw 'Asset identity schema is unsupported.' }
+    if ([string]$Identity.DeviceId -notmatch '^VLS-DEV-[A-F0-9]{32}$') { throw 'Asset identity DeviceId is invalid.' }
+    if ([string]$Identity.IdentityConfidence -notin @('High','Medium','Low')) { throw 'Asset identity confidence is invalid.' }
+    $digests = Get-ToolAssetRegistryDigestMap $Identity.IdentifierDigests
+    if ($digests.Count -eq 0) { throw 'Asset identity digests are missing.' }
+    foreach ($type in $digests.Keys) {
+        if (-not $script:ToolAssetRegistryIdentityWeights.Contains($type)) { throw 'Asset identity digest type is unsupported.' }
+    }
+    return $true
+}
+
+function Resolve-ToolAssetIdentityMatch {
+    param([Parameter(Mandatory=$true)][object]$Store, [Parameter(Mandatory=$true)][object]$Identity)
+    [void](Assert-ToolAssetIdentitySnapshot $Identity)
+    $identity = $Identity
     $incoming = Get-ToolAssetRegistryDigestMap $identity.IdentifierDigests
     $valid = New-Object Collections.Generic.List[object]
     $conflicting = New-Object Collections.Generic.List[object]
@@ -169,7 +183,10 @@ function Resolve-ToolAssetDeviceMatch {
                 [void]$conflicts.Add($type)
             }
         }
-        if ([string]$device.DeviceId -eq [string]$identity.DeviceId) { $score += 120; [void]$matches.Add('DeviceId') }
+        # DeviceId is a useful accelerator but must never be accepted without
+        # at least one independently matching digest from the authenticated
+        # endpoint report.
+        if ($matches.Count -gt 0 -and [string]$device.DeviceId -eq [string]$identity.DeviceId) { $score += 120; [void]$matches.Add('DeviceId') }
         if ($score -le 0) { continue }
         $candidate = [pscustomobject][ordered]@{
             DeviceId=[string]$device.DeviceId; Score=$score; MatchedIdentifiers=[object[]]@($matches.ToArray()); ConflictingIdentifiers=[object[]]@($conflicts.ToArray())
@@ -188,6 +205,12 @@ function Resolve-ToolAssetDeviceMatch {
         return [pscustomobject][ordered]@{ Status='Ambiguous'; DeviceId=''; Score=[int]$ranked[0].Score; Identity=$identity; Candidates=[object[]]$ranked; Reason='MultipleReliableMatches' }
     }
     return [pscustomobject][ordered]@{ Status='Matched'; DeviceId=[string]$ranked[0].DeviceId; Score=[int]$ranked[0].Score; Identity=$identity; Candidates=[object[]]$ranked; Reason='ReliableIdentityMatch' }
+}
+
+function Resolve-ToolAssetDeviceMatch {
+    param([Parameter(Mandatory=$true)][object]$Store, [Parameter(Mandatory=$true)][object]$Observation)
+    $identity = Get-ToolDeviceIdentitySnapshot -Observation $Observation
+    return (Resolve-ToolAssetIdentityMatch -Store $Store -Identity $identity)
 }
 
 function Assert-ToolAssetRegistryStore {
@@ -250,17 +273,18 @@ function Assert-ToolAssetRegistryStore {
     return $true
 }
 
-function Register-ToolAssetObservation {
+function Register-ToolAssetIdentitySnapshot {
     param(
         [Parameter(Mandatory=$true)][object]$Store,
-        [Parameter(Mandatory=$true)][object]$Observation,
+        [Parameter(Mandatory=$true)][object]$IdentitySnapshot,
         [string]$ExternalAssetTag = '',
         [string]$InventoryNumber = '',
         [AllowNull()][object]$ObservedAtUtc
     )
     [void](Assert-ToolAssetRegistryStore $Store)
     $now = ConvertTo-ToolAssetRegistryUtcText $ObservedAtUtc
-    $match = Resolve-ToolAssetDeviceMatch -Store $Store -Observation $Observation
+    [void](Assert-ToolAssetIdentitySnapshot $IdentitySnapshot)
+    $match = Resolve-ToolAssetIdentityMatch -Store $Store -Identity $IdentitySnapshot
     $normalizedTag = (ConvertTo-ToolAssetRegistrySafeText $ExternalAssetTag 120).ToUpperInvariant()
     $tagAsset = @($Store.Assets | Where-Object { $normalizedTag -and ([string]$_.ExternalAssetTag).ToUpperInvariant() -eq $normalizedTag } | Select-Object -First 1)
     if ($match.Status -in @('Conflict','Ambiguous')) {
@@ -317,6 +341,18 @@ function Register-ToolAssetObservation {
     return [pscustomobject][ordered]@{
         Status=if($created){'Created'}else{'Matched'}; Changed=$true; DeviceId=[string]$device.DeviceId; AssetId=[string]$asset[0].AssetId; Match=$match; Store=$Store
     }
+}
+
+function Register-ToolAssetObservation {
+    param(
+        [Parameter(Mandatory=$true)][object]$Store,
+        [Parameter(Mandatory=$true)][object]$Observation,
+        [string]$ExternalAssetTag = '',
+        [string]$InventoryNumber = '',
+        [AllowNull()][object]$ObservedAtUtc
+    )
+    $identity = Get-ToolDeviceIdentitySnapshot -Observation $Observation -ObservedAtUtc $ObservedAtUtc
+    return (Register-ToolAssetIdentitySnapshot -Store $Store -IdentitySnapshot $identity -ExternalAssetTag $ExternalAssetTag -InventoryNumber $InventoryNumber -ObservedAtUtc $ObservedAtUtc)
 }
 
 function Get-ToolCurrentAssetAssignment {

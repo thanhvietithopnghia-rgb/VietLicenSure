@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-08`
+Ngày build kỹ thuật hiện hành: `2026-10-09`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `08/10/2026`
+Nội dung cập nhật đến: `09/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,11 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 08/10/2026
+## Cập nhật hiện hành ngày 09/10/2026
+
+- Sửa launcher Elevated Broker để luôn truyền đường dẫn tiến trình EXE thật đã được kiểm chứng; chức năng **Quản lý giấy phép hợp lệ** không còn dừng với `ElevatedBrokerLauncherMissing` khi chạy bằng tài khoản thường.
+- Tích hợp **Asset Registry 1.0** vào Agent/Server: Device ID ổn định không phụ thuộc IP, hostname hoặc người dùng; chỉ gửi digest phần cứng đã băm, không gửi serial/UUID thô; matching xung đột hoặc mơ hồ luôn fail-closed.
+- Central Dashboard chỉ đọc hiển thị tham chiếu tài sản, trạng thái ghép, người/phòng ban đang được giao và số sự kiện bàn giao; API vẫn che DeviceId, AssetId và digest nội bộ.
 
 - Chuẩn hóa `Finding 1.0` và Detection Engine dùng chung cho License Advisor/Software Inventory; regression bảo đảm không đổi kết luận legacy.
 - Tạo baseline bảo mật v5.0 hiện hành và chuyển tài liệu v4.8/v4.9 vào khu archive để tách lịch sử khỏi assurance hiện tại.
