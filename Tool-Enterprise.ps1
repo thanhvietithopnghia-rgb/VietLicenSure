@@ -27,7 +27,13 @@ if (-not (Get-Command Get-ToolLicenseComplianceSnapshot -ErrorAction SilentlyCon
 }
 
 $toolEnterpriseAssetRegistryPath = Join-Path $PSScriptRoot "Tool-AssetRegistry.ps1"
-if (-not (Get-Command Get-ToolDeviceIdentitySnapshot -ErrorAction SilentlyContinue) -and
+$toolEnterpriseAssetRegistryReady = (
+    $null -ne (Get-Command Get-ToolDeviceIdentitySnapshot -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Command Read-ToolAssetRegistryStore -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Variable -Name ToolAssetRegistrySchemaVersion -Scope Script -ErrorAction SilentlyContinue) -and
+    $null -ne (Get-Variable -Name ToolAssetRegistryIdentityWeights -Scope Script -ErrorAction SilentlyContinue)
+)
+if (-not $toolEnterpriseAssetRegistryReady -and
     (Test-Path -LiteralPath $toolEnterpriseAssetRegistryPath -PathType Leaf)) {
     . $toolEnterpriseAssetRegistryPath
 }
