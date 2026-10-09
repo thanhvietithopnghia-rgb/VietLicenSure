@@ -60,9 +60,9 @@ $releaseLabel = if ($AllowUnsignedDevelopmentBuild) {
 }
 # Keep a hard payload-size budget for in-place updates.  The added safety UI,
 # localized evidence explanations, and post-verification data are intentional;
-# 900 KiB keeps a narrow cap while accommodating the canonical Detection
-# Engine/schema payloads and retaining signing/timestamp headroom.
-$maximumInPlaceExecutableBytes = 921600
+# 930 KiB keeps a narrow cap while accommodating the canonical Detection
+# Engine plus Asset Registry/schema payloads and retaining signing/timestamp headroom.
+$maximumInPlaceExecutableBytes = 952320
 $sourceDirectory = $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = Join-Path $sourceDirectory 'dist' }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
