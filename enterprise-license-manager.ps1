@@ -575,8 +575,54 @@ function Update-ServerClientList {
     if (-not $script:serverClientList) { return }
     $script:serverClientList.Items.Clear()
     try { $script:serverClients = @(Get-ToolEnterpriseServerClients) } catch { $script:serverClients = @() }
+    $assetStore = $null
+    $assetById = @{}
+    $assignedAssetIds = @{}
+    try {
+        if ((Get-Command Read-ToolAssetRegistryStore -ErrorAction SilentlyContinue) -and
+            (Get-Command Get-ToolCurrentAssetAssignment -ErrorAction SilentlyContinue)) {
+            $assetStore = Read-ToolAssetRegistryStore -RootPath (Initialize-ToolEnterpriseStorage).ServerAssets
+            if ($assetStore) {
+                foreach ($asset in @($assetStore.Assets)) {
+                    $assetId = [string]$asset.AssetId
+                    if ([string]::IsNullOrWhiteSpace($assetId)) { continue }
+                    $assetById[$assetId] = $asset
+                    if ($null -ne (Get-ToolCurrentAssetAssignment -Store $assetStore -AssetId $assetId)) {
+                        $assignedAssetIds[$assetId] = $true
+                    }
+                }
+            }
+        }
+    } catch {
+        $assetStore = $null
+        $assetById = @{}
+        $assignedAssetIds = @{}
+    }
+    $assetConflictCount = 0
     foreach ($client in $script:serverClients) {
         $item = New-Object Windows.Forms.ListViewItem([string]$client.ComputerName)
+        $assetId = if ($client.PSObject.Properties['AssetId']) { [string]$client.AssetId } else { '' }
+        $assetRecord = if ($assetId -and $assetById.ContainsKey($assetId)) { $assetById[$assetId] } else { $null }
+        $assetReference = if ($assetRecord -and (Get-Command Get-ToolEnterpriseAssetReference -ErrorAction SilentlyContinue)) {
+            Get-ToolEnterpriseAssetReference -Asset $assetRecord
+        } elseif ($assetId.Length -ge 8) {
+            'ASSET-' + $assetId.Substring($assetId.Length - 8)
+        } else {
+            Get-EnterpriseText 'enterprise.server.assetPending'
+        }
+        $assignment = if ($assetStore -and $assetId) { Get-ToolCurrentAssetAssignment -Store $assetStore -AssetId $assetId } else { $null }
+        $assignmentName = if ($assignment -and -not [string]::IsNullOrWhiteSpace([string]$assignment.DisplayName)) {
+            [string]$assignment.DisplayName
+        } elseif ($client.PSObject.Properties['AssignmentDisplayName'] -and -not [string]::IsNullOrWhiteSpace([string]$client.AssignmentDisplayName)) {
+            [string]$client.AssignmentDisplayName
+        } else {
+            Get-EnterpriseText 'enterprise.server.assetUnassigned'
+        }
+        if ($client.PSObject.Properties['AssetMatchStatus'] -and [string]$client.AssetMatchStatus -in @('Conflict','Ambiguous')) {
+            $assetConflictCount++
+        }
+        [void]$item.SubItems.Add($assetReference)
+        [void]$item.SubItems.Add($assignmentName)
         [void]$item.SubItems.Add([string]$client.RemoteAddress)
         [void]$item.SubItems.Add([string]$client.LastSeenUtc)
         $activationText = "{0} / {1}" -f [string]$client.WindowsStatus, [string]$client.OfficeStatus
@@ -590,7 +636,11 @@ function Update-ServerClientList {
         $item.Tag = $client
         [void]$script:serverClientList.Items.Add($item)
     }
-    $script:clientCountLabel.Text = Get-EnterpriseText "enterprise.server.pairedCount" @($script:serverClients.Count)
+    $assetCount = if ($assetStore) { @($assetStore.Assets).Count } else { 0 }
+    $unassignedAssetCount = [Math]::Max(0, ($assetCount - $assignedAssetIds.Count))
+    $script:clientCountLabel.Text = Get-EnterpriseText 'enterprise.server.assetSummary' @(
+        $script:serverClients.Count, $assetCount, $assignedAssetIds.Count, $unassignedAssetCount, $assetConflictCount
+    )
 }
 
 function Get-SelectedEnterpriseClient {
@@ -1579,11 +1629,13 @@ $script:serverClientList.FullRowSelect = $true
 $script:serverClientList.GridLines = $true
 $script:serverClientList.Anchor = "Top,Left,Right"
 foreach ($column in @(
-    @((Get-EnterpriseText "enterprise.server.clientColumn"),150),
-    @("IP",120),
-    @((Get-EnterpriseText "enterprise.server.lastSeenColumn"),180),
-    @((Get-EnterpriseText "enterprise.server.activationColumn"),190),
-    @("ClientId",240)
+    @((Get-EnterpriseText "enterprise.server.clientColumn"),120),
+    @((Get-EnterpriseText "enterprise.server.assetColumn"),110),
+    @((Get-EnterpriseText "enterprise.server.assignmentColumn"),130),
+    @("IP",95),
+    @((Get-EnterpriseText "enterprise.server.lastSeenColumn"),140),
+    @((Get-EnterpriseText "enterprise.server.activationColumn"),155),
+    @("ClientId",190)
 )) {
     [void]$script:serverClientList.Columns.Add($column[0], [int]$column[1])
 }

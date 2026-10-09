@@ -54,6 +54,7 @@ if ($failures.Count -eq 0) {
             @{ DisplayVersion="23H2"; Build=22631 },
             @{ DisplayVersion="24H2"; Build=26100 },
             @{ DisplayVersion="25H2"; Build=26200 },
+            @{ DisplayVersion="26H2"; Build=26300 },
             @{ DisplayVersion="26H1"; Build=28000 }
         )) {
             $match = @($catalog.WindowsReleases | Where-Object {
@@ -84,6 +85,7 @@ if ($failures.Count -eq 0) {
 
             $win10 = Get-ToolWindowsReleaseProfile -BuildNumber 19045 -DisplayVersion "22H2" -Ubr 7727
             $win11 = Get-ToolWindowsReleaseProfile -BuildNumber 26100 -DisplayVersion "24H2" -Ubr 9550
+            $win11_26H2 = Get-ToolWindowsReleaseProfile -BuildNumber 26300 -DisplayVersion "26H2" -Ubr 9457
             $ahead = Get-ToolWindowsReleaseProfile -BuildNumber 26200 -DisplayVersion "25H2" -Ubr 9999
             $maximumKnownBuild = [int64](($catalog.WindowsReleases | Measure-Object -Property Build -Maximum).Maximum)
             $future = Get-ToolWindowsReleaseProfile -BuildNumber ($maximumKnownBuild + 1000) -DisplayVersion "Future" -Ubr 1
@@ -92,6 +94,11 @@ if ($failures.Count -eq 0) {
             }
             if (-not $win11.Detected -or $win11.Name -ne "Windows 11 24H2" -or $win11.Currency -ne "MatchesCatalog") {
                 Fail "Nhận diện Windows 11 24H2 không đạt."
+            }
+            if (-not $win11_26H2.Detected -or $win11_26H2.Name -ne "Windows 11 26H2" -or
+                $win11_26H2.Currency -ne "OlderThanCatalog" -or $win11_26H2.CompatibilityMode -ne "Normal" -or
+                -not $win11_26H2.AutomaticVersionSensitiveActionsAllowed) {
+                Fail "Nhận diện Windows 11 26H2 build 26300.9457 không đạt."
             }
             if (-not $ahead.Detected -or $ahead.Currency -ne "AheadOfCatalog" -or $ahead.AutomaticVersionSensitiveActionsAllowed) {
                 Fail "Build Windows vượt catalog chưa chuyển tác vụ nhạy phiên bản sang chỉ đọc."
@@ -111,12 +118,12 @@ if ($failures.Count -eq 0) {
             if (-not $futureOffice.RequiresCatalogReview -or @($futureOffice.UnknownProductIds).Count -ne 1) {
                 Fail "Product ID Office tương lai không chuyển sang trạng thái chưa xác minh."
             }
-            if ((Compare-ToolOfficeBuild "16.0.20430.20118" "16.0.20430.20118") -ne "MatchesCatalog") { Fail "So sánh build Office sai." }
-            if ((Compare-ToolOfficeBuild "16.0.20000.10000" "16.0.20430.20118") -ne "OlderThanCatalog") { Fail "Không nhận ra build Office cũ." }
+            if ((Compare-ToolOfficeBuild "16.0.20430.20146" "16.0.20430.20146") -ne "MatchesCatalog") { Fail "So sánh build Office sai." }
+            if ((Compare-ToolOfficeBuild "16.0.20000.10000" "16.0.20430.20146") -ne "OlderThanCatalog") { Fail "Không nhận ra build Office cũ." }
 
             $metadata = Get-ToolCompatibilityMetadata
-            if ([string]$metadata.CatalogSchemaVersion -ne "1.1" -or [string]$metadata.CatalogVersion -ne "1.1.3.0" -or
-                [int]$metadata.WindowsReleaseCount -lt 5 -or [int]$metadata.OfficeFamilyCount -lt 3 -or
+            if ([string]$metadata.CatalogSchemaVersion -ne "1.1" -or [string]$metadata.CatalogVersion -ne "1.1.4.0" -or
+                [int]$metadata.WindowsReleaseCount -lt 6 -or [int]$metadata.OfficeFamilyCount -lt 3 -or
                 [string]$metadata.FutureCompatibilityMode -ne "ReadOnlyManualReview" -or [bool]$metadata.AutomaticRuntimeUpdateCheck) {
                 Fail "Metadata vòng đời catalog/tương thích tương lai chưa đầy đủ."
             }

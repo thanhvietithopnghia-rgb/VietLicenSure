@@ -537,6 +537,11 @@ try {
         "enterprise.server.stop",
         "enterprise.server.delete",
         "enterprise.server.firewall",
+        "enterprise.server.assetSummary",
+        "enterprise.server.assetColumn",
+        "enterprise.server.assignmentColumn",
+        "enterprise.server.assetPending",
+        "enterprise.server.assetUnassigned",
         "enterprise.server.refresh",
         "enterprise.server.export",
         "enterprise.server.dashboard",
@@ -568,6 +573,11 @@ try {
         Assert-Enterprise ($null -ne $viCatalog.PSObject.Properties[$assetDashboardKey] -and
             $null -ne $enCatalog.PSObject.Properties[$assetDashboardKey]) "Dashboard Asset Registry thiếu bản dịch: $assetDashboardKey"
     }
+    Assert-Enterprise ($enterpriseUiText -match 'Get-ToolEnterpriseAssetReference' -and
+        $enterpriseUiText -match 'Get-ToolCurrentAssetAssignment' -and
+        $enterpriseUiText -match 'enterprise\.server\.assetSummary' -and
+        $enterpriseUiText -match 'enterprise\.server\.assetColumn' -and
+        $enterpriseUiText -match 'enterprise\.server\.assignmentColumn') 'Tab máy chủ chưa hiển thị trực tiếp Asset Registry và trạng thái bàn giao.'
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Enable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Disable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Toggle-EnterpriseNetworkAccess' -and

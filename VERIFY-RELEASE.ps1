@@ -1039,7 +1039,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             @($releaseManifest.SupportedCultures).Count -ne 2) { throw 'Thiếu metadata đa ngôn ngữ vi-VN/en-US.' }
         if ([string]$releaseManifest.CompatibilitySchemaVersion -ne '1.0' -or
             [string]$releaseManifest.CompatibilityCatalogSchemaVersion -ne '1.1' -or
-            [string]$releaseManifest.CompatibilityCatalogVersion -ne '1.1.3.0' -or
+            [string]$releaseManifest.CompatibilityCatalogVersion -ne '1.1.4.0' -or
             [string]$releaseManifest.CompatibilityCatalogHealth -notin @('Fresh','Warning') -or
             [int]$releaseManifest.CompatibilityCatalogReviewWarningAgeDays -ne 30 -or
             [int]$releaseManifest.CompatibilityCatalogMaximumReviewAgeDays -ne 45 -or
