@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-09`
+Ngày build kỹ thuật hiện hành: `2026-10-10`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `09/10/2026`
+Nội dung cập nhật đến: `10/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,11 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 09/10/2026
+## Cập nhật hiện hành ngày 10/10/2026
+
+- Bổ sung panel **Asset Registry** luôn nhìn thấy trong cả tab Máy chủ và Máy trạm: trạng thái tài sản/bàn giao phía máy chủ; Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối phía máy trạm. Giao diện chỉ đọc, không thêm lệnh điều khiển từ xa hay thao tác ghi/xóa.
+
+## Cập nhật ngày 09/10/2026
 
 - Sửa launcher Elevated Broker để luôn truyền đường dẫn tiến trình EXE thật đã được kiểm chứng; chức năng **Quản lý giấy phép hợp lệ** không còn dừng với `ElevatedBrokerLauncherMissing` khi chạy bằng tài khoản thường.
 - Tích hợp **Asset Registry 1.0** vào Agent/Server: Device ID ổn định không phụ thuộc IP, hostname hoặc người dùng; chỉ gửi digest phần cứng đã băm, không gửi serial/UUID thô; matching xung đột hoặc mơ hồ luôn fail-closed.
