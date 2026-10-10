@@ -707,6 +707,271 @@ function Update-EnterpriseClientAssetSummary {
     $script:clientAssetSummaryLabel.Text = Get-EnterpriseText 'enterprise.client.assetSummary' @($deviceReference,$enrollment,$serverDisplay,$lastSync)
 }
 
+function Show-EnterpriseAssetAssignmentDialog {
+    param(
+        [Parameter(Mandatory=$true)][object]$Asset,
+        [AllowNull()][object]$CurrentAssignment
+    )
+
+    $dialog = New-Object Windows.Forms.Form
+    $dialog.Text = Get-EnterpriseText 'enterprise.assetManager.assignmentTitle'
+    $dialog.StartPosition = 'CenterParent'
+    $dialog.Size = New-Object Drawing.Size(610,390)
+    $dialog.MinimumSize = New-Object Drawing.Size(610,390)
+    $dialog.MaximumSize = New-Object Drawing.Size(610,390)
+    $dialog.BackColor = [Drawing.Color]::White
+    $dialog.Font = $script:enterpriseUiFont
+
+    $assetReference = Get-ToolEnterpriseAssetReference -Asset $Asset
+    $assetLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.assetSelected' @($assetReference)) 20 18 550 25
+    $dialog.Controls.Add($assetLabel)
+
+    $typeLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.assigneeType') 20 62 170 24
+    $typeBox = New-Object Windows.Forms.ComboBox
+    $typeBox.Location = New-Object Drawing.Point(200,60)
+    $typeBox.Size = New-Object Drawing.Size(360,26)
+    $typeBox.DropDownStyle = 'DropDownList'
+    [void]$typeBox.Items.AddRange([object[]]@('User','Department','Location','Custodian'))
+    $typeBox.SelectedItem = if ($CurrentAssignment -and [string]$CurrentAssignment.AssigneeType) { [string]$CurrentAssignment.AssigneeType } else { 'User' }
+
+    $referenceLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.assigneeReference') 20 104 170 24
+    $referenceBox = New-EnterpriseTextBox 200 102 360
+    if ($CurrentAssignment) { $referenceBox.Text = [string]$CurrentAssignment.AssigneeReference }
+
+    $displayLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.displayName') 20 146 170 24
+    $displayBox = New-EnterpriseTextBox 200 144 360
+    if ($CurrentAssignment) { $displayBox.Text = [string]$CurrentAssignment.DisplayName }
+
+    $reasonLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.reason') 20 188 170 24
+    $reasonBox = New-EnterpriseTextBox 200 186 360 75 $true
+
+    foreach ($control in @($typeLabel,$typeBox,$referenceLabel,$referenceBox,$displayLabel,$displayBox,$reasonLabel,$reasonBox)) {
+        $dialog.Controls.Add($control)
+    }
+
+    $saveButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.assetManager.save') 330 292 110 34 {}
+    $cancelButton = New-EnterpriseButton (Get-EnterpriseText 'report.privacy.cancelButton') 450 292 110 34 { $dialog.DialogResult=[Windows.Forms.DialogResult]::Cancel; $dialog.Close() }
+    $saveButton.Add_Click(({
+        try {
+            if ([string]::IsNullOrWhiteSpace($referenceBox.Text)) { throw (Get-EnterpriseText 'enterprise.assetManager.referenceRequired') }
+            $dialog.Tag = [pscustomobject][ordered]@{
+                AssigneeType = [string]$typeBox.SelectedItem
+                AssigneeReference = $referenceBox.Text.Trim()
+                DisplayName = $displayBox.Text.Trim()
+                Reason = $reasonBox.Text.Trim()
+            }
+            $dialog.DialogResult = [Windows.Forms.DialogResult]::OK
+            $dialog.Close()
+        } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 800) }
+    }).GetNewClosure())
+    $dialog.Controls.Add($saveButton)
+    $dialog.Controls.Add($cancelButton)
+    $dialog.AcceptButton = $saveButton
+    $dialog.CancelButton = $cancelButton
+
+    if ($dialog.ShowDialog($form) -ne [Windows.Forms.DialogResult]::OK) { return $null }
+    return $dialog.Tag
+}
+
+function Show-EnterpriseAssetHistoryDialog {
+    param(
+        [Parameter(Mandatory=$true)][object]$Store,
+        [Parameter(Mandatory=$true)][object]$Asset
+    )
+
+    $dialog = New-Object Windows.Forms.Form
+    $dialog.Text = Get-EnterpriseText 'enterprise.assetManager.historyTitle' @((Get-ToolEnterpriseAssetReference -Asset $Asset))
+    $dialog.StartPosition = 'CenterParent'
+    $dialog.Size = New-Object Drawing.Size(960,520)
+    $dialog.MinimumSize = New-Object Drawing.Size(820,460)
+    $dialog.BackColor = [Drawing.Color]::White
+    $dialog.Font = $script:enterpriseUiFont
+
+    $list = New-Object Windows.Forms.ListView
+    $list.Location = New-Object Drawing.Point(14,14)
+    $list.Size = New-Object Drawing.Size(915,395)
+    $list.Anchor = 'Top,Bottom,Left,Right'
+    $list.View = 'Details'
+    $list.FullRowSelect = $true
+    $list.GridLines = $true
+    foreach ($column in @(
+        @((Get-EnterpriseText 'enterprise.assetManager.sequence'),55),
+        @((Get-EnterpriseText 'enterprise.assetManager.action'),90),
+        @((Get-EnterpriseText 'enterprise.assetManager.assignedTo'),170),
+        @((Get-EnterpriseText 'enterprise.assetManager.effectiveAt'),150),
+        @((Get-EnterpriseText 'enterprise.assetManager.recordedBy'),115),
+        @((Get-EnterpriseText 'enterprise.assetManager.reason'),300)
+    )) { [void]$list.Columns.Add($column[0],[int]$column[1]) }
+
+    $history = @(Get-ToolAssetAssignmentHistory -Store $Store -AssetId ([string]$Asset.AssetId))
+    foreach ($event in $history) {
+        $item = New-Object Windows.Forms.ListViewItem([string]$event.Sequence)
+        [void]$item.SubItems.Add([string]$event.Action)
+        $assignedTo = if ([string]$event.Action -eq 'Release') { '--' } elseif ([string]::IsNullOrWhiteSpace([string]$event.DisplayName)) { [string]$event.AssigneeReference } else { [string]$event.DisplayName }
+        [void]$item.SubItems.Add($assignedTo)
+        [void]$item.SubItems.Add([string]$event.EffectiveAtUtc)
+        [void]$item.SubItems.Add([string]$event.RecordedBy)
+        [void]$item.SubItems.Add([string]$event.Reason)
+        [void]$list.Items.Add($item)
+    }
+    if ($history.Count -eq 0) {
+        $item = New-Object Windows.Forms.ListViewItem('--')
+        [void]$item.SubItems.Add((Get-EnterpriseText 'enterprise.assetManager.noHistory'))
+        [void]$list.Items.Add($item)
+    }
+    $dialog.Controls.Add($list)
+    $closeButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.navigation.close') 780 420 150 34 { $dialog.Close() }
+    $closeButton.Anchor = 'Bottom,Right'
+    $dialog.Controls.Add($closeButton)
+    [void]$dialog.ShowDialog($form)
+}
+
+function Show-EnterpriseAssetRegistryManager {
+    try {
+        foreach ($requiredCommand in @('Read-ToolAssetRegistryStore','Write-ToolAssetRegistryStore','Add-ToolAssetAssignmentEvent','Get-ToolCurrentAssetAssignment','Get-ToolAssetAssignmentHistory')) {
+            if (-not (Get-Command $requiredCommand -ErrorAction SilentlyContinue)) { throw (Get-EnterpriseText 'enterprise.assetManager.unavailable') }
+        }
+
+        $dialog = New-Object Windows.Forms.Form
+        $dialog.Text = Get-EnterpriseText 'enterprise.assetManager.title'
+        $dialog.StartPosition = 'CenterParent'
+        $dialog.Size = New-Object Drawing.Size(1080,700)
+        $dialog.MinimumSize = New-Object Drawing.Size(920,620)
+        $dialog.BackColor = [Drawing.Color]::White
+        $dialog.Font = $script:enterpriseUiFont
+
+        $filterLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.filter') 14 18 110 25
+        $filterBox = New-EnterpriseTextBox 125 15 560
+        $dialog.Controls.Add($filterLabel)
+        $dialog.Controls.Add($filterBox)
+
+        $list = New-Object Windows.Forms.ListView
+        $list.Location = New-Object Drawing.Point(14,52)
+        $list.Size = New-Object Drawing.Size(700,555)
+        $list.Anchor = 'Top,Bottom,Left,Right'
+        $list.View = 'Details'
+        $list.FullRowSelect = $true
+        $list.GridLines = $true
+        foreach ($column in @(
+            @((Get-EnterpriseText 'enterprise.assetManager.asset'),125),
+            @((Get-EnterpriseText 'enterprise.assetManager.device'),125),
+            @((Get-EnterpriseText 'enterprise.assetManager.status'),85),
+            @((Get-EnterpriseText 'enterprise.assetManager.assignedTo'),150),
+            @((Get-EnterpriseText 'enterprise.assetManager.history'),65),
+            @((Get-EnterpriseText 'enterprise.assetManager.updatedAt'),135)
+        )) { [void]$list.Columns.Add($column[0],[int]$column[1]) }
+        $dialog.Controls.Add($list)
+
+        $detailGroup = New-Object Windows.Forms.GroupBox
+        $detailGroup.Text = Get-EnterpriseText 'enterprise.assetManager.details'
+        $detailGroup.Location = New-Object Drawing.Point(730,52)
+        $detailGroup.Size = New-Object Drawing.Size(315,250)
+        $detailGroup.Anchor = 'Top,Right'
+        $detailLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.assetManager.selectAsset') 12 25 285 205
+        $detailGroup.Controls.Add($detailLabel)
+        $dialog.Controls.Add($detailGroup)
+
+        $state = [pscustomobject]@{ Store=$null; Assets=@(); SelectedAsset=$null }
+        $refresh = {
+            try {
+                $selectedAssetId = if ($state.SelectedAsset) { [string]$state.SelectedAsset.AssetId } else { '' }
+                $state.Store = Read-ToolAssetRegistryStore -RootPath (Initialize-ToolEnterpriseStorage).ServerAssets -CreateIfMissing
+                $state.Assets = @($state.Store.Assets | Sort-Object UpdatedAtUtc -Descending)
+                $list.Items.Clear()
+                $needle = $filterBox.Text.Trim().ToLowerInvariant()
+                foreach ($asset in $state.Assets) {
+                    $assignment = Get-ToolCurrentAssetAssignment -Store $state.Store -AssetId ([string]$asset.AssetId)
+                    $historyCount = @(Get-ToolAssetAssignmentHistory -Store $state.Store -AssetId ([string]$asset.AssetId)).Count
+                    $assetReference = Get-ToolEnterpriseAssetReference -Asset $asset
+                    $deviceId = [string]$asset.DeviceId
+                    $deviceReference = if ($deviceId.Length -ge 8) { 'DEVICE-' + $deviceId.Substring($deviceId.Length - 8) } else { '--' }
+                    $assignedTo = if ($assignment -and -not [string]::IsNullOrWhiteSpace([string]$assignment.DisplayName)) { [string]$assignment.DisplayName } elseif ($assignment) { [string]$assignment.AssigneeReference } else { Get-EnterpriseText 'enterprise.server.assetUnassigned' }
+                    $haystack = @($assetReference,$deviceReference,[string]$asset.Status,$assignedTo,[string]$asset.InventoryNumber,[string]$asset.ExternalAssetTag) -join ' '
+                    if ($needle -and $haystack.ToLowerInvariant().IndexOf($needle) -lt 0) { continue }
+                    $item = New-Object Windows.Forms.ListViewItem($assetReference)
+                    [void]$item.SubItems.Add($deviceReference)
+                    [void]$item.SubItems.Add([string]$asset.Status)
+                    [void]$item.SubItems.Add($assignedTo)
+                    [void]$item.SubItems.Add([string]$historyCount)
+                    [void]$item.SubItems.Add([string]$asset.UpdatedAtUtc)
+                    $item.Tag = [string]$asset.AssetId
+                    [void]$list.Items.Add($item)
+                    if ($selectedAssetId -and [string]$asset.AssetId -eq $selectedAssetId) { $item.Selected=$true; $item.Focused=$true }
+                }
+                if ($list.Items.Count -eq 0) { $detailLabel.Text = Get-EnterpriseText 'enterprise.assetManager.empty' }
+            } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $updateDetails = {
+            $state.SelectedAsset = $null
+            if ($list.SelectedItems.Count -ne 1 -or -not $state.Store) {
+                $detailLabel.Text = Get-EnterpriseText 'enterprise.assetManager.selectAsset'
+                return
+            }
+            $assetId = [string]$list.SelectedItems[0].Tag
+            $asset = @($state.Store.Assets | Where-Object { [string]$_.AssetId -eq $assetId } | Select-Object -First 1)
+            if ($asset.Count -eq 0) { return }
+            $state.SelectedAsset = $asset[0]
+            $assignment = Get-ToolCurrentAssetAssignment -Store $state.Store -AssetId $assetId
+            $historyCount = @(Get-ToolAssetAssignmentHistory -Store $state.Store -AssetId $assetId).Count
+            $assignedTo = if ($assignment -and -not [string]::IsNullOrWhiteSpace([string]$assignment.DisplayName)) { [string]$assignment.DisplayName } elseif ($assignment) { [string]$assignment.AssigneeReference } else { Get-EnterpriseText 'enterprise.server.assetUnassigned' }
+            $detailLabel.Text = Get-EnterpriseText 'enterprise.assetManager.detailLine' @(
+                (Get-ToolEnterpriseAssetReference -Asset $asset[0]),
+                [string]$asset[0].DeviceId,
+                [string]$asset[0].Status,
+                $assignedTo,
+                $historyCount,
+                [string]$asset[0].UpdatedAtUtc
+            )
+        }
+        $assignAction = {
+            try {
+                if (-not $state.SelectedAsset) { throw (Get-EnterpriseText 'enterprise.assetManager.selectAsset') }
+                $current = Get-ToolCurrentAssetAssignment -Store $state.Store -AssetId ([string]$state.SelectedAsset.AssetId)
+                $input = Show-EnterpriseAssetAssignmentDialog -Asset $state.SelectedAsset -CurrentAssignment $current
+                if ($null -eq $input) { return }
+                $action = if ($current) { 'Reassign' } else { 'Assign' }
+                [void](Add-ToolAssetAssignmentEvent -Store $state.Store -AssetId ([string]$state.SelectedAsset.AssetId) -Action $action -AssigneeType ([string]$input.AssigneeType) -AssigneeReference ([string]$input.AssigneeReference) -DisplayName ([string]$input.DisplayName) -Reason ([string]$input.Reason) -RecordedBy ([Environment]::UserName))
+                [void](Write-ToolAssetRegistryStore -Store $state.Store -RootPath (Initialize-ToolEnterpriseStorage).ServerAssets)
+                Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.assetManager.assignmentSaved') $true
+                & $refresh
+                Update-ServerClientList
+            } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $releaseAction = {
+            try {
+                if (-not $state.SelectedAsset) { throw (Get-EnterpriseText 'enterprise.assetManager.selectAsset') }
+                $current = Get-ToolCurrentAssetAssignment -Store $state.Store -AssetId ([string]$state.SelectedAsset.AssetId)
+                if (-not $current) { throw (Get-EnterpriseText 'enterprise.assetManager.notAssigned') }
+                if (-not (Confirm-EnterpriseAction (Get-EnterpriseText 'enterprise.assetManager.confirmRelease' @((Get-ToolEnterpriseAssetReference -Asset $state.SelectedAsset))))) { return }
+                [void](Add-ToolAssetAssignmentEvent -Store $state.Store -AssetId ([string]$state.SelectedAsset.AssetId) -Action Release -Reason (Get-EnterpriseText 'enterprise.assetManager.releaseReason') -RecordedBy ([Environment]::UserName))
+                [void](Write-ToolAssetRegistryStore -Store $state.Store -RootPath (Initialize-ToolEnterpriseStorage).ServerAssets)
+                Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.assetManager.released') $true
+                & $refresh
+                Update-ServerClientList
+            } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $historyAction = {
+            try {
+                if (-not $state.SelectedAsset) { throw (Get-EnterpriseText 'enterprise.assetManager.selectAsset') }
+                Show-EnterpriseAssetHistoryDialog -Store $state.Store -Asset $state.SelectedAsset
+            } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+
+        $list.Add_SelectedIndexChanged(({$updateDetails.Invoke()}).GetNewClosure())
+        $filterBox.Add_TextChanged(({$refresh.Invoke()}).GetNewClosure())
+        $assignButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.assetManager.assignOrReassign') 730 320 315 36 ($assignAction.GetNewClosure())
+        $releaseButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.assetManager.release') 730 366 315 36 ($releaseAction.GetNewClosure())
+        $historyButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.assetManager.viewHistory') 730 412 315 36 ($historyAction.GetNewClosure())
+        $refreshButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.assetManager.refresh') 730 458 315 36 ($refresh.GetNewClosure())
+        $closeButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.navigation.close') 895 610 150 34 { $dialog.Close() }
+        $closeButton.Anchor = 'Bottom,Right'
+        foreach ($button in @($assignButton,$releaseButton,$historyButton,$refreshButton,$closeButton)) { $dialog.Controls.Add($button) }
+
+        & $refresh
+        [void]$dialog.ShowDialog($form)
+    } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1200) }
+}
+
 function Get-SelectedEnterpriseClient {
     if (-not $script:serverClientList -or $script:serverClientList.SelectedItems.Count -eq 0) { return $null }
     return $script:serverClientList.SelectedItems[0].Tag
@@ -1497,11 +1762,12 @@ function Update-EnterpriseLayout {
             $scanResultY = $scanInputY + 34
             $assetPanelWidth = [Math]::Min(390, [Math]::Max(315, [Math]::Floor($contentWidth * 0.38)))
             $scanResultWidth = $contentWidth - $assetPanelWidth - $gap
-            Set-EnterpriseBounds $script:scanResultBox $margin $scanResultY $scanResultWidth 58
-            Set-EnterpriseBounds $script:serverAssetGroup ($margin + $scanResultWidth + $gap) $scanResultY $assetPanelWidth 58
+            Set-EnterpriseBounds $script:scanResultBox $margin $scanResultY $scanResultWidth 92
+            Set-EnterpriseBounds $script:serverAssetGroup ($margin + $scanResultWidth + $gap) $scanResultY $assetPanelWidth 92
             Set-EnterpriseBounds $script:serverAssetDetailLabel 10 19 ($assetPanelWidth - 20) 35
+            Set-EnterpriseBounds $script:serverAssetManagerButton 10 55 ($assetPanelWidth - 20) 28
 
-            $clientHeaderY = $scanResultY + 63
+            $clientHeaderY = $scanResultY + 97
             $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton)))
             $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton)))
             $complianceWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $complianceButton)))
@@ -1690,7 +1956,7 @@ $script:scanInputBox = New-EnterpriseTextBox 18 270 270
 $script:scanInputBox.Text = ""
 $serverTab.Controls.Add($script:scanInputBox)
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.scan") 300 268 130 32 { Invoke-ServerScan }))
-$script:scanResultBox = New-EnterpriseTextBox 18 307 900 78 $true
+$script:scanResultBox = New-EnterpriseTextBox 18 307 900 92 $true
 $script:scanResultBox.ReadOnly = $true
 $script:scanResultBox.Font = $script:enterpriseSmallFont
 $serverTab.Controls.Add($script:scanResultBox)
@@ -1700,9 +1966,11 @@ $script:serverAssetGroup.Font = $script:enterpriseFont
 $script:serverAssetGroup.ForeColor = $script:enterprisePalette.Text
 $script:serverAssetGroup.BackColor = $script:enterprisePalette.ServerSurface
 $script:serverAssetGroup.Location = New-Object Drawing.Point(560, 307)
-$script:serverAssetGroup.Size = New-Object Drawing.Size(358, 58)
+$script:serverAssetGroup.Size = New-Object Drawing.Size(358, 92)
 $script:serverAssetDetailLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.server.assetDetailsEmpty') 10 22 330 62
 $script:serverAssetGroup.Controls.Add($script:serverAssetDetailLabel)
+$script:serverAssetManagerButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.assetManager.open') 10 56 330 28 { Show-EnterpriseAssetRegistryManager }
+$script:serverAssetGroup.Controls.Add($script:serverAssetManagerButton)
 $serverTab.Controls.Add($script:serverAssetGroup)
 $script:serverClientList = New-Object Windows.Forms.ListView
 $script:serverClientList.Location = New-Object Drawing.Point(18, 400)
@@ -1952,6 +2220,13 @@ if ($SmokeTest) {
     }
     if (-not $serverTab.Controls.Contains($script:serverAssetGroup) -or $script:serverAssetGroup.Right -gt ($serverTab.ClientSize.Width + 1) -or
         -not $clientTab.Controls.Contains($script:clientAssetGroup) -or $script:clientAssetGroup.Right -gt ($clientTab.ClientSize.Width + 1)) {
+        throw (Get-EnterpriseText "enterpriseSmoke.serverLayoutClipped")
+    }
+    if (-not $script:serverAssetManagerButton -or
+        -not $script:serverAssetGroup.Controls.Contains($script:serverAssetManagerButton) -or
+        $script:serverAssetManagerButton.Text -ne (Get-EnterpriseText 'enterprise.assetManager.open') -or
+        $script:serverAssetManagerButton.Right -gt ($script:serverAssetGroup.ClientSize.Width + 1) -or
+        $script:serverAssetManagerButton.Bottom -gt ($script:serverAssetGroup.ClientSize.Height + 1)) {
         throw (Get-EnterpriseText "enterpriseSmoke.serverLayoutClipped")
     }
     $discoverButton = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.discover")

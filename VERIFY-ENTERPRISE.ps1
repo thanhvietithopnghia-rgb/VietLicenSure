@@ -590,6 +590,23 @@ try {
         $enterpriseUiText -match 'enterprise\.server\.assetDetailsLine' -and
         $enterpriseUiText -match 'function\s+Update-EnterpriseClientAssetSummary' -and
         $enterpriseUiText -match 'enterprise\.client\.assetSummary') 'UI máy chủ/máy trạm chưa hiển thị trực tiếp Asset Registry và trạng thái bàn giao.'
+    foreach ($assetManagerKey in @(
+        'enterprise.assetManager.open','enterprise.assetManager.title','enterprise.assetManager.filter',
+        'enterprise.assetManager.assignOrReassign','enterprise.assetManager.release',
+        'enterprise.assetManager.viewHistory','enterprise.assetManager.assignmentTitle',
+        'enterprise.assetManager.referenceRequired','enterprise.assetManager.confirmRelease',
+        'enterprise.assetManager.historyTitle','enterprise.assetManager.unavailable'
+    )) {
+        Assert-Enterprise ($enterpriseUiText.Contains($assetManagerKey) -and
+            $null -ne $viCatalog.PSObject.Properties[$assetManagerKey] -and
+            $null -ne $enCatalog.PSObject.Properties[$assetManagerKey]) "Giao diện quản lý Asset Registry thiếu hoặc chưa dịch: $assetManagerKey"
+    }
+    Assert-Enterprise ($enterpriseUiText -match 'function\s+Show-EnterpriseAssetRegistryManager' -and
+        $enterpriseUiText -match 'function\s+Show-EnterpriseAssetAssignmentDialog' -and
+        $enterpriseUiText -match 'function\s+Show-EnterpriseAssetHistoryDialog' -and
+        $enterpriseUiText -match 'Add-ToolAssetAssignmentEvent' -and
+        $enterpriseUiText -match 'Write-ToolAssetRegistryStore' -and
+        $enterpriseUiText -match "-Action\s+Release") 'UI Asset Registry chưa nối đủ tìm/lọc, gán/chuyển giao, thu hồi và lịch sử.'
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Enable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Disable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Toggle-EnterpriseNetworkAccess' -and
