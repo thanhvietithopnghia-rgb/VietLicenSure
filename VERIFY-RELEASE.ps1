@@ -146,7 +146,12 @@ if (-not (Test-Path -LiteralPath $releaseIdentityHelperPath -PathType Leaf)) {
     $expectedReleaseBuildTime = [string]$expectedReleaseIdentity.BuildTime
     $expectedReleaseBuildDate = $expectedReleaseBuildTime.Replace('-', '.')
     $expectedReleaseDateToken = $expectedReleaseBuildTime.Replace('-', '')
-    $expectedOfficialSelfSignedBuildId = $expectedReleaseVersion + '-official-self-signed-' + $expectedReleaseDateToken
+    $expectedBuildIdPattern = '^' + [regex]::Escape($expectedReleaseVersion + '-production-' + $expectedReleaseDateToken) + '(?<revision>-r[1-9][0-9]*)?$'
+    $expectedBuildIdMatch = [regex]::Match($expectedOfficialBuildId, $expectedBuildIdPattern)
+    if (-not $expectedBuildIdMatch.Success) {
+        $failures.Add('Build ID chuẩn không khớp phiên bản/ngày/revision phát hành.')
+    }
+    $expectedOfficialSelfSignedBuildId = $expectedReleaseVersion + '-official-self-signed-' + $expectedReleaseDateToken + $expectedBuildIdMatch.Groups['revision'].Value
     $expectedPublishedAtUtc = $expectedReleaseBuildTime + 'T00:00:00Z'
     $expectedVersionObject = [version]$expectedReleaseVersion
     $productVersion = [string]$expectedVersionObject.Major + '.' + [string]$expectedVersionObject.Minor
@@ -232,7 +237,7 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
 $expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 216 } else { 219 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 216 } else { 220 }
 $expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 47 } elseif ($AllowStoreManifest) { 48 } else { 49 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
