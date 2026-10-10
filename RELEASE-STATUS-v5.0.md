@@ -16,7 +16,7 @@
 | Trường | Giá trị đang được hồ sơ phát hành khai báo | Căn cứ |
 |---|---|---|
 | Tệp thực thi | `VietLicenSure-v5.0.exe` | Release v5.0 |
-| Build ID | `5.0-production-20261010-r2` | `OFFICIAL-PROVENANCE-v1.json` |
+| Build ID | `5.0-production-20261010-r3` | `OFFICIAL-PROVENANCE-v1.json` |
 | SHA-256 của EXE | Xem `RELEASE-MANIFEST.json` và `RELEASE-SHA256SUMS.txt` của chính gói nhận được | Hash thay đổi khi build/ký/timestamp; không sao chép giá trị từ gói khác |
 | Source snapshot được provenance khai báo | Xem `OFFICIAL-PROVENANCE-v1.json` của chính gói nhận được | Provenance có chữ ký CMS tách rời và phải khớp manifest |
 | Chứng thư ký | Chứng thư tự ký được launcher ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |
