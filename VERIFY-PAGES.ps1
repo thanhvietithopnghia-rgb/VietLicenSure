@@ -6,8 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
-$expectedHash = '3C24243A2C69414E43BD8CBAD97097F353DE3290ED1FEF39C4FC1F2C195D010C'
-$expectedBuild = '5.0-production-20261007'
+$expectedHash = 'BEA3BC78F9CEEA82DB3275F81DC386B7F73DDAA2E7B54A4C5A93FDC0FA9F47E7'
+$expectedBuild = '5.0-production-20261009'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
@@ -150,7 +150,7 @@ foreach ($content in @($viSoftwarePolicy, $enSoftwarePolicy)) {
 }
 if ($viAuthor -notmatch 'Thanh Vi\u1EC7t' -or $enAuthor -notmatch 'Thanh Viet') { $errors.Add('Author pages are missing the public author identity') }
 
-$galleryAssets = @('assets/vietlicensure-v5-ui.png', 'assets/runtime-dashboard-windows11.png', 'assets/environment-safety-warning.png')
+$galleryAssets = @('assets/vietlicensure-v5-ui.png', 'assets/enterprise-assets-server.png', 'assets/runtime-dashboard-windows11.png', 'assets/environment-safety-warning.png')
 foreach ($asset in $galleryAssets) {
     $assetPath = Join-Path $DocsRoot $asset
     if (-not (Test-Path -LiteralPath $assetPath) -or (Get-Item -LiteralPath $assetPath).Length -le 0) {
