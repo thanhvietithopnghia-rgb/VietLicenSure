@@ -26,15 +26,17 @@ $releaseVersion = [string]$releaseIdentity.ReleaseVersion
 $releaseBuildTime = [string]$releaseIdentity.BuildTime
 $officialBuildId = [string]$releaseIdentity.BuildId
 $releaseVersionMatch = [regex]::Match($releaseVersion, '^(?<major>\d+)\.(?<minor>\d+)(?:\.\d+\.\d+)?$')
+$baseProductionBuildId = $releaseVersion + '-production-' + $releaseBuildTime.Replace('-', '')
+$officialBuildIdMatch = [regex]::Match($officialBuildId, '^' + [regex]::Escape($baseProductionBuildId) + '(?<revision>-r[1-9][0-9]*)?$')
 if (-not $releaseVersionMatch.Success -or
     $releaseBuildTime -notmatch '^\d{4}-\d{2}-\d{2}$' -or
-    $officialBuildId -cne ($releaseVersion + '-production-' + $releaseBuildTime.Replace('-', ''))) {
+    -not $officialBuildIdMatch.Success) {
     throw 'Tool-Provenance.ps1 chứa release identity không nhất quán.'
 }
 $productVersion = $releaseVersionMatch.Groups['major'].Value + '.' + $releaseVersionMatch.Groups['minor'].Value
 $releaseBuildDate = $releaseBuildTime.Replace('-', '.')
 $releaseDateToken = $releaseBuildTime.Replace('-', '')
-$officialSelfSignedBuildId = "$releaseVersion-official-self-signed-$releaseDateToken"
+$officialSelfSignedBuildId = "$releaseVersion-official-self-signed-$releaseDateToken$($officialBuildIdMatch.Groups['revision'].Value)"
 $publishedAtUtc = $releaseBuildTime + 'T00:00:00Z'
 $requiresSignedArtifact = [bool]($RequireAuthenticode -or $AllowOfficialSelfSignedBuild)
 $requiresVerifiedProvenance = [bool]($requiresSignedArtifact -or $AllowStoreBuild)

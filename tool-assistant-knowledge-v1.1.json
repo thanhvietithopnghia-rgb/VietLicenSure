@@ -1,6 +1,6 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.23.0",
+  "KnowledgeVersion": "1.24.0",
   "UpdatedAtUtc": "2026-10-10T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
@@ -300,8 +300,8 @@
       "TitleVi": "Quản trị doanh nghiệp",
       "TitleEn": "Enterprise management",
       "Keywords": ["doanh nghiep", "enterprise", "lan", "agent", "may tram", "quan tri", "chuc nang 8", "chuc nang so 8", "muc 8", "nut 8"],
-      "AnswerVi": "Chức năng 8 là nhóm quản lý Doanh nghiệp, gồm Quản lý cục bộ Windows/Office, Máy chủ nhận/quản lý báo cáo trong LAN, Máy trạm ghép nối/gửi báo cáo và Central Dashboard chính thức chỉ đọc. Người dùng phải chủ động bật LAN nội bộ và ghép nối lần đầu; sau đó Máy chủ đã bật sẽ tự chạy lại cùng Windows, Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, còn ClientId/secret được giữ qua reboot nên không cần mã mới. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy; quyền thay đổi giấy phép từ xa vẫn mặc định tắt và đây không phải dịch vụ cloud công cộng.",
-      "AnswerEn": "Feature 8 covers local Windows/Office management, a LAN Server for reports, paired Workstations, and the official read-only Central Dashboard. Local LAN and first enrollment require explicit user action; afterward an enabled Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and the stored ClientId/secret survives reboot without a new code. Stopping the Server or disabling Local LAN removes autostart; remote license changes remain disabled by default and this is not a public cloud service."
+      "AnswerVi": "Chức năng 8 là nhóm quản lý Doanh nghiệp, gồm Quản lý cục bộ Windows/Office, Máy chủ nhận/quản lý báo cáo trong LAN, Máy trạm ghép nối/gửi báo cáo và Central Dashboard chính thức chỉ đọc. Trong tab Máy chủ, Asset Registry cho phép tìm/lọc tài sản, gán hoặc chuyển giao, thu hồi có xác nhận và xem lịch sử bàn giao append-only; tab Máy trạm chỉ đọc Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối. Người dùng phải chủ động bật LAN nội bộ và ghép nối lần đầu; sau đó Máy chủ đã bật sẽ tự chạy lại cùng Windows, Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, còn ClientId/secret được giữ qua reboot nên không cần mã mới. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy; quyền thay đổi giấy phép từ xa vẫn mặc định tắt và đây không phải dịch vụ cloud công cộng.",
+      "AnswerEn": "Feature 8 covers local Windows/Office management, a LAN Server for reports, paired Workstations, and the official read-only Central Dashboard. In the Server tab, Asset Registry can search/filter assets, assign or reassign them, confirm release, and inspect append-only assignment history; the Workstation tab remains read-only and shows a shortened Device ID, pairing/server state, and last synchronization. Local LAN and first enrollment require explicit user action; afterward an enabled Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and the stored ClientId/secret survives reboot without a new code. Stopping the Server or disabling Local LAN removes autostart; remote license changes remain disabled by default and this is not a public cloud service."
     },
     {
       "Id": "central-dashboard-mvp",
