@@ -639,9 +639,16 @@ function Update-ServerClientList {
     $assetCount = if ($assetStore) { @($assetStore.Assets).Count } else { 0 }
     $script:serverAssetStore = $assetStore
     $unassignedAssetCount = [Math]::Max(0, ($assetCount - $assignedAssetIds.Count))
-    $script:clientCountLabel.Text = Get-EnterpriseText 'enterprise.server.assetSummary' @(
+    $assetSummaryText = Get-EnterpriseText 'enterprise.server.assetSummary' @(
         $script:serverClients.Count, $assetCount, $assignedAssetIds.Count, $unassignedAssetCount, $assetConflictCount
     )
+    $assetSummaryParts = @($assetSummaryText -split ' \| ')
+    $script:clientCountLabel.Text = if ($assetSummaryParts.Count -eq 5) {
+        (($assetSummaryParts[0..2] -join ' | ') + [Environment]::NewLine + ($assetSummaryParts[3..4] -join ' | '))
+    } else {
+        $assetSummaryText
+    }
+    $script:enterpriseToolTip.SetToolTip($script:clientCountLabel, [string]$assetSummaryText)
     Update-EnterpriseServerAssetDetails
 }
 
@@ -1956,6 +1963,8 @@ $script:pairingOutputBox.ReadOnly = $true
 $serverTab.Controls.Add($script:pairingOutputBox)
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.firewall") 18 195 190 32 { Invoke-ServerNetworkAccess }))
 $script:clientCountLabel = New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.pairedCount" @(0)) 195 201 300
+$script:clientCountLabel.Font = $script:enterpriseSmallFont
+$script:enterpriseToolTip.SetToolTip($script:clientCountLabel, [string]$script:clientCountLabel.Text)
 $serverTab.Controls.Add($script:clientCountLabel)
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.refresh") 510 195 160 32 { Update-ServerClientList }))
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.export") 680 195 170 32 { Invoke-ServerExport }))
@@ -2237,6 +2246,12 @@ if ($SmokeTest) {
         $script:serverAssetManagerButton.Text -ne (Get-EnterpriseText 'enterprise.assetManager.open') -or
         $script:serverAssetManagerButton.Right -gt ($script:serverAssetGroup.ClientSize.Width + 1) -or
         $script:serverAssetManagerButton.Bottom -gt ($script:serverAssetGroup.ClientSize.Height + 1)) {
+        throw (Get-EnterpriseText "enterpriseSmoke.serverLayoutClipped")
+    }
+    $clientSummaryWidth = @(([string]$script:clientCountLabel.Text -split "`r?`n") | ForEach-Object {
+        [Windows.Forms.TextRenderer]::MeasureText($_, $script:clientCountLabel.Font).Width + 4
+    } | Measure-Object -Maximum).Maximum
+    if ($script:clientCountLabel.Width -lt $clientSummaryWidth) {
         throw (Get-EnterpriseText "enterpriseSmoke.serverLayoutClipped")
     }
     $discoverButton = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.discover")
