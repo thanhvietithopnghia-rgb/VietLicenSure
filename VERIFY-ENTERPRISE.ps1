@@ -542,6 +542,9 @@ try {
         "enterprise.server.assignmentColumn",
         "enterprise.server.assetPending",
         "enterprise.server.assetUnassigned",
+        "enterprise.server.assetDetailsTitle",
+        "enterprise.server.assetDetailsEmpty",
+        "enterprise.server.assetDetailsLine",
         "enterprise.server.refresh",
         "enterprise.server.export",
         "enterprise.server.dashboard",
@@ -555,6 +558,11 @@ try {
         "enterprise.client.send",
         "enterprise.client.enableAgent",
         "enterprise.client.disableAgent",
+        "enterprise.client.assetSummaryTitle",
+        "enterprise.client.assetSummary",
+        "enterprise.client.assetEnrolled",
+        "enterprise.client.assetNotEnrolled",
+        "enterprise.client.assetNeverSynced",
         "enterprise.server.startedWithAutostart",
         "enterprise.server.stopRequestedAutostartDisabled",
         "enterprise.client.scheduleEnabledLifecycle",
@@ -577,7 +585,11 @@ try {
         $enterpriseUiText -match 'Get-ToolCurrentAssetAssignment' -and
         $enterpriseUiText -match 'enterprise\.server\.assetSummary' -and
         $enterpriseUiText -match 'enterprise\.server\.assetColumn' -and
-        $enterpriseUiText -match 'enterprise\.server\.assignmentColumn') 'Tab máy chủ chưa hiển thị trực tiếp Asset Registry và trạng thái bàn giao.'
+        $enterpriseUiText -match 'enterprise\.server\.assignmentColumn' -and
+        $enterpriseUiText -match 'function\s+Update-EnterpriseServerAssetDetails' -and
+        $enterpriseUiText -match 'enterprise\.server\.assetDetailsLine' -and
+        $enterpriseUiText -match 'function\s+Update-EnterpriseClientAssetSummary' -and
+        $enterpriseUiText -match 'enterprise\.client\.assetSummary') 'UI máy chủ/máy trạm chưa hiển thị trực tiếp Asset Registry và trạng thái bàn giao.'
     Assert-Enterprise ($enterpriseUiText -match 'function\s+Enable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Disable-EnterpriseNetworkAccess' -and
         $enterpriseUiText -match 'function\s+Toggle-EnterpriseNetworkAccess' -and

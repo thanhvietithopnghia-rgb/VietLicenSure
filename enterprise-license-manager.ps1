@@ -637,10 +637,74 @@ function Update-ServerClientList {
         [void]$script:serverClientList.Items.Add($item)
     }
     $assetCount = if ($assetStore) { @($assetStore.Assets).Count } else { 0 }
+    $script:serverAssetStore = $assetStore
     $unassignedAssetCount = [Math]::Max(0, ($assetCount - $assignedAssetIds.Count))
     $script:clientCountLabel.Text = Get-EnterpriseText 'enterprise.server.assetSummary' @(
         $script:serverClients.Count, $assetCount, $assignedAssetIds.Count, $unassignedAssetCount, $assetConflictCount
     )
+    Update-EnterpriseServerAssetDetails
+}
+
+function Update-EnterpriseServerAssetDetails {
+    if (-not $script:serverAssetDetailLabel) { return }
+    $selected = Get-SelectedEnterpriseClient
+    if (-not $selected) {
+        $script:serverAssetDetailLabel.Text = Get-EnterpriseText 'enterprise.server.assetDetailsEmpty'
+        return
+    }
+
+    $assetId = if ($selected.PSObject.Properties['AssetId']) { [string]$selected.AssetId } else { '' }
+    $deviceId = if ($selected.PSObject.Properties['DeviceId']) { [string]$selected.DeviceId } else { '' }
+    $assetReference = if ($assetId.Length -ge 8) { 'ASSET-' + $assetId.Substring($assetId.Length - 8) } else { Get-EnterpriseText 'enterprise.server.assetPending' }
+    $deviceReference = if ($deviceId.Length -ge 8) { 'DEVICE-' + $deviceId.Substring($deviceId.Length - 8) } else { '--' }
+    $assetStatus = if ($selected.PSObject.Properties['AssetMatchStatus'] -and -not [string]::IsNullOrWhiteSpace([string]$selected.AssetMatchStatus)) { [string]$selected.AssetMatchStatus } else { '--' }
+    $assignmentName = Get-EnterpriseText 'enterprise.server.assetUnassigned'
+    $historyCount = 0
+
+    try {
+        if ($script:serverAssetStore -and $assetId) {
+            $assetRecord = @($script:serverAssetStore.Assets | Where-Object { [string]$_.AssetId -eq $assetId } | Select-Object -First 1)
+            if ($assetRecord.Count -gt 0 -and (Get-Command Get-ToolEnterpriseAssetReference -ErrorAction SilentlyContinue)) {
+                $assetReference = Get-ToolEnterpriseAssetReference -Asset $assetRecord[0]
+                if (-not [string]::IsNullOrWhiteSpace([string]$assetRecord[0].Status)) { $assetStatus = [string]$assetRecord[0].Status }
+            }
+            $assignment = Get-ToolCurrentAssetAssignment -Store $script:serverAssetStore -AssetId $assetId
+            if ($assignment -and -not [string]::IsNullOrWhiteSpace([string]$assignment.DisplayName)) { $assignmentName = [string]$assignment.DisplayName }
+            $historyCount = @(Get-ToolAssetAssignmentHistory -Store $script:serverAssetStore -AssetId $assetId).Count
+        }
+    } catch {}
+
+    $script:serverAssetDetailLabel.Text = Get-EnterpriseText 'enterprise.server.assetDetailsLine' @(
+        $assetReference, $deviceReference, $assetStatus, $assignmentName, $historyCount
+    )
+}
+
+function Update-EnterpriseClientAssetSummary {
+    if (-not $script:clientAssetSummaryLabel) { return }
+    $deviceReference = '--'
+    $enrollment = Get-EnterpriseText 'enterprise.client.assetNotEnrolled'
+    $serverDisplay = '--'
+    $lastSync = Get-EnterpriseText 'enterprise.client.assetNeverSynced'
+    try {
+        $identity = Get-ToolEnterpriseAssetIdentitySnapshot
+        if ($identity -and [string]$identity.DeviceId -and ([string]$identity.DeviceId).Length -ge 8) {
+            $deviceReference = 'DEVICE-' + ([string]$identity.DeviceId).Substring(([string]$identity.DeviceId).Length - 8)
+        }
+        $cfg = Get-ToolEnterpriseClientConfig
+        if ($cfg) {
+            $enrollment = Get-EnterpriseText $(if ([bool]$cfg.Enrolled) { 'enterprise.client.assetEnrolled' } else { 'enterprise.client.assetNotEnrolled' })
+            if (-not [string]::IsNullOrWhiteSpace([string]$cfg.ServerAddress)) { $serverDisplay = '{0}:{1}' -f [string]$cfg.ServerAddress,[int]$cfg.Port }
+        }
+        $paths = Get-ToolEnterprisePaths
+        if (Test-Path -LiteralPath $paths.ClientAgentResult -PathType Leaf) {
+            $result = Read-ToolEnterpriseJson -Path $paths.ClientAgentResult -MaximumBytes 65536
+            if ($result -and -not [string]::IsNullOrWhiteSpace([string]$result.CompletedAtUtc)) {
+                try { $lastSync = ([DateTimeOffset]::Parse([string]$result.CompletedAtUtc)).ToLocalTime().ToString('g') }
+                catch { $lastSync = ConvertTo-ToolEnterpriseSafeText $result.CompletedAtUtc 80 }
+            }
+        }
+    } catch {}
+    $script:clientAssetSummaryLabel.Text = Get-EnterpriseText 'enterprise.client.assetSummary' @($deviceReference,$enrollment,$serverDisplay,$lastSync)
 }
 
 function Get-SelectedEnterpriseClient {
@@ -1078,6 +1142,7 @@ function Invoke-ClientEnroll {
         if (-not $diagnostic.Success) { throw [string]$diagnostic.Message }
         $cfg = Register-ToolEnterpriseClient -ServerAddress $address -Port $port -PairingCode $code -AllowRemoteLicenseChanges ([bool]$script:clientRemoteChanges.Checked) -AutoSend ([bool]$script:clientAutoSend.Checked)
         $script:clientPairingBox.Clear()
+        Update-EnterpriseClientAssetSummary
         Set-EnterpriseStatus (Get-EnterpriseText "enterprise.client.enrolled" @($cfg.ClientId, $address, $port)) $true
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1100) }
 }
@@ -1109,6 +1174,7 @@ function Invoke-ClientSend {
         } else {
             Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.client.agentNoReport' @($agentResult.Message)) $false
         }
+        Update-EnterpriseClientAssetSummary
     } catch {
         try {
             if ($script:agentProcess -and -not $script:agentProcess.HasExited) {
@@ -1429,9 +1495,13 @@ function Update-EnterpriseLayout {
             Set-EnterpriseBounds $script:scanInputBox $margin $scanInputY ($contentWidth - $scanButtonWidth - $gap) 28
             Set-EnterpriseBounds $scanButton ($margin + $contentWidth - $scanButtonWidth) $scanInputY $scanButtonWidth 30
             $scanResultY = $scanInputY + 34
-            Set-EnterpriseBounds $script:scanResultBox $margin $scanResultY $contentWidth 44
+            $assetPanelWidth = [Math]::Min(390, [Math]::Max(315, [Math]::Floor($contentWidth * 0.38)))
+            $scanResultWidth = $contentWidth - $assetPanelWidth - $gap
+            Set-EnterpriseBounds $script:scanResultBox $margin $scanResultY $scanResultWidth 58
+            Set-EnterpriseBounds $script:serverAssetGroup ($margin + $scanResultWidth + $gap) $scanResultY $assetPanelWidth 58
+            Set-EnterpriseBounds $script:serverAssetDetailLabel 10 19 ($assetPanelWidth - 20) 35
 
-            $clientHeaderY = $scanResultY + 49
+            $clientHeaderY = $scanResultY + 63
             $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton)))
             $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton)))
             $complianceWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $complianceButton)))
@@ -1497,7 +1567,10 @@ function Update-EnterpriseLayout {
             $buttonY = 194
             $clientButtonGap = 7
             $clientButtonRows = Set-EnterpriseAdaptiveButtonRows -Buttons @($discoverButton,$testButton,$enrollButton,$sendButton,$enableAgentButton,$disableAgentButton) -X $clientMargin -Y $buttonY -AvailableWidth $clientContentWidth -Height 36 -Gap $clientButtonGap -RowGap 6
-            $clientNotesY = $buttonY + ($clientButtonRows * 36) + (($clientButtonRows - 1) * 6) + 14
+            $clientAssetY = $buttonY + ($clientButtonRows * 36) + (($clientButtonRows - 1) * 6) + 12
+            Set-EnterpriseBounds $script:clientAssetGroup $clientMargin $clientAssetY $clientContentWidth 78
+            Set-EnterpriseBounds $script:clientAssetSummaryLabel 12 20 ($clientContentWidth - 24) 52
+            $clientNotesY = $clientAssetY + 88
             if ($clientNotes.Count -gt 0) { Set-EnterpriseBounds $clientNotes[0] $clientMargin $clientNotesY $clientContentWidth 42 }
             if ($clientNotes.Count -gt 1) { Set-EnterpriseBounds $clientNotes[1] $clientMargin ($clientNotesY + 44) $clientContentWidth 45 }
             $clientContentBottom = $clientNotesY + 89
@@ -1621,6 +1694,16 @@ $script:scanResultBox = New-EnterpriseTextBox 18 307 900 78 $true
 $script:scanResultBox.ReadOnly = $true
 $script:scanResultBox.Font = $script:enterpriseSmallFont
 $serverTab.Controls.Add($script:scanResultBox)
+$script:serverAssetGroup = New-Object Windows.Forms.GroupBox
+$script:serverAssetGroup.Text = Get-EnterpriseText 'enterprise.server.assetDetailsTitle'
+$script:serverAssetGroup.Font = $script:enterpriseFont
+$script:serverAssetGroup.ForeColor = $script:enterprisePalette.Text
+$script:serverAssetGroup.BackColor = $script:enterprisePalette.ServerSurface
+$script:serverAssetGroup.Location = New-Object Drawing.Point(560, 307)
+$script:serverAssetGroup.Size = New-Object Drawing.Size(358, 58)
+$script:serverAssetDetailLabel = New-EnterpriseLabel (Get-EnterpriseText 'enterprise.server.assetDetailsEmpty') 10 22 330 62
+$script:serverAssetGroup.Controls.Add($script:serverAssetDetailLabel)
+$serverTab.Controls.Add($script:serverAssetGroup)
 $script:serverClientList = New-Object Windows.Forms.ListView
 $script:serverClientList.Location = New-Object Drawing.Point(18, 400)
 $script:serverClientList.Size = New-Object Drawing.Size(900, 112)
@@ -1639,6 +1722,7 @@ foreach ($column in @(
 )) {
     [void]$script:serverClientList.Columns.Add($column[0], [int]$column[1])
 }
+$script:serverClientList.Add_SelectedIndexChanged({ Update-EnterpriseServerAssetDetails })
 $serverTab.Controls.Add($script:serverClientList)
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.activationNote") 18 516 900 24))
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.job") 18 548 140))
@@ -1690,6 +1774,16 @@ $clientTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.cl
 $clientTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.client.send") 490 220 145 34 { Invoke-ClientSend }))
 $clientTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.client.enableAgent") 645 220 145 34 { Invoke-ClientSchedule $true }))
 $clientTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.client.disableAgent") 800 220 145 34 { Invoke-ClientSchedule $false }))
+$script:clientAssetGroup = New-Object Windows.Forms.GroupBox
+$script:clientAssetGroup.Text = Get-EnterpriseText 'enterprise.client.assetSummaryTitle'
+$script:clientAssetGroup.Font = $script:enterpriseFont
+$script:clientAssetGroup.ForeColor = $script:enterprisePalette.Text
+$script:clientAssetGroup.BackColor = $script:enterprisePalette.ClientSurface
+$script:clientAssetGroup.Location = New-Object Drawing.Point(20, 268)
+$script:clientAssetGroup.Size = New-Object Drawing.Size(925, 78)
+$script:clientAssetSummaryLabel = New-EnterpriseLabel '' 10 22 850 58
+$script:clientAssetGroup.Controls.Add($script:clientAssetSummaryLabel)
+$clientTab.Controls.Add($script:clientAssetGroup)
 $clientTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.client.queueNote") 20 285 850 45))
 $clientTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.client.keyNote") 20 335 850 45))
 $tabs.TabPages.Add($clientTab) | Out-Null
@@ -1773,6 +1867,7 @@ $form.Add_Shown({
             $script:clientAutoSend.Checked = [bool]$clientCfg.AutoSend
         }
         Update-ServerClientList
+        Update-EnterpriseClientAssetSummary
         Update-EnterpriseLayout
         Update-EnterpriseLifecycleStatus
     } catch {}
@@ -1853,6 +1948,10 @@ if ($SmokeTest) {
         }
     }
     if ($script:serverClientList.Bottom -gt ($serverTab.ClientSize.Height + 1) -or $script:jobKeyBox.Right -gt ($serverTab.ClientSize.Width + 1)) {
+        throw (Get-EnterpriseText "enterpriseSmoke.serverLayoutClipped")
+    }
+    if (-not $serverTab.Controls.Contains($script:serverAssetGroup) -or $script:serverAssetGroup.Right -gt ($serverTab.ClientSize.Width + 1) -or
+        -not $clientTab.Controls.Contains($script:clientAssetGroup) -or $script:clientAssetGroup.Right -gt ($clientTab.ClientSize.Width + 1)) {
         throw (Get-EnterpriseText "enterpriseSmoke.serverLayoutClipped")
     }
     $discoverButton = Find-EnterpriseDirectControl $clientTab (Get-EnterpriseText "enterprise.client.discover")
