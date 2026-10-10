@@ -1512,6 +1512,8 @@ function New-EnterpriseButton {
     $button.Cursor = [Windows.Forms.Cursors]::Hand
     if ($Action) { $button.Add_Click($Action) }
     Set-ToolUiActionButtonVisual -Button $button -Mode $script:enterpriseTheme -PreserveColors
+    $button.AutoEllipsis = $false
+    $script:enterpriseToolTip.SetToolTip($button, [string]$button.Text)
     return $button
 }
 
@@ -1572,6 +1574,12 @@ function Set-EnterpriseBounds {
     $safeWidth = [Math]::Max(1, $Width)
     $safeHeight = [Math]::Max(1, $Height)
     $Control.SetBounds($X, $Y, $safeWidth, $safeHeight)
+    if ($Control -is [Windows.Forms.Button] -and -not (Test-ToolUiHighContrast)) {
+        # The rounded Region is created at construction time. Rebuild it after
+        # every responsive resize or WinForms keeps masking the button at its
+        # old width even though Control.Width reports the new value.
+        Set-ToolUiRoundedButtonRegion -Button $Control -Radius $(if ($safeHeight -ge 40) { 8 } else { 6 })
+    }
 }
 
 function Set-EnterpriseAdaptiveButtonRows {
@@ -1588,7 +1596,7 @@ function Set-EnterpriseAdaptiveButtonRows {
     $activeButtons = @($Buttons | Where-Object { $null -ne $_ })
     if ($activeButtons.Count -eq 0) { return 0 }
     $requiredWidths = @($activeButtons | ForEach-Object {
-        [Math]::Max(92, (Get-ToolUiButtonRequiredWidth -Button $_))
+        [Math]::Max(92, (Get-ToolUiButtonRequiredWidth -Button $_ -HorizontalSafety 20))
     })
     $oneRowWidth = [int](($requiredWidths | Measure-Object -Sum).Sum + (($activeButtons.Count - 1) * $Gap))
     $columnCount = if ($oneRowWidth -le $AvailableWidth) { $activeButtons.Count } else { [Math]::Ceiling($activeButtons.Count / 2.0) }
@@ -1624,8 +1632,10 @@ function Get-EnterpriseClippedButtonLabels {
 
     foreach ($control in $Root.Controls) {
         if ($control -is [Windows.Forms.Button]) {
-            $requiredWidth = Get-ToolUiButtonRequiredWidth -Button $control -HorizontalSafety 8
-            if ($control.Width -lt $requiredWidth -or (([string]$control.Text).Contains('&') -and $control.UseMnemonic)) {
+            $requiredWidth = Get-ToolUiButtonRequiredWidth -Button $control -HorizontalSafety 20
+            $regionClipsRightEdge = [bool]($control.Region -and
+                -not $control.Region.IsVisible([Math]::Max(1, $control.ClientSize.Width - 3), [Math]::Floor($control.ClientSize.Height / 2)))
+            if ($control.Width -lt $requiredWidth -or $regionClipsRightEdge -or (([string]$control.Text).Contains('&') -and $control.UseMnemonic)) {
                 Write-Output ([string]$control.Text)
             }
         }
@@ -1666,7 +1676,7 @@ function Update-EnterpriseLayout {
             if ($localLabels.Count -gt 0) { Set-EnterpriseBounds $localLabels[0] 24 24 ($localWidth - 48) 30 }
             if ($localLabels.Count -gt 1) { Set-EnterpriseBounds $localLabels[1] 24 60 ($localWidth - 48) 42 }
             if ($localLabels.Count -gt 2) { Set-EnterpriseBounds $localLabels[2] 24 106 ($localWidth - 48) 34 }
-            $localButtonWidth = [Math]::Min(($localWidth - 48), [Math]::Max(280, (Get-ToolUiButtonRequiredWidth -Button $localManagerButton)))
+            $localButtonWidth = [Math]::Min(($localWidth - 48), [Math]::Max(280, (Get-ToolUiButtonRequiredWidth -Button $localManagerButton -HorizontalSafety 20)))
             Set-EnterpriseBounds $localManagerButton 24 154 $localButtonWidth 40
         }
 
@@ -1747,7 +1757,7 @@ function Update-EnterpriseLayout {
             $actionRowCount = Set-EnterpriseAdaptiveButtonRows -Buttons @($createButton,$pairButton,$startButton,$stopButton,$deleteButton) -X $margin -Y $actionY -AvailableWidth $contentWidth -Height 34 -Gap $gap -RowGap 5
 
             $pairY = $actionY + ($actionRowCount * 34) + (($actionRowCount - 1) * 5) + 5
-            $networkWidth = [Math]::Min(250, [Math]::Max((Get-ToolUiButtonRequiredWidth -Button $networkButton), [Math]::Floor($contentWidth * 0.21)))
+            $networkWidth = [Math]::Min(250, [Math]::Max((Get-ToolUiButtonRequiredWidth -Button $networkButton -HorizontalSafety 20), [Math]::Floor($contentWidth * 0.21)))
             $pairLabelWidth = [Math]::Min(245, [Math]::Max(190, [Math]::Floor($contentWidth * 0.25)))
             Set-EnterpriseBounds $networkButton $margin $pairY $networkWidth 32
             Set-EnterpriseBounds $pairingLabel ($margin + $networkWidth + $gap) $pairY $pairLabelWidth 32
@@ -1756,7 +1766,7 @@ function Update-EnterpriseLayout {
             $scanLabelY = $pairY + 37
             Set-EnterpriseBounds $scanLabel $margin $scanLabelY $contentWidth 20
             $scanInputY = $scanLabelY + 21
-            $scanButtonWidth = 130
+            $scanButtonWidth = [Math]::Min(180, [Math]::Max(130, (Get-ToolUiButtonRequiredWidth -Button $scanButton -HorizontalSafety 20)))
             Set-EnterpriseBounds $script:scanInputBox $margin $scanInputY ($contentWidth - $scanButtonWidth - $gap) 28
             Set-EnterpriseBounds $scanButton ($margin + $contentWidth - $scanButtonWidth) $scanInputY $scanButtonWidth 30
             $scanResultY = $scanInputY + 34
@@ -1768,10 +1778,10 @@ function Update-EnterpriseLayout {
             Set-EnterpriseBounds $script:serverAssetManagerButton 10 55 ($assetPanelWidth - 20) 28
 
             $clientHeaderY = $scanResultY + 97
-            $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton)))
-            $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton)))
-            $complianceWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $complianceButton)))
-            $dashboardWidth = [Math]::Min(190, [Math]::Max(145, (Get-ToolUiButtonRequiredWidth -Button $dashboardButton)))
+            $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton -HorizontalSafety 20)))
+            $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton -HorizontalSafety 20)))
+            $complianceWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $complianceButton -HorizontalSafety 20)))
+            $dashboardWidth = [Math]::Min(190, [Math]::Max(145, (Get-ToolUiButtonRequiredWidth -Button $dashboardButton -HorizontalSafety 20)))
             $clientCountWidth = [Math]::Max(80, ($contentWidth - $dashboardWidth - $complianceWidth - $refreshWidth - $exportWidth - (4 * $gap)))
             Set-EnterpriseBounds $script:clientCountLabel $margin $clientHeaderY $clientCountWidth 30
             Set-EnterpriseBounds $dashboardButton ($margin + $contentWidth - $dashboardWidth - $complianceWidth - $refreshWidth - $exportWidth - (3 * $gap)) $clientHeaderY $dashboardWidth 30
@@ -1786,7 +1796,7 @@ function Update-EnterpriseLayout {
 
             $jobLabelWidth = 105
             $operationWidth = [Math]::Min(230, [Math]::Max(170, [Math]::Floor($contentWidth * 0.23)))
-            $jobButtonWidth = [Math]::Min(285, [Math]::Max((Get-ToolUiButtonRequiredWidth -Button $createJobButton), [Math]::Floor($contentWidth * 0.24)))
+            $jobButtonWidth = [Math]::Min(285, [Math]::Max((Get-ToolUiButtonRequiredWidth -Button $createJobButton -HorizontalSafety 20), [Math]::Floor($contentWidth * 0.24)))
             $jobKeyWidth = $contentWidth - $jobLabelWidth - $operationWidth - $jobButtonWidth - (2 * $gap)
             Set-EnterpriseBounds $jobLabel $margin $jobY $jobLabelWidth 30
             Set-EnterpriseBounds $script:jobOperationBox ($margin + $jobLabelWidth) $jobY $operationWidth 28

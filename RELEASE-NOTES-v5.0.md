@@ -37,6 +37,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 
 ## Cập nhật hiện hành ngày 10/10/2026
 
+- Sửa bố cục responsive của **Máy chủ/Máy trạm**: tái tạo vùng bo góc sau mỗi lần đổi kích thước, đo đủ chữ Việt/Anh với khoảng an toàn 20 px và tự chia hàng nút máy trạm; không còn chữ bị mask/cắt ở cửa sổ đóng gói.
 - Hoàn thiện **Asset Registry** trong tab Máy chủ: tìm/lọc tài sản, gán hoặc chuyển giao, thu hồi có xác nhận và xem lịch sử bàn giao append-only. Tab Máy trạm vẫn chỉ đọc, hiển thị Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối; không thêm điều khiển từ xa.
 
 ## Cập nhật ngày 09/10/2026
