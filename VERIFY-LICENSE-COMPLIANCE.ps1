@@ -83,6 +83,36 @@ try {
     $officeObservation = [pscustomobject][ordered]@{ ClientId=$clientId; ProductScope='Office'; CatalogProductId='office-2024-pro'; ProductName='Office 2024 Pro' }
     Assert-Compliance (-not (Test-ToolLicenseEntitlementMatchesObservation -Entitlement $officeEntitlement -Observation $officeObservation)) 'A mismatched Office SKU was treated as the same product.'
 
+    $previousPoolingObservations = @($script:complianceFixtureObservations)
+    $poolRecordOne = Set-ToolLicenseEntitlement -ProductScope Software -CatalogProductId 'pooled-device-suite' -ProductName 'Pooled Device Suite' -Vendor 'Example Vendor' -LicenseModel Commercial -Metric Device -PurchasedQuantity 5
+    $poolRecordTwo = Set-ToolLicenseEntitlement -ProductScope Software -CatalogProductId 'pooled-device-suite' -ProductName 'Pooled Device Suite' -Vendor 'Example Vendor' -LicenseModel Commercial -Metric Device -PurchasedQuantity 5
+    [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $poolRecordOne.EntitlementId -ClientId ([Guid]::NewGuid().ToString('N')) -Quantity 5)
+    [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $poolRecordTwo.EntitlementId -ClientId ([Guid]::NewGuid().ToString('N')) -Quantity 5)
+    [void](Add-ToolLicenseEntitlementDocument -EntitlementId $poolRecordOne.EntitlementId -Path $documentPath -Kind Agreement)
+    [void](Add-ToolLicenseEntitlementDocument -EntitlementId $poolRecordTwo.EntitlementId -Path $documentPath -Kind Agreement)
+    $poolObservations = New-Object System.Collections.Generic.List[object]
+    foreach($poolClientIndex in 1..10) {
+        [void]$poolObservations.Add([pscustomobject][ordered]@{
+            ClientId=[Guid]::NewGuid().ToString('N'); ClientReference=('POOL-' + $poolClientIndex); ComputerName=('POOL-PC-' + $poolClientIndex)
+            ProductScope='Software'; CatalogProductId='pooled-device-suite'; ProductName='Pooled Device Suite'; LicenseModel='Paid'; TechnicalStatus='InventoryOnly'
+        })
+    }
+    $script:complianceFixtureObservations = @($poolObservations.ToArray())
+    $pooledRows = @((Get-ToolLicenseComplianceReconciliation).Rows | Where-Object { [string]$_.EntitlementId -in @([string]$poolRecordOne.EntitlementId,[string]$poolRecordTwo.EntitlementId) })
+    Assert-Compliance ($pooledRows.Count -eq 2 -and [int](($pooledRows | Measure-Object ConsumptionCount -Sum).Sum) -eq 10 -and
+        [int](($pooledRows | Measure-Object Installed -Sum).Sum) -eq 10 -and @($pooledRows | Where-Object ObservedDevices -ne 10).Count -eq 0) 'Device consumption was counted more than once across compatible entitlements.'
+    Assert-Compliance (@($pooledRows | Where-Object ComplianceState -ne 'Compliant').Count -eq 0) 'A 5+5 entitlement pool did not reconcile a 10-device fleet.'
+    [void]$poolObservations.Add([pscustomobject][ordered]@{
+        ClientId=[Guid]::NewGuid().ToString('N'); ClientReference='POOL-11'; ComputerName='POOL-PC-11'
+        ProductScope='Software'; CatalogProductId='pooled-device-suite'; ProductName='Pooled Device Suite'; LicenseModel='Paid'; TechnicalStatus='InventoryOnly'
+    })
+    $script:complianceFixtureObservations = @($poolObservations.ToArray())
+    $overPoolRows = @((Get-ToolLicenseComplianceReconciliation).Rows | Where-Object { [string]$_.EntitlementId -in @([string]$poolRecordOne.EntitlementId,[string]$poolRecordTwo.EntitlementId) })
+    Assert-Compliance ([int](($overPoolRows | Measure-Object ConsumptionCount -Sum).Sum) -eq 11 -and
+        @($overPoolRows | Where-Object { [string]$_.ComplianceState -eq 'Critical' -and [string]$_.ComplianceReason -eq 'ConsumptionExceedsPurchased' }).Count -eq 1) 'An 11-device fleet was not reported once against a 10-device entitlement pool.'
+    foreach($poolRecord in @($poolRecordOne,$poolRecordTwo)) { [void](Remove-ToolLicenseEntitlement -EntitlementId $poolRecord.EntitlementId) }
+    $script:complianceFixtureObservations = $previousPoolingObservations
+
     $advisor = Get-ToolLicenseAdvisorResult -ProductScope Windows -TechnicalStatus Activated -Channel Retail -LicenseModel Retail -EntitlementStatus NotVerified
     Assert-Compliance ([string]$advisor.Risk -eq 'Review') 'Advisor risk is incorrect.'
     Assert-Compliance ([string]$advisor.Explanation -match 'Technical activation' -and [string]$advisor.Limitation -match 'legal ownership') 'Advisor did not separate technical activation from legal entitlement.'

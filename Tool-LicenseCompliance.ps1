@@ -436,9 +436,46 @@ function Test-ToolLicenseEntitlementMatchesObservation {
     return [string]::Equals(([string]$Entitlement.ProductName).Trim(), ([string]$Observation.ProductName).Trim(), [StringComparison]::OrdinalIgnoreCase)
 }
 
+function Get-ToolLicenseComplianceEntitlementPoolKey {
+    param([Parameter(Mandatory=$true)][object]$Entitlement)
+    $scope = ([string]$Entitlement.ProductScope).Trim().ToLowerInvariant()
+    $metric = ([string]$Entitlement.Metric).Trim().ToLowerInvariant()
+    $model = ([string]$Entitlement.LicenseModel).Trim().ToLowerInvariant()
+    $catalogId = ([string]$Entitlement.CatalogProductId).Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($catalogId)) { $identity = 'catalog:' + $catalogId }
+    elseif ($scope -eq 'software') { $identity = 'name:' + ([string]$Entitlement.ProductName).Trim().ToLowerInvariant() }
+    else { $identity = 'entitlement:' + ([string]$Entitlement.EntitlementId).Trim().ToLowerInvariant() }
+    return ($scope + '|' + $identity + '|' + $metric + '|' + $model)
+}
+
 function Get-ToolLicenseComplianceReconciliation {
     $entitlements = @(Get-ToolLicenseEntitlements)
     $observations = @(Get-ToolLicenseComplianceFleetObservations)
+    $devicePoolState = @{}
+    foreach ($pool in @($entitlements | Where-Object { [string]$_.Metric -eq 'Device' } | Group-Object { Get-ToolLicenseComplianceEntitlementPoolKey -Entitlement $_ })) {
+        $poolEntitlements = @($pool.Group | Sort-Object CreatedAtUtc,EntitlementId)
+        if ($poolEntitlements.Count -eq 0) { continue }
+        $prototype = $poolEntitlements[0]
+        $scopeObservations = @($observations | Where-Object { [string]$_.ProductScope -eq [string]$prototype.ProductScope })
+        $matches = @($observations | Where-Object { Test-ToolLicenseEntitlementMatchesObservation -Entitlement $prototype -Observation $_ })
+        $identityEvidenceStatus = if ([string]$prototype.ProductScope -eq 'Software' -or $matches.Count -gt 0) { 'Complete' } else { 'InsufficientEvidence' }
+        $observedSource = if ([string]$prototype.ProductScope -ne 'Software' -and $identityEvidenceStatus -ne 'Complete') { $scopeObservations } else { $matches }
+        $observedDevices = @($observedSource | ForEach-Object { [string]$_.ClientId } | Where-Object { $_ } | Select-Object -Unique).Count
+        $remainingConsumption = [int]$observedDevices
+        for ($poolIndex = 0; $poolIndex -lt $poolEntitlements.Count; $poolIndex++) {
+            $poolEntitlement = $poolEntitlements[$poolIndex]
+            $purchased = [int]$poolEntitlement.PurchasedQuantity
+            $allocated = [Math]::Min($remainingConsumption, $purchased)
+            if ($poolIndex -eq ($poolEntitlements.Count - 1) -and $remainingConsumption -gt $purchased) { $allocated = $remainingConsumption }
+            $devicePoolState[[string]$poolEntitlement.EntitlementId] = [pscustomobject][ordered]@{
+                ObservedDevices=[int]$observedDevices
+                ConsumptionCount=[int]$allocated
+                IdentityEvidenceStatus=$identityEvidenceStatus
+                ConsumptionEvidenceStatus=$(if ($identityEvidenceStatus -eq 'Complete') { 'Complete' } else { 'InsufficientEvidence' })
+            }
+            $remainingConsumption = [Math]::Max(0, ($remainingConsumption - $allocated))
+        }
+    }
     $rows = New-Object System.Collections.Generic.List[object]
     foreach ($entitlement in $entitlements) {
         $scopeObservations = @($observations | Where-Object { [string]$_.ProductScope -eq [string]$entitlement.ProductScope })
@@ -450,6 +487,16 @@ function Get-ToolLicenseComplianceReconciliation {
         $metric = [string]$entitlement.Metric
         $consumptionEvidenceStatus = if ($metric -eq 'Device' -and $identityEvidenceStatus -eq 'Complete') { 'Complete' } else { 'InsufficientEvidence' }
         $consumptionCount = if ($consumptionEvidenceStatus -eq 'Complete') { [int]$installed } else { $null }
+        if ($metric -eq 'Device' -and $devicePoolState.ContainsKey([string]$entitlement.EntitlementId)) {
+            $poolState = $devicePoolState[[string]$entitlement.EntitlementId]
+            $installed = [int]$poolState.ConsumptionCount
+            $consumptionCount = if ([string]$poolState.ConsumptionEvidenceStatus -eq 'Complete') { [int]$poolState.ConsumptionCount } else { $null }
+            $identityEvidenceStatus = [string]$poolState.IdentityEvidenceStatus
+            $consumptionEvidenceStatus = [string]$poolState.ConsumptionEvidenceStatus
+            $observedDevices = [int]$poolState.ObservedDevices
+        } else {
+            $observedDevices = [int]$installed
+        }
         $assigned = [int](Get-ToolLicenseComplianceIntegerSum -Items @($entitlement.Assignments) -PropertyName Quantity)
         $purchased = [int]$entitlement.PurchasedQuantity
         $available = [int]($purchased - $assigned)
@@ -477,7 +524,7 @@ function Get-ToolLicenseComplianceReconciliation {
             EntitlementId=[string]$entitlement.EntitlementId; ProductScope=[string]$entitlement.ProductScope
             CatalogProductId=[string]$entitlement.CatalogProductId; ProductName=[string]$entitlement.ProductName
             LicenseModel=[string]$entitlement.LicenseModel; Metric=$metric
-            Purchased=$purchased; Assigned=$assigned; Installed=$installed; ObservedDevices=$installed
+            Purchased=$purchased; Assigned=$assigned; Installed=$installed; ObservedDevices=$observedDevices
             ConsumptionCount=$consumptionCount; Available=$available
             IdentityEvidenceStatus=$identityEvidenceStatus; ConsumptionEvidenceStatus=$consumptionEvidenceStatus
             DocumentCount=$documents; ExpiresAt=[string]$entitlement.ExpiresAt; ComplianceState=$state; ComplianceReason=$reason
