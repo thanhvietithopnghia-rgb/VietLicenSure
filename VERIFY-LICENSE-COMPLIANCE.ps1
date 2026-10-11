@@ -34,11 +34,12 @@ try {
     $storedDocumentPath = Join-Path $compliancePaths.Documents ([string]$document.StoredName)
     Assert-Compliance (Test-Path -LiteralPath $storedDocumentPath -PathType Leaf) 'Stored evidence document is missing.'
 
-    function Get-ToolLicenseComplianceFleetObservations {
-        return @(
+    $script:complianceFixtureObservations = @(
             [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Software'; CatalogProductId='commercial-suite'; ProductName='Commercial Suite'; LicenseModel='Paid'; TechnicalStatus='InventoryOnly' },
             [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Software'; CatalogProductId='uncovered-suite'; ProductName='Uncovered Suite'; LicenseModel='Subscription'; TechnicalStatus='InventoryOnly' }
-        )
+    )
+    function Get-ToolLicenseComplianceFleetObservations {
+        return @($script:complianceFixtureObservations)
     }
     $reconciliation = Get-ToolLicenseComplianceReconciliation
     $row = @($reconciliation.Rows | Select-Object -First 1)
@@ -50,6 +51,37 @@ try {
     [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $record.EntitlementId -ClientId $clientId -Quantity 3)
     $critical = @(Get-ToolLicenseComplianceReconciliation).Rows | Select-Object -First 1
     Assert-Compliance ([string]$critical.ComplianceState -eq 'Critical') 'Over-allocation was not marked Critical.'
+
+    $secondClientId = [Guid]::NewGuid().ToString('N')
+    $userRecord = Set-ToolLicenseEntitlement -ProductScope Software -CatalogProductId 'user-suite' -ProductName 'User Suite' -Vendor 'Example Vendor' -LicenseModel Subscription -Metric User -PurchasedQuantity 1
+    $concurrentRecord = Set-ToolLicenseEntitlement -ProductScope Software -CatalogProductId 'concurrent-suite' -ProductName 'Concurrent Suite' -Vendor 'Example Vendor' -LicenseModel Subscription -Metric Concurrent -PurchasedQuantity 1
+    $windowsRecord = Set-ToolLicenseEntitlement -ProductScope Windows -CatalogProductId 'windows-11-home' -ProductName 'Windows 11 Home' -Vendor Microsoft -LicenseModel Retail -Metric Device -PurchasedQuantity 1
+    $script:complianceFixtureObservations = @($script:complianceFixtureObservations) + @(
+        [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Software'; CatalogProductId='user-suite'; ProductName='User Suite'; LicenseModel='Subscription'; TechnicalStatus='InventoryOnly' },
+        [pscustomobject][ordered]@{ ClientId=$secondClientId; ClientReference='CLIENT-TEST-2'; ComputerName='TEST-PC-2'; ProductScope='Software'; CatalogProductId='user-suite'; ProductName='User Suite'; LicenseModel='Subscription'; TechnicalStatus='InventoryOnly' },
+        [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Software'; CatalogProductId='concurrent-suite'; ProductName='Concurrent Suite'; LicenseModel='Subscription'; TechnicalStatus='InventoryOnly' },
+        [pscustomobject][ordered]@{ ClientId=$secondClientId; ClientReference='CLIENT-TEST-2'; ComputerName='TEST-PC-2'; ProductScope='Software'; CatalogProductId='concurrent-suite'; ProductName='Concurrent Suite'; LicenseModel='Subscription'; TechnicalStatus='InventoryOnly' },
+        [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Windows'; CatalogProductId='windows-11-pro'; ProductName='Windows 11 Pro'; LicenseModel='Retail'; TechnicalStatus='Activated' }
+    )
+    $failClosed = Get-ToolLicenseComplianceReconciliation
+    $userRow = @($failClosed.Rows | Where-Object EntitlementId -eq $userRecord.EntitlementId | Select-Object -First 1)
+    $concurrentRow = @($failClosed.Rows | Where-Object EntitlementId -eq $concurrentRecord.EntitlementId | Select-Object -First 1)
+    $windowsRow = @($failClosed.Rows | Where-Object EntitlementId -eq $windowsRecord.EntitlementId | Select-Object -First 1)
+    Assert-Compliance ($userRow.Count -eq 1 -and [int]$userRow[0].ObservedDevices -eq 2 -and $null -eq $userRow[0].ConsumptionCount -and
+        [string]$userRow[0].ConsumptionEvidenceStatus -eq 'InsufficientEvidence' -and [string]$userRow[0].ComplianceState -eq 'NeedsReview' -and
+        [string]$userRow[0].ComplianceReason -eq 'MetricEvidenceMissing') 'User metric was inferred from device installations.'
+    Assert-Compliance ($concurrentRow.Count -eq 1 -and [int]$concurrentRow[0].ObservedDevices -eq 2 -and $null -eq $concurrentRow[0].ConsumptionCount -and
+        [string]$concurrentRow[0].ConsumptionEvidenceStatus -eq 'InsufficientEvidence' -and [string]$concurrentRow[0].ComplianceState -eq 'NeedsReview' -and
+        [string]$concurrentRow[0].ComplianceReason -eq 'MetricEvidenceMissing') 'Concurrent metric was inferred from device installations.'
+    Assert-Compliance ($windowsRow.Count -eq 1 -and [int]$windowsRow[0].ObservedDevices -eq 1 -and
+        [string]$windowsRow[0].IdentityEvidenceStatus -eq 'InsufficientEvidence' -and [string]$windowsRow[0].ComplianceState -eq 'NeedsReview' -and
+        [string]$windowsRow[0].ComplianceReason -eq 'ProductIdentityEvidenceMissing') 'A mismatched Windows SKU was treated as compliant.'
+    Assert-Compliance (-not (Test-ToolLicenseEntitlementMatchesObservation -Entitlement $windowsRecord -Observation $script:complianceFixtureObservations[-1])) 'A Windows Home entitlement matched a Windows Pro observation.'
+    $matchingWindowsObservation = [pscustomobject][ordered]@{ ClientId=$clientId; ProductScope='Windows'; CatalogProductId='windows-11-home'; ProductName='Windows 11 Home' }
+    Assert-Compliance (Test-ToolLicenseEntitlementMatchesObservation -Entitlement $windowsRecord -Observation $matchingWindowsObservation) 'An exact Windows catalog product identity did not match.'
+    $officeEntitlement = [pscustomobject][ordered]@{ ProductScope='Office'; CatalogProductId='office-2024-home'; ProductName='Office 2024 Home' }
+    $officeObservation = [pscustomobject][ordered]@{ ClientId=$clientId; ProductScope='Office'; CatalogProductId='office-2024-pro'; ProductName='Office 2024 Pro' }
+    Assert-Compliance (-not (Test-ToolLicenseEntitlementMatchesObservation -Entitlement $officeEntitlement -Observation $officeObservation)) 'A mismatched Office SKU was treated as the same product.'
 
     $advisor = Get-ToolLicenseAdvisorResult -ProductScope Windows -TechnicalStatus Activated -Channel Retail -LicenseModel Retail -EntitlementStatus NotVerified
     Assert-Compliance ([string]$advisor.Risk -eq 'Review') 'Advisor risk is incorrect.'
@@ -95,9 +127,11 @@ try {
     $documentForEntitlementRemoval = Add-ToolLicenseEntitlementDocument -EntitlementId $record.EntitlementId -Path $documentPath -Kind Agreement
     $documentForEntitlementRemovalPath = Join-Path $compliancePaths.Documents ([string]$documentForEntitlementRemoval.StoredName)
     [void](Remove-ToolLicenseEntitlement -EntitlementId $record.EntitlementId)
-    Assert-Compliance (@(Get-ToolLicenseEntitlements).Count -eq 0) 'Entitlement removal failed.'
+    Assert-Compliance (@(Get-ToolLicenseEntitlements | Where-Object EntitlementId -eq $record.EntitlementId).Count -eq 0) 'Entitlement removal failed.'
     Assert-Compliance (-not (Test-Path -LiteralPath $documentForEntitlementRemovalPath -PathType Leaf)) 'Entitlement removal left an evidence document on disk.'
     Assert-Compliance (@(Get-ChildItem -LiteralPath $compliancePaths.Documents -File -Filter '*.deleting-*' -ErrorAction SilentlyContinue).Count -eq 0) 'Entitlement removal left a staged document on disk.'
+    foreach($fixtureRecord in @($userRecord,$concurrentRecord,$windowsRecord)) { [void](Remove-ToolLicenseEntitlement -EntitlementId $fixtureRecord.EntitlementId) }
+    Assert-Compliance (@(Get-ToolLicenseEntitlements).Count -eq 0) 'Compliance fixture cleanup left entitlement records.'
     Write-Host 'LICENSE-COMPLIANCE PASS: evidence, reconciliation, advisor, privacy and validation.' -ForegroundColor Green
     exit 0
 } catch {

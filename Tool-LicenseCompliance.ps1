@@ -423,7 +423,12 @@ function Get-ToolLicenseComplianceFleetObservations {
 function Test-ToolLicenseEntitlementMatchesObservation {
     param([Parameter(Mandatory=$true)][object]$Entitlement,[Parameter(Mandatory=$true)][object]$Observation)
     if ([string]$Entitlement.ProductScope -ne [string]$Observation.ProductScope) { return $false }
-    if ([string]$Entitlement.ProductScope -ne 'Software') { return $true }
+    if ([string]$Entitlement.ProductScope -ne 'Software') {
+        $entitlementProductId = ([string]$Entitlement.CatalogProductId).Trim()
+        $observationProductId = ([string]$Observation.CatalogProductId).Trim()
+        if ([string]::IsNullOrWhiteSpace($entitlementProductId) -or [string]::IsNullOrWhiteSpace($observationProductId)) { return $false }
+        return [string]::Equals($entitlementProductId, $observationProductId, [StringComparison]::OrdinalIgnoreCase)
+    }
     $catalogId = ([string]$Entitlement.CatalogProductId).Trim()
     if (-not [string]::IsNullOrWhiteSpace($catalogId)) {
         return [string]::Equals($catalogId, [string]$Observation.CatalogProductId, [StringComparison]::OrdinalIgnoreCase)
@@ -436,9 +441,15 @@ function Get-ToolLicenseComplianceReconciliation {
     $observations = @(Get-ToolLicenseComplianceFleetObservations)
     $rows = New-Object System.Collections.Generic.List[object]
     foreach ($entitlement in $entitlements) {
+        $scopeObservations = @($observations | Where-Object { [string]$_.ProductScope -eq [string]$entitlement.ProductScope })
         $matches = @($observations | Where-Object { Test-ToolLicenseEntitlementMatchesObservation -Entitlement $entitlement -Observation $_ })
-        $installedClients = @($matches | ForEach-Object { [string]$_.ClientId } | Where-Object { $_ } | Select-Object -Unique)
+        $identityEvidenceStatus = if ([string]$entitlement.ProductScope -eq 'Software' -or $matches.Count -gt 0) { 'Complete' } else { 'InsufficientEvidence' }
+        $observedSource = if ([string]$entitlement.ProductScope -ne 'Software' -and $identityEvidenceStatus -ne 'Complete') { $scopeObservations } else { $matches }
+        $installedClients = @($observedSource | ForEach-Object { [string]$_.ClientId } | Where-Object { $_ } | Select-Object -Unique)
         $installed = [int]$installedClients.Count
+        $metric = [string]$entitlement.Metric
+        $consumptionEvidenceStatus = if ($metric -eq 'Device' -and $identityEvidenceStatus -eq 'Complete') { 'Complete' } else { 'InsufficientEvidence' }
+        $consumptionCount = if ($consumptionEvidenceStatus -eq 'Complete') { [int]$installed } else { $null }
         $assigned = [int](Get-ToolLicenseComplianceIntegerSum -Items @($entitlement.Assignments) -PropertyName Quantity)
         $purchased = [int]$entitlement.PurchasedQuantity
         $available = [int]($purchased - $assigned)
@@ -448,15 +459,28 @@ function Get-ToolLicenseComplianceReconciliation {
             $expiry = [DateTime]::MinValue
             if ([DateTime]::TryParse([string]$entitlement.ExpiresAt, [ref]$expiry)) { $expired = $expiry.Date -lt [DateTime]::Today }
         }
-        $state = if ($expired -or $installed -gt $purchased -or $assigned -gt $purchased) { 'Critical' }
-            elseif ($documents -eq 0 -or $installed -gt $assigned) { 'NeedsReview' }
+        $consumptionExceeded = [bool]($consumptionEvidenceStatus -eq 'Complete' -and [int]$consumptionCount -gt $purchased)
+        $assignmentExceeded = [bool]($metric -eq 'Device' -and $assigned -gt $purchased)
+        $state = if ($expired -or $consumptionExceeded -or $assignmentExceeded) { 'Critical' }
+            elseif ($identityEvidenceStatus -ne 'Complete' -or $consumptionEvidenceStatus -ne 'Complete' -or
+                $documents -eq 0 -or [int]$consumptionCount -gt $assigned) { 'NeedsReview' }
             else { 'Compliant' }
+        $reason = if ($expired) { 'Expired' }
+            elseif ($consumptionExceeded) { 'ConsumptionExceedsPurchased' }
+            elseif ($assignmentExceeded) { 'AssignmentExceedsPurchased' }
+            elseif ($identityEvidenceStatus -ne 'Complete') { 'ProductIdentityEvidenceMissing' }
+            elseif ($consumptionEvidenceStatus -ne 'Complete') { 'MetricEvidenceMissing' }
+            elseif ($documents -eq 0) { 'DocumentEvidenceMissing' }
+            elseif ([int]$consumptionCount -gt $assigned) { 'ConsumptionExceedsAssignment' }
+            else { 'Reconciled' }
         [void]$rows.Add([pscustomobject][ordered]@{
             EntitlementId=[string]$entitlement.EntitlementId; ProductScope=[string]$entitlement.ProductScope
             CatalogProductId=[string]$entitlement.CatalogProductId; ProductName=[string]$entitlement.ProductName
-            LicenseModel=[string]$entitlement.LicenseModel; Metric=[string]$entitlement.Metric
-            Purchased=$purchased; Assigned=$assigned; Installed=$installed; Available=$available
-            DocumentCount=$documents; ExpiresAt=[string]$entitlement.ExpiresAt; ComplianceState=$state
+            LicenseModel=[string]$entitlement.LicenseModel; Metric=$metric
+            Purchased=$purchased; Assigned=$assigned; Installed=$installed; ObservedDevices=$installed
+            ConsumptionCount=$consumptionCount; Available=$available
+            IdentityEvidenceStatus=$identityEvidenceStatus; ConsumptionEvidenceStatus=$consumptionEvidenceStatus
+            DocumentCount=$documents; ExpiresAt=[string]$entitlement.ExpiresAt; ComplianceState=$state; ComplianceReason=$reason
         })
     }
     $coveredKeys = @{}
