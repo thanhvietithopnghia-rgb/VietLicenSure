@@ -119,7 +119,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Danh sách phần mềm cần xem xét được sắp xếp **Cao → Trung bình → Thấp**.
 - Phần mềm trả phí, thuê bao hoặc dùng thử chưa xác minh luôn được nhắc kiểm tra giấy phép, không tự kết luận vi phạm.
 - Thành phần hệ thống, runtime, codec, extension nền, trình cài đặt, add-in, gói hỗ trợ và trình gỡ driver chỉ nằm trong kiểm kê/báo cáo, không xuất hiện ở cửa sổ xử lý.
-- Catalog tích hợp và Online `1.6.3.0` có 94 nhóm sản phẩm, được ký CMS, kiểm tra schema và chống hạ phiên bản.
+- Catalog Online `1.6.4.0` được rà soát ngày 11/10/2026, có 94 nhóm sản phẩm, ký CMS, kiểm tra schema và chống hạ phiên bản; bản tích hợp cũ vẫn là fallback Offline an toàn cho đến lần build kế tiếp.
 - Mỗi lần mở vẫn mặc định Offline. Sau khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure chỉ cập nhật/xác minh catalog ký số rồi dừng; không upload inventory, không tự quét/tạo báo cáo/hỏi mức riêng tư, không kiểm tra/cài phiên bản ứng dụng, không có dịch vụ nền và lần mở sau trở lại Offline.
 - Khắc phục tách riêng Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm.
 - Báo cáo HTML/PDF/JSON/XML được tạo cục bộ và che định danh phần cứng trong bản chia sẻ mặc định.

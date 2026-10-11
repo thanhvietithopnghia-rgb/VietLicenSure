@@ -1920,9 +1920,9 @@ if ($softwareInventory) {
         $catalogSignaturePath = $catalogPath + '.p7s'
         $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
         $catalogIds = @($catalog.Products | ForEach-Object { [string]$_.Id })
-        if ([string]$catalog.CatalogVersion -ne '1.6.3.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-08-31T06:05:00Z' -or
+        if ([string]$catalog.CatalogVersion -ne '1.6.4.0' -or [string]$catalog.GeneratedAtUtc -ne '2026-10-11T12:55:13Z' -or
             $catalogIds.Count -lt 94 -or @($catalogIds | Select-Object -Unique).Count -ne $catalogIds.Count) {
-            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.3.0 / ngày bảo trì / 94 quy tắc duy nhất.'
+            Fail 'Catalogue phần mềm v5.0 chưa đạt 1.6.4.0 / ngày bảo trì / 94 quy tắc duy nhất.'
         }
         foreach ($requiredCatalogId in @('iobit-driver-booster','canon-lbp-capt-printer-driver','windows-app-platform-component','winrar','adobe-creative-cloud-paid','autodesk-commercial','commercial-pdf-editors','internet-download-manager','mathworks-matlab-simulink','wiris-mathtype','microsoft-visual-studio-community','microsoft-visual-studio-paid')) {
             if ($catalogIds -notcontains $requiredCatalogId) { Fail "Catalogue phần mềm thiếu quy tắc: $requiredCatalogId" }
@@ -1939,7 +1939,7 @@ if ($softwareInventory) {
         }
         $trustedBundledCatalog = Import-ToolSoftwareCatalogFile -Path $catalogPath -SignaturePath $catalogSignaturePath -Source 'Bundled' -RequireSignature
         if (-not $trustedBundledCatalog -or -not [bool]$trustedBundledCatalog.CatalogSignatureValid -or
-            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.3.0') {
+            [string]$trustedBundledCatalog.CatalogVersion -ne '1.6.4.0') {
             Fail 'Catalogue phần mềm tích hợp chưa mở được bằng chữ ký CMS và signer đã ghim.'
         }
         $forgedCatalog = (Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json)
