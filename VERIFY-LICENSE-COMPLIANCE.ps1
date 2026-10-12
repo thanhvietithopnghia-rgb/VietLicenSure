@@ -14,7 +14,7 @@ try {
     $env:TOOL_ENTERPRISE_ROOT = $root
     $env:TOOL_ENTERPRISE_SKIP_ACL = '1'
     . (Join-Path $SourceDirectory 'Tool-Enterprise.ps1')
-    foreach($name in @('Get-ToolLicenseEntitlements','Set-ToolLicenseEntitlement','Set-ToolLicenseEntitlementAssignment','Add-ToolLicenseEntitlementDocument','Get-ToolLicenseComplianceReconciliation','Get-ToolLicenseAdvisorResult','Get-ToolLicenseComplianceSnapshot')) {
+    foreach($name in @('Get-ToolLicenseEntitlements','Set-ToolLicenseEntitlement','Set-ToolLicenseEntitlementAssignment','Add-ToolLicenseEntitlementDocument','Set-ToolLicenseEntitlementDocumentVerification','Get-ToolLicenseComplianceSoftwareInventory','Get-ToolLicenseComplianceReconciliation','Get-ToolLicenseAdvisorResult','Get-ToolLicenseComplianceSnapshot')) {
         Assert-Compliance ($null -ne (Get-Command $name -ErrorAction SilentlyContinue)) "Missing command: $name"
     }
 
@@ -31,6 +31,7 @@ try {
     $document = Add-ToolLicenseEntitlementDocument -EntitlementId $record.EntitlementId -Path $documentPath -Kind Invoice
     Assert-Compliance ([string]$document.Sha256 -match '^[0-9A-F]{64}$') 'Document SHA-256 was not recorded.'
     Assert-Compliance ([string]$document.OriginalName -eq 'invoice.txt') 'Original document name was not preserved.'
+    Assert-Compliance ([string]$document.VerificationStatus -eq 'Attached' -and [string]::IsNullOrWhiteSpace([string]$document.VerifiedAtUtc)) 'New evidence was implicitly treated as verified.'
     $storedDocumentPath = Join-Path $compliancePaths.Documents ([string]$document.StoredName)
     Assert-Compliance (Test-Path -LiteralPath $storedDocumentPath -PathType Leaf) 'Stored evidence document is missing.'
 
@@ -38,9 +39,32 @@ try {
             [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Software'; CatalogProductId='commercial-suite'; ProductName='Commercial Suite'; LicenseModel='Paid'; TechnicalStatus='InventoryOnly' },
             [pscustomobject][ordered]@{ ClientId=$clientId; ClientReference='CLIENT-TEST'; ComputerName='TEST-PC'; ProductScope='Software'; CatalogProductId='uncovered-suite'; ProductName='Uncovered Suite'; LicenseModel='Subscription'; TechnicalStatus='InventoryOnly' }
     )
+    function Get-ToolEnterpriseServerClients {
+        return @([pscustomobject][ordered]@{ ClientId=$clientId; ComputerName='TEST-PC'; WindowsStatus='NotDetected'; OfficeStatus='NotDetected' })
+    }
+    $enterprisePaths = Initialize-ToolEnterpriseStorage
+    $coverageReportDirectory = Join-Path $enterprisePaths.ServerReports $clientId
+    New-Item -ItemType Directory -Path $coverageReportDirectory -Force | Out-Null
+    Write-ToolEnterpriseJson -Path (Join-Path $coverageReportDirectory 'latest.json') -Value ([ordered]@{
+        SoftwareInventory=@(); SoftwareInventoryCoverage=[ordered]@{ CoverageStatus='Partial'; CoverageReason='MaximumItemsReached'; IncludedCount=300; OmittedCount=7 }
+    })
+    $productionCoverage = @(Get-ToolLicenseComplianceFleetCoverage)
+    Assert-Compliance ($productionCoverage.Count -eq 1 -and [string]$productionCoverage[0].CoverageStatus -eq 'Partial' -and [int]$productionCoverage[0].OmittedCount -eq 7) 'Fleet report inventory coverage metadata was not preserved.'
     function Get-ToolLicenseComplianceFleetObservations {
         return @($script:complianceFixtureObservations)
     }
+    $script:complianceFixtureCoverageStatus = 'Complete'
+    function Get-ToolLicenseComplianceFleetCoverage {
+        return @([pscustomobject][ordered]@{ ClientReference='CLIENT-TEST'; CoverageStatus=$script:complianceFixtureCoverageStatus; CoverageReason='Fixture'; IncludedCount=@($script:complianceFixtureObservations).Count; OmittedCount=$(if($script:complianceFixtureCoverageStatus -eq 'Partial'){1}else{0}) })
+    }
+    $attachedOnly = Get-ToolLicenseComplianceReconciliation
+    $attachedOnlyRow = @($attachedOnly.Rows | Where-Object EntitlementId -eq $record.EntitlementId | Select-Object -First 1)
+    Assert-Compliance ($attachedOnlyRow.Count -eq 1 -and [string]$attachedOnlyRow[0].ComplianceState -eq 'NeedsReview' -and [string]$attachedOnlyRow[0].ComplianceReason -eq 'DocumentEvidenceUnverified' -and [int]$attachedOnlyRow[0].VerifiedDocumentCount -eq 0) 'Attached evidence was treated as verified entitlement proof.'
+    $missingVerificationMetadataBlocked = $false
+    try { [void](Set-ToolLicenseEntitlementDocumentVerification -EntitlementId $record.EntitlementId -DocumentId $document.DocumentId -Status Verified) } catch { $missingVerificationMetadataBlocked = $true }
+    Assert-Compliance $missingVerificationMetadataBlocked 'Evidence verification accepted missing verifier/source/scope metadata.'
+    $verifiedDocument = Set-ToolLicenseEntitlementDocumentVerification -EntitlementId $record.EntitlementId -DocumentId $document.DocumentId -Status Verified -VerifiedBy 'Compliance Reviewer' -VerificationSource 'Vendor portal and signed agreement' -VerificationScope 'Commercial Suite; Example Organization; two devices' -VerificationNotes 'Fixture verification'
+    Assert-Compliance ([string]$verifiedDocument.VerificationStatus -eq 'Verified' -and [string]$verifiedDocument.VerifiedAtUtc -match '^\d{4}-\d{2}-\d{2}T') 'Verified evidence metadata was not recorded.'
     $reconciliation = Get-ToolLicenseComplianceReconciliation
     $row = @($reconciliation.Rows | Select-Object -First 1)
     Assert-Compliance ($row.Count -eq 1) 'Reconciliation row is missing.'
@@ -88,8 +112,10 @@ try {
     $poolRecordTwo = Set-ToolLicenseEntitlement -ProductScope Software -CatalogProductId 'pooled-device-suite' -ProductName 'Pooled Device Suite' -Vendor 'Example Vendor' -LicenseModel Commercial -Metric Device -PurchasedQuantity 5
     [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $poolRecordOne.EntitlementId -ClientId ([Guid]::NewGuid().ToString('N')) -Quantity 5)
     [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $poolRecordTwo.EntitlementId -ClientId ([Guid]::NewGuid().ToString('N')) -Quantity 5)
-    [void](Add-ToolLicenseEntitlementDocument -EntitlementId $poolRecordOne.EntitlementId -Path $documentPath -Kind Agreement)
-    [void](Add-ToolLicenseEntitlementDocument -EntitlementId $poolRecordTwo.EntitlementId -Path $documentPath -Kind Agreement)
+    $poolDocumentOne = Add-ToolLicenseEntitlementDocument -EntitlementId $poolRecordOne.EntitlementId -Path $documentPath -Kind Agreement
+    $poolDocumentTwo = Add-ToolLicenseEntitlementDocument -EntitlementId $poolRecordTwo.EntitlementId -Path $documentPath -Kind Agreement
+    [void](Set-ToolLicenseEntitlementDocumentVerification -EntitlementId $poolRecordOne.EntitlementId -DocumentId $poolDocumentOne.DocumentId -Status Verified -VerifiedBy 'Pool Reviewer' -VerificationSource 'Agreement register' -VerificationScope 'Pooled Device Suite; five devices')
+    [void](Set-ToolLicenseEntitlementDocumentVerification -EntitlementId $poolRecordTwo.EntitlementId -DocumentId $poolDocumentTwo.DocumentId -Status Verified -VerifiedBy 'Pool Reviewer' -VerificationSource 'Agreement register' -VerificationScope 'Pooled Device Suite; five devices')
     $poolObservations = New-Object System.Collections.Generic.List[object]
     foreach($poolClientIndex in 1..10) {
         [void]$poolObservations.Add([pscustomobject][ordered]@{
@@ -102,6 +128,11 @@ try {
     Assert-Compliance ($pooledRows.Count -eq 2 -and [int](($pooledRows | Measure-Object ConsumptionCount -Sum).Sum) -eq 10 -and
         [int](($pooledRows | Measure-Object Installed -Sum).Sum) -eq 10 -and @($pooledRows | Where-Object ObservedDevices -ne 10).Count -eq 0) 'Device consumption was counted more than once across compatible entitlements.'
     Assert-Compliance (@($pooledRows | Where-Object ComplianceState -ne 'Compliant').Count -eq 0) 'A 5+5 entitlement pool did not reconcile a 10-device fleet.'
+    $script:complianceFixtureCoverageStatus = 'Partial'
+    $partialCoverage = Get-ToolLicenseComplianceReconciliation
+    $partialPoolRows = @($partialCoverage.Rows | Where-Object { [string]$_.EntitlementId -in @([string]$poolRecordOne.EntitlementId,[string]$poolRecordTwo.EntitlementId) })
+    Assert-Compliance (@($partialPoolRows | Where-Object { [string]$_.ComplianceState -eq 'NeedsReview' -and [string]$_.ComplianceReason -eq 'SoftwareInventoryCoverageIncomplete' }).Count -eq 2 -and [string]$partialCoverage.SoftwareInventoryCoverageStatus -eq 'Partial') 'Partial inventory coverage produced a clean compliance result.'
+    $script:complianceFixtureCoverageStatus = 'Complete'
     [void]$poolObservations.Add([pscustomobject][ordered]@{
         ClientId=[Guid]::NewGuid().ToString('N'); ClientReference='POOL-11'; ComputerName='POOL-PC-11'
         ProductScope='Software'; CatalogProductId='pooled-device-suite'; ProductName='Pooled Device Suite'; LicenseModel='Paid'; TechnicalStatus='InventoryOnly'
@@ -112,6 +143,16 @@ try {
         @($overPoolRows | Where-Object { [string]$_.ComplianceState -eq 'Critical' -and [string]$_.ComplianceReason -eq 'ConsumptionExceedsPurchased' }).Count -eq 1) 'An 11-device fleet was not reported once against a 10-device entitlement pool.'
     foreach($poolRecord in @($poolRecordOne,$poolRecordTwo)) { [void](Remove-ToolLicenseEntitlement -EntitlementId $poolRecord.EntitlementId) }
     $script:complianceFixtureObservations = $previousPoolingObservations
+
+    $inventoryApplications = @(
+        [pscustomobject]@{Name='Fixture A';Publisher='Example';IsSystemComponent=$false},
+        [pscustomobject]@{Name='Fixture B';Publisher='Example';IsSystemComponent=$false},
+        [pscustomobject]@{Name='Fixture C';Publisher='Example';IsSystemComponent=$false}
+    )
+    $partialInventory = ConvertTo-ToolLicenseComplianceInventoryResult -Applications $inventoryApplications -MaximumItems 2 -CollectionMetadata ([pscustomobject]@{CompleteMachineRead=$true}) -Catalog $null
+    Assert-Compliance ([string]$partialInventory.CoverageStatus -eq 'Partial' -and [int]$partialInventory.IncludedCount -eq 2 -and [int]$partialInventory.OmittedCount -eq 1) 'Inventory truncation was not disclosed as Partial.'
+    $privilegeLimitedInventory = ConvertTo-ToolLicenseComplianceInventoryResult -Applications $inventoryApplications -MaximumItems 3 -CollectionMetadata ([pscustomobject]@{CompleteMachineRead=$false}) -Catalog $null
+    Assert-Compliance ([string]$privilegeLimitedInventory.CoverageStatus -eq 'Partial' -and [string]$privilegeLimitedInventory.CoverageReason -eq 'PrivilegeLimited') 'Privilege-limited inventory was reported as complete.'
 
     $advisor = Get-ToolLicenseAdvisorResult -ProductScope Windows -TechnicalStatus Activated -Channel Retail -LicenseModel Retail -EntitlementStatus NotVerified
     Assert-Compliance ([string]$advisor.Risk -eq 'Review') 'Advisor risk is incorrect.'

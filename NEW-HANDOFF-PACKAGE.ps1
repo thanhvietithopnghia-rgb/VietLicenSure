@@ -122,6 +122,12 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $sourceArchivePath -Pat
 Expand-Archive -LiteralPath $sourceArchivePath -DestinationPath $sourceOutputRoot -Force
 Remove-Item -LiteralPath $sourceArchivePath -Force
 
+# RELEASE-SHA256SUMS belongs only to the binary distribution and references
+# the canonical EXE. Keeping it inside the source-only package creates a
+# misleading missing-file checksum, so source delivery uses its own manifests.
+$releaseOnlyChecksumPath = Join-Path $sourceOutputRoot 'RELEASE-SHA256SUMS.txt'
+if (Test-Path -LiteralPath $releaseOnlyChecksumPath -PathType Leaf) { Remove-Item -LiteralPath $releaseOnlyChecksumPath -Force }
+
 # Metadata sinh sau build phải lấy exact-byte từ distribution canonical. Không
 # được tái sử dụng bản tracked cũ trong bundle commit.
 $canonicalMetadataNames = @(

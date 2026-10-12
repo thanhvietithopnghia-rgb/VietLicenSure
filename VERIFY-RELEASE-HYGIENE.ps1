@@ -228,6 +228,16 @@ if (-not $dashboardSource.Contains('$releaseDisplayName = "v5.0"') -or
     $failures.Add('User-facing display version is not synchronized to v5.0.')
 }
 
+$handoffBuilderSource = Read-HygieneText 'NEW-HANDOFF-PACKAGE.ps1'
+$handoffVerifierSource = Read-HygieneText 'VERIFY-HANDOFF.ps1'
+$releaseVerifierSource = Read-HygieneText 'VERIFY-RELEASE.ps1'
+if (-not $handoffBuilderSource.Contains("Join-Path `$sourceOutputRoot 'RELEASE-SHA256SUMS.txt'") -or
+    -not $handoffBuilderSource.Contains('Remove-Item -LiteralPath $releaseOnlyChecksumPath -Force') -or
+    -not $handoffVerifierSource.Contains('Gói mã nguồn không được chứa checksum dành riêng cho EXE phát hành.') -or
+    -not $releaseVerifierSource.Contains('$expectedSourcePackageHashCount--')) {
+    $failures.Add('Source handoff does not exclude the EXE-only release checksum or adjust its closed-set count.')
+}
+
 $storeIdentityText = Read-HygieneText 'packaging\msix\STORE-PRODUCT-IDENTITY.json'
 if ($storeIdentityText.Length -gt 0) {
     $storeIdentity = $storeIdentityText | ConvertFrom-Json

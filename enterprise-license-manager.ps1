@@ -1272,6 +1272,39 @@ function Invoke-ServerExport {
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
 }
 
+function Show-EnterpriseDocumentVerificationDialog {
+    param([Parameter(Mandatory=$true)]$Owner,[Parameter(Mandatory=$true)]$Document)
+    $verificationDialog = New-Object Windows.Forms.Form
+    $verificationDialog.Text = Get-EnterpriseText 'enterprise.compliance.reviewDocument'
+    $verificationDialog.StartPosition = 'CenterParent'; $verificationDialog.Size = New-Object Drawing.Size(580,520)
+    $verificationDialog.MinimumSize = New-Object Drawing.Size(540,500); $verificationDialog.BackColor=[Drawing.Color]::White; $verificationDialog.Font=$script:enterpriseUiFont
+    $fields = @(
+        @('enterprise.compliance.verificationStatus',18,18),@('enterprise.compliance.verifiedBy',18,78),
+        @('enterprise.compliance.verificationSource',18,138),@('enterprise.compliance.verificationScope',18,198),
+        @('enterprise.compliance.verificationNotes',18,308)
+    )
+    foreach($field in $fields){$label=New-Object Windows.Forms.Label;$label.Text=Get-EnterpriseText $field[0];$label.Location=New-Object Drawing.Point([int]$field[1],[int]$field[2]);$label.AutoSize=$true;$verificationDialog.Controls.Add($label)}
+    $status = New-Object Windows.Forms.ComboBox; $status.Location=New-Object Drawing.Point(18,40); $status.Size=New-Object Drawing.Size(520,25); $status.DropDownStyle='DropDownList'
+    [void]$status.Items.Add((Get-EnterpriseText 'enterprise.compliance.attached')); [void]$status.Items.Add((Get-EnterpriseText 'enterprise.compliance.verified'))
+    $status.SelectedIndex=$(if([string]$Document.VerificationStatus -eq 'Verified'){1}else{0})
+    $verifiedBy=New-EnterpriseTextBox 18 100 520; $verifiedBy.Text=$(if([string]$Document.VerifiedBy){[string]$Document.VerifiedBy}else{[Environment]::UserDomainName+'\'+[Environment]::UserName})
+    $source=New-EnterpriseTextBox 18 160 520; $source.Text=[string]$Document.VerificationSource
+    $scope=New-EnterpriseTextBox 18 220 520 75 $true; $scope.Text=[string]$Document.VerificationScope
+    $verificationNotes=New-EnterpriseTextBox 18 330 520 80 $true; $verificationNotes.Text=[string]$Document.VerificationNotes
+    foreach($control in @($status,$verifiedBy,$source,$scope,$verificationNotes)){$verificationDialog.Controls.Add($control)}
+    $save=New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.saveVerification') 278 428 125 34 {
+        if($status.SelectedIndex -eq 1 -and ([string]::IsNullOrWhiteSpace($verifiedBy.Text) -or [string]::IsNullOrWhiteSpace($source.Text) -or [string]::IsNullOrWhiteSpace($scope.Text))){
+            [void][Windows.Forms.MessageBox]::Show($verificationDialog,(Get-EnterpriseText 'enterprise.compliance.verificationFieldsRequired'),$verificationDialog.Text,[Windows.Forms.MessageBoxButtons]::OK,[Windows.Forms.MessageBoxIcon]::Warning); return
+        }
+        $verificationDialog.Tag=[pscustomobject]@{Status=$(if($status.SelectedIndex -eq 1){'Verified'}else{'Attached'});VerifiedBy=$verifiedBy.Text;VerificationSource=$source.Text;VerificationScope=$scope.Text;VerificationNotes=$verificationNotes.Text}
+        $verificationDialog.DialogResult=[Windows.Forms.DialogResult]::OK; $verificationDialog.Close()
+    }
+    $cancel=New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.cancel') 413 428 125 34 {$verificationDialog.DialogResult=[Windows.Forms.DialogResult]::Cancel;$verificationDialog.Close()}
+    $verificationDialog.Controls.Add($save);$verificationDialog.Controls.Add($cancel);$verificationDialog.AcceptButton=$save;$verificationDialog.CancelButton=$cancel
+    if($verificationDialog.ShowDialog($Owner) -ne [Windows.Forms.DialogResult]::OK){return $null}
+    return $verificationDialog.Tag
+}
+
 function Invoke-ServerCompliance {
     try {
         $selectedClient = Get-SelectedEnterpriseClient
@@ -1330,7 +1363,7 @@ function Invoke-ServerCompliance {
             $id=[string]$list.SelectedItems[0].Tag; $record=@($state.Records | Where-Object EntitlementId -eq $id | Select-Object -First 1)
             if($record.Count -eq 0){ return }
             $state.EntitlementId=$id; $product.Text=[string]$record[0].ProductName; $vendor.Text=[string]$record[0].Vendor; $scope.SelectedItem=[string]$record[0].ProductScope; $model.SelectedItem=[string]$record[0].LicenseModel; $metric.SelectedItem=[string]$record[0].Metric; $quantity.Value=[decimal]$record[0].PurchasedQuantity; $invoice.Text=[string]$record[0].InvoiceNumber; $purchaseDate.Text=[string]$record[0].PurchaseDate; $startDate.Text=[string]$record[0].ValidFrom; $expiryDate.Text=[string]$record[0].ExpiresAt; $notes.Text=[string]$record[0].Notes
-            $documents.Items.Clear(); $documents.Tag=[object[]]@($record[0].Documents); foreach($document in @($record[0].Documents)){ [void]$documents.Items.Add(([string]$document.OriginalName+' - '+[string]$document.Kind)) }; if($documents.Items.Count -gt 0){ $documents.SelectedIndex=0 }
+            $documents.Items.Clear(); $documents.Tag=[object[]]@($record[0].Documents); foreach($document in @($record[0].Documents)){ $verificationLabel=if([string]$document.VerificationStatus -eq 'Verified'){Get-EnterpriseText 'enterprise.compliance.verified'}else{Get-EnterpriseText 'enterprise.compliance.attached'}; [void]$documents.Items.Add(('['+$verificationLabel+'] '+[string]$document.OriginalName+' - '+[string]$document.Kind)) }; if($documents.Items.Count -gt 0){ $documents.SelectedIndex=0 }
         })
         $newButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.new') 440 438 100 32 { & $clear }
         $saveButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.save') 550 438 100 32 {
@@ -1348,10 +1381,13 @@ function Invoke-ServerCompliance {
         $unassignButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.unassign') 690 480 240 34 {
             try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; if(-not $selectedClient){ throw (Get-EnterpriseText 'enterprise.compliance.selectClient') }; [void](Set-ToolLicenseEntitlementAssignment -EntitlementId $state.EntitlementId -ClientId ([string]$selectedClient.ClientId) -Quantity 0); & $refresh } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
         }
-        $removeDocumentButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.removeDocument') 750 542 180 30 {
+        $reviewDocumentButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.reviewDocument') 750 542 180 30 {
+            try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; if($documents.SelectedIndex -lt 0 -or @($documents.Tag).Count -le $documents.SelectedIndex){ throw (Get-EnterpriseText 'enterprise.compliance.selectDocument') }; $selectedDocument=@($documents.Tag)[$documents.SelectedIndex]; $verification=Show-EnterpriseDocumentVerificationDialog -Owner $dialog -Document $selectedDocument; if($null -ne $verification){ $updated=Set-ToolLicenseEntitlementDocumentVerification -EntitlementId $state.EntitlementId -DocumentId ([string]$selectedDocument.DocumentId) -Status ([string]$verification.Status) -VerifiedBy ([string]$verification.VerifiedBy) -VerificationSource ([string]$verification.VerificationSource) -VerificationScope ([string]$verification.VerificationScope) -VerificationNotes ([string]$verification.VerificationNotes); Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.compliance.verificationSaved' @($updated.OriginalName)) $true; & $refresh } } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
+        }
+        $removeDocumentButton = New-EnterpriseButton (Get-EnterpriseText 'enterprise.compliance.removeDocument') 750 578 180 30 {
             try { if([string]::IsNullOrWhiteSpace($state.EntitlementId)){ throw (Get-EnterpriseText 'enterprise.compliance.selectEntitlement') }; if($documents.SelectedIndex -lt 0 -or @($documents.Tag).Count -le $documents.SelectedIndex){ throw (Get-EnterpriseText 'enterprise.compliance.selectDocument') }; $selectedDocument=@($documents.Tag)[$documents.SelectedIndex]; [void](Remove-ToolLicenseEntitlementDocument -EntitlementId $state.EntitlementId -DocumentId ([string]$selectedDocument.DocumentId)); Set-EnterpriseStatus (Get-EnterpriseText 'enterprise.compliance.documentRemoved' @($selectedDocument.OriginalName)) $true; & $refresh } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1000) }
         }
-        foreach($button in @($newButton,$saveButton,$deleteButton,$documentButton,$assignButton,$unassignButton,$removeDocumentButton)){ $dialog.Controls.Add($button) }
+        foreach($button in @($newButton,$saveButton,$deleteButton,$documentButton,$assignButton,$unassignButton,$reviewDocumentButton,$removeDocumentButton)){ $dialog.Controls.Add($button) }
         & $refresh
         [void]$dialog.ShowDialog($form)
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1200) }

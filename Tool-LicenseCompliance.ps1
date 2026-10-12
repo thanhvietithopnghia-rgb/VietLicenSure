@@ -6,6 +6,7 @@ $script:ToolLicenseComplianceAllowedModels = @('OEM','Retail','VolumeMAK','Volum
 $script:ToolLicenseComplianceAllowedMetrics = @('Device','User','Concurrent','Organization','Unknown')
 $script:ToolLicenseComplianceAllowedDocumentKinds = @('Invoice','Agreement','Certificate','LicenseEmail','PortalExport','Other')
 $script:ToolLicenseComplianceAllowedDocumentExtensions = @('.pdf','.png','.jpg','.jpeg','.txt','.eml','.msg','.docx','.xlsx')
+$script:ToolLicenseComplianceAllowedDocumentVerificationStatuses = @('Attached','Verified')
 $script:ToolLicenseAdvisorSchemaVersion = '1.0'
 $script:ToolLicenseAdvisorAllowedConfidence = @('Confirmed','High','Medium','Low','Informational')
 $toolDetectionEnginePath = Join-Path $PSScriptRoot 'Tool-DetectionEngine.ps1'
@@ -118,6 +119,20 @@ function Assert-ToolLicenseEntitlementRecord {
             -not [string]::Equals(([IO.Path]::GetFileNameWithoutExtension([string]$document.StoredName)), ([string]$document.DocumentId), [StringComparison]::OrdinalIgnoreCase)) {
             throw 'Stored document identity is invalid.'
         }
+        $verificationStatus = [string]$document.VerificationStatus
+        if ($verificationStatus -notin $script:ToolLicenseComplianceAllowedDocumentVerificationStatuses) { throw 'Document verification status is invalid.' }
+        if ($verificationStatus -eq 'Verified') {
+            if ([string]::IsNullOrWhiteSpace([string]$document.VerifiedBy) -or
+                [string]::IsNullOrWhiteSpace([string]$document.VerificationSource) -or
+                [string]::IsNullOrWhiteSpace([string]$document.VerificationScope)) {
+                throw 'Verified document metadata is incomplete.'
+            }
+            $verifiedAt = [DateTime]::MinValue
+            if (-not [DateTime]::TryParse([string]$document.VerifiedAtUtc, [Globalization.CultureInfo]::InvariantCulture,
+                [Globalization.DateTimeStyles]::RoundtripKind, [ref]$verifiedAt)) {
+                throw 'Verified document timestamp is invalid.'
+            }
+        }
     }
     return $true
 }
@@ -137,7 +152,15 @@ function Read-ToolLicenseComplianceStore {
         if (-not $record.PSObject.Properties['Documents'] -or $null -eq $record.Documents -or
             ($record.Documents -is [pscustomobject] -and @($record.Documents.PSObject.Properties).Count -eq 0)) {
             $record | Add-Member -NotePropertyName Documents -NotePropertyValue ([object[]]@()) -Force
-        } else { $record.Documents = [object[]]@($record.Documents) }
+        } else {
+            $record.Documents = [object[]]@($record.Documents)
+            foreach ($document in @($record.Documents)) {
+                if (-not $document.PSObject.Properties['VerificationStatus']) { $document | Add-Member -NotePropertyName VerificationStatus -NotePropertyValue 'Attached' -Force }
+                foreach ($name in @('VerifiedBy','VerifiedAtUtc','VerificationSource','VerificationScope','VerificationNotes')) {
+                    if (-not $document.PSObject.Properties[$name]) { $document | Add-Member -NotePropertyName $name -NotePropertyValue '' -Force }
+                }
+            }
+        }
         [void](Assert-ToolLicenseEntitlementRecord -Record $record)
     }
     return $store
@@ -314,6 +337,8 @@ function Add-ToolLicenseEntitlementDocument {
             OriginalName=ConvertTo-ToolLicenseComplianceSafeText $source.Name 260
             StoredName=$storedName; Sha256=$hash; Size=[int64]$source.Length
             AddedAtUtc=[DateTime]::UtcNow.ToString('o')
+            VerificationStatus='Attached'; VerifiedBy=''; VerifiedAtUtc=''
+            VerificationSource=''; VerificationScope=''; VerificationNotes=''
         }
         $record[0].Documents = @($record[0].Documents) + $document
         $record[0].UpdatedAtUtc = [DateTime]::UtcNow.ToString('o')
@@ -326,6 +351,50 @@ function Add-ToolLicenseEntitlementDocument {
         EntitlementId=$EntitlementId; DocumentId=$documentId; Kind=$Kind; Sha256=$hash; Size=[int64]$source.Length
     })
     return $document
+}
+
+function Set-ToolLicenseEntitlementDocumentVerification {
+    param(
+        [Parameter(Mandatory=$true)][string]$EntitlementId,
+        [Parameter(Mandatory=$true)][string]$DocumentId,
+        [Parameter(Mandatory=$true)][ValidateSet('Attached','Verified')][string]$Status,
+        [string]$VerifiedBy = '',
+        [string]$VerificationSource = '',
+        [string]$VerificationScope = '',
+        [string]$VerificationNotes = ''
+    )
+    $store = Read-ToolLicenseComplianceStore
+    $record = @($store.Entitlements | Where-Object { [string]$_.EntitlementId -eq $EntitlementId } | Select-Object -First 1)
+    if ($record.Count -eq 0) { throw 'Entitlement record was not found.' }
+    $document = @($record[0].Documents | Where-Object { [string]$_.DocumentId -eq $DocumentId } | Select-Object -First 1)
+    if ($document.Count -eq 0) { throw 'Evidence document was not found.' }
+    if ($Status -eq 'Verified') {
+        $safeVerifier = ConvertTo-ToolLicenseComplianceSafeText $VerifiedBy 200
+        $safeSource = ConvertTo-ToolLicenseComplianceSafeText $VerificationSource 300
+        $safeScope = ConvertTo-ToolLicenseComplianceSafeText $VerificationScope 600
+        if ([string]::IsNullOrWhiteSpace($safeVerifier) -or [string]::IsNullOrWhiteSpace($safeSource) -or [string]::IsNullOrWhiteSpace($safeScope)) {
+            throw 'Verifier, verification source and entitlement scope are required.'
+        }
+        $document[0].VerificationStatus = 'Verified'
+        $document[0].VerifiedBy = $safeVerifier
+        $document[0].VerifiedAtUtc = [DateTime]::UtcNow.ToString('o')
+        $document[0].VerificationSource = $safeSource
+        $document[0].VerificationScope = $safeScope
+        $document[0].VerificationNotes = ConvertTo-ToolLicenseComplianceSafeText $VerificationNotes 1500
+    } else {
+        $document[0].VerificationStatus = 'Attached'
+        $document[0].VerifiedBy = ''
+        $document[0].VerifiedAtUtc = ''
+        $document[0].VerificationSource = ''
+        $document[0].VerificationScope = ''
+        $document[0].VerificationNotes = ''
+    }
+    $record[0].UpdatedAtUtc = [DateTime]::UtcNow.ToString('o')
+    [void](Write-ToolLicenseComplianceStore -Store $store)
+    Write-ToolEnterpriseAudit -Scope Server -Event 'Compliance.DocumentVerificationChanged' -Message 'License evidence verification status changed.' -Data ([ordered]@{
+        EntitlementId=$EntitlementId; DocumentId=$DocumentId; VerificationStatus=$Status
+    })
+    return $document[0]
 }
 
 function Remove-ToolLicenseEntitlementDocument {
@@ -356,36 +425,67 @@ function Remove-ToolLicenseEntitlementDocument {
     return $true
 }
 
+function ConvertTo-ToolLicenseComplianceInventoryResult {
+    param(
+        [AllowNull()][object[]]$Applications,
+        [ValidateRange(1,500)][int]$MaximumItems = 300,
+        [AllowNull()][object]$CollectionMetadata,
+        [AllowNull()][object]$Catalog
+    )
+    $eligible = New-Object System.Collections.Generic.List[object]
+    foreach ($application in @($Applications | Sort-Object Name,Publisher)) {
+        if ($null -eq $application) { continue }
+        if ($application.PSObject.Properties['IsSystemComponent'] -and [bool]$application.IsSystemComponent) { continue }
+        $name = ConvertTo-ToolLicenseComplianceSafeText $application.Name 260
+        if ([string]::IsNullOrWhiteSpace($name)) { continue }
+        $match = if (Get-Command Find-ToolSoftwareCatalogMatch -ErrorAction SilentlyContinue) { Find-ToolSoftwareCatalogMatch -Application $application -Catalog $Catalog } else { $null }
+        $product = if ($match) { $match.Product } else { $null }
+        $rawModel = if ($product -and $product.PSObject.Properties['LicenseModel']) { [string]$product.LicenseModel } else { 'Unknown' }
+        $model = if (Get-Command ConvertTo-ToolSoftwareLicenseModel -ErrorAction SilentlyContinue) { ConvertTo-ToolSoftwareLicenseModel $rawModel } else { 'Unknown' }
+        $productId = if ($product -and $product.PSObject.Properties['Id']) { ConvertTo-ToolLicenseComplianceSafeText $product.Id 100 } else { '' }
+        [void]$eligible.Add([pscustomobject][ordered]@{
+            CatalogProductId=$productId; Name=$name
+            Publisher=ConvertTo-ToolLicenseComplianceSafeText $application.Publisher 160
+            LicenseModel=$model
+            ClassificationConfidence=$(if ($product) {'CatalogMatched'} elseif ($match -and [string]$match.Reason -eq 'CatalogUntrusted') {'CatalogRejected'} else {'Unknown'})
+            NeedsReview=[bool]($model -in @('Paid','Subscription','Trial','Unknown'))
+        })
+    }
+    $included = @($eligible.ToArray() | Select-Object -First $MaximumItems)
+    $omitted = [Math]::Max(0, ($eligible.Count - $included.Count))
+    $completeMachineRead = [bool]($CollectionMetadata -and $CollectionMetadata.PSObject.Properties['CompleteMachineRead'] -and [bool]$CollectionMetadata.CompleteMachineRead)
+    $coverageStatus = if ($omitted -gt 0 -or -not $completeMachineRead) { 'Partial' } else { 'Complete' }
+    $reason = if ($omitted -gt 0) { 'MaximumItemsReached' } elseif (-not $completeMachineRead) { 'PrivilegeLimited' } else { '' }
+    return [pscustomobject][ordered]@{
+        SchemaVersion='1.0'; CoverageStatus=$coverageStatus; CoverageReason=$reason
+        DiscoveredCount=[int]$eligible.Count; IncludedCount=[int]$included.Count; OmittedCount=[int]$omitted
+        MaximumItems=[int]$MaximumItems; CompleteMachineRead=$completeMachineRead
+        CollectedAtUtc=[DateTime]::UtcNow.ToString('o'); Items=[object[]]$included
+    }
+}
+
 function Get-ToolLicenseComplianceSoftwareInventory {
-    param([ValidateRange(1,500)][int]$MaximumItems = 300)
+    param([ValidateRange(1,500)][int]$MaximumItems = 300, [switch]$IncludeMetadata)
+    $result = $null
     try {
         if (-not (Get-Command Get-ToolInstalledSoftwareInventory -ErrorAction SilentlyContinue)) {
             $inventoryPath = Join-Path $PSScriptRoot 'Tool-SoftwareInventory.ps1'
             if (Test-Path -LiteralPath $inventoryPath -PathType Leaf) { . $inventoryPath }
         }
-        if (-not (Get-Command Get-ToolInstalledSoftwareInventory -ErrorAction SilentlyContinue)) { return @() }
+        if (-not (Get-Command Get-ToolInstalledSoftwareInventory -ErrorAction SilentlyContinue)) { throw 'SoftwareInventoryCommandUnavailable' }
+        $applications = @(Get-ToolInstalledSoftwareInventory)
+        $metadata = if (Get-Command Get-ToolSoftwareInventoryCollectionMetadata -ErrorAction SilentlyContinue) { Get-ToolSoftwareInventoryCollectionMetadata } else { $null }
         $catalog = if (Get-Command Get-ToolSoftwareLicenseCatalog -ErrorAction SilentlyContinue) { Get-ToolSoftwareLicenseCatalog } else { $null }
-        $output = New-Object System.Collections.Generic.List[object]
-        foreach ($application in @(Get-ToolInstalledSoftwareInventory | Sort-Object Name,Publisher)) {
-            if ($output.Count -ge $MaximumItems) { break }
-            if ($application.PSObject.Properties['IsSystemComponent'] -and [bool]$application.IsSystemComponent) { continue }
-            $match = if (Get-Command Find-ToolSoftwareCatalogMatch -ErrorAction SilentlyContinue) { Find-ToolSoftwareCatalogMatch -Application $application -Catalog $catalog } else { $null }
-            $product = if ($match) { $match.Product } else { $null }
-            $rawModel = if ($product -and $product.PSObject.Properties['LicenseModel']) { [string]$product.LicenseModel } else { 'Unknown' }
-            $model = if (Get-Command ConvertTo-ToolSoftwareLicenseModel -ErrorAction SilentlyContinue) { ConvertTo-ToolSoftwareLicenseModel $rawModel } else { 'Unknown' }
-            $productId = if ($product -and $product.PSObject.Properties['Id']) { ConvertTo-ToolLicenseComplianceSafeText $product.Id 100 } else { '' }
-            $name = ConvertTo-ToolLicenseComplianceSafeText $application.Name 260
-            if ([string]::IsNullOrWhiteSpace($name)) { continue }
-            [void]$output.Add([pscustomobject][ordered]@{
-                CatalogProductId=$productId; Name=$name
-                Publisher=ConvertTo-ToolLicenseComplianceSafeText $application.Publisher 160
-                LicenseModel=$model
-                ClassificationConfidence=$(if ($product) {'CatalogMatched'} elseif ($match -and [string]$match.Reason -eq 'CatalogUntrusted') {'CatalogRejected'} else {'Unknown'})
-                NeedsReview=[bool]($model -in @('Paid','Subscription','Trial','Unknown'))
-            })
+        $result = ConvertTo-ToolLicenseComplianceInventoryResult -Applications $applications -MaximumItems $MaximumItems -CollectionMetadata $metadata -Catalog $catalog
+    } catch {
+        $result = [pscustomobject][ordered]@{
+            SchemaVersion='1.0'; CoverageStatus='Failed'; CoverageReason='InventoryCollectionFailed'
+            DiscoveredCount=0; IncludedCount=0; OmittedCount=0; MaximumItems=[int]$MaximumItems
+            CompleteMachineRead=$false; CollectedAtUtc=[DateTime]::UtcNow.ToString('o'); Items=[object[]]@()
         }
-        return $output.ToArray()
-    } catch { return @() }
+    }
+    if ($IncludeMetadata) { return $result }
+    return @($result.Items)
 }
 
 function Get-ToolLicenseComplianceFleetObservations {
@@ -420,6 +520,41 @@ function Get-ToolLicenseComplianceFleetObservations {
     return $observations.ToArray()
 }
 
+function Get-ToolLicenseComplianceFleetCoverage {
+    $coverage = New-Object System.Collections.Generic.List[object]
+    $paths = Initialize-ToolEnterpriseStorage
+    foreach ($client in @(Get-ToolEnterpriseServerClients)) {
+        $clientId = [string]$client.ClientId
+        if (-not (Test-ToolLicenseComplianceGuid -Value $clientId)) { continue }
+        $clientReference = Get-ToolEnterpriseStableClientReference -ClientId $clientId
+        $reportPath = Join-Path (Join-Path $paths.ServerReports $clientId) 'latest.json'
+        if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) {
+            [void]$coverage.Add([pscustomobject][ordered]@{ ClientReference=$clientReference; CoverageStatus='Failed'; CoverageReason='ReportMissing'; IncludedCount=0; OmittedCount=0 })
+            continue
+        }
+        try {
+            $report = Read-ToolEnterpriseJson -Path $reportPath -MaximumBytes $script:ToolEnterpriseMaximumRequestBytes
+            $metadata = if ($report.PSObject.Properties['SoftwareInventoryCoverage']) { $report.SoftwareInventoryCoverage } else { $null }
+            $status = if ($metadata -and [string]$metadata.CoverageStatus -in @('Complete','Partial','Failed')) { [string]$metadata.CoverageStatus } else { 'Partial' }
+            $reason = if (-not $metadata) {
+                'CoverageMetadataMissing'
+            } elseif (-not [string]::IsNullOrWhiteSpace([string]$metadata.CoverageReason)) {
+                ConvertTo-ToolLicenseComplianceSafeText $metadata.CoverageReason 120
+            } else {
+                ''
+            }
+            [void]$coverage.Add([pscustomobject][ordered]@{
+                ClientReference=$clientReference; CoverageStatus=$status; CoverageReason=$reason
+                IncludedCount=$(if ($metadata -and $metadata.PSObject.Properties['IncludedCount']) { [int]$metadata.IncludedCount } else { [int]@($report.SoftwareInventory).Count })
+                OmittedCount=$(if ($metadata -and $metadata.PSObject.Properties['OmittedCount']) { [int]$metadata.OmittedCount } else { 0 })
+            })
+        } catch {
+            [void]$coverage.Add([pscustomobject][ordered]@{ ClientReference=$clientReference; CoverageStatus='Failed'; CoverageReason='ReportReadFailed'; IncludedCount=0; OmittedCount=0 })
+        }
+    }
+    return $coverage.ToArray()
+}
+
 function Test-ToolLicenseEntitlementMatchesObservation {
     param([Parameter(Mandatory=$true)][object]$Entitlement,[Parameter(Mandatory=$true)][object]$Observation)
     if ([string]$Entitlement.ProductScope -ne [string]$Observation.ProductScope) { return $false }
@@ -451,6 +586,11 @@ function Get-ToolLicenseComplianceEntitlementPoolKey {
 function Get-ToolLicenseComplianceReconciliation {
     $entitlements = @(Get-ToolLicenseEntitlements)
     $observations = @(Get-ToolLicenseComplianceFleetObservations)
+    $coverageRecords = @(Get-ToolLicenseComplianceFleetCoverage)
+    $softwareInventoryCoverageStatus = if ($coverageRecords.Count -eq 0 -or @($coverageRecords | Where-Object CoverageStatus -eq 'Failed').Count -gt 0) { 'Failed' }
+        elseif (@($coverageRecords | Where-Object CoverageStatus -eq 'Partial').Count -gt 0) { 'Partial' }
+        else { 'Complete' }
+    $softwareInventoryOmittedCount = [int](Get-ToolLicenseComplianceIntegerSum -Items $coverageRecords -PropertyName OmittedCount)
     $devicePoolState = @{}
     foreach ($pool in @($entitlements | Where-Object { [string]$_.Metric -eq 'Device' } | Group-Object { Get-ToolLicenseComplianceEntitlementPoolKey -Entitlement $_ })) {
         $poolEntitlements = @($pool.Group | Sort-Object CreatedAtUtc,EntitlementId)
@@ -501,6 +641,9 @@ function Get-ToolLicenseComplianceReconciliation {
         $purchased = [int]$entitlement.PurchasedQuantity
         $available = [int]($purchased - $assigned)
         $documents = @($entitlement.Documents).Count
+        $verifiedDocuments = @($entitlement.Documents | Where-Object { [string]$_.VerificationStatus -eq 'Verified' }).Count
+        $documentEvidenceStatus = if ($verifiedDocuments -gt 0) { 'Verified' } elseif ($documents -gt 0) { 'AttachedOnly' } else { 'Missing' }
+        $inventoryCoverageStatus = if ([string]$entitlement.ProductScope -eq 'Software') { $softwareInventoryCoverageStatus } else { 'Complete' }
         $expired = $false
         if (-not [string]::IsNullOrWhiteSpace([string]$entitlement.ExpiresAt)) {
             $expiry = [DateTime]::MinValue
@@ -510,14 +653,16 @@ function Get-ToolLicenseComplianceReconciliation {
         $assignmentExceeded = [bool]($metric -eq 'Device' -and $assigned -gt $purchased)
         $state = if ($expired -or $consumptionExceeded -or $assignmentExceeded) { 'Critical' }
             elseif ($identityEvidenceStatus -ne 'Complete' -or $consumptionEvidenceStatus -ne 'Complete' -or
-                $documents -eq 0 -or [int]$consumptionCount -gt $assigned) { 'NeedsReview' }
+                $inventoryCoverageStatus -ne 'Complete' -or $verifiedDocuments -eq 0 -or [int]$consumptionCount -gt $assigned) { 'NeedsReview' }
             else { 'Compliant' }
         $reason = if ($expired) { 'Expired' }
             elseif ($consumptionExceeded) { 'ConsumptionExceedsPurchased' }
             elseif ($assignmentExceeded) { 'AssignmentExceedsPurchased' }
             elseif ($identityEvidenceStatus -ne 'Complete') { 'ProductIdentityEvidenceMissing' }
             elseif ($consumptionEvidenceStatus -ne 'Complete') { 'MetricEvidenceMissing' }
+            elseif ($inventoryCoverageStatus -ne 'Complete') { 'SoftwareInventoryCoverageIncomplete' }
             elseif ($documents -eq 0) { 'DocumentEvidenceMissing' }
+            elseif ($verifiedDocuments -eq 0) { 'DocumentEvidenceUnverified' }
             elseif ([int]$consumptionCount -gt $assigned) { 'ConsumptionExceedsAssignment' }
             else { 'Reconciled' }
         [void]$rows.Add([pscustomobject][ordered]@{
@@ -526,8 +671,9 @@ function Get-ToolLicenseComplianceReconciliation {
             LicenseModel=[string]$entitlement.LicenseModel; Metric=$metric
             Purchased=$purchased; Assigned=$assigned; Installed=$installed; ObservedDevices=$observedDevices
             ConsumptionCount=$consumptionCount; Available=$available
-            IdentityEvidenceStatus=$identityEvidenceStatus; ConsumptionEvidenceStatus=$consumptionEvidenceStatus
-            DocumentCount=$documents; ExpiresAt=[string]$entitlement.ExpiresAt; ComplianceState=$state; ComplianceReason=$reason
+            IdentityEvidenceStatus=$identityEvidenceStatus; ConsumptionEvidenceStatus=$consumptionEvidenceStatus; InventoryCoverageStatus=$inventoryCoverageStatus
+            DocumentCount=$documents; VerifiedDocumentCount=$verifiedDocuments; DocumentEvidenceStatus=$documentEvidenceStatus
+            ExpiresAt=[string]$entitlement.ExpiresAt; ComplianceState=$state; ComplianceReason=$reason
         })
     }
     $coveredKeys = @{}
@@ -548,7 +694,12 @@ function Get-ToolLicenseComplianceReconciliation {
             })
         }
     }
-    return [pscustomobject][ordered]@{ Rows=$rows.ToArray(); Uncovered=$uncovered.ToArray(); Observations=$observations }
+    return [pscustomobject][ordered]@{
+        Rows=$rows.ToArray(); Uncovered=$uncovered.ToArray(); Observations=$observations
+        SoftwareInventoryCoverageStatus=$softwareInventoryCoverageStatus
+        SoftwareInventoryOmittedCount=$softwareInventoryOmittedCount
+        SoftwareInventoryCoverage=$coverageRecords
+    }
 }
 
 function New-ToolLicenseAdvisorEvidence {
@@ -657,7 +808,8 @@ function Get-ToolLicenseComplianceSnapshot {
     $rows = @($reconciliation.Rows)
     $uncovered = @($reconciliation.Uncovered)
     $critical = @($rows | Where-Object ComplianceState -eq 'Critical').Count
-    $review = @($rows | Where-Object ComplianceState -eq 'NeedsReview').Count + $uncovered.Count
+    $coverageReview = if ([string]$reconciliation.SoftwareInventoryCoverageStatus -eq 'Complete') { 0 } else { 1 }
+    $review = @($rows | Where-Object ComplianceState -eq 'NeedsReview').Count + $uncovered.Count + $coverageReview
     $compliant = @($rows | Where-Object ComplianceState -eq 'Compliant').Count
     $purchased = [int](Get-ToolLicenseComplianceIntegerSum -Items $rows -PropertyName Purchased)
     $assigned = [int](Get-ToolLicenseComplianceIntegerSum -Items $rows -PropertyName Assigned)
@@ -671,8 +823,10 @@ function Get-ToolLicenseComplianceSnapshot {
             AssuranceScore=$score; Compliant=$compliant; NeedsReview=$review; Critical=$critical
             Purchased=$purchased; Assigned=$assigned; Installed=$installed; Available=$available
             EntitlementRecords=$rows.Count; UncoveredCommercialProducts=$uncovered.Count
+            SoftwareInventoryCoverageStatus=[string]$reconciliation.SoftwareInventoryCoverageStatus
+            SoftwareInventoryOmittedCount=[int]$reconciliation.SoftwareInventoryOmittedCount
         }
-        Entitlements=$rows; Uncovered=$uncovered
+        Entitlements=$rows; Uncovered=$uncovered; SoftwareInventoryCoverage=@($reconciliation.SoftwareInventoryCoverage)
         Disclaimer='Technical activation and catalog classification do not independently prove legal entitlement. Authoritative documents and licensing portals remain required.'
     }
 }

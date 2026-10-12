@@ -225,6 +225,8 @@ if ($failures.Count -eq 0) {
             }
             Test-NestedSourceManifest $sourceRoot 'SOURCE-SHA256SUMS.txt'
             Test-NestedSourceManifest $sourceRoot 'SOURCE-PACKAGE-SHA256SUMS.txt' -ClosedSet
+            if (Test-Path -LiteralPath (Join-Path $sourceRoot 'RELEASE-SHA256SUMS.txt') -PathType Leaf) { Add-HandoffFailure 'Gói mã nguồn không được chứa checksum dành riêng cho EXE phát hành.' }
+            else { Add-HandoffPass 'Gói mã nguồn chỉ chứa checksum đúng phạm vi nguồn.' }
             if (Test-Path -LiteralPath (Join-Path $sourceRoot '.git')) { Add-HandoffFailure 'Gói mã nguồn không được chứa .git.' }
             else { Add-HandoffPass 'Gói mã nguồn không chứa .git.' }
         } catch { Add-HandoffFailure "Không xác minh được danh tính phát hành: $($_.Exception.Message)" }

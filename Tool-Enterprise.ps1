@@ -1255,9 +1255,16 @@ function Get-ToolEnterpriseLicenseSnapshot {
         $officeConfiguration = Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration" -ErrorAction SilentlyContinue
     }
     $capability = if (Get-Command Get-ToolCapabilityProfile -ErrorAction SilentlyContinue) { Get-ToolCapabilityProfile } else { $null }
-    $softwareInventory = if (Get-Command Get-ToolLicenseComplianceSoftwareInventory -ErrorAction SilentlyContinue) {
-        @(Get-ToolLicenseComplianceSoftwareInventory -MaximumItems 300)
-    } else { @() }
+    $softwareInventoryResult = if (Get-Command Get-ToolLicenseComplianceSoftwareInventory -ErrorAction SilentlyContinue) {
+        Get-ToolLicenseComplianceSoftwareInventory -MaximumItems 300 -IncludeMetadata
+    } else {
+        [pscustomobject][ordered]@{
+            SchemaVersion='1.0'; CoverageStatus='Failed'; CoverageReason='ComplianceInventoryCommandUnavailable'
+            DiscoveredCount=0; IncludedCount=0; OmittedCount=0; MaximumItems=300
+            CompleteMachineRead=$false; CollectedAtUtc=[DateTime]::UtcNow.ToString('o'); Items=[object[]]@()
+        }
+    }
+    $softwareInventory = @($softwareInventoryResult.Items)
     $assetIdentity = Get-ToolEnterpriseAssetIdentitySnapshot
     $data = [ordered]@{
         CreatedAt = [DateTime]::UtcNow.ToString("o")
@@ -1276,6 +1283,17 @@ function Get-ToolEnterpriseLicenseSnapshot {
         WindowsLicenses = $windowsLicenses
         OfficeLicenses = $officeLicenses
         SoftwareInventory = $softwareInventory
+        SoftwareInventoryCoverage = [ordered]@{
+            SchemaVersion=[string]$softwareInventoryResult.SchemaVersion
+            CoverageStatus=[string]$softwareInventoryResult.CoverageStatus
+            CoverageReason=ConvertTo-ToolEnterpriseSafeText $softwareInventoryResult.CoverageReason 120
+            DiscoveredCount=[int]$softwareInventoryResult.DiscoveredCount
+            IncludedCount=[int]$softwareInventoryResult.IncludedCount
+            OmittedCount=[int]$softwareInventoryResult.OmittedCount
+            MaximumItems=[int]$softwareInventoryResult.MaximumItems
+            CompleteMachineRead=[bool]$softwareInventoryResult.CompleteMachineRead
+            CollectedAtUtc=[string]$softwareInventoryResult.CollectedAtUtc
+        }
         AssetIdentity = $assetIdentity
         OfficeInstallation = [ordered]@{
             ProductReleaseIds = ConvertTo-ToolEnterpriseSafeText $(if ($officeConfiguration -and $officeConfiguration.PSObject.Properties['ProductReleaseIds']) { $officeConfiguration.ProductReleaseIds } else { '' }) 400
