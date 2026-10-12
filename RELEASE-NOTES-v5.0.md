@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-10`
+Ngày build kỹ thuật hiện hành: `2026-10-12`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `10/10/2026`
+Nội dung cập nhật đến: `12/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,11 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 10/10/2026
+## Cập nhật hiện hành ngày 12/10/2026
+
+- Sửa đối soát **User/Concurrent** theo hướng fail-closed: số thiết bị chỉ còn là quan sát, không bị dùng làm consumption khi chưa có bằng chứng người dùng hoặc phiên đồng thời; kết quả thiếu dữ liệu là `NeedsReview/InsufficientEvidence`.
+- Windows/Office chỉ được ghép quyền sử dụng khi `CatalogProductId`/SKU cụ thể trùng nhau; thiếu hoặc lệch edition/version trả `NeedsReview`, không kết luận `Compliant`.
+- Gộp các entitlement `Device` tương thích thành một pool: nhiều hợp đồng cùng sản phẩm chỉ tiêu thụ fleet một lần; pool 5+5 đối chiếu đúng 10 thiết bị và chỉ sinh một cảnh báo vượt pool khi có thiết bị thứ 11.
 
 - Sửa bố cục responsive của **Máy chủ/Máy trạm**: tái tạo vùng bo góc sau mỗi lần đổi kích thước, đo đủ chữ Việt/Anh với khoảng an toàn 20 px và tự chia hàng nút máy trạm; không còn chữ bị mask/cắt ở cửa sổ đóng gói.
 - Hoàn thiện **Asset Registry** trong tab Máy chủ: tìm/lọc tài sản, gán hoặc chuyển giao, thu hồi có xác nhận và xem lịch sử bàn giao append-only. Tab Máy trạm vẫn chỉ đọc, hiển thị Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối; không thêm điều khiển từ xa.
