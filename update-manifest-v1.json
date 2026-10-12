@@ -3,7 +3,7 @@
     "Channel":  "stable",
     "LatestVersion":  "5.0",
     "MinimumUpdaterVersion":  "4.6.1.0",
-    "PublishedAtUtc":  "2026-10-10T00:00:00Z",
+    "PublishedAtUtc":  "2026-10-12T00:00:00Z",
     "Title":  {
                   "vi-VN":  "v5.0 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
                   "en-US":  "v5.0 - Clear source policy and two-way feedback channels"
@@ -23,7 +23,7 @@
                                   "Giao diện hỗ trợ theme theo hệ thống, dark/light override và PerMonitorV2 DPI.",
                                   "Bổ sung xuất fleet JSON/CSV/HTML/PDF có redaction, chống CSV injection; CLI headless, script Intune/MDM và ma trận VM Windows 10/11.",
                                   "Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.",
-                                  "Catalog online 1.6.3.0 bao phủ 94 nhóm, loại thêm gói cài đặt/thành phần hỗ trợ khỏi danh sách xử lý và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.",
+                                  "Catalog online 1.6.4.0 bao phủ 94 nhóm, loại thêm gói cài đặt/thành phần hỗ trợ khỏi danh sách xử lý và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.",
                                   "Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.",
                                   "Các chế độ Quét/Báo cáo chỉ đọc; Khắc phục gỡ đúng khóa hoặc Activation ID xấu, bảo toàn bản quyền hợp lệ cùng tồn tại và chỉ cho phép gỡ hoàn chỉnh ứng dụng được chọn khi danh tính MSI/AppX gắn với nguồn đã được xác minh.",
                                   "Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.",
@@ -47,7 +47,7 @@
                                   "The UI follows the system theme, supports dark/light overrides, and declares PerMonitorV2 DPI awareness.",
                                   "Fleet JSON/CSV/HTML/PDF export adds redaction and CSV-injection guards, with a headless CLI, Intune/MDM scripts, and a Windows 10/11 VM matrix.",
                                   "Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.",
-                                  "Online catalog 1.6.3.0 covers 94 families, excludes additional installers/support components from the action list, and accepts only signed declarative data with allowlisted fields and profiles.",
+                                  "Online catalog 1.6.4.0 covers 94 families, excludes additional installers/support components from the action list, and accepts only signed declarative data with allowlisted fields and profiles.",
                                   "Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.",
                                   "Scan and report modes are read-only; remediation removes only the selected bad key or Activation ID, preserves coexisting genuine licences, and permits complete removal of an explicitly selected application only through a validated source-bound MSI/AppX identity.",
                                   "Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.",
@@ -60,8 +60,8 @@
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "DCD314AB923FB0824E30A31FCFFB408B1D520C94B010DD5EA6E068E17D572D16",
-    "DownloadSize":  935672,
+    "DownloadSha256":  "2102687E2A58C18EA0CB38B931C463E4AD5088593D61CE506113702893B6E2FF",
+    "DownloadSize":  936696,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA"
