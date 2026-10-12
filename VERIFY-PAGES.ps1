@@ -8,6 +8,7 @@ if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRo
 $errors = [System.Collections.Generic.List[string]]::new()
 $expectedHash = 'F9528CE742A96F58CA8B13E9434961708C9F6A15BF4D73F64A6EC653F903EB7F'
 $expectedBuild = '5.0-production-20261012-r2'
+$expectedEnUpdateDate = 'updated 2026-10-12'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
@@ -88,6 +89,8 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
+if ($viHome -notmatch '<div class="eyebrow">[^<]*12/10/2026[^<]*</div>') { $errors.Add('Vietnamese home page is missing the current update date') }
+if ($enHome -notmatch [regex]::Escape($expectedEnUpdateDate)) { $errors.Add('English home page is missing the current update date') }
 foreach ($requiredViCapability in @(
     'H\u1EC7 sinh th\u00E1i ch\u1EE9c n\u0103ng', 'Windows v\u00E0 Office', 'Ki\u1EC3m k\u00EA ph\u1EA7n m\u1EC1m',
     'License Compliance', 'Kh\u1EAFc ph\u1EE5c an to\u00E0n', 'B\u00E1o c\u00E1o v\u00E0 b\u1EB1ng ch\u1EE9ng',
