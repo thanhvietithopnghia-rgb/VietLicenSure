@@ -515,7 +515,7 @@ function ConvertTo-ToolAssistantVersionKey {
 }
 
 function ConvertTo-ToolAssistantDocumentBody {
-    param([AllowNull()][string]$Body, [int]$MaximumCharacters = 4600)
+    param([AllowNull()][string]$Body, [int]$MaximumCharacters = 5200)
 
     $selected = New-Object System.Collections.Generic.List[string]
     $previousBlank = $true
