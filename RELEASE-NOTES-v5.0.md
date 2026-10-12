@@ -40,6 +40,9 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Sửa đối soát **User/Concurrent** theo hướng fail-closed: số thiết bị chỉ còn là quan sát, không bị dùng làm consumption khi chưa có bằng chứng người dùng hoặc phiên đồng thời; kết quả thiếu dữ liệu là `NeedsReview/InsufficientEvidence`.
 - Windows/Office chỉ được ghép quyền sử dụng khi `CatalogProductId`/SKU cụ thể trùng nhau; thiếu hoặc lệch edition/version trả `NeedsReview`, không kết luận `Compliant`.
 - Gộp các entitlement `Device` tương thích thành một pool: nhiều hợp đồng cùng sản phẩm chỉ tiêu thụ fleet một lần; pool 5+5 đối chiếu đúng 10 thiết bị và chỉ sinh một cảnh báo vượt pool khi có thiết bị thứ 11.
+- Tách chứng từ `Attached` khỏi `Verified`: chỉ chứng từ có người xác minh, thời điểm, nguồn và phạm vi mới được dùng làm bằng chứng quyền sử dụng; tệp chỉ đính kèm luôn trả `NeedsReview`.
+- Công khai độ phủ kiểm kê `Complete/Partial/Failed`; dữ liệu bị cắt, thiếu quyền hoặc đọc lỗi không còn được hiểu sai là máy sạch hay đủ bằng chứng.
+- Gói mã nguồn loại checksum chỉ dành cho EXE phát hành; checksum và manifest nguồn chỉ tham chiếu các byte thực sự nằm trong gói nguồn.
 
 - Sửa bố cục responsive của **Máy chủ/Máy trạm**: tái tạo vùng bo góc sau mỗi lần đổi kích thước, đo đủ chữ Việt/Anh với khoảng an toàn 20 px và tự chia hàng nút máy trạm; không còn chữ bị mask/cắt ở cửa sổ đóng gói.
 - Hoàn thiện **Asset Registry** trong tab Máy chủ: tìm/lọc tài sản, gán hoặc chuyển giao, thu hồi có xác nhận và xem lịch sử bàn giao append-only. Tab Máy trạm vẫn chỉ đọc, hiển thị Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối; không thêm điều khiển từ xa.
