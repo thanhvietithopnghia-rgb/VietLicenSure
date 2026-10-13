@@ -123,7 +123,16 @@ Assert-SourcePattern $text '(?s)try\s*\{.+?\.\s+[$]capabilityHelper.+?\.\s+[$]sc
 Assert-SourcePattern $text 'Get-ToolCapabilityProfile\s+-StartupFast' 'Dashboard chưa dùng hồ sơ nhận diện nhanh khi khởi động.'
 Assert-SourcePattern $text 'function\s+Initialize-DashboardMenus\b' 'Dashboard chưa trì hoãn dựng menu đến sau lần vẽ đầu tiên.'
 Assert-SourcePattern $text 'function\s+Complete-DashboardStartupValidation\b' 'Dashboard chưa trì hoãn kiểm tra toàn vẹn đến sau lần vẽ đầu tiên.'
-Assert-SourcePattern $text '[$]startupValidationTimer\.Interval\s*=\s*150' 'Dashboard thiếu bộ định thời khởi động không chặn lần vẽ đầu tiên.'
+Assert-SourcePattern $text '[$]startupValidationTimer\.Interval\s*=\s*15' 'Dashboard thiếu bộ định thời lazy-load ngắn sau lần vẽ đầu tiên.'
+Assert-SourcePattern $text 'function\s+Import-NextDashboardDeferredModule\b' 'Dashboard chưa có bộ nạp tuần tự module trì hoãn.'
+Assert-SourcePattern $text 'Module\.ReportExport\.Deferred' 'Dashboard chưa trì hoãn Report Export.'
+Assert-SourcePattern $text 'Module\.PluginEngine\.Deferred' 'Dashboard chưa trì hoãn Plugin Engine.'
+Assert-SourcePattern $text 'Module\.Assistant\.Deferred' 'Dashboard chưa trì hoãn Trợ lý.'
+Assert-SourcePattern $text 'Module\.AssetRegistry\.Deferred' 'Dashboard chưa trì hoãn Asset Registry.'
+Assert-SourcePattern $text 'Module\.SoftwareInventory\.Deferred' 'Dashboard chưa trì hoãn Software Inventory.'
+Assert-SourcePattern $text 'DeferredModules\.Failed' 'Dashboard chưa fail-closed khi lazy-load module lỗi.'
+Assert-SourcePattern $text 'foreach\s*\([$]button\s+in\s+[$]buttons\)\s*\{\s*[$]button\.Enabled\s*=\s*[$]false\s*\}' 'Dashboard chưa khóa thao tác trước khi lazy-load hoàn tất.'
+Assert-SourcePattern $text 'TOOL_STARTUP_READY_EVENT' 'Dashboard chưa báo launcher đóng splash khi cửa sổ chính đã hiện.'
 if ($text -match '[$]startupSoftwareCatalog\s*=\s*Get-ToolSoftwareLicenseCatalog\s+-PreferCache') {
     Add-Failure 'Dashboard vẫn xác minh toàn bộ catalog trước khi hiện cửa sổ.'
 }

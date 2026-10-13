@@ -93,6 +93,7 @@ namespace ThanhViet.VietLicenSure
 #endif
         private static string OfficialBuildState = "Unverified";
         private static string OfficialBuildFailureCode = "NotChecked";
+        private static string StartupReadyEventName = String.Empty;
         private static readonly byte[] PayloadBundleMagic = Encoding.ASCII.GetBytes("TVPBNDL1");
         private static readonly object PayloadBundleLock = new object();
         private static byte[] CachedPayloadBundle;
@@ -271,6 +272,109 @@ namespace ThanhViet.VietLicenSure
         private static SecurityIdentifier RepairUserSid;
         private static string ElevatedModulePayloadBase64 = String.Empty;
 
+        private sealed class StartupSplashHost : IDisposable
+        {
+            private readonly ManualResetEvent ready = new ManualResetEvent(false);
+            private Thread thread;
+            private Form form;
+
+            internal static StartupSplashHost Start()
+            {
+                StartupSplashHost host = new StartupSplashHost();
+                host.thread = new Thread(host.Run);
+                host.thread.IsBackground = true;
+                host.thread.Name = "VietLicenSure.StartupSplash";
+                host.thread.SetApartmentState(ApartmentState.STA);
+                host.thread.Start();
+                host.ready.WaitOne(2000);
+                return host;
+            }
+
+            private void Run()
+            {
+                try
+                {
+                    Form splash = new Form();
+                    form = splash;
+                    splash.Text = "VietLicenSure v5.0";
+                    splash.StartPosition = FormStartPosition.CenterScreen;
+                    splash.FormBorderStyle = FormBorderStyle.FixedDialog;
+                    splash.ControlBox = false;
+                    splash.ShowInTaskbar = true;
+                    splash.TopMost = false;
+                    splash.ClientSize = new System.Drawing.Size(520, 176);
+                    splash.BackColor = System.Drawing.Color.FromArgb(241, 247, 255);
+
+                    Label title = new Label();
+                    title.AutoSize = false;
+                    title.Location = new System.Drawing.Point(28, 30);
+                    title.Size = new System.Drawing.Size(464, 42);
+                    title.Font = new System.Drawing.Font("Segoe UI", 21.0f, System.Drawing.FontStyle.Bold);
+                    title.ForeColor = System.Drawing.Color.FromArgb(6, 61, 125);
+                    title.Text = "VietLicenSure v5.0";
+                    splash.Controls.Add(title);
+
+                    Label status = new Label();
+                    status.AutoSize = false;
+                    status.Location = new System.Drawing.Point(31, 88);
+                    status.Size = new System.Drawing.Size(458, 28);
+                    status.Font = new System.Drawing.Font("Segoe UI", 10.5f, System.Drawing.FontStyle.Regular);
+                    status.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
+                    status.Text = IsEnglishUi() ? "Starting securely..." : "\u0110ang kh\u1EDFi \u0111\u1ED9ng an to\u00E0n...";
+                    splash.Controls.Add(status);
+
+                    ProgressBar progress = new ProgressBar();
+                    progress.Location = new System.Drawing.Point(34, 132);
+                    progress.Size = new System.Drawing.Size(452, 8);
+                    progress.Style = ProgressBarStyle.Marquee;
+                    progress.MarqueeAnimationSpeed = 28;
+                    splash.Controls.Add(progress);
+
+                    splash.Shown += delegate { ready.Set(); };
+                    Application.Run(splash);
+                }
+                finally
+                {
+                    ready.Set();
+                    form = null;
+                }
+            }
+
+            internal void CloseWhenSignaled(WaitHandle startupReadyEvent)
+            {
+                Thread waiter = new Thread(delegate()
+                {
+                    try { startupReadyEvent.WaitOne(TimeSpan.FromSeconds(90)); }
+                    catch (ObjectDisposedException) { }
+                    Stop();
+                });
+                waiter.IsBackground = true;
+                waiter.Name = "VietLicenSure.StartupSplashCloser";
+                waiter.Start();
+            }
+
+            internal void Stop()
+            {
+                Form current = form;
+                if (current == null || current.IsDisposed) return;
+                try
+                {
+                    if (current.InvokeRequired)
+                        current.BeginInvoke((MethodInvoker)delegate { if (!current.IsDisposed) current.Close(); });
+                    else
+                        current.Close();
+                }
+                catch (InvalidOperationException) { }
+            }
+
+            public void Dispose()
+            {
+                Stop();
+                if (thread != null && thread.IsAlive) thread.Join(2000);
+                ready.Dispose();
+            }
+        }
+
         [STAThread]
         private static int Main(string[] args)
         {
@@ -351,7 +455,27 @@ namespace ThanhViet.VietLicenSure
                     ShowMessage(mode, L("launcher.powerShellMissing", powershellPath), MessageBoxIcon.Error);
                     return 13;
                 }
-                return RunPayload(mode, powershellPath);
+                StartupSplashHost startupSplash = null;
+                EventWaitHandle startupReadyEvent = null;
+                try
+                {
+                    if (mode == LaunchMode.Gui)
+                    {
+                        StartupReadyEventName = "Local\\VietLicenSure.StartupReady." +
+                            Process.GetCurrentProcess().Id.ToString(CultureInfo.InvariantCulture) + "." +
+                            Guid.NewGuid().ToString("N");
+                        startupReadyEvent = new EventWaitHandle(false, EventResetMode.ManualReset, StartupReadyEventName);
+                        startupSplash = StartupSplashHost.Start();
+                        startupSplash.CloseWhenSignaled(startupReadyEvent);
+                    }
+                    return RunPayload(mode, powershellPath);
+                }
+                finally
+                {
+                    if (startupSplash != null) startupSplash.Dispose();
+                    if (startupReadyEvent != null) startupReadyEvent.Dispose();
+                    StartupReadyEventName = String.Empty;
+                }
             }
         }
 
@@ -1403,6 +1527,8 @@ namespace ThanhViet.VietLicenSure
                 startInfo.EnvironmentVariables["TOOL_TOOL_VERSION"] = "5.0";
                 startInfo.EnvironmentVariables["TOOL_UI_CULTURE"] = GetUiCulture();
                 startInfo.EnvironmentVariables["TOOL_CORRELATION_ID"] = correlationId;
+                if (!String.IsNullOrWhiteSpace(StartupReadyEventName))
+                    startInfo.EnvironmentVariables["TOOL_STARTUP_READY_EVENT"] = StartupReadyEventName;
                 startInfo.EnvironmentVariables["TOOL_CAPABILITY_SCHEMA"] = "1.1";
                 startInfo.EnvironmentVariables["TOOL_MODULE_CONTRACT_SCHEMA"] = "1.0";
                 startInfo.EnvironmentVariables["TOOL_REPORT_SCHEMA"] = "1.6";

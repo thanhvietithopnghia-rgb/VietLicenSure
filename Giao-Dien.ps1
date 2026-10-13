@@ -93,10 +93,8 @@ try {
     Write-DashboardStartupTrace "Module.ReportSchema"
     . $resultCenterHelper
     Write-DashboardStartupTrace "Module.ResultCenter"
-    . $reportExportHelper
-    Write-DashboardStartupTrace "Module.ReportExport"
-    . $pluginEngineHelper
-    Write-DashboardStartupTrace "Module.PluginEngine"
+    Write-DashboardStartupTrace "Module.ReportExport.Deferred"
+    Write-DashboardStartupTrace "Module.PluginEngine.Deferred"
     . $timelineHelper
     Write-DashboardStartupTrace "Module.Timeline"
     . $safetyPolicyHelper
@@ -110,12 +108,9 @@ try {
     Write-DashboardStartupTrace "Module.OfflinePolicy"
     . $provenanceHelper
     Write-DashboardStartupTrace "Module.Provenance"
-    . $assistantHelper
-    Write-DashboardStartupTrace "Module.Assistant"
-    . $assetRegistryHelper
-    Write-DashboardStartupTrace "Module.AssetRegistry"
-    . $softwareInventoryHelper
-    Write-DashboardStartupTrace "Module.SoftwareInventory"
+    Write-DashboardStartupTrace "Module.Assistant.Deferred"
+    Write-DashboardStartupTrace "Module.AssetRegistry.Deferred"
+    Write-DashboardStartupTrace "Module.SoftwareInventory.Deferred"
     $script:softwareCatalogFreshnessState = $null
     Write-DashboardStartupTrace "Catalog.Deferred"
     $provenanceState = Get-ToolOfficialBuildState -ManifestPath $provenanceManifest -SignaturePath $provenanceSignature
@@ -191,6 +186,30 @@ $script:dpiAwarenessState = Initialize-ToolDpiAwareness
 [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false)
 [System.Windows.Forms.Application]::EnableVisualStyles()
 Write-DashboardStartupTrace "WinForms.Ready"
+
+$script:dashboardDeferredModules = @(
+    [pscustomobject]@{ Name='VietLicenSure.ReportExport'; Path=$reportExportHelper; Trace='Module.ReportExport' },
+    [pscustomobject]@{ Name='VietLicenSure.PluginEngine'; Path=$pluginEngineHelper; Trace='Module.PluginEngine' },
+    [pscustomobject]@{ Name='VietLicenSure.Assistant'; Path=$assistantHelper; Trace='Module.Assistant' },
+    [pscustomobject]@{ Name='VietLicenSure.AssetRegistry'; Path=$assetRegistryHelper; Trace='Module.AssetRegistry' },
+    [pscustomobject]@{ Name='VietLicenSure.SoftwareInventory'; Path=$softwareInventoryHelper; Trace='Module.SoftwareInventory' }
+)
+$script:dashboardDeferredModuleIndex = 0
+$script:dashboardDeferredModuleHandles = New-Object System.Collections.Generic.List[object]
+
+function Import-NextDashboardDeferredModule {
+    if ($script:dashboardDeferredModuleIndex -ge $script:dashboardDeferredModules.Count) { return $true }
+    $definition = $script:dashboardDeferredModules[$script:dashboardDeferredModuleIndex]
+    $module = New-Module -Name ([string]$definition.Name) -ScriptBlock {
+        param([string]$ModulePath)
+        . $ModulePath
+    } -ArgumentList ([string]$definition.Path)
+    Import-Module -ModuleInfo $module -Global -DisableNameChecking -Force
+    [void]$script:dashboardDeferredModuleHandles.Add($module)
+    Write-DashboardStartupTrace ([string]$definition.Trace + '.Ready')
+    $script:dashboardDeferredModuleIndex++
+    return [bool]($script:dashboardDeferredModuleIndex -ge $script:dashboardDeferredModules.Count)
+}
 
 $baseDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $reportScript = Join-Path $baseDir "kiem-tra-cau-hinh-ban-quyen.ps1"
@@ -937,13 +956,33 @@ $script:dashboardStartupLayoutPending = $false
 Update-MainLayout
 Write-DashboardStartupTrace "Layout.Ready"
 $startupValidationTimer = New-Object System.Windows.Forms.Timer
-$startupValidationTimer.Interval = 150
+$startupValidationTimer.Interval = 15
 $script:dashboardStartupPhase = 0
 $startupValidationTimer.Add_Tick({
     $startupValidationTimer.Stop()
     if ($script:dashboardStartupPhase -eq 0) {
-        Initialize-DashboardMenus
+        try {
+            $allDeferredModulesReady = Import-NextDashboardDeferredModule
+        } catch {
+            $status.Text = $_.Exception.Message
+            $status.ForeColor = [System.Drawing.Color]::DarkRed
+            Write-DashboardStartupTrace "DeferredModules.Failed"
+            return
+        }
+        if (-not $allDeferredModulesReady) {
+            $startupValidationTimer.Interval = 15
+            $startupValidationTimer.Start()
+            return
+        }
+        Write-DashboardStartupTrace "DeferredModules.Ready"
         $script:dashboardStartupPhase = 1
+        $startupValidationTimer.Interval = 15
+        $startupValidationTimer.Start()
+        return
+    }
+    if ($script:dashboardStartupPhase -eq 1) {
+        Initialize-DashboardMenus
+        $script:dashboardStartupPhase = 2
         $startupValidationTimer.Interval = 75
         $startupValidationTimer.Start()
         return
@@ -951,8 +990,15 @@ $startupValidationTimer.Add_Tick({
     Complete-DashboardStartupValidation
 })
 foreach ($button in $buttons) { $button.Enabled = $false }
+$introAssistantButton.Enabled = $false
 $form.Add_Shown({
     Write-DashboardStartupTrace "Window.Shown"
+    if (-not [string]::IsNullOrWhiteSpace([string]$env:TOOL_STARTUP_READY_EVENT)) {
+        try {
+            $startupReadyEvent = [Threading.EventWaitHandle]::OpenExisting([string]$env:TOOL_STARTUP_READY_EVENT)
+            try { [void]$startupReadyEvent.Set() } finally { $startupReadyEvent.Dispose() }
+        } catch {}
+    }
     # DeviceDpi is authoritative only after the native window handle is shown.
     # Refit once on the message pump before the responsive layout pass so the
     # 150-200% canvas receives the physical pixels calculated above.

@@ -745,6 +745,7 @@ function Complete-DashboardStartupValidation {
 
 function Set-ButtonsEnabled([bool]$enabled) {
     foreach ($button in $buttons) { $button.Enabled = $enabled }
+    if ($introAssistantButton) { $introAssistantButton.Enabled = $enabled }
     $languageCombo.Enabled = $enabled
     $canStop = [bool]((-not $enabled) -and $script:activeProcess -and -not $script:activeProcess.HasExited)
     $stopButton.Visible = $canStop

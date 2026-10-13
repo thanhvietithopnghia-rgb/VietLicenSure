@@ -37,6 +37,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 
 ## Cập nhật hiện hành ngày 13/10/2026
 
+- Tối ưu **khởi động Giai đoạn 1**: launcher hiện splash phản hồi ngay; cửa sổ chính không còn chờ Report Export, Plugin Engine, Trợ lý, Asset Registry và Software Inventory nạp trước. Năm module này được nạp tuần tự sau `Window.Shown`, mọi thao tác giữ khóa đến khi validation hoàn tất và lỗi lazy-load vẫn fail-closed. Đo source cùng máy giảm cold launch từ 16,25 giây xuống 4,40 giây; warm launch từ 3,91 giây xuống 3,35 giây.
 - Khóa Central Dashboard về **loopback-only**: HTML/CSS/JS/API từ địa chỉ không phải loopback bị từ chối fail-closed; agent LAN vẫn dùng giao thức envelope mã hóa hiện có.
 - Bearer token chỉ đi trong URL fragment khi mở Dashboard, fragment được xóa ngay sau khi tải và token chỉ tồn tại trong bộ nhớ trang; không còn `sessionStorage`/`localStorage`. Quản trị từ xa phải đi qua tunnel hoặc reverse proxy HTTPS có trust được quản lý.
 
