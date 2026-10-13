@@ -197,7 +197,7 @@ $script:dashboardDeferredModules = @(
 $script:dashboardDeferredModuleIndex = 0
 $script:dashboardDeferredModuleHandles = New-Object System.Collections.Generic.List[object]
 
-function Import-NextDashboardDeferredModule {
+$script:importNextDashboardDeferredModule = {
     if ($script:dashboardDeferredModuleIndex -ge $script:dashboardDeferredModules.Count) { return $true }
     $definition = $script:dashboardDeferredModules[$script:dashboardDeferredModuleIndex]
     $module = New-Module -Name ([string]$definition.Name) -ScriptBlock {
@@ -962,7 +962,7 @@ $startupValidationTimer.Add_Tick({
     $startupValidationTimer.Stop()
     if ($script:dashboardStartupPhase -eq 0) {
         try {
-            $allDeferredModulesReady = Import-NextDashboardDeferredModule
+            $allDeferredModulesReady = & $script:importNextDashboardDeferredModule
         } catch {
             $status.Text = $_.Exception.Message
             $status.ForeColor = [System.Drawing.Color]::DarkRed
