@@ -264,6 +264,13 @@ function Start-ToolEnterpriseHost {
                 }
                 $path = $context.Request.Url.AbsolutePath.TrimEnd("/")
                 $method = $context.Request.HttpMethod.ToUpperInvariant()
+                $isDashboardRequest = $path -eq "/tool/v1/dashboard" -or $path.StartsWith("/tool/v1/dashboard/", [StringComparison]::OrdinalIgnoreCase)
+                if ($isDashboardRequest -and -not (Test-ToolEnterpriseLoopbackAddress -Address $remoteAddress)) {
+                    Write-ToolEnterpriseHostJsonResponse -Response $context.Response -StatusCode 403 -Value ([ordered]@{
+                        Accepted=$false; Message=(Get-ToolEnterpriseText "enterpriseDashboard.response.loopbackOnly")
+                    })
+                    continue
+                }
                 $body = if ($method -eq "POST") { Read-ToolEnterpriseHostRequestBody -Request $context.Request } else { $null }
                 $responseValue = $null
 

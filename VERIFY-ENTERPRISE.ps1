@@ -215,9 +215,9 @@ try {
     [void](Add-ToolAssetAssignmentEvent -Store $assetStore -AssetId ([string]$serverClientRecord.AssetId) -Action Assign -AssigneeType Department -AssigneeReference 'department:finance' -DisplayName 'Finance' -Reason 'Enterprise regression' -RecordedBy 'verifier')
     [void](Write-ToolAssetRegistryStore -Store $assetStore -RootPath $paths.ServerAssets)
 
-    # Central Dashboard: static assets are public but contain no fleet
-    # data; the read-only API requires a short-lived bearer token created by
-    # an administrator and bound to the first source address.
+    # Central Dashboard is loopback-only. The read-only API requires a
+    # short-lived bearer token created by an administrator and kept only in
+    # page memory after the URL fragment is removed.
     $wrongDashboardAdminRejected = $false
     try { [void](New-ToolEnterpriseDashboardSession -AdminCode 'Wrong-Admin' -ValidMinutes 30) }
     catch { $wrongDashboardAdminRejected = $true }
@@ -228,6 +228,14 @@ try {
     $dashboardSessionText = Get-Content -LiteralPath $paths.ServerDashboardSession -Raw -Encoding UTF8
     Assert-Enterprise ($dashboardSessionText -notmatch [regex]::Escape([string]$dashboardSession.AccessToken)) 'Dashboard lưu access token rõ trên đĩa.'
     Assert-Enterprise ($dashboardSessionText -notmatch 'AdminVerifier|Pairing|ClientSecret') 'Bản ghi phiên Dashboard chứa dữ liệu xác thực ngoài allow-list.'
+    foreach ($loopbackAddress in @('127.0.0.1','127.0.0.2','::1','::ffff:127.0.0.1')) {
+        Assert-Enterprise (Test-ToolEnterpriseLoopbackAddress -Address $loopbackAddress) "Dashboard từ chối địa chỉ loopback hợp lệ: $loopbackAddress"
+    }
+    foreach ($remoteAddress in @('10.0.0.5','192.168.1.10','::ffff:10.0.0.5','invalid')) {
+        Assert-Enterprise (-not (Test-ToolEnterpriseLoopbackAddress -Address $remoteAddress)) "Dashboard coi địa chỉ từ xa là loopback: $remoteAddress"
+    }
+    $dashboardScript = Get-ToolEnterpriseDashboardJs
+    Assert-Enterprise ($dashboardScript -notmatch '(?i)(?:session|local)Storage' -and $dashboardScript -match "var token=fragment\.get\('token'\)\|\|''") 'Dashboard còn lưu bearer token trong browser storage hoặc không giữ token trong bộ nhớ trang.'
 
     $dashboardBaseUri = "http://127.0.0.1:$enterprisePort/tool/v1/dashboard"
     $dashboardStatic = Invoke-WebRequest -Uri ($dashboardBaseUri + '/') -Method Get -UseBasicParsing -TimeoutSec 10
@@ -732,6 +740,9 @@ Last 5 characters of installed product key: ZZZZZ
     }
     Assert-Enterprise ($hostText -match 'rate\.Count\+\+' -and $hostText -match 'StatusCode\s+429') "Endpoint Enterprise thiếu rate limit."
     Assert-Enterprise ($hostText -match '\$prefixAddress\s*=\s*if.+?\{\s*"\+"\s*\}' -and $hostText -match 'http://\$prefixAddress') 'Listener không dùng cùng strong-wildcard prefix với URL ACL.'
+    Assert-Enterprise ($hostText -match 'Test-ToolEnterpriseLoopbackAddress\s+-Address\s+\$remoteAddress' -and
+        $hostText -match '\$isDashboardRequest' -and $hostText -match 'enterpriseDashboard\.response\.loopbackOnly' -and
+        $hostText -match 'StatusCode\s+403') 'Dashboard chưa chặn fail-closed mọi request HTTP không phải loopback.'
     $agentText = Get-Content -LiteralPath (Join-Path $SourceDirectory 'Tool-EnterpriseAgent.ps1') -Raw -Encoding UTF8
     Assert-Enterprise ($agentText -match 'function\s+Write-ToolEnterpriseAgentResultFile' -and
         $agentText -match 'ClientAgentResult' -and $agentText -match 'ClientAgentError' -and

@@ -411,7 +411,7 @@ Chỉ quản trị viên có thẩm quyền nên cấu hình máy chủ, firewal
 4. Cấp quyền cho đúng máy hoặc người dùng rồi xem Purchased, Assigned, Installed và Available.
 5. Mở Central Dashboard để xem điểm License Assurance, trạng thái Compliant/Cần kiểm tra/Nghiêm trọng và mở **Giải thích phát hiện** của License Advisor.
 
-License Advisor gắn Rule ID ổn định, nguồn bằng chứng, confidence và correlation cho từng phát hiện; đồng thời tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Một dấu hiệu hoặc KMS riêng lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. Kết quả dựa trên dữ liệu kỹ thuật cùng hồ sơ do quản trị viên nhập; không tự chứng minh quyền sở hữu, tính xác thực của hóa đơn hoặc tuân thủ pháp lý. Dashboard web chỉ đọc và không hiển thị đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret.
+License Advisor gắn Rule ID ổn định, nguồn bằng chứng, confidence và correlation cho từng phát hiện; đồng thời tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Một dấu hiệu hoặc KMS riêng lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. Kết quả dựa trên dữ liệu kỹ thuật cùng hồ sơ do quản trị viên nhập; không tự chứng minh quyền sở hữu, tính xác thực của hóa đơn hoặc tuân thủ pháp lý. Dashboard web chỉ đọc, chỉ mở qua loopback trên máy chủ và không hiển thị đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Truy cập Dashboard từ xa qua HTTP bị chặn; hãy dùng tunnel hoặc reverse proxy HTTPS do quản trị viên kiểm soát.
 
 ## Kiểm tra chuyên sâu
 

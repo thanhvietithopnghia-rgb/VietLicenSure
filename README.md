@@ -79,7 +79,7 @@ Fingerprint chứng thư công bố trong `CONTENT-SIGNING-CERTIFICATE.cer`:
 
 ### Central Dashboard
 
-Trong chức năng 8, quản trị viên có thể mở **Central Dashboard** từ tab Máy chủ sau khi listener LAN đã sẵn sàng. Dashboard chạy nội bộ, chỉ đọc và hỗ trợ Việt/Anh; nó tổng hợp Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Phiên truy cập tồn tại trong thời gian ngắn, yêu cầu mã quản trị và khóa theo địa chỉ truy cập đầu tiên. API không trả full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo; quyền sở hữu luôn là `NotVerified` cho đến khi đối chiếu chứng từ/portal. Dashboard không có điều khiển từ xa, telemetry, CDN hoặc cloud.
+Trong chức năng 8, quản trị viên có thể mở **Central Dashboard** từ tab Máy chủ sau khi listener LAN đã sẵn sàng. Dashboard chạy nội bộ, chỉ đọc và hỗ trợ Việt/Anh; nó tổng hợp Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Dashboard chỉ nhận kết nối loopback trên chính máy chủ; mọi request Dashboard từ địa chỉ khác qua HTTP đều bị từ chối. Phiên truy cập tồn tại trong thời gian ngắn, yêu cầu mã quản trị, khóa theo địa chỉ truy cập đầu tiên và token chỉ được giữ trong bộ nhớ trang. Nếu cần truy cập từ xa, quản trị viên phải dùng tunnel hoặc reverse proxy HTTPS có trust được quản lý. API không trả full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo; quyền sở hữu luôn là `NotVerified` cho đến khi đối chiếu chứng từ/portal. Dashboard không có điều khiển từ xa, telemetry, CDN hoặc cloud.
 
 ### License Compliance
 
