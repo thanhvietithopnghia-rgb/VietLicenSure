@@ -124,7 +124,7 @@ Assert-SourcePattern $text 'Get-ToolCapabilityProfile\s+-StartupFast' 'Dashboard
 Assert-SourcePattern $text 'function\s+Initialize-DashboardMenus\b' 'Dashboard chưa trì hoãn dựng menu đến sau lần vẽ đầu tiên.'
 Assert-SourcePattern $text 'function\s+Complete-DashboardStartupValidation\b' 'Dashboard chưa trì hoãn kiểm tra toàn vẹn đến sau lần vẽ đầu tiên.'
 Assert-SourcePattern $text '[$]startupValidationTimer\.Interval\s*=\s*15' 'Dashboard thiếu bộ định thời lazy-load ngắn sau lần vẽ đầu tiên.'
-Assert-SourcePattern $text 'function\s+Import-NextDashboardDeferredModule\b' 'Dashboard chưa có bộ nạp tuần tự module trì hoãn.'
+Assert-SourcePattern $text '[$]script:importNextDashboardDeferredModule\s*=\s*\{' 'Dashboard chưa có bộ nạp tuần tự module trì hoãn.'
 Assert-SourcePattern $text 'Module\.ReportExport\.Deferred' 'Dashboard chưa trì hoãn Report Export.'
 Assert-SourcePattern $text 'Module\.PluginEngine\.Deferred' 'Dashboard chưa trì hoãn Plugin Engine.'
 Assert-SourcePattern $text 'Module\.Assistant\.Deferred' 'Dashboard chưa trì hoãn Trợ lý.'
