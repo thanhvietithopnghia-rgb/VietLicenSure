@@ -6,9 +6,10 @@ param(
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
-$expectedHash = 'F663C3DE14D9DA150B8FE466F3C4921605AA4F839FE5BE94E96C799DDDAC6608'
-$expectedBuild = '5.0-production-20261013'
-$expectedEnUpdateDate = 'updated 2026-10-13'
+$expectedHash = 'C377BE0C3C55E3DF0998ED7EE79E3888D974C02A9E6A7199C3F641C9381E68D3'
+$expectedBuild = '5.0-production-20261014'
+$expectedEnUpdateDate = 'updated 2026-10-14'
+$expectedPublisher = 'Thanh Viet - VietLicenSure Code Signing'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
@@ -81,6 +82,8 @@ $viHome = Get-Content -LiteralPath (Join-Path $DocsRoot 'index.html') -Raw -Enco
 $enHome = Get-Content -LiteralPath (Join-Path $DocsRoot 'en.html') -Raw -Encoding UTF8
 $viGuide = Get-Content -LiteralPath (Join-Path $DocsRoot 'huong-dan.html') -Raw -Encoding UTF8
 $enGuide = Get-Content -LiteralPath (Join-Path $DocsRoot 'guide-en.html') -Raw -Encoding UTF8
+$viDocumentation = Get-Content -LiteralPath (Join-Path $DocsRoot 'tai-lieu.html') -Raw -Encoding UTF8
+$enDocumentation = Get-Content -LiteralPath (Join-Path $DocsRoot 'documentation-en.html') -Raw -Encoding UTF8
 $sitemap = Get-Content -LiteralPath (Join-Path $DocsRoot 'sitemap.xml') -Raw -Encoding UTF8
 
 foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
@@ -89,8 +92,11 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
-if ($viHome -notmatch '<div class="eyebrow">[^<]*13/10/2026[^<]*</div>') { $errors.Add('Vietnamese home page is missing the current update date') }
+if ($viHome -notmatch '<div class="eyebrow">[^<]*14/10/2026[^<]*</div>') { $errors.Add('Vietnamese home page is missing the current update date') }
 if ($enHome -notmatch [regex]::Escape($expectedEnUpdateDate)) { $errors.Add('English home page is missing the current update date') }
+foreach ($content in @($viHome, $enHome, $viDocumentation, $enDocumentation)) {
+    if ($content -notmatch [regex]::Escape($expectedPublisher)) { $errors.Add('A primary release page is missing the neutral Authenticode Publisher') }
+}
 foreach ($requiredViCapability in @(
     'H\u1EC7 sinh th\u00E1i ch\u1EE9c n\u0103ng', 'Windows v\u00E0 Office', 'Ki\u1EC3m k\u00EA ph\u1EA7n m\u1EC1m',
     'License Compliance', 'Kh\u1EAFc ph\u1EE5c an to\u00E0n', 'B\u00E1o c\u00E1o v\u00E0 b\u1EB1ng ch\u1EE9ng',
