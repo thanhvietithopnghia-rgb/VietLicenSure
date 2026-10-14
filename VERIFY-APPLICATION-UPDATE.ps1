@@ -27,7 +27,8 @@ try {
     foreach ($name in @(
         'Tool-UpdateManager.ps1', 'Giao-Dien.ps1', 'Tool-OfflinePolicy.ps1', 'Tool-ModuleContract.ps1',
         'VietLicenSure-v5.0-OneFile.cs', 'BUILD.ps1', 'Tool-Strings.vi-VN.json', 'Tool-Strings.en-US.json',
-        'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s'
+        'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s',
+        'AUTHENTICODE-SIGNING-CERTIFICATE.cer'
     )) {
         Assert-UpdateTest (Test-Path -LiteralPath (Join-Path $root $name) -PathType Leaf) "Missing update component: $name"
     }
@@ -48,6 +49,24 @@ try {
     $tamperedFixtureBytes[[Math]::Max(0, $tamperedFixtureBytes.Length - 2)] = $tamperedFixtureBytes[[Math]::Max(0, $tamperedFixtureBytes.Length - 2)] -bxor 1
     Assert-UpdateTest (-not (Test-ToolUpdateManifestSignature -ContentBytes $tamperedFixtureBytes -SignatureBytes $signedFixtureSignature)) 'Pinned detached-CMS verification accepted tampered content.'
 
+    $rolloverCertificateBytes = [IO.File]::ReadAllBytes((Join-Path $root 'AUTHENTICODE-SIGNING-CERTIFICATE.cer'))
+    $rolloverCertificate = New-Object Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList (,$rolloverCertificateBytes)
+    try {
+        Assert-UpdateTest (-not $rolloverCertificate.HasPrivateKey) 'Published Authenticode rollover CER contains a private key.'
+        Assert-UpdateTest ([string]$rolloverCertificate.Subject -ceq 'CN=Thanh Viet - VietLicenSure Code Signing') 'Published Authenticode rollover subject is not neutral.'
+        Assert-UpdateTest ([string]$rolloverCertificate.Subject -ceq [string]$rolloverCertificate.Issuer) 'Published Authenticode rollover certificate is not self-issued.'
+        Assert-UpdateTest (([string]$rolloverCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant() -ceq '575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62') 'Published Authenticode rollover thumbprint is invalid.'
+        $rolloverCertificateSha256 = [BitConverter]::ToString(([Security.Cryptography.SHA256]::Create()).ComputeHash($rolloverCertificate.RawData)).Replace('-', '')
+        Assert-UpdateTest ($rolloverCertificateSha256 -ceq '91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177') 'Published Authenticode rollover certificate SHA-256 is invalid.'
+        $rolloverHasCodeSigningEku = $false
+        foreach ($extension in @($rolloverCertificate.Extensions)) {
+            if ($extension.Oid.Value -ne '2.5.29.37') { continue }
+            $eku = New-Object Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension -ArgumentList @($extension, [bool]$extension.Critical)
+            foreach ($oid in @($eku.EnhancedKeyUsages)) { if ($oid.Value -eq '1.3.6.1.5.5.7.3.3') { $rolloverHasCodeSigningEku = $true } }
+        }
+        Assert-UpdateTest $rolloverHasCodeSigningEku 'Published Authenticode rollover certificate lacks Code Signing EKU.'
+    } finally { $rolloverCertificate.Dispose() }
+
     $manifest = [pscustomobject][ordered]@{
         SchemaVersion = '1.0'
         Channel = 'stable'
@@ -61,12 +80,16 @@ try {
         DownloadSha256 = ('A' * 64)
         DownloadSize = 65536
         AuthenticodeRequired = $true
-        SignerThumbprints = @('ABE70696679B1D8987A2D5B1F6C1C6909D364CEA')
+        SignerThumbprints = @('575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62')
     }
     $candidate = ConvertFrom-ToolUpdateManifest -Manifest $manifest -InstalledVersion '4.8.0.1' -SelectedCulture 'vi-VN' -SourceUrl $script:ToolUpdateDefaultManifestUrl
     Assert-UpdateTest ([bool]$candidate.UpdateAvailable) 'A newer version was not detected.'
     Assert-UpdateTest ([bool]$candidate.CanSelfUpdate) 'v4.8.0.1 must support self-update.'
     Assert-UpdateTest ($candidate.LatestVersion -eq '5.0' -and $candidate.Title -eq 'Test release VI') 'Manifest result or localization is invalid.'
+    $rollbackManifest = $manifest.PSObject.Copy()
+    $rollbackManifest.SignerThumbprints = @('ABE70696679B1D8987A2D5B1F6C1C6909D364CEA')
+    $rollbackCandidate = ConvertFrom-ToolUpdateManifest -Manifest $rollbackManifest -InstalledVersion '4.8.0.1' -SelectedCulture 'vi-VN'
+    Assert-UpdateTest ([string]$rollbackCandidate.SignerThumbprints[0] -eq 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA') 'The legacy signer overlap pin was not retained for rollback.'
     Assert-UpdateTest (-not [bool]$candidate.UploadedMachineData -and -not [bool]$candidate.TelemetrySent) 'Update result privacy flags are invalid.'
 
     $currentManifest = $manifest.PSObject.Copy()
@@ -123,6 +146,8 @@ try {
     Assert-UpdateThrows { ConvertFrom-ToolUpdateManifest -Manifest $badSignerManifest -InstalledVersion '4.8.0.1' | Out-Null } 'An unpinned signer thumbprint was accepted.'
     $authorizedRollover = ConvertFrom-ToolUpdateManifest -Manifest $badSignerManifest -InstalledVersion '4.8.0.1' -ManifestSignatureVerified
     Assert-UpdateTest (@($authorizedRollover.SignerThumbprints).Count -eq 1 -and [string]$authorizedRollover.SignerThumbprints[0] -eq ('D' * 40)) 'A detached-CMS-authorized Authenticode signer rollover was rejected.'
+    Assert-UpdateTest ([bool]$authorizedRollover.ManifestSignatureVerified) 'CMS-authorized rollover state was not preserved for staged EXE verification.'
+    Assert-UpdateTest (-not [bool]$candidate.ManifestSignatureVerified) 'An unsigned manifest was incorrectly marked as CMS-verified.'
     $missingSignerManifest = $manifest.PSObject.Copy()
     $missingSignerManifest.AuthenticodeRequired = $true
     $missingSignerManifest.SignerThumbprints = @()

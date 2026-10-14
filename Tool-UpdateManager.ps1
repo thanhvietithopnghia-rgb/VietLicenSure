@@ -26,7 +26,10 @@ $script:ToolUpdateMaximumManifestBytes = 131072
 $script:ToolUpdateMaximumSignatureBytes = 65536
 $script:ToolUpdateMaximumExecutableBytes = 104857600
 $script:ToolUpdateMinimumExecutableBytes = 65536
-$script:ToolUpdateSignerThumbprints = @('ABE70696679B1D8987A2D5B1F6C1C6909D364CEA')
+$script:ToolUpdateSignerThumbprints = @(
+    'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA',
+    '575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62'
+)
 $script:ToolUpdateSignerCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 
 # Every executable entry point fails closed before loading helpers or making a
@@ -349,6 +352,7 @@ function ConvertFrom-ToolUpdateManifest {
         DownloadSize = $downloadSize
         AuthenticodeRequired = $authenticodeRequired
         SignerThumbprints = @($signerThumbprints.ToArray())
+        ManifestSignatureVerified = [bool]$ManifestSignatureVerified
         ManifestUrl = $SourceUrl
         CheckedAtUtc = [DateTime]::UtcNow.ToString('o')
         UploadedMachineData = $false
@@ -527,12 +531,30 @@ function Invoke-ToolUpdateExecutableDownload {
     throw 'Update download exceeded the redirect limit.'
 }
 
+function Test-ToolUpdatePinnedSelfSignedTrust {
+    param([Security.Cryptography.X509Certificates.X509Certificate2]$Certificate)
+    if ($null -eq $Certificate -or $Certificate.Subject -cne $Certificate.Issuer) { return $false }
+    $now = Get-Date
+    if ($now -lt $Certificate.NotBefore -or $now -gt $Certificate.NotAfter) { return $false }
+    $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+    try {
+        $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+        $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+        if ($chain.Build($Certificate)) { return $true }
+        $statuses = @($chain.ChainStatus | ForEach-Object { $_.Status })
+        return [bool]($statuses.Count -gt 0 -and @($statuses | Where-Object {
+            $_ -ne [Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot
+        }).Count -eq 0)
+    } finally { $chain.Dispose() }
+}
+
 function Assert-ToolUpdateExecutable {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
         [Parameter(Mandatory = $true)][long]$ExpectedSize,
         [Parameter(Mandatory = $true)][string]$ExpectedSha256,
         [bool]$AuthenticodeRequired,
+        [bool]$ManifestSignatureVerified = $false,
         [string[]]$SignerThumbprints = @()
     )
     $item = Get-Item -LiteralPath $Path -Force
@@ -552,7 +574,13 @@ function Assert-ToolUpdateExecutable {
     if ($AuthenticodeRequired) {
         $signature = Get-AuthenticodeSignature -LiteralPath $item.FullName
         $thumbprint = if ($signature.SignerCertificate) { ([string]$signature.SignerCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant() } else { '' }
-        if ($signature.Status -ne 'Valid' -or $SignerThumbprints -notcontains $thumbprint) {
+        $portableSelfSignedAccepted = [bool](
+            $ManifestSignatureVerified -and
+            [string]$signature.Status -eq 'UnknownError' -and
+            $null -ne $signature.SignerCertificate -and
+            (Test-ToolUpdatePinnedSelfSignedTrust $signature.SignerCertificate)
+        )
+        if (($signature.Status -ne 'Valid' -and -not $portableSelfSignedAccepted) -or $SignerThumbprints -notcontains $thumbprint) {
             throw 'Staged update does not have the required trusted Authenticode signature.'
         }
     }
@@ -804,7 +832,7 @@ function Invoke-ToolUpdateApply {
         }
         [void](Invoke-ToolUpdateExecutableDownload -Uri ([uri]$candidate.DownloadUrl) -DestinationPath $stagedPath -ExpectedSize ([long]$candidate.DownloadSize) -ExpectedSha256 ([string]$candidate.DownloadSha256) -ProgressCallback $progressCallback)
         Set-ToolUpdateProgress $window (Get-ToolUpdateText 'update.apply.verifying') 100
-        [void](Assert-ToolUpdateExecutable -Path $stagedPath -ExpectedSize ([long]$candidate.DownloadSize) -ExpectedSha256 ([string]$candidate.DownloadSha256) -AuthenticodeRequired ([bool]$candidate.AuthenticodeRequired) -SignerThumbprints @($candidate.SignerThumbprints))
+        [void](Assert-ToolUpdateExecutable -Path $stagedPath -ExpectedSize ([long]$candidate.DownloadSize) -ExpectedSha256 ([string]$candidate.DownloadSha256) -AuthenticodeRequired ([bool]$candidate.AuthenticodeRequired) -ManifestSignatureVerified ([bool]$candidate.ManifestSignatureVerified) -SignerThumbprints @($candidate.SignerThumbprints))
         Set-ToolUpdateProgress $window (Get-ToolUpdateText 'update.apply.waiting') 100
         Wait-ToolUpdateLauncherExit -ProcessId $CurrentLauncherProcessId
         Set-ToolUpdateProgress $window (Get-ToolUpdateText 'update.apply.installing') 100

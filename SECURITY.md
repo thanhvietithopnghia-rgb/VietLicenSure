@@ -31,7 +31,7 @@ Không thử trên hệ thống không thuộc quyền kiểm soát của bạn,
 
 ## Bản dựng và chữ ký
 
-Chỉ xem bản dựng là chính thức khi chữ ký Authenticode hợp lệ, chuỗi chứng thư được Windows tin cậy, dấu thời gian hợp lệ và SHA-256 khớp kênh phát hành chính thức. Xem `CODE-SIGNING-POLICY-v1.md`.
+Chỉ xem bản dựng là chính thức khi chữ ký Authenticode nguyên vẹn, signer khớp đồng thời SHA-1/SHA-256 đã ghim, dấu thời gian hợp lệ và SHA-256 artifact khớp kênh phát hành chính thức. Kênh `Official Self-Signed` chỉ chấp nhận thêm đúng lỗi `UntrustedRoot` của signer tự ký đã ghim; nó không phải public trust. Xem `CODE-SIGNING-POLICY-v1.md`.
 
 ## Dữ liệu Enterprise
 

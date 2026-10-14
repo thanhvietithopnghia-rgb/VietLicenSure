@@ -1,4 +1,4 @@
-﻿$script:ToolProvenanceSchemaVersion = '1.0'
+$script:ToolProvenanceSchemaVersion = '1.1'
 $script:ToolProvenanceManifestFileName = 'OFFICIAL-PROVENANCE-v1.json'
 $script:ToolProvenanceSignatureFileName = 'OFFICIAL-PROVENANCE-v1.json.p7s'
 $script:ToolProvenanceMaximumManifestBytes = 32768
@@ -17,10 +17,12 @@ $script:ToolProvenanceAllowedFields = @(
     'SourceSnapshotCommit',
     'VerificationUrl',
     'SignerCertificateSha256',
-    'SignerThumbprint'
+    'SignerThumbprint',
+    'AuthenticodeSignerCertificateSha256',
+    'AuthenticodeSignerThumbprint'
 )
 $script:ToolProvenanceExpectedValues = [ordered]@{
-    SchemaVersion = '1.0'
+    SchemaVersion = '1.1'
     ProductId = '4B8D93E8-278A-4F9D-A39E-986B0322B65B'
     ProductName = 'VietLicenSure'
     Author = 'Thanh Viet'
@@ -30,12 +32,14 @@ $script:ToolProvenanceExpectedValues = [ordered]@{
     # compiled launcher and the elevated bridge reads it at runtime. Keep the
     # release identity here so a date cannot drift independently in source,
     # payload, provenance, or the final executable.
-    BuildId = '5.0-production-20261013-r2'
-    BuildTime = '2026-10-13'
+    BuildId = '5.0-production-20261014'
+    BuildTime = '2026-10-14'
     SourcePolicyId = 'ThanhViet.VietLicenSure.CommunityControlledSource.v5.0'
     VerificationUrl = 'https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build'
     SignerCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
     SignerThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
+    AuthenticodeSignerCertificateSha256 = '91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177'
+    AuthenticodeSignerThumbprint = '575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62'
 }
 
 function Get-ToolProvenanceExpectedValues {

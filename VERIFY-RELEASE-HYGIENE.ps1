@@ -23,7 +23,7 @@ $securityAdvisoryUrl = $repositoryUrl + '/security/advisories/new'
 $displayVersion = 'v5.0'
 $releaseDateVi = '08/09/2026'
 $releaseDateIso = '2026-09-29'
-$currentUpdateDateVi = '13/10/2026'
+$currentUpdateDateVi = '14/10/2026'
 
 function Read-HygieneText {
     param([Parameter(Mandatory = $true)][string]$RelativePath)
@@ -63,6 +63,7 @@ $requiredCurrentFiles = @(
     'VERIFY-DISTRIBUTION.ps1'
     'VERIFY-RELEASE.cmd'
     'CONTENT-SIGNING-CERTIFICATE.cer'
+    'AUTHENTICODE-SIGNING-CERTIFICATE.cer'
     'docs\huong-dan.html'
     'docs\logo.svg'
     'docs\assets\vietlicensure-v5-ui.png'

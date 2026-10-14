@@ -1,7 +1,7 @@
 # Xác minh bản phát hành VietLicenSure v5.0
 
 Áp dụng cho: **v5.0 Official Self-Signed** — trust mode kỹ thuật `OfficialSelfSigned`
-Ngày hồ sơ hiện hành: **2026-09-29**
+Ngày hồ sơ hiện hành: **2026-10-14**
 
 ## Cách nhanh nhất
 
@@ -23,14 +23,21 @@ Tham số `-ExecutionPolicy RemoteSigned` chỉ áp dụng cho tiến trình Pow
 
 ## Fingerprint được công bố
 
-Tệp công khai: `CONTENT-SIGNING-CERTIFICATE.cer`
+Signer detached CMS, tệp công khai: `CONTENT-SIGNING-CERTIFICATE.cer`
 
 - Subject: `CN=Thanh Viet - Tool Kiem Tra v4.9 (Self-Signed Code Signing)`
 - SHA-1 thumbprint: `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA`
 - SHA-256 certificate fingerprint: `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9`
 - Thuật toán khóa: RSA; mục đích: Code Signing.
 
-Hai fingerprint phải đồng thời khớp `OFFICIAL-PROVENANCE-v1.json`. Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo; việc cài trust root là quyết định quản trị riêng.
+Signer Authenticode của EXE, tệp công khai: `AUTHENTICODE-SIGNING-CERTIFICATE.cer`
+
+- Subject: `CN=Thanh Viet - VietLicenSure Code Signing`
+- SHA-1 thumbprint: `575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62`
+- SHA-256 certificate fingerprint: `91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177`
+- Thuật toán khóa: RSA; mục đích: Code Signing.
+
+Bốn fingerprint của hai vai trò phải đồng thời khớp `OFFICIAL-PROVENANCE-v1.json`. Không cài chứng thư vào Trusted Root chỉ để làm mất cảnh báo; việc cài trust root là quyết định quản trị riêng.
 
 ## Bốn nội dung CMS bắt buộc
 

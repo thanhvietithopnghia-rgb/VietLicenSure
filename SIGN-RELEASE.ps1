@@ -7,6 +7,7 @@ param(
     [Parameter(Mandatory = $true, ParameterSetName = "Pfx")][Security.SecureString]$PfxPassword,
     [string]$TimestampServer = "http://timestamp.digicert.com",
     [switch]$RequireTrustedSignature,
+    [switch]$AllowOfficialSelfSigned,
     [Alias('RequirePubliclyTrustedCertificate')][switch]$RequireWindowsTrustedCaCertificate
 )
 
@@ -93,6 +94,21 @@ function Find-WindowsSignTool {
     return ''
 }
 
+function Test-PinnedSelfSignedTrustException {
+    param([Security.Cryptography.X509Certificates.X509Certificate2]$Certificate)
+    if ($null -eq $Certificate -or $Certificate.Subject -cne $Certificate.Issuer) { return $false }
+    $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+    try {
+        $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+        $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+        if ($chain.Build($Certificate)) { return $true }
+        $statuses = @($chain.ChainStatus | ForEach-Object { $_.Status })
+        return [bool]($statuses.Count -gt 0 -and @($statuses | Where-Object {
+            $_ -ne [Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot
+        }).Count -eq 0)
+    } finally { $chain.Dispose() }
+}
+
 $certificate = Get-SigningCertificate
 try {
     Test-CodeSigningCertificate -Certificate $certificate -RequireWindowsTrust:$RequireWindowsTrustedCaCertificate
@@ -132,7 +148,12 @@ try {
             -not ([string]$verification.SignerCertificate.Thumbprint).Equals([string]$certificate.Thumbprint, [StringComparison]::OrdinalIgnoreCase)) {
             throw "Tệp đã ký không chứa đúng signer certificate: $fullPath"
         }
-        if ($RequireTrustedSignature -and $verification.Status -ne "Valid") {
+        $portableSelfSignedAccepted = [bool](
+            $AllowOfficialSelfSigned -and
+            [string]$verification.Status -eq 'UnknownError' -and
+            (Test-PinnedSelfSignedTrustException $verification.SignerCertificate)
+        )
+        if ($RequireTrustedSignature -and $verification.Status -ne "Valid" -and -not $portableSelfSignedAccepted) {
             throw "Chữ ký chưa được Windows tin cậy: $($verification.Status) - $($verification.StatusMessage)"
         }
         if ($RequireTrustedSignature -and -not $verification.TimeStamperCertificate) {

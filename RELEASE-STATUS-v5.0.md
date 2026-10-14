@@ -2,7 +2,7 @@
 
 > **Nguồn sự thật duy nhất (SSOT) về mức sẵn sàng phát hành.** Khi tài liệu khác mô tả khác với trang này, dùng trạng thái tại đây. Đối với tính nguyên vẹn của từng tệp, metadata có chữ ký, manifest và checksum của chính gói vẫn là căn cứ kỹ thuật bắt buộc.
 
-- **Cập nhật trạng thái:** 13/10/2026
+- **Cập nhật trạng thái:** 14/10/2026
 - **Phiên bản:** `v5.0`
 - **Kênh công khai:** `Official Self-Signed`
 - **Kênh kỹ thuật:** `OfficialSelfSigned`
@@ -16,10 +16,11 @@
 | Trường | Giá trị đang được hồ sơ phát hành khai báo | Căn cứ |
 |---|---|---|
 | Tệp thực thi | `VietLicenSure-v5.0.exe` | Release v5.0 |
-| Build ID | `5.0-production-20261013-r2` | `OFFICIAL-PROVENANCE-v1.json` |
+| Build ID | `5.0-production-20261014` | `OFFICIAL-PROVENANCE-v1.json` |
 | SHA-256 của EXE | Xem `RELEASE-MANIFEST.json` và `RELEASE-SHA256SUMS.txt` của chính gói nhận được | Hash thay đổi khi build/ký/timestamp; không sao chép giá trị từ gói khác |
 | Source snapshot được provenance khai báo | Xem `OFFICIAL-PROVENANCE-v1.json` của chính gói nhận được | Provenance có chữ ký CMS tách rời và phải khớp manifest |
-| Chứng thư ký | Chứng thư tự ký được launcher ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |
+| Signer CMS nội dung | Chứng thư tự ký lịch sử được ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |
+| Signer Authenticode EXE | `CN=Thanh Viet - VietLicenSure Code Signing`; SHA-256 `91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177` | `AUTHENTICODE-SIGNING-CERTIFICATE.cer` và provenance |
 
 Các giá trị trên mô tả artifact đang công bố; chúng không tự chứng minh source snapshot và EXE đã được chạy cùng nhau trong Harness4. Nếu bất kỳ giá trị nào thay đổi, phải cập nhật metadata/chữ ký/checksum của gói trước, rồi mới cập nhật bảng này.
 

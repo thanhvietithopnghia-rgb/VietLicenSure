@@ -1,11 +1,13 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 13, 2026; the public version remains v5.0.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 14, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — updated October 13, 2026 (first released September 8, 2026)
+## v5.0 — updated October 14, 2026 (first released September 8, 2026)
+
+- **Neutral publisher:** the EXE now uses the self-issued Authenticode signer `CN=Thanh Viet - VietLicenSure Code Signing`, removing the historical v4.9 product name from Publisher. The historical content-CMS signer remains a separate trust anchor that authorizes the new EXE signer; the channel remains Official Self-Signed, not public-CA/EV/Store-signed, so SmartScreen may still warn.
 
 - **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
 - **Elevated Broker fix:** the launcher now passes the real process executable path instead of a missing assembly path, restoring Valid License Management under UAC while remaining fail-closed when the launcher cannot be verified.

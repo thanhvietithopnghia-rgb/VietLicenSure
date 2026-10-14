@@ -9,9 +9,11 @@ Set-StrictMode -Version 2.0
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = $PSScriptRoot }
 $distributionRoot = [IO.Path]::GetFullPath($DistributionDirectory).TrimEnd('\')
 $expectedReleaseVersion = '5.0'
-$expectedBuildId = '5.0-production-20261013-r2'
-$expectedCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
-$expectedCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
+$expectedBuildId = '5.0-production-20261014'
+$expectedContentCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
+$expectedContentCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
+$expectedAuthenticodeCertificateThumbprint = '575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62'
+$expectedAuthenticodeCertificateSha256 = '91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177'
 $failures = New-Object System.Collections.Generic.List[string]
 $warnings = New-Object System.Collections.Generic.List[string]
 $notes = New-Object System.Collections.Generic.List[string]
@@ -157,7 +159,7 @@ $requiredNames = @(
     'OFFICIAL-PROVENANCE-v1.json', 'OFFICIAL-PROVENANCE-v1.json.p7s',
     'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s',
     'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s',
-    'CONTENT-SIGNING-CERTIFICATE.cer', 'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd'
+    'CONTENT-SIGNING-CERTIFICATE.cer', 'AUTHENTICODE-SIGNING-CERTIFICATE.cer', 'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd'
 )
 foreach ($name in $requiredNames) {
     if (-not (Test-Path -LiteralPath (Join-Path $distributionRoot $name) -PathType Leaf)) { Add-Failure "Thiếu tệp bắt buộc: $name" }
@@ -170,14 +172,19 @@ if (Test-Path -LiteralPath $distributionRoot -PathType Container) {
     }
 }
 
-$certificate = $null
-$certificatePath = Join-Path $distributionRoot 'CONTENT-SIGNING-CERTIFICATE.cer'
-if (Test-Path -LiteralPath $certificatePath -PathType Leaf) {
+function Read-PublishedCodeSigningCertificate(
+    [string]$FileName,
+    [string]$ExpectedSha256,
+    [string]$ExpectedThumbprint
+) {
+    $certificate = $null
+    $certificatePath = Join-Path $distributionRoot $FileName
+    if (-not (Test-Path -LiteralPath $certificatePath -PathType Leaf)) { return $null }
     try {
         $certificateBytes = [IO.File]::ReadAllBytes($certificatePath)
         $certificate = New-Object Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList (,$certificateBytes)
-        if ($certificate.HasPrivateKey) { Add-Failure 'Tệp CER công bố không được chứa private key.' }
-        if ([string]$certificate.PublicKey.Oid.Value -ne '1.2.840.113549.1.1.1') { Add-Failure 'Chứng thư công bố không dùng RSA.' }
+        if ($certificate.HasPrivateKey) { Add-Failure "$FileName không được chứa private key." }
+        if ([string]$certificate.PublicKey.Oid.Value -ne '1.2.840.113549.1.1.1') { Add-Failure "$FileName không dùng RSA." }
         $hasCodeSigningEku = $false
         foreach ($extension in @($certificate.Extensions)) {
             if ($extension.Oid.Value -eq '2.5.29.37') {
@@ -185,33 +192,43 @@ if (Test-Path -LiteralPath $certificatePath -PathType Leaf) {
                 foreach ($oid in @($eku.EnhancedKeyUsages)) { if ($oid.Value -eq '1.3.6.1.5.5.7.3.3') { $hasCodeSigningEku = $true } }
             }
         }
-        if (-not $hasCodeSigningEku) { Add-Failure 'Chứng thư công bố thiếu EKU Code Signing.' }
-        if ((Get-Date) -lt $certificate.NotBefore) { Add-Failure 'Chứng thư công bố chưa có hiệu lực.' }
-        elseif ((Get-Date) -gt $certificate.NotAfter) { Add-Warning 'Chứng thư công bố đã hết hạn; chữ ký CMS vẫn được kiểm tra mật mã nhưng cần đối chiếu thời điểm phát hành.' }
+        if (-not $hasCodeSigningEku) { Add-Failure "$FileName thiếu EKU Code Signing." }
+        if ((Get-Date) -lt $certificate.NotBefore) { Add-Failure "$FileName chưa có hiệu lực." }
+        elseif ((Get-Date) -gt $certificate.NotAfter) { Add-Warning "$FileName đã hết hạn; cần đối chiếu timestamp phát hành." }
         $publishedCertificateSha256 = Get-Sha256HexFromBytes $certificate.RawData
         $publishedCertificateThumbprint = ([string]$certificate.Thumbprint).Replace(' ', '').ToUpperInvariant()
-        if ($publishedCertificateSha256 -cne $expectedCertificateSha256 -or $publishedCertificateThumbprint -cne $expectedCertificateThumbprint) {
-            Add-Failure 'Chứng thư công bố không khớp trust anchor được ghim cứng trong verifier.'
-        } else { Add-Pass "Chứng thư công bố khớp trust anchor: SHA-256 $publishedCertificateSha256" }
-    } catch { Add-Failure "Không đọc được CONTENT-SIGNING-CERTIFICATE.cer ($($_.Exception.Message))" }
+        if ($publishedCertificateSha256 -cne $ExpectedSha256 -or $publishedCertificateThumbprint -cne $ExpectedThumbprint) {
+            Add-Failure "$FileName không khớp trust anchor được ghim cứng trong verifier."
+        } else { Add-Pass "$FileName khớp trust anchor: SHA-256 $publishedCertificateSha256" }
+        return $certificate
+    } catch {
+        if ($null -ne $certificate) { $certificate.Dispose() }
+        Add-Failure "Không đọc được $FileName ($($_.Exception.Message))"
+        return $null
+    }
 }
+
+$contentCertificate = Read-PublishedCodeSigningCertificate 'CONTENT-SIGNING-CERTIFICATE.cer' $expectedContentCertificateSha256 $expectedContentCertificateThumbprint
+$authenticodeCertificate = Read-PublishedCodeSigningCertificate 'AUTHENTICODE-SIGNING-CERTIFICATE.cer' $expectedAuthenticodeCertificateSha256 $expectedAuthenticodeCertificateThumbprint
 
 $releaseManifest = Read-JsonFile (Join-Path $distributionRoot 'RELEASE-MANIFEST.json')
 $provenance = Read-JsonFile (Join-Path $distributionRoot 'OFFICIAL-PROVENANCE-v1.json')
 $updateManifest = Read-JsonFile (Join-Path $distributionRoot 'update-manifest-v1.json')
 $sbom = Read-JsonFile (Join-Path $distributionRoot 'SBOM.cdx.json')
 
-if ($null -ne $certificate -and $null -ne $provenance) {
-    $certificateSha256 = Get-Sha256HexFromBytes $certificate.RawData
-    $certificateThumbprint = ([string]$certificate.Thumbprint).Replace(' ', '').ToUpperInvariant()
+if ($null -ne $contentCertificate -and $null -ne $authenticodeCertificate -and $null -ne $provenance) {
+    $certificateSha256 = Get-Sha256HexFromBytes $contentCertificate.RawData
+    $certificateThumbprint = ([string]$contentCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant()
     if ([string](Get-PropertyValue $provenance 'SignerCertificateSha256') -cne $certificateSha256) { Add-Failure 'SHA-256 chứng thư không khớp provenance.' }
     if (([string](Get-PropertyValue $provenance 'SignerThumbprint')).Replace(' ', '').ToUpperInvariant() -cne $certificateThumbprint) { Add-Failure 'Thumbprint chứng thư không khớp provenance.' }
-    if ($failures.Count -eq 0) { Add-Pass 'Chứng thư công bố khớp hai fingerprint trong provenance.' }
+    if ([string](Get-PropertyValue $provenance 'AuthenticodeSignerCertificateSha256') -cne (Get-Sha256HexFromBytes $authenticodeCertificate.RawData)) { Add-Failure 'SHA-256 signer Authenticode không khớp provenance.' }
+    if (([string](Get-PropertyValue $provenance 'AuthenticodeSignerThumbprint')).Replace(' ', '').ToUpperInvariant() -cne ([string]$authenticodeCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant()) { Add-Failure 'Thumbprint signer Authenticode không khớp provenance.' }
+    if ($failures.Count -eq 0) { Add-Pass 'Hai trust anchor CMS/Authenticode khớp provenance.' }
 
-    Test-DetachedCmsSignature 'OFFICIAL-PROVENANCE-v1.json' 'OFFICIAL-PROVENANCE-v1.json.p7s' $certificate
-    Test-DetachedCmsSignature 'software-license-catalog-v1.0.json' 'software-license-catalog-v1.0.json.p7s' $certificate
-    Test-DetachedCmsSignature 'tool-assistant-knowledge-v1.1.json' 'tool-assistant-knowledge-v1.1.json.p7s' $certificate
-    Test-DetachedCmsSignature 'update-manifest-v1.json' 'update-manifest-v1.json.p7s' $certificate
+    Test-DetachedCmsSignature 'OFFICIAL-PROVENANCE-v1.json' 'OFFICIAL-PROVENANCE-v1.json.p7s' $contentCertificate
+    Test-DetachedCmsSignature 'software-license-catalog-v1.0.json' 'software-license-catalog-v1.0.json.p7s' $contentCertificate
+    Test-DetachedCmsSignature 'tool-assistant-knowledge-v1.1.json' 'tool-assistant-knowledge-v1.1.json.p7s' $contentCertificate
+    Test-DetachedCmsSignature 'update-manifest-v1.json' 'update-manifest-v1.json.p7s' $contentCertificate
 }
 
 $primaryPath = $null
@@ -231,8 +248,8 @@ if ($null -ne $releaseManifest) {
     $primaryArtifact = @($artifacts | Where-Object { [string](Get-PropertyValue $_ 'FileName') -ceq $primaryName })
     if ($primaryArtifact.Count -ne 1) { Add-Failure 'RELEASE-MANIFEST phải có đúng một artifact cho EXE chính.' }
     elseif ($primaryHash -and [string](Get-PropertyValue $primaryArtifact[0] 'Sha256') -cne $primaryHash) { Add-Failure 'Hash EXE không khớp RELEASE-MANIFEST.' }
-    elseif ($null -ne $certificate) {
-        if (([string](Get-PropertyValue $primaryArtifact[0] 'AuthenticodeThumbprint')).Replace(' ', '').ToUpperInvariant() -cne $expectedCertificateThumbprint) { Add-Failure 'Artifact metadata ghi sai signer Authenticode.' }
+    elseif ($null -ne $authenticodeCertificate) {
+        if (([string](Get-PropertyValue $primaryArtifact[0] 'AuthenticodeThumbprint')).Replace(' ', '').ToUpperInvariant() -cne $expectedAuthenticodeCertificateThumbprint) { Add-Failure 'Artifact metadata ghi sai signer Authenticode.' }
         if ([bool](Get-PropertyValue $primaryArtifact[0] 'AuthenticodeTimestamped') -ne $true) { Add-Failure 'Artifact metadata không xác nhận timestamp Authenticode.' }
     }
 
@@ -254,9 +271,9 @@ if ($null -ne $releaseManifest) {
         if ([string](Get-PropertyValue $updateManifest 'DownloadSha256') -cne $primaryHash) { Add-Failure 'Hash tải xuống trong update manifest không khớp EXE.' }
         if ($null -ne $primaryPath -and [long](Get-PropertyValue $updateManifest 'DownloadSize') -ne (Get-Item -LiteralPath $primaryPath).Length) { Add-Failure 'Kích thước tải xuống trong update manifest không khớp EXE.' }
         if ([bool](Get-PropertyValue $updateManifest 'AuthenticodeRequired') -ne $true) { Add-Failure 'Update manifest phải yêu cầu Authenticode.' }
-        if ($null -ne $certificate) {
+        if ($null -ne $authenticodeCertificate) {
             $pins = @((Get-PropertyValue $updateManifest 'SignerThumbprints') | ForEach-Object { ([string]$_).Replace(' ', '').ToUpperInvariant() })
-            if ($pins -notcontains ([string]$certificate.Thumbprint).Replace(' ', '').ToUpperInvariant()) { Add-Failure 'Update manifest không ghim signer Authenticode đã công bố.' }
+            if ($pins -notcontains ([string]$authenticodeCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant()) { Add-Failure 'Update manifest không ghim signer Authenticode đã công bố.' }
         }
     }
 
@@ -275,7 +292,7 @@ if ($null -ne $releaseManifest) {
         }
     }
 
-    if ($null -ne $primaryPath -and $null -ne $certificate) {
+    if ($null -ne $primaryPath -and $null -ne $authenticodeCertificate) {
         try {
             $signature = Get-AuthenticodeSignature -FilePath $primaryPath
             $status = [string]$signature.Status
@@ -283,7 +300,7 @@ if ($null -ne $releaseManifest) {
             else {
                 $signerSha256 = Get-Sha256HexFromBytes $signature.SignerCertificate.RawData
                 $signerThumbprint = ([string]$signature.SignerCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant()
-                if ($signerSha256 -cne (Get-Sha256HexFromBytes $certificate.RawData) -or $signerThumbprint -cne ([string]$certificate.Thumbprint).Replace(' ', '').ToUpperInvariant()) { Add-Failure 'Signer Authenticode không khớp chứng thư công bố.' }
+                if ($signerSha256 -cne (Get-Sha256HexFromBytes $authenticodeCertificate.RawData) -or $signerThumbprint -cne ([string]$authenticodeCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant()) { Add-Failure 'Signer Authenticode không khớp chứng thư công bố.' }
             }
             $releaseStatus = [string](Get-PropertyValue $releaseManifest 'ReleaseStatus')
             if ($status -ceq 'Valid') { Add-Pass 'Authenticode hợp lệ trên máy kiểm tra.' }
@@ -295,7 +312,8 @@ if ($null -ne $releaseManifest) {
     }
 }
 
-if ($null -ne $certificate) { $certificate.Dispose() }
+if ($null -ne $contentCertificate) { $contentCertificate.Dispose() }
+if ($null -ne $authenticodeCertificate) { $authenticodeCertificate.Dispose() }
 
 $summary = "KẾT QUẢ: $($failures.Count) lỗi / $($warnings.Count) cảnh báo / $($notes.Count) mục đạt"
 Write-Host ''

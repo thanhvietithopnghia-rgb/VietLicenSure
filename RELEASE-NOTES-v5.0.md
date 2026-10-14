@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-13`
+Ngày build kỹ thuật hiện hành: `2026-10-14`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `13/10/2026`
+Nội dung cập nhật đến: `14/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,9 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 13/10/2026
+## Cập nhật hiện hành ngày 14/10/2026
+
+- **Publisher trung tính:** EXE chuyển sang signer Authenticode tự ký `CN=Thanh Viet - VietLicenSure Code Signing`, không còn mang tên sản phẩm lịch sử v4.9. Signer detached CMS cũ được giữ riêng làm trust anchor nội dung và ủy quyền signer EXE mới trong provenance/update manifest; hai public certificate, hai thumbprint và hai SHA-256 được kiểm độc lập. Kênh vẫn là Official Self-Signed, không phải public-CA/EV/Store-signed, nên SmartScreen vẫn có thể cảnh báo ứng dụng chưa được nhận diện.
 
 - Tối ưu **khởi động Giai đoạn 1**: launcher hiện splash phản hồi ngay; cửa sổ chính không còn chờ Report Export, Plugin Engine, Trợ lý, Asset Registry và Software Inventory nạp trước. Năm module này được nạp tuần tự sau `Window.Shown`, mọi thao tác giữ khóa đến khi validation hoàn tất và lỗi lazy-load vẫn fail-closed. Đo source cùng máy giảm cold launch từ 16,25 giây xuống 4,40 giây; warm launch từ 3,91 giây xuống 3,35 giây.
 - Khóa Central Dashboard về **loopback-only**: HTML/CSS/JS/API từ địa chỉ không phải loopback bị từ chối fail-closed; agent LAN vẫn dùng giao thức envelope mã hóa hiện có.

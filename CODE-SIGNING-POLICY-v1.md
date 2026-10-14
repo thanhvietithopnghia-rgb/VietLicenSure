@@ -31,7 +31,7 @@ Tách hai vai trò giúp thay chứng thư Authenticode mà không phải đồn
 8. Build/release phải nhận signer Authenticode và signer CMS nội dung bằng hai cấu hình rõ ràng; không suy diễn một thumbprint cho cả hai vai trò.
 9. Không công bố build chính thức chỉ dựa trên verifier tĩnh. `Official Self-Signed` còn cần đúng signer tự ký đã ghim, provenance của đúng commit, worktree sạch, Harness4/artifact-bound QA và hậu kiểm artifact cuối. Kênh public-CA/Store nếu có còn phải đáp ứng chuỗi trust tương ứng.
 
-Gói `Official Self-Signed` (trust mode `OfficialSelfSigned`) phải công bố chứng thư chỉ chứa public key dưới tên `CONTENT-SIGNING-CERTIFICATE.cer`, kèm cả fingerprint SHA-1 và SHA-256. `VERIFY-DISTRIBUTION.ps1` kiểm tra detached CMS trên byte gốc bằng `SignedCms.CheckSignature($true)`, sau đó ghim signer theo SHA-256 của chứng thư công bố; việc bỏ trust-chain trong bước mật mã không được hiểu là bỏ pinning. Bộ xác minh phải chạy từ chính thư mục chứa nó và từ chối tệp ngoài `RELEASE-SHA256SUMS.txt`.
+Gói `Official Self-Signed` (trust mode `OfficialSelfSigned`) phải công bố hai chứng thư chỉ chứa public key: `CONTENT-SIGNING-CERTIFICATE.cer` cho detached CMS và `AUTHENTICODE-SIGNING-CERTIFICATE.cer` cho EXE, mỗi chứng thư kèm fingerprint SHA-1 và SHA-256 riêng trong provenance. `VERIFY-DISTRIBUTION.ps1` kiểm tra detached CMS trên byte gốc bằng `SignedCms.CheckSignature($true)`, ghim signer CMS theo chứng thư nội dung, rồi kiểm signer Authenticode/timestamp theo chứng thư EXE; việc bỏ trust-chain trong bước mật mã không được hiểu là bỏ pinning. Bộ xác minh phải chạy từ chính thư mục chứa nó và từ chối tệp ngoài `RELEASE-SHA256SUMS.txt`.
 
 ## Chuyển đổi chứng thư
 

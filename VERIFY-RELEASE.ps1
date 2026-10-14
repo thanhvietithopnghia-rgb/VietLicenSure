@@ -60,6 +60,20 @@ function Test-PinnedDetachedCmsSignature([string]$ContentPath, [string]$Signatur
     } catch { return $false }
 }
 
+function Test-PinnedSelfSignedTrustException([Security.Cryptography.X509Certificates.X509Certificate2]$Certificate) {
+    if ($null -eq $Certificate -or $Certificate.Subject -cne $Certificate.Issuer) { return $false }
+    $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+    try {
+        $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+        $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+        if ($chain.Build($Certificate)) { return $true }
+        $statuses = @($chain.ChainStatus | ForEach-Object { $_.Status })
+        return [bool]($statuses.Count -gt 0 -and @($statuses | Where-Object {
+            $_ -ne [Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot
+        }).Count -eq 0)
+    } finally { $chain.Dispose() }
+}
+
 function Test-HashManifest([string]$ManifestPath, [string]$RootPath, [int]$ExpectedCount, [switch]$AllowRelativePaths) {
     if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
         $failures.Add("Thiếu manifest: $ManifestPath")
@@ -144,6 +158,8 @@ if (-not (Test-Path -LiteralPath $releaseIdentityHelperPath -PathType Leaf)) {
     $expectedReleaseVersion = [string]$expectedReleaseIdentity.ReleaseVersion
     $expectedOfficialBuildId = [string]$expectedReleaseIdentity.BuildId
     $expectedReleaseBuildTime = [string]$expectedReleaseIdentity.BuildTime
+    $expectedAuthenticodeSignerCertificateSha256 = ([string]$expectedReleaseIdentity.AuthenticodeSignerCertificateSha256).Replace(' ', '').ToUpperInvariant()
+    $expectedAuthenticodeSignerThumbprint = ([string]$expectedReleaseIdentity.AuthenticodeSignerThumbprint).Replace(' ', '').ToUpperInvariant()
     $expectedReleaseBuildDate = $expectedReleaseBuildTime.Replace('-', '.')
     $expectedReleaseDateToken = $expectedReleaseBuildTime.Replace('-', '')
     $expectedBuildIdPattern = '^' + [regex]::Escape($expectedReleaseVersion + '-production-' + $expectedReleaseDateToken) + '(?<revision>-r[1-9][0-9]*)?$'
@@ -236,14 +252,14 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 152 } else { 153 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 216 } else { 220 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 153 } else { 154 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 217 } else { 221 }
 if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectoryFull 'RELEASE-SHA256SUMS.txt') -PathType Leaf)) {
     # Source-only handoff intentionally omits the release checksum because it
     # references the EXE stored in the sibling release folder.
     $expectedSourcePackageHashCount--
 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 47 } elseif ($AllowStoreManifest) { 48 } else { 49 }
+$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 48 } elseif ($AllowStoreManifest) { 49 } else { 50 }
 Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
 Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
 # The source package includes both catalog review workflows, including the
@@ -744,6 +760,7 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 952320) {
     }
 
     $signature = Get-AuthenticodeSignature -LiteralPath $exePath
+    $portableSelfSignedAccepted = $false
     if ($AllowStoreManifest) {
         if ($signature.Status -ne 'NotSigned') {
             $failures.Add("$targetFileName phải chưa ký Authenticode trước khi Partner Center ký gói Store: $($signature.Status)")
@@ -753,14 +770,17 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 952320) {
             $warnings.Add("$targetFileName chưa có chữ ký Authenticode hợp lệ: $($signature.Status)")
         }
     } else {
-        if ($signature.Status -ne 'Valid') {
+        $portableSelfSignedAccepted = [bool]($AllowOfficialSelfSignedManifest -and
+            [string]$signature.Status -eq 'UnknownError' -and $null -ne $signature.SignerCertificate -and
+            (Test-PinnedSelfSignedTrustException $signature.SignerCertificate))
+        if ($signature.Status -ne 'Valid' -and -not $portableSelfSignedAccepted) {
             $failures.Add("$targetFileName chưa có chữ ký Authenticode hợp lệ: $($signature.Status)")
         }
         if ($null -eq $signature.TimeStamperCertificate) {
             $failures.Add("$targetFileName chưa có RFC 3161 timestamp.")
         }
     }
-    if ($signature.Status -eq 'Valid' -and $signature.SignerCertificate -and
+    if (($signature.Status -eq 'Valid' -or $portableSelfSignedAccepted) -and $signature.SignerCertificate -and
         ([string]$signature.SignerCertificate.Subject -eq [string]$signature.SignerCertificate.Issuer -or
          [string]$signature.SignerCertificate.Subject -match '(?i)Self-Signed')) {
         if ($AllowOfficialSelfSignedManifest) {
@@ -776,7 +796,8 @@ if ([int64](Get-Item -LiteralPath $exePath).Length -gt 952320) {
         try {
             if (-not $signature.SignerCertificate) { throw 'Không đọc được chứng thư signer.' }
             $signerCertificateSha256 = Get-Sha256HexFromBytes -Bytes $signature.SignerCertificate.RawData
-            if ($signerCertificateSha256 -ne 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9') {
+            if ($signerCertificateSha256 -ne $expectedAuthenticodeSignerCertificateSha256 -or
+                ([string]$signature.SignerCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant() -ne $expectedAuthenticodeSignerThumbprint) {
                 throw 'SHA-256 chứng thư signer không khớp pin phát hành.'
             }
 
@@ -1199,7 +1220,10 @@ if (-not (Test-Path -LiteralPath $applicationUpdateManifestPath -PathType Leaf))
             }
             $releaseSignature = Get-AuthenticodeSignature -LiteralPath $exePath
             $releaseSignerThumbprint = if ($releaseSignature.SignerCertificate) { ([string]$releaseSignature.SignerCertificate.Thumbprint).Replace(' ', '').ToUpperInvariant() } else { '' }
-            if ($releaseSignature.Status -ne 'Valid' -or $manifestSignerThumbprints -notcontains $releaseSignerThumbprint) {
+            $releasePortableSelfSignedAccepted = [bool]($AllowOfficialSelfSignedManifest -and
+                [string]$releaseSignature.Status -eq 'UnknownError' -and $null -ne $releaseSignature.SignerCertificate -and
+                (Test-PinnedSelfSignedTrustException $releaseSignature.SignerCertificate))
+            if (($releaseSignature.Status -ne 'Valid' -and -not $releasePortableSelfSignedAccepted) -or $manifestSignerThumbprints -notcontains $releaseSignerThumbprint) {
                 throw 'EXE phát hành không có chữ ký hợp lệ của signer đã ghim trong manifest.'
             }
             if (-not (Test-PinnedDetachedCmsSignature -ContentPath $sourceApplicationUpdateManifestPath `

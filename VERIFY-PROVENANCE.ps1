@@ -89,7 +89,7 @@ try {
             'Unknown provenance fields did not fail closed.'
 
         $duplicateDirectory = Join-Path $fixtureRoot 'duplicate-field'
-        $duplicateText = $canonical.Replace('{"SchemaVersion":"1.0",', '{"SchemaVersion":"1.0","SchemaVersion":"1.0",')
+        $duplicateText = $canonical.Replace('{"SchemaVersion":"1.1",', '{"SchemaVersion":"1.1","SchemaVersion":"1.1",')
         $duplicatePath = Write-ProvenanceFixture -Directory $duplicateDirectory -Text $duplicateText
         $duplicateResult = Test-ToolOfficialProvenance -ManifestPath $duplicatePath `
             -SignaturePath (Join-Path $duplicateDirectory 'OFFICIAL-PROVENANCE-v1.json.p7s') -AllowUnsignedDevelopmentTest

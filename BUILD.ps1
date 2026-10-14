@@ -122,6 +122,26 @@ if ($requiresSignedArtifact) {
     if ($normalizedUpdateManifestSignerThumbprint -notmatch '^[A-F0-9]{40}$') {
         throw 'Build stable cần thumbprint SHA-1 40 ký tự riêng cho chứng thư ký detached CMS của update manifest.'
     }
+    $expectedAuthenticodeThumbprint = ([string]$releaseIdentity.AuthenticodeSignerThumbprint).Replace(' ', '').ToUpperInvariant()
+    if ($expectedAuthenticodeThumbprint -notmatch '^[A-F0-9]{40}$' -or
+        $normalizedStableSignerThumbprint -cne $expectedAuthenticodeThumbprint) {
+        throw 'Signer Authenticode được chọn không khớp thumbprint Authenticode trong provenance.'
+    }
+}
+
+function Test-PinnedSelfSignedTrustException {
+    param([Security.Cryptography.X509Certificates.X509Certificate2]$Certificate)
+    if ($null -eq $Certificate -or $Certificate.Subject -cne $Certificate.Issuer) { return $false }
+    $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+    try {
+        $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+        $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+        if ($chain.Build($Certificate)) { return $true }
+        $statuses = @($chain.ChainStatus | ForEach-Object { $_.Status })
+        return [bool]($statuses.Count -gt 0 -and @($statuses | Where-Object {
+            $_ -ne [Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot
+        }).Count -eq 0)
+    } finally { $chain.Dispose() }
 }
 Assert-BuildOutputDirectoryReady -Path $OutputDirectory
 
@@ -372,7 +392,8 @@ $sourceFiles = @(
     'VERIFY-RELEASE.ps1'
     'VERIFY-DISTRIBUTION.ps1'
     'VERIFY-RELEASE.cmd'
-    'CONTENT-SIGNING-CERTIFICATE.cer'
+    'CONTENT-SIGNING-CERTIFICATE.cer',
+    'AUTHENTICODE-SIGNING-CERTIFICATE.cer'
     'VERIFY-HANDOFF.ps1'
     'VERIFY-HANDOFF.cmd'
     'NEW-HANDOFF-PACKAGE.ps1'
@@ -816,7 +837,7 @@ try {
             $signerConstantPattern,
             ('private const string OfficialSignerThumbprint = "' + $normalizedStableSignerThumbprint + '";'),
             1)
-        $signerCertificateSha256 = ([string]$releaseIdentity.SignerCertificateSha256).Replace(' ', '').ToUpperInvariant()
+        $signerCertificateSha256 = ([string]$releaseIdentity.AuthenticodeSignerCertificateSha256).Replace(' ', '').ToUpperInvariant()
         if ($signerCertificateSha256 -notmatch '^[A-F0-9]{64}$') {
             throw 'Tool-Provenance.ps1 thiếu SHA-256 chứng thư signer hợp lệ.'
         }
@@ -939,6 +960,7 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
             & $signingScript -FilePath $outputPath -CertificateThumbprint $SigningCertificateThumbprint `
                 -StoreLocation $SigningCertificateStore -TimestampServer $TimestampServer -RequireTrustedSignature:$requiresSignedArtifact `
+                -AllowOfficialSelfSigned:$AllowOfficialSelfSignedBuild `
                 -RequireWindowsTrustedCaCertificate:$RequireAuthenticode
         } else {
             if ($null -eq $SigningPfxPassword) { throw 'SigningPfxPassword là bắt buộc khi dùng SigningPfxPath.' }
@@ -951,7 +973,10 @@ try {
     }
 
     $signature = Get-AuthenticodeSignature -LiteralPath $outputPath
-    if ($requiresSignedArtifact -and $signature.Status -ne 'Valid') {
+    $portableSelfSignedAccepted = [bool]($AllowOfficialSelfSignedBuild -and
+        [string]$signature.Status -eq 'UnknownError' -and $null -ne $signature.SignerCertificate -and
+        (Test-PinnedSelfSignedTrustException $signature.SignerCertificate))
+    if ($requiresSignedArtifact -and $signature.Status -ne 'Valid' -and -not $portableSelfSignedAccepted) {
         throw "Artefact chưa có chữ ký Authenticode hợp lệ: $($signature.Status)"
     }
     if ($requiresSignedArtifact -and $null -eq $signature.TimeStamperCertificate) {
@@ -986,7 +1011,7 @@ $releaseSidecars = @(
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.6.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'DOCUMENTATION-MAP-v5.0.md', 'CURRENT-SECURITY-BASELINE-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
-    'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
+    'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer', 'AUTHENTICODE-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md', 'LOCALIZATION-v1.0.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s'
 )
@@ -1384,7 +1409,7 @@ $releaseManifest = [ordered]@{
 $updateSignerThumbprints = @()
 $updateAuthenticodeRequired = $requiresSignedArtifact
 if ($updateAuthenticodeRequired) {
-    if ($primaryArtifact.AuthenticodeStatus -ne 'Valid' -or
+    if (($primaryArtifact.AuthenticodeStatus -ne 'Valid' -and $primaryArtifact.AuthenticodeStatus -ne 'UnknownError') -or
         [string]::IsNullOrWhiteSpace([string]$primaryArtifact.AuthenticodeThumbprint)) {
         throw 'Stable update manifest requires a valid Authenticode signature and signer thumbprint.'
     }
@@ -1495,7 +1520,7 @@ $authenticodeInfo = if (-not [string]::IsNullOrWhiteSpace([string]$primaryArtifa
 } else {
     'Authenticode: NotSigned.'
 }
-$authenticodeTrustInfo = if ([string]$primaryArtifact.AuthenticodeStatus -eq 'Valid' -and [string]$primaryArtifact.AuthenticodeSigner -match 'Self-Signed') {
+$authenticodeTrustInfo = if ($AllowOfficialSelfSignedBuild) {
     'Chu ky Authenticode tu ky duoc ghim bang SHA-1 va SHA-256. Ban v5.0 chay tren may moi ma khong can cai chung thu truoc; Windows van co the bao Unknown publisher/SmartScreen.'
 } elseif ([string]$primaryArtifact.AuthenticodeStatus -eq 'Valid') {
     'Chu ky Authenticode duoc Windows tren may build xac minh Valid; SmartScreen van co the can danh tieng cho tep moi.'
@@ -1601,7 +1626,7 @@ $releaseHashFiles = @($targets.OutputName) + @(
     'MODULE-CONTRACT-v1.0.md', 'REPORT-SCHEMA-v1.6.md', 'SAFETY-POLICY-v1.0.md',
     'SECURITY.md', 'AUDIT-SCOPE-v1.md', 'SECURITY-REVIEW-PROCESS-v1.md', 'SECURITY-REVIEW-ATTESTATION-TEMPLATE-v1.json', 'SECURITY-TEST-RESULTS.md', 'CODE-SIGNING-POLICY-v1.md',
     'DOCUMENTATION-MAP-v5.0.md', 'CURRENT-SECURITY-BASELINE-v5.0.md', 'RELEASE-STATUS-v5.0.md', 'THREAT-MODEL-v5.0.md', 'RELEASE-VERIFICATION-v5.0.md',
-    'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer',
+    'VERIFY-DISTRIBUTION.ps1', 'VERIFY-RELEASE.cmd', 'CONTENT-SIGNING-CERTIFICATE.cer', 'AUTHENTICODE-SIGNING-CERTIFICATE.cer',
     'PLUGIN-PUBLISHER-TRUST-v1.md', 'REPORT-VIEWER-POLICY-v1.md', 'LOCALIZATION-v1.0.md',
     'compatibility-catalog-v1.0.json', 'software-license-catalog-v1.0.json', 'software-license-catalog-v1.0.json.p7s', 'builtin-windows-office-trust.plugin.json', 'tool-assistant-knowledge-v1.1.json', 'tool-assistant-knowledge-v1.1.json.p7s', 'RELEASE-MANIFEST.json', 'SBOM.cdx.json', 'update-manifest-v1.json', $infoName
 )
@@ -1661,7 +1686,8 @@ if (-not $SkipVerification) {
         -AllowDevelopmentManifest:$AllowUnsignedDevelopmentBuild -AllowOfficialSelfSignedManifest:$AllowOfficialSelfSignedBuild -AllowStoreManifest:$AllowStoreBuild
     if ($LASTEXITCODE -ne 0) { throw "VERIFY-RELEASE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
     if ($requiresSignedArtifact) {
-        & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "VietLicenSure-v$productVersion.exe") -RequireTimestamp
+        & (Join-Path $sourceDirectory 'VERIFY-AUTHENTICODE.ps1') -FilePath (Join-Path $OutputDirectory "VietLicenSure-v$productVersion.exe") `
+            -ExpectedThumbprint $normalizedStableSignerThumbprint -AllowOfficialSelfSigned:$AllowOfficialSelfSignedBuild -RequireTimestamp
         if ($LASTEXITCODE -ne 0) { throw "VERIFY-AUTHENTICODE.ps1 thất bại, mã thoát: $LASTEXITCODE" }
         & (Join-Path $sourceDirectory 'VERIFY-CODE-SIGNING-READINESS.ps1') `
             -CertificateThumbprint $normalizedStableSignerThumbprint `

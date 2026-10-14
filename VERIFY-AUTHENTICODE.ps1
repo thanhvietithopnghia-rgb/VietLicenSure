@@ -3,6 +3,7 @@ param(
     [Parameter(Mandatory = $true)][string[]]$FilePath,
     [string]$ExpectedThumbprint = "",
     [string]$ExpectedSubjectPattern = "",
+    [switch]$AllowOfficialSelfSigned,
     [switch]$RequireTimestamp
 )
 
@@ -10,14 +11,34 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 $failures = New-Object System.Collections.Generic.List[string]
 
+function Test-PinnedSelfSignedTrustException {
+    param([Security.Cryptography.X509Certificates.X509Certificate2]$Certificate)
+    if ($null -eq $Certificate -or $Certificate.Subject -cne $Certificate.Issuer) { return $false }
+    $chain = New-Object Security.Cryptography.X509Certificates.X509Chain
+    try {
+        $chain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+        $chain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+        if ($chain.Build($Certificate)) { return $true }
+        $statuses = @($chain.ChainStatus | ForEach-Object { $_.Status })
+        return [bool]($statuses.Count -gt 0 -and @($statuses | Where-Object {
+            $_ -ne [Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot
+        }).Count -eq 0)
+    } finally { $chain.Dispose() }
+}
+
 foreach ($inputPath in $FilePath) {
     try {
         $fullPath = [IO.Path]::GetFullPath($inputPath)
         if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { throw "Không tìm thấy tệp." }
         $signature = Get-AuthenticodeSignature -LiteralPath $fullPath
-        if ($signature.Status -ne "Valid") { throw "Status=$($signature.Status); $($signature.StatusMessage)" }
         if (-not $signature.SignerCertificate) { throw "Thiếu signer certificate." }
         $certificate = $signature.SignerCertificate
+        $portableSelfSignedAccepted = [bool](
+            $AllowOfficialSelfSigned -and
+            [string]$signature.Status -eq 'UnknownError' -and
+            (Test-PinnedSelfSignedTrustException $certificate)
+        )
+        if ($signature.Status -ne "Valid" -and -not $portableSelfSignedAccepted) { throw "Status=$($signature.Status); $($signature.StatusMessage)" }
         $hasCodeSigningEku = $false
         foreach ($extension in @($certificate.Extensions)) {
             if ($extension.Oid.Value -eq "2.5.29.37") {

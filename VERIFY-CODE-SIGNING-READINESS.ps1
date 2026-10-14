@@ -41,6 +41,7 @@ $artifactStatus = ''
 $artifactTimestamped = $false
 $artifactSignerThumbprint = ''
 $artifactSignerMatches = $false
+$artifactTrustAccepted = $false
 if (-not [string]::IsNullOrWhiteSpace($ArtifactPath)) {
     $artifactFullPath = [IO.Path]::GetFullPath($ArtifactPath)
     if (-not (Test-Path -LiteralPath $artifactFullPath -PathType Leaf)) { throw 'ArtifactPath does not exist.' }
@@ -50,8 +51,25 @@ if (-not [string]::IsNullOrWhiteSpace($ArtifactPath)) {
     if ($signature.SignerCertificate) {
         $artifactSignerThumbprint = ([string]$signature.SignerCertificate.Thumbprint -replace '\s', '').ToUpperInvariant()
         $artifactSignerMatches = $artifactSignerThumbprint.Equals($normalized, [StringComparison]::OrdinalIgnoreCase)
+        if ($AllowOfficialSelfSigned -and $artifactStatus -eq 'UnknownError' -and
+            [string]$signature.SignerCertificate.Subject -eq [string]$signature.SignerCertificate.Issuer) {
+            $artifactChain = New-Object Security.Cryptography.X509Certificates.X509Chain
+            try {
+                $artifactChain.ChainPolicy.RevocationMode = [Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+                $artifactChain.ChainPolicy.VerificationFlags = [Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+                [void]$artifactChain.Build($signature.SignerCertificate)
+                $artifactStatuses = @($artifactChain.ChainStatus | ForEach-Object { $_.Status })
+                $artifactTrustAccepted = [bool]($artifactStatuses.Count -gt 0 -and @($artifactStatuses | Where-Object {
+                    $_ -ne [Security.Cryptography.X509Certificates.X509ChainStatusFlags]::UntrustedRoot
+                }).Count -eq 0)
+            } finally { $artifactChain.Dispose() }
+        } elseif ($artifactStatus -eq 'Valid') { $artifactTrustAccepted = $true }
     }
 }
+
+$certificateTrustAccepted = [bool]($chainValid -or ($AllowOfficialSelfSigned -and
+    [string]$certificate.Subject -eq [string]$certificate.Issuer -and
+    $chainErrors.Count -gt 0 -and @($chainErrors | Where-Object { $_ -ne 'UntrustedRoot' }).Count -eq 0))
 
 $ready = [bool](
     $certificate.HasPrivateKey -and
@@ -59,8 +77,8 @@ $ready = [bool](
     ($AllowOfficialSelfSigned -or [string]$certificate.Subject -ne [string]$certificate.Issuer) -and
     (Get-Date) -ge $certificate.NotBefore -and
     (Get-Date) -le $certificate.NotAfter -and
-    $chainValid -and
-    ([string]::IsNullOrWhiteSpace($ArtifactPath) -or ($artifactStatus -eq 'Valid' -and $artifactTimestamped -and $artifactSignerMatches))
+    $certificateTrustAccepted -and
+    ([string]::IsNullOrWhiteSpace($ArtifactPath) -or ($artifactTrustAccepted -and $artifactTimestamped -and $artifactSignerMatches))
 )
 
 $result = [pscustomobject][ordered]@{
