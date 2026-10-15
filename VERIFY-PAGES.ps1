@@ -6,9 +6,9 @@ param(
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
-$expectedHash = 'C377BE0C3C55E3DF0998ED7EE79E3888D974C02A9E6A7199C3F641C9381E68D3'
-$expectedBuild = '5.0-production-20261014'
-$expectedEnUpdateDate = 'updated 2026-10-14'
+$expectedHash = '50F2F319F1D94478F27C7ADB73907A9F84EABA6E5326EFC83269748414985DEF'
+$expectedBuild = '5.0-production-20261015'
+$expectedEnUpdateDate = 'updated 2026-10-15'
 $expectedPublisher = 'Thanh Viet - VietLicenSure Code Signing'
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
@@ -92,7 +92,7 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
-if ($viHome -notmatch '<div class="eyebrow">[^<]*14/10/2026[^<]*</div>') { $errors.Add('Vietnamese home page is missing the current update date') }
+if ($viHome -notmatch '<div class="eyebrow">[^<]*15/10/2026[^<]*</div>') { $errors.Add('Vietnamese home page is missing the current update date') }
 if ($enHome -notmatch [regex]::Escape($expectedEnUpdateDate)) { $errors.Add('English home page is missing the current update date') }
 foreach ($content in @($viHome, $enHome, $viDocumentation, $enDocumentation)) {
     if ($content -notmatch [regex]::Escape($expectedPublisher)) { $errors.Add('A primary release page is missing the neutral Authenticode Publisher') }
