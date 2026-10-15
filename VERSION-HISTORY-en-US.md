@@ -7,8 +7,6 @@ Public product page:
 
 ## v5.0 — updated October 15, 2026 (first released September 8, 2026)
 
-- **Source-package integrity:** TOOL/SOURCE/SOURCE-PACKAGE checksums are regenerated and verified against the canonical `git archive` bytes in dependency order and as a closed set; CI does not self-heal manifests before verification, so stale manifests fail closed.
-
 - **Neutral publisher:** the EXE now uses the self-issued Authenticode signer `CN=Thanh Viet - VietLicenSure Code Signing`, removing the historical v4.9 product name from Publisher. The historical content-CMS signer remains a separate trust anchor that authorizes the new EXE signer; the channel remains Official Self-Signed, not public-CA/EV/Store-signed, so SmartScreen may still warn.
 
 - **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.

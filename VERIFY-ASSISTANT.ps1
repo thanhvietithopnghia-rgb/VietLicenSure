@@ -557,7 +557,7 @@ if ($errors.Count -eq 0) {
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
         $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*15/10/2026' -or
-        $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*14 October 2026' -or
+        $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*15 October 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's (?:prior )?written approval" -or
