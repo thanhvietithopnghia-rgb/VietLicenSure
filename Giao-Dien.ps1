@@ -20,7 +20,10 @@ if (-not [string]::IsNullOrWhiteSpace($script:startupTracePath)) {
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0"
-$releaseBuildDate = "2026.09.26"
+# The first public v5.0 date is historical metadata. The displayed build date
+# is loaded from signed release identity below and must not drift independently.
+$releaseInitialDate = "2026.09.26"
+$releaseBuildDate = ""
 $toolDisplayVersion = "v$toolVersion"
 $releaseDisplayName = "v5.0"
 $script:isUnsignedDevelopmentBuild = $false
@@ -108,6 +111,8 @@ try {
     Write-DashboardStartupTrace "Module.OfflinePolicy"
     . $provenanceHelper
     Write-DashboardStartupTrace "Module.Provenance"
+    $releaseIdentity = Get-ToolProvenanceExpectedValues
+    $releaseBuildDate = ([string]$releaseIdentity.BuildTime).Replace('-', '.')
     Write-DashboardStartupTrace "Module.Assistant.Deferred"
     Write-DashboardStartupTrace "Module.AssetRegistry.Deferred"
     Write-DashboardStartupTrace "Module.SoftwareInventory.Deferred"

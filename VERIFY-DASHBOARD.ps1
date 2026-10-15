@@ -6,6 +6,8 @@ if ([string]::IsNullOrWhiteSpace($SourceDirectory)) { $SourceDirectory = $PSScri
 $root = [IO.Path]::GetFullPath($SourceDirectory)
 $failures = New-Object System.Collections.Generic.List[string]
 . (Join-Path $root 'VERIFY-COMPOSED-SOURCE.ps1')
+. (Join-Path $root 'Tool-Provenance.ps1')
+$expectedReleaseBuildDate = ([string](Get-ToolProvenanceExpectedValues).BuildTime).Replace('-', '.')
 
 function Add-Failure([string]$Message) {
     [void]$failures.Add($Message)
@@ -116,7 +118,10 @@ if ($guiAst) {
 Assert-SourcePattern $text '[$]dashboardSchemaVersion\s*=\s*"2\.0"' 'Dashboard schema không phải 2.0.'
 Assert-SourcePattern $text '[$]toolVersion\s*=\s*"5\.0"' 'Phiên bản hiển thị của Dashboard chưa được khóa ở v5.0.'
 Assert-SourcePattern $text '[$]releaseVersion\s*=\s*"5\.0"' 'Dashboard chưa dùng release 5.0.'
-Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*"2026\.09\.26"' 'Dashboard chưa dùng ngày build 2026.09.26.'
+Assert-SourcePattern $text '[$]releaseInitialDate\s*=\s*"2026\.09\.26"' 'Dashboard không phân biệt ngày phát hành v5.0 đầu tiên.'
+Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*""' 'Dashboard không khởi tạo ngày build theo hợp đồng SSOT.'
+Assert-SourcePattern $text '[$]releaseIdentity\s*=\s*Get-ToolProvenanceExpectedValues' 'Dashboard chưa đọc release identity đã ký.'
+Assert-SourcePattern $text '[$]releaseBuildDate\s*=\s*\(\[string\][$]releaseIdentity[.]BuildTime\)[.]Replace\(''-'',\s*''[.]''\)' 'Dashboard chưa lấy ngày build từ release identity đã ký.'
 Assert-SourcePattern $text '[$]scanOptimizationHelper\s*=\s*Join-Path\s+[$]PSScriptRoot\s+"Tool-ScanOptimization\.ps1"' 'Dashboard chưa khai báo helper tối ưu phạm vi quét.'
 Assert-SourcePattern $text '(?s)[$]missingFoundationFiles\s*=\s*@\(.+?[$]scanOptimizationHelper.+?\)\s*\|\s*Where-Object' 'Dashboard chưa fail-closed khi thiếu Tool-ScanOptimization.ps1.'
 Assert-SourcePattern $text '(?s)try\s*\{.+?\.\s+[$]capabilityHelper.+?\.\s+[$]scanOptimizationHelper.+?\.\s+[$]loggingHelper' 'Dashboard chưa nạp Tool-ScanOptimization.ps1 trước khi mở hộp phạm vi quét.'
@@ -670,7 +675,7 @@ foreach ($aboutCase in @(@('vi-VN', $fitViCatalog), @('en-US', $fitEnCatalog))) 
             $contentWidth = $headerWidth - (2 * $sideMargin)
             $wrappedFlags = [Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix -bor [Windows.Forms.TextFormatFlags]::NoPadding
             $headingSize = [Windows.Forms.TextRenderer]::MeasureText([string]$aboutCase[1].'about.heading', $aboutHeadingFont, (New-Object Drawing.Size($contentWidth, 500)), $wrappedFlags)
-            $taglineText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, [string]$aboutCase[1].'about.byline', @('v5.0','2026.09.26'))
+            $taglineText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, [string]$aboutCase[1].'about.byline', @('v5.0',$expectedReleaseBuildDate))
             $taglineSize = [Windows.Forms.TextRenderer]::MeasureText($taglineText, $aboutTaglineFont, (New-Object Drawing.Size($contentWidth, 500)), $wrappedFlags)
             $requiredHeaderHeight = [int](8 * $dpiScale) + $headingSize.Height + [int](3 * $dpiScale) + $taglineSize.Height + [int](5 * $dpiScale)
             if ($headingSize.Width -gt $contentWidth -or $taglineSize.Width -gt $contentWidth -or $requiredHeaderHeight -gt $headerHeight) {

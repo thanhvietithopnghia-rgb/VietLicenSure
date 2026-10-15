@@ -1,0 +1,63 @@
+name: Source integrity gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'TOOL-SHA256SUMS.txt'
+      - 'SOURCE-SHA256SUMS.txt'
+      - 'SOURCE-PACKAGE-SHA256SUMS.txt'
+      - 'Tool-SourceManifest.ps1'
+      - 'NEW-HANDOFF-PACKAGE.ps1'
+      - 'VERIFY-HANDOFF.ps1'
+      - 'VERIFY-RELEASE-HYGIENE.ps1'
+      - 'VERIFY-DASHBOARD.ps1'
+      - 'Giao-Dien.ps1'
+      - 'Tool-Provenance.ps1'
+      - '.github/workflows/source-integrity.yml'
+  push:
+    paths:
+      - 'TOOL-SHA256SUMS.txt'
+      - 'SOURCE-SHA256SUMS.txt'
+      - 'SOURCE-PACKAGE-SHA256SUMS.txt'
+      - 'Tool-SourceManifest.ps1'
+      - 'NEW-HANDOFF-PACKAGE.ps1'
+      - 'VERIFY-HANDOFF.ps1'
+      - 'VERIFY-RELEASE-HYGIENE.ps1'
+      - 'VERIFY-DASHBOARD.ps1'
+      - 'Giao-Dien.ps1'
+      - 'Tool-Provenance.ps1'
+      - '.github/workflows/source-integrity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Reproduce canonical source package and verify every manifest
+        shell: powershell
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'vietlicensure-source-integrity'
+          $archive = Join-Path $env:RUNNER_TEMP 'vietlicensure-source-integrity.zip'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          git archive --format=zip "--output=$archive" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'git archive failed.' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $stage -Force
+
+          . (Join-Path $stage 'Tool-SourceManifest.ps1')
+          $tool = Test-ToolSourceHashManifest -SourceDirectory $stage -ManifestName 'TOOL-SHA256SUMS.txt'
+          $source = Test-ToolSourceHashManifest -SourceDirectory $stage -ManifestName 'SOURCE-SHA256SUMS.txt'
+          $package = Test-ToolSourceHashManifest -SourceDirectory $stage -ManifestName 'SOURCE-PACKAGE-SHA256SUMS.txt' -RequireClosedSet
+          Write-Host ("Manifest entries: tool={0}; source={1}; package={2}" -f $tool.Entries,$source.Entries,$package.Entries)
+
+      - name: Verify packaging contract and release identity source
+        shell: powershell
+        run: |
+          .\VERIFY-RELEASE-HYGIENE.ps1 -SourceDirectory .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\VERIFY-DASHBOARD.ps1 -SourceDirectory .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

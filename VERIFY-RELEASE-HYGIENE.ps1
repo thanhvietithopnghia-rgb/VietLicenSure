@@ -232,11 +232,23 @@ if (-not $dashboardSource.Contains('$releaseDisplayName = "v5.0"') -or
 $handoffBuilderSource = Read-HygieneText 'NEW-HANDOFF-PACKAGE.ps1'
 $handoffVerifierSource = Read-HygieneText 'VERIFY-HANDOFF.ps1'
 $releaseVerifierSource = Read-HygieneText 'VERIFY-RELEASE.ps1'
+$sourceManifestHelperSource = Read-HygieneText 'Tool-SourceManifest.ps1'
+$sourceIntegrityWorkflow = Read-HygieneText '.github\workflows\source-integrity.yml'
 if (-not $handoffBuilderSource.Contains("Join-Path `$sourceOutputRoot 'RELEASE-SHA256SUMS.txt'") -or
     -not $handoffBuilderSource.Contains('Remove-Item -LiteralPath $releaseOnlyChecksumPath -Force') -or
     -not $handoffVerifierSource.Contains('Gói mã nguồn không được chứa checksum dành riêng cho EXE phát hành.') -or
     -not $releaseVerifierSource.Contains('$expectedSourcePackageHashCount--')) {
     $failures.Add('Source handoff does not exclude the EXE-only release checksum or adjust its closed-set count.')
+}
+if (-not $handoffBuilderSource.Contains('Update-ToolSourceSubsetHashManifest -SourceDirectory $sourceOutputRoot -ManifestName ''TOOL-SHA256SUMS.txt''') -or
+    -not $handoffBuilderSource.Contains('Update-ToolSourceSubsetHashManifest -SourceDirectory $sourceOutputRoot -ManifestName ''SOURCE-SHA256SUMS.txt''') -or
+    -not $handoffBuilderSource.Contains('Update-ToolSourcePackageHashManifest -SourceDirectory $sourceOutputRoot') -or
+    -not $handoffVerifierSource.Contains('Test-NestedSourceManifest $sourceRoot ''TOOL-SHA256SUMS.txt''') -or
+    -not $sourceManifestHelperSource.Contains('function Test-ToolSourceHashManifest') -or
+    -not $sourceIntegrityWorkflow.Contains('Reproduce canonical source package and verify every manifest') -or
+    -not $sourceIntegrityWorkflow.Contains('-ManifestName ''TOOL-SHA256SUMS.txt''') -or
+    $sourceIntegrityWorkflow.Contains('Update-ToolSourceSubsetHashManifest')) {
+    $failures.Add('Source handoff/CI does not refresh and verify TOOL/SOURCE manifests from canonical staged bytes.')
 }
 
 $storeIdentityText = Read-HygieneText 'packaging\msix\STORE-PRODUCT-IDENTITY.json'

@@ -338,6 +338,7 @@ $sourceFiles = @(
     'CURRENT-SECURITY-BASELINE-v5.0.md'
     'LOCALIZATION-v1.0.md'
     'Manage-ToolEnterpriseDeployment.ps1'
+    'Tool-SourceManifest.ps1'
     'New-ClientVmTestSummary.ps1'
     'PLUGIN-PUBLISHER-TRUST-v1.md'
     'REPORT-VIEWER-POLICY-v1.md'
@@ -560,6 +561,7 @@ function Get-VerificationPowerShell([string]$Architecture) {
 $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }) + @(
     '.gitignore',
     '.github\workflows\client-vm-matrix.yml',
+    '.github\workflows\source-integrity.yml',
     '00-VietLicenSure.ico',
     'AUDIT-SCOPE-v1.md',
     'BUILD.ps1',
@@ -588,6 +590,7 @@ $requiredFiles = @($payloadFiles | Where-Object { $_ -ne 'TOOL-SHA256SUMS.txt' }
     'docs\archive\v4.x\OFFLINE-AND-REPORTING-v4.8.md',
     'LOCALIZATION-v1.0.md',
     'Manage-ToolEnterpriseDeployment.ps1',
+    'Tool-SourceManifest.ps1',
     'New-ClientVmTestSummary.ps1',
     'PLUGIN-PUBLISHER-TRUST-v1.md',
     'REPORT-VIEWER-POLICY-v1.md',

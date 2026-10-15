@@ -252,8 +252,8 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 }
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 153 } else { 154 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 217 } else { 221 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 154 } else { 155 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 219 } else { 223 }
 if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectoryFull 'RELEASE-SHA256SUMS.txt') -PathType Leaf)) {
     # Source-only handoff intentionally omits the release checksum because it
     # references the EXE stored in the sibling release folder.

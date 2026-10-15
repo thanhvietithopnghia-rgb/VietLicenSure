@@ -139,28 +139,16 @@ foreach ($name in $canonicalMetadataNames) {
     Copy-RegularFile (Join-Path $distributionRoot $name) (Join-Path $sourceOutputRoot $name)
 }
 
-# Git archive emits canonical Git bytes. Refresh the legacy subset manifest so
-# it describes those staged bytes instead of a CRLF working-tree checkout.
-$sourceHashManifestPath = Join-Path $sourceOutputRoot 'SOURCE-SHA256SUMS.txt'
-$sourceHashLines = New-Object System.Collections.Generic.List[string]
-$sourceHashSeen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
-foreach ($line in Get-Content -LiteralPath $sourceHashManifestPath -Encoding UTF8) {
-    if ($line -notmatch '^([0-9A-Fa-f]{64})\s+\*?(.+)$') { $sourceHashLines.Add($line); continue }
-    $relative = $matches[2].Trim().Replace('/', '\')
-    if ([IO.Path]::IsPathRooted($relative) -or $relative -match '(^|\\)\.\.?(\\|$)' -or -not $sourceHashSeen.Add($relative)) { throw "Đường dẫn không an toàn/lặp trong SOURCE-SHA256SUMS.txt: $relative" }
-    $stagedPath = [IO.Path]::GetFullPath((Join-Path $sourceOutputRoot $relative))
-    if (-not $stagedPath.StartsWith($sourceOutputRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path -LiteralPath $stagedPath -PathType Leaf)) { throw "Thiếu tệp nguồn đã ghim: $relative" }
-    $sourceHashLines.Add("$(Get-PackageSha256 $stagedPath)  $($relative.Replace('\','/'))")
-}
-[IO.File]::WriteAllLines($sourceHashManifestPath, $sourceHashLines, $utf8NoBom)
-
-$sourcePackageManifestPath = Join-Path $sourceOutputRoot 'SOURCE-PACKAGE-SHA256SUMS.txt'
-$sourcePackageLines = @('# SHA-256 của gói mã nguồn bàn giao; manifest này không tự liệt kê.')
-foreach ($file in @(Get-ChildItem -LiteralPath $sourceOutputRoot -Recurse -File -Force | Where-Object { $_.FullName -ne $sourcePackageManifestPath } | Sort-Object FullName)) {
-    $relative = Get-RelativePathFromRoot $sourceOutputRoot $file.FullName
-    $sourcePackageLines += "$(Get-PackageSha256 $file.FullName)  $relative"
-}
-[IO.File]::WriteAllLines($sourcePackageManifestPath, $sourcePackageLines, $utf8NoBom)
+# Git archive emits canonical Git bytes, which can differ from a Windows
+# working-tree checkout because of line-ending filters. Refresh both subset
+# manifests from the staged bytes, in dependency order, before sealing the
+# recursive closed-set manifest.
+$sourceManifestHelper = Join-Path $sourceOutputRoot 'Tool-SourceManifest.ps1'
+if (-not (Test-Path -LiteralPath $sourceManifestHelper -PathType Leaf)) { throw 'Gói nguồn thiếu Tool-SourceManifest.ps1.' }
+. $sourceManifestHelper
+[void](Update-ToolSourceSubsetHashManifest -SourceDirectory $sourceOutputRoot -ManifestName 'TOOL-SHA256SUMS.txt')
+[void](Update-ToolSourceSubsetHashManifest -SourceDirectory $sourceOutputRoot -ManifestName 'SOURCE-SHA256SUMS.txt')
+[void](Update-ToolSourcePackageHashManifest -SourceDirectory $sourceOutputRoot)
 
 foreach ($rootVerifier in @('VERIFY-HANDOFF.ps1', 'VERIFY-HANDOFF.cmd')) {
     Copy-RegularFile (Join-Path $sourceRoot $rootVerifier) (Join-Path $outputRoot $rootVerifier)

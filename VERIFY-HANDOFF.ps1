@@ -223,6 +223,7 @@ if ($failures.Count -eq 0) {
             foreach ($name in @('RELEASE-MANIFEST.json','SBOM.cdx.json','update-manifest-v1.json','update-manifest-v1.json.p7s','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s')) {
                 Test-ExactFilePair (Join-Path $releaseRoot $name) (Join-Path $sourceRoot $name) $name
             }
+            Test-NestedSourceManifest $sourceRoot 'TOOL-SHA256SUMS.txt'
             Test-NestedSourceManifest $sourceRoot 'SOURCE-SHA256SUMS.txt'
             Test-NestedSourceManifest $sourceRoot 'SOURCE-PACKAGE-SHA256SUMS.txt' -ClosedSet
             if (Test-Path -LiteralPath (Join-Path $sourceRoot 'RELEASE-SHA256SUMS.txt') -PathType Leaf) { Add-HandoffFailure 'Gói mã nguồn không được chứa checksum dành riêng cho EXE phát hành.' }
