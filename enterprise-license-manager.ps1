@@ -641,7 +641,7 @@ function Update-ServerClientList {
         [void]$item.SubItems.Add($activationText)
         [void]$item.SubItems.Add([string]$client.ClientId)
         if ($client.PSObject.Properties['LastAssessmentKind'] -and -not [string]::IsNullOrWhiteSpace([string]$client.LastAssessmentKind)) {
-            $item.ToolTipText = Get-EnterpriseText 'enterprise.server.lastAssessment' @([string]$client.LastAssessmentKind, [string]$client.LastJobStatus)
+            $item.ToolTipText = Get-EnterpriseText 'enterprise.server.lastAssessment' @([string]$client.LastAssessmentKind, (Get-ToolEnterpriseAssessmentStatus -Record $client))
         } else {
             $item.ToolTipText = Get-EnterpriseText 'enterprise.server.currentInventoryTooltip' @([string]$client.InventoryObservedAtUtc)
         }
