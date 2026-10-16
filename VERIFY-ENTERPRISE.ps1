@@ -264,9 +264,9 @@ try {
     $actualDashboardServerFields = @($dashboardSnapshot.Server.PSObject.Properties.Name | Sort-Object)
     Assert-Enterprise (@(Compare-Object ($expectedDashboardServerFields | Sort-Object) $actualDashboardServerFields).Count -eq 0) 'API Dashboard trả thêm trường Server ngoài allow-list.'
     $expectedDashboardClientFields = @(
-        'AgeMinutes','Alerts','AssetMatchStatus','AssetReference','AssetStatus','AssignmentDisplayName','AssignmentHistoryCount','AssignmentType','ClientReference','ComplianceStatus','ComputerName','LastSeenUtc','LicenseIdentityChangedAtUtc',
-        'OfficeAdvisor','OfficeChannel','OfficeEntitlementStatus','OfficeStatus','Presence','RemoteAddress','SoftwareSummary',
-        'WindowsAdvisor','WindowsChannel','WindowsEntitlementStatus','WindowsStatus'
+        'AgeMinutes','Alerts','AssetMatchStatus','AssetReference','AssetStatus','AssignmentDisplayName','AssignmentHistoryCount','AssignmentType','ClientReference','ComplianceStatus','ComputerName','InventoryObservedAtUtc','InventoryRevision','LastAssessmentKind','LastAssessmentStatus','LastSeenUtc','LicenseIdentityChangedAtUtc',
+        'OfficeAdvisor','OfficeChannel','OfficeEntitlementStatus','OfficeLicenseCount','OfficeStatus','Presence','RecordClass','RemoteAddress','SoftwareSummary','SynchronizationStatus',
+        'WindowsAdvisor','WindowsChannel','WindowsEntitlementStatus','WindowsLicenseCount','WindowsStatus'
     )
     $actualDashboardClientFields = @($dashboardSnapshot.Clients[0].PSObject.Properties.Name | Sort-Object)
     Assert-Enterprise (@(Compare-Object ($expectedDashboardClientFields | Sort-Object) $actualDashboardClientFields).Count -eq 0) 'API Dashboard trả thêm trường máy trạm ngoài allow-list.'

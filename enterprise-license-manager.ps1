@@ -626,6 +626,13 @@ function Update-ServerClientList {
         [void]$item.SubItems.Add([string]$client.RemoteAddress)
         [void]$item.SubItems.Add([string]$client.LastSeenUtc)
         $activationText = "{0} / {1}" -f [string]$client.WindowsStatus, [string]$client.OfficeStatus
+        $synchronizationStatus = if ($client.PSObject.Properties['SynchronizationStatus']) { [string]$client.SynchronizationStatus } else { 'Current' }
+        $syncText = if ($synchronizationStatus -eq 'PendingInventoryRefresh') {
+            Get-EnterpriseText 'enterprise.server.syncPending'
+        } else {
+            Get-EnterpriseText 'enterprise.server.syncCurrent'
+        }
+        $activationText += " | " + $syncText
         $windowsIdentityChanged = [bool]($client.PSObject.Properties['WindowsIdentityChanged'] -and $client.WindowsIdentityChanged)
         $officeIdentityChanged = [bool]($client.PSObject.Properties['OfficeIdentityChanged'] -and $client.OfficeIdentityChanged)
         if ($windowsIdentityChanged -or $officeIdentityChanged) {
@@ -633,6 +640,11 @@ function Update-ServerClientList {
         }
         [void]$item.SubItems.Add($activationText)
         [void]$item.SubItems.Add([string]$client.ClientId)
+        if ($client.PSObject.Properties['LastAssessmentKind'] -and -not [string]::IsNullOrWhiteSpace([string]$client.LastAssessmentKind)) {
+            $item.ToolTipText = Get-EnterpriseText 'enterprise.server.lastAssessment' @([string]$client.LastAssessmentKind, [string]$client.LastJobStatus)
+        } else {
+            $item.ToolTipText = Get-EnterpriseText 'enterprise.server.currentInventoryTooltip' @([string]$client.InventoryObservedAtUtc)
+        }
         $item.Tag = $client
         [void]$script:serverClientList.Items.Add($item)
     }
@@ -1418,14 +1430,30 @@ function Invoke-ServerJob {
     try {
         $client = Get-SelectedEnterpriseClient
         if (-not $client) { throw (Get-EnterpriseText "enterprise.error.selectClient") }
-        $operation = [string]$script:jobOperationBox.SelectedItem
+        $selectedOperation = $script:jobOperationBox.SelectedItem
+        $operation = if ($selectedOperation -and $selectedOperation.PSObject.Properties['Code']) { [string]$selectedOperation.Code } else { [string]$selectedOperation }
+        $operationLabel = if ($selectedOperation -and $selectedOperation.PSObject.Properties['Label']) { [string]$selectedOperation.Label } else { $operation }
+        $changesLicenseState = Test-ToolEnterpriseJobChangesLicenseState -Operation $operation
         $key = $script:jobKeyBox.Text.Trim()
-        if ($operation -ne "InventoryOnly" -and [string]::IsNullOrWhiteSpace($key)) { throw (Get-EnterpriseText "enterprise.error.keyRequired") }
-        if (-not (Confirm-EnterpriseAction (Get-EnterpriseText "enterprise.server.jobPrompt" @($operation, $client.ComputerName)))) { return }
+        if ($changesLicenseState -and [string]::IsNullOrWhiteSpace($key)) { throw (Get-EnterpriseText "enterprise.error.keyRequired") }
+        $promptKey = if ($changesLicenseState) { 'enterprise.server.jobPromptChange' } else { 'enterprise.server.jobPromptReadOnly' }
+        if (-not (Confirm-EnterpriseAction (Get-EnterpriseText $promptKey @($operationLabel, $client.ComputerName)))) { return }
         $job = New-ToolEnterpriseLicenseJob -ClientId ([string]$client.ClientId) -Operation $operation -ProductKey $key -RequestedBy ([Environment]::UserName)
         $script:jobKeyBox.Clear()
         Set-EnterpriseStatus (Get-EnterpriseText "enterprise.server.jobCreated" @($job.JobId, $job.ProductKeyLast5)) $true
     } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1100) }
+}
+
+function Update-EnterpriseJobInputState {
+    if (-not $script:jobOperationBox -or -not $script:jobKeyBox) { return }
+    $selectedOperation = $script:jobOperationBox.SelectedItem
+    $operation = if ($selectedOperation -and $selectedOperation.PSObject.Properties['Code']) { [string]$selectedOperation.Code } else { [string]$selectedOperation }
+    $requiresKey = Test-ToolEnterpriseJobChangesLicenseState -Operation $operation
+    $script:jobKeyBox.Enabled = $requiresKey
+    if (-not $requiresKey) { $script:jobKeyBox.Clear() }
+    $tooltipKey = if ($requiresKey) { 'enterprise.server.jobChangeNote' } else { 'enterprise.server.jobReadOnlyNote' }
+    $script:enterpriseToolTip.SetToolTip($script:jobOperationBox, (Get-EnterpriseText $tooltipKey))
+    $script:enterpriseToolTip.SetToolTip($script:jobKeyBox, (Get-EnterpriseText $tooltipKey))
 }
 
 function Invoke-ServerNetworkAccess {
@@ -2033,6 +2061,7 @@ $script:serverClientList.Size = New-Object Drawing.Size(900, 112)
 $script:serverClientList.View = "Details"
 $script:serverClientList.FullRowSelect = $true
 $script:serverClientList.GridLines = $true
+$script:serverClientList.ShowItemToolTips = $true
 $script:serverClientList.Anchor = "Top,Left,Right"
 foreach ($column in @(
     @((Get-EnterpriseText "enterprise.server.clientColumn"),120),
@@ -2053,14 +2082,21 @@ $script:jobOperationBox = New-Object Windows.Forms.ComboBox
 $script:jobOperationBox.Location = New-Object Drawing.Point(145, 545)
 $script:jobOperationBox.Size = New-Object Drawing.Size(230, 25)
 $script:jobOperationBox.DropDownStyle = "DropDownList"
-[void]$script:jobOperationBox.Items.Add("InventoryOnly")
-[void]$script:jobOperationBox.Items.Add("WindowsInstallAndActivate")
-[void]$script:jobOperationBox.Items.Add("OfficeInstallAndActivate")
+$script:jobOperationBox.DisplayMember = 'Label'
+foreach ($operationItem in @(
+    [pscustomobject]@{ Code='InventoryOnly'; Label=(Get-EnterpriseText 'enterprise.server.job.inventory') },
+    [pscustomobject]@{ Code='LicenseForensics'; Label=(Get-EnterpriseText 'enterprise.server.job.forensics') },
+    [pscustomobject]@{ Code='ComplianceAssessment'; Label=(Get-EnterpriseText 'enterprise.server.job.assessment') },
+    [pscustomobject]@{ Code='WindowsInstallAndActivate'; Label=(Get-EnterpriseText 'enterprise.server.job.windowsActivate') },
+    [pscustomobject]@{ Code='OfficeInstallAndActivate'; Label=(Get-EnterpriseText 'enterprise.server.job.officeActivate') }
+)) { [void]$script:jobOperationBox.Items.Add($operationItem) }
 $script:jobOperationBox.SelectedIndex = 0
 $serverTab.Controls.Add($script:jobOperationBox)
 $script:jobKeyBox = New-EnterpriseTextBox 390 545 250
 $script:jobKeyBox.UseSystemPasswordChar = $true
 $serverTab.Controls.Add($script:jobKeyBox)
+$script:jobOperationBox.Add_SelectedIndexChanged({ Update-EnterpriseJobInputState })
+Update-EnterpriseJobInputState
 $serverTab.Controls.Add((New-EnterpriseButton (Get-EnterpriseText "enterprise.server.createJob") 655 542 230 34 { Invoke-ServerJob }))
 $tabs.TabPages.Add($serverTab) | Out-Null
 

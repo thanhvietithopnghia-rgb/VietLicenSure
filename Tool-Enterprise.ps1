@@ -165,6 +165,7 @@ function Get-ToolEnterprisePaths {
         ClientSecret = Join-Path $root "client\client-secret.bin"
         ClientOutbox = Join-Path $root "client\outbox"
         ClientProcessed = Join-Path $root "client\processed"
+        ClientReports = Join-Path $root "client\reports"
         ClientAudit = Join-Path $root "client\enterprise-audit.jsonl"
         ClientAgentResult = Join-Path $root "client\agent-result.json"
         ClientAgentError = Join-Path $root "client\agent-error.json"
@@ -223,7 +224,7 @@ function Initialize-ToolEnterpriseStorage {
     $directories = @(
         $paths.Root, $paths.Server, $paths.ServerClients, $paths.ServerClientSecrets,
         $paths.ServerReports, $paths.ServerJobs, $paths.ServerResults, $paths.ServerAssets,
-        $paths.Client, $paths.ClientOutbox, $paths.ClientProcessed, $paths.Bin
+        $paths.Client, $paths.ClientOutbox, $paths.ClientProcessed, $paths.ClientReports, $paths.Bin
     )
     foreach ($directory in $directories) {
         if (Test-ToolEnterpriseReparsePoint -Path $directory) { throw (Get-ToolEnterpriseText "enterpriseCore.error.directoryReparse" @($directory)) }
@@ -1588,6 +1589,28 @@ function Get-ToolEnterpriseServerClientRecordPath {
     return (Join-Path $paths.ServerClients ($parsed.ToString("N") + ".json"))
 }
 
+function Get-ToolEnterpriseLicenseStateHash {
+    param([Parameter(Mandatory = $true)][object]$Report)
+
+    $rows = New-Object System.Collections.Generic.List[object]
+    foreach ($scope in @('WindowsLicenses','OfficeLicenses')) {
+        foreach ($license in @($Report.$scope)) {
+            [void]$rows.Add([pscustomobject][ordered]@{
+                Scope = $scope
+                ProductId = ConvertTo-ToolEnterpriseSafeText $license.ProductId 120
+                ApplicationId = ConvertTo-ToolEnterpriseSafeText $license.ApplicationId 120
+                Channel = ConvertTo-ToolEnterpriseSafeText $license.Channel 120
+                PartialProductKey = ConvertTo-ToolEnterpriseSafeText $license.PartialProductKey 5
+                LicenseStatus = ConvertTo-ToolEnterpriseSafeText $license.LicenseStatusText 80
+            })
+        }
+    }
+    $canonical = @($rows.ToArray() | Sort-Object Scope, ProductId, ApplicationId, Channel, PartialProductKey, LicenseStatus) |
+        ConvertTo-Json -Depth 4 -Compress
+    $hash = Get-ToolEnterpriseSha256Bytes -Bytes ([Text.Encoding]::UTF8.GetBytes([string]$canonical))
+    return ([BitConverter]::ToString($hash)).Replace('-', '')
+}
+
 function Save-ToolEnterpriseServerReport {
     param(
         [Parameter(Mandatory = $true)][string]$ClientId,
@@ -1620,6 +1643,16 @@ function Save-ToolEnterpriseServerReport {
         -not [string]::IsNullOrWhiteSpace($officeLast5) -and [string]$existingRecord.OfficeLast5 -ne $officeLast5)
     $assetRegistration = Update-ToolEnterpriseAssetRegistryFromReport -Report $Report
     $assetAssignment = $assetRegistration.CurrentAssignment
+    $stateHash = Get-ToolEnterpriseLicenseStateHash -Report $Report
+    $previousStateHash = if ($existingRecord -and $existingRecord.PSObject.Properties['CurrentLicenseStateHash']) { [string]$existingRecord.CurrentLicenseStateHash } else { '' }
+    $stateChanged = [bool](-not [string]::IsNullOrWhiteSpace($previousStateHash) -and $previousStateHash -ne $stateHash)
+    $stateChangedAtUtc = if ($stateChanged) {
+        [DateTime]::UtcNow.ToString('o')
+    } elseif ($existingRecord -and $existingRecord.PSObject.Properties['InventoryStateChangedAtUtc']) {
+        [string]$existingRecord.InventoryStateChangedAtUtc
+    } else { '' }
+    $inventoryRevision = if ($existingRecord -and $existingRecord.PSObject.Properties['InventoryRevision']) { [int]$existingRecord.InventoryRevision + 1 } else { 1 }
+    $inventoryObservedAtUtc = ConvertTo-ToolEnterpriseSafeText $(if ($Report.PSObject.Properties['CreatedAt']) { $Report.CreatedAt } else { [DateTime]::UtcNow.ToString('o') }) 80
     $identityChangedAtUtc = if ($windowsIdentityChanged -or $officeIdentityChanged) {
         [DateTime]::UtcNow.ToString("o")
     } elseif ($existingRecord -and $existingRecord.PSObject.Properties['LicenseIdentityChangedAtUtc']) {
@@ -1632,6 +1665,15 @@ function Save-ToolEnterpriseServerReport {
         RemoteAddress = ConvertTo-ToolEnterpriseSafeText $RemoteAddress 80
         NetworkAddresses = @($Report.NetworkAddresses)
         LastSeenUtc = [DateTime]::UtcNow.ToString("o")
+        RecordClass = 'CurrentInventory'
+        SynchronizationStatus = 'Current'
+        InventoryObservedAtUtc = $inventoryObservedAtUtc
+        InventoryRevision = $inventoryRevision
+        WindowsLicenseCount = [int]@($Report.WindowsLicenses).Count
+        OfficeLicenseCount = [int]@($Report.OfficeLicenses).Count
+        CurrentLicenseStateHash = $stateHash
+        InventoryStateChanged = $stateChanged
+        InventoryStateChangedAtUtc = $stateChangedAtUtc
         FirstSeenUtc = if ($existingRecord) { [string]$existingRecord.FirstSeenUtc } else { [DateTime]::UtcNow.ToString("o") }
         AllowRemoteLicenseChanges = if ($existingRecord) { [bool]$existingRecord.AllowRemoteLicenseChanges } else { $false }
         WindowsStatus = if ($windows.Count -gt 0) { [string]$windows[0].LicenseStatusText } else { "NotDetected" }
@@ -1651,6 +1693,12 @@ function Save-ToolEnterpriseServerReport {
         AssignmentType = if ($assetAssignment) { ConvertTo-ToolEnterpriseSafeText $assetAssignment.AssigneeType 40 } else { '' }
         AssignmentDisplayName = if ($assetAssignment) { ConvertTo-ToolEnterpriseSafeText $assetAssignment.DisplayName 200 } else { '' }
         AssignmentHistoryCount = [int]$assetRegistration.HistoryCount
+        LastJobId = if ($existingRecord -and $existingRecord.PSObject.Properties['LastJobId']) { ConvertTo-ToolEnterpriseSafeText $existingRecord.LastJobId 40 } else { '' }
+        LastJobOperation = if ($existingRecord -and $existingRecord.PSObject.Properties['LastJobOperation']) { ConvertTo-ToolEnterpriseSafeText $existingRecord.LastJobOperation 80 } else { '' }
+        LastJobStatus = if ($existingRecord -and $existingRecord.PSObject.Properties['LastJobStatus']) { ConvertTo-ToolEnterpriseSafeText $existingRecord.LastJobStatus 60 } else { '' }
+        LastJobCompletedAtUtc = if ($existingRecord -and $existingRecord.PSObject.Properties['LastJobCompletedAtUtc']) { ConvertTo-ToolEnterpriseSafeText $existingRecord.LastJobCompletedAtUtc 80 } else { '' }
+        LastAssessmentKind = if ($existingRecord -and $existingRecord.PSObject.Properties['LastAssessmentKind']) { ConvertTo-ToolEnterpriseSafeText $existingRecord.LastAssessmentKind 80 } else { '' }
+        LastAssessmentSummary = if ($existingRecord -and $existingRecord.PSObject.Properties['LastAssessmentSummary']) { $existingRecord.LastAssessmentSummary } else { $null }
         LatestReportPath = $latestPath
     }
     Write-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId) -Value $record
@@ -1873,6 +1921,14 @@ function Get-ToolEnterpriseDashboardSnapshot {
             AssignmentHistoryCount = [int]$assignmentHistoryCount
             RemoteAddress = ConvertTo-ToolEnterpriseSafeText $source.RemoteAddress 80
             LastSeenUtc = ConvertTo-ToolEnterpriseSafeText $source.LastSeenUtc 80
+            RecordClass = 'CurrentInventory'
+            SynchronizationStatus = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['SynchronizationStatus']) { $source.SynchronizationStatus } else { 'Current' }) 40
+            InventoryObservedAtUtc = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['InventoryObservedAtUtc']) { $source.InventoryObservedAtUtc } else { $source.LastSeenUtc }) 80
+            InventoryRevision = if ($source.PSObject.Properties['InventoryRevision']) { [int]$source.InventoryRevision } else { 1 }
+            WindowsLicenseCount = if ($source.PSObject.Properties['WindowsLicenseCount']) { [int]$source.WindowsLicenseCount } else { 0 }
+            OfficeLicenseCount = if ($source.PSObject.Properties['OfficeLicenseCount']) { [int]$source.OfficeLicenseCount } else { 0 }
+            LastAssessmentKind = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['LastAssessmentKind']) { $source.LastAssessmentKind } else { '' }) 80
+            LastAssessmentStatus = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['LastJobStatus']) { $source.LastJobStatus } else { '' }) 60
             AgeMinutes = if ([double]::IsPositiveInfinity([double]$ageHours)) { $null } else { [Math]::Round(($ageHours * 60), 1) }
             Presence = $presence
             WindowsStatus = $windowsStatus
@@ -2132,10 +2188,52 @@ function Normalize-ToolEnterpriseProductKey {
     return (($clean -split '(.{5})' | Where-Object { $_ }) -join '-')
 }
 
+function Test-ToolEnterpriseJobChangesLicenseState {
+    param([Parameter(Mandatory = $true)][string]$Operation)
+    return [bool]($Operation -in @('WindowsInstallAndActivate','OfficeInstallAndActivate'))
+}
+
+function ConvertTo-ToolEnterpriseAssessmentSummary {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('LicenseForensics','ComplianceAssessment')][string]$ReportKind,
+        [Parameter(Mandatory = $true)][object]$Report
+    )
+
+    if ($ReportKind -eq 'LicenseForensics') {
+        return [pscustomobject][ordered]@{
+            AccessDenied = [bool]$Report.AccessDenied
+            Overall = ConvertTo-ToolEnterpriseSafeText $Report.Overall 300
+            RiskScore = [int]$Report.RiskScore
+            RiskLevel = ConvertTo-ToolEnterpriseSafeText $Report.RiskLevel 80
+            HighCount = [int]$Report.HighCount
+            ReviewCount = [int]$Report.ReviewCount
+            NewFindingCount = [int]$Report.NewFindingCount
+            ResolvedFindingCount = [int]$Report.ResolvedFindingCount
+        }
+    }
+
+    $remainingItemCount = 0
+    if ($Report.PSObject.Properties['RemainingItemCount']) {
+        $remainingItemCount = [int]$Report.RemainingItemCount
+    } elseif ($Report.PSObject.Properties['PostVerification'] -and $Report.PostVerification -and
+        $Report.PostVerification.PSObject.Properties['RemainingItemCount']) {
+        $remainingItemCount = [int]$Report.PostVerification.RemainingItemCount
+    }
+    return [pscustomobject][ordered]@{
+        DecisionCode = ConvertTo-ToolEnterpriseSafeText $Report.DecisionCode 100
+        Decision = ConvertTo-ToolEnterpriseSafeText $Report.Decision 300
+        ReadyForOfficialActivation = [bool]$Report.ReadyForOfficialActivation
+        OfficiallyLicensed = [bool]$Report.OfficiallyLicensed
+        SelectionRequired = [bool]$Report.SelectionRequired
+        RemainingItemCount = $remainingItemCount
+        ScanWarningCount = [int]$Report.ScanWarningCount
+    }
+}
+
 function New-ToolEnterpriseLicenseJob {
     param(
         [Parameter(Mandatory = $true)][string]$ClientId,
-        [Parameter(Mandatory = $true)][ValidateSet("InventoryOnly", "WindowsInstallAndActivate", "OfficeInstallAndActivate")][string]$Operation,
+        [Parameter(Mandatory = $true)][ValidateSet("InventoryOnly", "LicenseForensics", "ComplianceAssessment", "WindowsInstallAndActivate", "OfficeInstallAndActivate")][string]$Operation,
         [string]$ProductKey = "",
         [string]$RequestedBy = ""
     )
@@ -2143,11 +2241,12 @@ function New-ToolEnterpriseLicenseJob {
     $paths = Initialize-ToolEnterpriseStorage
     $clientRecord = Read-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId)
     if (-not $clientRecord) { throw (Get-ToolEnterpriseText "enterpriseCore.error.clientRecordMissing") }
-    if ($Operation -ne "InventoryOnly" -and -not [bool]$clientRecord.AllowRemoteLicenseChanges) {
+    $changesLicenseState = Test-ToolEnterpriseJobChangesLicenseState -Operation $Operation
+    if ($changesLicenseState -and -not [bool]$clientRecord.AllowRemoteLicenseChanges) {
         throw (Get-ToolEnterpriseText "enterpriseCore.error.remoteLicenseChangesDisabled")
     }
     $normalizedKey = ""
-    if ($Operation -ne "InventoryOnly") { $normalizedKey = Normalize-ToolEnterpriseProductKey -ProductKey $ProductKey }
+    if ($changesLicenseState) { $normalizedKey = Normalize-ToolEnterpriseProductKey -ProductKey $ProductKey }
     $clientSecret = Get-ToolEnterpriseServerClientSecret -ClientId $ClientId
     if (-not $clientSecret) { throw (Get-ToolEnterpriseText "enterpriseCore.error.serverClientSecretMissing") }
     $jobId = [Guid]::NewGuid().ToString("N")
@@ -2167,6 +2266,12 @@ function New-ToolEnterpriseLicenseJob {
     $clientJobDirectory = Join-Path $paths.ServerJobs $ClientId
     if (-not (Test-Path -LiteralPath $clientJobDirectory -PathType Container)) { New-Item -ItemType Directory -Path $clientJobDirectory -Force | Out-Null }
     Write-ToolEnterpriseJson -Path (Join-Path $clientJobDirectory ($jobId + ".job")) -Value ([ordered]@{ JobId=$jobId; Envelope=$envelope })
+    $clientRecord | Add-Member -NotePropertyName SynchronizationStatus -NotePropertyValue 'PendingInventoryRefresh' -Force
+    $clientRecord | Add-Member -NotePropertyName InventoryRefreshPendingSinceUtc -NotePropertyValue ([DateTime]::UtcNow.ToString('o')) -Force
+    $clientRecord | Add-Member -NotePropertyName LastJobId -NotePropertyValue $jobId -Force
+    $clientRecord | Add-Member -NotePropertyName LastJobOperation -NotePropertyValue $Operation -Force
+    $clientRecord | Add-Member -NotePropertyName LastJobStatus -NotePropertyValue 'Queued' -Force
+    Write-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId) -Value $clientRecord
     Write-ToolEnterpriseAudit -Scope Server -Event "Job.Created" -Message (Get-ToolEnterpriseText "enterpriseCore.audit.jobCreated" @($Operation)) -Data ([ordered]@{
         JobId=$jobId; ClientId=$ClientId; Operation=$Operation; ProductKeyLast5=$job.ProductKeyLast5; RequestedBy=$job.RequestedBy
     })
@@ -2191,6 +2296,11 @@ function Save-ToolEnterpriseJobResult {
     $jobId = [string]$Result.JobId
     $parsedJobId = [Guid]::Empty
     if (-not [Guid]::TryParse($jobId, [ref]$parsedJobId)) { throw (Get-ToolEnterpriseText "enterpriseCore.error.jobResultIdInvalid") }
+    $reportKind = if ($Result.PSObject.Properties['ReportKind']) { ConvertTo-ToolEnterpriseSafeText $Result.ReportKind 80 } else { '' }
+    $reportSummary = $null
+    if ($reportKind -in @('LicenseForensics','ComplianceAssessment') -and $Result.PSObject.Properties['ReportSummary'] -and $Result.ReportSummary) {
+        $reportSummary = ConvertTo-ToolEnterpriseAssessmentSummary -ReportKind $reportKind -Report $Result.ReportSummary
+    }
     $safeResult = [pscustomobject][ordered]@{
         SchemaVersion = $script:ToolEnterpriseSchemaVersion
         ToolVersion = $script:ToolEnterpriseToolVersion
@@ -2203,12 +2313,35 @@ function Save-ToolEnterpriseJobResult {
         ProductKeyLast5 = ConvertTo-ToolEnterpriseSafeText $Result.ProductKeyLast5 5
         StartedAtUtc = ConvertTo-ToolEnterpriseSafeText $Result.StartedAtUtc 60
         CompletedAtUtc = ConvertTo-ToolEnterpriseSafeText $Result.CompletedAtUtc 60
+        ReportKind = $reportKind
+        ReportSummary = $reportSummary
+        ReportGeneratedAtUtc = if ($Result.PSObject.Properties['ReportGeneratedAtUtc']) { ConvertTo-ToolEnterpriseSafeText $Result.ReportGeneratedAtUtc 60 } else { '' }
     }
     $resultDirectory = Join-Path $paths.ServerResults $ClientId
     if (-not (Test-Path -LiteralPath $resultDirectory -PathType Container)) { New-Item -ItemType Directory -Path $resultDirectory -Force | Out-Null }
     Write-ToolEnterpriseJson -Path (Join-Path $resultDirectory ($safeResult.JobId + ".json")) -Value $safeResult
     $pendingPath = Join-Path (Join-Path $paths.ServerJobs $ClientId) ($safeResult.JobId + ".job")
     if (Test-Path -LiteralPath $pendingPath -PathType Leaf) { Remove-Item -LiteralPath $pendingPath -Force }
+    $clientRecordPath = Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId
+    $clientRecord = Read-ToolEnterpriseJson -Path $clientRecordPath
+    if ($clientRecord) {
+        $nowUtc = [DateTime]::UtcNow.ToString('o')
+        foreach ($property in @{
+            SynchronizationStatus='PendingInventoryRefresh'
+            InventoryRefreshPendingSinceUtc=$nowUtc
+            LastJobId=$safeResult.JobId
+            LastJobOperation=$safeResult.Operation
+            LastJobStatus=$safeResult.Status
+            LastJobCompletedAtUtc=$safeResult.CompletedAtUtc
+        }.GetEnumerator()) {
+            $clientRecord | Add-Member -NotePropertyName $property.Key -NotePropertyValue $property.Value -Force
+        }
+        if (-not [string]::IsNullOrWhiteSpace($safeResult.ReportKind)) {
+            $clientRecord | Add-Member -NotePropertyName LastAssessmentKind -NotePropertyValue $safeResult.ReportKind -Force
+            $clientRecord | Add-Member -NotePropertyName LastAssessmentSummary -NotePropertyValue $safeResult.ReportSummary -Force
+        }
+        Write-ToolEnterpriseJson -Path $clientRecordPath -Value $clientRecord
+    }
     Write-ToolEnterpriseAudit -Scope Server -Event "Job.Completed" -Message $safeResult.Message -Data ([ordered]@{
         JobId=$safeResult.JobId; ClientId=$ClientId; Operation=$safeResult.Operation; Status=$safeResult.Status; ExitCode=$safeResult.ExitCode; ProductKeyLast5=$safeResult.ProductKeyLast5
     })
@@ -2250,6 +2383,53 @@ function Invoke-ToolEnterpriseCapturedProcess {
     }
 }
 
+function Invoke-ToolEnterpriseReadOnlyAssessment {
+    param(
+        [Parameter(Mandatory = $true)][ValidateSet('LicenseForensics','ComplianceAssessment')][string]$Operation,
+        [Parameter(Mandatory = $true)][string]$JobId
+    )
+
+    $parsedJobId = [Guid]::Empty
+    if (-not [Guid]::TryParse($JobId, [ref]$parsedJobId)) { throw (Get-ToolEnterpriseText 'enterpriseCore.error.jobResultIdInvalid') }
+    $paths = Initialize-ToolEnterpriseStorage
+    $reportDirectory = Join-Path $paths.ClientReports $parsedJobId.ToString('N')
+    if (-not (Test-Path -LiteralPath $reportDirectory -PathType Container)) {
+        New-Item -ItemType Directory -Path $reportDirectory -Force | Out-Null
+    }
+    $decisionPath = Join-Path $reportDirectory 'decision.json'
+    $scriptName = if ($Operation -eq 'LicenseForensics') { 'windows-license-forensics.ps1' } else { 'windows-license-compliance-cleanup.ps1' }
+    $scriptPath = Join-Path $PSScriptRoot $scriptName
+    if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) { throw (Get-ToolEnterpriseText 'enterpriseCore.error.assessmentScriptMissing' @($scriptName)) }
+    $powerShellPath = (Get-Command powershell.exe -ErrorAction Stop).Source
+    $culture = [string]$env:TOOL_UI_CULTURE
+    if ($culture -notin @('vi-VN','en-US')) { $culture = 'vi-VN' }
+    $quotedScript = '"' + $scriptPath.Replace('"','') + '"'
+    $quotedOutput = '"' + $reportDirectory.Replace('"','') + '"'
+    $quotedDecision = '"' + $decisionPath.Replace('"','') + '"'
+    $arguments = if ($Operation -eq 'LicenseForensics') {
+        '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0} -OutputDir {1} -DecisionFile {2} -Culture {3} -RedactSensitive -NoOpen' -f $quotedScript,$quotedOutput,$quotedDecision,$culture
+    } else {
+        '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0} -OutputDir {1} -DecisionFile {2} -Culture {3} -ScanScope All -SkipDeepSoftwareScan -RedactSensitive' -f $quotedScript,$quotedOutput,$quotedDecision,$culture
+    }
+    $execution = Invoke-ToolEnterpriseCapturedProcess -FilePath $powerShellPath -Arguments $arguments -TimeoutSeconds 900
+    if (-not (Test-Path -LiteralPath $decisionPath -PathType Leaf)) {
+        throw (Get-ToolEnterpriseText 'enterpriseCore.error.assessmentDecisionMissing' @($Operation, $execution.ExitCode))
+    }
+    $report = Read-ToolEnterpriseJson -Path $decisionPath -MaximumBytes 1048576
+    $expectedReportKind = if ($Operation -eq 'LicenseForensics') { 'LicenseForensics' } else { 'CleanupCompliance' }
+    if (Get-Command Test-ToolReportEnvelope -ErrorAction SilentlyContinue) {
+        $validation = Test-ToolReportEnvelope -Report $report -ExpectedReportKind $expectedReportKind -ExpectedToolVersion $script:ToolEnterpriseToolVersion
+        if (-not $validation.Valid) { throw (Get-ToolEnterpriseText 'enterpriseCore.error.reportInvalid' @(($validation.Errors -join '; '))) }
+    }
+    $summary = ConvertTo-ToolEnterpriseAssessmentSummary -ReportKind $Operation -Report $report
+    return [pscustomobject][ordered]@{
+        ReportKind = $Operation
+        ReportSummary = $summary
+        ReportGeneratedAtUtc = [DateTime]::UtcNow.ToString('o')
+        AssessmentExitCode = [int]$execution.ExitCode
+    }
+}
+
 function Get-ToolEnterpriseOfficeOsppPaths {
     $result = New-Object System.Collections.Generic.List[string]
     $roots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:ProgramW6432) | Where-Object { $_ } | Select-Object -Unique
@@ -2285,12 +2465,27 @@ function Invoke-ToolEnterpriseLicenseJob {
     $exitCode = 0
     $message = ""
     $key = [string]$Job.ProductKey
+    $reportKind = ''
+    $reportSummary = $null
+    $reportGeneratedAtUtc = ''
     try {
         $expires = [DateTime]::Parse([string]$Job.ExpiresAtUtc, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind)
         if ($expires.ToUniversalTime() -lt [DateTime]::UtcNow) { throw (Get-ToolEnterpriseText "enterpriseCore.error.jobExpired") }
         if ($operation -eq "InventoryOnly") {
             $message = Get-ToolEnterpriseText "enterpriseCore.job.inventoryRefreshed"
-        } elseif (-not $AllowRemoteLicenseChanges) {
+        } elseif ($operation -in @('LicenseForensics','ComplianceAssessment')) {
+            $assessment = Invoke-ToolEnterpriseReadOnlyAssessment -Operation $operation -JobId ([string]$Job.JobId)
+            $reportKind = [string]$assessment.ReportKind
+            $reportSummary = $assessment.ReportSummary
+            $reportGeneratedAtUtc = [string]$assessment.ReportGeneratedAtUtc
+            if ([int]$assessment.AssessmentExitCode -eq 0) {
+                $message = Get-ToolEnterpriseText 'enterpriseCore.job.assessmentCompleted' @($operation)
+            } else {
+                $status = 'ActionRequired'
+                $exitCode = [int]$assessment.AssessmentExitCode
+                $message = Get-ToolEnterpriseText 'enterpriseCore.job.assessmentNeedsReview' @($operation, $exitCode)
+            }
+        } elseif ((Test-ToolEnterpriseJobChangesLicenseState -Operation $operation) -and -not $AllowRemoteLicenseChanges) {
             $status = "Blocked"
             $exitCode = 20
             $message = Get-ToolEnterpriseText "enterpriseCore.job.remoteChangesBlocked"
@@ -2347,6 +2542,9 @@ function Invoke-ToolEnterpriseLicenseJob {
         ProductKeyLast5 = $last5
         StartedAtUtc = $started.ToString("o")
         CompletedAtUtc = [DateTime]::UtcNow.ToString("o")
+        ReportKind = $reportKind
+        ReportSummary = $reportSummary
+        ReportGeneratedAtUtc = $reportGeneratedAtUtc
     }
 }
 
@@ -2438,6 +2636,14 @@ function Export-ToolEnterpriseFleetReport {
             RemoteAddress = if ($RedactSensitive) { $redactionMarker } else { ConvertTo-ToolEnterpriseSafeText $source.RemoteAddress 80 }
             NetworkAddresses = $exportNetworkAddresses
             LastSeenUtc = ConvertTo-ToolEnterpriseSafeText $source.LastSeenUtc 80
+            RecordClass = 'CurrentInventory'
+            SynchronizationStatus = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['SynchronizationStatus']) { $source.SynchronizationStatus } else { 'Current' }) 40
+            InventoryObservedAtUtc = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['InventoryObservedAtUtc']) { $source.InventoryObservedAtUtc } else { $source.LastSeenUtc }) 80
+            InventoryRevision = if ($source.PSObject.Properties['InventoryRevision']) { [int]$source.InventoryRevision } else { 1 }
+            WindowsLicenseCount = if ($source.PSObject.Properties['WindowsLicenseCount']) { [int]$source.WindowsLicenseCount } else { 0 }
+            OfficeLicenseCount = if ($source.PSObject.Properties['OfficeLicenseCount']) { [int]$source.OfficeLicenseCount } else { 0 }
+            LastAssessmentKind = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['LastAssessmentKind']) { $source.LastAssessmentKind } else { '' }) 80
+            LastAssessmentStatus = ConvertTo-ToolEnterpriseSafeText $(if ($source.PSObject.Properties['LastJobStatus']) { $source.LastJobStatus } else { '' }) 60
             AgeHours = if ([double]::IsPositiveInfinity([double]$entry.AgeHours)) { $null } else { [Math]::Round([double]$entry.AgeHours, 2) }
             Freshness = [string]$entry.Freshness
             WindowsStatus = ConvertTo-ToolEnterpriseSafeText $source.WindowsStatus 100
@@ -2490,6 +2696,12 @@ function Export-ToolEnterpriseFleetReport {
             StaleClientCount = $staleCount
             InvalidOrMissingLastSeenCountsAsStale = $true
         }
+        InventoryModel = [pscustomobject][ordered]@{
+            RecordClass = 'CurrentInventory'
+            CurrentInventoryOnly = $true
+            HistoricalSnapshotsStoredSeparately = $true
+            HistoryMixedIntoCurrentTable = $false
+        }
         Privacy = [pscustomobject][ordered]@{
             RedactSensitive = $RedactSensitive
             FullProductKeysIncluded = $false
@@ -2502,6 +2714,10 @@ function Export-ToolEnterpriseFleetReport {
     }
 
     $columnComputer = Get-ToolEnterpriseText "enterpriseReport.column.computer"
+    $columnSync = Get-ToolEnterpriseText "enterpriseReport.column.sync"
+    $columnObservedAt = Get-ToolEnterpriseText "enterpriseReport.column.observedAt"
+    $columnRevision = Get-ToolEnterpriseText "enterpriseReport.column.revision"
+    $columnLastAssessment = Get-ToolEnterpriseText "enterpriseReport.column.lastAssessment"
     $columnIp = Get-ToolEnterpriseText "enterpriseReport.column.ip"
     $columnLastSeen = Get-ToolEnterpriseText "enterpriseReport.column.lastSeen"
     $columnAgeHours = "AgeHours"
@@ -2519,6 +2735,10 @@ function Export-ToolEnterpriseFleetReport {
     $fleetRows = @($clients | ForEach-Object {
         $row = [ordered]@{}
         $row[$columnComputer] = [string]$_.ComputerName
+        $row[$columnSync] = [string]$_.SynchronizationStatus
+        $row[$columnObservedAt] = [string]$_.InventoryObservedAtUtc
+        $row[$columnRevision] = [string]$_.InventoryRevision
+        $row[$columnLastAssessment] = if ([string]::IsNullOrWhiteSpace([string]$_.LastAssessmentKind)) { '' } else { '{0} / {1}' -f [string]$_.LastAssessmentKind,[string]$_.LastAssessmentStatus }
         $row[$columnIp] = [string]$_.RemoteAddress
         $row[$columnLastSeen] = [string]$_.LastSeenUtc
         $row[$columnAgeHours] = if ($null -eq $_.AgeHours) { "" } else { [string]$_.AgeHours }
@@ -2552,7 +2772,7 @@ function Export-ToolEnterpriseFleetReport {
                 $csvRows | Export-Csv -LiteralPath $csvStagePath -NoTypeInformation -Encoding UTF8
             } else {
                 $emptyRow = [ordered]@{}
-                foreach ($columnName in @($columnComputer,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnWindowsChannel,$columnWindowsLast5,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnIdentityChange,$columnRemoteChanges)) {
+                foreach ($columnName in @($columnComputer,$columnSync,$columnObservedAt,$columnRevision,$columnLastAssessment,$columnIp,$columnLastSeen,$columnAgeHours,$columnFreshness,$columnWindows,$columnWindowsChannel,$columnWindowsLast5,$columnOffice,$columnOfficeChannel,$columnOfficeLast5,$columnIdentityChange,$columnRemoteChanges)) {
                     $emptyRow[$columnName] = ""
                 }
                 $header = @([pscustomobject]$emptyRow | ConvertTo-Csv -NoTypeInformation)[0]

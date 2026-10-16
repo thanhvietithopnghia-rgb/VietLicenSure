@@ -84,12 +84,22 @@ function Invoke-ToolEnterpriseAgentOnce {
                     $summary.Message = ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 800
                     Write-ToolEnterpriseAgentEvent -Event "Job.ResultSendFailed" -Message $summary.Message -Data ([ordered]@{ JobId=$result.JobId })
                 }
-                # A job may change the license state, therefore send a fresh
-                # inventory after the action (or queue it when the route is
-                # temporarily unavailable).
-                if ($sendReport) {
+                # Every completed job invalidates the server's current-state
+                # view. Refresh it even when AutoSend is disabled; only an
+                # explicit -NoReport suppresses this job-bound sync.
+                if (-not $NoReport) {
                     $afterReport = Get-ToolEnterpriseAgentReport -ClientId $clientId
-                    try { [void](Send-ToolEnterpriseReport -Report $afterReport -QueueOnFailure) } catch {}
+                    try {
+                        [void](Send-ToolEnterpriseReport -Report $afterReport -QueueOnFailure)
+                        $summary.Sent++
+                        Write-ToolEnterpriseAgentEvent -Event "Report.PostJobSent" -Message (Get-ToolEnterpriseText "enterpriseAgent.audit.postJobReportSent") -Data ([ordered]@{
+                            JobId=$result.JobId; Operation=$result.Operation; Status=$result.Status
+                        })
+                    } catch {
+                        $summary.Queued++
+                        $summary.Message = ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 800
+                        Write-ToolEnterpriseAgentEvent -Event "Report.PostJobFailed" -Message $summary.Message -Data ([ordered]@{ JobId=$result.JobId })
+                    }
                 }
             }
         } catch {
