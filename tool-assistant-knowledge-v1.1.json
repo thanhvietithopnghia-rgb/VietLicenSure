@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
   "KnowledgeVersion": "1.28.0",
-  "UpdatedAtUtc": "2026-10-15T00:00:00Z",
+  "UpdatedAtUtc": "2026-10-16T00:00:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -52,8 +52,8 @@
       "TitleVi": "Ngày phát hành và ngày build",
       "TitleEn": "Release and build date",
       "Keywords": ["ngay phat hanh tool", "tool ra mat khi nao", "ngay build hien tai", "release date cua tool", "build date", "ngay cap nhat ban v5.0"],
-      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 15/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: EXE dùng Publisher trung tính Thanh Viet - VietLicenSure Code Signing, còn nội dung/cập nhật dùng chứng thư CMS được ghim riêng. Cả hai đều là chứng thư tự ký, nên Windows vẫn có thể hiện cảnh báo SmartScreen hoặc ứng dụng chưa được nhận diện. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
-      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 15 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: the EXE uses the neutral Thanh Viet - VietLicenSure Code Signing publisher while content/update CMS uses a separately pinned certificate. Both are self-issued, so Windows can still show SmartScreen or unrecognized-app warnings. It is not described as public-CA, EV, or Store signed."
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 16/10/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: EXE dùng Publisher trung tính Thanh Viet - VietLicenSure Code Signing, còn nội dung/cập nhật dùng chứng thư CMS được ghim riêng. Cả hai đều là chứng thư tự ký, nên Windows vẫn có thể hiện cảnh báo SmartScreen hoặc ứng dụng chưa được nhận diện. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 16 October 2026 while the public version remains v5.0. The public channel is Official Self-Signed: the EXE uses the neutral Thanh Viet - VietLicenSure Code Signing publisher while content/update CMS uses a separately pinned certificate. Both are self-issued, so Windows can still show SmartScreen or unrecognized-app warnings. It is not described as public-CA, EV, or Store signed."
     },
     {
       "Id": "first-release",

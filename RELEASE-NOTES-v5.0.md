@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-15`
+Ngày build kỹ thuật hiện hành: `2026-10-16`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `15/10/2026`
+Nội dung cập nhật đến: `16/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 15/10/2026
+## Cập nhật hiện hành ngày 16/10/2026
 
 - **Toàn vẹn gói nguồn:** checksum TOOL/SOURCE/SOURCE-PACKAGE được tái tạo từ đúng byte canonical đã stage theo thứ tự phụ thuộc và được kiểm closed-set trong handoff/CI; loại bỏ sai lệch CRLF/LF giữa Windows worktree và `git archive`.
 
@@ -167,3 +167,10 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Bổ sung bản đồ tài liệu v5.0, mô hình đe dọa và hướng dẫn phân biệt lỗi CMS thật với lỗi do chuyển đổi line ending.
 - Thiết kế lại logo theo biểu tượng khiên + chữ V/dấu kiểm, đồng bộ icon EXE, social card và trang chủ; thêm hướng dẫn người mới, bảng so sánh phiên bản, lộ trình và thông tin dự án.
 - `Chưa xác minh` không đồng nghĩa phần mềm vi phạm; cần kiểm tra giấy phép, tài khoản hoặc chứng từ chính thức.
+
+## Enterprise report synchronization
+
+- Read-only investigation and compliance jobs now send refreshed inventory unless NoReport is explicitly selected.
+- Current/Pending inventory and assessment freshness are tracked separately. Delayed/duplicate reports cannot overwrite newer observations; assessment results are bound to the agent-observed license state.
+- Enterprise command labels and synchronization status are available in Vietnamese and English. Historical reports remain separate from current state.
+- Focused synthetic regression: 14/14 assertions passed. This is not a claim of concurrent-writer certification or independent security review.
