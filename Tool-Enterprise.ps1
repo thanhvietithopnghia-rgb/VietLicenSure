@@ -2469,9 +2469,9 @@ function Invoke-ToolEnterpriseReadOnlyAssessment {
     $quotedOutput = '"' + $reportDirectory.Replace('"','') + '"'
     $quotedDecision = '"' + $decisionPath.Replace('"','') + '"'
     $arguments = if ($Operation -eq 'LicenseForensics') {
-        '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0} -OutputDir {1} -DecisionFile {2} -Culture {3} -RedactSensitive -NoOpen' -f $quotedScript,$quotedOutput,$quotedDecision,$culture
+        '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File {0} -OutputDir {1} -DecisionFile {2} -Culture {3} -RedactSensitive -NoOpen' -f $quotedScript,$quotedOutput,$quotedDecision,$culture
     } else {
-        '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0} -OutputDir {1} -DecisionFile {2} -Culture {3} -ScanScope All -SkipDeepSoftwareScan -RedactSensitive' -f $quotedScript,$quotedOutput,$quotedDecision,$culture
+        '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File {0} -OutputDir {1} -DecisionFile {2} -Culture {3} -ScanScope All -SkipDeepSoftwareScan -RedactSensitive' -f $quotedScript,$quotedOutput,$quotedDecision,$culture
     }
     $assessmentClientId = (Get-ToolEnterpriseClientConfig).ClientId
     $beforeStateHash = Get-ToolEnterpriseLicenseStateHash -Report (Get-ToolEnterpriseLicenseSnapshot -ClientId $assessmentClientId)
