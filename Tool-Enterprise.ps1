@@ -1628,7 +1628,7 @@ function Save-ToolEnterpriseServerReport {
     if (-not (Test-Path -LiteralPath $clientDirectory -PathType Container)) { New-Item -ItemType Directory -Path $clientDirectory -Force | Out-Null }
     $observed = [DateTimeOffset]::MinValue
     if (-not [DateTimeOffset]::TryParse([string]$Report.CreatedAt, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::AssumeUniversal, [ref]$observed)) {
-        throw 'Invalid inventory observation timestamp.'
+        throw (Get-ToolEnterpriseText 'enterprise.error.inventoryObservationTimestamp')
     }
     $existingRecord = Read-ToolEnterpriseJson -Path (Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId)
     $timestampName = [DateTime]::UtcNow.ToString("yyyyMMdd-HHmmssfff") + '-' + [Guid]::NewGuid().ToString('N')

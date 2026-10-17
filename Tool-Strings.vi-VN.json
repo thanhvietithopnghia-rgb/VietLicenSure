@@ -1,4 +1,6 @@
 {
+  "enterprise.error.inventoryObservationTimestamp": "Thời điểm ghi nhận dữ liệu kiểm kê không hợp lệ.",
+
   "app.title": "VietLicenSure v5.0 - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống",
   "app.developer": "Hỗ trợ người dùng cá nhân và doanh nghiệp",
   "app.hero.title": "KIỂM TRA, ĐÁNH GIÁ VÀ BẢO ĐẢM BẢN QUYỀN",

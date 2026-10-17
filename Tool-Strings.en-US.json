@@ -1,4 +1,6 @@
 {
+  "enterprise.error.inventoryObservationTimestamp": "Invalid inventory observation timestamp.",
+
   "app.title": "VietLicenSure v5.0 - System License Inspection and Management Software",
   "app.developer": "Support for individual and business users",
   "app.hero.title": "CONFIGURATION, COMPLIANCE AND LICENSE ASSURANCE",
