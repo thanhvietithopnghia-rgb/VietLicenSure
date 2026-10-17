@@ -950,15 +950,16 @@ function Set-DashboardCompositeButtonAccessibility {
     # The PowerShell-hosted WinForms UI Automation bridge derives the name of
     # a Button from Text. AccessibleName alone is not surfaced reliably when
     # Text is empty, leaving keyboard tab stops unnamed for screen readers.
-    # Keep semantic Text on the real Button and mask only the base-rendered
-    # text area; the visible child labels are painted afterwards.
+    # Keep semantic Text on the real Button. Narrow buttons can render that
+    # text underneath the icon, so mask the full interior and repaint the
+    # icon; the visible child labels are painted afterwards.
     $Button.Text = $AccessibleText
     $Button.AccessibleName = $AccessibleText
     $Button.AccessibleRole = [System.Windows.Forms.AccessibleRole]::PushButton
     $Button.UseMnemonic = $false
     $Button.Add_Paint({
         param($sender, $eventArgs)
-        $maskLeft = 52
+        $maskLeft = 2
         $maskTop = 2
         $maskWidth = [Math]::Max(0, $sender.ClientSize.Width - $maskLeft - 2)
         $maskHeight = [Math]::Max(0, $sender.ClientSize.Height - 4)
@@ -968,6 +969,15 @@ function Set-DashboardCompositeButtonAccessibility {
                 $eventArgs.Graphics.FillRectangle($brush, $maskLeft, $maskTop, $maskWidth, $maskHeight)
             } finally {
                 $brush.Dispose()
+            }
+            if ($sender.Image) {
+                $imageX = [int]$sender.Padding.Left
+                $imageY = [int][Math]::Floor(($sender.ClientSize.Height - $sender.Image.Height) / 2)
+                $eventArgs.Graphics.DrawImageUnscaled($sender.Image, $imageX, $imageY)
+            }
+            if ($sender.Focused) {
+                $focusBounds = New-Object System.Drawing.Rectangle(3, 3, ([Math]::Max(1, $sender.ClientSize.Width - 6)), ([Math]::Max(1, $sender.ClientSize.Height - 6)))
+                [System.Windows.Forms.ControlPaint]::DrawFocusRectangle($eventArgs.Graphics, $focusBounds)
             }
         }
     })
