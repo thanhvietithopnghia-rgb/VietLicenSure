@@ -17,6 +17,11 @@ $j=New-ToolEnterpriseLicenseJob -ClientId $id -Operation InventoryOnly
 $blocked=$false
 try { [void](New-ToolEnterpriseLicenseJob -ClientId $id -Operation LicenseForensics) } catch { $blocked=$true }
 Assert-Sync $blocked 'Duplicate submission was accepted.'
+$blocked=$false
+try { [void](New-ToolEnterpriseLicenseJob -ClientId ([guid]$id).ToString('D').ToUpperInvariant() -Operation InventoryOnly) } catch { $blocked=$true }
+Assert-Sync $blocked 'Alternate GUID spelling bypassed single pending job.'
+Assert-Sync ((Get-ToolEnterprisePendingJobPackage ([guid]$id).ToString('D')).JobId -eq $j.JobId) 'Alternate GUID spelling lost pending job.'
+Assert-Sync ((Get-ToolEnterpriseDeviceJobState ([guid]$id).ToString('D')).Pending) 'Alternate GUID spelling lost device state.'
 Assert-Sync (@(Get-ChildItem (Join-Path $paths.ServerJobs $id) -Filter '*.job').Count -eq 1) 'More than one pending job.'
 $running=New-Result $j.JobId 21
 $running.Status='Running'
@@ -55,4 +60,36 @@ try { [void](Invoke-ToolEnterpriseLicenseJobOnce $job $false) } catch {}
 Assert-Sync ($executions -eq 1) 'Job ran without a server acknowledgement.'
 $recovered=Invoke-ToolEnterpriseLicenseJobOnce $job $false
 Assert-Sync ($executions -eq 1 -and $recovered.Status -eq 'ActionRequired') 'Unacknowledged receipt replay executed work.'
+# Exercise the real AgentOnce orchestration and durable receipt, using synthetic
+# transport/execution boundaries only; no host scan, listener or license change.
+$agentAst=[Management.Automation.Language.Parser]::ParseFile((Join-Path $SourceDirectory 'Tool-EnterpriseAgent.ps1'),[ref]$null,[ref]$null)
+$agentFunction=$agentAst.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-ToolEnterpriseAgentOnce'},$false)
+. ([scriptblock]::Create($agentFunction.Extent.Text))
+$paths | Add-Member ClientSecret 'synthetic'
+$NoReport=$false; $Force=$false; $NoJob=$false
+$script:deliveries=0; $script:postReports=0; $script:dropResult=$true
+$script:agentJob=New-ToolEnterpriseLicenseJob $id InventoryOnly
+function Get-ToolEnterpriseClientConfig { return [pscustomobject]@{Enrolled=$true;ClientId=$id;AutoSend=$false;AllowRemoteLicenseChanges=$false} }
+function Flush-ToolEnterpriseOutbox { return 0 }
+function Get-ToolEnterpriseClientJob { return [pscustomobject]@{HasJob=$true;JobId=$script:agentJob.JobId;JobEnvelope='fixture'} }
+function Get-ToolEnterpriseSecret { param($Path); return ,([byte[]](1..32)) }
+function Open-ToolEnterpriseEnvelope { param($Secret,$ExpectedContext,$Envelope); return [pscustomobject]@{Payload=$script:agentJob} }
+function Write-ToolEnterpriseAgentEvent { param($Event,$Message,$Data) }
+function Get-ToolEnterpriseAgentReport { param($ClientId); return [pscustomobject]@{ClientId=$ClientId} }
+function Send-ToolEnterpriseReport { param($Report,[switch]$QueueOnFailure); $script:postReports++ }
+function Send-ToolEnterpriseJobResult {
+    param($Result)
+    if($Result.Status -eq 'Running'){ [void](Save-ToolEnterpriseJobResult ([guid]$script:id).ToString('D') $Result); return }
+    if($script:dropResult){$script:dropResult=$false; throw 'Synthetic result disconnect'}
+    [void](Save-ToolEnterpriseJobResult $script:id $Result); $script:deliveries++
+}
+$before=$executions
+$run1=Invoke-ToolEnterpriseAgentOnce
+Assert-Sync ($executions -eq $before+1 -and (Get-ToolEnterpriseDeviceJobState $id).Status -eq 'Running') 'Lost result did not retain Running.'
+$run2=Invoke-ToolEnterpriseAgentOnce
+Assert-Sync ($executions -eq $before+1 -and $deliveries -eq 1 -and -not (Get-ToolEnterpriseDeviceJobState $id).Pending) 'Agent result redelivery executed twice or failed to clear pending.'
+Assert-Sync ($postReports -eq 2 -and $run1.Sent -eq 1 -and $run2.Sent -eq 1) 'AutoSend=false suppressed post-job inventory.'
+$NoReport=$true
+[void](Invoke-ToolEnterpriseAgentOnce)
+Assert-Sync ($postReports -eq 2 -and $executions -eq $before+1) 'Explicit NoReport ignored or job reexecuted.'
 [pscustomobject]@{Status='PASS';Checks=$checks;EvidenceDirectory=$fixture} | ConvertTo-Json -Compress

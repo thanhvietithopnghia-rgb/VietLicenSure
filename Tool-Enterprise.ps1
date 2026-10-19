@@ -2289,6 +2289,7 @@ function New-ToolEnterpriseLicenseJob {
 
 function Get-ToolEnterpriseDeviceJobState {
     param([Parameter(Mandatory=$true)][string]$ClientId)
+    $ClientId = ([guid]$ClientId).ToString('N')
     $paths = Initialize-ToolEnterpriseStorage
     $record = Read-ToolEnterpriseJson (Get-ToolEnterpriseServerClientRecordPath $ClientId)
     if (-not $record) { throw (Get-ToolEnterpriseText 'enterpriseCore.error.clientRecordMissing') }
@@ -2399,6 +2400,7 @@ function New-ToolEnterpriseLicenseJobCore {
 
 function Get-ToolEnterprisePendingJobPackage {
     param([Parameter(Mandatory = $true)][string]$ClientId)
+    $ClientId = ([guid]$ClientId).ToString('N')
     $paths = Initialize-ToolEnterpriseStorage
     $directory = Join-Path $paths.ServerJobs $ClientId
     if (-not (Test-Path -LiteralPath $directory -PathType Container)) { return $null }
@@ -2409,6 +2411,7 @@ function Get-ToolEnterprisePendingJobPackage {
 
 function Save-ToolEnterpriseJobResult {
     param([Parameter(Mandatory = $true)][string]$ClientId, [Parameter(Mandatory = $true)][object]$Result)
+    $ClientId = ([guid]$ClientId).ToString('N')
     $paths = Initialize-ToolEnterpriseStorage
     $jobId = [string]$Result.JobId
     $parsedJobId = [Guid]::Empty
