@@ -17,3 +17,6 @@ THONG-TIN-PHAT-HANH-v5.0.txt binary
 *.png binary
 *.exe binary
 *.zip binary
+TOOL-SHA256SUMS.txt text eol=lf
+SOURCE-SHA256SUMS.txt text eol=lf
+SOURCE-PACKAGE-SHA256SUMS.txt text eol=lf
