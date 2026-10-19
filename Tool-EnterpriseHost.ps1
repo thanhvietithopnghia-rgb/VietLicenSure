@@ -372,6 +372,10 @@ function Start-ToolEnterpriseHost {
                     } elseif ($path -eq "/tool/v1/poll") {
                         $opened = Open-ToolEnterpriseEnvelope -Secret $clientSecret -ExpectedContext "poll:$clientId" -Envelope $body
                         Test-ToolEnterpriseHostReplay -ReplayCache $replayCache -OpenedEnvelope $opened
+                        $contactPaths = Initialize-ToolEnterpriseStorage
+                        $contactDir = Join-Path $contactPaths.ServerResults $clientId
+                        [void][IO.Directory]::CreateDirectory($contactDir)
+                        Write-ToolEnterpriseJson (Join-Path $contactDir 'agent-contact.json') ([ordered]@{ LastSeenUtc=[DateTime]::UtcNow.ToString('o') })
                         $pending = Get-ToolEnterprisePendingJobPackage -ClientId $clientId
                         $responsePayload = if ($pending) {
                             [ordered]@{ Accepted=$true; HasJob=$true; JobId=[string]$pending.JobId; JobEnvelope=$pending.Envelope }

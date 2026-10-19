@@ -72,8 +72,9 @@ function Invoke-ToolEnterpriseAgentOnce {
                 try {
                     $jobOpened = Open-ToolEnterpriseEnvelope -Secret $secret -ExpectedContext ("job:{0}:{1}" -f $clientId, [string]$poll.JobId) -Envelope $poll.JobEnvelope
                     $job = $jobOpened.Payload
+                    if ([guid]$job.ClientId -ne [guid]$clientId -or [guid]$job.JobId -ne [guid]$poll.JobId) { throw (Get-ToolEnterpriseText 'enterpriseCore.error.jobResultIdInvalid') }
                 } finally { [Array]::Clear($secret, 0, $secret.Length) }
-                $result = Invoke-ToolEnterpriseLicenseJob -Job $job -AllowRemoteLicenseChanges ([bool]$config.AllowRemoteLicenseChanges)
+                $result = Invoke-ToolEnterpriseLicenseJobOnce -Job $job -AllowRemoteLicenseChanges ([bool]$config.AllowRemoteLicenseChanges)
                 $summary.JobStatus = [string]$result.Status
                 try {
                     [void](Send-ToolEnterpriseJobResult -Result $result)

@@ -2266,7 +2266,88 @@ function ConvertTo-ToolEnterpriseAssessmentSummary {
     }
 }
 
+# Serialize submissions per client across UI/CLI processes. Pending jobs are
+# never replaced, including when the agent is offline or result delivery fails.
 function New-ToolEnterpriseLicenseJob {
+    param([Parameter(Mandatory=$true)][string]$ClientId,
+        [Parameter(Mandatory=$true)][string]$Operation,
+        [string]$ProductKey='', [string]$RequestedBy='')
+    $ClientId = ([guid]$ClientId).ToString("N")
+    $PSBoundParameters["ClientId"] = $ClientId
+    $paths = Initialize-ToolEnterpriseStorage
+    [void](Get-ToolEnterpriseServerClientRecordPath -ClientId $ClientId)
+    $directory = Join-Path $paths.ServerJobs $ClientId
+    [void][IO.Directory]::CreateDirectory($directory)
+    $lock = [IO.File]::Open((Join-Path $directory 'submit.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    try {
+        if (Get-ToolEnterprisePendingJobPackage -ClientId $ClientId) {
+            throw (Get-ToolEnterpriseText 'enterprise.workflow.busy')
+        }
+        return (New-ToolEnterpriseLicenseJobCore @PSBoundParameters)
+    } finally { $lock.Dispose() }
+}
+
+function Get-ToolEnterpriseDeviceJobState {
+    param([Parameter(Mandatory=$true)][string]$ClientId)
+    $paths = Initialize-ToolEnterpriseStorage
+    $record = Read-ToolEnterpriseJson (Get-ToolEnterpriseServerClientRecordPath $ClientId)
+    if (-not $record) { throw (Get-ToolEnterpriseText 'enterpriseCore.error.clientRecordMissing') }
+    $pending = Get-ToolEnterprisePendingJobPackage $ClientId
+    $result = $null
+    if ($record.PSObject.Properties['LastJobId'] -and $record.LastJobId) {
+        $id = ([guid]$record.LastJobId).ToString('N')
+        $result = Read-ToolEnterpriseJson (Join-Path (Join-Path $paths.ServerResults $ClientId) ($id+'.json'))
+    }
+    $status = if ($pending) {
+        if ($pending.PSObject.Properties['Status']) { [string]$pending.Status } else { 'Queued' }
+    } elseif ($result) { [string]$result.Status } else { 'None' }
+    $operation = if ($result) { [string]$result.Operation } elseif ($record.PSObject.Properties['LastJobOperation']) { [string]$record.LastJobOperation } else { '' }
+    return [pscustomobject]@{ Record=$record; Status=$status; Operation=$operation; Result=$result; Pending=[bool]$pending
+        CanRetry=([bool](-not $pending -and $result -and $status -in @('Failed','Blocked','ActionRequired') -and $operation -in @('InventoryOnly','LicenseForensics','ComplianceAssessment'))) }
+}
+
+function Restart-ToolEnterpriseReadOnlyJob {
+    param([Parameter(Mandatory=$true)][string]$ClientId)
+    $state = Get-ToolEnterpriseDeviceJobState $ClientId
+    if (-not $state.CanRetry) { throw (Get-ToolEnterpriseText 'enterprise.workflow.retryDenied') }
+    New-ToolEnterpriseLicenseJob -ClientId $ClientId -Operation $state.Operation -RequestedBy ([Environment]::UserName)
+}
+
+# Durable at-most-once execution. A crash after the started receipt is written
+# leaves an uncertain operation, never an automatic repeat of a license change.
+function Invoke-ToolEnterpriseLicenseJobOnce {
+    param([Parameter(Mandatory=$true)][object]$Job, [bool]$AllowRemoteLicenseChanges)
+    $paths = Initialize-ToolEnterpriseStorage
+    $id = ([guid]$Job.JobId).ToString('N')
+    $clientId = ([guid]$Job.ClientId).ToString('N')
+    $directory = Join-Path $paths.ClientProcessed $clientId
+    [void][IO.Directory]::CreateDirectory($directory)
+    $lock = [IO.File]::Open((Join-Path $directory ($id+'.lock')), 'OpenOrCreate', 'ReadWrite', 'None')
+    try {
+        $receiptPath = Join-Path $directory ($id+'.json')
+        $receipt = Read-ToolEnterpriseJson $receiptPath
+        if ($receipt -and $receipt.Status -ne 'Running') { return $receipt }
+        if ($receipt) {
+            $receipt.Status = 'ActionRequired'
+            $receipt.ExitCode = 24
+            $receipt.Message = Get-ToolEnterpriseText 'enterprise.workflow.uncertain'
+            $receipt.CompletedAtUtc = [DateTime]::UtcNow.ToString('o')
+            Write-ToolEnterpriseJson $receiptPath $receipt
+            return $receipt
+        }
+        $receipt = [pscustomobject]@{ JobId=$Job.JobId; ClientId=$Job.ClientId; Operation=$Job.Operation;
+            ProductKeyLast5=$Job.ProductKeyLast5; Status='Running'; ExitCode=0; Message='';
+            StartedAtUtc=[DateTime]::UtcNow.ToString('o'); CompletedAtUtc='' }
+        Write-ToolEnterpriseJson $receiptPath $receipt
+        # If acknowledgement cannot be delivered, do not execute a change.
+        [void](Send-ToolEnterpriseJobResult -Result $receipt)
+        $result = Invoke-ToolEnterpriseLicenseJob -Job $Job -AllowRemoteLicenseChanges $AllowRemoteLicenseChanges
+        Write-ToolEnterpriseJson $receiptPath $result
+        return $result
+    } finally { $lock.Dispose() }
+}
+
+function New-ToolEnterpriseLicenseJobCore {
     param(
         [Parameter(Mandatory = $true)][string]$ClientId,
         [Parameter(Mandatory = $true)][ValidateSet("InventoryOnly", "LicenseForensics", "ComplianceAssessment", "WindowsInstallAndActivate", "OfficeInstallAndActivate")][string]$Operation,
@@ -2332,6 +2413,15 @@ function Save-ToolEnterpriseJobResult {
     $jobId = [string]$Result.JobId
     $parsedJobId = [Guid]::Empty
     if (-not [Guid]::TryParse($jobId, [ref]$parsedJobId)) { throw (Get-ToolEnterpriseText "enterpriseCore.error.jobResultIdInvalid") }
+    if ([string]$Result.Status -eq 'Running') {
+        $pendingPath = Join-Path (Join-Path $paths.ServerJobs $ClientId) ($parsedJobId.ToString('N')+'.job')
+        $pending = Read-ToolEnterpriseJson $pendingPath
+        if (-not $pending) { throw (Get-ToolEnterpriseText 'enterprise.workflow.retryDenied') }
+        $pending | Add-Member Status 'Running' -Force
+        $pending | Add-Member StartedAtUtc ([DateTime]::UtcNow.ToString('o')) -Force
+        Write-ToolEnterpriseJson $pendingPath $pending
+        return $Result
+    }
     $reportKind = if ($Result.PSObject.Properties['ReportKind']) { ConvertTo-ToolEnterpriseSafeText $Result.ReportKind 80 } else { '' }
     $reportSummary = $null
     if ($reportKind -in @('LicenseForensics','ComplianceAssessment') -and $Result.PSObject.Properties['ReportSummary'] -and $Result.ReportSummary) {

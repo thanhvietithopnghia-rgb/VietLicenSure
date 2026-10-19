@@ -1426,6 +1426,118 @@ function Invoke-ServerDashboard {
     }
 }
 
+function Show-EnterpriseDeviceWorkflow {
+    $selected = Get-SelectedEnterpriseClient
+    if (-not $selected) { Show-EnterpriseError (Get-EnterpriseText 'enterprise.error.selectClient'); return }
+    $clientId = [string]$selected.ClientId
+    $dialog = New-Object Windows.Forms.Form
+    $dialog.Text = (Get-EnterpriseText 'enterprise.workflow.title') + ' - ' + $selected.ComputerName
+    $dialog.Size = New-Object Drawing.Size(820,620)
+    $dialog.MinimumSize = New-Object Drawing.Size(620,500)
+    $dialog.StartPosition = 'CenterParent'
+    $dialog.AutoScaleMode = 'Dpi'
+    $layout = New-Object Windows.Forms.TableLayoutPanel
+    $layout.Dock = 'Fill'; $layout.Padding = New-Object Windows.Forms.Padding(16)
+    $layout.ColumnCount=1; $layout.RowCount=4
+    [void]$layout.RowStyles.Add((New-Object Windows.Forms.RowStyle('AutoSize')))
+    [void]$layout.RowStyles.Add((New-Object Windows.Forms.RowStyle('Percent',100)))
+    [void]$layout.RowStyles.Add((New-Object Windows.Forms.RowStyle('AutoSize')))
+    [void]$layout.RowStyles.Add((New-Object Windows.Forms.RowStyle('AutoSize')))
+    $intro=New-Object Windows.Forms.Label
+    $intro.Text=Get-EnterpriseText 'enterprise.workflow.steps'; $intro.AutoSize=$true
+    $intro.MaximumSize=New-Object Drawing.Size(560,0)
+    $details=New-Object Windows.Forms.TextBox
+    $details.Multiline=$true; $details.ReadOnly=$true; $details.Dock='Fill'; $details.ScrollBars='Vertical'
+    $inputs=New-Object Windows.Forms.FlowLayoutPanel
+    $inputs.AutoSize=$true; $inputs.Dock='Fill'
+    $operation=New-Object Windows.Forms.ComboBox
+    $operation.DropDownStyle='DropDownList'; $operation.DisplayMember='Label'; $operation.Width=280
+    foreach($item in @(
+        [pscustomobject]@{Code='WindowsInstallAndActivate';Label=(Get-EnterpriseText 'enterprise.server.job.windowsActivate')},
+        [pscustomobject]@{Code='OfficeInstallAndActivate';Label=(Get-EnterpriseText 'enterprise.server.job.officeActivate')}
+    )) { [void]$operation.Items.Add($item) }
+    $operation.SelectedIndex=0
+    $key=New-Object Windows.Forms.TextBox
+    $key.Width=270; $key.UseSystemPasswordChar=$true; $key.AccessibleName=Get-EnterpriseText 'enterprise.workflow.key'
+    $keyLabel=New-Object Windows.Forms.Label
+    $keyLabel.AutoSize=$true; $keyLabel.Text=$key.AccessibleName
+    $inputs.Controls.AddRange(@($operation,$keyLabel,$key))
+    $actions=New-Object Windows.Forms.FlowLayoutPanel
+    $actions.AutoSize=$true; $actions.Dock='Fill'
+    $buttons=@{}
+    foreach($name in @('scan','change','verify','export','retry')) {
+        $b=New-Object Windows.Forms.Button
+        $b.Text=Get-EnterpriseText ('enterprise.workflow.'+$name)
+        $b.AutoSize=$true; $b.MinimumSize=New-Object Drawing.Size(100,36)
+        $actions.Controls.Add($b); $buttons[$name]=$b
+    }
+    $refresh={
+        try {
+            $state=Get-ToolEnterpriseDeviceJobState $clientId
+            $record=$state.Record
+            $contactPath=Join-Path (Join-Path (Initialize-ToolEnterpriseStorage).ServerResults $clientId) 'agent-contact.json'
+            $contact=Read-ToolEnterpriseJson $contactPath
+            $lastSeen=if($contact){[string]$contact.LastSeenUtc}else{[string]$record.LastSeenUtc}
+            $assessment=Get-ToolEnterpriseAssessmentStatus $record
+            $assessmentText=if($assessment){Get-EnterpriseText ('enterprise.workflow.state.'+$assessment)}else{Get-EnterpriseText 'enterprise.workflow.state.None'}
+            $lines=@((Get-EnterpriseText 'enterprise.workflow.contact' @($lastSeen)),
+                (Get-EnterpriseText 'enterprise.workflow.jobState' @((Get-EnterpriseText ('enterprise.workflow.state.'+$state.Status)),$state.Operation)),
+                (Get-EnterpriseText 'enterprise.workflow.inventory' @($record.InventoryObservedAtUtc,$record.WindowsStatus,$record.OfficeStatus)),
+                (Get-EnterpriseText 'enterprise.workflow.assessment' @($assessmentText)))
+            if($record.PSObject.Properties['LastAssessmentSummary'] -and $record.LastAssessmentSummary) {
+                $summary=$record.LastAssessmentSummary
+                if($summary.PSObject.Properties['RiskScore']) {
+                    $lines+=Get-EnterpriseText 'enterprise.workflow.risk' @($summary.RiskScore,$summary.RiskLevel,$summary.HighCount,$summary.ReviewCount)
+                }
+            }
+            if($state.Result){$lines+=Get-EnterpriseText 'enterprise.workflow.result' @($state.Result.ExitCode,$state.Result.Message)}
+            $details.Text=$lines -join [Environment]::NewLine
+            $buttons.scan.Enabled=-not $state.Pending; $buttons.verify.Enabled=-not $state.Pending
+            $buttons.change.Enabled=(-not $state.Pending -and $assessment -in @('Completed','ActionRequired') -and [bool]$record.AllowRemoteLicenseChanges)
+            $buttons.retry.Enabled=$state.CanRetry
+            # Export remains possible for stale/offline data, explicitly labeled in the report.
+        } catch { $details.Text=$_.Exception.Message; foreach($b in $buttons.Values){$b.Enabled=$false} }
+    }.GetNewClosure()
+    $submit={
+        param([string]$code,[string]$productKey='')
+        try {
+            [void](New-ToolEnterpriseLicenseJob -ClientId $clientId -Operation $code -ProductKey $productKey -RequestedBy ([Environment]::UserName))
+            $key.Clear()
+        } catch { Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 1100) }
+        & $refresh
+    }.GetNewClosure()
+    $buttons.scan.Add_Click({ & $submit 'LicenseForensics' }.GetNewClosure())
+    $buttons.verify.Add_Click({ & $submit 'LicenseForensics' }.GetNewClosure())
+    $buttons.change.Add_Click({
+        $item=$operation.SelectedItem
+        if(Confirm-EnterpriseAction (Get-EnterpriseText 'enterprise.server.jobPromptChange' @($item.Label,$selected.ComputerName))) {
+            & $submit $item.Code $key.Text.Trim()
+        }
+    }.GetNewClosure())
+    $buttons.retry.Add_Click({
+        try {
+            if(Confirm-EnterpriseAction (Get-EnterpriseText 'enterprise.workflow.retryPrompt')) {
+                [void](Restart-ToolEnterpriseReadOnlyJob $clientId)
+            }
+        } catch { Show-EnterpriseError $_.Exception.Message }
+        & $refresh
+    }.GetNewClosure())
+    $buttons.export.Add_Click({
+        try {
+            $destination=Join-Path ([Environment]::GetFolderPath('Desktop')) 'BaoCao-VietLicenSure'
+            $report=Export-ToolEnterpriseFleetReport -DestinationDirectory $destination -ClientId @($clientId)
+            Start-Process -FilePath $report.HtmlPath | Out-Null
+        } catch { Show-EnterpriseError $_.Exception.Message }
+    }.GetNewClosure())
+    $layout.Controls.Add($intro,0,0); $layout.Controls.Add($details,0,1)
+    $layout.Controls.Add($inputs,0,2); $layout.Controls.Add($actions,0,3)
+    $dialog.Controls.Add($layout)
+    $timer=New-Object Windows.Forms.Timer
+    $timer.Interval=5000; $timer.Add_Tick($refresh)
+    try { & $refresh; $timer.Start(); [void]$dialog.ShowDialog($form) }
+    finally { $timer.Stop(); $timer.Dispose(); $dialog.Dispose(); Update-ServerClientList }
+}
+
 function Invoke-ServerJob {
     try {
         $client = Get-SelectedEnterpriseClient
@@ -2062,6 +2174,7 @@ $script:serverClientList.View = "Details"
 $script:serverClientList.FullRowSelect = $true
 $script:serverClientList.GridLines = $true
 $script:serverClientList.ShowItemToolTips = $true
+$script:serverClientList.AccessibleDescription = Get-EnterpriseText 'enterprise.workflow.title'
 $script:serverClientList.Anchor = "Top,Left,Right"
 foreach ($column in @(
     @((Get-EnterpriseText "enterprise.server.clientColumn"),120),
@@ -2075,6 +2188,12 @@ foreach ($column in @(
     [void]$script:serverClientList.Columns.Add($column[0], [int]$column[1])
 }
 $script:serverClientList.Add_SelectedIndexChanged({ Update-EnterpriseServerAssetDetails })
+$script:serverClientList.Add_DoubleClick({ Show-EnterpriseDeviceWorkflow })
+$workflowMenu=New-Object Windows.Forms.ContextMenuStrip
+$workflowItem=$workflowMenu.Items.Add((Get-EnterpriseText 'enterprise.workflow.title'))
+$workflowItem.Add_Click({ Show-EnterpriseDeviceWorkflow })
+$script:serverClientList.ContextMenuStrip=$workflowMenu
+
 $serverTab.Controls.Add($script:serverClientList)
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.activationNote") 18 516 900 24))
 $serverTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.server.job") 18 548 140))
