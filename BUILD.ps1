@@ -515,14 +515,24 @@ function New-DeflatedPayloadFile {
         [Parameter(Mandatory = $true)][string]$DestinationPath
     )
 
-    $input = [IO.File]::OpenRead($SourcePath)
+    # Build-only Python stdlib encoder: stronger raw Deflate, same runtime format.
+    # Keep the existing executable size gate and every decoded payload byte.
+    $python = Get-Command python.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1
+    $encoderPath = Join-Path $PSScriptRoot 'BUILD-COMPRESS-PAYLOAD.py'
+    & $python.Source -I -S -B $encoderPath $SourcePath $DestinationPath
+    if ($LASTEXITCODE -ne 0) { throw 'Build payload encoder failed.' }
+    # Also prove compatibility using the exact .NET decoder used by the launcher.
+    $input = [IO.File]::OpenRead($DestinationPath)
     try {
-        $output = New-Object IO.FileStream($DestinationPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        $deflate = New-Object IO.Compression.DeflateStream($input, [IO.Compression.CompressionMode]::Decompress, $true)
         try {
-            $deflate = New-Object IO.Compression.DeflateStream($output, [IO.Compression.CompressionLevel]::Optimal, $true)
-            try { $input.CopyTo($deflate) }
-            finally { $deflate.Dispose() }
-        } finally { $output.Dispose() }
+            $sha = [Security.Cryptography.SHA256]::Create()
+            try { $decodedHash = ([BitConverter]::ToString($sha.ComputeHash($deflate))).Replace('-', '') }
+            finally { $sha.Dispose() }
+            if ($decodedHash -cne (Get-FileHash -LiteralPath $SourcePath -Algorithm SHA256).Hash) {
+                throw 'Payload round-trip mismatch in .NET decoder.'
+            }
+        } finally { $deflate.Dispose() }
     } finally { $input.Dispose() }
 }
 
