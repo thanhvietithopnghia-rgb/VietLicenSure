@@ -253,7 +253,9 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
 
 $expectedToolHashCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
 $expectedSourceHashCount = if ($AllowDevelopmentManifest) { 154 } else { 155 }
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 219 } else { 223 }
+# Device workflow adds BUILD-COMPRESS-PAYLOAD.py and DEVICE-WORKFLOW-v1.md.
+# test/ remains excluded by the existing source-package manifest policy.
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 221 } else { 225 }
 if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectoryFull 'RELEASE-SHA256SUMS.txt') -PathType Leaf)) {
     # Source-only handoff intentionally omits the release checksum because it
     # references the EXE stored in the sibling release folder.
