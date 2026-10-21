@@ -1371,6 +1371,10 @@ function Set-DashboardSection {
             $number = if ($metadata -and $metadata.PSObject.Properties["Number"]) { [int]$metadata.Number } else { 0 }
             $button.Visible = [bool]($number -in $allowedNumbers)
         }
+        if ($script:workspaceRole -and (Get-Command Test-RoleWorkspaceActionVisible -ErrorAction SilentlyContinue)) {
+            $roleNumber = if ($metadata -and $metadata.PSObject.Properties['Number']) { [int]$metadata.Number } else { 0 }
+            if (-not (Test-RoleWorkspaceActionVisible $script:workspaceRole $kind $roleNumber)) { $button.Visible=$false }
+        }
     }
     $menuCaption.Text = Get-ToolText -Key (Get-DashboardSectionTitleKey -Section $Section) -Culture $script:dashboardCulture
 

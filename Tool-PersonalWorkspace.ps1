@@ -3,7 +3,8 @@
 function Start-ToolPersonalWorkspace {
     [CmdletBinding()]
     param([Parameter(Mandatory=$true)][string]$Page,
-          [Parameter(Mandatory=$true)][string]$JavaScript)
+          [Parameter(Mandatory=$true)][string]$JavaScript,
+          [string]$StyleSheet = '')
 
     $listener = New-Object Net.HttpListener
     $random = [Security.Cryptography.RandomNumberGenerator]::Create()
@@ -28,7 +29,7 @@ function Start-ToolPersonalWorkspace {
     })
     $worker = [PowerShell]::Create()
     $server = {
-        param($listener, $state, $token, $origin, $page, $javascript)
+        param($listener, $state, $token, $origin, $page, $javascript, $stylesheet)
         while ($listener.IsListening) {
             try { $context = $listener.GetContext() } catch { break }
             $request = $context.Request
@@ -53,10 +54,11 @@ function Start-ToolPersonalWorkspace {
                     $code = 403; $body = '{"error":"origin"}'
                 } elseif ($request.HasEntityBody -or $request.Url.Query) {
                     $code = 400; $body = '{"error":"unexpected_input"}'
-                } elseif ($request.HttpMethod -eq 'GET' -and $path -in @('/','/app.js')) {
+                } elseif ($request.HttpMethod -eq 'GET' -and $path -in @('/','/app.js','/app.css')) {
                     $code = 200
                     if ($path -eq '/') { $body = $page; $type = 'text/html; charset=utf-8' }
-                    else { $body = $javascript; $type = 'text/javascript; charset=utf-8' }
+                    elseif ($path -eq '/app.js') { $body = $javascript; $type = 'text/javascript; charset=utf-8' }
+                    else { $body = $stylesheet; $type = 'text/css; charset=utf-8' }
                 } elseif ($request.Headers['X-VietLicenSure-Session'] -cne $token) {
                     $code = 401; $body = '{"error":"session"}'
                 } elseif ($request.HttpMethod -eq 'GET' -and $path -eq '/api/state') {
@@ -89,7 +91,7 @@ function Start-ToolPersonalWorkspace {
         }
     }
     try {
-        [void]$worker.AddScript($server.ToString()).AddArgument($listener).AddArgument($state).AddArgument($token).AddArgument($origin).AddArgument($Page).AddArgument($JavaScript)
+        [void]$worker.AddScript($server.ToString()).AddArgument($listener).AddArgument($state).AddArgument($token).AddArgument($origin).AddArgument($Page).AddArgument($JavaScript).AddArgument($StyleSheet)
         $handle = $worker.BeginInvoke()
         return [pscustomobject]@{ Listener=$listener; Worker=$worker; Handle=$handle; State=$state; Origin=$origin; LaunchUri=($origin + '/#' + [uri]::EscapeDataString($token)) }
     } catch { $listener.Close(); $worker.Dispose(); throw }

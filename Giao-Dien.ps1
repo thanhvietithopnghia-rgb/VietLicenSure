@@ -16,6 +16,8 @@ if (-not [string]::IsNullOrWhiteSpace($script:startupTracePath)) {
 . (Join-Path $PSScriptRoot 'Dashboard-OnlineUpdate.ps1')
 . (Join-Path $PSScriptRoot 'Dashboard-CleanupWorkflow.ps1')
 . (Join-Path $PSScriptRoot 'Dashboard-AssuranceCenter.ps1')
+. (Join-Path $PSScriptRoot 'Tool-PersonalWorkspace.ps1')
+. (Join-Path $PSScriptRoot 'Dashboard-RoleWorkspaces.ps1')
 
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
@@ -993,6 +995,7 @@ $startupValidationTimer.Add_Tick({
         return
     }
     Complete-DashboardStartupValidation
+    Initialize-RoleWorkspaces
 })
 foreach ($button in $buttons) { $button.Enabled = $false }
 $introAssistantButton.Enabled = $false
