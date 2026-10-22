@@ -3572,5 +3572,18 @@
   "officialBuild.state.unverified": "Could not be checked",
   "officialBuild.systemChangeBlocked": "Actions are locked because the current copy could not be checked. Download the VietLicenSure again from {0}.",
   "launcher.officialBuildInvalid": "The current copy could not be checked ({0}). Download the VietLicenSure again from {1}.",
-  "launcher.officialBuildChangeBlocked": "This copy is not allowed to change the computer. Download the VietLicenSure again from {0}."
+  "launcher.officialBuildChangeBlocked": "This copy is not allowed to change the computer. Download the VietLicenSure again from {0}.",
+  "roleWorkspace.chooser.title": "Choose a workspace",
+  "roleWorkspace.chooser.intro": "VietLicenSure still includes all check, licensing, investigation, Agent-task and reporting groups. A role only arranges the workspace; it never grants administrator permissions.",
+  "roleWorkspace.choice.overview": "Overview — show every functional group",
+  "roleWorkspace.choice.personal": "Personal — check this computer in a local web UI",
+  "roleWorkspace.choice.helpdesk": "IT Helpdesk — handle and track each computer in the application",
+  "roleWorkspace.choice.itam": "ITAM / SAM — inventory, reconcile licensing and report",
+  "roleWorkspace.role.overview": "Overview",
+  "roleWorkspace.role.personal": "Personal",
+  "roleWorkspace.role.helpdesk": "IT Helpdesk",
+  "roleWorkspace.role.itam": "ITAM / SAM",
+  "roleWorkspace.buttonFormat": "Role: {0}",
+  "roleWorkspace.buttonDescription": "Change the workspace; this action never changes the user's permissions.",
+  "roleWorkspace.webUnavailable": "The local web UI could not be opened. VietLicenSure made no permission or network changes; you can still use the Windows interface."
 }

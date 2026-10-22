@@ -28,6 +28,8 @@ try {
     $bridge = Start-ToolPersonalWorkspace -Page '<!doctype html><title>Test</title>' -JavaScript '"use strict";'
     $script:token = [uri]::UnescapeDataString(([uri]$bridge.LaunchUri).Fragment.Substring(1))
     Assert-Check ($token.Length -ge 40) 'session entropy'
+    Assert-Check ($bridge.Listener -is [Net.Sockets.TcpListener]) 'standard-user transport has no HTTP.sys URL ACL dependency'
+    Assert-Check (([Net.IPEndPoint]$bridge.Listener.LocalEndpoint).Address.Equals([Net.IPAddress]::Loopback)) 'listener bound only to IPv4 loopback'
     Assert-Check ((Request '/' -Auth '').Code -eq 200) 'public static shell'
     Assert-Check ((Request '/api/state' -Auth '').Code -eq 401) 'unauthenticated state rejected'
     Assert-Check ((Request '/api/state' -Auth 'wrong').Code -eq 401) 'wrong token rejected'
@@ -44,6 +46,15 @@ try {
     Assert-Check ((Request '/api/scan' -Method POST).Code -eq 403) 'mutation requires origin'
     Assert-Check ((Request '/api/scan' -Method POST -Origin 'null').Code -eq 403) 'null origin rejected'
     Assert-Check ((Request '/api/scan?path=C:/secret' -Method POST -Origin $bridge.Origin).Code -eq 400) 'query input rejected'
+    $bodyRequest = New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post, ($bridge.Origin + '/api/scan'))
+    try {
+        [void]$bodyRequest.Headers.TryAddWithoutValidation('X-VietLicenSure-Session', $script:token)
+        [void]$bodyRequest.Headers.TryAddWithoutValidation('Origin', $bridge.Origin)
+        $bodyRequest.Content = New-Object Net.Http.StringContent('unexpected')
+        $bodyReply = $client.SendAsync($bodyRequest).GetAwaiter().GetResult()
+        try { Assert-Check ([int]$bodyReply.StatusCode -eq 400) 'request body rejected' }
+        finally { $bodyReply.Dispose() }
+    } finally { $bodyRequest.Dispose() }
     Assert-Check ((Request '/api/execute' -Method POST -Origin $bridge.Origin).Code -eq 403) 'unknown action rejected'
     Assert-Check ((Request '/api/scan' -Method POST -Origin $bridge.Origin).Code -eq 202) 'scan queued'
     Assert-Check ((Request '/api/scan' -Method POST -Origin $bridge.Origin).Code -eq 409) 'duplicate queued rejected'
@@ -60,7 +71,7 @@ try {
         Set-ToolPersonalWorkspaceSnapshot $bridge @{status='idle'} -Ready $true -Busy $false
     }
     Stop-ToolPersonalWorkspace $bridge
-    Assert-Check (-not $bridge.Listener.IsListening -and -not $bridge.LaunchUri) 'explicit lifecycle cleanup'
+    Assert-Check (-not $bridge.Listener.Server.IsBound -and -not $bridge.LaunchUri) 'explicit lifecycle cleanup'
     $bridge = $null
     [pscustomobject]@{ Passed=$true; Checks=$script:checks; Scope='Transport only; desktop engine and browser not integrated' } | ConvertTo-Json
 } finally {

@@ -251,11 +251,11 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 154 } else { 155 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 72 } else { 73 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 156 } else { 157 }
 # Device workflow adds BUILD-COMPRESS-PAYLOAD.py and DEVICE-WORKFLOW-v1.md.
 # test/ remains excluded by the existing source-package manifest policy.
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 221 } else { 225 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 223 } else { 227 }
 if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectoryFull 'RELEASE-SHA256SUMS.txt') -PathType Leaf)) {
     # Source-only handoff intentionally omits the release checksum because it
     # references the EXE stored in the sibling release folder.
@@ -702,7 +702,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','FAQ-NGUOI-DUNG-MOI-v5.0.md','FIRST-RUN-FAQ-v5.0.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt','SOURCE-POLICY-v5.0.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
-    'Giao-Dien.ps1','Dashboard-Core.ps1','Dashboard-Execution.ps1','Dashboard-OnlineUpdate.ps1','Dashboard-CleanupWorkflow.ps1','Dashboard-AssuranceCenter.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
+    'Giao-Dien.ps1','Dashboard-Core.ps1','Dashboard-Execution.ps1','Dashboard-OnlineUpdate.ps1','Dashboard-CleanupWorkflow.ps1','Dashboard-AssuranceCenter.ps1','Tool-PersonalWorkspace.ps1','Dashboard-RoleWorkspaces.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-DashboardPresentation.ps1','Tool-Localization.ps1',
@@ -940,8 +940,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 72 } else { 73 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 70 } else { 71 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 74 } else { 75 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 72 } else { 73 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or

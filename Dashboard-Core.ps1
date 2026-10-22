@@ -1667,6 +1667,7 @@ function Set-DashboardLanguage {
         }
     }
     Set-DashboardSection -Section $script:dashboardSection
+    if (Get-Command Update-RoleWorkspaceChrome -ErrorAction SilentlyContinue) { Update-RoleWorkspaceChrome }
     Update-DashboardOfflineUi
     Set-DashboardTheme -Mode $script:dashboardTheme
     Update-MainLayout

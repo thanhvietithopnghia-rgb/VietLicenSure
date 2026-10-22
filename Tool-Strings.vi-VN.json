@@ -3572,5 +3572,18 @@
   "officialBuild.state.unverified": "Chưa kiểm tra được",
   "officialBuild.systemChangeBlocked": "Việc xử lý đang bị khóa vì VietLicenSure chưa kiểm tra được bản đang dùng. Hãy tải lại VietLicenSure tại {0}.",
   "launcher.officialBuildInvalid": "Không thể kiểm tra bản đang dùng ({0}). Hãy tải lại VietLicenSure tại {1}.",
-  "launcher.officialBuildChangeBlocked": "Bản đang dùng không được phép thay đổi máy tính. Hãy tải lại VietLicenSure tại {0}."
+  "launcher.officialBuildChangeBlocked": "Bản đang dùng không được phép thay đổi máy tính. Hãy tải lại VietLicenSure tại {0}.",
+  "roleWorkspace.chooser.title": "Chọn không gian làm việc",
+  "roleWorkspace.chooser.intro": "VietLicenSure vẫn có đầy đủ nhóm kiểm tra, giấy phép, điều tra, tác vụ Agent và báo cáo. Vai trò chỉ sắp xếp không gian làm việc; không cấp thêm quyền quản trị.",
+  "roleWorkspace.choice.overview": "Tổng quan — xem tất cả nhóm chức năng",
+  "roleWorkspace.choice.personal": "Cá nhân — kiểm tra máy này bằng web cục bộ",
+  "roleWorkspace.choice.helpdesk": "IT Helpdesk — xử lý và theo dõi từng máy trong ứng dụng",
+  "roleWorkspace.choice.itam": "ITAM / SAM — kiểm kê, đối chiếu giấy phép và báo cáo",
+  "roleWorkspace.role.overview": "Tổng quan",
+  "roleWorkspace.role.personal": "Cá nhân",
+  "roleWorkspace.role.helpdesk": "IT Helpdesk",
+  "roleWorkspace.role.itam": "ITAM / SAM",
+  "roleWorkspace.buttonFormat": "Vai trò: {0}",
+  "roleWorkspace.buttonDescription": "Đổi không gian làm việc; thao tác này không thay đổi quyền của người dùng.",
+  "roleWorkspace.webUnavailable": "Không mở được web cục bộ. VietLicenSure không thay đổi quyền hoặc kết nối mạng; bạn vẫn có thể dùng giao diện Windows."
 }

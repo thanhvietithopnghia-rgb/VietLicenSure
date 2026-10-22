@@ -6,23 +6,19 @@ function Start-ToolPersonalWorkspace {
           [Parameter(Mandatory=$true)][string]$JavaScript,
           [string]$StyleSheet = '')
 
-    $listener = New-Object Net.HttpListener
+    # TcpListener avoids machine-wide HTTP.sys URL ACL changes and therefore
+    # works for a standard user.  The server below accepts only a tiny,
+    # bodyless, fixed-route HTTP subset on the IPv4 loopback interface.
+    $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
+    $listener.Server.ExclusiveAddressUse = $true
     $random = [Security.Cryptography.RandomNumberGenerator]::Create()
     $secret = New-Object byte[] 32
     $random.GetBytes($secret)
     $token = [Convert]::ToBase64String($secret)
     $random.Dispose()
-    # HTTP.sys reservation can fail for an ordinary user. Fail closed; never
-    # request elevation, add a wildcard URL ACL, or bind to LAN as a fallback.
-    $started = $false
-    for ($attempt = 0; $attempt -lt 8; $attempt++) {
-        $port = Get-Random -Minimum 49152 -Maximum 65535
-        $origin = 'http://127.0.0.1:' + $port
-        $listener.Prefixes.Clear()
-        $listener.Prefixes.Add($origin + '/')
-        try { $listener.Start(); $started = $true; break } catch {}
-    }
-    if (-not $started) { $listener.Close(); throw 'PersonalWorkspaceLoopbackUnavailable' }
+    try { $listener.Start(8) } catch { $listener.Stop(); throw 'PersonalWorkspaceLoopbackUnavailable' }
+    $port = ([Net.IPEndPoint]$listener.LocalEndpoint).Port
+    $origin = 'http://127.0.0.1:' + $port
     $state = [hashtable]::Synchronized(@{
         Snapshot = '{"status":"starting","hasReport":false}'
         Pending = ''; Busy = $false; Ready = $false; Closed = $false
@@ -30,40 +26,69 @@ function Start-ToolPersonalWorkspace {
     $worker = [PowerShell]::Create()
     $server = {
         param($listener, $state, $token, $origin, $page, $javascript, $stylesheet)
-        while ($listener.IsListening) {
-            try { $context = $listener.GetContext() } catch { break }
-            $request = $context.Request
-            $response = $context.Response
+        while ($state.Closed -eq $false) {
+            $client = $null
+            try { $client = $listener.AcceptTcpClient() } catch { break }
             $code = 404; $body = '{"error":"not_found"}'; $type = 'application/json; charset=utf-8'
             try {
-                $response.Headers['Cache-Control'] = 'no-store'
-                $response.Headers['X-Content-Type-Options'] = 'nosniff'
-                $response.Headers['Referrer-Policy'] = 'no-referrer'
-                $response.Headers['X-Frame-Options'] = 'DENY'
-                $response.Headers['Content-Security-Policy'] = "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+                $client.ReceiveTimeout = 3000
+                $client.SendTimeout = 3000
+                $stream = $client.GetStream()
+                $headerBytes = New-Object Collections.Generic.List[byte]
+                $tail = ''
+                while ($headerBytes.Count -lt 16384 -and $tail -ne "`r`n`r`n") {
+                    $value = $stream.ReadByte()
+                    if ($value -lt 0) { break }
+                    [void]$headerBytes.Add([byte]$value)
+                    $tail = if ($headerBytes.Count -ge 4) {
+                        [Text.Encoding]::ASCII.GetString($headerBytes.GetRange($headerBytes.Count - 4, 4).ToArray())
+                    } else { '' }
+                }
+                if ($tail -ne "`r`n`r`n") { throw 'PersonalWorkspaceHeaderInvalid' }
+                $headerText = [Text.Encoding]::ASCII.GetString($headerBytes.ToArray())
+                $lines = @($headerText.Substring(0, $headerText.Length - 4) -split "`r`n")
+                if ($lines.Count -lt 2 -or $lines[0] -notmatch '^(GET|POST) ([^ ]+) HTTP/1\.[01]$') {
+                    throw 'PersonalWorkspaceRequestLineInvalid'
+                }
+                $method = [string]$Matches[1]
+                $target = [string]$Matches[2]
+                $headers = New-Object 'Collections.Generic.Dictionary[string,string]' ([StringComparer]::OrdinalIgnoreCase)
+                foreach ($line in @($lines | Select-Object -Skip 1)) {
+                    $separator = $line.IndexOf(':')
+                    if ($separator -le 0) { throw 'PersonalWorkspaceHeaderInvalid' }
+                    $name = $line.Substring(0, $separator).Trim()
+                    $value = $line.Substring($separator + 1).Trim()
+                    if ($name -notmatch '^[A-Za-z0-9-]{1,64}$' -or $headers.ContainsKey($name)) {
+                        throw 'PersonalWorkspaceHeaderInvalid'
+                    }
+                    $headers.Add($name, $value)
+                }
                 $expectedHost = ([uri]$origin).Authority
-                $remoteOk = [Net.IPAddress]::IsLoopback($request.RemoteEndPoint.Address)
-                $hostOk = $request.Headers['Host'] -ceq $expectedHost
-                $originHeader = [string]$request.Headers['Origin']
+                $remoteOk = [Net.IPAddress]::IsLoopback(([Net.IPEndPoint]$client.Client.RemoteEndPoint).Address)
+                $hostOk = ($headers.ContainsKey('Host') -and $headers['Host'] -ceq $expectedHost)
+                $originHeader = if ($headers.ContainsKey('Origin')) { [string]$headers['Origin'] } else { '' }
                 $originOk = ($originHeader -ceq $origin)
-                $fetchSite = [string]$request.Headers['Sec-Fetch-Site']
+                $fetchSite = if ($headers.ContainsKey('Sec-Fetch-Site')) { [string]$headers['Sec-Fetch-Site'] } else { '' }
                 $crossSite = $fetchSite -in @('cross-site','same-site')
-                $path = $request.Url.AbsolutePath
+                $path = $target
+                $hasBody = (($headers.ContainsKey('Content-Length') -and $headers['Content-Length'] -ne '0') -or
+                    $headers.ContainsKey('Transfer-Encoding'))
                 if (-not $remoteOk -or -not $hostOk -or $crossSite -or
                     ($originHeader -and -not $originOk)) {
                     $code = 403; $body = '{"error":"origin"}'
-                } elseif ($request.HasEntityBody -or $request.Url.Query) {
+                } elseif ($hasBody -or $target.Contains('?')) {
                     $code = 400; $body = '{"error":"unexpected_input"}'
-                } elseif ($request.HttpMethod -eq 'GET' -and $path -in @('/','/app.js','/app.css')) {
+                } elseif ($method -eq 'GET' -and $path -in @('/','/app.js','/app.css')) {
                     $code = 200
                     if ($path -eq '/') { $body = $page; $type = 'text/html; charset=utf-8' }
                     elseif ($path -eq '/app.js') { $body = $javascript; $type = 'text/javascript; charset=utf-8' }
                     else { $body = $stylesheet; $type = 'text/css; charset=utf-8' }
-                } elseif ($request.Headers['X-VietLicenSure-Session'] -cne $token) {
+                } elseif (-not $headers.ContainsKey('X-VietLicenSure-Session') -or
+                    $headers['X-VietLicenSure-Session'] -cne $token) {
                     $code = 401; $body = '{"error":"session"}'
-                } elseif ($request.HttpMethod -eq 'GET' -and $path -eq '/api/state') {
+                } elseif ($method -eq 'GET' -and $path -eq '/api/state') {
                     $code = 200; $body = [string]$state.Snapshot
-                } elseif ($request.HttpMethod -eq 'POST' -and $originOk -and
+                } elseif ($method -eq 'POST' -and $originOk -and
                     $path -in @('/api/scan','/api/overview','/api/results')) {
                     # One bounded mailbox, locked across listener and UI threads.
                     # These are requests to the existing desktop workflow, not
@@ -77,17 +102,19 @@ function Start-ToolPersonalWorkspace {
                             $code = 202; $body = '{"status":"queued"}'
                         }
                     } finally { [Threading.Monitor]::Exit($state.SyncRoot) }
-                } elseif ($request.HttpMethod -ne 'GET') {
+                } elseif ($method -ne 'GET') {
                     $code = 403; $body = '{"error":"action"}'
                 }
                 $bytes = [Text.Encoding]::UTF8.GetBytes($body)
-                $response.StatusCode = $code
-                $response.ContentType = $type
-                $response.ContentLength64 = $bytes.Length
-                $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                $reason = switch ($code) { 200 {'OK'} 202 {'Accepted'} 400 {'Bad Request'} 401 {'Unauthorized'} 403 {'Forbidden'} 404 {'Not Found'} 409 {'Conflict'} 503 {'Service Unavailable'} default {'Error'} }
+                $responseHead = "HTTP/1.1 $code $reason`r`nContent-Type: $type`r`nContent-Length: $($bytes.Length)`r`nCache-Control: no-store`r`nX-Content-Type-Options: nosniff`r`nReferrer-Policy: no-referrer`r`nX-Frame-Options: DENY`r`nContent-Security-Policy: default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`r`nConnection: close`r`n`r`n"
+                $headBytes = [Text.Encoding]::ASCII.GetBytes($responseHead)
+                $stream.Write($headBytes, 0, $headBytes.Length)
+                $stream.Write($bytes, 0, $bytes.Length)
+                $stream.Flush()
             } catch {
                 # A disconnected tab is not a cancellation request.
-            } finally { $response.Close() }
+            } finally { if ($client) { $client.Close() } }
         }
     }
     try {
@@ -128,7 +155,7 @@ function Stop-ToolPersonalWorkspace {
     param([Parameter(Mandatory=$true)]$Bridge)
     $Bridge.State.Closed = $true
     $Bridge.State.Ready = $false
-    $Bridge.Listener.Close()
+    $Bridge.Listener.Stop()
     try { [void]$Bridge.Worker.EndInvoke($Bridge.Handle) }
     finally { $Bridge.Worker.Dispose(); $Bridge.LaunchUri = '' }
 }

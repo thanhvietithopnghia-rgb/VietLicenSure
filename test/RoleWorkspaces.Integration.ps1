@@ -12,6 +12,10 @@ Check (Test-ToolPersonalWorkspaceAllowed $true) 'Loopback permitted'
 Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 6)) 'ITAM excludes cleanup'
 Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'QuickAction' 6) 'Helpdesk retains gated cleanup'
 Check (Test-RoleWorkspaceActionVisible 'overview' 'QuickAction' 6) 'Overview retains all groups'
+Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 8)) 'Personal excludes Enterprise management'
+Check (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 5) 'Personal retains software check'
+Check (Test-RoleWorkspaceActionVisible 'personal' 'ReportAction' 0) 'Personal retains report access'
+Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 9)) 'ITAM excludes forensic scan'
 $fake=[pscustomobject]@{HasReport=$true;Latest=[pscustomobject]@{CreatedAt=(Get-Date);Path='secret';Report='private'};HighCount=1;MediumCount=2;LowCount=3;Items=@('secret')}
 $state=ConvertTo-RoleResultSnapshot $fake 'running' $true
 Check ($state.hasReport -and $state.busy -and $state.coverage -eq 'unknown') 'Existing report not proof of completed scan'

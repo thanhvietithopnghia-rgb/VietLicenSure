@@ -1,16 +1,34 @@
 ﻿# Roles are presentation preferences, never an authorization boundary.
-function Get-RoleText([string]$Vi, [string]$En) {
-    if ($script:dashboardCulture -eq 'en-US') { return $En }; return $Vi
+function Get-RoleWorkspaceText([string]$Key) {
+    return (Get-ToolText -Key ('roleWorkspace.' + $Key) -Culture $script:dashboardCulture)
 }
 
 function Test-RoleWorkspaceActionVisible {
     param([string]$Role, [string]$Kind, [int]$Number)
-    if ($Kind -eq 'ReportAction') { return ($Role -ne 'personal') }
+    if ($Kind -eq 'ReportAction') { return $true }
     switch ($Role) {
-        'personal' { return ($Number -in @(1,3,4,8,10)) }
-        'itam' { return ($Number -in @(1,2,3,4,8,9,10)) }
+        'personal' { return ($Number -in @(1,3,4,5,10)) }
+        'itam' { return ($Number -in @(1,2,3,4,5,8,10)) }
         default { return $true }
     }
+}
+
+function Get-RoleWorkspaceName([string]$Role) {
+    switch ($Role) {
+        'personal' { return (Get-RoleWorkspaceText 'role.personal') }
+        'helpdesk' { return (Get-RoleWorkspaceText 'role.helpdesk') }
+        'itam' { return (Get-RoleWorkspaceText 'role.itam') }
+        default { return (Get-RoleWorkspaceText 'role.overview') }
+    }
+}
+
+function Update-RoleWorkspaceChrome {
+    if (-not $script:roleButton) { return }
+    $roleName = Get-RoleWorkspaceName $script:workspaceRole
+    $script:roleButton.Text = [string]::Format((Get-RoleWorkspaceText 'buttonFormat'), @($roleName))
+    $script:roleButton.AccessibleName = $script:roleButton.Text
+    $script:roleButton.AccessibleDescription = Get-RoleWorkspaceText 'buttonDescription'
+    $toolTip.SetToolTip($script:roleButton, $script:roleButton.AccessibleDescription)
 }
 
 function Test-ToolPersonalWorkspaceAllowed {
@@ -110,32 +128,45 @@ function Open-PersonalRoleWorkspace {
 
 function Show-RoleWorkspaceChooser {
     $chooser=New-Object Windows.Forms.Form
-    $chooser.Text=Get-RoleText 'Không gian làm việc' 'Workspaces'
-    $chooser.Size=New-Object Drawing.Size(620,420)
+    $chooser.Text=Get-RoleWorkspaceText 'chooser.title'
+    $chooser.Size=New-Object Drawing.Size(660,470)
+    $chooser.MinimumSize=New-Object Drawing.Size(560,420)
     $chooser.StartPosition='CenterParent'
     $chooser.AutoScroll=$true
+    $chooser.AutoScaleMode=[Windows.Forms.AutoScaleMode]::Dpi
+    $chooser.Font=$fontNormal
     $layout=New-Object Windows.Forms.FlowLayoutPanel
     $layout.Dock='Fill'; $layout.FlowDirection='TopDown'; $layout.WrapContents=$false; $layout.AutoScroll=$true
+    $layout.Padding=New-Object Windows.Forms.Padding(22,20,22,20)
     $chooser.Controls.Add($layout)
     $note=New-Object Windows.Forms.Label
-    $note.Size=New-Object Drawing.Size(550,65)
-    $note.Text=Get-RoleText 'Tổng quan: kiểm tra, giấy phép, điều tra, tác vụ Agent và báo cáo. Chọn vai trò chỉ đổi không gian làm việc, không cấp thêm quyền.' 'Overview: checks, licensing, investigation, Agent tasks and reports. A role changes the workspace, not permissions.'
+    $note.Size=New-Object Drawing.Size(590,68)
+    $note.Text=Get-RoleWorkspaceText 'chooser.intro'
     $layout.Controls.Add($note)
-    $labels=@((Get-RoleText 'Tổng quan · Tất cả nhóm chức năng' 'Overview · All functional groups'),(Get-RoleText 'Cá nhân · Mở web cục bộ' 'Personal · Open local web'),'IT Helpdesk · Desktop','ITAM / SAM · Desktop')
+    $labels=@((Get-RoleWorkspaceText 'choice.overview'),(Get-RoleWorkspaceText 'choice.personal'),(Get-RoleWorkspaceText 'choice.helpdesk'),(Get-RoleWorkspaceText 'choice.itam'))
     $roles=@('overview','personal','helpdesk','itam')
     for($i=0;$i -lt 4;$i++) {
         $button=New-Object Windows.Forms.Button
-        $button.Size=New-Object Drawing.Size(550,48); $button.Text=$labels[$i]; $button.Tag=$roles[$i]
+        $button.Size=New-Object Drawing.Size(590,58); $button.Text=$labels[$i]; $button.Tag=$roles[$i]
+        $button.TextAlign='MiddleLeft'; $button.Padding=New-Object Windows.Forms.Padding(12,0,12,0)
+        $button.AccessibleName=$button.Text; $button.AccessibleDescription=$button.Text
         $button.Add_Click({param($sender,$eventArgs) $sender.FindForm().Tag=[string]$sender.Tag; $sender.FindForm().Close()})
         $layout.Controls.Add($button)
     }
-    [void]$chooser.ShowDialog($form); $selected=[string]$chooser.Tag; $chooser.Dispose()
+    Set-ToolWindowTheme -Root $chooser -Mode $script:dashboardTheme
+    [void](Show-DashboardModalDialog -Dialog $chooser); $selected=[string]$chooser.Tag; $chooser.Dispose()
     if (-not $selected) { return }
     $script:workspaceRole=$selected
+    Update-RoleWorkspaceChrome
     Set-DashboardSection -Section 'Overview'
     if ($selected -eq 'personal') {
         try { Open-PersonalRoleWorkspace }
-        catch { [void][Windows.Forms.MessageBox]::Show((Get-RoleText 'Không mở được web cục bộ. Không thay đổi quyền hoặc kết nối mạng; dùng giao diện Windows.' 'Local web unavailable. No permission or network changes were made; use the desktop.'),'VietLicenSure') }
+        catch { [void][Windows.Forms.MessageBox]::Show((Get-RoleWorkspaceText 'webUnavailable'),'VietLicenSure') }
+    } elseif ($script:personalBridge) {
+        # Switching workspace closes only the local browser session. A desktop
+        # task already confirmed by the user continues under the shared engine.
+        Stop-ToolPersonalWorkspace $script:personalBridge
+        $script:personalBridge=$null
     }
 }
 
@@ -144,14 +175,16 @@ function Initialize-RoleWorkspaces {
     $script:roleWorkspaceReady=$true; $script:workspaceRole='overview'
     $script:roleTaskStatus='idle'
     $script:roleButton=New-Object Windows.Forms.Button
-    $script:roleButton.Text='Vai trò / Workspace'; $script:roleButton.Size=New-Object Drawing.Size(180,28)
+    $script:roleButton.Size=New-Object Drawing.Size(220,28)
     $script:roleButton.Top=4; $script:roleButton.Anchor='Top,Right'
-    $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-190)
+    $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-230)
     $script:roleButton.Add_Click({Show-RoleWorkspaceChooser})
     $buttonPanel.Controls.Add($script:roleButton); $script:roleButton.BringToFront()
     $buttonPanel.Add_SizeChanged({
-        $menuCaption.Width=[Math]::Max(70,$buttonPanel.ClientSize.Width-220)
+        $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-230)
+        $menuCaption.Width=[Math]::Max(70,$buttonPanel.ClientSize.Width-260)
     })
+    Update-RoleWorkspaceChrome
     $script:roleTimer=New-Object Windows.Forms.Timer; $script:roleTimer.Interval=1000
     $script:roleTimer.Add_Tick({Update-PersonalWorkspace}); $script:roleTimer.Start()
     $form.Add_FormClosed({
