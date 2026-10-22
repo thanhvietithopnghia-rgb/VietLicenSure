@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-20`
+Ngày build kỹ thuật hiện hành: `2026-10-22`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `20/10/2026`
+Nội dung cập nhật đến: `22/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,9 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 20/10/2026
+## Cập nhật hiện hành ngày 22/10/2026
+
+- **Không gian theo vai trò:** trang tổng quan cho phép chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cá nhân dùng web cục bộ có xác thực trên 127.0.0.1 và chung engine/kho kết quả; Helpdesk và ITAM/SAM dùng giao diện Windows theo phạm vi vai trò. Chọn vai trò không cấp quyền quản trị; đóng tab không hủy tác vụ.
 
 - **Quy trình theo từng máy và theo dõi Agent:** liên kết quét, đánh giá, xử lý có xác nhận, kiểm tra lại và báo cáo; hiển thị trạng thái/lỗi tác vụ, ngăn lệnh trùng, thử lại có kiểm soát và giữ kết quả khi mất kết nối. Đã kiểm localhost phục hồi inventory; bản mới vẫn cần QA trên EXE đã ký trước khi phát hành.
 
