@@ -1246,6 +1246,44 @@ function Show-ReportScanChooser {
     return $result
 }
 
+function Get-DashboardCurrentBuildId {
+    if ($script:releaseIdentity -and $script:releaseIdentity.BuildId) { return [string]$script:releaseIdentity.BuildId }
+    if ($releaseIdentity -and $releaseIdentity.BuildId) { return [string]$releaseIdentity.BuildId }
+    return ''
+}
+
+function Update-SharedScanResultDisplay {
+    param(
+        [ValidateSet('All','Hardware','Windows','Office','Software')][string]$Mode = 'All',
+        [ValidateSet('Auto','Pending','Error')][string]$Override = 'Auto'
+    )
+    if (-not $sharedResultStateLabel -or -not $sharedResultSummaryLabel -or -not $sharedResultDetailButton) { return $null }
+    $state = Get-ToolSharedScanState -ReportRoot $reportRoot -Mode $Mode -CurrentBuildId (Get-DashboardCurrentBuildId)
+    $script:sharedScanDisplayMode = $Mode
+    $script:sharedScanDisplayState = $state
+    $stateKey = if ($Override -eq 'Pending') { 'sharedScan.state.pending' } elseif ($Override -eq 'Error') { 'sharedScan.state.error' } else {
+        switch ([string]$state.Status) { 'Current' { 'sharedScan.state.current' }; 'Stale' { 'sharedScan.state.stale' }; default { 'sharedScan.state.empty' } }
+    }
+    $sharedResultStateLabel.Text = Get-DashboardText $stateKey
+    if ($state.Latest -and $state.Summary) {
+        $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.summary' @(
+            [int]$state.Summary.High, [int]$state.Summary.Medium, [int]$state.Summary.Low,
+            [int]$state.Summary.New, [int]$state.Summary.Resolved)
+        $sharedResultTimeLabel.Text = Get-DashboardText 'sharedScan.observedAt' @(([DateTime]$state.Latest.CreatedAt).ToString('g'))
+        $sharedResultDetailButton.Enabled = [bool](Test-Path -LiteralPath ([string]$state.HtmlPath) -PathType Leaf)
+    } else {
+        $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.noResult'
+        $sharedResultTimeLabel.Text = ''
+        $sharedResultDetailButton.Enabled = $false
+    }
+    return $state
+}
+
+function Open-SharedScanResultDetails {
+    if (-not $script:sharedScanDisplayState -or -not $script:sharedScanDisplayState.Latest) { return }
+    Open-ResultCenterReport -ReportPath ([string]$script:sharedScanDisplayState.Latest.Path)
+}
+
 function Start-Report([string]$mode, [string]$displayName) {
     if (-not (Test-Path -LiteralPath $reportScript)) {
         [System.Windows.Forms.MessageBox]::Show(
@@ -1254,11 +1292,36 @@ function Start-Report([string]$mode, [string]$displayName) {
             "OK", "Error") | Out-Null
         return
     }
-    $privacyChoice = Show-ReportPrivacyChooser
-    if ($privacyChoice -eq 'Cancel') { return }
-    $scanChoice = Show-ReportScanChooser
-    if ($null -eq $scanChoice) { return }
+    if ($script:activeProcess -and -not $script:activeProcess.HasExited) {
+        [void](Update-SharedScanResultDisplay -Mode $mode -Override Pending)
+        $status.Text = Get-DashboardText 'sharedScan.duplicateBlocked'
+        $status.ForeColor = [System.Drawing.Color]::DarkOrange
+        return
+    }
+    $sharedState = Get-ToolSharedScanState -ReportRoot $reportRoot -Mode $mode -CurrentBuildId (Get-DashboardCurrentBuildId)
+    [void](Update-SharedScanResultDisplay -Mode $mode)
+    $incrementalRefresh = [bool]($sharedState.IsFresh -and $sharedState.Latest)
+    $baselineReportPath = if ($incrementalRefresh) { [string]$sharedState.Latest.Path } else { '' }
+    if ($incrementalRefresh) {
+        [void](Update-SharedScanResultDisplay -Mode $mode -Override Pending)
+        $privacyChoice = if ([bool]$sharedState.Latest.Redacted) { 'Redacted' } else { 'Internal' }
+        $priorScan = Get-ToolResultObjectValue $sharedState.Latest.Report @('Scan')
+        $scanChoice = [pscustomobject][ordered]@{
+            Profile = 'Quick'
+            LowResource = $true
+            IncludedRoots = @((Get-ToolResultObjectValue $priorScan @('IncludedRoots') @()))
+            ExcludedRoots = @((Get-ToolResultObjectValue $priorScan @('ExcludedRoots') @()))
+            DeleteAfterRead = $true
+        }
+        Write-ProgressLog (Get-DashboardText 'sharedScan.reusingCurrent')
+    } else {
+        $privacyChoice = Show-ReportPrivacyChooser
+        if ($privacyChoice -eq 'Cancel') { return }
+        $scanChoice = Show-ReportScanChooser
+        if ($null -eq $scanChoice) { return }
+    }
     $redactSensitive = [bool]($privacyChoice -eq 'Redacted')
+    [void](Update-SharedScanResultDisplay -Mode $mode -Override Pending)
     try {
         Start-ProgressDisplay $displayName (Get-ToolText -Key "report.starting" -Culture $script:dashboardCulture) $false
         Write-ProgressLog (Get-ToolText -Key $(if ($redactSensitive) { "report.redactedProgress" } else { "report.internalProgress" }) -Culture $script:dashboardCulture)
@@ -1267,19 +1330,23 @@ function Start-Report([string]$mode, [string]$displayName) {
         $scanSettingsPath = Join-Path $output 'scan-request.json'
         $scanRequestJson = $scanChoice | ConvertTo-Json -Depth 4
         [IO.File]::WriteAllText($scanSettingsPath, $scanRequestJson, (New-Object Text.UTF8Encoding($false)))
-        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -ScanSettingsPath `"$scanSettingsPath`" -Pdf$privacyArgument"
+        $incrementalArguments = if ($incrementalRefresh) { " -IncrementalRefresh -BaselineReportPath `"$baselineReportPath`"" } else { '' }
+        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -ScanSettingsPath `"$scanSettingsPath`" -Pdf$privacyArgument$incrementalArguments"
         $moduleId = Get-ToolReportModuleId -Mode $mode
         # Windows licensing, all-user AppX and other-user registry hives can
         # require an elevated token. The click is the user's action and UAC is
         # still the final consent boundary; cancellation remains non-destructive.
         $needsCompleteMachineRead = [bool]($mode -in @('All','Windows','Office','Software'))
         [void](Start-ToolModuleProcess -ModuleId $moduleId -Arguments $arguments -Action $displayName -Hidden -Elevate:$needsCompleteMachineRead)
+        $script:activeReportMode = $mode
+        $script:activeReportIncremental = $incrementalRefresh
         $status.Text = Get-ToolText -Key "report.running" -Culture $script:dashboardCulture -FormatArguments @($displayName)
         $status.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
         Set-ButtonsEnabled $false
         $timer.Start()
     } catch {
         Set-ButtonsEnabled $true
+        [void](Update-SharedScanResultDisplay -Mode $mode -Override Error)
         Stop-ProgressOnStartError (Get-ToolText -Key "report.startFailed" -Culture $script:dashboardCulture -FormatArguments @($_.Exception.Message))
     }
 }

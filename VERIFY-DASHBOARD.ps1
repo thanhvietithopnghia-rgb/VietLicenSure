@@ -200,8 +200,9 @@ Assert-SourcePattern $text 'about\.openFaqDescription' 'Nút FAQ chưa có mô t
 Assert-SourcePattern $text 'function\s+Set-ModernRoundedRegion' 'Dashboard thiếu bo góc cho card/tile.'
 Assert-SourcePattern $text 'FlatAppearance\.BorderSize\s*=\s*0' 'Tile hiện đại chưa dùng nút phẳng.'
 Assert-SourcePattern $text 'Add_MouseEnter' 'Tile chưa có hover state.'
-Assert-SourcePattern $text '[$]buttonIndex\s*/\s*2' 'Menu chưa có layout hai cột.'
-Assert-SourcePattern $text '[$]buttonIndex\s*%\s*2' 'Menu chưa có layout hai cột.'
+Assert-SourcePattern $text '[$]tileColumnCount\s*=\s*if\s*\([$]personalWorkspace\)\s*\{\s*1\s*\}\s*else\s*\{\s*2\s*\}' 'Menu chưa chuyển Cá nhân sang một cột và giữ hai cột cho Helpdesk/ITAM.'
+Assert-SourcePattern $text '[$]row\s*=\s*\[Math\]::Floor\([$]buttonIndex\s*/\s*[$]tileColumnCount\)' 'Menu chưa tính hàng theo số cột của vai trò.'
+Assert-SourcePattern $text '[$]column\s*=\s*[$]buttonIndex\s*%\s*[$]tileColumnCount' 'Menu chưa tính cột theo vai trò.'
 Assert-SourcePattern $text '[$]descriptionLabel' 'Tile chưa có mô tả chức năng.'
 Assert-SourcePattern $text '[$]minimumTileHeight\s*=\s*if\s*\([$]ultraCompactHeight\)' 'Tile chưa có ngưỡng thích ứng cho màn hình thấp.'
 Assert-SourcePattern $text 'function\s+Get-DashboardTilePalette' 'Dashboard thiếu palette riêng theo loại tile.'
@@ -1290,7 +1291,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyEnText -match 'Technical ProductVersion/FileVersion:') {
         Add-Failure 'Đầu tài liệu lịch sử còn khối metadata phiên bản hiện tại đã yêu cầu loại bỏ.'
     }
-    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+cập nhật\s+22/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$' -or
+    if ($historyText -notmatch '(?m)^##\s+v5\.0\s+—\s+cập nhật\s+23/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$' -or
         $historyText -notmatch 'tên chính thức' -or
         $historyText -notmatch 'VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống' -or
         $historyText -notmatch '(?i)ba mức quét Quick, Standard và Deep' -or
@@ -1299,13 +1300,13 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $historyText -notmatch 'Chính sách mã nguồn') {
         Add-Failure 'Tài liệu lịch sử chưa ghi đúng danh tính v5.0, chính sách mã nguồn, kênh phản hồi hoặc các nâng cấp cốt lõi.'
     }
-    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+cập nhật\s+22/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$.*?(?=^##\s+v4\.9)').Value
-    if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 16 -or
+    $v5HistorySection = [regex]::Match($historyText, '(?s)(?m)^##\s+v5\.0\s+—\s+cập nhật\s+23/10/2026\s+\(phát hành lần đầu 08/09/2026\)\s*$.*?(?=^##\s+v4\.9)').Value
+    if ([regex]::Matches($v5HistorySection, '(?m)^-\s+').Count -ne 17 -or
         $v5HistorySection -match 'Tên\s+\*\*VietLicenSure\*\*\s+ghép từ|kiểm thử UI tự động') {
         Add-Failure 'Mục lịch sử v5.0 chưa được rút gọn về danh tính, chính sách, phản hồi, kênh phát hành và các nhóm nâng cấp cốt lõi.'
     }
     $requiredHistoryHeadings = @(
-        '## v5.0 — cập nhật 22/10/2026 (phát hành lần đầu 08/09/2026)',
+        '## v5.0 — cập nhật 23/10/2026 (phát hành lần đầu 08/09/2026)',
         '## v4.9.0.0 — 22/08/2026',
         '## v4.8.0.1 — 18/08/2026',
         '## v4.8.0.0 — 10/08/2026',
@@ -1357,7 +1358,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## v5.0 — updated October 22, 2026 (first released September 8, 2026)',
+        '## v5.0 — updated October 23, 2026 (first released September 8, 2026)',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',

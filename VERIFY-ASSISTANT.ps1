@@ -250,7 +250,7 @@ if ($errors.Count -eq 0) {
         @{ Question='pm hệ thống trong pdf quá dài'; Expected='phụ lục' }
         @{ Question='cách luna cập nhật'; Expected='manifest' }
         @{ Question='phiên bản hiện tại của tool'; Expected='v5.0' }
-        @{ Question='ngày build hiện tại của tool'; Expected='22/10/2026' }
+        @{ Question='ngày build hiện tại của tool'; Expected='23/10/2026' }
         @{ Question='phiên bản đầu tiên ngày mấy'; Expected='v1.0, phát hành ngày 17/07/2026' }
         @{ Question='v1 ngày nào'; Expected='v1.0.0 — 17/07/2026' }
         @{ Question='bản đầu tiên'; Expected='v1.0, phát hành ngày 17/07/2026' }
@@ -393,8 +393,8 @@ if ($errors.Count -eq 0) {
     $currentCompareVi = Get-ToolAssistantAnswer -Question 'bản hiện tại so với v4.9' -Culture 'vi-VN' -Knowledge $knowledge
     $currentCompareEn = Get-ToolAssistantAnswer -Question 'compare v4.9 with the current version' -Culture 'en-US' -Knowledge $knowledge
     $futureMissing = Get-ToolAssistantAnswer -Question 'v5.1 cập nhật gì' -Culture 'vi-VN' -Knowledge $knowledge
-    if ($currentVi -notmatch 'v5\.0' -or $currentVi -notmatch 'Giao diện và trải nghiệm' -or $currentVi -notmatch 'Báo cáo, riêng tư và toàn vẹn' -or
-        $currentEn -notmatch 'v5\.0' -or $currentEn -notmatch 'Interface and experience' -or $currentEn -notmatch 'Reports, privacy, and release integrity' -or
+    if ($currentVi -notmatch 'v5\.0' -or $currentVi -notmatch 'Giao diện và trải nghiệm' -or $currentVi -notmatch 'Kết quả dùng chung và đối chiếu gia tăng' -or
+        $currentEn -notmatch 'v5\.0' -or $currentEn -notmatch 'Interface and experience' -or $currentEn -notmatch 'Shared per-device results and incremental comparison' -or
         $currentAliasVi -notmatch 'v5\.0' -or $currentAliasEn -notmatch 'v5\.0' -or
         $latestAliasVi -notmatch 'v5\.0' -or $latestAliasEn -notmatch 'v5\.0' -or
         $bareLatestEn -notmatch 'v5\.0' -or
@@ -412,8 +412,8 @@ if ($errors.Count -eq 0) {
     $coreCompareEn = Get-ToolAssistantAnswer -Question 'what are the core changes from v4.9 to v5.0' -Culture 'en-US' -Knowledge $knowledge
     $onlinePolicyVi = Get-ToolAssistantAnswer -Question 'bật online thì phần mềm làm gì' -Culture 'vi-VN' -Knowledge $knowledge
     $onlinePolicyEn = Get-ToolAssistantAnswer -Question 'what happens when I enable Online' -Culture 'en-US' -Knowledge $knowledge
-    if ($coreCompareVi -notmatch 'v4\.9' -or $coreCompareVi -notmatch 'v5\.0' -or $coreCompareVi -notmatch 'Offline' -or
-        $coreCompareEn -notmatch 'v4\.9' -or $coreCompareEn -notmatch 'v5\.0' -or $coreCompareEn -notmatch 'Offline' -or
+    if ($coreCompareVi -notmatch 'v4\.9' -or $coreCompareVi -notmatch 'v5\.0' -or $coreCompareVi -notmatch 'Kết quả dùng chung' -or
+        $coreCompareEn -notmatch 'v4\.9' -or $coreCompareEn -notmatch 'v5\.0' -or $coreCompareEn -notmatch 'Shared per-device results' -or
         $onlinePolicyVi -notmatch 'catalog ký số.*kiểm tra phiên bản' -or $onlinePolicyVi -notmatch 'không tự tải/cài' -or
         $onlinePolicyVi -notmatch 'không tự.*quét' -or $onlinePolicyVi -notmatch 'không.*báo cáo' -or
         $onlinePolicyEn -notmatch 'signed catalog.*application-version' -or $onlinePolicyEn -notmatch 'never downloads/installs' -or
@@ -557,8 +557,8 @@ if ($errors.Count -eq 0) {
     $statusTermsEn = Get-ToolAssistantAnswer -Question 'what do Unknown, Unverified, Suspicious, and CrackConfirmed mean' -Culture 'en-US' -Knowledge $knowledge
     $statusTermsVi = Get-ToolAssistantAnswer -Question 'Unknown Unverified Suspicious Crack khác nhau thế nào' -Culture 'vi-VN' -Knowledge $knowledge
     if ($firstReleaseEn -notmatch 'v1\.0\.0.*July 17, 2026' -or
-        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*22/10/2026' -or
-        $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*22 October 2026' -or
+        $releaseDateVi -notmatch 'v5\.0.*08/09/2026.*23/10/2026' -or
+        $releaseDateEn -notmatch 'v5\.0.*8 September 2026.*23 October 2026' -or
         $pricingEn -notmatch 'provided free of charge' -or
         $sourceEn -notmatch 'controlled access' -or
         $sourceEn -notmatch "author's (?:prior )?written approval" -or

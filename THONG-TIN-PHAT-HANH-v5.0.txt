@@ -1,7 +1,7 @@
 VietLicenSure v5.0 - PHAN MEM KIEM TRA VA QUAN LY BAN QUYEN HE THONG
 Release version: 5.0
 Release build date: 2026.10.22
-Release label: 5.0-official-self-signed-20261022
+Release label: 5.0-official-self-signed-20261023
 Public release channel: Official Self-Signed.
 Technical trust mode: OfficialSelfSigned.
 Release status: OfficialSelfSigned.

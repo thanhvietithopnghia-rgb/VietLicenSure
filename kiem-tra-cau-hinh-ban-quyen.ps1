@@ -10,6 +10,8 @@
     [string[]]$ScanRoot = @(),
     [string[]]$ExcludeScanRoot = @(),
     [string]$ScanSettingsPath = "",
+    [string]$BaselineReportPath = "",
+    [switch]$IncrementalRefresh,
     [string]$ApprovedKmsServerFile = "",
     [switch]$Pdf,
     [switch]$RedactSensitive,
@@ -36,6 +38,7 @@ $timelineHelper = Join-Path $PSScriptRoot "Tool-LicenseTimeline.ps1"
 $localizationHelper = Join-Path $PSScriptRoot "Tool-Localization.ps1"
 $offlinePolicyHelper = Join-Path $PSScriptRoot "Tool-OfflinePolicy.ps1"
 $scanOptimizationHelper = Join-Path $PSScriptRoot "Tool-ScanOptimization.ps1"
+$resultCenterHelper = Join-Path $PSScriptRoot "Tool-ResultCenter.ps1"
 $softwareInventoryHelper = Join-Path $PSScriptRoot "Tool-SoftwareInventory.ps1"
 $licenseComplianceHelper = Join-Path $PSScriptRoot "Tool-LicenseCompliance.ps1"
 $provenanceHelper = Join-Path $PSScriptRoot "Tool-Provenance.ps1"
@@ -56,7 +59,7 @@ if ($RedactSensitive -and $FullInternal) {
 $RedactSensitive = -not [bool]$FullInternal
 if ($PSVersionTable.PSVersion.Major -lt 3) { Write-Host (Get-ReportText "report.bootstrap.powerShellRequired"); exit 10 }
 try {
-    foreach ($requiredPath in @($runtimeHelper, $compatibilityHelper, $capabilityHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $offlinePolicyHelper, $scanOptimizationHelper, $softwareInventoryHelper, $licenseComplianceHelper, $provenanceHelper)) {
+    foreach ($requiredPath in @($runtimeHelper, $compatibilityHelper, $capabilityHelper, $loggingHelper, $moduleContractHelper, $reportSchemaHelper, $reportExportHelper, $pluginEngineHelper, $timelineHelper, $offlinePolicyHelper, $scanOptimizationHelper, $resultCenterHelper, $softwareInventoryHelper, $licenseComplianceHelper, $provenanceHelper)) {
         if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw (Get-ReportText "common.missingDependency" @([IO.Path]::GetFileName($requiredPath))) }
     }
     . $runtimeHelper
@@ -70,9 +73,27 @@ try {
     . $timelineHelper
     . $offlinePolicyHelper
     . $scanOptimizationHelper
+    . $resultCenterHelper
     . $softwareInventoryHelper
     . $licenseComplianceHelper
     . $provenanceHelper
+    $baselineReportSha256 = ''
+    $baselineCreatedAt = ''
+    if ($IncrementalRefresh) {
+        if ([string]::IsNullOrWhiteSpace($BaselineReportPath)) { throw 'IncrementalBaselineRequired' }
+        $resolvedBaselinePath = [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables($BaselineReportPath))
+        $baselineItem = Get-Item -LiteralPath $resolvedBaselinePath -Force -ErrorAction Stop
+        if ($baselineItem.PSIsContainer -or ($baselineItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or
+            $baselineItem.Length -le 0 -or $baselineItem.Length -gt 24MB) { throw 'IncrementalBaselineInvalid' }
+        $baselineReport = Read-ToolResultJsonFile -Path $resolvedBaselinePath
+        if ([string](Get-ToolResultObjectValue $baselineReport @('ReportKind')) -ne 'InventoryAndLicense' -or
+            [string](Get-ToolResultObjectValue $baselineReport @('Mode')) -ne $Mode -or
+            [string](Get-ToolResultObjectValue $baselineReport @('MachineBinding')) -ne (Get-ToolResultMachineBinding)) {
+            throw 'IncrementalBaselineMismatch'
+        }
+        $baselineReportSha256 = Get-ToolResultFileSha256 -Path $resolvedBaselinePath
+        $baselineCreatedAt = [string](Get-ToolResultObjectValue $baselineReport @('CreatedAt'))
+    }
     $requestedScanLevel = $ScanLevel
     $requestedLowResource = [bool]$LowResource
     $requestedScanRoots = @($ScanRoot)
@@ -3216,8 +3237,12 @@ $summary = New-ToolReportEnvelope -ReportKind "InventoryAndLicense" -ToolVersion
     ModuleContract = $moduleContractState
     ModuleResult = $moduleResult
     ComputerName = $reportComputer
+    MachineBinding = Get-ToolResultMachineBinding
     CreatedAt = $started.ToString("o")
     Mode = $Mode
+    RefreshKind = $(if ($IncrementalRefresh) { 'Incremental' } else { 'Full' })
+    BaselineReportSha256 = $baselineReportSha256
+    BaselineCreatedAt = $baselineCreatedAt
     Culture = $Culture
     OfflineMode = [bool]$script:reportOfflineMode
     Scan = $scanPlanForExport

@@ -871,6 +871,35 @@ $progressLog.Location = New-Object System.Drawing.Point(38, ($progressBar.Bottom
 $progressLog.Size = New-Object System.Drawing.Size(670, 62)
 $activityPanel.Controls.Add($progressLog)
 
+$sharedResultCaption = New-Object System.Windows.Forms.Label
+$sharedResultCaption.Text = Get-ToolText -Key "sharedScan.caption" -Culture $script:dashboardCulture
+$sharedResultCaption.Font = $fontBold
+$sharedResultCaption.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
+$activityPanel.Controls.Add($sharedResultCaption)
+
+$sharedResultStateLabel = New-Object System.Windows.Forms.Label
+$sharedResultStateLabel.Font = $fontBold
+$sharedResultStateLabel.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
+$activityPanel.Controls.Add($sharedResultStateLabel)
+
+$sharedResultSummaryLabel = New-Object System.Windows.Forms.Label
+$sharedResultSummaryLabel.Font = $fontSmall
+$sharedResultSummaryLabel.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
+$sharedResultSummaryLabel.AutoEllipsis = $true
+$activityPanel.Controls.Add($sharedResultSummaryLabel)
+
+$sharedResultTimeLabel = New-Object System.Windows.Forms.Label
+$sharedResultTimeLabel.Font = $fontSmall
+$sharedResultTimeLabel.ForeColor = [System.Drawing.Color]::FromArgb(102, 112, 133)
+$activityPanel.Controls.Add($sharedResultTimeLabel)
+
+$sharedResultDetailButton = New-Object System.Windows.Forms.Button
+$sharedResultDetailButton.Text = Get-ToolText -Key "sharedScan.viewDetails" -Culture $script:dashboardCulture
+$sharedResultDetailButton.Font = $fontSmall
+$sharedResultDetailButton.Enabled = $false
+$sharedResultDetailButton.Add_Click({ Open-SharedScanResultDetails })
+$activityPanel.Controls.Add($sharedResultDetailButton)
+
 $activityLabel.Visible = $false
 $elapsedLabel.Visible = $false
 $progressBar.Visible = $false
@@ -945,6 +974,10 @@ $script:taskCancellationRequested = $false
 $script:lastReportDirectory = $reportRoot
 $script:lastReportPath = ""
 $script:resultCenterState = $null
+$script:sharedScanDisplayMode = 'All'
+$script:sharedScanDisplayState = $null
+$script:activeReportMode = ''
+$script:activeReportIncremental = $false
 $script:executionEnvironmentWarningShown = $false
 Write-DashboardStartupTrace "ShellControls.Ready"
 
@@ -1010,6 +1043,7 @@ $form.Add_Shown({
     # Refit once on the message pump before the responsive layout pass so the
     # 150-200% canvas receives the physical pixels calculated above.
     [void]$form.BeginInvoke([System.Action]{ Fit-MainWindowToWorkingArea; Update-MainLayout })
+    [void](Update-SharedScanResultDisplay -Mode 'All')
     $startupValidationTimer.Start()
     Show-ExecutionEnvironmentWarning
     $updateTimer.Start()
@@ -1044,6 +1078,7 @@ $timer.Add_Tick({
         $finishedAction = $script:activeAction
         $finishedModuleId = $script:activeModuleId
         $finishedModuleInvocation = $script:activeModuleInvocation
+        $finishedReportMode = [string]$script:activeReportMode
         $wasCancellationRequested = [bool]$script:taskCancellationRequested
         $processDurationMs = if ($script:taskStartedAt) { [long][Math]::Round(((Get-Date) - $script:taskStartedAt).TotalMilliseconds) } else { $null }
         if ($finishedModuleInvocation) {
@@ -1076,6 +1111,8 @@ $timer.Add_Tick({
         $script:activeTaskKind = ""
         $script:activeModuleId = ""
         $script:activeModuleInvocation = $null
+        $script:activeReportMode = ''
+        $script:activeReportIncremental = $false
         if ($script:applicationUpdateReminderPending -and -not [string]::IsNullOrWhiteSpace($finishedTaskKind)) {
             $script:applicationUpdateTaskObservedAfterDeferral = $true
         }
@@ -1193,12 +1230,17 @@ $timer.Add_Tick({
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkGreen
             if ($finishedTaskKind -eq "Report") {
-                [void]$form.BeginInvoke([System.Action]{ $script:resultCenterState = $null; Update-ResultActionCard -HeaderOnly })
+                [void]$form.BeginInvoke([System.Action]{
+                    $script:resultCenterState = $null
+                    Update-ResultActionCard -HeaderOnly
+                    [void](Update-SharedScanResultDisplay -Mode $(if ($finishedReportMode) { $finishedReportMode } else { 'All' }))
+                })
             }
         } else {
             $status.Text = Get-ToolText -Key "progress.failed" -Culture $script:dashboardCulture -FormatArguments @($finishedAction, $exitCode)
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkRed
+            if ($finishedTaskKind -eq 'Report') { [void](Update-SharedScanResultDisplay -Mode $(if ($finishedReportMode) { $finishedReportMode } else { 'All' }) -Override Error) }
         }
         Stop-ProgressDisplay $status.Text
     }

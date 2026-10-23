@@ -140,11 +140,22 @@ function Get-ToolResultReportHistory {
     $candidates = @(Get-ToolResultReportCandidates -ReportRoot $ReportRoot -MaximumCandidates ($MaximumReports * 3))
 
     $reports = New-Object System.Collections.Generic.List[object]
+    $currentMachineBinding = Get-ToolResultMachineBinding
     foreach ($file in $candidates) {
         if ($reports.Count -ge $MaximumReports) { break }
         try {
             $report = Read-ToolResultJsonFile -Path $file.FullName
             if ([string](Get-ToolResultObjectValue $report @('ReportKind')) -ne 'InventoryAndLicense') { continue }
+            $reportMachineBinding = [string](Get-ToolResultObjectValue $report @('MachineBinding'))
+            $reportComputerName = [string](Get-ToolResultObjectValue $report @('ComputerName'))
+            if (-not [string]::IsNullOrWhiteSpace($reportMachineBinding)) {
+                if (-not [string]::Equals($reportMachineBinding, $currentMachineBinding, [StringComparison]::OrdinalIgnoreCase)) { continue }
+            } elseif (-not [string]::Equals($reportComputerName, [string]$env:COMPUTERNAME, [StringComparison]::OrdinalIgnoreCase)) {
+                # Legacy reports did not carry MachineBinding.  They remain
+                # usable only on a host with the same computer name; every new
+                # report is bound to the stronger MachineGuid-derived value.
+                continue
+            }
             $createdAt = $file.LastWriteTime
             $createdText = [string](Get-ToolResultObjectValue $report @('CreatedAt'))
             $parsed = [DateTime]::MinValue
@@ -154,11 +165,60 @@ function Get-ToolResultReportHistory {
                 CreatedAt = $createdAt
                 Mode = [string](Get-ToolResultObjectValue $report @('Mode') 'Unknown')
                 Redacted = [bool](Get-ToolResultObjectValue $report @('Redacted') $false)
+                MachineBinding = $reportMachineBinding
+                BuildId = [string](Get-ToolResultObjectValue $report @('BuildId'))
+                RefreshKind = [string](Get-ToolResultObjectValue $report @('RefreshKind') 'Full')
                 Report = $report
             })
         } catch {}
     }
     return @($reports.ToArray() | Sort-Object CreatedAt -Descending)
+}
+
+function Get-ToolSharedScanState {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$ReportRoot,
+        [Parameter(Mandatory = $true)][ValidateSet('All','Hardware','Windows','Office','Software')][string]$Mode,
+        [string]$CurrentBuildId = '',
+        [ValidateRange(1, 1440)][int]$FreshnessMinutes = 30
+    )
+
+    $history = @(Get-ToolResultReportHistory -ReportRoot $ReportRoot -MaximumReports 80 |
+        Where-Object { [string]::Equals([string]$_.Mode, $Mode, [StringComparison]::OrdinalIgnoreCase) })
+    if ($history.Count -eq 0) {
+        return [pscustomobject][ordered]@{
+            Status='Empty'; IsFresh=$false; Mode=$Mode; Latest=$null; Previous=$null
+            Summary=$null; HtmlPath=''; Reason='NoReport'
+        }
+    }
+
+    $latest = $history[0]
+    $previous = if ($history.Count -gt 1) { $history[1] } else { $null }
+    $htmlPath = [IO.Path]::ChangeExtension([string]$latest.Path, '.html')
+    $age = (Get-Date) - [DateTime]$latest.CreatedAt
+    $buildMatches = [string]::IsNullOrWhiteSpace($CurrentBuildId) -or
+        [string]::Equals([string]$latest.BuildId, $CurrentBuildId, [StringComparison]::OrdinalIgnoreCase)
+    $filesPresent = (Test-Path -LiteralPath ([string]$latest.Path) -PathType Leaf) -and
+        (Test-Path -LiteralPath $htmlPath -PathType Leaf)
+    $stronglyBound = -not [string]::IsNullOrWhiteSpace([string]$latest.MachineBinding)
+    $isFresh = [bool]($stronglyBound -and $age.TotalMinutes -ge -2 -and $age.TotalMinutes -le $FreshnessMinutes -and $buildMatches -and $filesPresent)
+    $items = @(ConvertTo-ToolResultCenterItems -Report $latest.Report -SourceReportPath ([string]$latest.Path))
+    $previousItems = if ($previous) { @(ConvertTo-ToolResultCenterItems -Report $previous.Report -SourceReportPath ([string]$previous.Path)) } else { @() }
+    $comparison = @(Compare-ToolResultCenterItems -CurrentItems $items -PreviousItems $previousItems -HasBaseline:([bool]$previous))
+    $summary = [pscustomobject][ordered]@{
+        High = [int]@($items | Where-Object Severity -eq 'High').Count
+        Medium = [int]@($items | Where-Object Severity -eq 'Medium').Count
+        Low = [int]@($items | Where-Object Severity -eq 'Low').Count
+        New = [int]@($comparison | Where-Object ComparisonStatus -eq 'New').Count
+        Resolved = [int]@($comparison | Where-Object ComparisonStatus -eq 'Resolved').Count
+        Total = [int]$items.Count
+    }
+    $reason = if (-not $stronglyBound) { 'LegacyUnbound' } elseif (-not $filesPresent) { 'ReportPackageMissing' } elseif (-not $buildMatches) { 'BuildChanged' } elseif (-not $isFresh) { 'Expired' } else { 'Current' }
+    return [pscustomobject][ordered]@{
+        Status=$(if ($isFresh) { 'Current' } else { 'Stale' }); IsFresh=$isFresh; Mode=$Mode
+        Latest=$latest; Previous=$previous; Summary=$summary; HtmlPath=$htmlPath; Reason=$reason
+    }
 }
 
 function New-ToolResultCenterItem {

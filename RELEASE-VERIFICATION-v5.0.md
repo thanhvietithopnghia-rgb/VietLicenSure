@@ -1,7 +1,7 @@
 # Xác minh bản phát hành VietLicenSure v5.0
 
 Áp dụng cho: **v5.0 Official Self-Signed** — trust mode kỹ thuật `OfficialSelfSigned`
-Ngày hồ sơ hiện hành: **2026-10-22**
+Ngày hồ sơ hiện hành: **2026-10-23**
 
 ## Cách nhanh nhất
 

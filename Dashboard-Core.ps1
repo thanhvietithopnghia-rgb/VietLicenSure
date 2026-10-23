@@ -773,11 +773,12 @@ function Update-MainLayout {
         $mainBottom = $clientHeight - $(if ($ultraCompactHeight) { 8 } else { 16 })
         $mainHeight = [Math]::Max(250, $mainBottom - $mainTop)
         $paneGap = if ($clientWidth -lt 900) { 8 } else { 12 }
-        $activityWidth = if ($contentWidth -ge 980) { 302 } elseif ($contentWidth -ge 780) { 272 } else { 220 }
+        $personalWorkspace = [bool]($script:workspaceRole -eq 'personal')
+        $activityWidth = if ($personalWorkspace) { [Math]::Max(340, [Math]::Floor($contentWidth * 0.56)) } elseif ($contentWidth -ge 980) { 302 } elseif ($contentWidth -ge 780) { 272 } else { 220 }
 
         $buttonPanel.Left = $left
         $buttonPanel.Top = $mainTop
-        $buttonPanel.Width = [Math]::Max(470, $contentWidth - $activityWidth - $paneGap)
+        $buttonPanel.Width = [Math]::Max($(if ($personalWorkspace) { 300 } else { 470 }), $contentWidth - $activityWidth - $paneGap)
         $buttonPanel.Height = $mainHeight
         $activityPanel.Left = $buttonPanel.Right + $paneGap
         $activityPanel.Top = $mainTop
@@ -792,11 +793,12 @@ function Update-MainLayout {
         $rowGap = if ($ultraCompactHeight) { 3 } elseif ($compactHeight) { 5 } else { 8 }
         $tileMargin = 13
         $scrollbarReserve = [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + 2
-        $tileLayoutWidth = [Math]::Max(470, $buttonPanel.ClientSize.Width - $scrollbarReserve)
-        $tileWidth = [Math]::Max(220, [Math]::Floor(($tileLayoutWidth - ($tileMargin * 2) - $tileGap) / 2))
+        $tileColumnCount = if ($personalWorkspace) { 1 } else { 2 }
+        $tileLayoutWidth = [Math]::Max($(if ($personalWorkspace) { 260 } else { 470 }), $buttonPanel.ClientSize.Width - $scrollbarReserve)
+        $tileWidth = if ($personalWorkspace) { [Math]::Max(220, $tileLayoutWidth - ($tileMargin * 2)) } else { [Math]::Max(220, [Math]::Floor(($tileLayoutWidth - ($tileMargin * 2) - $tileGap) / 2)) }
         $buttonPanelBottomPadding = if ($ultraCompactHeight) { 5 } else { 10 }
         $visibleButtons = @($buttons | Where-Object { $_.Visible })
-        $visibleRowCount = [Math]::Max(1, [Math]::Ceiling($visibleButtons.Count / 2.0))
+        $visibleRowCount = [Math]::Max(1, [Math]::Ceiling($visibleButtons.Count / [double]$tileColumnCount))
         $availableButtonHeight = $buttonPanel.ClientSize.Height - 42 - (($visibleRowCount - 1) * $rowGap) - $buttonPanelBottomPadding
         $calculatedTileHeight = [Math]::Floor($availableButtonHeight / $visibleRowCount)
         $minimumTileHeight = if ($ultraCompactHeight) { 64 } elseif ($compactHeight) { 68 } else { 72 }
@@ -819,8 +821,8 @@ function Update-MainLayout {
         $buttonPanel.AutoScrollMinSize = New-Object System.Drawing.Size(0, $requiredButtonPanelHeight)
         for ($buttonIndex = 0; $buttonIndex -lt $visibleButtons.Count; $buttonIndex++) {
             $button = $visibleButtons[$buttonIndex]
-            $row = [Math]::Floor($buttonIndex / 2)
-            $column = $buttonIndex % 2
+            $row = [Math]::Floor($buttonIndex / $tileColumnCount)
+            $column = $buttonIndex % $tileColumnCount
             $button.Left = $tileMargin + ($column * ($tileWidth + $tileGap))
             $button.Top = 42 + ($row * ($tileHeight + $rowGap))
             $button.Width = $tileWidth
@@ -883,6 +885,27 @@ function Update-MainLayout {
         $openReportFolderButton.Height = 32
         $openReportFolderButton.Top = $copyLogButton.Top - $openReportFolderButton.Height - 8
 
+        $sharedResultDetailButton.Left = 16
+        $sharedResultDetailButton.Width = $activityPanel.ClientSize.Width - 32
+        $sharedResultDetailButton.Height = 32
+        $sharedResultDetailButton.Top = $openReportFolderButton.Top - $sharedResultDetailButton.Height - 8
+        $sharedResultTimeLabel.Left = 16
+        $sharedResultTimeLabel.Width = $activityPanel.ClientSize.Width - 32
+        $sharedResultTimeLabel.Height = 20
+        $sharedResultTimeLabel.Top = $sharedResultDetailButton.Top - $sharedResultTimeLabel.Height - 4
+        $sharedResultSummaryLabel.Left = 16
+        $sharedResultSummaryLabel.Width = $activityPanel.ClientSize.Width - 32
+        $sharedResultSummaryLabel.Height = 40
+        $sharedResultSummaryLabel.Top = $sharedResultTimeLabel.Top - $sharedResultSummaryLabel.Height - 2
+        $sharedResultStateLabel.Left = 16
+        $sharedResultStateLabel.Width = $activityPanel.ClientSize.Width - 32
+        $sharedResultStateLabel.Height = 22
+        $sharedResultStateLabel.Top = $sharedResultSummaryLabel.Top - $sharedResultStateLabel.Height - 2
+        $sharedResultCaption.Left = 16
+        $sharedResultCaption.Width = $activityPanel.ClientSize.Width - 32
+        $sharedResultCaption.Height = 22
+        $sharedResultCaption.Top = $sharedResultStateLabel.Top - $sharedResultCaption.Height - 4
+
         if ($progressExpanded) {
             $activityLabel.Visible = $true
             $elapsedLabel.Visible = $true
@@ -901,7 +924,7 @@ function Update-MainLayout {
             $progressLog.Left = 16
             $progressLog.Top = $progressBar.Bottom + 4
             $progressLog.Width = $activityPanel.ClientSize.Width - 32
-            $availableLogHeight = $openReportFolderButton.Top - $progressLog.Top - 8
+            $availableLogHeight = $sharedResultCaption.Top - $progressLog.Top - 8
             $progressLog.Height = [Math]::Max(30, $availableLogHeight)
         } else {
             $activityLabel.Visible = $false
@@ -920,6 +943,7 @@ function Update-MainLayout {
         Set-ModernRoundedRegion -Control $closeButton -Radius 9
         Set-ModernRoundedRegion -Control $copyLogButton -Radius 8
         Set-ModernRoundedRegion -Control $openReportFolderButton -Radius 8
+        Set-ModernRoundedRegion -Control $sharedResultDetailButton -Radius 8
     } finally {
         $script:updatingMainLayout = $false
     }
@@ -1599,6 +1623,8 @@ function Set-DashboardLanguage {
     $toolTip.SetToolTip($introAssistantButton, (Get-ToolText -Key "assistant.tooltip" -Culture $Culture))
     $introDetailButton.Text = Get-ToolText -Key "app.about" -Culture $Culture
     $activityPanelCaption.Text = Get-ToolText -Key "dashboard.activity" -Culture $Culture
+    $sharedResultCaption.Text = Get-ToolText -Key "sharedScan.caption" -Culture $Culture
+    $sharedResultDetailButton.Text = Get-ToolText -Key "sharedScan.viewDetails" -Culture $Culture
     $sidebarBrand.Text = Get-ToolText -Key "dashboard.sidebar.brand" -Culture $Culture
     Set-DashboardSidebarBrandFont
     foreach ($navButton in $sidebarNavButtons) {
@@ -1668,6 +1694,9 @@ function Set-DashboardLanguage {
     }
     Set-DashboardSection -Section $script:dashboardSection
     if (Get-Command Update-RoleWorkspaceChrome -ErrorAction SilentlyContinue) { Update-RoleWorkspaceChrome }
+    if (Get-Command Update-SharedScanResultDisplay -ErrorAction SilentlyContinue) {
+        [void](Update-SharedScanResultDisplay -Mode $(if ($script:sharedScanDisplayMode) { [string]$script:sharedScanDisplayMode } else { 'All' }))
+    }
     Update-DashboardOfflineUi
     Set-DashboardTheme -Mode $script:dashboardTheme
     Update-MainLayout
@@ -1817,6 +1846,10 @@ function Set-DashboardTheme {
     $buttonPanel.BackColor = $surface
     $activityPanel.BackColor = $surface
     $activityPanelCaption.ForeColor = $primary
+    $sharedResultCaption.ForeColor = $primary
+    $sharedResultStateLabel.ForeColor = $text
+    $sharedResultSummaryLabel.ForeColor = $text
+    $sharedResultTimeLabel.ForeColor = $muted
     $menuCaption.ForeColor = $primary
     $progressCaption.ForeColor = $primary
     $elapsedLabel.ForeColor = $muted
@@ -1830,6 +1863,8 @@ function Set-DashboardTheme {
     $copyLogButton.ForeColor = $text
     $openReportFolderButton.BackColor = $surface
     $openReportFolderButton.ForeColor = $text
+    $sharedResultDetailButton.BackColor = $surface
+    $sharedResultDetailButton.ForeColor = $text
     $themeButton.BackColor = $surface
     $themeButton.ForeColor = $text
     $themeButton.Text = Get-ToolText -Key $(if ($dark) { "app.theme.light" } else { "app.theme.dark" }) -Culture $script:dashboardCulture
@@ -1910,7 +1945,7 @@ function Set-DashboardAssistantButtonHighlight {
 
 function Complete-DashboardThemeInitialization {
     param([ValidateSet("Light", "Dark")][string]$Mode)
-    foreach ($actionButton in @($introAssistantButton, $introDetailButton, $themeButton, $offlineButton, $openReportFolderButton, $copyLogButton, $stopButton, $closeButton)) {
+    foreach ($actionButton in @($introAssistantButton, $introDetailButton, $themeButton, $offlineButton, $openReportFolderButton, $copyLogButton, $sharedResultDetailButton, $stopButton, $closeButton)) {
         Set-ToolUiActionButtonVisual -Button $actionButton -Mode $Mode
     }
     Set-DashboardAssistantButtonHighlight -Mode $Mode

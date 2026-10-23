@@ -27,9 +27,11 @@ $extractRoot = Join-Path $testRoot 'extract'
 New-Item -ItemType Directory -Path $reportRoot,$backupDirectory,$extractRoot -Force | Out-Null
 
 try {
+    $currentMachineBinding = Get-ToolResultMachineBinding
     $previousReport = [pscustomobject][ordered]@{
         SchemaVersion='1.6'; ReportSchemaVersion='1.6'; ReportKind='InventoryAndLicense'; ToolVersion='5.0'
         ToolName='VietLicenSure'; CreatedAt='2026-08-31T10:00:00+07:00'; Mode='All'; Redacted=$true
+        MachineBinding=$currentMachineBinding; ComputerName=[string]$env:COMPUTERNAME
         WindowsConclusionCode='ActivatedEntitlementUnverified'; WindowsConclusion='Activated; entitlement not verified.'
         OfficeConclusionCode='NotDetected'; OfficeConclusion='Office not detected.'
         DetailedInventory=[pscustomobject][ordered]@{
@@ -45,6 +47,7 @@ try {
     $latestReport = [pscustomobject][ordered]@{
         SchemaVersion='1.6'; ReportSchemaVersion='1.6'; ReportKind='InventoryAndLicense'; ToolVersion='5.0'
         ToolName='VietLicenSure'; CreatedAt='2026-09-01T10:00:00+07:00'; Mode='All'; Redacted=$true
+        MachineBinding=$currentMachineBinding; ComputerName=[string]$env:COMPUTERNAME
         WindowsConclusionCode='NotLicensed'; WindowsConclusion='Windows is not licensed.'
         OfficeConclusionCode='NotDetected'; OfficeConclusion='Office not detected.'
         DetailedInventory=[pscustomobject][ordered]@{

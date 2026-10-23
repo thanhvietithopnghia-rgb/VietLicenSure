@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-22`
+Ngày build kỹ thuật hiện hành: `2026-10-23`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `22/10/2026`
+Nội dung cập nhật đến: `23/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,9 +35,11 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 22/10/2026
+## Cập nhật hiện hành ngày 23/10/2026
 
 - **Giao diện theo vai trò:** khi mở ứng dụng, người dùng chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cả ba dùng chung giao diện Windows, engine và dữ liệu hiện hành; dashboard chỉ hiển thị đúng chức năng của vai trò đã chọn. Chọn vai trò không cấp quyền quản trị và không thay đổi nguyên tắc Offline.
+
+- **Kết quả dùng chung theo máy:** vai trò Cá nhân hiển thị các tác vụ theo một cột, còn tiến trình, trạng thái và tóm tắt kết quả nằm ngay bên phải; nút Xem chi tiết mở báo cáo HTML. Mỗi máy/phạm vi chỉ có một kết quả hiện hành dùng chung giữa ba vai trò. Khi kết quả còn mới, lần kiểm tra sau hiển thị ngay baseline rồi chạy đối chiếu Quick gia tăng; chỉ quét toàn phần khi baseline thiếu, cũ, khác build/nguồn hoặc không khớp máy. Tác vụ trùng đang chờ/chạy bị chặn fail-closed.
 
 - **Quy trình theo từng máy và theo dõi Agent:** liên kết quét, đánh giá, xử lý có xác nhận, kiểm tra lại và báo cáo; hiển thị trạng thái/lỗi tác vụ, ngăn lệnh trùng, thử lại có kiểm soát và giữ kết quả khi mất kết nối. Đã kiểm localhost phục hồi inventory; bản mới vẫn cần QA trên EXE đã ký trước khi phát hành.
 

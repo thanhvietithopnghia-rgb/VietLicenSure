@@ -84,6 +84,9 @@ function Show-RoleWorkspaceChooser {
     $script:workspaceRole=$selected
     Update-RoleWorkspaceChrome
     Set-DashboardSection -Section 'Overview'
+    if (Get-Command Update-SharedScanResultDisplay -ErrorAction SilentlyContinue) {
+        [void](Update-SharedScanResultDisplay -Mode $(if ($script:sharedScanDisplayMode) { [string]$script:sharedScanDisplayMode } else { 'All' }))
+    }
 }
 
 function Initialize-RoleWorkspaces {
