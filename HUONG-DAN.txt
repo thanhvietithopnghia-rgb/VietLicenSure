@@ -66,7 +66,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Bản Official Self-Signed chỉ được công bố khi đúng signer tự ký đã ghim, RFC3161 timestamp, provenance CMS, source commit sạch và bộ verifier/artifact-bound QA đều đạt; nếu chuyển public-CA/EV/Store phải tạo chuỗi phát hành mới.
 - Catalog có trạng thái độ mới; plugin bên thứ ba chỉ dùng metadata khai báo đã ký với fingerprint nhà phát hành được ghim.
 - Có ba mức Quick/Standard/Deep, giao diện dark/light theo hệ thống, PerMonitorV2 DPI và xuất fleet an toàn cho quản trị doanh nghiệp.
-- Khi mở ứng dụng, người dùng bắt buộc chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cá nhân dùng web cục bộ; Helpdesk dùng các chức năng desktop và Quản lý giấy phép Windows/Office; ITAM/SAM dùng kiểm kê, báo cáo và Quản lý doanh nghiệp Máy chủ/Máy trạm. Chọn vai trò chỉ thay đổi giao diện, không cấp thêm quyền hệ thống.
+- Khi mở ứng dụng, người dùng bắt buộc chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cả ba dùng chung giao diện Windows và dữ liệu hiện hành: Cá nhân chỉ thấy kiểm tra đọc/báo cáo; Helpdesk có tác vụ hỗ trợ và Quản lý giấy phép Windows/Office; ITAM/SAM có kiểm kê, báo cáo và Quản lý doanh nghiệp Máy chủ/Máy trạm. Chọn vai trò chỉ thay đổi phạm vi hiển thị, không cấp thêm quyền hệ thống.
 - Mục Khắc phục có năm chức năng riêng: Windows, Microsoft Office, phần mềm khác, Khôi phục key OEM và Quản lý giấy phép; ba chức năng khắc phục mở thẳng đúng màn hình và khóa phạm vi từ lúc quét đến hậu kiểm.
 
 - Launcher và manifest nguồn gốc kiểm tra chữ ký, chứng thư, metadata và Build ID. Nếu bản chạy bị sửa hoặc không xác minh được, VietLicenSure cảnh báo và chặn cập nhật/thao tác thay đổi hệ thống theo nguyên tắc fail-closed.
@@ -380,7 +380,7 @@ Nếu key không khớp edition, Windows có thể từ chối. Không dùng key
 
 ## Quản lý giấy phép
 
-Chức năng được phân theo vai trò nhưng dùng chung dữ liệu hiện hành. **IT Helpdesk** mở quản lý Windows/Office, nâng cấp phiên bản, thay đổi giấy phép và lưu hồ sơ chứng từ. **ITAM/SAM** mở **Quản lý doanh nghiệp** gồm Máy chủ/Máy trạm, tác vụ Agent và báo cáo đội máy. Cá nhân dùng web cục bộ để kiểm tra và xem báo cáo, không nhận quyền quản trị. VietLicenSure không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
+Chức năng được phân theo vai trò nhưng dùng chung giao diện Windows, engine và dữ liệu hiện hành. **Cá nhân** chỉ thấy kiểm tra đọc và báo cáo. **IT Helpdesk** mở quản lý Windows/Office, nâng cấp phiên bản, thay đổi giấy phép và lưu hồ sơ chứng từ. **ITAM/SAM** mở **Quản lý doanh nghiệp** gồm Máy chủ/Máy trạm, tác vụ Agent và báo cáo đội máy. Chọn vai trò không cấp quyền quản trị. VietLicenSure không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
 
 ### IT Helpdesk: Windows, Office và hồ sơ chứng từ
 

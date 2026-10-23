@@ -27,7 +27,7 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
 ### Tóm tắt cốt lõi giữa hai thế hệ
 
-**v4.9 → v5.0:** v5.0 kế thừa nền nhận diện và bằng chứng của v4.9, rồi hợp nhất kiểm tra, khắc phục, báo cáo và quản lý theo ba vai trò Cá nhân / IT Helpdesk / ITAM-SAM dùng chung dữ liệu. Bản mới bổ sung web Cá nhân cục bộ, quản lý giấy phép Windows/Office cho Helpdesk, Máy chủ/Máy trạm cho ITAM/SAM, Trợ lý Offline, Dry Run/backup/UAC/rollback và báo cáo đa định dạng. Offline vẫn là mặc định; khi người dùng chủ động bật Online, phần mềm cập nhật catalog ký số trước rồi kiểm tra phiên bản ứng dụng nhưng không tự tải/cài, quét hay báo cáo; lần mở sau trở lại Offline.
+**v4.9 → v5.0:** v5.0 kế thừa nền nhận diện và bằng chứng của v4.9, rồi hợp nhất kiểm tra, khắc phục, báo cáo và quản lý theo ba vai trò Cá nhân / IT Helpdesk / ITAM-SAM trên một giao diện Windows, engine và dữ liệu hiện hành. Bản mới bổ sung lọc chức năng theo vai trò, quản lý giấy phép Windows/Office cho Helpdesk, Máy chủ/Máy trạm cho ITAM/SAM, Trợ lý Offline, Dry Run/backup/UAC/rollback và báo cáo đa định dạng. Offline vẫn là mặc định; khi người dùng chủ động bật Online, phần mềm cập nhật catalog ký số trước rồi kiểm tra phiên bản ứng dụng nhưng không tự tải/cài, quét hay báo cáo; lần mở sau trở lại Offline.
 
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
 

@@ -66,7 +66,7 @@ You do not need source access, configuration files, or technical documentation t
 - Official Self-Signed requires the exact pinned self-issued signer, RFC3161 timestamp, valid CMS provenance, a clean source commit, and fully passing verifier/artifact-bound QA. A future public-CA/EV/Store channel requires a new release chain.
 - Catalog freshness is explicit, and third-party plugins accept only signed declarative metadata from pinned publisher fingerprints.
 - Quick, Standard, and Deep scans, system-aware dark/light themes, PerMonitorV2 DPI, and safe fleet exports support larger deployments.
-- Startup requires one of three workspaces: Personal, IT Helpdesk, or ITAM/SAM. Personal uses a local web UI; Helpdesk uses desktop functions and Windows/Office License management; ITAM/SAM uses inventory, reporting, and Enterprise management for Server/Workstation. A workspace changes presentation only and never grants operating-system permissions.
+- Startup requires one of three roles: Personal, IT Helpdesk, or ITAM/SAM. All three use the same Windows interface and current data: Personal sees only read-only checks/reports; Helpdesk gets support actions and Windows/Office License management; ITAM/SAM gets inventory, reporting, and Enterprise management for Server/Workstation. A role changes visible scope only and never grants operating-system permissions.
 - Remediation contains five separate entries: Windows, Microsoft Office, other software, OEM key recovery, and License management. The first three open their scope-specific screen directly and keep that scope locked through scan, backup, confirmation, and post-check.
 
 - The launcher and provenance manifest verify the signature, pinned certificate, metadata, and Build ID. A modified or unverifiable build is warned about and fails closed for updates and system-changing actions.
@@ -324,7 +324,7 @@ Do not use an OEM key from another computer or force an unsupported edition chan
 
 ## License management
 
-The selected workspace changes the presentation while retaining one current data workflow. **IT Helpdesk** opens Windows/Office management, edition upgrades, license changes, and local evidence storage. **ITAM/SAM** opens **Enterprise management** for Server/Workstation, Agent jobs, and fleet reports. Personal uses the local web UI for checks and reports and gains no administrative permissions. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
+The selected role filters one native Windows interface while retaining one engine and current-data workflow. **Personal** sees only read-only checks and reports. **IT Helpdesk** opens Windows/Office management, edition upgrades, license changes, and local evidence storage. **ITAM/SAM** opens **Enterprise management** for Server/Workstation, Agent jobs, and fleet reports. Choosing a role grants no administrative permissions. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
 
 **Evidence, entitlements, and License Advisor**
 

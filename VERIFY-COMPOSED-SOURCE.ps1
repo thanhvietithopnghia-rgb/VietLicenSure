@@ -12,7 +12,6 @@ function Get-VietLicenSureSourcePartNames {
                 'Dashboard-OnlineUpdate.ps1',
                 'Dashboard-CleanupWorkflow.ps1',
                 'Dashboard-AssuranceCenter.ps1',
-                'Tool-PersonalWorkspace.ps1',
                 'Dashboard-RoleWorkspaces.ps1'
             )
         }

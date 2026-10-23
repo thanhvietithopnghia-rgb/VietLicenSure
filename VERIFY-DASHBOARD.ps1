@@ -1093,12 +1093,10 @@ if ([string]$viCatalog.'menu.7.description' -ne 'Kiểm tra key firmware; chỉ 
 if ([string]$viCatalog.'about.card.config.body' -notmatch 'Quick, Standard và Deep' -or
     [string]$viCatalog.'about.card.remediation.body' -notmatch 'Dry Run' -or
     [string]$viCatalog.'about.card.report.body' -notmatch 'HTML/PDF/JSON/XML/CSV' -or
-    [string]$viCatalog.'about.card.assurance.body' -notmatch 'web Cá nhân cục bộ' -or
-    [string]$viCatalog.'about.card.assurance.body' -notmatch 'Helpdesk và ITAM/SAM dùng chung dữ liệu' -or
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'ba vai trò dùng chung giao diện Windows và dữ liệu' -or
     [string]$viCatalog.'about.card.assurance.body' -notmatch 'cập nhật catalog ký số rồi kiểm tra phiên bản nhưng không tự cài' -or
     [string]$viCatalog.'about.card.assurance.body' -notmatch 'Agent giữ ghép nối qua reboot' -or
-    [string]$enCatalog.'about.card.assurance.body' -notmatch 'local Personal web UI' -or
-    [string]$enCatalog.'about.card.assurance.body' -notmatch 'Helpdesk and ITAM/SAM share one data source' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'all three roles share the Windows interface and one data source' -or
     [string]$enCatalog.'about.card.assurance.body' -notmatch 'checks the application version without auto-install' -or
     [string]$enCatalog.'about.card.assurance.body' -notmatch 'Agent enrollment survives reboot') {
     Add-Failure 'Ô Năng lực trong Giới thiệu chưa phản ánh đúng chức năng v5.0 hiện tại.'

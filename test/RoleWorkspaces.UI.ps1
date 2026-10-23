@@ -10,13 +10,8 @@ function Get-ToolText{param([string]$Key,[string]$Culture) $value=$script:maps[$
 function Set-ToolWindowTheme{}
 function Show-DashboardModalDialog{param($Dialog)[void]$Dialog.ShowDialog($script:form)}
 function Set-DashboardSection{param([string]$Section)$script:lastSection=$Section}
-function Open-PersonalRoleWorkspace{$script:personalOpened=$true}
-function Stop-ToolPersonalWorkspace{}
 . (Join-Path $SourceDirectory 'Dashboard-RoleWorkspaces.ps1')
-# Replace the real browser launcher after importing the production functions;
-# this test exercises chooser/layout/selection without starting a browser.
-function Open-PersonalRoleWorkspace{$script:personalOpened=$true}
-$script:dashboardTheme='Light';$script:personalBridge=$null
+$script:dashboardTheme='Light'
 $script:form=New-Object Windows.Forms.Form
 $script:form.ShowInTaskbar=$false;$script:form.Opacity=0;$script:form.Size=New-Object Drawing.Size(900,650)
 $script:fontNormal=New-Object Drawing.Font('Segoe UI',9)
@@ -26,7 +21,7 @@ try{
  foreach($culture in @('vi-VN','en-US')){
   $script:dashboardCulture=$culture
   foreach($role in @('personal','helpdesk','itam')){
-   $script:personalOpened=$false;$script:lastSection=''
+   $script:lastSection=''
    $timer=New-Object Windows.Forms.Timer;$timer.Interval=180
    $timer.Add_Tick({
     $dialog=@([Windows.Forms.Application]::OpenForms|Where-Object{$_.Owner -eq $script:form -and $_ -ne $script:form})|Select-Object -First 1
@@ -48,8 +43,8 @@ try{
    $timer.Start();Show-RoleWorkspaceChooser;$timer.Dispose()
    if($script:workspaceRole -cne $role){throw "Selected role mismatch: $culture/$role"};$checks++
    if($script:lastSection -cne 'Overview'){throw "Role did not return to overview: $culture/$role"};$checks++
-   if($role -eq 'personal' -and -not $script:personalOpened){throw "Personal workspace not opened: $culture"};$checks++
-   $results+=[pscustomobject]@{Culture=$culture;Role=$role;Selected=$script:workspaceRole;PersonalOpened=[bool]$script:personalOpened;Passed=$true}
+   if($script:form.WindowState -eq [Windows.Forms.FormWindowState]::Minimized){throw "Native dashboard was minimized: $culture/$role"};$checks++
+   $results+=[pscustomobject]@{Culture=$culture;Role=$role;Selected=$script:workspaceRole;NativeDashboard=$true;Passed=$true}
   }
  }
  $results|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $OutputDirectory 'result.json') -Encoding UTF8

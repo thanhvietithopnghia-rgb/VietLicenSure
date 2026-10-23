@@ -11,15 +11,14 @@ function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
 $groups = [ordered]@{
     'Giao-Dien.ps1' = [ordered]@{
         MaximumLines = 2000
-        TotalFunctions = 192
+        TotalFunctions = 183
         Modules = [ordered]@{
             'Dashboard-Core.ps1' = 38
             'Dashboard-Execution.ps1' = 43
             'Dashboard-OnlineUpdate.ps1' = 17
             'Dashboard-CleanupWorkflow.ps1' = 58
             'Dashboard-AssuranceCenter.ps1' = 21
-            'Tool-PersonalWorkspace.ps1' = 4
-            'Dashboard-RoleWorkspaces.ps1' = 11
+            'Dashboard-RoleWorkspaces.ps1' = 6
         }
     }
     'windows-license-compliance-cleanup.ps1' = [ordered]@{

@@ -25,7 +25,7 @@ Public product page:
 
 ### Core summary across the two generations
 
-**v4.9 → v5.0:** v5.0 retains the recognition/evidence foundation of v4.9 and unifies inspection, remediation, reporting, and management across Personal / IT Helpdesk / ITAM-SAM workspaces backed by one data source. It adds a local Personal web UI, Windows/Office license management for Helpdesk, Server/Workstation management for ITAM/SAM, an Offline Assistant, Dry Run/backup/UAC/rollback, and multi-format reports. Offline remains the default; explicitly enabling Online refreshes the signed catalog first and then checks application-version availability without automatically downloading/installing, scanning, or reporting, and the next launch returns to Offline.
+**v4.9 → v5.0:** v5.0 retains the recognition/evidence foundation of v4.9 and unifies inspection, remediation, reporting, and management across Personal / IT Helpdesk / ITAM-SAM roles on one Windows interface, engine, and current data source. It adds role-filtered functions, Windows/Office license management for Helpdesk, Server/Workstation management for ITAM/SAM, an Offline Assistant, Dry Run/backup/UAC/rollback, and multi-format reports. Offline remains the default; explicitly enabling Online refreshes the signed catalog first and then checks application-version availability without automatically downloading/installing, scanning, or reporting, and the next launch returns to Offline.
 
 `Unverified` does not mean that software violates its licence.
 

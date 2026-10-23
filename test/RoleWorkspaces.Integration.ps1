@@ -1,50 +1,29 @@
-﻿$ErrorActionPreference='Stop'
+$ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
-. (Join-Path $root 'Tool-PersonalWorkspace.ps1')
 . (Join-Path $root 'Dashboard-RoleWorkspaces.ps1')
-$script:dashboardCulture='en-US'
 $checks=0
 function Check($condition,$message) { if(-not $condition){throw $message}; $script:checks++ }
-Check (-not (Test-ToolPersonalWorkspaceAllowed $false)) 'Explicit choice required'
-Check (-not (Test-ToolPersonalWorkspaceAllowed $true '0.0.0.0')) 'Wildcard denied'
-Check (-not (Test-ToolPersonalWorkspaceAllowed $true '192.168.1.2')) 'LAN denied'
-Check (Test-ToolPersonalWorkspaceAllowed $true) 'Loopback permitted'
-Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 6)) 'ITAM excludes cleanup'
-Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'QuickAction' 6) 'Helpdesk retains gated cleanup'
-Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'QuickAction' 6)) 'Unselected workspace exposes no actions'
-Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'ReportAction' 0)) 'Unselected workspace exposes no reports'
-Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 8)) 'Personal excludes Enterprise management'
-Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 5)) 'Personal uses the local web instead of duplicate desktop actions'
-Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'ReportAction' 0)) 'Personal reports are opened from the local web'
-Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 9)) 'ITAM excludes forensic scan'
-Check (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 8) 'ITAM owns Enterprise Server/Client management'
-Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'QuickAction' 8) 'Helpdesk retains License management entry'
-$fake=[pscustomobject]@{HasReport=$true;Latest=[pscustomobject]@{CreatedAt=(Get-Date);Path='secret';Report='private'};HighCount=1;MediumCount=2;LowCount=3;Items=@('secret')}
-$state=ConvertTo-RoleResultSnapshot $fake 'running' $true
-Check ($state.hasReport -and $state.busy -and $state.coverage -eq 'unknown') 'Existing report not proof of completed scan'
-Check (($state | ConvertTo-Json -Depth 5) -notmatch 'secret|private|Path|Items') 'Safe projection'
-$assets=Get-PersonalWorkspaceAssets
-$bridge=$null
-Add-Type -AssemblyName System.Net.Http
-$handler=New-Object Net.Http.HttpClientHandler; $handler.UseProxy=$false
-$client=New-Object Net.Http.HttpClient($handler)
-try {
-    $bridge=Start-ToolPersonalWorkspace @assets
-    $css=$client.GetAsync($bridge.Origin+'/app.css').GetAwaiter().GetResult()
-    Check ($css.IsSuccessStatusCode -and $css.Content.Headers.ContentType.MediaType -eq 'text/css') 'Stylesheet fixed route'
-    $css.Dispose()
-    Set-ToolPersonalWorkspaceSnapshot $bridge $state -Ready $true -Busy $false
-    $token=[uri]::UnescapeDataString(([uri]$bridge.LaunchUri).Fragment.Substring(1))
-    $request=New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post,($bridge.Origin+'/api/scan-all'))
-    [void]$request.Headers.TryAddWithoutValidation('X-VietLicenSure-Session',$token)
-    [void]$request.Headers.TryAddWithoutValidation('Origin',$bridge.Origin)
-    $reply=$client.SendAsync($request).GetAwaiter().GetResult()
-    Check ([int]$reply.StatusCode -eq 202) 'Authenticated request queued'
-    Check ((Receive-ToolPersonalWorkspaceAction $bridge) -eq 'scan-all') 'UI dispatcher receives scoped scan'
-    Check ($null -eq (Receive-ToolPersonalWorkspaceAction $bridge)) 'Request consumed once'
-    $reply.Dispose();$request.Dispose()
-} finally {
-    if($bridge){Stop-ToolPersonalWorkspace $bridge}
-    $client.Dispose(); $handler.Dispose()
-}
-Write-Output "Role integration contracts: $checks PASS. Desktop engine/browser/standard-user proof pending."
+
+Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'QuickAction' 1)) 'Unselected workspace exposes a quick action'
+Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'ReportAction' 0)) 'Unselected workspace exposes a report'
+
+foreach($number in 1..5){Check (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' $number) "Personal misses native action $number"}
+foreach($number in @(6,7,8,9,10,11,12,13,14)){Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' $number)) "Personal exposes privileged/support action $number"}
+Check (Test-RoleWorkspaceActionVisible 'personal' 'ReportAction' 0) 'Personal misses native reports'
+
+foreach($number in 1..14){Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'QuickAction' $number) "Helpdesk misses action $number"}
+Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'ReportAction' 0) 'Helpdesk misses reports'
+
+foreach($number in @(1,3,4,5,8,10)){Check (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' $number) "ITAM misses action $number"}
+foreach($number in @(2,6,7,9,11,12,13,14)){Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' $number)) "ITAM exposes out-of-scope action $number"}
+Check (Test-RoleWorkspaceActionVisible 'itam' 'ReportAction' 0) 'ITAM misses reports'
+
+$roleSource=Get-Content -LiteralPath (Join-Path $root 'Dashboard-RoleWorkspaces.ps1') -Raw -Encoding UTF8
+$entrySource=Get-Content -LiteralPath (Join-Path $root 'Giao-Dien.ps1') -Raw -Encoding UTF8
+$buildSource=Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8
+Check ($roleSource -notmatch 'PersonalWorkspace|personalBridge|LaunchUri|Start-Process') 'Role module still launches a Personal browser'
+Check ($entrySource -notmatch 'Tool-PersonalWorkspace') 'Dashboard still imports the Personal web transport'
+Check ($buildSource -notmatch 'Tool-PersonalWorkspace') 'Build still packages the Personal web transport'
+Check (-not (Test-Path -LiteralPath (Join-Path $root 'Tool-PersonalWorkspace.ps1'))) 'Personal web transport source still exists'
+
+[pscustomobject]@{Passed=$true;Checks=$checks;Mode='Native role-filtered WinForms only'}|ConvertTo-Json -Compress

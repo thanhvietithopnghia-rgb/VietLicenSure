@@ -37,7 +37,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 
 ## Cập nhật hiện hành ngày 22/10/2026
 
-- **Không gian theo vai trò:** trang tổng quan cho phép chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cá nhân dùng web cục bộ có xác thực trên 127.0.0.1 và chung engine/kho kết quả; Helpdesk và ITAM/SAM dùng giao diện Windows theo phạm vi vai trò. Chọn vai trò không cấp quyền quản trị; đóng tab không hủy tác vụ.
+- **Giao diện theo vai trò:** khi mở ứng dụng, người dùng chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cả ba dùng chung giao diện Windows, engine và dữ liệu hiện hành; dashboard chỉ hiển thị đúng chức năng của vai trò đã chọn. Chọn vai trò không cấp quyền quản trị và không thay đổi nguyên tắc Offline.
 
 - **Quy trình theo từng máy và theo dõi Agent:** liên kết quét, đánh giá, xử lý có xác nhận, kiểm tra lại và báo cáo; hiển thị trạng thái/lỗi tác vụ, ngăn lệnh trùng, thử lại có kiểm soát và giữ kết quả khi mất kết nối. Đã kiểm localhost phục hồi inventory; bản mới vẫn cần QA trên EXE đã ký trước khi phát hành.
 

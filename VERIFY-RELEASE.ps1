@@ -702,7 +702,7 @@ foreach ($script in Get-ChildItem -LiteralPath $sourceDirectoryFull -Filter '*.p
 $payloadFiles = @(
     'approved-kms-servers.txt','HUONG-DAN.txt','USER-GUIDE-en-US.md','FAQ-NGUOI-DUNG-MOI-v5.0.md','FIRST-RUN-FAQ-v5.0.md','LICH-SU-PHIEN-BAN.txt','VERSION-HISTORY-en-US.md',
     'LICENSE-NOTICE.txt','SOURCE-POLICY-v5.0.md','Tool-Provenance.ps1','OFFICIAL-PROVENANCE-v1.json','OFFICIAL-PROVENANCE-v1.json.p7s',
-    'Giao-Dien.ps1','Dashboard-Core.ps1','Dashboard-Execution.ps1','Dashboard-OnlineUpdate.ps1','Dashboard-CleanupWorkflow.ps1','Dashboard-AssuranceCenter.ps1','Tool-PersonalWorkspace.ps1','Dashboard-RoleWorkspaces.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
+    'Giao-Dien.ps1','Dashboard-Core.ps1','Dashboard-Execution.ps1','Dashboard-OnlineUpdate.ps1','Dashboard-CleanupWorkflow.ps1','Dashboard-AssuranceCenter.ps1','Dashboard-RoleWorkspaces.ps1','kiem-tra-cau-hinh-ban-quyen.ps1','VietLicenSure-icon.svg','VietLicenSure.cmd',
     'Tool-Runtime.ps1','Tool-ElevatedBridge.ps1','Tool-DataLifecycle.ps1','Tool-Compatibility.ps1','compatibility-catalog-v1.0.json','Tool-Capabilities.ps1',
     'Tool-ScanOptimization.ps1',
     'Tool-Logging.ps1','Tool-ModuleContract.ps1','Tool-UiTheme.ps1','Tool-DashboardPresentation.ps1','Tool-Localization.ps1',
