@@ -205,6 +205,7 @@ function Complete-SoftwareCatalogOnlineUpdate {
             }))
             Start-Cleanup -ScanScope $resumeScope
         }
+        if ($wasBackgroundSync) { Invoke-PendingOnlineSessionWork }
         return
     }
 
@@ -230,11 +231,13 @@ function Request-OnlineSessionRefresh {
 
     # A fresh launch remains Offline.  This queue is populated only after the
     # user explicitly enables Online for the current session.  This action is
-    # catalog-only: it never starts a scan, report, privacy prompt, application
-    # update check, or any other follow-up task.
+    # It refreshes the signed catalog first, then checks application-version
+    # availability.  Neither step downloads/installs an application update,
+    # starts a scan/report, or opens a report-privacy prompt.
     $script:softwareCatalogRefreshPending = $true
+    $script:applicationUpdateCheckPending = $true
     [void](Write-ToolLog -Level "AUDIT" -Event "OnlineMode.RefreshQueued" -Message (Get-DashboardText "online.refresh.queued") -Data ([ordered]@{
-        Catalog=$true; ApplicationVersion=$false; Scan=$false; Report=$false; SessionOnly=$true; SilentInstall=$false
+        Catalog=$true; ApplicationVersion=$true; RefreshOrder=@('SignedCatalog','ApplicationVersionCheck'); Scan=$false; Report=$false; SessionOnly=$true; SilentInstall=$false
     }))
     Invoke-PendingOnlineSessionWork
 }
@@ -243,6 +246,7 @@ function Invoke-PendingOnlineSessionWork {
     if ($script:offlineMode -or [string]$env:TOOL_OFFLINE_MODE -ne "0" -or
         -not (Test-ToolNetworkActionAllowed -Scope Internet)) {
         $script:softwareCatalogRefreshPending = $false
+        $script:applicationUpdateCheckPending = $false
         return
     }
     if (($script:activeProcess -and -not $script:activeProcess.HasExited) -or
@@ -252,6 +256,10 @@ function Invoke-PendingOnlineSessionWork {
     if ($script:softwareCatalogRefreshPending) {
         $script:softwareCatalogRefreshPending = $false
         Start-SoftwareCatalogOnlineUpdate -ConsentAlreadyGranted -BackgroundSync
+        return
+    }
+    if ($script:applicationUpdateCheckPending) {
+        Start-ApplicationUpdateCheck
         return
     }
 }

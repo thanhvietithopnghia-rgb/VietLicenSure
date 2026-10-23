@@ -1231,6 +1231,10 @@ if ($gui) {
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Enable-DashboardOnlineForCurrentCatalogSession'
         }, $true)
+        $onlineQueueAst = $gui.Ast.Find({
+            param($node)
+            $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Request-OnlineSessionRefresh'
+        }, $true)
         $cleanupScreenAst = $gui.Ast.Find({
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Show-CleanupFunctionScreen'
@@ -1241,6 +1245,10 @@ if ($gui) {
             -not $onlineEnableAst -or $onlineEnableAst.Extent.Text -notmatch 'Set-ToolOfflineModePreference\s+-OfflineMode\s+\$false' -or
             $onlineEnableAst.Extent.Text -notmatch 'NextLaunchMode=Offline' -or
             $onlineEnableAst.Extent.Text -match 'applicationUpdateCheckPending\s*=\s*\$true' -or
+            -not $onlineQueueAst -or
+            $onlineQueueAst.Extent.Text -notmatch 'softwareCatalogRefreshPending\s*=\s*\$true' -or
+            $onlineQueueAst.Extent.Text -notmatch 'applicationUpdateCheckPending\s*=\s*\$true' -or
+            $onlineQueueAst.Extent.Text -notmatch "RefreshOrder=@\('SignedCatalog','ApplicationVersionCheck'\)" -or
             -not $onlineCompleteAst -or
             $onlineCompleteAst.Extent.Text -notmatch '(?s)if\s*\(\$resumeCleanup\).+?Start-Cleanup\s+-ScanScope\s+\$resumeScope' -or
             $onlineCompleteAst.Extent.Text -notmatch 'PreviewRequired=\$true;\s*SeparateConfirmationRequired=\$true;\s*AutoRemediation=\$false;\s*Report=\$false' -or
@@ -1250,7 +1258,7 @@ if ($gui) {
             $cleanupScreenAst.Extent.Text -notmatch '\$selectedScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
             $cleanupScreenAst.Extent.Text -notmatch '\$autoScope\s*=\s*if\s*\(\[string\]::IsNullOrWhiteSpace\(\$FixedScope\)\)' -or
             $cleanupScreenAst.Extent.Text -notmatch 'Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+\$selectedScope\s+-ResumeCleanup') {
-            Fail 'Luồng Online chưa tách đúng: công tắc chung catalog-only; Khắc phục cập nhật catalog rồi quét lại/xem trước, không tự xử lý hoặc báo cáo.'
+            Fail 'Luồng Online chưa tách đúng: công tắc chung phải cập nhật catalog rồi kiểm phiên bản; Khắc phục cập nhật catalog rồi quét lại/xem trước, không tự xử lý hoặc báo cáo.'
         }
     } catch {
         Fail "Không chạy được fixture ánh xạ ba ô tích phạm vi: $($_.Exception.Message)"

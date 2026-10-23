@@ -1,11 +1,11 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 15, 2026; the public version remains v5.0.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 22, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — updated October 15, 2026 (first released September 8, 2026)
+## v5.0 — updated October 22, 2026 (first released September 8, 2026)
 
 - **Neutral publisher:** the EXE now uses the self-issued Authenticode signer `CN=Thanh Viet - VietLicenSure Code Signing`, removing the historical v4.9 product name from Publisher. The historical content-CMS signer remains a separate trust anchor that authorizes the new EXE signer; the channel remains Official Self-Signed, not public-CA/EV/Store-signed, so SmartScreen may still warn.
 
@@ -25,7 +25,7 @@ Public product page:
 
 ### Core summary across the two generations
 
-**v4.9** concentrated on the recognition foundation: correlating multiple inventory sources, grading evidence, avoiding unsupported conclusions, and binding uninstall/remediation to the exact selected identity. **v5.0** retains that foundation and unifies inspection, remediation, reporting, and management in one dashboard with DPI/Light/Dark/High Contrast support, an Offline Assistant, and Local/Server/Workstation management. Remediation is separated into Windows, Office, and third-party scopes with Dry Run, scope locking, backup, UAC, post-checks, and fail-closed rollback; reporting expands to HTML/PDF/JSON/XML/CSV, signed plugins, and a protected timeline. Offline remains the default; when the user explicitly enables Online for the current session, v5.0 only validates/refreshes the signed catalog and then stops—without starting a scan, report, report-privacy prompt, or application-version check—and the next launch returns to Offline.
+**v4.9 → v5.0:** v5.0 retains the recognition/evidence foundation of v4.9 and unifies inspection, remediation, reporting, and management across Personal / IT Helpdesk / ITAM-SAM workspaces backed by one data source. It adds a local Personal web UI, Windows/Office license management for Helpdesk, Server/Workstation management for ITAM/SAM, an Offline Assistant, Dry Run/backup/UAC/rollback, and multi-format reports. Offline remains the default; explicitly enabling Online refreshes the signed catalog first and then checks application-version availability without automatically downloading/installing, scanning, or reporting, and the next launch returns to Offline.
 
 `Unverified` does not mean that software violates its licence.
 

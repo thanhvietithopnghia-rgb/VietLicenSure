@@ -11,11 +11,14 @@ Check (-not (Test-ToolPersonalWorkspaceAllowed $true '192.168.1.2')) 'LAN denied
 Check (Test-ToolPersonalWorkspaceAllowed $true) 'Loopback permitted'
 Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 6)) 'ITAM excludes cleanup'
 Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'QuickAction' 6) 'Helpdesk retains gated cleanup'
-Check (Test-RoleWorkspaceActionVisible 'overview' 'QuickAction' 6) 'Overview retains all groups'
+Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'QuickAction' 6)) 'Unselected workspace exposes no actions'
+Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'ReportAction' 0)) 'Unselected workspace exposes no reports'
 Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 8)) 'Personal excludes Enterprise management'
-Check (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 5) 'Personal retains software check'
-Check (Test-RoleWorkspaceActionVisible 'personal' 'ReportAction' 0) 'Personal retains report access'
+Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'QuickAction' 5)) 'Personal uses the local web instead of duplicate desktop actions'
+Check (-not (Test-RoleWorkspaceActionVisible 'personal' 'ReportAction' 0)) 'Personal reports are opened from the local web'
 Check (-not (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 9)) 'ITAM excludes forensic scan'
+Check (Test-RoleWorkspaceActionVisible 'itam' 'QuickAction' 8) 'ITAM owns Enterprise Server/Client management'
+Check (Test-RoleWorkspaceActionVisible 'helpdesk' 'QuickAction' 8) 'Helpdesk retains License management entry'
 $fake=[pscustomobject]@{HasReport=$true;Latest=[pscustomobject]@{CreatedAt=(Get-Date);Path='secret';Report='private'};HighCount=1;MediumCount=2;LowCount=3;Items=@('secret')}
 $state=ConvertTo-RoleResultSnapshot $fake 'running' $true
 Check ($state.hasReport -and $state.busy -and $state.coverage -eq 'unknown') 'Existing report not proof of completed scan'
@@ -32,12 +35,12 @@ try {
     $css.Dispose()
     Set-ToolPersonalWorkspaceSnapshot $bridge $state -Ready $true -Busy $false
     $token=[uri]::UnescapeDataString(([uri]$bridge.LaunchUri).Fragment.Substring(1))
-    $request=New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post,($bridge.Origin+'/api/scan'))
+    $request=New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post,($bridge.Origin+'/api/scan-all'))
     [void]$request.Headers.TryAddWithoutValidation('X-VietLicenSure-Session',$token)
     [void]$request.Headers.TryAddWithoutValidation('Origin',$bridge.Origin)
     $reply=$client.SendAsync($request).GetAwaiter().GetResult()
     Check ([int]$reply.StatusCode -eq 202) 'Authenticated request queued'
-    Check ((Receive-ToolPersonalWorkspaceAction $bridge) -eq 'scan') 'UI dispatcher receives scan'
+    Check ((Receive-ToolPersonalWorkspaceAction $bridge) -eq 'scan-all') 'UI dispatcher receives scoped scan'
     Check ($null -eq (Receive-ToolPersonalWorkspaceAction $bridge)) 'Request consumed once'
     $reply.Dispose();$request.Dispose()
 } finally {

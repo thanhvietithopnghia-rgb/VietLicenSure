@@ -25,14 +25,15 @@ $results=@();$checks=0
 try{
  foreach($culture in @('vi-VN','en-US')){
   $script:dashboardCulture=$culture
-  foreach($role in @('overview','personal','helpdesk','itam')){
+  foreach($role in @('personal','helpdesk','itam')){
    $script:personalOpened=$false;$script:lastSection=''
    $timer=New-Object Windows.Forms.Timer;$timer.Interval=180
    $timer.Add_Tick({
     $dialog=@([Windows.Forms.Application]::OpenForms|Where-Object{$_.Owner -eq $script:form -and $_ -ne $script:form})|Select-Object -First 1
     if(-not $dialog){return}
     $buttons=@($dialog.Controls|ForEach-Object{$_.Controls}|Where-Object{$_ -is [Windows.Forms.Button]})
-    if($buttons.Count -ne 4){throw "Role chooser button count: $($buttons.Count)"}
+    if($buttons.Count -ne 3){throw "Role chooser button count: $($buttons.Count)"}
+    if($dialog.ControlBox){throw 'Mandatory role chooser must not expose a close button'}
     foreach($button in $buttons){
       $measured=[Windows.Forms.TextRenderer]::MeasureText($button.Text,$button.Font,(New-Object Drawing.Size(($button.ClientSize.Width-24),300)),([Windows.Forms.TextFormatFlags]::WordBreak -bor [Windows.Forms.TextFormatFlags]::NoPrefix))
       if($measured.Height -gt ($button.ClientSize.Height-4)){throw "Role text clipped: $culture/$($button.Tag)"}

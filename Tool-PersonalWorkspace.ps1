@@ -89,14 +89,15 @@ function Start-ToolPersonalWorkspace {
                 } elseif ($method -eq 'GET' -and $path -eq '/api/state') {
                     $code = 200; $body = [string]$state.Snapshot
                 } elseif ($method -eq 'POST' -and $originOk -and
-                    $path -in @('/api/scan','/api/overview','/api/results')) {
+                    $path -in @('/api/scan-all','/api/scan-hardware','/api/scan-windows','/api/scan-office','/api/scan-software','/api/reports','/api/back','/api/role','/api/network','/api/language','/api/theme','/api/about','/api/assistant')) {
                     # One bounded mailbox, locked across listener and UI threads.
                     # These are requests to the existing desktop workflow, not
                     # authorization to bypass its privacy, integrity or UAC gates.
                     [Threading.Monitor]::Enter($state.SyncRoot)
                     try {
+                        $safeUiAction = $path -in @('/api/back','/api/role','/api/network','/api/language','/api/theme','/api/about','/api/assistant')
                         if (-not $state.Ready) { $code = 503; $body = '{"error":"not_ready"}' }
-                        elseif ($state.Pending -or $state.Busy) { $code = 409; $body = '{"error":"busy"}' }
+                        elseif ($state.Pending -or ($state.Busy -and -not $safeUiAction)) { $code = 409; $body = '{"error":"busy"}' }
                         else {
                             $state.Pending = $path.Substring(5)
                             $code = 202; $body = '{"status":"queued"}'
@@ -142,7 +143,8 @@ function Receive-ToolPersonalWorkspaceAction {
     param([Parameter(Mandatory=$true)]$Bridge)
     [Threading.Monitor]::Enter($Bridge.State.SyncRoot)
     try {
-        if ($Bridge.State.Pending -and $Bridge.State.Ready -and -not $Bridge.State.Busy) {
+        $safeUiAction = [string]$Bridge.State.Pending -in @('back','role','network','language','theme','about','assistant')
+        if ($Bridge.State.Pending -and $Bridge.State.Ready -and (-not $Bridge.State.Busy -or $safeUiAction)) {
             $action = [string]$Bridge.State.Pending
             $Bridge.State.Pending = ''
             $Bridge.State.Busy = $true

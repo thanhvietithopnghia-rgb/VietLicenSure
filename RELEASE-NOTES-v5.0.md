@@ -68,7 +68,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Chuẩn hóa `Finding 1.0` và Detection Engine dùng chung cho License Advisor/Software Inventory; regression bảo đảm không đổi kết luận legacy.
 - Tạo baseline bảo mật v5.0 hiện hành và chuyển tài liệu v4.8/v4.9 vào khu archive để tách lịch sử khỏi assurance hiện tại.
 
-- Công tắc **Online** giờ chỉ tải/xác minh danh mục ký số mới nhất rồi dừng; không tự quét máy, tạo báo cáo, hỏi mức riêng tư hoặc kiểm tra/cài phiên bản ứng dụng.
+- Công tắc **Online** tải/xác minh danh mục ký số trước rồi kiểm tra phiên bản ứng dụng; không tự tải/cài bản mới, quét máy, tạo báo cáo hoặc hỏi mức riêng tư.
 
 - Bổ sung **Central Dashboard** Việt/Anh chính thức, chỉ đọc trong LAN: Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key; phiên ngắn hạn yêu cầu mã quản trị, khóa theo địa chỉ truy cập đầu tiên và API chỉ trả allow-list không chứa full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo.
 - Bổ sung **License Compliance** chính thức: License Advisor, hồ sơ quyền sử dụng/tham chiếu chứng từ lưu cục bộ, cấp phát máy/người dùng và đối chiếu Purchased–Assigned–Installed–Available; cảnh báo vượt số lượng/hết hạn và Dashboard chỉ đọc hiển thị License Assurance mà không lộ đường dẫn chứng từ hoặc định danh nhạy cảm.
@@ -79,7 +79,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Forensics tách kích hoạt kỹ thuật khỏi quyền sử dụng, không đòi KMS cho MAK, không cộng điểm từ W32Time/SPP hoặc file MAS tồn dư khi thiếu bằng chứng hoạt động.
 - Fleet đổi nhãn `Licensed` thành `Activated`, công bố quyền sử dụng chưa xác minh và phát hiện thay đổi Last5 giữa hai lần inventory mà không lưu full key.
 - Máy chủ LAN đã bật tự chạy lại cùng Windows; Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, tái dùng ClientId/secret cũ nên không cần mã ghép nối mới sau reboot. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy.
-- Mỗi phiên vẫn khởi động Offline; sau khi người dùng bật Online, VietLicenSure chỉ xác minh/cập nhật catalog ký số rồi dừng, không tự quét, tạo báo cáo, hỏi mức riêng tư, kiểm tra/cài phiên bản ứng dụng hoặc upload inventory.
+- Mỗi phiên vẫn khởi động Offline; sau khi người dùng bật Online, VietLicenSure xác minh/cập nhật catalog ký số rồi kiểm tra phiên bản, nhưng không tự tải/cài, quét, tạo báo cáo, hỏi mức riêng tư hoặc upload inventory.
 - Bộ dựng tài liệu vô hiệu hóa cache renderer cũ và khóa đúng 56 mục với một `Tổng quan/Overview`.
 
 - Thống nhất trạng thái phát hành thành **Official Self-Signed**; trạng thái nội bộ là `OfficialSelfSigned`, không còn dùng nhãn `ManagedSigned` hoặc `Pilot`.
@@ -139,7 +139,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Phần mềm trả phí, thuê bao hoặc dùng thử chưa xác minh luôn được nhắc kiểm tra giấy phép, không tự kết luận vi phạm.
 - Thành phần hệ thống, runtime, codec, extension nền, trình cài đặt, add-in, gói hỗ trợ và trình gỡ driver chỉ nằm trong kiểm kê/báo cáo, không xuất hiện ở cửa sổ xử lý.
 - Catalog Online `1.6.4.0` được rà soát ngày 11/10/2026, có 94 nhóm sản phẩm, ký CMS, kiểm tra schema và chống hạ phiên bản; bản tích hợp cũ vẫn là fallback Offline an toàn cho đến lần build kế tiếp.
-- Mỗi lần mở vẫn mặc định Offline. Sau khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure chỉ cập nhật/xác minh catalog ký số rồi dừng; không upload inventory, không tự quét/tạo báo cáo/hỏi mức riêng tư, không kiểm tra/cài phiên bản ứng dụng, không có dịch vụ nền và lần mở sau trở lại Offline.
+- Mỗi lần mở vẫn mặc định Offline. Sau khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure cập nhật/xác minh catalog ký số trước rồi kiểm tra phiên bản ứng dụng; không upload inventory, không tự tải/cài, quét/tạo báo cáo/hỏi mức riêng tư, không có dịch vụ nền và lần mở sau trở lại Offline.
 - Khắc phục tách riêng Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm.
 - Báo cáo HTML/PDF/JSON/XML được tạo cục bộ và che định danh phần cứng trong bản chia sẻ mặc định.
 - Hỗ trợ giao diện responsive, DPI cao, Light/Dark, timeline, plugin khai báo có chữ ký, CLI headless và quản trị nhiều máy.

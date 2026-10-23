@@ -48,6 +48,9 @@ if (-not (Test-Path -LiteralPath $offlinePolicyHelper -PathType Leaf) -or -not (
 }
 . $offlinePolicyHelper
 . $compatibilityHelper
+$enterpriseHelper = Join-Path $PSScriptRoot 'Tool-Enterprise.ps1'
+if (-not (Test-Path -LiteralPath $enterpriseHelper -PathType Leaf)) { throw (Get-LocalLicenseText 'localLicense.error.foundationMissing') }
+. $enterpriseHelper
 $script:localOfflineMode = [bool](-not (Test-ToolEnterpriseNetworkActionAllowed))
 $script:officeCompatibility = Get-ToolOfficeCompatibilityProfile
 
@@ -59,6 +62,19 @@ function Show-LocalOfflineBlocked {
         [System.Windows.Forms.MessageBoxButtons]::OK,
         [System.Windows.Forms.MessageBoxIcon]::Information
     ) | Out-Null
+}
+
+function Add-LocalLicenseEvidence {
+    param([ValidateSet('Windows','Office')][string]$Scope,[string]$ProductName,[Windows.Forms.IWin32Window]$Owner)
+    $picker = New-Object Windows.Forms.OpenFileDialog
+    $picker.Title = Get-LocalLicenseText 'localLicense.evidence.title'
+    $picker.Filter = 'Supported evidence|*.jpg;*.jpeg;*.png;*.doc;*.docx;*.xls;*.xlsx;*.pdf;*.json;*.txt;*.eml;*.msg|All files|*.*'
+    if ($picker.ShowDialog($Owner) -ne [Windows.Forms.DialogResult]::OK) { return $null }
+    $record = @(Get-ToolLicenseEntitlements | Where-Object { $_.ProductScope -eq $Scope -and $_.ProductName -eq $ProductName } | Select-Object -First 1)
+    if ($record.Count -eq 0) {
+        $record = @(Set-ToolLicenseEntitlement -ProductScope $Scope -ProductName $ProductName -Vendor $(if($Scope -eq 'Windows'){'Microsoft Windows'}else{'Microsoft'}) -LicenseModel Unknown -Metric Device -PurchasedQuantity 0 -Notes (Get-LocalLicenseText 'localLicense.evidence.localNote'))
+    }
+    return Add-ToolLicenseEntitlementDocument -EntitlementId ([string]$record[0].EntitlementId) -Path $picker.FileName -Kind Other
 }
 
 function Test-IsAdministrator {
@@ -553,8 +569,18 @@ $winStore.Add_Click({
 })
 $windowsTab.Controls.Add($winStore)
 
+$winEvidence = New-Object System.Windows.Forms.Button
+$winEvidence.Text = Get-LocalLicenseText 'localLicense.evidence.add'
+$winEvidence.Location = New-Object System.Drawing.Point(18, 271)
+$winEvidence.Size = New-Object System.Drawing.Size(530, 30)
+$winEvidence.Add_Click({
+    try { $document=Add-LocalLicenseEvidence -Scope Windows -ProductName ([string]$windowsInfo.Name) -Owner $form; if($document){$winResult.Text=Get-LocalLicenseText 'localLicense.evidence.saved' @($document.OriginalName);$winResult.ForeColor=[Drawing.Color]::DarkGreen} }
+    catch { $winResult.Text=Get-LocalLicenseText 'localLicense.evidence.failed' @($_.Exception.Message);$winResult.ForeColor=[Drawing.Color]::DarkRed }
+})
+$windowsTab.Controls.Add($winEvidence)
+
 $winResult = New-Object System.Windows.Forms.Label
-$winResult.Location = New-Object System.Drawing.Point(18, 271)
+$winResult.Location = New-Object System.Drawing.Point(18, 311)
 $winResult.Size = New-Object System.Drawing.Size(660, 86)
 $winResult.Anchor = 'Top,Left,Right'
 $winResult.AutoEllipsis = $false
@@ -686,8 +712,18 @@ $officeRedeem.Add_Click({
 })
 $officeTab.Controls.Add($officeRedeem)
 
+$officeEvidence = New-Object System.Windows.Forms.Button
+$officeEvidence.Text = Get-LocalLicenseText 'localLicense.evidence.add'
+$officeEvidence.Location = New-Object System.Drawing.Point(18, 216)
+$officeEvidence.Size = New-Object System.Drawing.Size(540, 30)
+$officeEvidence.Add_Click({
+    try { $document=Add-LocalLicenseEvidence -Scope Office -ProductName ([string]$officeDetails.Product) -Owner $form; if($document){$officeResult.Text=Get-LocalLicenseText 'localLicense.evidence.saved' @($document.OriginalName);$officeResult.ForeColor=[Drawing.Color]::DarkGreen} }
+    catch { $officeResult.Text=Get-LocalLicenseText 'localLicense.evidence.failed' @($_.Exception.Message);$officeResult.ForeColor=[Drawing.Color]::DarkRed }
+})
+$officeTab.Controls.Add($officeEvidence)
+
 $officeResult = New-Object System.Windows.Forms.Label
-$officeResult.Location = New-Object System.Drawing.Point(18, 216)
+$officeResult.Location = New-Object System.Drawing.Point(18, 256)
 $officeResult.Size = New-Object System.Drawing.Size(660, 140)
 $officeResult.Anchor = 'Top,Left,Right'
 $officeResult.AutoEllipsis = $false
@@ -771,6 +807,8 @@ function Update-LocalLicenseLayout {
             $winStore.SetBounds($margin, $winY, $windowsWidth, $buttonHeight)
             $winY += $buttonHeight + $gap
         }
+        $winEvidence.SetBounds($margin, $winY, $windowsWidth, $buttonHeight)
+        $winY += $buttonHeight + $gap
         $availableResultHeight = [Math]::Max($minimumResultHeight, $windowsTab.ClientSize.Height - $winY - $margin)
         $requiredResultHeight = Get-LocalLicenseWrappedTextHeight -Control $winResult -Width $windowsWidth -MinimumHeight $minimumResultHeight
         $winResult.SetBounds($margin, $winY, $windowsWidth, [Math]::Max($availableResultHeight, $requiredResultHeight))
@@ -807,6 +845,8 @@ function Update-LocalLicenseLayout {
             $officeRedeem.SetBounds($margin, $officeY, $officeWidth, $buttonHeight)
             $officeY += $buttonHeight + $gap
         }
+        $officeEvidence.SetBounds($margin, $officeY, $officeWidth, $buttonHeight)
+        $officeY += $buttonHeight + $gap
         $officeAvailableResultHeight = [Math]::Max($minimumResultHeight, $officeTab.ClientSize.Height - $officeY - $margin)
         $officeRequiredResultHeight = Get-LocalLicenseWrappedTextHeight -Control $officeResult -Width $officeWidth -MinimumHeight $minimumResultHeight
         $officeResult.SetBounds($margin, $officeY, $officeWidth, [Math]::Max($officeAvailableResultHeight, $officeRequiredResultHeight))

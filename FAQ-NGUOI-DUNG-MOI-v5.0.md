@@ -27,7 +27,7 @@ Bản v5.0 là `Official Self-Signed`, dùng trust mode kỹ thuật `OfficialSe
 
 ## Lần đầu nên chọn chức năng nào?
 
-Giữ **Offline**, mở bằng tài khoản thường và chọn **Kiểm tra toàn bộ**. Đọc thẻ tổng quan trước, sau đó mở bằng chứng chi tiết. Chỉ bật Online khi chủ động cập nhật catalog/tri thức hoặc dùng chức năng LAN đã được tổ chức cho phép.
+Giữ **Offline**, mở bằng tài khoản thường và chọn **Kiểm tra toàn bộ**. Đọc thẻ tổng quan trước, sau đó mở bằng chứng chi tiết. Chỉ bật Online khi chủ động cập nhật catalog rồi kiểm tra phiên bản, cập nhật tri thức hoặc dùng chức năng LAN đã được tổ chức cho phép; phần mềm không tự tải/cài bản mới.
 
 ## Vì sao ứng dụng hỏi UAC?
 

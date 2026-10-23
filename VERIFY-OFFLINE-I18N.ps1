@@ -36,10 +36,10 @@ if ($failures.Count -eq 0) {
 
         if (-not (Get-ToolOfflineMode)) { Fail "Offline không phải mặc định." }
         $offlineMetadata = Get-ToolOfflinePolicyMetadata
-        if ([bool]$offlineMetadata.AutomaticUpdateCheck -or [string]$offlineMetadata.AutomaticUpdateCheckTrigger -ne "ExplicitUpdateActionOnly" -or
+        if (-not [bool]$offlineMetadata.AutomaticUpdateCheck -or [string]$offlineMetadata.AutomaticUpdateCheckTrigger -ne "UserEnabledOnline" -or
             [bool]$offlineMetadata.BackgroundUpdateService -or [bool]$offlineMetadata.SilentUpdate -or
-            (@($offlineMetadata.OnlineRefreshOrder) -join ',') -ne 'SignedCatalog') {
-            Fail "Chính sách Online không còn catalog-only hoặc vẫn cho phép kiểm tra/cập nhật ứng dụng tự động."
+            (@($offlineMetadata.OnlineRefreshOrder) -join ',') -ne 'SignedCatalog,ApplicationVersionCheck') {
+            Fail "Chính sách Online không giữ đúng thứ tự catalog ký số rồi kiểm tra phiên bản, hoặc cho phép cài đặt nền/im lặng."
         }
         if (Test-ToolNetworkActionAllowed -Scope Internet) { Fail "Offline vẫn cho phép Internet." }
         if (Test-ToolNetworkActionAllowed -Scope Lan) { Fail "Offline vẫn cho phép LAN." }
@@ -79,17 +79,19 @@ if ($failures.Count -eq 0) {
         if ($catalogDifference.Count -gt 0) { Fail "Catalog vi-VN/en-US không đồng bộ key." }
 
         $dashboardText = Get-VietLicenSureComposedSourceText -SourceDirectory $root -EntrypointName 'Giao-Dien.ps1'
-        if ($dashboardText -notmatch 'ArgumentList\s+"--enterprise-ui"' -or
+        if ($dashboardText -notmatch '\$launchMode\s*=\s*if\s*\(\$isEnterpriseRole\)\s*\{\s*''--enterprise-ui''\s*\}\s*else\s*\{\s*''--local-license-manager''\s*\}' -or
+            $dashboardText -notmatch 'ArgumentList\s+\$launchMode' -or
+            $dashboardText -notmatch '\$targetScript\s*=\s*if\s*\(\$isEnterpriseRole\)' -or
             $dashboardText -match '\$licenseLaunchMode\s*=\s*if\s*\(\$script:offlineMode\)' -or
             $dashboardText -match 'máy chủ/máy trạm bị ẩn') {
-            Fail "Offline đang làm Mục 8 mất hoặc ẩn chức năng."
+            Fail "Offline đang làm mất hoặc ẩn phân luồng Helpdesk/ITAM của Mục 8."
         }
         $enterpriseUiText = Get-Content -LiteralPath (Join-Path $root "enterprise-license-manager.ps1") -Raw -Encoding UTF8
         if ($enterpriseUiText -notmatch 'function\s+Toggle-EnterpriseNetworkAccess' -or
             $enterpriseUiText -notmatch 'function\s+Confirm-EnterpriseNetworkAccess' -or
             $enterpriseUiText -notmatch 'Set-ToolEnterpriseNetworkAllowedPreference' -or
             $enterpriseUiText -notmatch 'enterpriseSmoke\.offlineTabsUnavailable') {
-            Fail "Enterprise UI chưa giữ đủ 3 chức năng hoặc thiếu công tắc mạng riêng."
+            Fail "Enterprise UI chưa giữ đủ Máy chủ/Máy trạm hoặc thiếu công tắc mạng riêng."
         }
         if ($enterpriseUiText -match 'Mục 8 vẫn giữ nguyên đủ 3 chức năng.+v4\.2\.0\.8') {
             Fail "Enterprise UI vẫn còn câu cảnh báo Mục 8 mà người dùng yêu cầu bỏ."

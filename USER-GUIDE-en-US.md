@@ -8,7 +8,7 @@ VietLicenSure is a Windows application for reviewing computer configuration, Win
 
 The workflow has four steps: select an inspection scope, review results and evidence, preview a remediation plan when needed, then confirm and perform post-verification. Inspection and reporting are read-only by default; system-changing actions always provide a preview, backup, confirmation, and an appropriate privilege request.
 
-VietLicenSure is Offline by default and does not automatically upload inventory or reports. Only after the user explicitly enables Online for the current session does VietLicenSure download and validate the signed catalog and then stop; it does not start a scan, create a report, show a report-privacy prompt, or check/install an application version, and the next launch returns to Offline. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page. The current acceptance state is maintained only in `RELEASE-STATUS-v5.0.md`.
+VietLicenSure is Offline by default and does not automatically upload inventory or reports. Only after the user explicitly enables Online for the current session does VietLicenSure download/validate the signed catalog and then check application-version availability; it never downloads or installs that version automatically, starts no scan/report/privacy prompt, and the next launch returns to Offline. This guide focuses on operation, result interpretation, and safe use; version, release date, signature, and SHA-256 details are available under **Version and updates** in VietLicenSure or on the official release page. The current acceptance state is maintained only in `RELEASE-STATUS-v5.0.md`.
 
 ## Author information
 
@@ -36,7 +36,7 @@ The project aims to provide a reliable, clear, and cautious technical inspection
 3. Close Word, Excel, Outlook, and any application that may be remediated.
 4. Prepare a valid account or product key if you expect to change licensing.
 5. Ensure the system drive and Desktop have enough free space for backups and report packages.
-6. Keep Offline enabled by default. Explicitly enabling Online for the current session only refreshes the signed catalog and then stops; scans/reports remain user-started, and enterprise LAN access still uses its separate permission switch.
+6. Keep Offline enabled by default. Explicitly enabling Online refreshes the signed catalog first and then checks application-version availability without downloading/installing it; scans/reports remain user-started, and enterprise LAN access still uses its separate permission switch.
 
 The `Official Self-Signed` single-file EXE uses the technical `OfficialSelfSigned` trust mode and carries a signature plus provenance manifest for tamper detection. It is an official release signed with a pinned self-issued certificate; it is not public-CA, EV, or Microsoft Store signed. Verification does not remove every SmartScreen warning and cannot absolutely prevent copying or reverse engineering. Download it directly from <https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe>, compare SHA-256, Build ID, signature, and provenance data, inspect the certificate with `Get-AuthenticodeSignature`, and scan with Microsoft Defender.
 
@@ -66,7 +66,8 @@ You do not need source access, configuration files, or technical documentation t
 - Official Self-Signed requires the exact pinned self-issued signer, RFC3161 timestamp, valid CMS provenance, a clean source commit, and fully passing verifier/artifact-bound QA. A future public-CA/EV/Store channel requires a new release chain.
 - Catalog freshness is explicit, and third-party plugins accept only signed declarative metadata from pinned publisher fingerprints.
 - Quick, Standard, and Deep scans, system-aware dark/light themes, PerMonitorV2 DPI, and safe fleet exports support larger deployments.
-- Remediation contains five separate entries: Windows, Microsoft Office, other software, OEM key recovery, and valid-license management. The first three open their scope-specific screen directly and keep that scope locked through scan, backup, confirmation, and post-check.
+- Startup requires one of three workspaces: Personal, IT Helpdesk, or ITAM/SAM. Personal uses a local web UI; Helpdesk uses desktop functions and Windows/Office License management; ITAM/SAM uses inventory, reporting, and Enterprise management for Server/Workstation. A workspace changes presentation only and never grants operating-system permissions.
+- Remediation contains five separate entries: Windows, Microsoft Office, other software, OEM key recovery, and License management. The first three open their scope-specific screen directly and keep that scope locked through scan, backup, confirmation, and post-check.
 
 - The launcher and provenance manifest verify the signature, pinned certificate, metadata, and Build ID. A modified or unverifiable build is warned about and fails closed for updates and system-changing actions.
 - The online catalog is signed, accepts only allowlisted declarative rules, maintains a persistent version floor to prevent downgrades, and retains a previous-cache fallback.
@@ -88,7 +89,7 @@ You do not need source access, configuration files, or technical documentation t
 
 ## Assistant
 
-VietLicenSure Assistant understands and answers every product-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0 release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, updates, and Server/Workstation connectivity. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
+VietLicenSure Assistant understands and answers every product-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0 release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, License management for IT Helpdesk, Enterprise Server/Workstation management for ITAM/SAM, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, and updates. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
 
 ### Send and Enter
 
@@ -192,7 +193,7 @@ Important interpretation rules:
 
 This group can change the system. Use it only after reviewing evidence, closing affected applications, and preparing an official installer or valid license.
 
-Under **Remediation**, five entries are available: **Remediate Windows**, **Remediate Microsoft Office**, **Remediate other software**, **Restore OEM key**, and **Manage valid licenses**. The first three open their dedicated scope-specific screen directly instead of the shared remediation chooser. The combined tile on **Overview** remains unchanged and still provides manual scope selection plus backup, restore, and automatic-safe tools.
+Under **Remediation**, five entries are available: **Remediate Windows**, **Remediate Microsoft Office**, **Remediate other software**, **Restore OEM key**, and **License management**. The first three open their dedicated scope-specific screen directly instead of the shared remediation chooser. The combined tile on **Overview** remains unchanged and still provides manual scope selection plus backup, restore, and automatic-safe tools.
 
 ### Remediate Windows
 
@@ -280,7 +281,7 @@ Scan the current state and evidence again without changing the computer.
 
 #### Activate legitimately
 
-Move to Manage valid licenses after the system is ready; the user still needs a legitimate key, entitled account, or authorized activation right.
+Move to License management after the system is ready; the user still needs a legitimate key, entitled account, or authorized activation right.
 
 #### Restore backup from Action Center
 
@@ -321,24 +322,25 @@ No automatic-safe item is not an error. It means the remaining findings require 
 
 Do not use an OEM key from another computer or force an unsupported edition change.
 
-## Manage valid licenses
+## License management
 
-This function includes Local Windows/Office management, Server, and Workstation. In local mode, select the exact Windows or Office action, enter a legitimate key when required, and review confirmation before installing a key, changing edition, or activating. In enterprise mode, an administrator explicitly enables LAN access, creates a Server, pairs Workstations with temporary codes, and receives reports under policy; remote license-changing actions remain disabled by default. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
+The selected workspace changes the presentation while retaining one current data workflow. **IT Helpdesk** opens Windows/Office management, edition upgrades, license changes, and local evidence storage. **ITAM/SAM** opens **Enterprise management** for Server/Workstation, Agent jobs, and fleet reports. Personal uses the local web UI for checks and reports and gains no administrative permissions. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
 
 **Evidence, entitlements, and License Advisor**
 
 On the Server tab, select **Evidence and entitlements** to create locally stored entitlement records, copy bounded evidence files into the managed local store, and assign seats to an endpoint or user. Stored evidence receives an internal random name and SHA-256; it is not uploaded to a cloud service or returned through the web dashboard. VietLicenSure reconciles Purchased, Assigned, Installed, and Available quantities and flags over-allocation or expiry. License Advisor assigns a stable Rule ID, evidence sources, confidence, and correlation to each finding while keeping technical activation, tampering assessment, entitlement, and the overall verdict separate. In the read-only Central Dashboard, open **Explain this finding** to review the evidence, recommendation, and limitation. The Dashboard accepts loopback connections on the server only; non-loopback Dashboard requests over HTTP are denied, and remote administration requires a managed HTTPS tunnel or reverse proxy. Its short-lived token is kept in page memory rather than browser storage. KMS or a single indicator doesn't independently prove cracking or unlawful entitlement. The dashboard exposes no evidence paths, full keys, full ClientIds, or secrets. These records support administration/SAM review and are not legal certification of ownership or invoice authenticity.
 
-### Local management
+### IT Helpdesk: Windows, Office, and evidence
 
-1. Select Manage legitimate licenses.
-2. Open Local Windows/Office management.
+1. Select the IT Helpdesk workspace and open License management.
+2. Select Windows or Office.
 3. Select the required Windows or Office operation.
 4. Enter only a key issued by Microsoft, the manufacturer, or an authorized organization.
 5. Read the confirmation before installing a key, changing edition, or activating.
 6. For Microsoft 365, prefer signing in with an entitled account in Office.
+7. Use **Store evidence document** to import supported JPG, PNG, Word, Excel, PDF, JSON, text, or email files. The file is copied into the local compliance store under a random name with SHA-256 and Attached status; it is never uploaded automatically and is never treated as verified merely because it was imported.
 
-### Enterprise server and workstation
+### ITAM/SAM: Server and Workstation
 
 Network access starts disabled. Enable Local LAN only for authorized LAN use. After the administrator successfully starts the Server, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables that task. When enabled, the Workstation agent runs after startup, logon, resume, and every hour; encrypted queued reports retry after connectivity returns. An enrolled workstation retains its ClientId/secret across reboot and does not need a new pairing code. Create new pairing code rotates only the temporary 24-hour enrollment code and does not affect already enrolled workstations. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
 
@@ -395,9 +397,9 @@ HashMismatch, a known activator hash, or a replaced licensing module can be stro
 
 If Incomplete coverage is reported, check for missing Administrator rights, scan timeout, locked files, or failed WMI/Task Scheduler sources before evaluating the application.
 
-## Enable Online only for catalog refresh
+## Enable Online for catalog refresh and version availability
 
-Every VietLicenSure launch begins Offline. When the user explicitly switches the dashboard network control to **Online** and confirms, the application only downloads/validates the signed recognition catalog and then stops. It does not start a machine scan, create a report, show a report-privacy prompt, or check/install an application version. There is no background update service, and the next launch defaults to Offline again.
+Every VietLicenSure launch begins Offline. When the user explicitly switches the dashboard network control to **Online** and confirms, the application downloads/validates the signed recognition catalog first and then checks whether a newer application version is available. It never downloads or installs that version automatically, starts no machine scan/report/privacy prompt, has no background update service, and the next launch defaults to Offline again.
 
 The manual catalog action remains available under **Remediate other software** or the combined Overview remediation tile, on the Inspect and return to original state screen:
 

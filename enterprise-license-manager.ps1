@@ -49,6 +49,7 @@ $script:enterpriseFont = New-Object Drawing.Font($script:enterpriseTypography.Fo
 $script:enterpriseSmallFont = New-Object Drawing.Font($script:enterpriseTypography.FontFamily, $script:enterpriseTypography.SmallSize)
 $script:enterpriseTitleFont = New-Object Drawing.Font($script:enterpriseTypography.FontFamily, $script:enterpriseTypography.DialogTitleSize, [Drawing.FontStyle]::Bold)
 $script:enterpriseTheme = Get-ToolUiTheme
+$env:TOOL_UI_THEME = $script:enterpriseTheme
 $script:baseUiPalette = Get-ToolUiPalette -Mode $script:enterpriseTheme
 $script:enterpriseDark = [bool]($script:enterpriseTheme -eq "Dark")
 $script:enterprisePalette = @{
@@ -1849,24 +1850,19 @@ function Update-EnterpriseLayout {
         Set-EnterpriseBounds $script:enterpriseStatus 18 41 ([Math]::Max(300, $formWidth - 294)) 26
         Set-EnterpriseBounds $script:enterpriseNetworkButton ([Math]::Max(382, $formWidth - 258)) 38 240 30
         Set-EnterpriseBounds $tabs 10 72 ($formWidth - 20) ([Math]::Max(330, $formHeight - 124))
-        $tabItemWidth = [Math]::Max(180, [Math]::Floor(($tabs.ClientSize.Width - 6) / 3))
+        $tabItemWidth = [Math]::Max(180, [Math]::Floor(($tabs.ClientSize.Width - 6) / 2))
         $tabs.ItemSize = New-Object Drawing.Size($tabItemWidth, 32)
         $tabs.PerformLayout()
-
-        if ($localManagerTab) {
-            $localWidth = [Math]::Max(620, $localManagerTab.ClientSize.Width)
-            $localLabels = @($localManagerTab.Controls | Where-Object { $_ -is [Windows.Forms.Label] })
-            if ($localLabels.Count -gt 0) { Set-EnterpriseBounds $localLabels[0] 24 24 ($localWidth - 48) 30 }
-            if ($localLabels.Count -gt 1) { Set-EnterpriseBounds $localLabels[1] 24 60 ($localWidth - 48) 42 }
-            if ($localLabels.Count -gt 2) { Set-EnterpriseBounds $localLabels[2] 24 106 ($localWidth - 48) 34 }
-            $localButtonWidth = [Math]::Min(($localWidth - 48), [Math]::Max(280, (Get-ToolUiButtonRequiredWidth -Button $localManagerButton -HorizontalSafety 20)))
-            Set-EnterpriseBounds $localManagerButton 24 154 $localButtonWidth 40
-        }
 
         if ($serverTab) {
             $serverTab.AutoScroll = $false
             $width = [Math]::Max(680, $serverTab.ClientSize.Width)
-            $height = [Math]::Max(470, $serverTab.ClientSize.Height)
+            # Keep the responsive layout inside the visible tab at the minimum
+            # supported window size.  A 470px synthetic floor made WinForms add
+            # a vertical scrollbar by only a few pixels; that scrollbar then
+            # reduced the viewport width and incorrectly produced a horizontal
+            # scrollbar as well.
+            $height = [Math]::Max(430, $serverTab.ClientSize.Height)
             $margin = 16
             $gap = 8
             $contentWidth = $width - (2 * $margin)
@@ -1953,14 +1949,16 @@ function Update-EnterpriseLayout {
             Set-EnterpriseBounds $script:scanInputBox $margin $scanInputY ($contentWidth - $scanButtonWidth - $gap) 28
             Set-EnterpriseBounds $scanButton ($margin + $contentWidth - $scanButtonWidth) $scanInputY $scanButtonWidth 30
             $scanResultY = $scanInputY + 34
+            $compactVertical = [bool]($serverTab.ClientSize.Height -lt 500)
+            $scanPanelHeight = if ($compactVertical) { 66 } else { 92 }
             $assetPanelWidth = [Math]::Min(390, [Math]::Max(315, [Math]::Floor($contentWidth * 0.38)))
             $scanResultWidth = $contentWidth - $assetPanelWidth - $gap
-            Set-EnterpriseBounds $script:scanResultBox $margin $scanResultY $scanResultWidth 92
-            Set-EnterpriseBounds $script:serverAssetGroup ($margin + $scanResultWidth + $gap) $scanResultY $assetPanelWidth 92
-            Set-EnterpriseBounds $script:serverAssetDetailLabel 10 19 ($assetPanelWidth - 20) 35
-            Set-EnterpriseBounds $script:serverAssetManagerButton 10 55 ($assetPanelWidth - 20) 28
+            Set-EnterpriseBounds $script:scanResultBox $margin $scanResultY $scanResultWidth $scanPanelHeight
+            Set-EnterpriseBounds $script:serverAssetGroup ($margin + $scanResultWidth + $gap) $scanResultY $assetPanelWidth $scanPanelHeight
+            Set-EnterpriseBounds $script:serverAssetDetailLabel 10 $(if ($compactVertical) { 10 } else { 19 }) ($assetPanelWidth - 20) $(if ($compactVertical) { 27 } else { 35 })
+            Set-EnterpriseBounds $script:serverAssetManagerButton 10 $(if ($compactVertical) { 39 } else { 55 }) ($assetPanelWidth - 20) $(if ($compactVertical) { 24 } else { 28 })
 
-            $clientHeaderY = $scanResultY + 97
+            $clientHeaderY = $scanResultY + $scanPanelHeight + $(if ($compactVertical) { 3 } else { 5 })
             $refreshWidth = [Math]::Min(220, [Math]::Max(155, (Get-ToolUiButtonRequiredWidth -Button $refreshButton -HorizontalSafety 20)))
             $exportWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $exportButton -HorizontalSafety 20)))
             $complianceWidth = [Math]::Min(220, [Math]::Max(170, (Get-ToolUiButtonRequiredWidth -Button $complianceButton -HorizontalSafety 20)))
@@ -2076,34 +2074,8 @@ $tabs.ItemSize = New-Object Drawing.Size(320, 32)
 $tabs.Padding = New-Object Drawing.Point(12, 4)
 $form.Controls.Add($tabs)
 
-# Chức năng 1: quản lý license cục bộ
-$localManagerTab = New-Object Windows.Forms.TabPage
-$localManagerTab.Text = Get-EnterpriseText "enterprise.local.tab"
-$localManagerTab.BackColor = $script:enterprisePalette.LocalSurface
-$localManagerTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.local.description") 24 24 930 30))
-$localManagerTab.Controls.Add((New-EnterpriseLabel (Get-EnterpriseText "enterprise.local.detail") 24 60 930 42))
-$localSafetyLabel = New-EnterpriseLabel (Get-EnterpriseText "enterprise.local.safety") 24 106 930 34
-$localSafetyLabel.ForeColor = $script:enterprisePalette.DangerText
-$localManagerTab.Controls.Add($localSafetyLabel)
-$localManagerButton = New-EnterpriseButton (Get-EnterpriseText "enterprise.local.open") 24 154 280 40 {
-    try {
-        $env:TOOL_UI_THEME = $script:enterpriseTheme
-        $local = Join-Path $baseDir "windows-office-license-manager.ps1"
-        $launcher = Get-EnterpriseLauncherPath
-        if ($launcher) {
-            Start-Process -FilePath $launcher -ArgumentList "--local-license-manager" -Verb RunAs | Out-Null
-        } else {
-            Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy RemoteSigned -File `"$local`"" -Verb RunAs | Out-Null
-        }
-        Set-EnterpriseStatus (Get-EnterpriseText "enterprise.local.opened") $true
-    } catch {
-        Show-EnterpriseError (ConvertTo-ToolEnterpriseSafeText $_.Exception.Message 900)
-    }
-}
-$localManagerTab.Controls.Add($localManagerButton)
-$tabs.TabPages.Add($localManagerTab) | Out-Null
-
-# Chức năng 2: máy chủ
+# ITAM/SAM Enterprise management contains only Server and Client management.
+# Windows/Office license management belongs to the separate Helpdesk surface.
 $serverTab = New-Object Windows.Forms.TabPage
 $serverTab.Text = Get-EnterpriseText "enterprise.server.tab"
 $serverTab.BackColor = $script:enterprisePalette.ServerSurface
@@ -2300,9 +2272,6 @@ $tabs.Add_DrawItem({
     }
 })
 
-foreach ($button in @($localManagerTab.Controls | Where-Object { $_ -is [Windows.Forms.Button] })) {
-    Set-EnterpriseButtonStyle $button $script:enterprisePalette.LocalButton ([Drawing.Color]::White) $script:enterprisePalette.LocalHover
-}
 foreach ($button in @($serverTab.Controls | Where-Object { $_ -is [Windows.Forms.Button] })) {
     Set-EnterpriseButtonStyle $button $script:enterprisePalette.ServerButton ([Drawing.Color]::White) $script:enterprisePalette.ServerHover
 }
@@ -2365,14 +2334,10 @@ $form.Add_FormClosed({
     try { $script:enterpriseToolTip.Dispose() } catch {}
 })
 if ($SmokeTest) {
-    if ($tabs.TabPages.Count -ne 3) { throw (Get-EnterpriseText "enterpriseSmoke.tabCount") }
-    if ($tabs.TabPages[0].Text -ne (Get-EnterpriseText "enterprise.local.tab") -or
-        $tabs.TabPages[1].Text -ne (Get-EnterpriseText "enterprise.server.tab") -or
-        $tabs.TabPages[2].Text -ne (Get-EnterpriseText "enterprise.client.tab")) {
+    if ($tabs.TabPages.Count -ne 2) { throw (Get-EnterpriseText "enterpriseSmoke.tabCount") }
+    if ($tabs.TabPages[0].Text -ne (Get-EnterpriseText "enterprise.server.tab") -or
+        $tabs.TabPages[1].Text -ne (Get-EnterpriseText "enterprise.client.tab")) {
         throw (Get-EnterpriseText "enterpriseSmoke.tabNames")
-    }
-    if (-not $localManagerButton -or $localManagerButton.Text -ne (Get-EnterpriseText "enterprise.local.open")) {
-        throw (Get-EnterpriseText "enterpriseSmoke.localManagerMissing")
     }
     if (-not $backButton -or -not $closeButton) { throw (Get-EnterpriseText "enterpriseSmoke.navigationMissing") }
     if (-not $script:enterpriseNetworkButton -or -not $form.Controls.Contains($script:enterpriseNetworkButton)) {
@@ -2382,7 +2347,6 @@ if ($SmokeTest) {
         throw (Get-EnterpriseText "enterpriseSmoke.offlineTabsUnavailable")
     }
     if ($form.BackColor.ToArgb() -ne $script:enterprisePalette.Form.ToArgb() -or
-        $localManagerTab.BackColor.ToArgb() -ne $script:enterprisePalette.LocalSurface.ToArgb() -or
         $serverTab.BackColor.ToArgb() -ne $script:enterprisePalette.ServerSurface.ToArgb() -or
         $clientTab.BackColor.ToArgb() -ne $script:enterprisePalette.ClientSurface.ToArgb()) {
         throw (Get-EnterpriseText "enterpriseSmoke.themeCoverage" @($script:enterpriseTheme))
@@ -2406,7 +2370,10 @@ if ($SmokeTest) {
     if ([string]::IsNullOrWhiteSpace($script:scanInputBox.Text)) {
         throw (Get-EnterpriseText "enterpriseSmoke.defaultCidrMissing")
     }
-    if ($serverTab.AutoScroll -or $serverTab.HorizontalScroll.Visible) { throw (Get-EnterpriseText "enterpriseSmoke.horizontalScroll") }
+    Write-Output ("ENTERPRISE-UI-LAYOUT: tab={0}x{1}; listBottom={2}; jobRight={3}; horizontal={4}; vertical={5}" -f `
+        $serverTab.ClientSize.Width, $serverTab.ClientSize.Height, $script:serverClientList.Bottom, `
+        $script:jobKeyBox.Right, $serverTab.HorizontalScroll.Visible, $serverTab.VerticalScroll.Visible)
+    if ($serverTab.HorizontalScroll.Visible) { throw (Get-EnterpriseText "enterpriseSmoke.horizontalScroll") }
     foreach ($buttonText in @(
         (Get-EnterpriseText "enterprise.server.create"),
         (Get-EnterpriseText "enterprise.server.pair"),
@@ -2449,7 +2416,7 @@ if ($SmokeTest) {
     if (-not $discoverButton -or $discoverButton.Right -gt ($clientTab.ClientSize.Width + 1)) {
         throw (Get-EnterpriseText "enterpriseSmoke.discoverClipped")
     }
-    foreach ($tabIndex in 0..2) {
+    foreach ($tabIndex in 0..1) {
         $tabs.SelectedIndex = $tabIndex
         Update-EnterpriseLayout
         [Windows.Forms.Application]::DoEvents()
@@ -2458,10 +2425,10 @@ if ($SmokeTest) {
     if ($clippedButtonLabels.Count -gt 0) {
         throw (Get-EnterpriseText "enterpriseSmoke.buttonClipped" @(($clippedButtonLabels -join ', ')))
     }
-    $tabs.SelectedIndex = 2
+    $tabs.SelectedIndex = 1
     $backButton.PerformClick()
     [Windows.Forms.Application]::DoEvents()
-    if ($tabs.SelectedIndex -ne 1) { throw (Get-EnterpriseText "enterpriseSmoke.backNavigation") }
+    if ($tabs.SelectedIndex -ne 0) { throw (Get-EnterpriseText "enterpriseSmoke.backNavigation") }
     if ($closeButton.Text -ne (Get-EnterpriseText "enterprise.navigation.close")) { throw (Get-EnterpriseText "enterpriseSmoke.closeLabel") }
     $networkStateBefore = [bool]$script:enterpriseNetworkAllowed
     $script:enterpriseNetworkButton.PerformClick()

@@ -2326,8 +2326,12 @@ function Complete-ForensicsScan {
 }
 
 function Open-LicenseManager {
+    $isEnterpriseRole = ($script:workspaceRole -eq 'itam')
+    $targetScript = if ($isEnterpriseRole) { $licenseManagerScript } else { $localLicenseManagerScript }
+    $moduleId = if ($isEnterpriseRole) { 'license.manager' } else { 'license.manager.local' }
+    $launchMode = if ($isEnterpriseRole) { '--enterprise-ui' } else { '--local-license-manager' }
     if (-not (Confirm-IntegrityForElevatedAction (Get-ToolText -Key "status.enterprise.action" -Culture $script:dashboardCulture))) { return }
-    if (-not (Test-Path -LiteralPath $licenseManagerScript)) {
+    if (-not (Test-Path -LiteralPath $targetScript)) {
         $status.Text = Get-ToolText -Key "status.enterprise.missing" -Culture $script:dashboardCulture
         $status.ForeColor = [System.Drawing.Color]::DarkRed
         return
@@ -2338,17 +2342,18 @@ function Open-LicenseManager {
             (Get-ToolText -Key "status.enterprise.elevation" -Culture $script:dashboardCulture) `
             $false
         $env:TOOL_UI_THEME = $script:dashboardTheme
+        $env:TOOL_WORKSPACE_ROLE = [string]$script:workspaceRole
         $launcherPath = [string]$env:TOOL_LAUNCHER_PATH
         if ($env:TOOL_SECURE_LAUNCH -eq "1" -and -not [string]::IsNullOrWhiteSpace($launcherPath) -and (Test-Path -LiteralPath $launcherPath -PathType Leaf)) {
-            [void](Get-ReadyToolModule -moduleId "license.manager" -elevatedLaunch $true)
-            $enterpriseProcess = Start-Process -FilePath $launcherPath -ArgumentList "--enterprise-ui" -Verb RunAs -PassThru
+            [void](Get-ReadyToolModule -moduleId $moduleId -elevatedLaunch $true)
+            $enterpriseProcess = Start-Process -FilePath $launcherPath -ArgumentList $launchMode -Verb RunAs -PassThru
             if (-not $enterpriseProcess) { throw (Get-ToolText -Key "status.enterprise.launchFailed" -Culture $script:dashboardCulture) }
             [void](Write-ToolLog -Level "AUDIT" -Event "Module.Launched" -Message (Get-ToolText -Key "status.enterprise.action" -Culture $script:dashboardCulture) -Data ([ordered]@{
-                ModuleId="license.manager"; ProcessId=$enterpriseProcess.Id; LaunchMode="--enterprise-ui"; OfflineMode=[bool]$script:offlineMode
+                ModuleId=$moduleId; ProcessId=$enterpriseProcess.Id; LaunchMode=$launchMode; OfflineMode=[bool]$script:offlineMode; WorkspaceRole=[string]$script:workspaceRole
             }))
         } else {
-            $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$licenseManagerScript`""
-            [void](Start-DetachedToolModuleProcess -ModuleId "license.manager" -Arguments $arguments -Elevate)
+            $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$targetScript`""
+            [void](Start-DetachedToolModuleProcess -ModuleId $moduleId -Arguments $arguments -Elevate)
         }
         $status.Text = Get-ToolText -Key "status.enterprise.opened" -Culture $script:dashboardCulture
         $status.ForeColor = [System.Drawing.Color]::DarkGreen

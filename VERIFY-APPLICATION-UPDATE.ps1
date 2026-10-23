@@ -216,8 +216,8 @@ try {
     . (Join-Path $root 'Tool-ModuleContract.ps1')
     $offlineMetadata = Get-ToolOfflinePolicyMetadata
     Assert-UpdateTest ([bool]$offlineMetadata.AutomaticCatalogRefresh -and $offlineMetadata.AutomaticCatalogRefreshTrigger -eq 'UserEnabledOnline') 'Offline metadata does not gate catalog refresh on user-enabled Online mode.'
-    Assert-UpdateTest (-not [bool]$offlineMetadata.AutomaticUpdateCheck -and $offlineMetadata.AutomaticUpdateCheckTrigger -eq 'ExplicitUpdateActionOnly') 'Online mode still queues an automatic application update check.'
-    Assert-UpdateTest ((@($offlineMetadata.OnlineRefreshOrder) -join ',') -eq 'SignedCatalog') 'Online refresh is not catalog-only.'
+    Assert-UpdateTest ([bool]$offlineMetadata.AutomaticUpdateCheck -and $offlineMetadata.AutomaticUpdateCheckTrigger -eq 'UserEnabledOnline') 'Online mode does not queue the user-consented application-version check.'
+    Assert-UpdateTest ((@($offlineMetadata.OnlineRefreshOrder) -join ',') -eq 'SignedCatalog,ApplicationVersionCheck') 'Online refresh order is not signed catalog then application-version check.'
     Assert-UpdateTest (-not [bool]$offlineMetadata.BackgroundUpdateService -and -not [bool]$offlineMetadata.SilentUpdate) 'Metadata permits a background service or silent update.'
     $updateDescriptor = Get-ToolModuleDescriptor -ModuleId 'application.update.check'
     Assert-UpdateTest ($updateDescriptor.NetworkScope -eq 'Internet' -and $updateDescriptor.AccessMode -eq 'ReadOnly') 'Update module contract is invalid.'
@@ -246,12 +246,17 @@ try {
         param($node)
         $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Request-OnlineSessionRefresh'
     }, $true)
-    Assert-UpdateTest ($onlineRefreshFunction -and $onlineRefreshFunction.Extent.Text -notmatch 'applicationUpdateCheckPending\s*=\s*\$true') 'Enabling Online still queues an application update check.'
+    Assert-UpdateTest ($onlineRefreshFunction -and
+        $onlineRefreshFunction.Extent.Text -match 'softwareCatalogRefreshPending\s*=\s*\$true' -and
+        $onlineRefreshFunction.Extent.Text -match 'applicationUpdateCheckPending\s*=\s*\$true' -and
+        $onlineRefreshFunction.Extent.Text -match "RefreshOrder=@\('SignedCatalog','ApplicationVersionCheck'\)") 'Enabling Online does not queue catalog then application-version check.'
     $onlineCompleteFunction = $dashboardAst.Find({
         param($node)
         $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Complete-SoftwareCatalogOnlineUpdate'
     }, $true)
-    Assert-UpdateTest ($onlineCompleteFunction -and $onlineCompleteFunction.Extent.Text -notmatch 'Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork') 'Catalog completion still starts a report/privacy flow or application update work.'
+    Assert-UpdateTest ($onlineCompleteFunction -and
+        $onlineCompleteFunction.Extent.Text -match 'if\s*\(\$wasBackgroundSync\)\s*\{\s*Invoke-PendingOnlineSessionWork\s*\}' -and
+        $onlineCompleteFunction.Extent.Text -notmatch 'Show-ReportPrivacyChooser|Invoke-PendingApplicationUpdateWork') 'Catalog completion does not advance the ordered Online queue or starts a report/privacy flow.'
     $catalogCompletionCleanupCalls = @($onlineCompleteFunction.Body.FindAll({
         param($node)
         $node -is [System.Management.Automation.Language.CommandAst] -and $node.GetCommandName() -eq 'Start-Cleanup'

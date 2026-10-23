@@ -453,10 +453,14 @@ try {
         $launcherText -match 'TOOL_ENTERPRISE_NETWORK_ALLOWED' -and
         $launcherText -match 'mode\s*==\s*LaunchMode\.EnterpriseServer\s*\|\|\s*mode\s*==\s*LaunchMode\.EnterpriseAgent') "Launcher không còn chặn riêng tiến trình mạng server/agent theo công tắc Mục 8."
     $dashboardText = Get-VietLicenSureComposedSourceText -SourceDirectory $SourceDirectory -EntrypointName 'Giao-Dien.ps1'
-    Assert-Enterprise ($dashboardText -match 'Start-Process\s+-FilePath\s+\$launcherPath\s+-ArgumentList\s+"--enterprise-ui"' -and
-        $dashboardText -match '-File\s+`"\$licenseManagerScript`"' -and
+    Assert-Enterprise ($dashboardText -match '\$isEnterpriseRole\s*=\s*\(\$script:workspaceRole\s+-eq\s+''itam''\)' -and
+        $dashboardText -match '\$targetScript\s*=\s*if\s*\(\$isEnterpriseRole\)\s*\{\s*\$licenseManagerScript\s*\}\s*else\s*\{\s*\$localLicenseManagerScript\s*\}' -and
+        $dashboardText -match '\$launchMode\s*=\s*if\s*\(\$isEnterpriseRole\)\s*\{\s*''--enterprise-ui''\s*\}\s*else\s*\{\s*''--local-license-manager''\s*\}' -and
+        $dashboardText -match 'Start-Process\s+-FilePath\s+\$launcherPath\s+-ArgumentList\s+\$launchMode' -and
+        $dashboardText -match '-File\s+`"\$targetScript`"' -and
+        $dashboardText -match 'TOOL_WORKSPACE_ROLE' -and
         $dashboardText -notmatch '\$licenseLaunchMode\s*=\s*if\s*\(\$script:offlineMode\)' -and
-        $dashboardText -notmatch 'máy chủ/máy trạm bị ẩn') "Dashboard chưa luôn mở đủ trung tâm Mục 8 như v4.2.0.8."
+        $dashboardText -notmatch 'máy chủ/máy trạm bị ẩn') "Dashboard chưa phân luồng Helpdesk Windows/Office và ITAM/SAM Máy chủ/Máy trạm theo cùng vai trò."
     $enterpriseUiPath = Join-Path $SourceDirectory "enterprise-license-manager.ps1"
     $enterpriseUiText = Get-Content -LiteralPath $enterpriseUiPath -Raw -Encoding UTF8
     $enterpriseUiTokens = $null
@@ -526,17 +530,16 @@ try {
         $enterpriseUiText -match 'sddl=D:\(A;;GX;;;\$currentUserSid\)\(A;;GX;;;SY\)' -and
         $enterpriseUiText.IndexOf('Wait-EnterpriseServerReady', [StringComparison]::Ordinal) -lt $enterpriseUiText.IndexOf('Install-EnterpriseLifecycleTask -Role Server', [StringComparison]::Ordinal) -and
         $enterpriseUiText -match 'Stop-EnterpriseServer[\s\S]+?Remove-EnterpriseLifecycleTasks\s+-Role\s+Server') 'Vòng đời LAN chưa khóa mã mới, URL ACL SYSTEM hoặc tự khởi động/dừng fail-closed.'
-    Assert-Enterprise ($enterpriseUiText -notmatch 'Mục "Trên máy này"|\$localTab' -and
-        $enterpriseUiText -match 'enterprise\.status\.choose' -and
-        $enterpriseUiText -match 'enterprise\.local\.tab' -and
-        $enterpriseUiText -match '--local-license-manager' -and
+    Assert-Enterprise ($enterpriseUiText -notmatch 'Mục "Trên máy này"|\$localTab|\$localManagerTab|enterprise\.local\.tab|--local-license-manager' -and
+        $enterpriseUiText -match '\$tabs\.TabPages\.Add\(\$serverTab\)' -and
+        $enterpriseUiText -match '\$tabs\.TabPages\.Add\(\$clientTab\)' -and
+        $enterpriseUiText -match '\$tabs\.TabPages\.Count\s+-ne\s+2' -and
         $enterpriseUiText -match 'enterprise\.navigation\.close' -and
         $enterpriseUiText -match 'Invoke-EnterpriseBack' -and
-        $enterpriseUiText -match 'RectangleF') "Giao diện mục 8 chưa chuyển sang chọn chức năng hoặc thiếu điều hướng phiên."
+        $enterpriseUiText -match 'RectangleF') "Quản lý doanh nghiệp chưa khóa đúng hai tab Máy chủ/Máy trạm hoặc thiếu điều hướng phiên."
     $viCatalog = Get-Content -LiteralPath (Join-Path $SourceDirectory "Tool-Strings.vi-VN.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     $enCatalog = Get-Content -LiteralPath (Join-Path $SourceDirectory "Tool-Strings.en-US.json") -Raw -Encoding UTF8 | ConvertFrom-Json
     foreach ($preservedKey in @(
-        "enterprise.local.tab",
         "enterprise.server.tab",
         "enterprise.client.tab",
         "enterprise.server.create",

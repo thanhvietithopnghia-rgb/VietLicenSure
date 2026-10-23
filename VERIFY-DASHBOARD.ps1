@@ -998,8 +998,8 @@ Assert-SourcePattern $text 'Name="ThirdParty";\s*TextKey="cleanup\.scope\.scanTh
 Assert-SourcePattern $text 'if\s*\([$]Choice\s+-eq\s+"Online"\)\s*\{\s*Start-SoftwareCatalogOnlineUpdate\s+-ScanScope\s+[$]selectedScope\s+-ResumeCleanup' 'Nút Online trong Khắc phục chưa giữ phạm vi để cập nhật catalog rồi quét lại.'
 Assert-SourcePattern $text 'function\s+Request-OnlineSessionRefresh' 'Dashboard thiếu hàng đợi đồng bộ sau khi người dùng chủ động bật Online.'
 Assert-SourcePattern $text 'Start-SoftwareCatalogOnlineUpdate\s+-ConsentAlreadyGranted\s+-BackgroundSync' 'Bật Online chưa tự cập nhật catalog ký số ở chế độ nền.'
-Assert-SourcePattern $text 'Catalog=[$]true;\s*ApplicationVersion=[$]false;\s*Scan=[$]false;\s*Report=[$]false' 'Audit Online chưa khẳng định catalog-only, không quét và không báo cáo.'
-Assert-SourcePattern $text 'if\s*\(-not\s+[$]script:offlineMode\)\s*\{\s*Request-OnlineSessionRefresh\s*\}' 'Khởi tạo Online được cho phép chưa dùng hàng đợi catalog-only.'
+Assert-SourcePattern $text 'Catalog=[$]true;\s*ApplicationVersion=[$]true;\s*RefreshOrder=@\(''SignedCatalog'',''ApplicationVersionCheck''\);\s*Scan=[$]false;\s*Report=[$]false' 'Audit Online chưa khẳng định catalog trước, kiểm phiên bản sau, không quét và không báo cáo.'
+Assert-SourcePattern $text 'if\s*\(-not\s+[$]script:offlineMode\)\s*\{\s*Request-OnlineSessionRefresh\s*\}' 'Khởi tạo Online được cho phép chưa dùng hàng đợi catalog rồi kiểm phiên bản.'
 Assert-SourcePattern $text 'Invoke-PendingOnlineSessionWork' 'Dashboard chưa điều phối hàng đợi catalog.'
 Assert-SourcePattern $text 'if\s*\([$]resumeCleanup\)\s*\{(?s:.*?)Start-Cleanup\s+-ScanScope\s+[$]resumeScope' 'Cập nhật catalog từ Khắc phục chưa tiếp tục quét lại phạm vi đang chờ.'
 Assert-SourcePattern $text 'PreviewRequired=[$]true;\s*SeparateConfirmationRequired=[$]true;\s*AutoRemediation=[$]false;\s*Report=[$]false' 'Luồng tiếp tục sau catalog chưa khóa xem trước, xác nhận riêng và không tự khắc phục/báo cáo.'
@@ -1093,11 +1093,14 @@ if ([string]$viCatalog.'menu.7.description' -ne 'Kiểm tra key firmware; chỉ 
 if ([string]$viCatalog.'about.card.config.body' -notmatch 'Quick, Standard và Deep' -or
     [string]$viCatalog.'about.card.remediation.body' -notmatch 'Dry Run' -or
     [string]$viCatalog.'about.card.report.body' -notmatch 'HTML/PDF/JSON/XML/CSV' -or
-    [string]$viCatalog.'about.card.assurance.body' -notmatch 'bật Online chỉ cập nhật danh mục ký số rồi dừng' -or
-    [string]$viCatalog.'about.card.assurance.body' -notmatch 'Máy chủ tự chạy lại' -or
-    [string]$viCatalog.'about.card.assurance.body' -notmatch 'giữ nguyên ghép nối qua reboot' -or
-    [string]$enCatalog.'about.card.assurance.body' -notmatch 'Online only refreshes the signed catalog and then stops' -or
-    [string]$enCatalog.'about.card.assurance.body' -notmatch 'preserve enrollment across reboot') {
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'web Cá nhân cục bộ' -or
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'Helpdesk và ITAM/SAM dùng chung dữ liệu' -or
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'cập nhật catalog ký số rồi kiểm tra phiên bản nhưng không tự cài' -or
+    [string]$viCatalog.'about.card.assurance.body' -notmatch 'Agent giữ ghép nối qua reboot' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'local Personal web UI' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'Helpdesk and ITAM/SAM share one data source' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'checks the application version without auto-install' -or
+    [string]$enCatalog.'about.card.assurance.body' -notmatch 'Agent enrollment survives reboot') {
     Add-Failure 'Ô Năng lực trong Giới thiệu chưa phản ánh đúng chức năng v5.0 hiện tại.'
 }
 foreach ($lightCardColor in @('238,246,255','255,248,232','237,250,244','247,241,255')) {
@@ -1356,7 +1359,7 @@ if (-not (Test-Path -LiteralPath $guideViPath -PathType Leaf) -or
         $previousHistoryHeadingIndex = $historyHeadingIndex
     }
     foreach ($requiredEnglishHistoryHeading in @(
-        '## v5.0 — updated October 15, 2026 (first released September 8, 2026)',
+        '## v5.0 — updated October 22, 2026 (first released September 8, 2026)',
         '## v4.9.0.0 — August 22, 2026',
         '## v4.8.0.1 — August 18, 2026',
         '## v4.8.0.0 — August 10, 2026',
@@ -1601,8 +1604,12 @@ foreach ($pattern in @(
     if ($text -notmatch $pattern) { Add-Failure "Thiếu hành động menu: $pattern" }
 }
 
-Assert-SourcePattern $text 'Start-Process\s+-FilePath\s+[$]launcherPath\s+-ArgumentList\s+"--enterprise-ui"' 'Mục 8 không luôn mở trung tâm đủ 3 chức năng.'
-Assert-SourcePattern $text '-File\s+`"[$]licenseManagerScript`"' 'Fallback của Mục 8 không mở trung tâm enterprise.'
+Assert-SourcePattern $text '[$]isEnterpriseRole\s*=\s*\([$]script:workspaceRole\s+-eq\s+''itam''\)' 'Mục 8 chưa phân luồng Helpdesk và ITAM/SAM theo vai trò đã chọn.'
+Assert-SourcePattern $text '[$]targetScript\s*=\s*if\s*\([$]isEnterpriseRole\)\s*\{\s*[$]licenseManagerScript\s*\}\s*else\s*\{\s*[$]localLicenseManagerScript\s*\}' 'Mục 8 chưa ánh xạ Helpdesk sang Windows/Office và ITAM/SAM sang Máy chủ/Máy trạm.'
+Assert-SourcePattern $text '[$]launchMode\s*=\s*if\s*\([$]isEnterpriseRole\)\s*\{\s*''--enterprise-ui''\s*\}\s*else\s*\{\s*''--local-license-manager''\s*\}' 'Secure launcher chưa dùng launch mode theo vai trò.'
+Assert-SourcePattern $text 'Start-Process\s+-FilePath\s+[$]launcherPath\s+-ArgumentList\s+[$]launchMode' 'Secure launcher chưa mở đúng trình quản lý theo vai trò.'
+Assert-SourcePattern $text '-File\s+`"[$]targetScript`"' 'Fallback chưa mở đúng trình quản lý theo vai trò.'
+Assert-SourcePattern $text 'TOOL_WORKSPACE_ROLE' 'Tiến trình quản lý giấy phép chưa nhận vai trò giao diện đã chọn.'
 if ($text -match '[$]licenseLaunchMode\s*=\s*if\s*\([$]script:offlineMode\)' -or $text -match 'máy chủ/máy trạm bị ẩn') {
     Add-Failure 'Mục 8 vẫn ẩn chức năng Máy chủ/Máy trạm khi Offline.'
 }

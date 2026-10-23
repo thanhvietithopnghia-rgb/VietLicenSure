@@ -414,9 +414,10 @@ if ($errors.Count -eq 0) {
     $onlinePolicyEn = Get-ToolAssistantAnswer -Question 'what happens when I enable Online' -Culture 'en-US' -Knowledge $knowledge
     if ($coreCompareVi -notmatch 'v4\.9' -or $coreCompareVi -notmatch 'v5\.0' -or $coreCompareVi -notmatch 'Offline' -or
         $coreCompareEn -notmatch 'v4\.9' -or $coreCompareEn -notmatch 'v5\.0' -or $coreCompareEn -notmatch 'Offline' -or
-        $onlinePolicyVi -notmatch 'catalog ký số' -or $onlinePolicyVi -notmatch 'không tự (?:kiểm tra máy|quét)' -or $onlinePolicyVi -notmatch 'không.*(?:tạo )?báo cáo' -or
-        $onlinePolicyEn -notmatch 'signed catalog' -or $onlinePolicyEn -notmatch 'does not start a machine scan' -or $onlinePolicyEn -notmatch 'create a report' -or
-        $onlinePolicyVi -match 'manifest phiên bản mới' -or $onlinePolicyEn -match 'new-version manifest') {
+        $onlinePolicyVi -notmatch 'catalog ký số.*kiểm tra phiên bản' -or $onlinePolicyVi -notmatch 'không tự tải/cài' -or
+        $onlinePolicyVi -notmatch 'không tự.*quét' -or $onlinePolicyVi -notmatch 'không.*báo cáo' -or
+        $onlinePolicyEn -notmatch 'signed catalog.*application-version' -or $onlinePolicyEn -notmatch 'never downloads/installs' -or
+        $onlinePolicyEn -notmatch 'no machine scan/report') {
         Add-AssistantVerificationError 'Assistant knowledge is not synchronized with the v4.9→v5.0 summary or explicit-Online refresh policy.'
     }
 
@@ -476,7 +477,7 @@ if ($errors.Count -eq 0) {
         @{ Culture='vi-VN'; Question='phần mềm và dấu hiệu can thiệp hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Phần mềm & dấu hiệu can thiệp:' },
         @{ Culture='vi-VN'; Question='năm chức năng trong mục khắc phục hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Năm chức năng trong mục Khắc phục:' },
         @{ Culture='vi-VN'; Question='khôi phục key OEM hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Khôi phục key OEM:' },
-        @{ Culture='vi-VN'; Question='quản lý giấy phép hợp lệ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quản lý giấy phép hợp lệ:' },
+        @{ Culture='vi-VN'; Question='quản lý giấy phép hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quản lý giấy phép:' },
         @{ Culture='vi-VN'; Question='kiểm tra chuyên sâu hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kiểm tra chuyên sâu:' },
         @{ Culture='vi-VN'; Question='quét chuyên sâu 7 nhóm hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kiểm tra chuyên sâu 7 nhóm:' },
         @{ Culture='vi-VN'; Question='điều tra 12 nhóm và chấm điểm hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Điều tra 12 nhóm và chấm điểm:' },
@@ -493,8 +494,8 @@ if ($errors.Count -eq 0) {
         @{ Culture='vi-VN'; Question='xác nhận KMS nội bộ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Xác nhận KMS nội bộ:' },
         @{ Culture='vi-VN'; Question='quét lại hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quét lại:' },
         @{ Culture='vi-VN'; Question='kích hoạt hợp lệ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Kích hoạt hợp lệ:' },
-        @{ Culture='vi-VN'; Question='quản lý cục bộ hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quản lý cục bộ:' },
-        @{ Culture='vi-VN'; Question='máy chủ và máy trạm doanh nghiệp hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Máy chủ và máy trạm doanh nghiệp:' },
+        @{ Culture='vi-VN'; Question='IT Helpdesk quản lý Windows Office và chứng từ ra sao'; Expected='IT Helpdesk làm việc trong giao diện Windows' },
+        @{ Culture='vi-VN'; Question='ITAM SAM quản lý máy chủ và máy trạm ra sao'; Expected='ITAM/SAM dùng kiểm kê' },
         @{ Culture='vi-VN'; Question='kiểm tra chứng chỉ số Windows Office hoạt động thế nào'; Expected='chuỗi tin cậy Offline' },
         @{ Culture='vi-VN'; Question='đánh giá plugin hoạt động thế nào'; Expected='plugin JSON chỉ đọc' },
         @{ Culture='vi-VN'; Question='xác minh và xuất timeline hoạt động ra sao'; Expected='chuỗi nhật ký' },
@@ -503,7 +504,7 @@ if ($errors.Count -eq 0) {
         @{ Culture='vi-VN'; Question='mở hướng dẫn sử dụng ở đâu'; Expected='HDSD HTML/PDF' },
         @{ Culture='vi-VN'; Question='xem phiên bản và cập nhật ở đâu'; Expected='Phiên bản và cập nhật' },
         @{ Culture='vi-VN'; Question='tạo gói hỗ trợ đã che định danh ra sao'; Expected='bản xem trước' },
-        @{ Culture='vi-VN'; Question='bật online chỉ để cập nhật catalog hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bật Online chỉ để cập nhật catalog:' },
+        @{ Culture='vi-VN'; Question='bật online cập nhật catalog và kiểm tra phiên bản hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Bật Online để cập nhật catalog và kiểm tra phiên bản:' },
         @{ Culture='vi-VN'; Question='đồng bộ tri thức hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Đồng bộ tri thức:' },
         @{ Culture='vi-VN'; Question='nút Gửi và Enter hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Nút Gửi và Enter:' },
         @{ Culture='vi-VN'; Question='quyền riêng tư báo cáo hoạt động ra sao'; Expected='Hướng dẫn sử dụng — Quyền riêng tư báo cáo:' },
@@ -523,9 +524,9 @@ if ($errors.Count -eq 0) {
         @{ Culture='en-US'; Question='how does Recheck work'; Expected='User guide — Recheck:' },
         @{ Culture='en-US'; Question='how does Activate legitimately work'; Expected='User guide — Activate legitimately:' },
         @{ Culture='en-US'; Question='how does Restore the OEM key work'; Expected='User guide — Restore the OEM key:' },
-        @{ Culture='en-US'; Question='how does Manage valid licenses work'; Expected='User guide — Manage valid licenses:' },
-        @{ Culture='en-US'; Question='how does local license management work'; Expected='User guide — Local management:' },
-        @{ Culture='en-US'; Question='how does enterprise server and workstation work'; Expected='User guide — Enterprise server and workstation:' },
+        @{ Culture='en-US'; Question='how does License management work'; Expected='User guide — License management:' },
+        @{ Culture='en-US'; Question='how does IT Helpdesk manage Windows Office and evidence'; Expected='User guide — IT Helpdesk: Windows, Office, and evidence:' },
+        @{ Culture='en-US'; Question='how does ITAM SAM manage Server and Workstation'; Expected='User guide — ITAM/SAM: Server and Workstation:' },
         @{ Culture='en-US'; Question='how does Advanced inspection work'; Expected='User guide — Advanced inspection:' },
         @{ Culture='en-US'; Question='how does seven-group deep scan work'; Expected='User guide — Seven-group deep scan:' },
         @{ Culture='en-US'; Question='how does twelve-group forensics and scoring work'; Expected='User guide — Twelve-group forensics and scoring:' },

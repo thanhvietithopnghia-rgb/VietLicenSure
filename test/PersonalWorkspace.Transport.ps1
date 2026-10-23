@@ -37,16 +37,16 @@ try {
     Assert-Check ((Request '/api/state' -FetchSite 'cross-site').Code -eq 403) 'cross site rejected'
     # HTTP.sys may reject a hostile Host before the application sees it.
     Assert-Check ((Request '/api/state' -HostHeader 'attacker.invalid').Code -ne 200) 'host rebinding rejected'
-    Assert-Check ((Request '/api/scan' -Method POST -Origin $bridge.Origin).Code -eq 503) 'startup gate'
+    Assert-Check ((Request '/api/scan-all' -Method POST -Origin $bridge.Origin).Code -eq 503) 'startup gate'
     $snapshot = @{ status='partial'; hasReport=$true; history=@(@{mode='Hardware'; status='partial'}) }
     Set-ToolPersonalWorkspaceSnapshot -Bridge $bridge -Snapshot $snapshot -Ready $true -Busy $false
     $reply = Request '/api/state'
     Assert-Check ($reply.Code -eq 200 -and ($reply.Body | ConvertFrom-Json).status -eq 'partial') 'shared snapshot preserved'
     Assert-Check ($reply.Csp -match "frame-ancestors 'none'") 'CSP applied'
-    Assert-Check ((Request '/api/scan' -Method POST).Code -eq 403) 'mutation requires origin'
-    Assert-Check ((Request '/api/scan' -Method POST -Origin 'null').Code -eq 403) 'null origin rejected'
-    Assert-Check ((Request '/api/scan?path=C:/secret' -Method POST -Origin $bridge.Origin).Code -eq 400) 'query input rejected'
-    $bodyRequest = New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post, ($bridge.Origin + '/api/scan'))
+    Assert-Check ((Request '/api/scan-all' -Method POST).Code -eq 403) 'mutation requires origin'
+    Assert-Check ((Request '/api/scan-all' -Method POST -Origin 'null').Code -eq 403) 'null origin rejected'
+    Assert-Check ((Request '/api/scan-all?path=C:/secret' -Method POST -Origin $bridge.Origin).Code -eq 400) 'query input rejected'
+    $bodyRequest = New-Object Net.Http.HttpRequestMessage([Net.Http.HttpMethod]::Post, ($bridge.Origin + '/api/scan-all'))
     try {
         [void]$bodyRequest.Headers.TryAddWithoutValidation('X-VietLicenSure-Session', $script:token)
         [void]$bodyRequest.Headers.TryAddWithoutValidation('Origin', $bridge.Origin)
@@ -56,16 +56,16 @@ try {
         finally { $bodyReply.Dispose() }
     } finally { $bodyRequest.Dispose() }
     Assert-Check ((Request '/api/execute' -Method POST -Origin $bridge.Origin).Code -eq 403) 'unknown action rejected'
-    Assert-Check ((Request '/api/scan' -Method POST -Origin $bridge.Origin).Code -eq 202) 'scan queued'
-    Assert-Check ((Request '/api/scan' -Method POST -Origin $bridge.Origin).Code -eq 409) 'duplicate queued rejected'
-    Assert-Check ((Receive-ToolPersonalWorkspaceAction $bridge) -eq 'scan') 'desktop receives request'
-    Assert-Check ((Request '/api/scan' -Method POST -Origin $bridge.Origin).Code -eq 409) 'active task rejected'
+    Assert-Check ((Request '/api/scan-all' -Method POST -Origin $bridge.Origin).Code -eq 202) 'scan queued'
+    Assert-Check ((Request '/api/scan-all' -Method POST -Origin $bridge.Origin).Code -eq 409) 'duplicate queued rejected'
+    Assert-Check ((Receive-ToolPersonalWorkspaceAction $bridge) -eq 'scan-all') 'desktop receives scoped request'
+    Assert-Check ((Request '/api/scan-all' -Method POST -Origin $bridge.Origin).Code -eq 409) 'active task rejected'
     Assert-Check ($null -eq (Receive-ToolPersonalWorkspaceAction $bridge)) 'one dispatch only'
     foreach ($status in @('no-result','error','cancelled','completed')) {
         Set-ToolPersonalWorkspaceSnapshot $bridge @{status=$status;hasReport=$false} -Ready $true -Busy $false
         Assert-Check (((Request '/api/state').Body | ConvertFrom-Json).status -eq $status) ('preserve ' + $status)
     }
-    foreach ($action in @('overview','results')) {
+    foreach ($action in @('back','role','network','language','theme','about','assistant','reports','scan-hardware','scan-windows','scan-office','scan-software')) {
         Assert-Check ((Request ('/api/'+$action) -Method POST -Origin $bridge.Origin).Code -eq 202) ('queue '+$action)
         Assert-Check ((Receive-ToolPersonalWorkspaceAction $bridge) -eq $action) ('receive '+$action)
         Set-ToolPersonalWorkspaceSnapshot $bridge @{status='idle'} -Ready $true -Busy $false

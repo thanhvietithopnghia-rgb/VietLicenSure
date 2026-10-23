@@ -27,7 +27,7 @@ VietLicenSure v5.0 is officially distributed through the `Official Self-Signed` 
 
 ## Which function should I choose first?
 
-Keep **Offline** enabled, run under a standard user account, and choose **Check everything**. Read the summary cards first, then open the detailed evidence. Enable Online only when you intentionally update a catalog or knowledge file, or use an authorized LAN function.
+Keep **Offline** enabled, run under a standard user account, and choose **Check everything**. Read the summary cards first, then open the detailed evidence. Enable Online only when you intentionally refresh the signed catalog and check application-version availability, update knowledge, or use an authorized LAN function; no version is downloaded/installed automatically.
 
 ## Why does the application ask for UAC?
 
