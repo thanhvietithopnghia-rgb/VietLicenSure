@@ -251,11 +251,11 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 72 } else { 73 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 156 } else { 157 }
+$expectedToolHashCount = if ($AllowDevelopmentManifest) { 71 } else { 72 }
+$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 155 } else { 156 }
 # Device workflow adds BUILD-COMPRESS-PAYLOAD.py and DEVICE-WORKFLOW-v1.md.
 # test/ remains excluded by the existing source-package manifest policy.
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 223 } else { 227 }
+$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 222 } else { 226 }
 if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectoryFull 'RELEASE-SHA256SUMS.txt') -PathType Leaf)) {
     # Source-only handoff intentionally omits the release checksum because it
     # references the EXE stored in the sibling release folder.
@@ -411,8 +411,10 @@ foreach ($aclScript in @($cleanupText, $backupText)) {
         break
     }
 }
-if ($guiText -notmatch 'Verb\s*=\s*"RunAs"' -or $guiText -notmatch 'ArgumentList\s+"--enterprise-ui"\s+-Verb\s+RunAs') {
-    $failures.Add('Cập nhật/Mục 8 chưa yêu cầu quyền quản trị theo từng thao tác.')
+if ($guiText -notmatch 'Confirm-IntegrityForElevatedAction' -or
+    $guiText -notmatch 'Start-Process\s+-FilePath\s+\$launcherPath\s+-ArgumentList\s+\$launchMode\s+-Verb\s+RunAs' -or
+    $guiText -notmatch 'Start-DetachedToolModuleProcess\s+-ModuleId\s+\$moduleId\s+-Arguments\s+\$arguments\s+-Elevate') {
+    $failures.Add('Quản lý giấy phép theo vai trò chưa yêu cầu quyền quản trị theo từng thao tác.')
 }
 if ($guiText -notmatch 'function\s+New-ToolReportRunDirectory' -or $guiText -notmatch 'function\s+Open-ToolHtmlReport' -or
     $reportText -notmatch 'WindowsConclusionCode' -or $reportText -notmatch 'KmsUnapprovedHost') {
@@ -432,9 +434,12 @@ if ($assistantText -notmatch 'function\s+Show-ToolAssistantWindow' -or
     $failures.Add('Trợ lý VietLicenSure v5.0 thiếu máy trả lời cục bộ hoặc ranh giới không API/Codex/upload.')
 }
 if ($guiText -notmatch 'enterprise-license-manager\.ps1' -or
-    $guiText -notmatch 'status\.enterprise\.opening' -or
-    $guiText -notmatch 'ArgumentList\s+"--enterprise-ui"') {
-    $failures.Add('Mục 8 chưa nối tới trung tâm enterprise server/client.')
+    $guiText -notmatch 'windows-office-license-manager\.ps1' -or
+    $guiText -notmatch '\$isEnterpriseRole\s*=\s*\(\$script:workspaceRole\s+-eq\s+''itam''\)' -or
+    $guiText -notmatch '\$targetScript\s*=\s*if\s*\(\$isEnterpriseRole\)' -or
+    $guiText -notmatch '\$launchMode\s*=\s*if\s*\(\$isEnterpriseRole\)' -or
+    $guiText -notmatch 'TOOL_WORKSPACE_ROLE') {
+    $failures.Add('Quản lý giấy phép chưa phân Helpdesk sang Windows/Office và ITAM/SAM sang Máy chủ/Máy trạm.')
 }
 if ($enterpriseText -notmatch 'AES-256|AesManaged' -or $enterpriseText -notmatch 'HMACSHA256' -or
     $enterpriseText -notmatch 'EnterpriseInventory' -or $enterpriseText -notmatch 'Find-ToolEnterpriseNetworkDevices' -or
@@ -940,8 +945,8 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             (Get-Sha256Hex $sourceProvenanceSignaturePath) -ne (Get-Sha256Hex $releaseProvenanceSignaturePath)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
-        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 74 } else { 75 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 72 } else { 73 }
+        $expectedPayloadCount = if ($AllowDevelopmentManifest) { 73 } else { 74 }
+        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 71 } else { 72 }
         if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
