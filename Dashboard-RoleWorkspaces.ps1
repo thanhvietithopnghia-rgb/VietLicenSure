@@ -130,8 +130,21 @@ function Initialize-RoleWorkspaces {
     $script:roleButton.Add_Click({Show-RoleWorkspaceChooser})
     $buttonPanel.Controls.Add($script:roleButton); $script:roleButton.BringToFront()
     $buttonPanel.Add_SizeChanged({
-        $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-250)
-        $menuCaption.Width=[Math]::Max(70,$buttonPanel.ClientSize.Width-280)
+        $clientWidth = [Math]::Max(1, $buttonPanel.ClientSize.Width)
+        if ($clientWidth -lt 560) {
+            # The personal workspace is intentionally narrow.  Use the
+            # highlighted role button as the row heading instead of squeezing
+            # a second caption beside it; every control then remains inside
+            # the vertical-scroll viewport.
+            $menuCaption.Visible = $false
+            $script:roleButton.Left = 16
+            $script:roleButton.Width = [Math]::Max(120, $clientWidth - 32)
+        } else {
+            $menuCaption.Visible = $true
+            $script:roleButton.Width = 240
+            $script:roleButton.Left = [Math]::Max(0, $clientWidth - 250)
+            $menuCaption.Width = [Math]::Max(70, $script:roleButton.Left - $menuCaption.Left - 10)
+        }
     })
     Update-RoleWorkspaceChrome
     [void]$form.BeginInvoke([Action]{Show-RoleWorkspaceChooser})

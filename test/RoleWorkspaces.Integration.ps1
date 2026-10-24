@@ -25,5 +25,7 @@ Check ($roleSource -notmatch 'PersonalWorkspace|personalBridge|LaunchUri|Start-P
 Check ($entrySource -notmatch 'Tool-PersonalWorkspace') 'Dashboard still imports the Personal web transport'
 Check ($buildSource -notmatch 'Tool-PersonalWorkspace') 'Build still packages the Personal web transport'
 Check (-not (Test-Path -LiteralPath (Join-Path $root 'Tool-PersonalWorkspace.ps1'))) 'Personal web transport source still exists'
+Check ($roleSource -match '\$clientWidth -lt 560' -and $roleSource -match '\$menuCaption\.Visible = \$false') 'Narrow workspace does not replace the clipped duplicate caption'
+Check ($roleSource -match '\$script:roleButton\.Width = \[Math\]::Max\(120, \$clientWidth - 32\)') 'Narrow role button can overflow its viewport'
 
 [pscustomobject]@{Passed=$true;Checks=$checks;Mode='Native role-filtered WinForms only'}|ConvertTo-Json -Compress
