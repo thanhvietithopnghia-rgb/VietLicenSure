@@ -47,9 +47,33 @@ try {
     $stale = Get-ToolSharedScanState -ReportRoot $temp -Mode Windows -CurrentBuildId 'different-build'
     Check (-not $stale.IsFresh -and $stale.Reason -eq 'BuildChanged') 'Build change did not force a full refresh'
 
+    $officeQuick = Get-ToolSharedScanQuickSummary -Mode Office -Report ([pscustomobject][ordered]@{
+        OfficeConclusionCode='KmsUnapprovedHost'; OfficeConclusion='Office KMS host is not approved.'
+        OfficeAdvisor=[pscustomobject]@{ EvidenceSourceCount=3; Confidence='High' }
+    })
+    Check ($officeQuick.Kind -eq 'License' -and $officeQuick.Risk -eq 'High') 'Office KMS risk was not summarized as high'
+    Check ($officeQuick.Code -eq 'KmsUnapprovedHost' -and $officeQuick.EvidenceSourceCount -eq 3) 'Office quick evidence summary is incomplete'
+
+    $softwareQuick = Get-ToolSharedScanQuickSummary -Mode Software -Report ([pscustomobject][ordered]@{
+        ThirdPartyHighSeverityCount=1
+        DetailedInventory=[pscustomobject][ordered]@{ Software=[pscustomobject][ordered]@{
+            ThirdPartyApplications=@(
+                [pscustomobject]@{ Name='Paid'; LicenseModel='Paid'; AssessmentCode='Unverified'; IsSystemComponent=$false },
+                [pscustomobject]@{ Name='Free'; LicenseModel='Free'; AssessmentCode='FreeOrIncluded'; IsSystemComponent=$false },
+                [pscustomobject]@{ Name='Freemium'; LicenseModel='Freemium'; AssessmentCode='FreeOrIncluded'; IsSystemComponent=$false },
+                [pscustomobject]@{ Name='Unknown'; LicenseModel='Unknown'; AssessmentCode='Suspicious'; IsSystemComponent=$false },
+                [pscustomobject]@{ Name='Driver'; LicenseModel='Driver'; AssessmentCode='FreeOrIncluded'; IsSystemComponent=$true }
+            )
+        }; ActivatorFindings=@([pscustomobject]@{ Indicator='fixture' }) }
+    })
+    Check ($softwareQuick.Total -eq 4 -and $softwareQuick.Paid -eq 1 -and $softwareQuick.Free -eq 2 -and $softwareQuick.Unknown -eq 1) 'Software quick counts are incorrect'
+    Check ($softwareQuick.Intervention -eq 2 -and $softwareQuick.High -eq 1) 'Software intervention summary is incorrect'
+
     $executionSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-Execution.ps1') -Raw -Encoding UTF8
     $layoutSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-Core.ps1') -Raw -Encoding UTF8
     $reportSource = Get-Content -LiteralPath (Join-Path $root 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
+    $guiSource = Get-Content -LiteralPath (Join-Path $root 'Giao-Dien.ps1') -Raw -Encoding UTF8
+    $roleSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-RoleWorkspaces.ps1') -Raw -Encoding UTF8
     Check ($executionSource -match 'activeProcess.+HasExited' -and $executionSource -match 'sharedScan\.duplicateBlocked') 'Duplicate in-flight scan is not blocked'
     Check ($executionSource -match "Profile = 'Quick'" -and $executionSource -match 'IncrementalRefresh') 'Fresh result does not select quick incremental refresh'
     Check ($executionSource -match 'BaselineReportPath') 'Incremental baseline is not passed to the report engine'
@@ -57,6 +81,9 @@ try {
     Check ($layoutSource -match 'sharedResultCaption' -and $layoutSource -match 'sharedResultDetailButton') 'Inline summary/details layout is missing'
     Check ($reportSource -match 'MachineBinding = Get-ToolResultMachineBinding') 'Report is not bound to the current machine'
     Check ($reportSource.Contains('BaselineReportSha256') -and $reportSource.Contains("RefreshKind = `$(if (`$IncrementalRefresh)")) 'Report does not record incremental provenance'
+    Check ($executionSource -match "mode -in @\('Windows','Office','Software'\).+NoOpen") 'Windows/Office/Software reports still auto-open HTML'
+    Check ($guiSource -match 'progress\.completed\.summaryReady') 'Report completion does not announce the inline quick result'
+    Check ($roleSource -match 'Set-RoleWorkspaceButtonVisual' -and $roleSource -match 'SuspendLayout' -and $roleSource -match 'ResumeLayout') 'Role emphasis or flicker-controlled switching is missing'
 
     [pscustomobject]@{Passed=$true;Checks=$checks;MachineBinding=$binding;Mode='Shared per-device current result with incremental comparison'} | ConvertTo-Json -Compress
 } finally {

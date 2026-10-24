@@ -221,6 +221,53 @@ function Get-ToolSharedScanState {
     }
 }
 
+function Get-ToolSharedScanQuickSummary {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][object]$Report,
+        [Parameter(Mandatory = $true)][ValidateSet('All','Hardware','Windows','Office','Software')][string]$Mode
+    )
+
+    if ($Mode -in @('Windows','Office')) {
+        $prefix = if ($Mode -eq 'Windows') { 'Windows' } else { 'Office' }
+        $code = [string](Get-ToolResultObjectValue $Report @(($prefix + 'ConclusionCode')) 'Unverifiable')
+        $conclusion = [string](Get-ToolResultObjectValue $Report @(($prefix + 'Conclusion')) $code)
+        $advisor = Get-ToolResultObjectValue $Report @(($prefix + 'Advisor'))
+        $risk = if ($code -in @('NotLicensed','KmsUnapprovedHost','KmsEntitlementUnverified')) { 'High' }
+            elseif ($code -in @('KmsApprovedHost','ActivatedEntitlementUnverified','Unverifiable')) { 'Review' }
+            else { 'Info' }
+        return [pscustomobject][ordered]@{
+            Kind='License'; Mode=$Mode; Code=$code; Risk=$risk; Conclusion=$conclusion
+            EvidenceSourceCount=[int](Get-ToolResultObjectValue $advisor @('EvidenceSourceCount') 0)
+            Confidence=[string](Get-ToolResultObjectValue $advisor @('Confidence') 'Informational')
+        }
+    }
+
+    if ($Mode -eq 'Software') {
+        $detailed = Get-ToolResultObjectValue $Report @('DetailedInventory')
+        $software = Get-ToolResultObjectValue $detailed @('Software')
+        $applications = @(Get-ToolResultObjectValue $software @('ThirdPartyApplications') @() |
+            Where-Object { -not [bool](Get-ToolResultObjectValue $_ @('IsSystemComponent') $false) })
+        $paidModels = @('Paid','Commercial','Subscription','Perpetual','Trial','Trialware','Mixed')
+        $freeModels = @('Free','Freeware','Freemium','OpenSource','Runtime','Driver','Included')
+        $paid = @($applications | Where-Object { [string](Get-ToolResultObjectValue $_ @('LicenseModel')) -in $paidModels }).Count
+        $free = @($applications | Where-Object { [string](Get-ToolResultObjectValue $_ @('LicenseModel')) -in $freeModels }).Count
+        $unknown = [Math]::Max(0, $applications.Count - $paid - $free)
+        $riskyApplications = @($applications | Where-Object {
+            [string](Get-ToolResultObjectValue $_ @('AssessmentCode')) -in @('NonGenuine','Suspicious','IntegrityCompromised') -or
+            [bool](Get-ToolResultObjectValue $_ @('CleanupFinding') $false)
+        }).Count
+        $activatorFindings = @(Get-ToolResultObjectValue $detailed @('ActivatorFindings') @()).Count
+        return [pscustomobject][ordered]@{
+            Kind='Software'; Mode=$Mode; Total=[int]$applications.Count; Paid=[int]$paid; Free=[int]$free
+            Unknown=[int]$unknown; Intervention=[int]($riskyApplications + $activatorFindings)
+            High=[int](Get-ToolResultObjectValue $Report @('ThirdPartyHighSeverityCount') $riskyApplications)
+        }
+    }
+
+    return [pscustomobject][ordered]@{ Kind='Direct'; Mode=$Mode }
+}
+
 function New-ToolResultCenterItem {
     param(
         [Parameter(Mandatory = $true)][string]$Identity,

@@ -80,7 +80,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Thanh bên trái gồm Tổng quan, Kiểm tra, Khắc phục, Báo cáo và Cài đặt.
 - Bốn thẻ phía trên hiển thị trạng thái Windows, Office, chế độ chạy và tính toàn vẹn của công cụ.
 - Mười ô chức năng là các tác vụ chính. Có thể lọc theo nhóm Kiểm tra, Khắc phục hoặc Báo cáo.
-- Khung Hoạt động gần đây ghi thời gian, bước đang chạy, cảnh báo và kết quả cuối.
+- Khung Hoạt động gần đây ghi thời gian, bước đang chạy, cảnh báo và kết quả nhanh. Với Windows, Office và Phần mềm, báo cáo HTML chỉ mở khi bấm Xem chi tiết; Kiểm tra toàn bộ và Cấu hình phần cứng vẫn mở kết quả ngay sau khi hoàn tất.
 - Nút Sao chép toàn bộ log dùng khi cần gửi nội dung chẩn đoán cho kỹ thuật viên.
 - Nút Mở thư mục báo cáo mở nơi chứa kết quả mới nhất.
 - Nút Dừng chỉ dùng khi tác vụ kéo dài bất thường. Nếu dừng giữa lúc khắc phục, hãy giữ backup và quét lại trước khi làm tiếp.

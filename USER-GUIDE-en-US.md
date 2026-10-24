@@ -80,7 +80,7 @@ You do not need source access, configuration files, or technical documentation t
 - The left navigation contains Overview, Scan, Remediation, Reports, and Settings.
 - Four cards show Windows, Office, run mode, and tool integrity.
 - Ten task tiles provide the main functions and can be filtered by category.
-- Recent activity records the current step, warnings, and final result.
+- Recent activity records the current step, warnings, and a quick result. For Windows, Office, and Software, the HTML report opens only after selecting View details; Full inspection and Hardware configuration still open their result immediately when complete.
 - Copy all log copies diagnostics for support.
 - Open report folder opens the latest report location.
 - Stop should be used only when a task is taking abnormally long. If remediation is interrupted, preserve the backup and rescan before continuing.

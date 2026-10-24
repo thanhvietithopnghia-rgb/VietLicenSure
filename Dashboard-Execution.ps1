@@ -1266,9 +1266,34 @@ function Update-SharedScanResultDisplay {
     }
     $sharedResultStateLabel.Text = Get-DashboardText $stateKey
     if ($state.Latest -and $state.Summary) {
-        $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.summary' @(
-            [int]$state.Summary.High, [int]$state.Summary.Medium, [int]$state.Summary.Low,
-            [int]$state.Summary.New, [int]$state.Summary.Resolved)
+        $quick = Get-ToolSharedScanQuickSummary -Report $state.Latest.Report -Mode $Mode
+        if ([string]$quick.Kind -eq 'License') {
+            $riskKey = 'sharedScan.quick.risk.' + [string]$quick.Risk
+            $sharedResultStateLabel.Text = Get-DashboardText 'sharedScan.quick.licenseTitle' @(
+                $(if ($Mode -eq 'Windows') { 'Windows' } else { 'Microsoft Office' }), (Get-DashboardText $riskKey))
+            $conclusionKey = switch ([string]$quick.Code) {
+                'KmsUnapprovedHost' { 'report.license.' + $Mode.ToLowerInvariant() + '.kmsUnapproved' }
+                'KmsEntitlementUnverified' { 'report.license.' + $Mode.ToLowerInvariant() + '.kmsUnverified' }
+                'KmsApprovedHost' { 'report.license.' + $Mode.ToLowerInvariant() + '.kmsApproved' }
+                'ActivatedEntitlementUnverified' { 'report.license.' + $Mode.ToLowerInvariant() + '.activatedUnverified' }
+                'NotLicensed' { 'report.license.' + $Mode.ToLowerInvariant() + '.notLicensed' }
+                'Unverifiable' { 'report.license.' + $Mode.ToLowerInvariant() + '.unverifiable' }
+                'NotDetected' { 'report.license.office.notDetected' }
+                default { '' }
+            }
+            $localizedConclusion = if ($conclusionKey) { Get-DashboardText $conclusionKey } else { [string]$quick.Conclusion }
+            $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.quick.licenseSummary' @(
+                $localizedConclusion, [int]$quick.EvidenceSourceCount)
+        } elseif ([string]$quick.Kind -eq 'Software') {
+            $sharedResultStateLabel.Text = Get-DashboardText 'sharedScan.quick.softwareTitle'
+            $sharedResultSummaryLabel.Text = (Get-DashboardText 'sharedScan.quick.softwareCounts' @(
+                [int]$quick.Total, [int]$quick.Paid, [int]$quick.Free, [int]$quick.Unknown)) + "`r`n" +
+                (Get-DashboardText 'sharedScan.quick.softwareIntervention' @([int]$quick.Intervention, [int]$quick.High))
+        } else {
+            $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.summary' @(
+                [int]$state.Summary.High, [int]$state.Summary.Medium, [int]$state.Summary.Low,
+                [int]$state.Summary.New, [int]$state.Summary.Resolved)
+        }
         $sharedResultTimeLabel.Text = Get-DashboardText 'sharedScan.observedAt' @(([DateTime]$state.Latest.CreatedAt).ToString('g'))
         $sharedResultDetailButton.Enabled = [bool](Test-Path -LiteralPath ([string]$state.HtmlPath) -PathType Leaf)
     } else {
@@ -1331,7 +1356,8 @@ function Start-Report([string]$mode, [string]$displayName) {
         $scanRequestJson = $scanChoice | ConvertTo-Json -Depth 4
         [IO.File]::WriteAllText($scanSettingsPath, $scanRequestJson, (New-Object Text.UTF8Encoding($false)))
         $incrementalArguments = if ($incrementalRefresh) { " -IncrementalRefresh -BaselineReportPath `"$baselineReportPath`"" } else { '' }
-        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -ScanSettingsPath `"$scanSettingsPath`" -Pdf$privacyArgument$incrementalArguments"
+        $openArgument = if ($mode -in @('Windows','Office','Software')) { ' -NoOpen' } else { '' }
+        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$reportScript`" -OutputDir `"$output`" -Mode `"$mode`" -Culture `"$script:dashboardCulture`" -ApprovedKmsServerFile `"$approvedKmsFile`" -ScanSettingsPath `"$scanSettingsPath`" -Pdf$privacyArgument$incrementalArguments$openArgument"
         $moduleId = Get-ToolReportModuleId -Mode $mode
         # Windows licensing, all-user AppX and other-user registry hives can
         # require an elevated token. The click is the user's action and UAC is

@@ -895,7 +895,7 @@ function Update-MainLayout {
         $sharedResultTimeLabel.Top = $sharedResultDetailButton.Top - $sharedResultTimeLabel.Height - 4
         $sharedResultSummaryLabel.Left = 16
         $sharedResultSummaryLabel.Width = $activityPanel.ClientSize.Width - 32
-        $sharedResultSummaryLabel.Height = 40
+        $sharedResultSummaryLabel.Height = 64
         $sharedResultSummaryLabel.Top = $sharedResultTimeLabel.Top - $sharedResultSummaryLabel.Height - 2
         $sharedResultStateLabel.Left = 16
         $sharedResultStateLabel.Width = $activityPanel.ClientSize.Width - 32

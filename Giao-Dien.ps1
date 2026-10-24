@@ -886,6 +886,7 @@ $sharedResultSummaryLabel = New-Object System.Windows.Forms.Label
 $sharedResultSummaryLabel.Font = $fontSmall
 $sharedResultSummaryLabel.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
 $sharedResultSummaryLabel.AutoEllipsis = $true
+$sharedResultSummaryLabel.TextAlign = 'TopLeft'
 $activityPanel.Controls.Add($sharedResultSummaryLabel)
 
 $sharedResultTimeLabel = New-Object System.Windows.Forms.Label
@@ -1226,7 +1227,8 @@ $timer.Add_Tick({
         }
         Set-ButtonsEnabled $true
         if ($exitCode -eq 0) {
-            $status.Text = Get-ToolText -Key "progress.completed" -Culture $script:dashboardCulture -FormatArguments @($finishedAction)
+            $completionKey = if ($finishedTaskKind -eq 'Report' -and $finishedReportMode -in @('Windows','Office','Software')) { 'progress.completed.summaryReady' } else { 'progress.completed' }
+            $status.Text = Get-ToolText -Key $completionKey -Culture $script:dashboardCulture -FormatArguments @($finishedAction)
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkGreen
             if ($finishedTaskKind -eq "Report") {

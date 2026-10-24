@@ -24,6 +24,26 @@ function Get-RoleWorkspaceName([string]$Role) {
     }
 }
 
+function Set-RoleWorkspaceButtonVisual {
+    param(
+        [Parameter(Mandatory=$true)][Windows.Forms.Button]$Button,
+        [Parameter(Mandatory=$true)][ValidateSet('personal','helpdesk','itam')][string]$Role,
+        [switch]$Selected
+    )
+    $accent = switch ($Role) {
+        'personal' { [Drawing.Color]::FromArgb(21, 101, 192) }
+        'helpdesk' { [Drawing.Color]::FromArgb(230, 81, 0) }
+        'itam' { [Drawing.Color]::FromArgb(106, 27, 154) }
+    }
+    $Button.FlatStyle = 'Flat'
+    $Button.FlatAppearance.BorderColor = $accent
+    $Button.FlatAppearance.BorderSize = $(if ($Selected) { 3 } else { 1 })
+    $Button.BackColor = $accent
+    $Button.ForeColor = [Drawing.Color]::White
+    $Button.Font = $fontBold
+    $Button.UseVisualStyleBackColor = $false
+}
+
 function Update-RoleWorkspaceChrome {
     if (-not $script:roleButton) { return }
     $roleName = Get-RoleWorkspaceName $script:workspaceRole
@@ -31,6 +51,9 @@ function Update-RoleWorkspaceChrome {
     $script:roleButton.AccessibleName = $script:roleButton.Text
     $script:roleButton.AccessibleDescription = Get-RoleWorkspaceText 'buttonDescription'
     $toolTip.SetToolTip($script:roleButton, $script:roleButton.AccessibleDescription)
+    if ($script:workspaceRole -in @('personal','helpdesk','itam')) {
+        Set-RoleWorkspaceButtonVisual -Button $script:roleButton -Role $script:workspaceRole -Selected
+    }
     $licenseButton = @($buttons | Where-Object { $_.Tag -and [int]$_.Tag.Number -eq 8 } | Select-Object -First 1)
     if ($licenseButton.Count -eq 1) {
         $licenseButton = $licenseButton[0]
@@ -69,38 +92,46 @@ function Show-RoleWorkspaceChooser {
     $layout.Controls.Add($note)
     $labels=@((Get-RoleWorkspaceText 'choice.personal'),(Get-RoleWorkspaceText 'choice.helpdesk'),(Get-RoleWorkspaceText 'choice.itam'))
     $roles=@('personal','helpdesk','itam')
+    $roleChoiceButtons = New-Object Collections.Generic.List[Windows.Forms.Button]
     for($i=0;$i -lt 3;$i++) {
         $button=New-Object Windows.Forms.Button
         $button.Size=New-Object Drawing.Size(590,58); $button.Text=$labels[$i]; $button.Tag=$roles[$i]
         $button.TextAlign='MiddleLeft'; $button.Padding=New-Object Windows.Forms.Padding(12,0,12,0)
         $button.AccessibleName=$button.Text; $button.AccessibleDescription=$button.Text
         $button.Add_Click({param($sender,$eventArgs) $sender.FindForm().Tag=[string]$sender.Tag; $sender.FindForm().Close()})
+        $roleChoiceButtons.Add($button)
         $layout.Controls.Add($button)
     }
     $chooser.Add_FormClosing({param($sender,$e) if([string]::IsNullOrWhiteSpace([string]$sender.Tag)){$e.Cancel=$true}})
     Set-ToolWindowTheme -Root $chooser -Mode $script:dashboardTheme
+    foreach ($choiceButton in $roleChoiceButtons) {
+        Set-RoleWorkspaceButtonVisual -Button $choiceButton -Role ([string]$choiceButton.Tag) -Selected:([string]$choiceButton.Tag -eq [string]$script:workspaceRole)
+    }
     [void](Show-DashboardModalDialog -Dialog $chooser); $selected=[string]$chooser.Tag; $chooser.Dispose()
     if (-not $selected) { throw 'RoleWorkspaceSelectionRequired' }
-    $script:workspaceRole=$selected
-    Update-RoleWorkspaceChrome
-    Set-DashboardSection -Section 'Overview'
-    if (Get-Command Update-SharedScanResultDisplay -ErrorAction SilentlyContinue) {
-        [void](Update-SharedScanResultDisplay -Mode $(if ($script:sharedScanDisplayMode) { [string]$script:sharedScanDisplayMode } else { 'All' }))
-    }
+    $form.SuspendLayout()
+    try {
+        $script:workspaceRole=$selected
+        Update-RoleWorkspaceChrome
+        Set-DashboardSection -Section 'Overview'
+        if (Get-Command Update-SharedScanResultDisplay -ErrorAction SilentlyContinue) {
+            [void](Update-SharedScanResultDisplay -Mode $(if ($script:sharedScanDisplayMode) { [string]$script:sharedScanDisplayMode } else { 'All' }))
+        }
+    } finally { $form.ResumeLayout($true) }
 }
 
 function Initialize-RoleWorkspaces {
     if ($script:roleButton) { return }
     $script:roleWorkspaceReady=$true; $script:workspaceRole='unselected'
     $script:roleButton=New-Object Windows.Forms.Button
-    $script:roleButton.Size=New-Object Drawing.Size(220,28)
+    $script:roleButton.Size=New-Object Drawing.Size(240,32)
     $script:roleButton.Top=4; $script:roleButton.Anchor='Top,Right'
-    $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-230)
+    $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-250)
     $script:roleButton.Add_Click({Show-RoleWorkspaceChooser})
     $buttonPanel.Controls.Add($script:roleButton); $script:roleButton.BringToFront()
     $buttonPanel.Add_SizeChanged({
-        $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-230)
-        $menuCaption.Width=[Math]::Max(70,$buttonPanel.ClientSize.Width-260)
+        $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-250)
+        $menuCaption.Width=[Math]::Max(70,$buttonPanel.ClientSize.Width-280)
     })
     Update-RoleWorkspaceChrome
     [void]$form.BeginInvoke([Action]{Show-RoleWorkspaceChooser})
