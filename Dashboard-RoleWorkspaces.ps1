@@ -72,6 +72,30 @@ function Update-RoleWorkspaceChrome {
     }
 }
 
+function Update-RoleWorkspaceHeaderLayout {
+    if (-not $script:roleButton -or -not $buttonPanel) { return }
+    $clientWidth = [Math]::Max(1, $buttonPanel.ClientSize.Width)
+    $verticalReserve = if ($buttonPanel.VerticalScroll.Visible -or
+        $buttonPanel.AutoScrollMinSize.Height -gt $buttonPanel.ClientSize.Height) {
+        [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth + 4
+    } else { 4 }
+    if ($clientWidth -lt 560) {
+        # The role button replaces the duplicate caption in a narrow column.
+        # Reserve the vertical scrollbar explicitly so AutoScroll never needs
+        # to expose a horizontal scrollbar after the task list grows.
+        $menuCaption.Visible = $false
+        $script:roleButton.Left = 12
+        $script:roleButton.Width = [Math]::Max(120, $clientWidth - $script:roleButton.Left - 12 - $verticalReserve)
+    } else {
+        $menuCaption.Visible = $true
+        $script:roleButton.Width = 240
+        $script:roleButton.Left = [Math]::Max(0, $clientWidth - $script:roleButton.Width - 12)
+        $menuCaption.Width = [Math]::Max(70, $script:roleButton.Left - $menuCaption.Left - 10)
+    }
+    $currentVerticalOffset = [Math]::Abs($buttonPanel.AutoScrollPosition.Y)
+    $buttonPanel.AutoScrollPosition = New-Object Drawing.Point(0, $currentVerticalOffset)
+}
+
 function Show-RoleWorkspaceChooser {
     $chooser=New-Object Windows.Forms.Form
     $chooser.Text=Get-RoleWorkspaceText 'chooser.title'
@@ -125,27 +149,12 @@ function Initialize-RoleWorkspaces {
     $script:roleWorkspaceReady=$true; $script:workspaceRole='unselected'
     $script:roleButton=New-Object Windows.Forms.Button
     $script:roleButton.Size=New-Object Drawing.Size(240,32)
-    $script:roleButton.Top=4; $script:roleButton.Anchor='Top,Right'
+    $script:roleButton.Top=4; $script:roleButton.Anchor='Top,Left'
     $script:roleButton.Left=[Math]::Max(0,$buttonPanel.ClientSize.Width-250)
     $script:roleButton.Add_Click({Show-RoleWorkspaceChooser})
     $buttonPanel.Controls.Add($script:roleButton); $script:roleButton.BringToFront()
-    $buttonPanel.Add_SizeChanged({
-        $clientWidth = [Math]::Max(1, $buttonPanel.ClientSize.Width)
-        if ($clientWidth -lt 560) {
-            # The personal workspace is intentionally narrow.  Use the
-            # highlighted role button as the row heading instead of squeezing
-            # a second caption beside it; every control then remains inside
-            # the vertical-scroll viewport.
-            $menuCaption.Visible = $false
-            $script:roleButton.Left = 16
-            $script:roleButton.Width = [Math]::Max(120, $clientWidth - 32)
-        } else {
-            $menuCaption.Visible = $true
-            $script:roleButton.Width = 240
-            $script:roleButton.Left = [Math]::Max(0, $clientWidth - 250)
-            $menuCaption.Width = [Math]::Max(70, $script:roleButton.Left - $menuCaption.Left - 10)
-        }
-    })
+    $buttonPanel.Add_SizeChanged({ Update-RoleWorkspaceHeaderLayout })
+    Update-RoleWorkspaceHeaderLayout
     Update-RoleWorkspaceChrome
     [void]$form.BeginInvoke([Action]{Show-RoleWorkspaceChooser})
 }

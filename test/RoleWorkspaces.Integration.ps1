@@ -20,12 +20,15 @@ Check (Test-RoleWorkspaceActionVisible 'itam' 'ReportAction' 0) 'ITAM misses rep
 
 $roleSource=Get-Content -LiteralPath (Join-Path $root 'Dashboard-RoleWorkspaces.ps1') -Raw -Encoding UTF8
 $entrySource=Get-Content -LiteralPath (Join-Path $root 'Giao-Dien.ps1') -Raw -Encoding UTF8
+$layoutSource=Get-Content -LiteralPath (Join-Path $root 'Dashboard-Core.ps1') -Raw -Encoding UTF8
 $buildSource=Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8
 Check ($roleSource -notmatch 'PersonalWorkspace|personalBridge|LaunchUri|Start-Process') 'Role module still launches a Personal browser'
 Check ($entrySource -notmatch 'Tool-PersonalWorkspace') 'Dashboard still imports the Personal web transport'
 Check ($buildSource -notmatch 'Tool-PersonalWorkspace') 'Build still packages the Personal web transport'
 Check (-not (Test-Path -LiteralPath (Join-Path $root 'Tool-PersonalWorkspace.ps1'))) 'Personal web transport source still exists'
 Check ($roleSource -match '\$clientWidth -lt 560' -and $roleSource -match '\$menuCaption\.Visible = \$false') 'Narrow workspace does not replace the clipped duplicate caption'
-Check ($roleSource -match '\$script:roleButton\.Width = \[Math\]::Max\(120, \$clientWidth - 32\)') 'Narrow role button can overflow its viewport'
+Check ($roleSource -match "roleButton\.Anchor='Top,Left'" -and $roleSource -match 'verticalReserve') 'Narrow role button can drift or overlap the vertical scrollbar'
+Check ($roleSource -match 'AutoScrollPosition = New-Object Drawing\.Point\(0, \$currentVerticalOffset\)') 'Narrow workspace does not force the horizontal offset back to zero'
+Check ($layoutSource -match '\$menuCaption\.Width = \[Math\]::Max\(40, \$buttonPanel\.ClientSize\.Width - 28\)') 'Hidden narrow caption can still force a horizontal scrollbar'
 
 [pscustomobject]@{Passed=$true;Checks=$checks;Mode='Native role-filtered WinForms only'}|ConvertTo-Json -Compress

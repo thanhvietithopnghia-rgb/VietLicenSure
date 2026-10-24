@@ -784,7 +784,7 @@ function Update-MainLayout {
         $activityPanel.Top = $mainTop
         $activityPanel.Width = [Math]::Max(200, $left + $contentWidth - $activityPanel.Left)
         $activityPanel.Height = $mainHeight
-        $menuCaption.Width = [Math]::Max(300, $buttonPanel.ClientSize.Width - 28)
+        $menuCaption.Width = [Math]::Max(40, $buttonPanel.ClientSize.Width - 28)
         $menuCaption.Left = 16
         $menuCaption.Top = 12
         $menuCaption.Height = 24
@@ -852,6 +852,9 @@ function Update-MainLayout {
                 $button.Left = [Math]::Floor(($buttonPanel.ClientSize.Width - $tileWidth) / 2)
             }
             Set-ModernRoundedRegion -Control $button -Radius 10
+        }
+        if (Get-Command Update-RoleWorkspaceHeaderLayout -ErrorAction SilentlyContinue) {
+            Update-RoleWorkspaceHeaderLayout
         }
 
         $activityPanelCaption.Left = 16

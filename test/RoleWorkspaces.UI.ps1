@@ -47,6 +47,38 @@ try{
    $results+=[pscustomobject]@{Culture=$culture;Role=$role;Selected=$script:workspaceRole;NativeDashboard=$true;Passed=$true}
   }
  }
+
+ $script:buttonPanel=New-Object Windows.Forms.Panel
+ $script:buttonPanel.Size=New-Object Drawing.Size(330,420)
+ $script:buttonPanel.AutoScroll=$true
+ $script:buttonPanel.AutoScrollMinSize=New-Object Drawing.Size(0,760)
+ $script:menuCaption=New-Object Windows.Forms.Label
+ $script:menuCaption.Text='Cá nhân'
+ $script:menuCaption.Location=New-Object Drawing.Point(16,12)
+ $script:menuCaption.Size=New-Object Drawing.Size(300,24)
+ $script:roleButton=New-Object Windows.Forms.Button
+ $script:roleButton.Text='Vai trò: Cá nhân'
+ $script:roleButton.Top=4
+ $script:roleButton.Anchor='Top,Left'
+ $dummy=New-Object Windows.Forms.Panel
+ $dummy.Location=New-Object Drawing.Point(13,700)
+ $dummy.Size=New-Object Drawing.Size(250,40)
+ $script:buttonPanel.Controls.AddRange(@($script:menuCaption,$script:roleButton,$dummy))
+ $script:form.Controls.Add($script:buttonPanel)
+ [void]$script:form.Handle
+ [void]$script:buttonPanel.Handle
+ $script:buttonPanel.PerformLayout()
+ Update-RoleWorkspaceHeaderLayout
+ $script:buttonPanel.PerformLayout()
+ [Windows.Forms.Application]::DoEvents()
+ if($script:menuCaption.Visible){throw 'Narrow role caption was not hidden'}
+ if($script:roleButton.Left -lt 0 -or $script:roleButton.Right -gt ($script:buttonPanel.ClientSize.Width-[Windows.Forms.SystemInformation]::VerticalScrollBarWidth)){
+  throw "Role button exceeds narrow viewport: left=$($script:roleButton.Left) right=$($script:roleButton.Right) client=$($script:buttonPanel.ClientSize.Width)"
+ }
+ if($script:buttonPanel.HorizontalScroll.Visible -or $script:buttonPanel.AutoScrollPosition.X -ne 0){throw 'Narrow role panel exposes a horizontal scrollbar'}
+ $checks++
+ $script:form.Controls.Remove($script:buttonPanel)
+ $script:buttonPanel.Dispose()
  $results|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $OutputDirectory 'result.json') -Encoding UTF8
  [pscustomobject]@{Passed=$true;Checks=$checks;Cases=$results.Count;OutputDirectory=$OutputDirectory}|ConvertTo-Json -Compress
 }finally{$script:toolTip.Dispose();$script:fontNormal.Dispose();$script:form.Dispose()}
