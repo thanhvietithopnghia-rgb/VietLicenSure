@@ -130,6 +130,10 @@ try {
     Check ($reportSource.Contains('BaselineReportSha256') -and $reportSource.Contains("RefreshKind = `$(if (`$IncrementalRefresh)")) 'Report does not record incremental provenance'
     Check ($executionSource -match "mode -in @\('Windows','Office','Software'\).+NoOpen") 'Windows/Office/Software reports still auto-open HTML'
     Check ($guiSource -match 'progress\.completed\.summaryReady') 'Report completion does not announce the inline quick result'
+    Check ($guiSource -match 'pendingSharedScanCompletionMode' -and $guiSource -match 'Update-SharedScanResultDisplay -Mode \$completedMode') 'Deferred report completion loses the Windows/Office/Software mode and falls back to All'
+    Check ($guiSource -match "Get-DashboardText 'sharedScan\.detailsMissing'") 'Report completion does not surface a missing HTML package'
+    Check ($executionSource -match 'sharedScanDisplayState\.HtmlPath' -and $executionSource -match 'Open-ToolHtmlReport -Path \$htmlPath') 'View details is not bound to the exact generated HTML path'
+    Check ($executionSource -match 'sharedScan\.detailsMissing' -and $executionSource -match 'sharedScan\.detailsOpenFailed') 'View details does not report missing/open failures explicitly'
     Check ($roleSource -match 'Set-RoleWorkspaceButtonVisual' -and $roleSource -match 'SuspendLayout' -and $roleSource -match 'ResumeLayout') 'Role emphasis or flicker-controlled switching is missing'
     Check ($roleSource -match 'sharedScanDisplayInitialized' -and $roleSource -notmatch 'Update-SharedScanResultDisplay') 'Role switching still reparses result history synchronously'
     Check ($reportSource -match '(?s)if \(\$wantWindows\).+?summaryCardsHtml\.Append' -and

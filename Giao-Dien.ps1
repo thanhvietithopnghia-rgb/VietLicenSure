@@ -984,6 +984,7 @@ $script:sharedScanDisplayState = $null
 $script:sharedScanDisplayInitialized = $false
 $script:lastSharedScanAttempt = $null
 $script:activeReportMode = ''
+$script:pendingSharedScanCompletionMode = ''
 $script:activeReportIncremental = $false
 $script:executionEnvironmentWarningShown = $false
 Write-DashboardStartupTrace "ShellControls.Ready"
@@ -1247,10 +1248,19 @@ $timer.Add_Tick({
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkGreen
             if ($finishedTaskKind -eq "Report") {
+                $script:pendingSharedScanCompletionMode = $(if ($finishedReportMode) { $finishedReportMode } else { 'All' })
                 [void]$form.BeginInvoke([System.Action]{
+                    $completedMode = [string]$script:pendingSharedScanCompletionMode
+                    $script:pendingSharedScanCompletionMode = ''
                     $script:resultCenterState = $null
                     Update-ResultActionCard -HeaderOnly
-                    [void](Update-SharedScanResultDisplay -Mode $(if ($finishedReportMode) { $finishedReportMode } else { 'All' }))
+                    $completedState = Update-SharedScanResultDisplay -Mode $completedMode
+                    if ($completedMode -in @('Windows','Office','Software') -and
+                        (-not $completedState -or -not (Test-Path -LiteralPath ([string]$completedState.HtmlPath) -PathType Leaf))) {
+                        $status.Text = Get-DashboardText 'sharedScan.detailsMissing'
+                        $status.ForeColor = [System.Drawing.Color]::DarkRed
+                        Write-ProgressLog $status.Text
+                    }
                 })
             }
         } else {

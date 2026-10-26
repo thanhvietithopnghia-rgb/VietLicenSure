@@ -1323,8 +1323,21 @@ function Update-SharedScanResultDisplay {
 }
 
 function Open-SharedScanResultDetails {
-    if (-not $script:sharedScanDisplayState -or -not $script:sharedScanDisplayState.Latest) { return }
-    Open-ResultCenterReport -ReportPath ([string]$script:sharedScanDisplayState.Latest.Path)
+    $htmlPath = if ($script:sharedScanDisplayState) { [string]$script:sharedScanDisplayState.HtmlPath } else { '' }
+    if ([string]::IsNullOrWhiteSpace($htmlPath) -or -not (Test-Path -LiteralPath $htmlPath -PathType Leaf)) {
+        $message = Get-DashboardText 'sharedScan.detailsMissing'
+        Write-ProgressLog $message
+        [System.Windows.Forms.MessageBox]::Show($message, (Get-DashboardText 'report.errorTitle'), 'OK', 'Warning') | Out-Null
+        [void](Update-SharedScanResultDisplay -Mode $(if ($script:sharedScanDisplayMode) { $script:sharedScanDisplayMode } else { 'All' }))
+        return
+    }
+    try {
+        if (-not (Open-ToolHtmlReport -Path $htmlPath)) { throw 'OpenToolHtmlReportFailed' }
+    } catch {
+        $message = Get-DashboardText 'sharedScan.detailsOpenFailed' @($_.Exception.Message)
+        Write-ProgressLog $message
+        [System.Windows.Forms.MessageBox]::Show($message, (Get-DashboardText 'report.errorTitle'), 'OK', 'Error') | Out-Null
+    }
 }
 
 function Start-Report([string]$mode, [string]$displayName) {

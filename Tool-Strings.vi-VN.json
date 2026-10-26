@@ -75,6 +75,8 @@
   "sharedScan.attemptFailed": "Lần thử gần nhất: {0} — thất bại (mã {1})",
   "sharedScan.noResult": "Chọn chức năng quét để tạo kết quả đầu tiên.",
   "sharedScan.viewDetails": "Xem chi tiết (HTML)",
+  "sharedScan.detailsMissing": "Kết quả nhanh đã sẵn sàng nhưng chưa tìm thấy tệp HTML. Hãy mở thư mục báo cáo hoặc chạy lại tác vụ này.",
+  "sharedScan.detailsOpenFailed": "Không thể mở tệp HTML chi tiết: {0}",
   "sharedScan.duplicateBlocked": "Đang có tác vụ xử lý; không gửi lệnh quét trùng.",
   "sharedScan.reusingCurrent": "Đã hiển thị kết quả hiện hành; đang quét nhanh để đối chiếu thay đổi mới nhất.",
   "sharedScan.quick.licenseTitle": "{0} — {1}",
