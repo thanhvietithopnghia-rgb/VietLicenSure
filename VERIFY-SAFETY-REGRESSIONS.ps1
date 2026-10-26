@@ -1364,6 +1364,43 @@ if ($gui) {
             $parsedValidScan = ConvertFrom-BridgeTargetArguments -Arguments $validScanArguments
             Assert-BridgeModuleArgumentProfile -ModuleId 'cleanup.scan' -ParsedArguments $parsedValidScan `
                 -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            $scanSettingsFixture = Join-Path $bridgeFixtureRoot 'scan-request.json'
+            $baselineFixture = Join-Path $bridgeFixtureRoot 'baseline.json'
+            $validReportArguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupFixtureScript`" -OutputDir `"$bridgeFixtureRoot`" -Mode `"Windows`" -Culture `"vi-VN`" -ApprovedKmsServerFile `"$cleanupFixtureScript`" -ScanSettingsPath `"$scanSettingsFixture`" -Pdf -FullInternal -NoOpen"
+            $parsedValidReport = ConvertFrom-BridgeTargetArguments -Arguments $validReportArguments
+            Assert-BridgeModuleArgumentProfile -ModuleId 'report.windows' -ParsedArguments $parsedValidReport `
+                -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            foreach ($reportProfile in @(
+                @{ ModuleId='report.office'; Mode='Office' },
+                @{ ModuleId='report.software'; Mode='Software' }
+            )) {
+                $profileArguments = $validReportArguments.Replace('-Mode "Windows"', ('-Mode "' + [string]$reportProfile.Mode + '"'))
+                $parsedProfile = ConvertFrom-BridgeTargetArguments -Arguments $profileArguments
+                Assert-BridgeModuleArgumentProfile -ModuleId ([string]$reportProfile.ModuleId) -ParsedArguments $parsedProfile `
+                    -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            }
+            $parsedIncrementalReport = ConvertFrom-BridgeTargetArguments -Arguments ($validReportArguments + " -IncrementalRefresh -BaselineReportPath `"$baselineFixture`"")
+            Assert-BridgeModuleArgumentProfile -ModuleId 'report.windows' -ParsedArguments $parsedIncrementalReport `
+                -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            $missingNoOpenBlocked = $false
+            try {
+                $parsedMissingNoOpen = ConvertFrom-BridgeTargetArguments -Arguments ($validReportArguments -replace ' -NoOpen$', '')
+                Assert-BridgeModuleArgumentProfile -ModuleId 'report.windows' -ParsedArguments $parsedMissingNoOpen `
+                    -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+            } catch { $missingNoOpenBlocked = [string]$_.Exception.Message -eq 'ElevatedBridgeReportNoOpenRequired' }
+            if (-not $missingNoOpenBlocked) { Fail 'Broker cho phép báo cáo Windows/Office/Software tự mở HTML.' }
+            foreach ($invalidIncrementalArguments in @(
+                ($validReportArguments + ' -IncrementalRefresh'),
+                ($validReportArguments + " -BaselineReportPath `"$baselineFixture`"")
+            )) {
+                $invalidIncrementalBlocked = $false
+                try {
+                    $parsedInvalidIncremental = ConvertFrom-BridgeTargetArguments -Arguments $invalidIncrementalArguments
+                    Assert-BridgeModuleArgumentProfile -ModuleId 'report.windows' -ParsedArguments $parsedInvalidIncremental `
+                        -OriginalRuntimeRoot $bridgeRuntimeRoot -TrustedLauncherPath $bridgePowerShell
+                } catch { $invalidIncrementalBlocked = [string]$_.Exception.Message -eq 'ElevatedBridgeReportBaselineProfileInvalid' }
+                if (-not $invalidIncrementalBlocked) { Fail 'Broker không khóa cặp IncrementalRefresh/BaselineReportPath.' }
+            }
             foreach ($unsafePath in @('\\attacker.example\share\reports','\\?\C:\Temp\reports','C:\Temp\report.txt:stream')) {
                 $unsafePathArguments = $validScanArguments.Replace(
                     "-OutputDir `"$bridgeFixtureRoot`"",

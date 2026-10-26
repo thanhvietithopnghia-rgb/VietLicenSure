@@ -30,16 +30,60 @@ function Set-RoleWorkspaceButtonVisual {
         [Parameter(Mandatory=$true)][ValidateSet('personal','helpdesk','itam')][string]$Role,
         [switch]$Selected
     )
+    $dark = [bool]($script:dashboardTheme -eq 'Dark')
     $accent = switch ($Role) {
-        'personal' { [Drawing.Color]::FromArgb(21, 101, 192) }
-        'helpdesk' { [Drawing.Color]::FromArgb(230, 81, 0) }
-        'itam' { [Drawing.Color]::FromArgb(106, 27, 154) }
+        'personal' { [Drawing.Color]::FromArgb(48, 105, 170) }
+        'helpdesk' { [Drawing.Color]::FromArgb(171, 97, 35) }
+        'itam' { [Drawing.Color]::FromArgb(111, 77, 145) }
+    }
+    $selectedBack = if ($dark) {
+        switch ($Role) {
+            'personal' { [Drawing.Color]::FromArgb(31, 55, 82) }
+            'helpdesk' { [Drawing.Color]::FromArgb(67, 48, 31) }
+            'itam' { [Drawing.Color]::FromArgb(54, 43, 68) }
+        }
+    } else {
+        switch ($Role) {
+            'personal' { [Drawing.Color]::FromArgb(226, 236, 248) }
+            'helpdesk' { [Drawing.Color]::FromArgb(249, 237, 225) }
+            'itam' { [Drawing.Color]::FromArgb(239, 232, 247) }
+        }
+    }
+    $idleBack = if ($dark) { [Drawing.Color]::FromArgb(38, 44, 57) } else { [Drawing.Color]::FromArgb(246, 248, 251) }
+    $idleFore = if ($dark) {
+        switch ($Role) {
+            'personal' { [Drawing.Color]::FromArgb(155, 199, 246) }
+            'helpdesk' { [Drawing.Color]::FromArgb(238, 186, 132) }
+            'itam' { [Drawing.Color]::FromArgb(203, 174, 228) }
+        }
+    } else { $accent }
+    $selectedFore = if ($dark) {
+        switch ($Role) {
+            'personal' { [Drawing.Color]::FromArgb(183, 214, 248) }
+            'helpdesk' { [Drawing.Color]::FromArgb(244, 202, 160) }
+            'itam' { [Drawing.Color]::FromArgb(216, 193, 238) }
+        }
+    } else {
+        switch ($Role) {
+            'personal' { [Drawing.Color]::FromArgb(32, 75, 125) }
+            'helpdesk' { [Drawing.Color]::FromArgb(122, 62, 18) }
+            'itam' { [Drawing.Color]::FromArgb(78, 48, 108) }
+        }
+    }
+    if (Test-ToolUiHighContrast) {
+        $accent = [Drawing.SystemColors]::Highlight
+        $selectedBack = [Drawing.SystemColors]::Highlight
+        $selectedFore = [Drawing.SystemColors]::HighlightText
+        $idleBack = [Drawing.SystemColors]::Control
+        $idleFore = [Drawing.SystemColors]::ControlText
     }
     $Button.FlatStyle = 'Flat'
     $Button.FlatAppearance.BorderColor = $accent
-    $Button.FlatAppearance.BorderSize = $(if ($Selected) { 3 } else { 1 })
-    $Button.BackColor = $accent
-    $Button.ForeColor = [Drawing.Color]::White
+    $Button.FlatAppearance.BorderSize = $(if ($Selected) { 2 } else { 1 })
+    $Button.FlatAppearance.MouseOverBackColor = $(if ($Selected) { $selectedBack } elseif ($dark) { [Drawing.Color]::FromArgb(48, 56, 72) } else { [Drawing.Color]::FromArgb(234, 239, 246) })
+    $Button.FlatAppearance.MouseDownBackColor = $(if ($dark) { [Drawing.Color]::FromArgb(48, 56, 72) } else { [Drawing.Color]::FromArgb(218, 228, 240) })
+    $Button.BackColor = $(if ($Selected) { $selectedBack } else { $idleBack })
+    $Button.ForeColor = $(if ($Selected) { $selectedFore } else { $idleFore })
     $Button.Font = $fontBold
     $Button.UseVisualStyleBackColor = $false
 }
@@ -138,10 +182,7 @@ function Show-RoleWorkspaceChooser {
         $script:workspaceRole=$selected
         Update-RoleWorkspaceChrome
         Set-DashboardSection -Section 'Overview'
-        if (Get-Command Update-SharedScanResultDisplay -ErrorAction SilentlyContinue) {
-            [void](Update-SharedScanResultDisplay -Mode $(if ($script:sharedScanDisplayMode) { [string]$script:sharedScanDisplayMode } else { 'All' }))
-        }
-    } finally { $form.ResumeLayout($true) }
+    } finally { $form.ResumeLayout($false) }
 }
 
 function Initialize-RoleWorkspaces {
@@ -156,5 +197,15 @@ function Initialize-RoleWorkspaces {
     $buttonPanel.Add_SizeChanged({ Update-RoleWorkspaceHeaderLayout })
     Update-RoleWorkspaceHeaderLayout
     Update-RoleWorkspaceChrome
-    [void]$form.BeginInvoke([Action]{Show-RoleWorkspaceChooser})
+    [void]$form.BeginInvoke([Action]{
+        Show-RoleWorkspaceChooser
+        if (-not $script:sharedScanDisplayInitialized -and $script:sharedScanStartupTimer) {
+            $script:sharedScanDisplayInitialized = $true
+            $script:sharedScanStartupTimer.Start()
+        }
+        if ($startupValidationTimer -and -not $startupValidationTimer.Enabled) {
+            $startupValidationTimer.Interval = 15
+            $startupValidationTimer.Start()
+        }
+    })
 }

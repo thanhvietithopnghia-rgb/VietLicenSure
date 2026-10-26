@@ -226,9 +226,12 @@ function Assert-BridgeModuleArgumentProfile {
     $switches = @()
     switch ($ModuleId) {
         { $_ -in @('report.all','report.hardware','report.windows','report.office','report.software') } {
-            $allowed = @('outputdir','mode','culture','approvedkmsserverfile','scansettingspath','pdf','redactsensitive','fullinternal')
+            $allowed = @(
+                'outputdir','mode','culture','approvedkmsserverfile','scansettingspath','pdf',
+                'redactsensitive','fullinternal','incrementalrefresh','baselinereportpath','noopen'
+            )
             $required = @('outputdir','mode','culture','approvedkmsserverfile','scansettingspath','pdf')
-            $switches = @('pdf','redactsensitive','fullinternal')
+            $switches = @('pdf','redactsensitive','fullinternal','incrementalrefresh','noopen')
         }
         'cleanup.scan' {
             $allowed = @('outputdir','approvedkmsserverfile','treatunapprovedkmsasnoncompliant','decisionfile','scanscope','culture','redactsensitive')
@@ -299,7 +302,7 @@ function Assert-BridgeModuleArgumentProfile {
     if ($parameters.ContainsKey('scanscope') -and $scanScope -notin @('All','Windows','Office','ThirdParty','WindowsOffice','WindowsThirdParty','OfficeThirdParty')) {
         throw 'ElevatedBridgeScanScopeInvalid'
     }
-    foreach ($pathName in @('outputdir','approvedkmsserverfile','scansettingspath','decisionfile','selectionfile','launcherpath','backupdir')) {
+    foreach ($pathName in @('outputdir','approvedkmsserverfile','scansettingspath','baselinereportpath','decisionfile','selectionfile','launcherpath','backupdir')) {
         if ($parameters.ContainsKey($pathName) -and
             -not (Test-BridgeLocalAbsolutePath -Path (Get-BridgeArgumentValue -Parameters $parameters -Name $pathName))) {
             throw 'ElevatedBridgePathArgumentInvalid'
@@ -320,9 +323,15 @@ function Assert-BridgeModuleArgumentProfile {
             'report.software' { 'Software' }
             default { 'All' }
         }
+        $incrementalRequested = [bool]$parameters.ContainsKey('incrementalrefresh')
+        $baselineProvided = [bool]$parameters.ContainsKey('baselinereportpath')
         if ((Get-BridgeArgumentValue -Parameters $parameters -Name 'mode') -cne $expectedMode -or
             ([int]$parameters.ContainsKey('redactsensitive') + [int]$parameters.ContainsKey('fullinternal')) -ne 1) {
             throw 'ElevatedBridgeReportArgumentProfileInvalid'
+        }
+        if ($incrementalRequested -ne $baselineProvided) { throw 'ElevatedBridgeReportBaselineProfileInvalid' }
+        if ($expectedMode -in @('Windows','Office','Software') -and -not $parameters.ContainsKey('noopen')) {
+            throw 'ElevatedBridgeReportNoOpenRequired'
         }
     }
     if ($ModuleId -eq 'application.update.apply') {

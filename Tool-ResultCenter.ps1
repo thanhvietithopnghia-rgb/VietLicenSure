@@ -135,9 +135,11 @@ function Get-ToolResultReportHistory {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$ReportRoot,
-        [ValidateRange(2, 240)][int]$MaximumReports = 80
+        [ValidateRange(2, 240)][int]$MaximumReports = 80,
+        [string]$Mode = ''
     )
-    $candidates = @(Get-ToolResultReportCandidates -ReportRoot $ReportRoot -MaximumCandidates ($MaximumReports * 3))
+    $candidateLimit = if ([string]::IsNullOrWhiteSpace($Mode)) { $MaximumReports * 3 } else { 240 }
+    $candidates = @(Get-ToolResultReportCandidates -ReportRoot $ReportRoot -MaximumCandidates $candidateLimit)
 
     $reports = New-Object System.Collections.Generic.List[object]
     $currentMachineBinding = Get-ToolResultMachineBinding
@@ -146,6 +148,8 @@ function Get-ToolResultReportHistory {
         try {
             $report = Read-ToolResultJsonFile -Path $file.FullName
             if ([string](Get-ToolResultObjectValue $report @('ReportKind')) -ne 'InventoryAndLicense') { continue }
+            if (-not [string]::IsNullOrWhiteSpace($Mode) -and
+                -not [string]::Equals([string](Get-ToolResultObjectValue $report @('Mode') 'Unknown'), $Mode, [StringComparison]::OrdinalIgnoreCase)) { continue }
             $reportMachineBinding = [string](Get-ToolResultObjectValue $report @('MachineBinding'))
             $reportComputerName = [string](Get-ToolResultObjectValue $report @('ComputerName'))
             if (-not [string]::IsNullOrWhiteSpace($reportMachineBinding)) {
@@ -184,8 +188,7 @@ function Get-ToolSharedScanState {
         [ValidateRange(1, 1440)][int]$FreshnessMinutes = 30
     )
 
-    $history = @(Get-ToolResultReportHistory -ReportRoot $ReportRoot -MaximumReports 80 |
-        Where-Object { [string]::Equals([string]$_.Mode, $Mode, [StringComparison]::OrdinalIgnoreCase) })
+    $history = @(Get-ToolResultReportHistory -ReportRoot $ReportRoot -MaximumReports 2 -Mode $Mode)
     if ($history.Count -eq 0) {
         return [pscustomobject][ordered]@{
             Status='Empty'; IsFresh=$false; Mode=$Mode; Latest=$null; Previous=$null
@@ -306,6 +309,14 @@ function ConvertTo-ToolResultCenterItems {
         [string]$SourceReportPath = ''
     )
     $items = New-Object System.Collections.Generic.List[object]
+    $reportMode = [string](Get-ToolResultObjectValue $Report @('Mode') 'All')
+    $allowedCategories = switch ($reportMode) {
+        'Hardware' { @('Hardware') }
+        'Windows' { @('Windows') }
+        'Office' { @('Office') }
+        'Software' { @('Software') }
+        default { @('Hardware','Windows','Office','Software') }
+    }
     foreach ($component in @(
         [pscustomobject]@{ Category='Windows'; Name='Windows'; CodeProperty='WindowsConclusionCode'; TextProperty='WindowsConclusion'; Action='OpenWindows' },
         [pscustomobject]@{ Category='Office'; Name='Microsoft Office'; CodeProperty='OfficeConclusionCode'; TextProperty='OfficeConclusion'; Action='OpenOffice' }
@@ -402,6 +413,7 @@ function ConvertTo-ToolResultCenterItems {
 
     $severityRank = @{ High=0; Medium=1; Low=2 }
     return @($items.ToArray() |
+        Where-Object { [string]$_.Category -in $allowedCategories } |
         Group-Object StableId |
         ForEach-Object { $_.Group | Sort-Object @{Expression={ $severityRank[[string]$_.Severity] }} | Select-Object -First 1 } |
         Sort-Object @{Expression={ $severityRank[[string]$_.Severity] }}, Category, Name)

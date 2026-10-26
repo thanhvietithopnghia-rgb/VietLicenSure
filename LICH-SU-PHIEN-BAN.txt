@@ -1,11 +1,13 @@
 # Lịch sử phát triển VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại. Nội dung v5.0 được cập nhật đến ngày 23/10/2026; số phiên bản công khai vẫn giữ nguyên là v5.0.
+Tài liệu tóm tắt các thay đổi cốt lõi của toàn bộ phiên bản được ghi nhận, từ bản đầu tiên đến bản phát hành kỹ thuật hiện tại. Nội dung v5.0 được cập nhật đến ngày 25/10/2026; số phiên bản công khai vẫn giữ nguyên là v5.0.
 
 Trang công khai:
 https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
-## v5.0 — cập nhật 23/10/2026 (phát hành lần đầu 08/09/2026)
+## v5.0 — cập nhật 25/10/2026 (phát hành lần đầu 08/09/2026)
+
+- **Sửa quét và trải nghiệm runtime:** cầu nối nâng quyền chấp nhận đúng hợp đồng `-NoOpen`/baseline gia tăng của Windows, Office và Phần mềm nhưng vẫn fail-closed với tham số không an toàn. Giao diện tách lần thử mới khỏi kết quả thành công cũ, giảm màu vai trò, hiện bộ chọn sớm và tránh đọc lại toàn bộ lịch sử khi đổi vai trò.
 
 - **Publisher trung tính:** EXE dùng signer Authenticode tự ký `CN=Thanh Viet - VietLicenSure Code Signing`, không còn tên v4.9 trong Publisher. Signer CMS nội dung lịch sử được giữ riêng để xác minh manifest và ủy quyền signer EXE mới; kênh vẫn là Official Self-Signed và SmartScreen vẫn có thể cảnh báo.
 

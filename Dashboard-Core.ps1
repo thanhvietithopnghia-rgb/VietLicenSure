@@ -873,7 +873,11 @@ function Update-MainLayout {
         $closeButton.Height = 30
         $closeButton.Width = 108
         $closeButton.Left = $activityPanel.ClientSize.Width - $closeButton.Width - 16
-        $closeButton.Top = $activityPanel.ClientSize.Height - $closeButton.Height - 12
+        # Keep the result stack clear of the status band at the minimum
+        # supported 1024x768 viewport.  The former 12px bottom margin plus
+        # three 8px action gaps pushed sharedResultCaption 12px into $status.
+        $activityActionGap = 4
+        $closeButton.Top = $activityPanel.ClientSize.Height - $closeButton.Height - 8
         $stopButton.Height = $closeButton.Height
         $stopButton.Width = 108
         $stopButton.Left = $closeButton.Left - $stopButton.Width - 8
@@ -882,27 +886,27 @@ function Update-MainLayout {
         $copyLogButton.Left = 16
         $copyLogButton.Width = $activityPanel.ClientSize.Width - 32
         $copyLogButton.Height = 32
-        $copyLogButton.Top = $closeButton.Top - $copyLogButton.Height - 8
+        $copyLogButton.Top = $closeButton.Top - $copyLogButton.Height - $activityActionGap
         $openReportFolderButton.Left = 16
         $openReportFolderButton.Width = $activityPanel.ClientSize.Width - 32
         $openReportFolderButton.Height = 32
-        $openReportFolderButton.Top = $copyLogButton.Top - $openReportFolderButton.Height - 8
+        $openReportFolderButton.Top = $copyLogButton.Top - $openReportFolderButton.Height - $activityActionGap
 
         $sharedResultDetailButton.Left = 16
         $sharedResultDetailButton.Width = $activityPanel.ClientSize.Width - 32
         $sharedResultDetailButton.Height = 32
-        $sharedResultDetailButton.Top = $openReportFolderButton.Top - $sharedResultDetailButton.Height - 8
+        $sharedResultDetailButton.Top = $openReportFolderButton.Top - $sharedResultDetailButton.Height - $activityActionGap
         $sharedResultTimeLabel.Left = 16
         $sharedResultTimeLabel.Width = $activityPanel.ClientSize.Width - 32
-        $sharedResultTimeLabel.Height = 20
+        $sharedResultTimeLabel.Height = 42
         $sharedResultTimeLabel.Top = $sharedResultDetailButton.Top - $sharedResultTimeLabel.Height - 4
         $sharedResultSummaryLabel.Left = 16
         $sharedResultSummaryLabel.Width = $activityPanel.ClientSize.Width - 32
-        $sharedResultSummaryLabel.Height = 64
+        $sharedResultSummaryLabel.Height = 68
         $sharedResultSummaryLabel.Top = $sharedResultTimeLabel.Top - $sharedResultSummaryLabel.Height - 2
         $sharedResultStateLabel.Left = 16
         $sharedResultStateLabel.Width = $activityPanel.ClientSize.Width - 32
-        $sharedResultStateLabel.Height = 22
+        $sharedResultStateLabel.Height = 26
         $sharedResultStateLabel.Top = $sharedResultSummaryLabel.Top - $sharedResultStateLabel.Height - 2
         $sharedResultCaption.Left = 16
         $sharedResultCaption.Width = $activityPanel.ClientSize.Width - 32
@@ -1381,6 +1385,8 @@ function Get-DashboardSectionTitleKey {
 function Set-DashboardSection {
     param([ValidateSet("Overview", "Scan", "Remediation", "Reports")][string]$Section = "Overview")
 
+    $buttonPanel.SuspendLayout()
+    try {
     $script:dashboardSection = $Section
     $buttonPanel.AutoScrollPosition = New-Object System.Drawing.Point(0, 0)
     $allowedNumbers = switch ($Section) {
@@ -1422,6 +1428,9 @@ function Set-DashboardSection {
         }
     } finally {
         $script:syncingCompactNavigation = $false
+    }
+    } finally {
+        $buttonPanel.ResumeLayout($false)
     }
     Update-MainLayout
 }

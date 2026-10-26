@@ -2884,11 +2884,23 @@ $thirdPartyCount = if ($wantSoftware) { [int]@($thirdPartyApps).Count } else { 0
 $thirdPartyReviewCount = if ($wantSoftware) { [int]@($thirdPartyReview).Count } else { 0 }
 $thirdPartyHighCount = if ($wantSoftware) { [int]@($thirdPartyReview | Where-Object { [int]$_.ReviewRank -ge 2 }).Count } else { 0 }
 $summaryCardsHtml = New-Object Text.StringBuilder
-[void]$summaryCardsHtml.Append("<div class='card tone-$windowsTone'><div class='card-label'>Windows</div><div class='card-value'>$(Html $windowsCardValue)</div></div>")
-[void]$summaryCardsHtml.Append("<div class='card tone-$officeTone'><div class='card-label'>Microsoft Office</div><div class='card-value'>$(Html $officeCardValue)</div></div>")
-[void]$summaryCardsHtml.Append("<div class='card tone-$findingTone'><div class='card-label'>$(Html (Get-ToolText -Key 'report.specificFindings' -Culture $Culture))</div><div class='card-value'>$(@($crackFindings).Count)</div></div>")
-[void]$summaryCardsHtml.Append("<div class='card tone-$manualReviewTone'><div class='card-label'>$(Html (Get-ToolText -Key 'report.manualReviewFindings' -Culture $Culture))</div><div class='card-value'>$(@($manualReviewFindings).Count)</div></div>")
+$summaryCardCount = 0
+if ($wantWindows) {
+    [void]$summaryCardsHtml.Append("<div class='card tone-$windowsTone'><div class='card-label'>Windows</div><div class='card-value'>$(Html $windowsCardValue)</div></div>")
+    $summaryCardCount++
+}
+if ($wantOffice) {
+    [void]$summaryCardsHtml.Append("<div class='card tone-$officeTone'><div class='card-label'>Microsoft Office</div><div class='card-value'>$(Html $officeCardValue)</div></div>")
+    $summaryCardCount++
+}
+if ($wantWindows -or $wantOffice -or $wantSoftware) {
+    [void]$summaryCardsHtml.Append("<div class='card tone-$findingTone'><div class='card-label'>$(Html (Get-ToolText -Key 'report.specificFindings' -Culture $Culture))</div><div class='card-value'>$(@($crackFindings).Count)</div></div>")
+    [void]$summaryCardsHtml.Append("<div class='card tone-$manualReviewTone'><div class='card-label'>$(Html (Get-ToolText -Key 'report.manualReviewFindings' -Culture $Culture))</div><div class='card-value'>$(@($manualReviewFindings).Count)</div></div>")
+    $summaryCardCount += 2
+}
 [void]$summaryCardsHtml.Append("<div class='card tone-$offlineTone'><div class='card-label'>$(Html (Get-ToolText -Key 'report.offline' -Culture $Culture))</div><div class='card-value'>$(Html $offlineCardValue)</div></div>")
+$summaryCardCount++
+$summaryCardsClass = 'cards-count-' + [Math]::Max(1, [Math]::Min(6, $summaryCardCount))
 $reportModeLabel = if ($Mode -eq "Software") {
     if ($script:reportOfflineMode) { "OFFLINE" } else { "NETWORK ALLOWED" }
 } elseif ($script:reportOfflineMode) {
@@ -2975,7 +2987,7 @@ $pdfCompatibilityCss</style>
 <div class="meta-item"><b>$(Html (Get-ToolText -Key "report.privacy" -Culture $Culture))</b>$(Html (Get-ToolText -Key $(if ($RedactSensitive) { "report.redacted" } else { "report.internal" }) -Culture $Culture))</div>
 </div>
 </header>
-<div class="cards cards-count-5">
+<div class="cards $summaryCardsClass">
 $($summaryCardsHtml.ToString())
 </div>
 $tocBlock
@@ -3013,7 +3025,7 @@ $html = @"
 <div class="meta-item"><b>$(Html (Get-ToolText -Key "report.privacy" -Culture $Culture))</b>$(Html (Get-ToolText -Key $(if ($RedactSensitive) { "report.redacted" } else { "report.internal" }) -Culture $Culture))</div>
 </div>
 </header>
-<div class="cards cards-summary cards-count-5">
+<div class="cards cards-summary $summaryCardsClass">
 $($summaryCardsHtml.ToString())
 </div>
 <section class="summary-intro"><h2>$(Html (Get-ReportText "report.summary.quickViewTitle"))</h2><p>$(Html (Get-ReportText "report.summary.quickViewBody"))</p></section>

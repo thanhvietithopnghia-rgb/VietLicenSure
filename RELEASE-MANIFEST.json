@@ -2,8 +2,8 @@
     "SchemaVersion":  "2.0",
     "ToolVersion":  "5.0",
     "ReleaseVersion":  "5.0",
-    "ReleaseBuildDate":  "2026.10.23",
-    "ReleaseLabel":  "5.0-official-self-signed-20261023",
+    "ReleaseBuildDate":  "2026.10.25",
+    "ReleaseLabel":  "5.0-official-self-signed-20261025",
     "ReleaseStatus":  "OfficialSelfSigned",
     "PrimaryFileName":  "VietLicenSure-v5.0.exe",
     "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
@@ -12,7 +12,7 @@
                           "FileName":  "VietLicenSure-v5.0.exe",
                           "Architecture":  "AnyCPU",
                           "RuntimeArchitecture":  "Auto: x64 on Windows 64-bit; x86 on Windows 32-bit",
-                          "Sha256":  "C17901A195EEC4F1B05B96E5FDE0F8DA692ACCA13701EEE4FF3F816272933AFB",
+                          "Sha256":  "CA08817994E20F69DCBD84039CB46E53C41C6F2A7B9676C72B7D8471C5934DF7",
                           "AuthenticodeStatus":  "UnknownError",
                           "AuthenticodeSigner":  "CN=Thanh Viet - VietLicenSure Code Signing",
                           "AuthenticodeThumbprint":  "575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62",
@@ -40,7 +40,7 @@
                  "FileName":  "SBOM.cdx.json",
                  "Format":  "CycloneDX",
                  "SpecVersion":  "1.5",
-                 "Sha256":  "7A4CF3B36E861DD13BDE14A05C17DC422EBBF2D18490CC2B56B186FAD5C2D198"
+                 "Sha256":  "C7E7550976044A4B5A6403D4CAE587460A2358B836D122328089B2BCACE47CBE"
              },
     "PayloadCount":  74,
     "IntegrityFileCount":  72,
@@ -51,10 +51,10 @@
                                "ResourceCount":  1,
                                "PayloadCount":  74,
                                "HeaderBytes":  616,
-                               "SourceBytes":  3981895,
-                               "BundleBytes":  3982511,
-                               "EmbeddedBytes":  838013,
-                               "SavedBytes":  3143882,
+                               "SourceBytes":  3991350,
+                               "BundleBytes":  3991966,
+                               "EmbeddedBytes":  840004,
+                               "SavedBytes":  3151346,
                                "SavingsPercent":  78.95,
                                "MaximumPayloadBytes":  8388608,
                                "MaximumPayloadDataBytes":  16777216,
@@ -116,7 +116,7 @@
     "ApplicationUpdateVerification":  "Pinned detached-CMS manifest + fixed GitHub HTTPS allowlist + declared size + SHA-256 + mandatory pinned Authenticode signer for stable + rollback",
     "OfficialBuildProvenance":  {
                                     "State":  "Official",
-                                    "BuildId":  "5.0-production-20261023",
+                                    "BuildId":  "5.0-production-20261025",
                                     "ManifestFile":  "OFFICIAL-PROVENANCE-v1.json",
                                     "SignatureFile":  "OFFICIAL-PROVENANCE-v1.json.p7s",
                                     "VerificationUrl":  "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/#verify-official-build",
@@ -134,7 +134,7 @@
     "CompatibilityCatalogSchemaVersion":  "1.1",
     "CompatibilityCatalogVersion":  "1.1.4.0",
     "CompatibilityCatalogReviewedAtUtc":  "2026-10-09T00:00:00.0000000Z",
-    "CompatibilityCatalogAgeDays":  15,
+    "CompatibilityCatalogAgeDays":  16,
     "CompatibilityCatalogHealth":  "Fresh",
     "CompatibilityCatalogFresh":  true,
     "CompatibilityCatalogReviewWarningAgeDays":  30,
@@ -179,7 +179,7 @@
     "SoftwareLicenseCatalogGeneratedAtUtc":  "2026-10-11T12:55:13Z",
     "SoftwareLicenseCatalogFreshnessStatus":  "Fresh",
     "SoftwareLicenseCatalogFreshForDecisiveEvidence":  true,
-    "SoftwareLicenseCatalogAgeDays":  12.91,
+    "SoftwareLicenseCatalogAgeDays":  14.063,
     "SoftwareLicenseCatalogFreshnessWarningAgeDays":  30,
     "SoftwareLicenseCatalogFreshnessMaximumAgeDays":  45,
     "SoftwareLicenseCatalogProductRules":  94,
@@ -450,5 +450,5 @@
                              "Status":  "NotClaimed",
                              "Reason":  "Launcher la managed IL; CSC khong tao CFG instrumentation/load-config native. Khong gan co GUARD_CF gia."
                          },
-    "BuiltAtUtc":  "2026-10-24T10:45:57.3085919Z"
+    "BuiltAtUtc":  "2026-10-25T14:25:22.7114284Z"
 }

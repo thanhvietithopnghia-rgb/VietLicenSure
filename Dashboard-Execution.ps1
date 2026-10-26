@@ -1261,6 +1261,7 @@ function Update-SharedScanResultDisplay {
     $state = Get-ToolSharedScanState -ReportRoot $reportRoot -Mode $Mode -CurrentBuildId (Get-DashboardCurrentBuildId)
     $script:sharedScanDisplayMode = $Mode
     $script:sharedScanDisplayState = $state
+    $attempt = if ($script:lastSharedScanAttempt -and [string]$script:lastSharedScanAttempt.Mode -eq $Mode) { $script:lastSharedScanAttempt } else { $null }
     $stateKey = if ($Override -eq 'Pending') { 'sharedScan.state.pending' } elseif ($Override -eq 'Error') { 'sharedScan.state.error' } else {
         switch ([string]$state.Status) { 'Current' { 'sharedScan.state.current' }; 'Stale' { 'sharedScan.state.stale' }; default { 'sharedScan.state.empty' } }
     }
@@ -1269,8 +1270,10 @@ function Update-SharedScanResultDisplay {
         $quick = Get-ToolSharedScanQuickSummary -Report $state.Latest.Report -Mode $Mode
         if ([string]$quick.Kind -eq 'License') {
             $riskKey = 'sharedScan.quick.risk.' + [string]$quick.Risk
-            $sharedResultStateLabel.Text = Get-DashboardText 'sharedScan.quick.licenseTitle' @(
-                $(if ($Mode -eq 'Windows') { 'Windows' } else { 'Microsoft Office' }), (Get-DashboardText $riskKey))
+            if ($Override -eq 'Auto' -and [string]$state.Status -eq 'Current') {
+                $sharedResultStateLabel.Text = Get-DashboardText 'sharedScan.quick.licenseTitle' @(
+                    $(if ($Mode -eq 'Windows') { 'Windows' } else { 'Microsoft Office' }), (Get-DashboardText $riskKey))
+            }
             $conclusionKey = switch ([string]$quick.Code) {
                 'KmsUnapprovedHost' { 'report.license.' + $Mode.ToLowerInvariant() + '.kmsUnapproved' }
                 'KmsEntitlementUnverified' { 'report.license.' + $Mode.ToLowerInvariant() + '.kmsUnverified' }
@@ -1283,24 +1286,39 @@ function Update-SharedScanResultDisplay {
             }
             $localizedConclusion = if ($conclusionKey) { Get-DashboardText $conclusionKey } else { [string]$quick.Conclusion }
             $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.quick.licenseSummary' @(
-                $localizedConclusion, [int]$quick.EvidenceSourceCount)
+                $localizedConclusion, [int]$quick.EvidenceSourceCount, (Get-DashboardText $riskKey))
         } elseif ([string]$quick.Kind -eq 'Software') {
-            $sharedResultStateLabel.Text = Get-DashboardText 'sharedScan.quick.softwareTitle'
-            $sharedResultSummaryLabel.Text = (Get-DashboardText 'sharedScan.quick.softwareCounts' @(
-                [int]$quick.Total, [int]$quick.Paid, [int]$quick.Free, [int]$quick.Unknown)) + "`r`n" +
-                (Get-DashboardText 'sharedScan.quick.softwareIntervention' @([int]$quick.Intervention, [int]$quick.High))
+            if ($Override -eq 'Auto' -and [string]$state.Status -eq 'Current') {
+                $sharedResultStateLabel.Text = Get-DashboardText 'sharedScan.quick.softwareTitle'
+            }
+            $softwareRisk = if ([int]$quick.High -gt 0) { 'High' } elseif ([int]$quick.Intervention -gt 0) { 'Review' } else { 'Info' }
+            $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.quick.softwareSummary' @(
+                (Get-DashboardText 'sharedScan.quick.softwareCounts' @(
+                    [int]$quick.Total, [int]$quick.Paid, [int]$quick.Free, [int]$quick.Unknown)),
+                (Get-DashboardText 'sharedScan.quick.softwareIntervention' @([int]$quick.Intervention, [int]$quick.High)),
+                (Get-DashboardText ('sharedScan.quick.risk.' + $softwareRisk)))
         } else {
             $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.summary' @(
                 [int]$state.Summary.High, [int]$state.Summary.Medium, [int]$state.Summary.Low,
                 [int]$state.Summary.New, [int]$state.Summary.Resolved)
         }
-        $sharedResultTimeLabel.Text = Get-DashboardText 'sharedScan.observedAt' @(([DateTime]$state.Latest.CreatedAt).ToString('g'))
         $sharedResultDetailButton.Enabled = [bool](Test-Path -LiteralPath ([string]$state.HtmlPath) -PathType Leaf)
     } else {
         $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.noResult'
-        $sharedResultTimeLabel.Text = ''
         $sharedResultDetailButton.Enabled = $false
     }
+    $timeLines = New-Object Collections.Generic.List[string]
+    if ($Override -eq 'Pending' -and $attempt) {
+        $timeLines.Add((Get-DashboardText 'sharedScan.attemptRunning' @(([DateTime]$attempt.StartedAt).ToString('g'))))
+    } elseif ($Override -eq 'Error' -and $attempt) {
+        $attemptTime = if ($attempt.CompletedAt) { [DateTime]$attempt.CompletedAt } else { [DateTime]$attempt.StartedAt }
+        $timeLines.Add((Get-DashboardText 'sharedScan.attemptFailed' @($attemptTime.ToString('g'), [string]$attempt.ExitCode)))
+    }
+    if ($state.Latest) {
+        $lastSuccessKey = if ([string]$state.Status -eq 'Stale' -or $Override -eq 'Error') { 'sharedScan.lastSuccessStale' } else { 'sharedScan.lastSuccess' }
+        $timeLines.Add((Get-DashboardText $lastSuccessKey @(([DateTime]$state.Latest.CreatedAt).ToString('g'))))
+    }
+    $sharedResultTimeLabel.Text = ($timeLines.ToArray() -join "`r`n")
     return $state
 }
 
@@ -1346,6 +1364,13 @@ function Start-Report([string]$mode, [string]$displayName) {
         if ($null -eq $scanChoice) { return }
     }
     $redactSensitive = [bool]($privacyChoice -eq 'Redacted')
+    $script:lastSharedScanAttempt = [pscustomobject][ordered]@{
+        Mode = $mode
+        StartedAt = Get-Date
+        CompletedAt = $null
+        Status = 'Running'
+        ExitCode = $null
+    }
     [void](Update-SharedScanResultDisplay -Mode $mode -Override Pending)
     try {
         Start-ProgressDisplay $displayName (Get-ToolText -Key "report.starting" -Culture $script:dashboardCulture) $false
@@ -1371,6 +1396,11 @@ function Start-Report([string]$mode, [string]$displayName) {
         Set-ButtonsEnabled $false
         $timer.Start()
     } catch {
+        if ($script:lastSharedScanAttempt -and [string]$script:lastSharedScanAttempt.Mode -eq $mode) {
+            $script:lastSharedScanAttempt.CompletedAt = Get-Date
+            $script:lastSharedScanAttempt.Status = 'Failed'
+            $script:lastSharedScanAttempt.ExitCode = -1
+        }
         Set-ButtonsEnabled $true
         [void](Update-SharedScanResultDisplay -Mode $mode -Override Error)
         Stop-ProgressOnStartError (Get-ToolText -Key "report.startFailed" -Culture $script:dashboardCulture -FormatArguments @($_.Exception.Message))

@@ -9,7 +9,7 @@ Set-StrictMode -Version 2.0
 if ([string]::IsNullOrWhiteSpace($DistributionDirectory)) { $DistributionDirectory = $PSScriptRoot }
 $distributionRoot = [IO.Path]::GetFullPath($DistributionDirectory).TrimEnd('\')
 $expectedReleaseVersion = '5.0'
-$expectedBuildId = '5.0-production-20261023'
+$expectedBuildId = '5.0-production-20261025'
 $expectedContentCertificateThumbprint = 'ABE70696679B1D8987A2D5B1F6C1C6909D364CEA'
 $expectedContentCertificateSha256 = 'A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9'
 $expectedAuthenticodeCertificateThumbprint = '575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62'

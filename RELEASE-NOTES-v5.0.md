@@ -1,8 +1,8 @@
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
-Ngày build kỹ thuật hiện hành: `2026-10-23`
+Ngày build kỹ thuật hiện hành: `2026-10-25`
 Ngày phát hành lần đầu: `08/09/2026`
-Nội dung cập nhật đến: `23/10/2026`
+Nội dung cập nhật đến: `25/10/2026`
 Phiên bản hiển thị: `v5.0`
 Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
 
@@ -35,7 +35,11 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
 - **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
 
-## Cập nhật hiện hành ngày 23/10/2026
+## Cập nhật hiện hành ngày 25/10/2026
+
+- **Khôi phục quét Windows/Office/Phần mềm:** cầu nối nâng quyền chấp nhận đúng hợp đồng `-NoOpen` và đối chiếu gia tăng nhưng vẫn từ chối tham số thừa, đường dẫn không an toàn hoặc cặp baseline không hợp lệ; lỗi mã 87 do lệch allowlist không còn chặn các tác vụ quét hợp lệ.
+- **Thời gian và dữ liệu rõ ràng:** giao diện tách “lần thử gần nhất” khỏi “kết quả thành công gần nhất”; lần thử ngày hiện tại bị lỗi không còn làm kết quả cũ ngày 23/10 trông như dữ liệu vừa quét, và baseline cũ được gắn nhãn “dữ liệu cũ”.
+- **Vai trò dịu và phản hồi nhanh:** ba nút vai trò dùng nền trung tính với viền/chữ nhận diện; vai trò đang chọn dùng tint nhẹ, viền đậm và không bị làm mờ. Bộ chọn vai trò xuất hiện trước validation nặng, đổi vai trò không đọc lại toàn bộ lịch sử báo cáo và tác vụ vẫn khóa fail-closed cho tới khi validation hoàn tất.
 
 - **Giao diện theo vai trò:** khi mở ứng dụng, người dùng chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cả ba dùng chung giao diện Windows, engine và dữ liệu hiện hành; dashboard chỉ hiển thị đúng chức năng của vai trò đã chọn. Chọn vai trò không cấp quyền quản trị và không thay đổi nguyên tắc Offline.
 

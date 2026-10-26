@@ -30,5 +30,24 @@ Check ($roleSource -match '\$clientWidth -lt 560' -and $roleSource -match '\$men
 Check ($roleSource -match "roleButton\.Anchor='Top,Left'" -and $roleSource -match 'verticalReserve') 'Narrow role button can drift or overlap the vertical scrollbar'
 Check ($roleSource -match 'AutoScrollPosition = New-Object Drawing\.Point\(0, \$currentVerticalOffset\)') 'Narrow workspace does not force the horizontal offset back to zero'
 Check ($layoutSource -match '\$menuCaption\.Width = \[Math\]::Max\(40, \$buttonPanel\.ClientSize\.Width - 28\)') 'Hidden narrow caption can still force a horizontal scrollbar'
+Check ($roleSource -match '\$idleBack' -and $roleSource -match '\$selectedBack' -and $roleSource -match 'MouseOverBackColor') 'Role choices do not distinguish calm idle, hover, and selected states'
+Check ($roleSource -match 'ResumeLayout\(\$false\)' -and $roleSource -notmatch 'ResumeLayout\(\$true\)') 'Role switching still forces a redundant full layout pass'
+
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+function Test-ToolUiHighContrast { return $false }
+$script:dashboardTheme = 'Light'
+$fontBold = New-Object Drawing.Font('Segoe UI', 9, [Drawing.FontStyle]::Bold)
+$personalIdle = New-Object Windows.Forms.Button
+$personalSelected = New-Object Windows.Forms.Button
+try {
+    Set-RoleWorkspaceButtonVisual -Button $personalIdle -Role personal
+    Set-RoleWorkspaceButtonVisual -Button $personalSelected -Role personal -Selected
+    Check ($personalIdle.BackColor.ToArgb() -ne $personalSelected.BackColor.ToArgb()) 'Selected role is not visually stronger than idle role'
+    Check ($personalSelected.ForeColor.ToArgb() -ne $personalSelected.BackColor.ToArgb()) 'Selected role does not retain contrasting text'
+    Check ($personalIdle.BackColor.R -ge 230 -and $personalIdle.BackColor.G -ge 230 -and $personalIdle.BackColor.B -ge 230) 'Idle role color is still overly saturated'
+} finally {
+    $personalIdle.Dispose(); $personalSelected.Dispose(); $fontBold.Dispose()
+}
 
 [pscustomobject]@{Passed=$true;Checks=$checks;Mode='Native role-filtered WinForms only'}|ConvertTo-Json -Compress

@@ -1,11 +1,13 @@
 # VietLicenSure — System License Inspection and Management Software Version History
 
-This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 23, 2026; the public version remains v5.0.
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through October 25, 2026; the public version remains v5.0.
 
 Public product page:
 <https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
 
-## v5.0 — updated October 23, 2026 (first released September 8, 2026)
+## v5.0 — updated October 25, 2026 (first released September 8, 2026)
+
+- **Runtime scan and UX correction:** the elevated bridge now accepts the exact `-NoOpen` and incremental-baseline contract used by Windows, Office, and Software inspections while remaining fail-closed for unsafe or extra arguments. The activity panel separates the latest attempt from the latest successful result and labels an older baseline as stale. Role colors use restrained tints with a clear selected state, the chooser appears before heavy validation, and role switching no longer rescans the whole report history.
 
 - **Neutral publisher:** the EXE now uses the self-issued Authenticode signer `CN=Thanh Viet - VietLicenSure Code Signing`, removing the historical v4.9 product name from Publisher. The historical content-CMS signer remains a separate trust anchor that authorizes the new EXE signer; the channel remains Official Self-Signed, not public-CA/EV/Store-signed, so SmartScreen may still warn.
 

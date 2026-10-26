@@ -604,10 +604,12 @@ if ([regex]::Matches($deepScanText, 'New-ToolReportEnvelope\s+-ReportKind\s+"Dee
     Add-Failure 'Deep scan phải tạo envelope cho cả nhánh từ chối quyền và nhánh thành công.'
 }
 
-if ($inventoryText -notmatch 'class="cards cards-count-5"' -or
-    $inventoryText -notmatch 'class="cards cards-summary cards-count-5"' -or
-    $reportExportText -notmatch '\.cards-summary\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)\}') {
-    Add-Failure 'HTML/PDF chưa gắn đúng bố cục năm ô thông tin trên cùng một hàng.'
+if (-not $inventoryText.Contains('class="cards $summaryCardsClass"') -or
+    -not $inventoryText.Contains('class="cards cards-summary $summaryCardsClass"') -or
+    -not $inventoryText.Contains('$summaryCardsClass = ''cards-count-''') -or
+    $reportExportText -notmatch '\.cards-count-1\{grid-template-columns:repeat\(1,minmax\(0,1fr\)\)\}' -or
+    $reportExportText -notmatch '\.cards-count-6\{grid-template-columns:repeat\(6,minmax\(0,1fr\)\)\}') {
+    Add-Failure 'HTML/PDF chưa gắn đúng số ô tóm tắt theo phạm vi quét.'
 }
 if (-not $reportExportText.Contains('cards-count-$cardCount') -or
     $reportExportText -notmatch '\.cards\.cards-count-5\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)\}') {

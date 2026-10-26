@@ -880,6 +880,8 @@ $activityPanel.Controls.Add($sharedResultCaption)
 $sharedResultStateLabel = New-Object System.Windows.Forms.Label
 $sharedResultStateLabel.Font = $fontBold
 $sharedResultStateLabel.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
+$sharedResultStateLabel.AutoEllipsis = $true
+$sharedResultStateLabel.TextAlign = 'MiddleLeft'
 $activityPanel.Controls.Add($sharedResultStateLabel)
 
 $sharedResultSummaryLabel = New-Object System.Windows.Forms.Label
@@ -892,6 +894,8 @@ $activityPanel.Controls.Add($sharedResultSummaryLabel)
 $sharedResultTimeLabel = New-Object System.Windows.Forms.Label
 $sharedResultTimeLabel.Font = $fontSmall
 $sharedResultTimeLabel.ForeColor = [System.Drawing.Color]::FromArgb(102, 112, 133)
+$sharedResultTimeLabel.AutoEllipsis = $true
+$sharedResultTimeLabel.TextAlign = 'TopLeft'
 $activityPanel.Controls.Add($sharedResultTimeLabel)
 
 $sharedResultDetailButton = New-Object System.Windows.Forms.Button
@@ -977,6 +981,8 @@ $script:lastReportPath = ""
 $script:resultCenterState = $null
 $script:sharedScanDisplayMode = 'All'
 $script:sharedScanDisplayState = $null
+$script:sharedScanDisplayInitialized = $false
+$script:lastSharedScanAttempt = $null
 $script:activeReportMode = ''
 $script:activeReportIncremental = $false
 $script:executionEnvironmentWarningShown = $false
@@ -997,6 +1003,12 @@ Update-MainLayout
 Write-DashboardStartupTrace "Layout.Ready"
 $startupValidationTimer = New-Object System.Windows.Forms.Timer
 $startupValidationTimer.Interval = 15
+$script:sharedScanStartupTimer = New-Object System.Windows.Forms.Timer
+$script:sharedScanStartupTimer.Interval = 75
+$script:sharedScanStartupTimer.Add_Tick({
+    $script:sharedScanStartupTimer.Stop()
+    [void](Update-SharedScanResultDisplay -Mode 'All')
+})
 $script:dashboardStartupPhase = 0
 $startupValidationTimer.Add_Tick({
     $startupValidationTimer.Stop()
@@ -1023,12 +1035,10 @@ $startupValidationTimer.Add_Tick({
     if ($script:dashboardStartupPhase -eq 1) {
         Initialize-DashboardMenus
         $script:dashboardStartupPhase = 2
-        $startupValidationTimer.Interval = 75
-        $startupValidationTimer.Start()
+        Initialize-RoleWorkspaces
         return
     }
     Complete-DashboardStartupValidation
-    Initialize-RoleWorkspaces
 })
 foreach ($button in $buttons) { $button.Enabled = $false }
 $introAssistantButton.Enabled = $false
@@ -1044,7 +1054,6 @@ $form.Add_Shown({
     # Refit once on the message pump before the responsive layout pass so the
     # 150-200% canvas receives the physical pixels calculated above.
     [void]$form.BeginInvoke([System.Action]{ Fit-MainWindowToWorkingArea; Update-MainLayout })
-    [void](Update-SharedScanResultDisplay -Mode 'All')
     $startupValidationTimer.Start()
     Show-ExecutionEnvironmentWarning
     $updateTimer.Start()
@@ -1108,6 +1117,12 @@ $timer.Add_Tick({
             ModuleId = $finishedModuleId
             ExitCode = [int]$exitCode
         }))
+        if ($finishedTaskKind -eq 'Report' -and $script:lastSharedScanAttempt -and
+            [string]$script:lastSharedScanAttempt.Mode -eq $finishedReportMode) {
+            $script:lastSharedScanAttempt.CompletedAt = Get-Date
+            $script:lastSharedScanAttempt.Status = $(if ($wasCancellationRequested) { 'Cancelled' } elseif ($exitCode -eq 0) { 'Succeeded' } else { 'Failed' })
+            $script:lastSharedScanAttempt.ExitCode = [int]$exitCode
+        }
         $script:activeProcess = $null
         $script:activeTaskKind = ""
         $script:activeModuleId = ""
@@ -1239,7 +1254,8 @@ $timer.Add_Tick({
                 })
             }
         } else {
-            $status.Text = Get-ToolText -Key "progress.failed" -Culture $script:dashboardCulture -FormatArguments @($finishedAction, $exitCode)
+            $failureKey = if ($finishedTaskKind -eq 'Report' -and $exitCode -eq 87) { 'progress.failed.elevatedBridge' } else { 'progress.failed' }
+            $status.Text = Get-ToolText -Key $failureKey -Culture $script:dashboardCulture -FormatArguments @($finishedAction, $exitCode)
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkRed
             if ($finishedTaskKind -eq 'Report') { [void](Update-SharedScanResultDisplay -Mode $(if ($finishedReportMode) { $finishedReportMode } else { 'All' }) -Override Error) }

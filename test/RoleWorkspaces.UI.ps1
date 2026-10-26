@@ -8,6 +8,7 @@ $script:maps=@{}
 foreach($culture in @('vi-VN','en-US')){$script:maps[$culture]=Get-Content -Raw -Encoding UTF8 (Join-Path $SourceDirectory ('Tool-Strings.'+$culture+'.json'))|ConvertFrom-Json}
 function Get-ToolText{param([string]$Key,[string]$Culture) $value=$script:maps[$Culture].PSObject.Properties[$Key];if(-not $value){throw "Missing localization key: $Culture/$Key"};[string]$value.Value}
 function Set-ToolWindowTheme{}
+function Test-ToolUiHighContrast{return $false}
 function Show-DashboardModalDialog{param($Dialog)[void]$Dialog.ShowDialog($script:form)}
 function Set-DashboardSection{param([string]$Section)$script:lastSection=$Section}
 . (Join-Path $SourceDirectory 'Dashboard-RoleWorkspaces.ps1')
