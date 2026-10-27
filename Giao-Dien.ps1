@@ -984,9 +984,6 @@ $script:sharedScanDisplayState = $null
 $script:sharedScanDisplayInitialized = $false
 $script:lastSharedScanAttempt = $null
 $script:activeReportMode = ''
-$script:activeReportOutputDirectory = ''
-$script:pendingSharedScanCompletionMode = ''
-$script:pendingSharedScanCompletionRoot = ''
 $script:activeReportIncremental = $false
 $script:executionEnvironmentWarningShown = $false
 Write-DashboardStartupTrace "ShellControls.Ready"
@@ -1092,18 +1089,11 @@ $timer.Add_Tick({
         $finishedModuleId = $script:activeModuleId
         $finishedModuleInvocation = $script:activeModuleInvocation
         $finishedReportMode = [string]$script:activeReportMode
-        $finishedReportOutputDirectory = [string]$script:activeReportOutputDirectory
         $wasCancellationRequested = [bool]$script:taskCancellationRequested
         $processDurationMs = if ($script:taskStartedAt) { [long][Math]::Round(((Get-Date) - $script:taskStartedAt).TotalMilliseconds) } else { $null }
         if ($finishedTaskKind -eq 'Report' -and $exitCode -eq 0) {
-            $expectedReportModuleId = Get-ToolReportModuleId -Mode $finishedReportMode
-            $scopeValidation = Test-ToolCompletedReportScope -ReportRoot $finishedReportOutputDirectory -Mode $finishedReportMode -ExpectedModuleId $expectedReportModuleId
-            if (-not $scopeValidation.Valid) {
+            if (-not (Test-ReportScope $script:lastReportDirectory $finishedReportMode (Get-ToolReportModuleId -Mode $finishedReportMode))) {
                 $exitCode = 78
-                [void](Write-ToolLog -Level 'ERROR' -Event 'Report.ScopeMismatch' -Message ($scopeValidation.Errors -join '; ') -Data ([ordered]@{
-                    RequestedMode=$finishedReportMode; ExpectedModuleId=$expectedReportModuleId
-                    ActualModuleId=[string]$scopeValidation.ActualModuleId; OutputDirectory=$finishedReportOutputDirectory
-                }))
             }
         }
         if ($finishedModuleInvocation) {
@@ -1143,7 +1133,6 @@ $timer.Add_Tick({
         $script:activeModuleId = ""
         $script:activeModuleInvocation = $null
         $script:activeReportMode = ''
-        $script:activeReportOutputDirectory = ''
         $script:activeReportIncremental = $false
         if ($script:applicationUpdateReminderPending -and -not [string]::IsNullOrWhiteSpace($finishedTaskKind)) {
             $script:applicationUpdateTaskObservedAfterDeferral = $true
@@ -1263,16 +1252,12 @@ $timer.Add_Tick({
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkGreen
             if ($finishedTaskKind -eq "Report") {
-                $script:pendingSharedScanCompletionMode = $(if ($finishedReportMode) { $finishedReportMode } else { 'All' })
-                $script:pendingSharedScanCompletionRoot = $finishedReportOutputDirectory
+                $script:sharedScanDisplayMode = $(if ($finishedReportMode) { $finishedReportMode } else { 'All' })
                 [void]$form.BeginInvoke([System.Action]{
-                    $completedMode = [string]$script:pendingSharedScanCompletionMode
-                    $completedRoot = [string]$script:pendingSharedScanCompletionRoot
-                    $script:pendingSharedScanCompletionMode = ''
-                    $script:pendingSharedScanCompletionRoot = ''
+                    $completedMode = [string]$script:sharedScanDisplayMode
                     $script:resultCenterState = $null
                     Update-ResultActionCard -HeaderOnly
-                    $completedState = Update-SharedScanResultDisplay -Mode $completedMode -ResultRoot $completedRoot
+                    $completedState = Update-SharedScanResultDisplay -Mode $completedMode
                     if ($completedMode -in @('Windows','Office','Software') -and
                         (-not $completedState -or -not (Test-Path -LiteralPath ([string]$completedState.HtmlPath) -PathType Leaf))) {
                         $status.Text = Get-DashboardText 'sharedScan.detailsMissing'
@@ -1282,7 +1267,7 @@ $timer.Add_Tick({
                 })
             }
         } else {
-            $failureKey = if ($finishedTaskKind -eq 'Report' -and $exitCode -eq 78) { 'progress.failed.reportScope' } elseif ($finishedTaskKind -eq 'Report' -and $exitCode -eq 87) { 'progress.failed.elevatedBridge' } else { 'progress.failed' }
+            $failureKey = if ($finishedTaskKind -eq 'Report' -and $exitCode -eq 87) { 'progress.failed.elevatedBridge' } else { 'progress.failed' }
             $status.Text = Get-ToolText -Key $failureKey -Culture $script:dashboardCulture -FormatArguments @($finishedAction, $exitCode)
             Write-ProgressLog $status.Text
             $status.ForeColor = [System.Drawing.Color]::DarkRed

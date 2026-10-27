@@ -716,7 +716,6 @@
   "progress.completed": "Completed: {0}. The result file was opened directly.",
   "progress.completed.summaryReady": "Completed: {0}. The quick result is displayed; select View details to open HTML.",
   "progress.failed": "Task {0} ended with code {1}. Review the result file.",
-  "progress.failed.reportScope": "Task {0} did not create the report for the selected function (code {1}). The result was rejected to prevent opening a full report by mistake.",
   "progress.failed.elevatedBridge": "Task {0} was rejected by the security bridge (code {1}). Copy the log to inspect the argument contract.",
   "progress.copyAllLog": "Copy all log",
   "progress.copyNoLog": "There is no log content to copy yet.",

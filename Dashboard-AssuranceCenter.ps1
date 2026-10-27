@@ -941,17 +941,6 @@ function Get-DashboardMenuIconKind([int]$Number) {
     }
 }
 
-function Get-DashboardReportModeForMenuNumber([int]$Number) {
-    switch ($Number) {
-        1 { return 'All' }
-        2 { return 'Hardware' }
-        3 { return 'Windows' }
-        4 { return 'Office' }
-        5 { return 'Software' }
-        default { return '' }
-    }
-}
-
 function Set-DashboardCompositeButtonAccessibility {
     param(
         [Parameter(Mandatory = $true)][System.Windows.Forms.Button]$Button,
@@ -1001,7 +990,6 @@ function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey
         Number = $number
         TitleKey = $titleKey
         DescriptionKey = $descriptionKey
-        ReportMode = Get-DashboardReportModeForMenuNumber -Number $number
         Tone = if ($number -eq 8) { "Enterprise" } elseif ($warning) { "Warning" } else { "Normal" }
         IconKind = Get-DashboardMenuIconKind -Number $number
         TitleLabel = $null
@@ -1061,18 +1049,7 @@ function Add-MenuButton([int]$number, [string]$titleKey, [string]$descriptionKey
     $button.AccessibleName = $buttonText
     $button.AccessibleDescription = Get-ToolText -Key $descriptionKey -Culture $script:dashboardCulture
     $rootAction = $action
-    $button.Add_Click({
-        param($sender, $eventArgs)
-        $selectedReportMode = if ($sender.Tag -and $sender.Tag.PSObject.Properties['ReportMode']) { [string]$sender.Tag.ReportMode } else { '' }
-        if ($selectedReportMode -in @('All','Hardware','Windows','Office','Software')) {
-            $selectedTitleKey = [string]$sender.Tag.TitleKey
-            Invoke-DashboardRootAction -Action ({
-                Start-Report $selectedReportMode (Get-ToolText -Key $selectedTitleKey -Culture $script:dashboardCulture)
-            }.GetNewClosure())
-            return
-        }
-        Invoke-DashboardRootAction -Action $rootAction
-    }.GetNewClosure())
+    $button.Add_Click({ Invoke-DashboardRootAction -Action $rootAction }.GetNewClosure())
     $button.Add_MouseEnter({
         param($sender, $eventArgs)
         $tone = if ($sender.Tag -and $sender.Tag.PSObject.Properties["Tone"]) { [string]$sender.Tag.Tone } else { "Normal" }
