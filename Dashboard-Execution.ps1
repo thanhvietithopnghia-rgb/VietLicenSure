@@ -1258,7 +1258,7 @@ function Update-SharedScanResultDisplay {
         [ValidateSet('Auto','Pending','Error')][string]$Override = 'Auto'
     )
     if (-not $sharedResultStateLabel -or -not $sharedResultSummaryLabel -or -not $sharedResultDetailButton) { return $null }
-    $state = Get-ToolSharedScanState -ReportRoot $(if ($Mode -eq 'All') { $reportRoot } else { $script:lastReportDirectory }) -Mode $Mode -CurrentBuildId (Get-DashboardCurrentBuildId)
+    $state = Get-ToolSharedScanState -ReportRoot $reportRoot -Mode $Mode -CurrentBuildId (Get-DashboardCurrentBuildId)
     $script:sharedScanDisplayMode = $Mode
     $script:sharedScanDisplayState = $state
     $attempt = if ($script:lastSharedScanAttempt -and [string]$script:lastSharedScanAttempt.Mode -eq $Mode) { $script:lastSharedScanAttempt } else { $null }
@@ -1403,7 +1403,6 @@ function Start-Report([string]$mode, [string]$displayName) {
         $needsCompleteMachineRead = [bool]($mode -in @('All','Windows','Office','Software'))
         [void](Start-ToolModuleProcess -ModuleId $moduleId -Arguments $arguments -Action $displayName -Hidden -Elevate:$needsCompleteMachineRead)
         $script:activeReportMode = $mode
-        $script:lastReportDirectory = $output
         $script:activeReportIncremental = $incrementalRefresh
         $status.Text = Get-ToolText -Key "report.running" -Culture $script:dashboardCulture -FormatArguments @($displayName)
         $status.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)

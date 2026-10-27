@@ -8,9 +8,6 @@ if (-not [string]::IsNullOrWhiteSpace($script:startupTracePath)) {
     $script:startupTraceClock = [Diagnostics.Stopwatch]::StartNew()
     $script:startupTraceEncoding = New-Object Text.UTF8Encoding($false)
 }
-# Load function libraries before executing entrypoint statements. Keeping the
-# imports explicit makes the runtime dependency graph auditable and lets a
-# missing library fail before any UI state is created.
 . (Join-Path $PSScriptRoot 'Dashboard-Core.ps1')
 . (Join-Path $PSScriptRoot 'Dashboard-Execution.ps1')
 . (Join-Path $PSScriptRoot 'Dashboard-OnlineUpdate.ps1')
@@ -21,8 +18,6 @@ if (-not [string]::IsNullOrWhiteSpace($script:startupTracePath)) {
 Write-DashboardStartupTrace "Script.Started"
 $dashboardSchemaVersion = "2.0"
 $releaseVersion = "5.0"
-# The first public v5.0 date is historical metadata. The displayed build date
-# is loaded from signed release identity below and must not drift independently.
 $releaseInitialDate = "2026.09.26"
 $releaseBuildDate = ""
 $toolDisplayVersion = "v$toolVersion"
@@ -316,10 +311,6 @@ $form.BackColor = [System.Drawing.Color]::FromArgb(244, 246, 249)
 $form.Font = $fontNormal
 $form.AutoScroll = $false
 $form.AutoScrollMargin = New-Object System.Drawing.Size(0, 0)
-# The main dashboard is positioned by Update-MainLayout in the current
-# per-monitor physical coordinate space.  Letting WinForms auto-scale these
-# manually positioned children a second time at 150-200% DPI causes clipped
-# labels and overlapping tiles.  Modal dialogs keep their own Dpi mode below.
 $form.AutoScaleMode = [System.Windows.Forms.AutoScaleMode]::None
 $script:dashboardDialogStack = New-Object System.Collections.Stack
 $script:dashboardWorkflowCloseRequested = $false
@@ -976,7 +967,6 @@ $script:updatingMainLayout = $false
 $script:hasTaskActivity = $false
 $script:dashboardSection = "Overview"
 $script:taskCancellationRequested = $false
-$script:lastReportDirectory = $reportRoot
 $script:lastReportPath = ""
 $script:resultCenterState = $null
 $script:sharedScanDisplayMode = 'All'
@@ -1050,9 +1040,6 @@ $form.Add_Shown({
             try { [void]$startupReadyEvent.Set() } finally { $startupReadyEvent.Dispose() }
         } catch {}
     }
-    # DeviceDpi is authoritative only after the native window handle is shown.
-    # Refit once on the message pump before the responsive layout pass so the
-    # 150-200% canvas receives the physical pixels calculated above.
     [void]$form.BeginInvoke([System.Action]{ Fit-MainWindowToWorkingArea; Update-MainLayout })
     $startupValidationTimer.Start()
     Show-ExecutionEnvironmentWarning
@@ -1092,9 +1079,8 @@ $timer.Add_Tick({
         $wasCancellationRequested = [bool]$script:taskCancellationRequested
         $processDurationMs = if ($script:taskStartedAt) { [long][Math]::Round(((Get-Date) - $script:taskStartedAt).TotalMilliseconds) } else { $null }
         if ($finishedTaskKind -eq 'Report' -and $exitCode -eq 0) {
-            if (-not (Test-ReportScope $script:lastReportDirectory $finishedReportMode (Get-ToolReportModuleId -Mode $finishedReportMode))) {
-                $exitCode = 78
-            }
+            $r=Get-ToolSharedScanState $reportRoot $finishedReportMode (Get-DashboardCurrentBuildId)
+            if(-not $r.IsFresh-or$r.Latest.CreatedAt-lt$script:taskStartedAt-or$r.Latest.Report.ModuleResult.ModuleId-ine$finishedModuleId){$exitCode=78}
         }
         if ($finishedModuleInvocation) {
             $moduleResult = Complete-ToolModuleInvocation -Invocation $finishedModuleInvocation -ExitCode $exitCode -Summary $finishedAction

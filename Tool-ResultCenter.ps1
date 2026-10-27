@@ -224,15 +224,6 @@ function Get-ToolSharedScanState {
     }
 }
 
-function Test-ReportScope($ReportRoot,$Mode,$ExpectedModuleId) {
-    try {
-        $r = @(Get-ToolResultReportHistory -ReportRoot $ReportRoot)
-        return ($r.Count -eq 1 -and [string]$r[0].Mode -ieq $Mode -and
-            [string]$r[0].Report.ModuleResult.ModuleId -ieq $ExpectedModuleId -and
-            (Test-Path -LiteralPath ($r[0].Path -replace '\.json$','.html') -PathType Leaf))
-    } catch { return $false }
-}
-
 function Get-ToolSharedScanQuickSummary {
     [CmdletBinding()]
     param(

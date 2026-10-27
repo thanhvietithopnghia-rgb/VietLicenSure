@@ -57,14 +57,14 @@ try {
     $exactRoot = Join-Path $temp 'exact-windows'
     [void](New-Item -ItemType Directory -Path $exactRoot -Force)
     [void](Write-Report -Name 'windows' -MachineBinding $binding -BuildId 'build-current' -CreatedAt $now -Mode Windows -Directory $exactRoot -ModuleId 'report.windows')
-    $exactScope = Test-ReportScope $exactRoot Windows 'report.windows'
-    Check $exactScope 'Exact Windows run was not accepted'
+    $exactScope = Get-ToolSharedScanState -ReportRoot $exactRoot -Mode Windows -CurrentBuildId 'build-current'
+    Check ($exactScope.IsFresh -and [string]$exactScope.Latest.Report.ModuleResult.ModuleId -eq 'report.windows') 'Exact Windows run was not accepted'
 
     $wrongRoot = Join-Path $temp 'wrong-all'
     [void](New-Item -ItemType Directory -Path $wrongRoot -Force)
     [void](Write-Report -Name 'all' -MachineBinding $binding -BuildId 'build-current' -CreatedAt $now -Mode All -Directory $wrongRoot -ModuleId 'report.all')
-    $wrongScope = Test-ReportScope $wrongRoot Windows 'report.windows'
-    Check (-not $wrongScope) 'Windows action accepted an All report'
+    $wrongScope = Get-ToolSharedScanState -ReportRoot $wrongRoot -Mode Windows -CurrentBuildId 'build-current'
+    Check (-not $wrongScope.IsFresh) 'Windows action accepted an All report'
 
     $officeQuick = Get-ToolSharedScanQuickSummary -Mode Office -Report ([pscustomobject][ordered]@{
         OfficeConclusionCode='KmsUnapprovedHost'; OfficeConclusion='Office KMS host is not approved.'
@@ -116,8 +116,8 @@ try {
     $guiSource = Get-Content -LiteralPath (Join-Path $root 'Giao-Dien.ps1') -Raw -Encoding UTF8
     $roleSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-RoleWorkspaces.ps1') -Raw -Encoding UTF8
     Check ($executionSource -match 'activeProcess.+HasExited' -and $executionSource -match 'sharedScan\.duplicateBlocked') 'Duplicate in-flight scan is not blocked'
-    Check ($guiSource -match 'Test-ReportScope' -and $guiSource -match 'exitCode = 78') 'Completed report mode/module is not checked fail-closed'
-    Check ($guiSource -match 'Test-ReportScope.+lastReportDirectory') 'Quick result is not bound to the exact run directory'
+    Check ($guiSource -match 'Latest\.CreatedAt.+taskStartedAt' -and $guiSource -match 'exitCode\s*=\s*78') 'Completed report is not bound to the current run'
+    Check ($guiSource -match 'ModuleResult\.ModuleId.+finishedModuleId') 'Completed report module is not checked fail-closed'
     Check ($executionSource -match "Profile = 'Quick'" -and $executionSource -match 'IncrementalRefresh') 'Fresh result does not select quick incremental refresh'
     Check ($executionSource -match 'BaselineReportPath') 'Incremental baseline is not passed to the report engine'
     Check ($executionSource -match 'sharedScan\.attemptFailed' -and $executionSource -match 'sharedScan\.lastSuccessStale') 'Failed-attempt and previous-success timestamps are not separated'
