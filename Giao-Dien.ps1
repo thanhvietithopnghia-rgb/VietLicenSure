@@ -828,9 +828,10 @@ $activityLabel.Text = ""
 $activityLabel.Font = $fontSmall
 $activityLabel.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
 $activityLabel.TextAlign = "MiddleLeft"
-$activityLabel.AutoEllipsis = $true
+$activityLabel.AutoEllipsis = $false
+$activityLabel.UseCompatibleTextRendering = $true
 $activityLabel.Location = New-Object System.Drawing.Point(38, ($progressCaption.Bottom + 2))
-$activityLabel.Size = New-Object System.Drawing.Size(585, 20)
+$activityLabel.Size = New-Object System.Drawing.Size(585, 38)
 $activityPanel.Controls.Add($activityLabel)
 
 $elapsedLabel = New-Object System.Windows.Forms.Label

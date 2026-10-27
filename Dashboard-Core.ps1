@@ -920,7 +920,7 @@ function Update-MainLayout {
             $progressLog.Visible = $true
             $activityLabel.Left = 16
             $activityLabel.Top = $progressCaption.Bottom + 2
-            $activityLabel.Height = 20
+            $activityLabel.Height = 38
             $activityLabel.Width = [Math]::Max(80, $activityPanel.ClientSize.Width - $elapsedLabel.Width - 40)
             $elapsedLabel.Left = $activityPanel.ClientSize.Width - $elapsedLabel.Width - 16
             $elapsedLabel.Top = $activityLabel.Top
@@ -1955,12 +1955,27 @@ function Set-DashboardAssistantButtonHighlight {
     Set-ToolUiRoundedButtonRegion -Button $introAssistantButton -Radius 9
 }
 
+function Set-DashboardSharedResultButtonHighlight {
+    param([ValidateSet("Light", "Dark")][string]$Mode)
+
+    Set-ToolUiActionButtonVisual -Button $sharedResultDetailButton -Mode $Mode
+    if ((Test-ToolUiHighContrast) -or -not $sharedResultDetailButton.Enabled) { return }
+
+    $dark = [bool]($Mode -eq "Dark")
+    $sharedResultDetailButton.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(30, 58, 86) } else { [System.Drawing.Color]::FromArgb(226, 239, 250) }
+    $sharedResultDetailButton.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(219, 234, 254) } else { [System.Drawing.Color]::FromArgb(20, 75, 125) }
+    $sharedResultDetailButton.FlatAppearance.BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(78, 126, 171) } else { [System.Drawing.Color]::FromArgb(126, 174, 211) }
+    $sharedResultDetailButton.FlatAppearance.MouseOverBackColor = if ($dark) { [System.Drawing.Color]::FromArgb(38, 72, 105) } else { [System.Drawing.Color]::FromArgb(213, 233, 249) }
+    $sharedResultDetailButton.FlatAppearance.MouseDownBackColor = if ($dark) { [System.Drawing.Color]::FromArgb(25, 50, 76) } else { [System.Drawing.Color]::FromArgb(199, 224, 244) }
+}
+
 function Complete-DashboardThemeInitialization {
     param([ValidateSet("Light", "Dark")][string]$Mode)
-    foreach ($actionButton in @($introAssistantButton, $introDetailButton, $themeButton, $offlineButton, $openReportFolderButton, $copyLogButton, $sharedResultDetailButton, $stopButton, $closeButton)) {
+    foreach ($actionButton in @($introAssistantButton, $introDetailButton, $themeButton, $offlineButton, $openReportFolderButton, $copyLogButton, $stopButton, $closeButton)) {
         Set-ToolUiActionButtonVisual -Button $actionButton -Mode $Mode
     }
     Set-DashboardAssistantButtonHighlight -Mode $Mode
+    Set-DashboardSharedResultButtonHighlight -Mode $Mode
     Write-DashboardStartupTrace "Theme.ControlsStyled"
     Set-ToolUiLiteralText -Root $form
     Write-DashboardStartupTrace "Theme.TextNormalized"

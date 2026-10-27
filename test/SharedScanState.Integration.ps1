@@ -9,6 +9,7 @@ function Get-DashboardText([string]$Key,[object[]]$FormatArguments=@()) {
     if ($FormatArguments.Count -gt 0) { return $Key + ': ' + ($FormatArguments -join ' | ') }
     return $Key
 }
+function Set-DashboardSharedResultButtonHighlight { param([string]$Mode) $script:sharedHighlightCalls++ }
 
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-SharedScan-' + [guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $temp -Force)
@@ -72,8 +73,11 @@ try {
     $script:sharedResultSummaryLabel = New-Object Windows.Forms.Label
     $script:sharedResultTimeLabel = New-Object Windows.Forms.Label
     $script:sharedResultDetailButton = New-Object Windows.Forms.Button
+    $script:dashboardTheme = 'Light'
+    $script:sharedHighlightCalls = 0
     $boundState = Update-SharedScanResultDisplay -Mode Windows
     Check $script:sharedResultDetailButton.Enabled 'Completed Windows report did not enable View details'
+    Check ($script:sharedHighlightCalls -eq 1) 'View details highlight was not refreshed with the enabled state'
     Check ([string]$script:sharedScanDisplayState.HtmlPath -eq [string]$exactScope.HtmlPath) 'View details was not bound to the exact generated HTML path'
     Check ([string]$boundState.Status -eq 'Current') 'Completed Windows report was not rendered as current'
 
@@ -142,6 +146,8 @@ try {
     Check ($layoutSource -match 'tileColumnCount = if \(\$personalWorkspace\) \{ 1 \}') 'Personal actions are not a vertical single column'
     Check ($layoutSource -match 'sharedResultCaption' -and $layoutSource -match 'sharedResultDetailButton') 'Inline summary/details layout is missing'
     Check ($layoutSource -match 'sharedResultSummaryLabel\.Height = 68' -and $layoutSource -match 'sharedResultTimeLabel\.Height = 42') 'Inline result labels do not reserve three-line summary space'
+    Check ($guiSource -match 'activityLabel\.AutoEllipsis = \$false' -and $guiSource -match 'activityLabel\.UseCompatibleTextRendering = \$true' -and $layoutSource -match 'activityLabel\.Height = 38') 'Recent activity text does not reserve a readable two-line area'
+    Check ($layoutSource -match 'function Set-DashboardSharedResultButtonHighlight' -and $executionSource -match 'Set-DashboardSharedResultButtonHighlight') 'Enabled HTML details button is not given its restrained highlight'
     Check ($layoutSource -match '\$activityActionGap = 4' -and
         $layoutSource -match 'closeButton\.Top = \$activityPanel\.ClientSize\.Height - \$closeButton\.Height - 8' -and
         ([regex]::Matches($layoutSource, '- \$activityActionGap').Count -ge 3)) 'Compact activity action spacing is not locked for the 1024x768 viewport'

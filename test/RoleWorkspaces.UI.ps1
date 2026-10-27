@@ -78,6 +78,18 @@ try{
  }
  if($script:buttonPanel.HorizontalScroll.Visible -or $script:buttonPanel.AutoScrollPosition.X -ne 0){throw 'Narrow role panel exposes a horizontal scrollbar'}
  $checks++
+ $script:dashboardCulture='vi-VN'
+ $script:workspaceRole='itam'
+ $script:fontBold=$script:fontNormal
+ $script:buttons=@()
+ Update-RoleWorkspaceChrome
+ $expectedRoleName=Get-RoleWorkspaceText 'role.itam'
+ $expectedAccessible=[string]::Format((Get-RoleWorkspaceText 'buttonFormat'),@($expectedRoleName))
+ if($script:roleButton.Text -cne $expectedRoleName){throw "Business Inventory role is clipped by a redundant prefix: $($script:roleButton.Text)"}
+ if($script:roleButton.AccessibleName -cne $expectedAccessible){throw 'Role button lost the complete accessible label'}
+ $roleTextWidth=[Windows.Forms.TextRenderer]::MeasureText($script:roleButton.Text,$script:roleButton.Font).Width
+ if($roleTextWidth -gt ($script:roleButton.ClientSize.Width-20)){throw "Business Inventory role text does not fit: $roleTextWidth/$($script:roleButton.ClientSize.Width)"}
+ $checks++
  $script:form.Controls.Remove($script:buttonPanel)
  $script:buttonPanel.Dispose()
  $results|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $OutputDirectory 'result.json') -Encoding UTF8

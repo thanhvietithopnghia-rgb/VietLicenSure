@@ -1307,6 +1307,7 @@ function Update-SharedScanResultDisplay {
         $sharedResultSummaryLabel.Text = Get-DashboardText 'sharedScan.noResult'
         $sharedResultDetailButton.Enabled = $false
     }
+    Set-DashboardSharedResultButtonHighlight -Mode $script:dashboardTheme
     $timeLines = New-Object Collections.Generic.List[string]
     if ($Override -eq 'Pending' -and $attempt) {
         $timeLines.Add((Get-DashboardText 'sharedScan.attemptRunning' @(([DateTime]$attempt.StartedAt).ToString('g'))))
