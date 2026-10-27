@@ -489,8 +489,6 @@ $officeTab.AutoScroll = $true
 $tabs.TabPages.Add($officeTab)
 
 $windowsInfo = Get-WindowsDetails
-$windowsTargets = @()
-$windowsActivationState = [pscustomobject]@{ ProbeSucceeded=$false; ActivationConfirmed=$false; RequestedKeyActivationConfirmed=$false; StateCode='Unknown'; ProductKeyLast5=''; Error='' }
 
 $winCurrent = New-Object System.Windows.Forms.Label
 $winCurrent.Location = New-Object System.Drawing.Point(18, 16)
@@ -508,8 +506,8 @@ $winActivationStatus.Size = New-Object System.Drawing.Size(660, 42)
 $winActivationStatus.Anchor = 'Top,Left,Right'
 $winActivationStatus.AutoEllipsis = $false
 $winActivationStatus.UseCompatibleTextRendering = $true
-$winActivationStatus.ForeColor = [System.Drawing.Color]::FromArgb(90, 98, 112)
-$winActivationStatus.Text = Get-LocalLicenseText "localLicense.status.loading"
+$winActivationStatus.ForeColor = [Drawing.Color]::FromArgb(90, 98, 112)
+$winActivationStatus.Text = Get-LocalLicenseText "cleanup.scan.detail"
 $windowsTab.Controls.Add($winActivationStatus)
 
 $winTargetLabel = New-Object System.Windows.Forms.Label
@@ -523,7 +521,6 @@ $winTarget.DropDownStyle = 'DropDownList'
 $winTarget.Location = New-Object System.Drawing.Point(18, 127)
 $winTarget.Size = New-Object System.Drawing.Size(330, 28)
 [void]$winTarget.Items.Add((Get-LocalLicenseText "localLicense.windows.keepEdition"))
-foreach ($target in $windowsTargets) { [void]$winTarget.Items.Add($target) }
 $winTarget.SelectedIndex = 0
 $windowsTab.Controls.Add($winTarget)
 
@@ -582,7 +579,7 @@ $winResult.Anchor = 'Top,Left,Right'
 $winResult.AutoEllipsis = $false
 $winResult.UseCompatibleTextRendering = $true
 $winResult.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
-$winResult.Text = Get-LocalLicenseText "localLicense.status.loading"
+$winResult.Text = Get-LocalLicenseText "cleanup.scan.detail"
 $windowsTab.Controls.Add($winResult)
 
 $winApply.Add_Click({
@@ -635,8 +632,6 @@ $winApply.Add_Click({
 })
 
 $officeDetails = Get-OfficeDetails
-$osppPaths = @()
-$officeActivationState = [pscustomobject]@{ ProbeSucceeded=$false; ActivationConfirmed=$false; RequestedKeyActivationConfirmed=$false; StateCode='Unknown'; ProductKeyLast5=''; Error='' }
 
 $officeCurrent = New-Object System.Windows.Forms.Label
 $officeCurrent.Location = New-Object System.Drawing.Point(18, 16)
@@ -654,8 +649,8 @@ $officeActivationStatus.Size = New-Object System.Drawing.Size(660, 42)
 $officeActivationStatus.Anchor = 'Top,Left,Right'
 $officeActivationStatus.AutoEllipsis = $false
 $officeActivationStatus.UseCompatibleTextRendering = $true
-$officeActivationStatus.ForeColor = [System.Drawing.Color]::FromArgb(90, 98, 112)
-$officeActivationStatus.Text = Get-LocalLicenseText "localLicense.status.loading"
+$officeActivationStatus.ForeColor = [Drawing.Color]::FromArgb(90, 98, 112)
+$officeActivationStatus.Text = Get-LocalLicenseText "cleanup.scan.detail"
 $officeTab.Controls.Add($officeActivationStatus)
 
 $officeKeyLabel = New-Object System.Windows.Forms.Label
@@ -717,7 +712,7 @@ $officeResult.Anchor = 'Top,Left,Right'
 $officeResult.AutoEllipsis = $false
 $officeResult.UseCompatibleTextRendering = $true
 $officeResult.ForeColor = [System.Drawing.Color]::FromArgb(52, 64, 84)
-$officeResult.Text = Get-LocalLicenseText "localLicense.status.loading"
+$officeResult.Text = Get-LocalLicenseText "cleanup.scan.detail"
 $officeTab.Controls.Add($officeResult)
 
 $licenseToolTip = New-Object System.Windows.Forms.ToolTip
@@ -842,66 +837,45 @@ function Update-LocalLicenseLayout {
 }
 
 function Initialize-LocalLicenseData {
-    if ($script:localLicenseDataReady -or $script:localLicenseDataLoading) { return }
-    $script:localLicenseDataLoading = $true
-    $subtitle.Text = Get-LocalLicenseText "localLicense.subtitle.loading"
-    $form.UseWaitCursor = $true
     try {
         $smokeTest = [bool]([string]$env:TOOL_UI_SMOKE_TEST -eq '1')
-        $resolvedWindowsTargets = if ($smokeTest) { @() } else { @(Get-WindowsTargetEditions) }
-        Set-Variable -Name windowsTargets -Scope Script -Value @($resolvedWindowsTargets)
-        $winTarget.BeginUpdate()
-        try {
-            $winTarget.Items.Clear()
-            [void]$winTarget.Items.Add((Get-LocalLicenseText "localLicense.windows.keepEdition"))
-            foreach ($target in $windowsTargets) { [void]$winTarget.Items.Add($target) }
-            $winTarget.SelectedIndex = 0
-        } finally { $winTarget.EndUpdate() }
+        $script:windowsTargets = @(if ($smokeTest) { @() } else { Get-WindowsTargetEditions })
+        $winTarget.Items.Clear()
+        [void]$winTarget.Items.Add((Get-LocalLicenseText "localLicense.windows.keepEdition"))
+        foreach ($target in $windowsTargets) { [void]$winTarget.Items.Add($target) }
+        $winTarget.SelectedIndex = 0
         $winResult.Text = if ($windowsTargets.Count -gt 0) {
             Get-LocalLicenseText "localLicense.windows.targetsFound" @(($windowsTargets -join ', '))
         } else {
             Get-LocalLicenseText "localLicense.windows.targetsMissing"
         }
-        [System.Windows.Forms.Application]::DoEvents()
-
-        $resolvedWindowsState = if ($smokeTest) {
-            [pscustomobject]@{ ProbeSucceeded=$true; ActivationConfirmed=$false; RequestedKeyActivationConfirmed=$false; StateCode='Notification'; ProductKeyLast5=''; Error='' }
+        $script:windowsActivationState = if ($smokeTest) {
+            [pscustomobject]@{ ProbeSucceeded=$true; ActivationConfirmed=$false; StateCode='Notification' }
         } else { Get-WindowsActivationState }
-        Set-Variable -Name windowsActivationState -Scope Script -Value $resolvedWindowsState
-        $winActivationStatus.ForeColor = if ([bool]$windowsActivationState.ActivationConfirmed) { [System.Drawing.Color]::DarkGreen } else { [System.Drawing.Color]::DarkOrange }
+        $winActivationStatus.ForeColor = if ([bool]$windowsActivationState.ActivationConfirmed) { [Drawing.Color]::DarkGreen } else { [Drawing.Color]::DarkOrange }
         $winActivationStatus.Text = Get-WindowsActivationStatusText -State $windowsActivationState
-        [System.Windows.Forms.Application]::DoEvents()
+        [Windows.Forms.Application]::DoEvents()
 
-        $resolvedOsppPaths = if ($smokeTest) { @() } else { @(Get-OfficeOsppPaths) }
-        Set-Variable -Name osppPaths -Scope Script -Value @($resolvedOsppPaths)
-        $resolvedOfficeState = if ($smokeTest) {
-            [pscustomobject]@{ ProbeSucceeded=$true; ActivationConfirmed=$false; RequestedKeyActivationConfirmed=$false; StateCode='Unlicensed'; ProductKeyLast5=''; Error='' }
+        $script:osppPaths = @(if ($smokeTest) { @() } else { Get-OfficeOsppPaths })
+        $script:officeActivationState = if ($smokeTest) {
+            [pscustomobject]@{ ActivationConfirmed=$false; StateCode='Unlicensed' }
         } else { Get-OfficeActivationState -OsppPaths $osppPaths }
-        Set-Variable -Name officeActivationState -Scope Script -Value $resolvedOfficeState
-        $officeActivationStatus.ForeColor = if ([bool]$officeActivationState.ActivationConfirmed) { [System.Drawing.Color]::DarkGreen } else { [System.Drawing.Color]::DarkOrange }
+        $officeActivationStatus.ForeColor = if ([bool]$officeActivationState.ActivationConfirmed) { [Drawing.Color]::DarkGreen } else { [Drawing.Color]::DarkOrange }
         $officeActivationStatus.Text = Get-OfficeActivationStatusText -State $officeActivationState
         $officeResult.Text = if ($osppPaths.Count -gt 0) {
             Get-LocalLicenseText "localLicense.office.osppFound"
         } else {
             Get-LocalLicenseText "localLicense.office.osppMissing"
         }
-        $script:localLicenseDataReady = $true
         $winApply.Enabled = -not $script:localOfflineMode
         $officeApply.Enabled = [bool]($osppPaths.Count -gt 0 -and -not $script:localOfflineMode)
     } catch {
-        $message = Get-LocalLicenseText "localLicense.status.loadingFailed" @($_.Exception.Message)
-        $winResult.Text = $message
-        $officeResult.Text = $message
-        $winResult.ForeColor = [System.Drawing.Color]::DarkRed
-        $officeResult.ForeColor = [System.Drawing.Color]::DarkRed
-    } finally {
-        $subtitle.Text = if ($script:localOfflineMode) {
-            Get-LocalLicenseText "localLicense.subtitle.offline"
-        } else {
-            Get-LocalLicenseText "localLicense.subtitle.ready"
+        $message = Get-LocalLicenseText "cleanup.scan.readFailedLog" @($_.Exception.Message)
+        foreach ($label in @($winResult, $officeResult)) {
+            $label.Text = $message
+            $label.ForeColor = [Drawing.Color]::DarkRed
         }
-        $script:localLicenseDataLoading = $false
-        $form.UseWaitCursor = $false
+    } finally {
         Update-LocalLicenseLayout
     }
 }
@@ -985,9 +959,6 @@ $tabs.PerformLayout()
 Update-LocalLicenseLayout
 if ([string]$env:TOOL_UI_SMOKE_TEST -eq "1") {
     Initialize-LocalLicenseData
-    if (-not $script:localLicenseDataReady -or $script:localLicenseDataLoading) {
-        throw (Get-LocalLicenseText "localLicense.smoke.controls")
-    }
     if ($form.Text -ne (Get-LocalLicenseText "localLicense.form.title" @($script:localLicenseVersion))) {
         throw (Get-LocalLicenseText "localLicense.smoke.title")
     }
@@ -1009,8 +980,6 @@ if ([string]$env:TOOL_UI_SMOKE_TEST -eq "1") {
         ) -join "`n"
         if ($visibleText -cmatch '[À-ỹ]') { throw (Get-LocalLicenseText "localLicense.smoke.englishLeak" @($visibleText)) }
     }
-    # Exercise the longest real Windows/Office result shapes seen after a
-    # rejected key so the smoke gate covers the clipped-text regression.
     $winResult.Text = Get-LocalLicenseText "localLicense.windows.rejected" @(-2147217373)
     $officeResult.Text = Get-LocalLicenseText "localLicense.office.rejected" @('XXXXX', '0xC004F050 - edition/channel mismatch')
     $form.PerformLayout()

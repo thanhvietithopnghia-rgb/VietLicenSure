@@ -1961,12 +1961,7 @@ function Set-DashboardSharedResultButtonHighlight {
     Set-ToolUiActionButtonVisual -Button $sharedResultDetailButton -Mode $Mode
     if ((Test-ToolUiHighContrast) -or -not $sharedResultDetailButton.Enabled) { return }
 
-    $dark = [bool]($Mode -eq "Dark")
-    $sharedResultDetailButton.BackColor = if ($dark) { [System.Drawing.Color]::FromArgb(30, 58, 86) } else { [System.Drawing.Color]::FromArgb(226, 239, 250) }
-    $sharedResultDetailButton.ForeColor = if ($dark) { [System.Drawing.Color]::FromArgb(219, 234, 254) } else { [System.Drawing.Color]::FromArgb(20, 75, 125) }
-    $sharedResultDetailButton.FlatAppearance.BorderColor = if ($dark) { [System.Drawing.Color]::FromArgb(78, 126, 171) } else { [System.Drawing.Color]::FromArgb(126, 174, 211) }
-    $sharedResultDetailButton.FlatAppearance.MouseOverBackColor = if ($dark) { [System.Drawing.Color]::FromArgb(38, 72, 105) } else { [System.Drawing.Color]::FromArgb(213, 233, 249) }
-    $sharedResultDetailButton.FlatAppearance.MouseDownBackColor = if ($dark) { [System.Drawing.Color]::FromArgb(25, 50, 76) } else { [System.Drawing.Color]::FromArgb(199, 224, 244) }
+    $sharedResultDetailButton.BackColor = if ($Mode -eq "Dark") { [Drawing.Color]::FromArgb(30, 58, 86) } else { [Drawing.Color]::AliceBlue }
 }
 
 function Complete-DashboardThemeInitialization {

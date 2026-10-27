@@ -92,8 +92,6 @@ function Update-RoleWorkspaceChrome {
     if (-not $script:roleButton) { return }
     $roleName = Get-RoleWorkspaceName $script:workspaceRole
     $fullRoleText = [string]::Format((Get-RoleWorkspaceText 'buttonFormat'), @($roleName))
-    # The button already sits in the role header, so repeating the prefix can
-    # clip the longer Business Inventory label at common DPI settings.
     $script:roleButton.Text = $roleName
     $script:roleButton.AccessibleName = $fullRoleText
     $script:roleButton.AccessibleDescription = Get-RoleWorkspaceText 'buttonDescription'
