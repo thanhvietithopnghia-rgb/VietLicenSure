@@ -11,9 +11,9 @@ function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
 $groups = [ordered]@{
     'Giao-Dien.ps1' = [ordered]@{
         MaximumLines = 2000
-        TotalFunctions = 188
+        TotalFunctions = 189
         Modules = [ordered]@{
-            'Dashboard-Core.ps1' = 38
+            'Dashboard-Core.ps1' = 39
             'Dashboard-Execution.ps1' = 46
             'Dashboard-OnlineUpdate.ps1' = 17
             'Dashboard-CleanupWorkflow.ps1' = 58
