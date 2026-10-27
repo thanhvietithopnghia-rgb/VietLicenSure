@@ -714,7 +714,7 @@
   "progress.phase.log": "{0}% - {1}",
   "progress.eta.finishing": "đang hoàn tất",
   "progress.completed": "Hoàn tất: {0}. Đã mở trực tiếp tệp kết quả.",
-  "progress.completed.summaryReady": "Hoàn tất: {0}. Kết quả nhanh đã hiển thị; chọn Xem chi tiết để mở HTML.",
+  "progress.completed.summaryReady": "Hoàn tất: {0}. Mở HTML bằng Xem chi tiết.",
   "progress.failed": "Tác vụ {0} kết thúc với mã {1}. Hãy kiểm tra tệp kết quả.",
   "progress.failed.elevatedBridge": "Tác vụ {0} bị cầu nối bảo mật từ chối (mã {1}). Hãy sao chép log để kiểm tra hợp đồng tham số.",
   "progress.copyAllLog": "Sao chép toàn bộ log",

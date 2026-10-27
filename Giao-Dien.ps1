@@ -839,8 +839,8 @@ $elapsedLabel.Text = ""
 $elapsedLabel.Font = $fontSmall
 $elapsedLabel.ForeColor = [System.Drawing.Color]::FromArgb(102, 112, 133)
 $elapsedLabel.TextAlign = "MiddleRight"
-$elapsedLabel.Location = New-Object System.Drawing.Point(623, ($progressCaption.Bottom + 2))
-$elapsedLabel.Size = New-Object System.Drawing.Size(85, 20)
+$elapsedLabel.Location = New-Object System.Drawing.Point(654, $progressCaption.Top)
+$elapsedLabel.Size = New-Object System.Drawing.Size(54, 22)
 $activityPanel.Controls.Add($elapsedLabel)
 
 $progressBar = New-Object System.Windows.Forms.ProgressBar

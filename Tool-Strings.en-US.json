@@ -714,7 +714,7 @@
   "progress.phase.log": "{0}% - {1}",
   "progress.eta.finishing": "finishing",
   "progress.completed": "Completed: {0}. The result file was opened directly.",
-  "progress.completed.summaryReady": "Completed: {0}. The quick result is displayed; select View details to open HTML.",
+  "progress.completed.summaryReady": "Completed: {0}. Open HTML with View details.",
   "progress.failed": "Task {0} ended with code {1}. Review the result file.",
   "progress.failed.elevatedBridge": "Task {0} was rejected by the security bridge (code {1}). Copy the log to inspect the argument contract.",
   "progress.copyAllLog": "Copy all log",

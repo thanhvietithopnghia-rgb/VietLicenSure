@@ -146,17 +146,25 @@ try {
     Check ($layoutSource -match 'tileColumnCount = if \(\$personalWorkspace\) \{ 1 \}') 'Personal actions are not a vertical single column'
     Check ($layoutSource -match 'sharedResultCaption' -and $layoutSource -match 'sharedResultDetailButton') 'Inline summary/details layout is missing'
     Check ($layoutSource -match 'sharedResultSummaryLabel\.Height = 68' -and $layoutSource -match 'sharedResultTimeLabel\.Height = 42') 'Inline result labels do not reserve three-line summary space'
-    Check ($guiSource -match 'activityLabel\.AutoEllipsis = \$false' -and $guiSource -match 'activityLabel\.UseCompatibleTextRendering = \$true' -and $layoutSource -match 'activityLabel\.Height = 38') 'Recent activity text does not reserve a readable two-line area'
+    Check ($guiSource -match 'activityLabel\.AutoEllipsis = \$false' -and
+        $guiSource -match 'activityLabel\.UseCompatibleTextRendering = \$true' -and
+        $layoutSource -match 'activityLabel\.Height = 38' -and
+        $layoutSource -match 'activityLabel\.Width = \[Math\]::Max\(80, \$activityPanel\.ClientSize\.Width - 32\)' -and
+        $layoutSource -match 'elapsedLabel\.Top = \$progressCaption\.Top') 'Recent activity text and elapsed time do not use separate non-overlapping rows'
+    Check ($layoutSource -match 'progressLog\.Height = \$availableLogHeight') 'Recent activity log does not use the bounded height left above the result stack'
     Check ($layoutSource -match 'function Set-DashboardSharedResultButtonHighlight' -and $executionSource -match 'Set-DashboardSharedResultButtonHighlight') 'Enabled HTML details button is not given its restrained highlight'
     Check ($layoutSource -match '\$activityActionGap = 4' -and
-        $layoutSource -match 'closeButton\.Top = \$activityPanel\.ClientSize\.Height - \$closeButton\.Height - 8' -and
+        $layoutSource -match 'closeButton\.Top = \$activityLayoutHeight - \$closeButton\.Height - 8' -and
         ([regex]::Matches($layoutSource, '- \$activityActionGap').Count -ge 3)) 'Compact activity action spacing is not locked for the 1024x768 viewport'
 
     # Mirror the fixed vertical stack at the minimum packaged viewport.  The
     # shared caption must start below the 48..90px status band while retaining
     # the full 68px three-line summary and 42px timestamp block.
     $activityPanelHeight = 410
-    $closeTop = $activityPanelHeight - 30 - 8
+    $activityLayoutHeight = [Math]::Max(525, $activityPanelHeight)
+    Check ($layoutSource -match 'activityLayoutHeight = \[Math\]::Max\(\$activityPanel\.ClientSize\.Height, \$\(if \(\$progressExpanded\) \{ 525 \}' -and
+        $layoutSource -match 'activityPanel\.AutoScrollMinSize') 'Compact recent activity panel does not enable bounded vertical scrolling'
+    $closeTop = $activityLayoutHeight - 30 - 8
     $copyTop = $closeTop - 32 - 4
     $folderTop = $copyTop - 32 - 4
     $detailTop = $folderTop - 32 - 4
@@ -165,6 +173,14 @@ try {
     $stateTop = $summaryTop - 26 - 2
     $captionTop = $stateTop - 22 - 4
     Check ($captionTop -ge 94) "Shared result caption overlaps the status band at 1024x768: top=$captionTop"
+    $progressCaptionBottom = 96 + 22
+    $activityBottom = ($progressCaptionBottom + 2) + 38
+    $progressBottom = ($activityBottom + 1) + 14
+    $logTop = $progressBottom + 4
+    $availableLogHeight = $captionTop - $logTop - 8
+    Check ($availableLogHeight -ge 24) "Recent activity log is too short at the minimum virtual height: $availableLogHeight"
+    $progressRegionBottom = $logTop + $availableLogHeight
+    Check (($progressRegionBottom + 8) -le $captionTop) "Recent activity overlaps the shared result stack at 1024x768: progressBottom=$progressRegionBottom captionTop=$captionTop"
     Check ($reportSource -match 'MachineBinding = Get-ToolResultMachineBinding') 'Report is not bound to the current machine'
     Check ($reportSource.Contains('BaselineReportSha256') -and $reportSource.Contains("RefreshKind = `$(if (`$IncrementalRefresh)")) 'Report does not record incremental provenance'
     Check ($executionSource -match "mode -in @\('Windows','Office','Software'\).+NoOpen") 'Windows/Office/Software reports still auto-open HTML'

@@ -784,6 +784,9 @@ function Update-MainLayout {
         $activityPanel.Top = $mainTop
         $activityPanel.Width = [Math]::Max(200, $left + $contentWidth - $activityPanel.Left)
         $activityPanel.Height = $mainHeight
+        $activityLayoutHeight = [Math]::Max($activityPanel.ClientSize.Height, $(if ($progressExpanded) { 525 } else { 0 }))
+        $activityPanel.AutoScroll = $progressExpanded
+        $activityPanel.AutoScrollMinSize = New-Object System.Drawing.Size(0, $activityLayoutHeight)
         $menuCaption.Width = [Math]::Max(40, $buttonPanel.ClientSize.Width - 28)
         $menuCaption.Left = 16
         $menuCaption.Top = 12
@@ -873,11 +876,8 @@ function Update-MainLayout {
         $closeButton.Height = 30
         $closeButton.Width = 108
         $closeButton.Left = $activityPanel.ClientSize.Width - $closeButton.Width - 16
-        # Keep the result stack clear of the status band at the minimum
-        # supported 1024x768 viewport.  The former 12px bottom margin plus
-        # three 8px action gaps pushed sharedResultCaption 12px into $status.
         $activityActionGap = 4
-        $closeButton.Top = $activityPanel.ClientSize.Height - $closeButton.Height - 8
+        $closeButton.Top = $activityLayoutHeight - $closeButton.Height - 8
         $stopButton.Height = $closeButton.Height
         $stopButton.Width = 108
         $stopButton.Left = $closeButton.Left - $stopButton.Width - 8
@@ -918,12 +918,14 @@ function Update-MainLayout {
             $elapsedLabel.Visible = $true
             $progressBar.Visible = $true
             $progressLog.Visible = $true
+            $elapsedLabel.Left = $activityPanel.ClientSize.Width - $elapsedLabel.Width - 16
+            $elapsedLabel.Top = $progressCaption.Top
+            $elapsedLabel.Height = $progressCaption.Height
+            $progressCaption.Width = [Math]::Max(80, $elapsedLabel.Left - $progressCaption.Left - 6)
             $activityLabel.Left = 16
             $activityLabel.Top = $progressCaption.Bottom + 2
             $activityLabel.Height = 38
-            $activityLabel.Width = [Math]::Max(80, $activityPanel.ClientSize.Width - $elapsedLabel.Width - 40)
-            $elapsedLabel.Left = $activityPanel.ClientSize.Width - $elapsedLabel.Width - 16
-            $elapsedLabel.Top = $activityLabel.Top
+            $activityLabel.Width = [Math]::Max(80, $activityPanel.ClientSize.Width - 32)
             $progressBar.Left = 16
             $progressBar.Top = $activityLabel.Bottom + 1
             $progressBar.Height = 14
@@ -932,7 +934,7 @@ function Update-MainLayout {
             $progressLog.Top = $progressBar.Bottom + 4
             $progressLog.Width = $activityPanel.ClientSize.Width - 32
             $availableLogHeight = $sharedResultCaption.Top - $progressLog.Top - 8
-            $progressLog.Height = [Math]::Max(30, $availableLogHeight)
+            $progressLog.Height = $availableLogHeight
         } else {
             $activityLabel.Visible = $false
             $elapsedLabel.Visible = $false
