@@ -66,7 +66,7 @@ You do not need source access, configuration files, or technical documentation t
 - Official Self-Signed requires the exact pinned self-issued signer, RFC3161 timestamp, valid CMS provenance, a clean source commit, and fully passing verifier/artifact-bound QA. A future public-CA/EV/Store channel requires a new release chain.
 - Catalog freshness is explicit, and third-party plugins accept only signed declarative metadata from pinned publisher fingerprints.
 - Quick, Standard, and Deep scans, system-aware dark/light themes, PerMonitorV2 DPI, and safe fleet exports support larger deployments.
-- Startup requires one of three roles: Personal, IT Helpdesk, or ITAM/SAM. All three use the same Windows interface and current data: Personal sees only read-only checks/reports; Helpdesk gets support actions and Windows/Office License management; ITAM/SAM gets inventory, reporting, and Enterprise management for Server/Workstation. A role changes visible scope only and never grants operating-system permissions.
+- Startup requires one of three roles: Personal, Technical Support, or Business Inventory. All three use the same Windows interface and current data: Personal sees only read-only checks/reports; Technical Support gets support actions and Windows/Office License management; Business Inventory gets inventory, reporting, and the Server/Workstation workspace. A role changes visible scope only and never grants operating-system permissions.
 - Remediation contains five separate entries: Windows, Microsoft Office, other software, OEM key recovery, and License management. The first three open their scope-specific screen directly and keep that scope locked through scan, backup, confirmation, and post-check.
 
 - The launcher and provenance manifest verify the signature, pinned certificate, metadata, and Build ID. A modified or unverifiable build is warned about and fails closed for updates and system-changing actions.
@@ -89,7 +89,7 @@ You do not need source access, configuration files, or technical documentation t
 
 ## Assistant
 
-VietLicenSure Assistant understands and answers every product-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0 release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, License management for IT Helpdesk, Enterprise Server/Workstation management for ITAM/SAM, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, and updates. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
+VietLicenSure Assistant understands and answers every product-related question supported by available data; it is not limited to a fixed sample-question list. This includes product information and every recorded milestone from v1.0.0 through the current v5.0 release; the purpose, use, output, and safety notes of all ten main functions, remediation/backup choices, License management for Technical Support, Server/Workstation inventory for Business Inventory, and all eight Reports & Assurance actions; Windows/Office/software status; evidence, errors, catalogs, and updates. The complete bundled Vietnamese/English user guides and version histories are indexed section by section—not only a few sample passages or OEM recovery.
 
 ### Send and Enter
 
@@ -324,15 +324,15 @@ Do not use an OEM key from another computer or force an unsupported edition chan
 
 ## License management
 
-The selected role filters one native Windows interface while retaining one engine and current-data workflow. **Personal** sees only read-only checks and reports. **IT Helpdesk** opens Windows/Office management, edition upgrades, license changes, and local evidence storage. **ITAM/SAM** opens **Enterprise management** for Server/Workstation, Agent jobs, and fleet reports. Choosing a role grants no administrative permissions. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
+The selected role filters one native Windows interface while retaining one engine and current-data workflow. **Personal** sees only read-only checks and reports. **Technical Support** opens Windows/Office management, edition upgrades, license changes, and local evidence storage. **Business Inventory** opens Server/Workstation inventory, Agent jobs, and fleet reports. Choosing a role grants no administrative permissions. VietLicenSure does not generate keys, replace entitlement records, or upload data to a public cloud service.
 
 **Evidence, entitlements, and License Advisor**
 
 On the Server tab, select **Evidence and entitlements** to create locally stored entitlement records, copy bounded evidence files into the managed local store, and assign seats to an endpoint or user. Stored evidence receives an internal random name and SHA-256; it is not uploaded to a cloud service or returned through the web dashboard. VietLicenSure reconciles Purchased, Assigned, Installed, and Available quantities and flags over-allocation or expiry. License Advisor assigns a stable Rule ID, evidence sources, confidence, and correlation to each finding while keeping technical activation, tampering assessment, entitlement, and the overall verdict separate. In the read-only Central Dashboard, open **Explain this finding** to review the evidence, recommendation, and limitation. The Dashboard accepts loopback connections on the server only; non-loopback Dashboard requests over HTTP are denied, and remote administration requires a managed HTTPS tunnel or reverse proxy. Its short-lived token is kept in page memory rather than browser storage. KMS or a single indicator doesn't independently prove cracking or unlawful entitlement. The dashboard exposes no evidence paths, full keys, full ClientIds, or secrets. These records support administration/SAM review and are not legal certification of ownership or invoice authenticity.
 
-### IT Helpdesk: Windows, Office, and evidence
+### Technical Support: Windows, Office, and evidence
 
-1. Select the IT Helpdesk workspace and open License management.
+1. Select the Technical Support workspace and open License management.
 2. Select Windows or Office.
 3. Select the required Windows or Office operation.
 4. Enter only a key issued by Microsoft, the manufacturer, or an authorized organization.
@@ -340,7 +340,7 @@ On the Server tab, select **Evidence and entitlements** to create locally stored
 6. For Microsoft 365, prefer signing in with an entitled account in Office.
 7. Use **Store evidence document** to import supported JPG, PNG, Word, Excel, PDF, JSON, text, or email files. The file is copied into the local compliance store under a random name with SHA-256 and Attached status; it is never uploaded automatically and is never treated as verified merely because it was imported.
 
-### ITAM/SAM: Server and Workstation
+### Business Inventory: Server and Workstation
 
 Network access starts disabled. Enable Local LAN only for authorized LAN use. After the administrator successfully starts the Server, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables that task. When enabled, the Workstation agent runs after startup, logon, resume, and every hour; encrypted queued reports retry after connectivity returns. An enrolled workstation retains its ClientId/secret across reboot and does not need a new pairing code. Create new pairing code rotates only the temporary 24-hour enrollment code and does not affect already enrolled workstations. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
 

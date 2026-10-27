@@ -11,7 +11,7 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
 - **Publisher trung tính:** EXE dùng signer Authenticode tự ký `CN=Thanh Viet - VietLicenSure Code Signing`, không còn tên v4.9 trong Publisher. Signer CMS nội dung lịch sử được giữ riêng để xác minh manifest và ủy quyền signer EXE mới; kênh vẫn là Official Self-Signed và SmartScreen vẫn có thể cảnh báo.
 
-- **Kết quả dùng chung và đối chiếu gia tăng:** Cá nhân dùng danh sách tác vụ một cột với tiến trình, tóm tắt và trạng thái ngay bên phải; chi tiết vẫn mở bằng báo cáo HTML. Kết quả được ràng buộc với đúng máy và phạm vi rồi dùng chung giữa Cá nhân, Helpdesk và ITAM/SAM. Nếu baseline còn mới, phần mềm hiển thị ngay kết quả hiện hành và chạy đối chiếu Quick; baseline thiếu/cũ/khác build hoặc sai máy buộc quét toàn phần. Job trùng đang chạy bị chặn.
+- **Kết quả dùng chung và đối chiếu gia tăng:** Cá nhân dùng danh sách tác vụ một cột với tiến trình, tóm tắt và trạng thái ngay bên phải; chi tiết vẫn mở bằng báo cáo HTML. Kết quả được ràng buộc với đúng máy và phạm vi rồi dùng chung giữa Cá nhân, Hỗ trợ kỹ thuật và Kiểm kê doanh nghiệp. Nếu baseline còn mới, phần mềm hiển thị ngay kết quả hiện hành và chạy đối chiếu Quick; baseline thiếu/cũ/khác build hoặc sai máy buộc quét toàn phần. Job trùng đang chạy bị chặn.
 
 - **Tên gọi và định hướng:** tên chính thức được đổi từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống**; thống nhất một tên phiên bản duy nhất là **v5.0** trên ứng dụng, tài liệu, bộ cập nhật và GitHub.
 - **Sửa lỗi Elevated Broker:** launcher truyền đường dẫn EXE của tiến trình thực tế thay cho đường dẫn assembly không còn tồn tại, khôi phục chức năng Quản lý giấy phép hợp lệ khi cần UAC và vẫn fail-closed nếu launcher không xác minh được.
@@ -31,7 +31,7 @@ https://thanhvietithopnghia-rgb.github.io/VietLicenSure/
 
 ### Tóm tắt cốt lõi giữa hai thế hệ
 
-**v4.9 → v5.0:** v5.0 kế thừa nền nhận diện và bằng chứng của v4.9, rồi hợp nhất kiểm tra, khắc phục, báo cáo và quản lý theo ba vai trò Cá nhân / IT Helpdesk / ITAM-SAM trên một giao diện Windows, engine và dữ liệu hiện hành. Bản mới bổ sung lọc chức năng theo vai trò, quản lý giấy phép Windows/Office cho Helpdesk, Máy chủ/Máy trạm cho ITAM/SAM, Trợ lý Offline, Dry Run/backup/UAC/rollback và báo cáo đa định dạng. Offline vẫn là mặc định; khi người dùng chủ động bật Online, phần mềm cập nhật catalog ký số trước rồi kiểm tra phiên bản ứng dụng nhưng không tự tải/cài, quét hay báo cáo; lần mở sau trở lại Offline.
+**v4.9 → v5.0:** v5.0 kế thừa nền nhận diện và bằng chứng của v4.9, rồi hợp nhất kiểm tra, khắc phục, báo cáo và quản lý theo ba vai trò Cá nhân / Hỗ trợ kỹ thuật / Kiểm kê doanh nghiệp trên một giao diện Windows, engine và dữ liệu hiện hành. Bản mới bổ sung lọc chức năng theo vai trò, quản lý giấy phép Windows/Office cho Hỗ trợ kỹ thuật, kiểm kê Máy chủ/Máy trạm cho Kiểm kê doanh nghiệp, Trợ lý Offline, Dry Run/backup/UAC/rollback và báo cáo đa định dạng. Offline vẫn là mặc định; khi người dùng chủ động bật Online, phần mềm cập nhật catalog ký số trước rồi kiểm tra phiên bản ứng dụng nhưng không tự tải/cài, quét hay báo cáo; lần mở sau trở lại Offline.
 
 `Chưa xác minh` không đồng nghĩa phần mềm vi phạm bản quyền.
 

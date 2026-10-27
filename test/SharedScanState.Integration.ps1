@@ -2,8 +2,13 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $root 'Tool-ResultCenter.ps1')
+. (Join-Path $root 'Dashboard-Execution.ps1')
 $checks = 0
 function Check([bool]$Condition,[string]$Message) { if(-not $Condition){throw $Message}; $script:checks++ }
+function Get-DashboardText([string]$Key,[object[]]$FormatArguments=@()) {
+    if ($FormatArguments.Count -gt 0) { return $Key + ': ' + ($FormatArguments -join ' | ') }
+    return $Key
+}
 
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-SharedScan-' + [guid]::NewGuid().ToString('N'))
 [void](New-Item -ItemType Directory -Path $temp -Force)
@@ -59,6 +64,18 @@ try {
     [void](Write-Report -Name 'windows' -MachineBinding $binding -BuildId 'build-current' -CreatedAt $now -Mode Windows -Directory $exactRoot -ModuleId 'report.windows')
     $exactScope = Get-ToolSharedScanState -ReportRoot $exactRoot -Mode Windows -CurrentBuildId 'build-current'
     Check ($exactScope.IsFresh -and [string]$exactScope.Latest.Report.ModuleResult.ModuleId -eq 'report.windows') 'Exact Windows run was not accepted'
+
+    $script:reportRoot = $exactRoot
+    $script:releaseIdentity = [pscustomobject]@{ BuildId='build-current' }
+    $script:lastSharedScanAttempt = $null
+    $script:sharedResultStateLabel = New-Object Windows.Forms.Label
+    $script:sharedResultSummaryLabel = New-Object Windows.Forms.Label
+    $script:sharedResultTimeLabel = New-Object Windows.Forms.Label
+    $script:sharedResultDetailButton = New-Object Windows.Forms.Button
+    $boundState = Update-SharedScanResultDisplay -Mode Windows
+    Check $script:sharedResultDetailButton.Enabled 'Completed Windows report did not enable View details'
+    Check ([string]$script:sharedScanDisplayState.HtmlPath -eq [string]$exactScope.HtmlPath) 'View details was not bound to the exact generated HTML path'
+    Check ([string]$boundState.Status -eq 'Current') 'Completed Windows report was not rendered as current'
 
     $wrongRoot = Join-Path $temp 'wrong-all'
     [void](New-Item -ItemType Directory -Path $wrongRoot -Force)
@@ -146,7 +163,8 @@ try {
     Check ($reportSource.Contains('BaselineReportSha256') -and $reportSource.Contains("RefreshKind = `$(if (`$IncrementalRefresh)")) 'Report does not record incremental provenance'
     Check ($executionSource -match "mode -in @\('Windows','Office','Software'\).+NoOpen") 'Windows/Office/Software reports still auto-open HTML'
     Check ($guiSource -match 'progress\.completed\.summaryReady') 'Report completion does not announce the inline quick result'
-    Check ($guiSource -match 'sharedScanDisplayMode.+finishedReportMode' -and $guiSource -match 'Update-SharedScanResultDisplay -Mode \$completedMode') 'Deferred report completion loses the Windows/Office/Software mode and falls back to All'
+    Check ($guiSource -match 'sharedScanDisplayMode.+finishedReportMode' -and $guiSource -match 'Update-SharedScanResultDisplay -Mode \$completedMode') 'Report completion loses the Windows/Office/Software mode and falls back to All'
+    Check ($guiSource -notmatch '(?s)BeginInvoke\(\[System\.Action\]\{\s*\$completedMode.+?Update-SharedScanResultDisplay') 'Report completion still defers the HTML-button binding after showing success'
     Check ($guiSource -match "Get-DashboardText 'sharedScan\.detailsMissing'") 'Report completion does not surface a missing HTML package'
     Check ($executionSource -match 'sharedScanDisplayState\.HtmlPath' -and $executionSource -match 'Open-ToolHtmlReport -Path \$htmlPath') 'View details is not bound to the exact generated HTML path'
     Check ($executionSource -match 'sharedScan\.detailsMissing' -and $executionSource -match 'sharedScan\.detailsOpenFailed') 'View details does not report missing/open failures explicitly'

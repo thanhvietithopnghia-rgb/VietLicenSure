@@ -4,6 +4,16 @@ $root=Split-Path $PSScriptRoot -Parent
 $checks=0
 function Check($condition,$message) { if(-not $condition){throw $message}; $script:checks++ }
 
+$vi=Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.vi-VN.json') -Raw -Encoding UTF8|ConvertFrom-Json
+$en=Get-Content -LiteralPath (Join-Path $root 'Tool-Strings.en-US.json') -Raw -Encoding UTF8|ConvertFrom-Json
+$expectedVi='{"personal":"C\u00e1 nh\u00e2n","helpdesk":"H\u1ed7 tr\u1ee3 k\u1ef9 thu\u1eadt","itam":"Ki\u1ec3m k\u00ea doanh nghi\u1ec7p"}'|ConvertFrom-Json
+Check ($vi.'roleWorkspace.role.personal' -eq $expectedVi.personal) 'Vietnamese Personal role label drifted'
+Check ($vi.'roleWorkspace.role.helpdesk' -eq $expectedVi.helpdesk) 'Vietnamese Technical Support role label drifted'
+Check ($vi.'roleWorkspace.role.itam' -eq $expectedVi.itam) 'Vietnamese Business Inventory role label drifted'
+Check ($en.'roleWorkspace.role.personal' -eq 'Personal') 'English Personal role label drifted'
+Check ($en.'roleWorkspace.role.helpdesk' -eq 'Technical Support') 'English Technical Support role label drifted'
+Check ($en.'roleWorkspace.role.itam' -eq 'Business Inventory') 'English Business Inventory role label drifted'
+
 Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'QuickAction' 1)) 'Unselected workspace exposes a quick action'
 Check (-not (Test-RoleWorkspaceActionVisible 'unselected' 'ReportAction' 0)) 'Unselected workspace exposes a report'
 

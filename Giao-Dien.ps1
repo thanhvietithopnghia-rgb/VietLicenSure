@@ -1239,18 +1239,16 @@ $timer.Add_Tick({
             $status.ForeColor = [System.Drawing.Color]::DarkGreen
             if ($finishedTaskKind -eq "Report") {
                 $script:sharedScanDisplayMode = $(if ($finishedReportMode) { $finishedReportMode } else { 'All' })
-                [void]$form.BeginInvoke([System.Action]{
-                    $completedMode = [string]$script:sharedScanDisplayMode
-                    $script:resultCenterState = $null
-                    Update-ResultActionCard -HeaderOnly
-                    $completedState = Update-SharedScanResultDisplay -Mode $completedMode
-                    if ($completedMode -in @('Windows','Office','Software') -and
-                        (-not $completedState -or -not (Test-Path -LiteralPath ([string]$completedState.HtmlPath) -PathType Leaf))) {
-                        $status.Text = Get-DashboardText 'sharedScan.detailsMissing'
-                        $status.ForeColor = [System.Drawing.Color]::DarkRed
-                        Write-ProgressLog $status.Text
-                    }
-                })
+                $completedMode = [string]$script:sharedScanDisplayMode
+                $script:resultCenterState = $null
+                Update-ResultActionCard -HeaderOnly
+                $completedState = Update-SharedScanResultDisplay -Mode $completedMode
+                if ($completedMode -in @('Windows','Office','Software') -and
+                    (-not $completedState -or -not (Test-Path -LiteralPath ([string]$completedState.HtmlPath) -PathType Leaf))) {
+                    $status.Text = Get-DashboardText 'sharedScan.detailsMissing'
+                    $status.ForeColor = [System.Drawing.Color]::DarkRed
+                    Write-ProgressLog $status.Text
+                }
             }
         } else {
             $failureKey = if ($finishedTaskKind -eq 'Report' -and $exitCode -eq 87) { 'progress.failed.elevatedBridge' } else { 'progress.failed' }

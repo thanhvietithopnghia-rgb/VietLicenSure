@@ -66,7 +66,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 - Bản Official Self-Signed chỉ được công bố khi đúng signer tự ký đã ghim, RFC3161 timestamp, provenance CMS, source commit sạch và bộ verifier/artifact-bound QA đều đạt; nếu chuyển public-CA/EV/Store phải tạo chuỗi phát hành mới.
 - Catalog có trạng thái độ mới; plugin bên thứ ba chỉ dùng metadata khai báo đã ký với fingerprint nhà phát hành được ghim.
 - Có ba mức Quick/Standard/Deep, giao diện dark/light theo hệ thống, PerMonitorV2 DPI và xuất fleet an toàn cho quản trị doanh nghiệp.
-- Khi mở ứng dụng, người dùng bắt buộc chọn Cá nhân, IT Helpdesk hoặc ITAM/SAM. Cả ba dùng chung giao diện Windows và dữ liệu hiện hành: Cá nhân chỉ thấy kiểm tra đọc/báo cáo; Helpdesk có tác vụ hỗ trợ và Quản lý giấy phép Windows/Office; ITAM/SAM có kiểm kê, báo cáo và Quản lý doanh nghiệp Máy chủ/Máy trạm. Chọn vai trò chỉ thay đổi phạm vi hiển thị, không cấp thêm quyền hệ thống.
+- Khi mở ứng dụng, người dùng bắt buộc chọn Cá nhân, Hỗ trợ kỹ thuật hoặc Kiểm kê doanh nghiệp. Cả ba dùng chung giao diện Windows và dữ liệu hiện hành: Cá nhân chỉ thấy kiểm tra đọc/báo cáo; Hỗ trợ kỹ thuật có tác vụ hỗ trợ và Quản lý giấy phép Windows/Office; Kiểm kê doanh nghiệp có kiểm kê, báo cáo và không gian Máy chủ/Máy trạm. Chọn vai trò chỉ thay đổi phạm vi hiển thị, không cấp thêm quyền hệ thống.
 - Mục Khắc phục có năm chức năng riêng: Windows, Microsoft Office, phần mềm khác, Khôi phục key OEM và Quản lý giấy phép; ba chức năng khắc phục mở thẳng đúng màn hình và khóa phạm vi từ lúc quét đến hậu kiểm.
 
 - Launcher và manifest nguồn gốc kiểm tra chữ ký, chứng thư, metadata và Build ID. Nếu bản chạy bị sửa hoặc không xác minh được, VietLicenSure cảnh báo và chặn cập nhật/thao tác thay đổi hệ thống theo nguyên tắc fail-closed.
@@ -89,7 +89,7 @@ Không cần truy cập mã nguồn, tệp cấu hình hoặc tài liệu kỹ t
 
 ## Trợ lý
 
-Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm và toàn bộ lịch sử được ghi nhận từ v1.0.0 đến v5.0 hiện tại; mục đích, cách dùng, kết quả và lưu ý của cả 10 chức năng chính, các lựa chọn khắc phục/backup, Quản lý giấy phép cho IT Helpdesk, Quản lý doanh nghiệp Máy chủ/Máy trạm cho ITAM/SAM và tám tác vụ Báo cáo & Bảo đảm; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, catalogue và cập nhật. Toàn bộ Hướng dẫn sử dụng và toàn bộ Lịch sử phiên bản tiếng Việt/Anh đi kèm đều được lập chỉ mục theo từng mục, không chỉ một vài đoạn mẫu hay riêng chức năng OEM.
+Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu sẵn có, không giới hạn ở một danh sách câu mẫu. Phạm vi này bao gồm thông tin sản phẩm và toàn bộ lịch sử được ghi nhận từ v1.0.0 đến v5.0 hiện tại; mục đích, cách dùng, kết quả và lưu ý của cả 10 chức năng chính, các lựa chọn khắc phục/backup, Quản lý giấy phép cho Hỗ trợ kỹ thuật, kiểm kê Máy chủ/Máy trạm cho Kiểm kê doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm; trạng thái Windows/Office/phần mềm; bằng chứng, mã lỗi, catalogue và cập nhật. Toàn bộ Hướng dẫn sử dụng và toàn bộ Lịch sử phiên bản tiếng Việt/Anh đi kèm đều được lập chỉ mục theo từng mục, không chỉ một vài đoạn mẫu hay riêng chức năng OEM.
 
 ### Nút Gửi và Enter
 
@@ -256,7 +256,7 @@ Chỉ quét và xử lý đúng SKU/Activation ID Office đã chọn, bảo toà
 
 Chỉ xử lý artifact hoặc dòng hosts đã có bằng chứng đủ mạnh; không tự gỡ ứng dụng, không đặt lại kho giấy phép hãng và không mở rộng sang Windows/Office.
 
-**Khôi phục key OEM** kiểm tra khóa firmware và chỉ áp dụng sau khi người dùng xác nhận. **Quản lý giấy phép** mở Windows/Office, nâng cấp, thay đổi giấy phép và hồ sơ chứng từ cho Helpdesk; với ITAM/SAM, mục này trở thành **Quản lý doanh nghiệp** và chỉ mở Máy chủ/Máy trạm.
+**Khôi phục key OEM** kiểm tra khóa firmware và chỉ áp dụng sau khi người dùng xác nhận. **Quản lý giấy phép** mở Windows/Office, nâng cấp, thay đổi giấy phép và hồ sơ chứng từ cho Hỗ trợ kỹ thuật; với vai trò Kiểm kê doanh nghiệp, mục này mở không gian kiểm kê Máy chủ/Máy trạm.
 
 Các công cụ Backup, Khôi phục từ backup và Tự động làm sạch an toàn vẫn nằm trong ô khắc phục tổng hợp ở **Tổng quan**; giao diện và hành vi của chúng không thay đổi.
 
@@ -380,11 +380,11 @@ Nếu key không khớp edition, Windows có thể từ chối. Không dùng key
 
 ## Quản lý giấy phép
 
-Chức năng được phân theo vai trò nhưng dùng chung giao diện Windows, engine và dữ liệu hiện hành. **Cá nhân** chỉ thấy kiểm tra đọc và báo cáo. **IT Helpdesk** mở quản lý Windows/Office, nâng cấp phiên bản, thay đổi giấy phép và lưu hồ sơ chứng từ. **ITAM/SAM** mở **Quản lý doanh nghiệp** gồm Máy chủ/Máy trạm, tác vụ Agent và báo cáo đội máy. Chọn vai trò không cấp quyền quản trị. VietLicenSure không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
+Chức năng được phân theo vai trò nhưng dùng chung giao diện Windows, engine và dữ liệu hiện hành. **Cá nhân** chỉ thấy kiểm tra đọc và báo cáo. **Hỗ trợ kỹ thuật** mở quản lý Windows/Office, nâng cấp phiên bản, thay đổi giấy phép và lưu hồ sơ chứng từ. **Kiểm kê doanh nghiệp** mở không gian kiểm kê Máy chủ/Máy trạm, tác vụ Agent và báo cáo đội máy. Chọn vai trò không cấp quyền quản trị. VietLicenSure không tự tạo key, không thay thế hồ sơ quyền sử dụng và không gửi dữ liệu lên dịch vụ cloud công cộng.
 
-### IT Helpdesk: Windows, Office và hồ sơ chứng từ
+### Hỗ trợ kỹ thuật: Windows, Office và hồ sơ chứng từ
 
-1. Chọn vai trò IT Helpdesk rồi mở Quản lý giấy phép.
+1. Chọn vai trò Hỗ trợ kỹ thuật rồi mở Quản lý giấy phép.
 2. Chọn Windows hoặc Office.
 3. Chọn tác vụ Windows hoặc Office cần thực hiện.
 4. Chỉ nhập key hợp lệ do Microsoft, nhà sản xuất hoặc tổ chức cấp.
@@ -392,7 +392,7 @@ Chức năng được phân theo vai trò nhưng dùng chung giao diện Windows
 6. Với Microsoft 365, ưu tiên đăng nhập tài khoản đã được cấp quyền trong ứng dụng Office.
 7. Dùng **Lưu hồ sơ chứng từ** để nhập JPG, PNG, Word, Excel, PDF, JSON, TXT hoặc thư điện tử được hỗ trợ. Tệp được sao chép vào kho compliance cục bộ, đổi sang tên ngẫu nhiên, ghi SHA-256 và trạng thái Chưa xác minh; không tự tải lên Internet và không tự coi là bằng chứng hợp lệ.
 
-### ITAM/SAM: Máy chủ và Máy trạm
+### Kiểm kê doanh nghiệp: Máy chủ và Máy trạm
 
 - Mạng doanh nghiệp mặc định tắt. Chỉ bật Online khi cần kết nối trong LAN.
 - Máy chủ tạo cấu hình, mã ghép nối và nhận báo cáo từ máy trạm được phép.
