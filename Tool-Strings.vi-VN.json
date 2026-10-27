@@ -716,6 +716,7 @@
   "progress.completed": "Hoàn tất: {0}. Đã mở trực tiếp tệp kết quả.",
   "progress.completed.summaryReady": "Hoàn tất: {0}. Kết quả nhanh đã hiển thị; chọn Xem chi tiết để mở HTML.",
   "progress.failed": "Tác vụ {0} kết thúc với mã {1}. Hãy kiểm tra tệp kết quả.",
+  "progress.failed.reportScope": "Tác vụ {0} không tạo đúng báo cáo của chức năng đã chọn (mã {1}). Kết quả bị từ chối để tránh mở nhầm báo cáo toàn bộ.",
   "progress.failed.elevatedBridge": "Tác vụ {0} bị cầu nối bảo mật từ chối (mã {1}). Hãy sao chép log để kiểm tra hợp đồng tham số.",
   "progress.copyAllLog": "Sao chép toàn bộ log",
   "progress.copyNoLog": "Chưa có nội dung log để sao chép.",

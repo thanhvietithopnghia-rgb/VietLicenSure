@@ -224,6 +224,44 @@ function Get-ToolSharedScanState {
     }
 }
 
+function Test-ToolCompletedReportScope {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)][string]$ReportRoot,
+        [Parameter(Mandatory = $true)][ValidateSet('All','Hardware','Windows','Office','Software')][string]$Mode,
+        [Parameter(Mandatory = $true)][string]$ExpectedModuleId
+    )
+
+    $errors = New-Object Collections.Generic.List[string]
+    $reports = @(Get-ToolResultReportHistory -ReportRoot $ReportRoot -MaximumReports 8)
+    $matching = @($reports | Where-Object { [string]::Equals([string]$_.Mode, $Mode, [StringComparison]::OrdinalIgnoreCase) })
+    $foreign = @($reports | Where-Object { -not [string]::Equals([string]$_.Mode, $Mode, [StringComparison]::OrdinalIgnoreCase) })
+    if ($matching.Count -ne 1) { $errors.Add('CompletedReportModeCountInvalid') }
+    if ($foreign.Count -gt 0) { $errors.Add('CompletedReportContainsForeignMode') }
+
+    $latest = if ($matching.Count -gt 0) { $matching[0] } else { $null }
+    $moduleResult = if ($latest) { Get-ToolResultObjectValue $latest.Report @('ModuleResult') } else { $null }
+    $actualModuleId = if ($moduleResult) { [string](Get-ToolResultObjectValue $moduleResult @('ModuleId')) } else { '' }
+    if (-not [string]::Equals($actualModuleId, $ExpectedModuleId, [StringComparison]::OrdinalIgnoreCase)) {
+        $errors.Add('CompletedReportModuleMismatch')
+    }
+    $htmlPath = if ($latest) { [IO.Path]::ChangeExtension([string]$latest.Path, '.html') } else { '' }
+    if ([string]::IsNullOrWhiteSpace($htmlPath) -or -not (Test-Path -LiteralPath $htmlPath -PathType Leaf)) {
+        $errors.Add('CompletedReportHtmlMissing')
+    }
+
+    return [pscustomobject][ordered]@{
+        Valid = [bool]($errors.Count -eq 0)
+        Mode = $Mode
+        ExpectedModuleId = $ExpectedModuleId
+        ActualModuleId = $actualModuleId
+        Report = $latest
+        JsonPath = $(if ($latest) { [string]$latest.Path } else { '' })
+        HtmlPath = $htmlPath
+        Errors = @($errors.ToArray())
+    }
+}
+
 function Get-ToolSharedScanQuickSummary {
     [CmdletBinding()]
     param(

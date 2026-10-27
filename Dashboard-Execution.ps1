@@ -1255,10 +1255,12 @@ function Get-DashboardCurrentBuildId {
 function Update-SharedScanResultDisplay {
     param(
         [ValidateSet('All','Hardware','Windows','Office','Software')][string]$Mode = 'All',
-        [ValidateSet('Auto','Pending','Error')][string]$Override = 'Auto'
+        [ValidateSet('Auto','Pending','Error')][string]$Override = 'Auto',
+        [string]$ResultRoot = ''
     )
     if (-not $sharedResultStateLabel -or -not $sharedResultSummaryLabel -or -not $sharedResultDetailButton) { return $null }
-    $state = Get-ToolSharedScanState -ReportRoot $reportRoot -Mode $Mode -CurrentBuildId (Get-DashboardCurrentBuildId)
+    $stateRoot = if ([string]::IsNullOrWhiteSpace($ResultRoot)) { $reportRoot } else { $ResultRoot }
+    $state = Get-ToolSharedScanState -ReportRoot $stateRoot -Mode $Mode -CurrentBuildId (Get-DashboardCurrentBuildId)
     $script:sharedScanDisplayMode = $Mode
     $script:sharedScanDisplayState = $state
     $attempt = if ($script:lastSharedScanAttempt -and [string]$script:lastSharedScanAttempt.Mode -eq $Mode) { $script:lastSharedScanAttempt } else { $null }
@@ -1403,12 +1405,15 @@ function Start-Report([string]$mode, [string]$displayName) {
         $needsCompleteMachineRead = [bool]($mode -in @('All','Windows','Office','Software'))
         [void](Start-ToolModuleProcess -ModuleId $moduleId -Arguments $arguments -Action $displayName -Hidden -Elevate:$needsCompleteMachineRead)
         $script:activeReportMode = $mode
+        $script:activeReportOutputDirectory = $output
+        $script:lastReportDirectory = $output
         $script:activeReportIncremental = $incrementalRefresh
         $status.Text = Get-ToolText -Key "report.running" -Culture $script:dashboardCulture -FormatArguments @($displayName)
         $status.ForeColor = [System.Drawing.Color]::FromArgb(18, 59, 116)
         Set-ButtonsEnabled $false
         $timer.Start()
     } catch {
+        $script:activeReportOutputDirectory = ''
         if ($script:lastSharedScanAttempt -and [string]$script:lastSharedScanAttempt.Mode -eq $mode) {
             $script:lastSharedScanAttempt.CompletedAt = Get-Date
             $script:lastSharedScanAttempt.Status = 'Failed'

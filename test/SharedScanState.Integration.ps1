@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing
 $root = Split-Path $PSScriptRoot -Parent
 . (Join-Path $root 'Tool-ResultCenter.ps1')
+. (Join-Path $root 'Dashboard-AssuranceCenter.ps1')
 $checks = 0
 function Check([bool]$Condition,[string]$Message) { if(-not $Condition){throw $Message}; $script:checks++ }
 
@@ -10,13 +11,20 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-SharedScan-' + [gui
 try {
     $binding = Get-ToolResultMachineBinding
     $now = Get-Date
-    function Write-Report([string]$Name,[string]$MachineBinding,[string]$BuildId,[datetime]$CreatedAt,[string]$Mode='Windows') {
-        $jsonPath = Join-Path $temp ($Name + '.json')
-        $htmlPath = Join-Path $temp ($Name + '.html')
+    $expectedMenuModes = @('All','Hardware','Windows','Office','Software')
+    foreach ($menuNumber in 1..5) {
+        Check ((Get-DashboardReportModeForMenuNumber -Number $menuNumber) -eq $expectedMenuModes[$menuNumber - 1]) ('Menu ' + $menuNumber + ' did not preserve its report mode')
+    }
+    Check ([string]::IsNullOrWhiteSpace((Get-DashboardReportModeForMenuNumber -Number 6))) 'Non-report menu was assigned a report mode'
+    function Write-Report([string]$Name,[string]$MachineBinding,[string]$BuildId,[datetime]$CreatedAt,[string]$Mode='Windows',[string]$Directory=$temp,[string]$ModuleId='') {
+        if ([string]::IsNullOrWhiteSpace($ModuleId)) { $ModuleId = 'report.' + $Mode.ToLowerInvariant() }
+        $jsonPath = Join-Path $Directory ($Name + '.json')
+        $htmlPath = Join-Path $Directory ($Name + '.html')
         $report = [ordered]@{
             ReportKind='InventoryAndLicense'; ToolVersion='5.0'; BuildId=$BuildId
             MachineBinding=$MachineBinding; ComputerName=[string]$env:COMPUTERNAME
             CreatedAt=$CreatedAt.ToString('o'); Mode=$Mode; Redacted=$true; RefreshKind='Full'
+            ModuleResult=[ordered]@{ ModuleId=$ModuleId; Status='Completed'; ExitCode=0 }
             WindowsConclusionCode='Licensed'; WindowsConclusion='Licensed'; DetailedInventory=[ordered]@{}
         }
         [IO.File]::WriteAllText($jsonPath, ($report|ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding($false)))
@@ -51,6 +59,18 @@ try {
 
     $stale = Get-ToolSharedScanState -ReportRoot $temp -Mode Windows -CurrentBuildId 'different-build'
     Check (-not $stale.IsFresh -and $stale.Reason -eq 'BuildChanged') 'Build change did not force a full refresh'
+
+    $exactRoot = Join-Path $temp 'exact-windows'
+    [void](New-Item -ItemType Directory -Path $exactRoot -Force)
+    [void](Write-Report -Name 'windows' -MachineBinding $binding -BuildId 'build-current' -CreatedAt $now -Mode Windows -Directory $exactRoot -ModuleId 'report.windows')
+    $exactScope = Test-ToolCompletedReportScope -ReportRoot $exactRoot -Mode Windows -ExpectedModuleId 'report.windows'
+    Check ($exactScope.Valid -and $exactScope.HtmlPath -like '*windows.html') 'Exact Windows run was not accepted'
+
+    $wrongRoot = Join-Path $temp 'wrong-all'
+    [void](New-Item -ItemType Directory -Path $wrongRoot -Force)
+    [void](Write-Report -Name 'all' -MachineBinding $binding -BuildId 'build-current' -CreatedAt $now -Mode All -Directory $wrongRoot -ModuleId 'report.all')
+    $wrongScope = Test-ToolCompletedReportScope -ReportRoot $wrongRoot -Mode Windows -ExpectedModuleId 'report.windows'
+    Check (-not $wrongScope.Valid -and $wrongScope.Errors -contains 'CompletedReportModeCountInvalid') 'Windows action accepted an All report'
 
     $officeQuick = Get-ToolSharedScanQuickSummary -Mode Office -Report ([pscustomobject][ordered]@{
         OfficeConclusionCode='KmsUnapprovedHost'; OfficeConclusion='Office KMS host is not approved.'
@@ -97,11 +117,15 @@ try {
     Check ($softwareItems.Count -eq 2 -and @($softwareItems | Where-Object Category -ne 'Software').Count -eq 0) 'Software mode leaked another result category'
 
     $executionSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-Execution.ps1') -Raw -Encoding UTF8
+    $assuranceSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-AssuranceCenter.ps1') -Raw -Encoding UTF8
     $layoutSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-Core.ps1') -Raw -Encoding UTF8
     $reportSource = Get-Content -LiteralPath (Join-Path $root 'kiem-tra-cau-hinh-ban-quyen.ps1') -Raw -Encoding UTF8
     $guiSource = Get-Content -LiteralPath (Join-Path $root 'Giao-Dien.ps1') -Raw -Encoding UTF8
     $roleSource = Get-Content -LiteralPath (Join-Path $root 'Dashboard-RoleWorkspaces.ps1') -Raw -Encoding UTF8
     Check ($executionSource -match 'activeProcess.+HasExited' -and $executionSource -match 'sharedScan\.duplicateBlocked') 'Duplicate in-flight scan is not blocked'
+    Check ($assuranceSource -match 'ReportMode = Get-DashboardReportModeForMenuNumber' -and $assuranceSource -match 'sender\.Tag\.ReportMode') 'Clicked menu metadata is not the source of the report mode'
+    Check ($guiSource -match 'Test-ToolCompletedReportScope' -and $guiSource -match 'Report\.ScopeMismatch') 'Completed report mode/module is not checked fail-closed'
+    Check ($guiSource -match 'pendingSharedScanCompletionRoot' -and $guiSource -match 'ResultRoot \$completedRoot') 'Quick result is not bound to the exact run directory'
     Check ($executionSource -match "Profile = 'Quick'" -and $executionSource -match 'IncrementalRefresh') 'Fresh result does not select quick incremental refresh'
     Check ($executionSource -match 'BaselineReportPath') 'Incremental baseline is not passed to the report engine'
     Check ($executionSource -match 'sharedScan\.attemptFailed' -and $executionSource -match 'sharedScan\.lastSuccessStale') 'Failed-attempt and previous-success timestamps are not separated'
