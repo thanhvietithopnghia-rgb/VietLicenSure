@@ -23,11 +23,11 @@ $groups = [ordered]@{
     }
     'windows-license-compliance-cleanup.ps1' = [ordered]@{
         MaximumLines = 1600
-        TotalFunctions = 123
+        TotalFunctions = 124
         Modules = [ordered]@{
             'Cleanup-Platform.ps1' = 48
             'Cleanup-Detection.ps1' = 26
-            'Cleanup-Evidence.ps1' = 32
+            'Cleanup-Evidence.ps1' = 33
             'Cleanup-Remediation.ps1' = 17
         }
     }

@@ -254,10 +254,10 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$toolHashCount = Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull
-[void](Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull)
-[void](Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull -AllowRelativePaths)
-[void](Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull)
+$toolHashCount = Test-HashManifest -ManifestPath (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') -RootPath $sourceDirectoryFull
+[void](Test-HashManifest -ManifestPath (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') -RootPath $sourceDirectoryFull)
+[void](Test-HashManifest -ManifestPath (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') -RootPath $sourceDirectoryFull -AllowRelativePaths)
+[void](Test-HashManifest -ManifestPath (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') -RootPath $distributionDirectoryFull)
 
 $sourceManifestHelperPath = Join-Path $sourceDirectoryFull 'Tool-SourceManifest.ps1'
 if (-not (Test-Path -LiteralPath $sourceManifestHelperPath -PathType Leaf)) {
