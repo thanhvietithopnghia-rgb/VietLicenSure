@@ -644,6 +644,7 @@ function Stop-ProgressDisplay([string]$summary) {
     $progressBar.Value = 100
     $activityLabel.Text = $summary
     $activityLabel.ForeColor = $status.ForeColor
+    Update-MainLayout
     if (Test-ProcessingTimelineWindowOpen) {
         $lastTimelineText = if ($script:processingTimelineList.Items.Count -gt 0) {
             [string]$script:processingTimelineList.Items[$script:processingTimelineList.Items.Count - 1].SubItems[2].Text

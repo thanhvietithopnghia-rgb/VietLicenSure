@@ -148,9 +148,12 @@ try {
     Check ($layoutSource -match 'sharedResultSummaryLabel\.Height = 68' -and $layoutSource -match 'sharedResultTimeLabel\.Height = 42') 'Inline result labels do not reserve three-line summary space'
     Check ($guiSource -match 'activityLabel\.AutoEllipsis = \$false' -and
         $guiSource -match 'activityLabel\.UseCompatibleTextRendering = \$true' -and
-        $layoutSource -match 'activityLabel\.Height = 38' -and
-        $layoutSource -match 'activityLabel\.Width = \[Math\]::Max\(80, \$activityPanel\.ClientSize\.Width - 32\)' -and
+        $layoutSource -match 'activityLabel\.Height = \$activityTextHeight' -and
+        $layoutSource -match 'activityLabel\.Width = \$activityTextWidth' -and
         $layoutSource -match 'elapsedLabel\.Top = \$progressCaption\.Top') 'Recent activity text and elapsed time do not use separate non-overlapping rows'
+    Check ($layoutSource -match 'Get-DashboardWrappedTextHeight.+activityLabel\.Text.+MinimumHeight 38 -MaximumHeight 72' -and
+        $layoutSource -match '525 \+ \[Math\]::Max\(0, \$activityTextHeight - 38\)' -and
+        $executionSource -match '(?s)activityLabel\.Text = \$summary.+?Update-MainLayout') 'Completed long activity summary is not remeasured before progress/log layout'
     Check ($layoutSource -match 'progressLog\.Height = \$availableLogHeight') 'Recent activity log does not use the bounded height left above the result stack'
     Check ($layoutSource -match 'function Set-DashboardSharedResultButtonHighlight' -and $executionSource -match 'Set-DashboardSharedResultButtonHighlight') 'Enabled HTML details button is not given its restrained highlight'
     Check ($layoutSource -match '\$activityActionGap = 4' -and
@@ -161,8 +164,9 @@ try {
     # shared caption must start below the 48..90px status band while retaining
     # the full 68px three-line summary and 42px timestamp block.
     $activityPanelHeight = 410
-    $activityLayoutHeight = [Math]::Max(525, $activityPanelHeight)
-    Check ($layoutSource -match 'activityLayoutHeight = \[Math\]::Max\(\$activityPanel\.ClientSize\.Height, \$\(if \(\$progressExpanded\) \{ 525 \}' -and
+    $activityTextHeight = 60
+    $activityLayoutHeight = [Math]::Max((525 + [Math]::Max(0, $activityTextHeight - 38)), $activityPanelHeight)
+    Check ($layoutSource -match 'activityLayoutHeight = \[Math\]::Max\(\$activityPanel\.ClientSize\.Height, \$\(if \(\$progressExpanded\) \{ 525 \+ \[Math\]::Max\(0, \$activityTextHeight - 38\)' -and
         $layoutSource -match 'activityPanel\.AutoScrollMinSize') 'Compact recent activity panel does not enable bounded vertical scrolling'
     $closeTop = $activityLayoutHeight - 30 - 8
     $copyTop = $closeTop - 32 - 4
@@ -174,7 +178,7 @@ try {
     $captionTop = $stateTop - 22 - 4
     Check ($captionTop -ge 94) "Shared result caption overlaps the status band at 1024x768: top=$captionTop"
     $progressCaptionBottom = 96 + 22
-    $activityBottom = ($progressCaptionBottom + 2) + 38
+    $activityBottom = ($progressCaptionBottom + 2) + $activityTextHeight
     $progressBottom = ($activityBottom + 1) + 14
     $logTop = $progressBottom + 4
     $availableLogHeight = $captionTop - $logTop - 8

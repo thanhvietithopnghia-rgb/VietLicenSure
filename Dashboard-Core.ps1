@@ -784,7 +784,11 @@ function Update-MainLayout {
         $activityPanel.Top = $mainTop
         $activityPanel.Width = [Math]::Max(200, $left + $contentWidth - $activityPanel.Left)
         $activityPanel.Height = $mainHeight
-        $activityLayoutHeight = [Math]::Max($activityPanel.ClientSize.Height, $(if ($progressExpanded) { 525 } else { 0 }))
+        $activityTextWidth = [Math]::Max(80, $activityPanel.ClientSize.Width - 32)
+        $activityTextHeight = if ($progressExpanded) {
+            Get-DashboardWrappedTextHeight -Text ([string]$activityLabel.Text) -Font $activityLabel.Font -Width $activityTextWidth -MinimumHeight 38 -MaximumHeight 72
+        } else { 38 }
+        $activityLayoutHeight = [Math]::Max($activityPanel.ClientSize.Height, $(if ($progressExpanded) { 525 + [Math]::Max(0, $activityTextHeight - 38) } else { 0 }))
         $activityPanel.AutoScroll = $progressExpanded
         $activityPanel.AutoScrollMinSize = New-Object System.Drawing.Size(0, $activityLayoutHeight)
         $menuCaption.Width = [Math]::Max(40, $buttonPanel.ClientSize.Width - 28)
@@ -924,8 +928,8 @@ function Update-MainLayout {
             $progressCaption.Width = [Math]::Max(80, $elapsedLabel.Left - $progressCaption.Left - 6)
             $activityLabel.Left = 16
             $activityLabel.Top = $progressCaption.Bottom + 2
-            $activityLabel.Height = 38
-            $activityLabel.Width = [Math]::Max(80, $activityPanel.ClientSize.Width - 32)
+            $activityLabel.Height = $activityTextHeight
+            $activityLabel.Width = $activityTextWidth
             $progressBar.Left = 16
             $progressBar.Top = $activityLabel.Bottom + 1
             $progressBar.Height = 14
