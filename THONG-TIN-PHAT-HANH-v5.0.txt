@@ -6,7 +6,7 @@ Public release channel: Official Self-Signed.
 Technical trust mode: OfficialSelfSigned.
 Release status: OfficialSelfSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 190C176FAAFD297F289FAE75BF02474881F99B7D2B468441C6D7F903526D455F
+SHA-256: DBE1A4400C6F80E5ABE90633A45255FBF12F510908794FF1B3056878797CFB26
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
