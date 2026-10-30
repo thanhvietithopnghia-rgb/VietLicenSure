@@ -307,6 +307,11 @@ try {
         $parsedForbiddenRestartArguments = ConvertFrom-BridgeTargetArguments -Arguments $forbiddenRestartArguments
         Assert-BridgeModuleArgumentProfile -ModuleId 'application.update.apply' -ParsedArguments $parsedForbiddenRestartArguments -OriginalRuntimeRoot $temporaryRoot -TrustedLauncherPath $bridgeLauncherPath
     } 'Elevated bridge still accepts the removed restart-control switch.'
+    Assert-UpdateThrows {
+        $alternateManifestArguments = $bridgeArguments -replace [regex]::Escape($script:ToolUpdateDefaultManifestUrl), 'https://example.invalid/update-manifest-v1.json'
+        $parsedAlternateManifestArguments = ConvertFrom-BridgeTargetArguments -Arguments $alternateManifestArguments
+        Assert-BridgeModuleArgumentProfile -ModuleId 'application.update.apply' -ParsedArguments $parsedAlternateManifestArguments -OriginalRuntimeRoot $temporaryRoot -TrustedLauncherPath $bridgeLauncherPath
+    } 'Elevated broker accepted an update manifest outside the fixed host/path allowlist.'
     $launcherText = Get-Content -LiteralPath (Join-Path $root 'VietLicenSure-v5.0-OneFile.cs') -Raw -Encoding UTF8
     Assert-UpdateTest ($launcherText.Contains('"Tool-UpdateManager.ps1"') -and $launcherText.Contains('TOOL_LAUNCHER_PID') -and $launcherText.Contains('TOOL_TOOL_VERSION"] = "5.0"') -and $launcherText.Contains('TOOL_SIGNED_STABLE_BUILD') -and $launcherText.Contains('TOOL_OFFICIAL_SELF_SIGNED_BUILD') -and $launcherText.Contains('TOOL_STORE_BUILD') -and $launcherText.Contains('TOOL_SELF_UPDATE_ALLOWED')) 'Launcher does not embed or pin the v5.0 update foundation.'
     $buildText = Get-Content -LiteralPath (Join-Path $root 'BUILD.ps1') -Raw -Encoding UTF8

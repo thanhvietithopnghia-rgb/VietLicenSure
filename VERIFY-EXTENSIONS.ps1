@@ -15,6 +15,7 @@ $previousDataOwnerSid = [string]$env:TOOL_DATA_OWNER_SID
 $previousTimelinePath = [string]$env:TOOL_TIMELINE_PATH
 $previousTimelineKeyPath = [string]$env:TOOL_TIMELINE_KEY_PATH
 $previousSecureRuntimeDir = [string]$env:TOOL_SECURE_RUNTIME_DIR
+$previousOfficialBuildState = [string]$env:TOOL_OFFICIAL_BUILD_STATE
 $pdfProfileState = $null
 
 function Add-Failure([string]$Message) { [void]$failures.Add($Message) }
@@ -132,6 +133,29 @@ try {
     if ($traversal.Valid -or $traversalErrorText -notmatch "(?i)(không an toàn|unsafe)") {
         Add-Failure "Plugin có Registry traversal không bị từ chối đúng quy tắc an toàn (Valid=$($traversal.Valid); Errors=$traversalErrorText)."
     }
+    $env:TOOL_SECURE_LAUNCH = '1'
+    $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
+    $env:TOOL_OFFICIAL_BUILD_STATE = 'Official'
+    $unsignedSourcePath = Join-Path $source 'builtin-windows-office-trust.plugin.json'
+    $unsignedProductionPackage = Read-ToolPluginPackage -Path $unsignedSourcePath -AllowOutsideProtectedDirectory
+    if ($unsignedProductionPackage.Valid -or [string]$unsignedProductionPackage.SignatureStatus -notin @('Missing','TrustedSignerRequired')) {
+        Add-Failure 'Production plugin API accepted an unsigned package when caller omitted RequireTrustedSignature.'
+    }
+    $unsignedInstallBlocked = $false
+    try {
+        [void](Install-ToolPluginPackage -SourcePath $unsignedSourcePath -PluginDirectory $pluginDir -Force)
+    } catch { $unsignedInstallBlocked = $true }
+    if (-not $unsignedInstallBlocked) { Add-Failure 'Production plugin install API allowed caller omission to disable signature/publisher pinning.' }
+    $unsignedAuditPath = Join-Path $pluginDir 'unsigned-thirdparty.plugin.json'
+    Copy-Item -LiteralPath $unsignedSourcePath -Destination $unsignedAuditPath -Force
+    $productionAudit = Invoke-ToolPluginAudit -PluginDirectory $pluginDir
+    if ([int]$productionAudit.InvalidPluginCount -lt 1 -or
+        @($productionAudit.InvalidPlugins | Where-Object { [string]$_.File -eq 'unsigned-thirdparty.plugin.json' }).Count -ne 1) {
+        Add-Failure 'Production plugin audit did not reject an unsigned non-built-in plugin by default.'
+    }
+    Remove-Item -LiteralPath $unsignedAuditPath -Force -ErrorAction SilentlyContinue
+    $env:TOOL_SECURE_LAUNCH = ''
+    $env:TOOL_OFFICIAL_BUILD_STATE = ''
 
 $timelineState = Initialize-ToolLicenseTimeline -ToolVersion "4.8"
     if (-not $timelineState.Enabled) { Add-Failure "Không khởi tạo được timeline test: $($timelineState.Error)" }
@@ -215,6 +239,7 @@ $validation = Test-ToolReportEnvelope -Report $json -ExpectedReportKind "Certifi
     $env:TOOL_TIMELINE_PATH = $previousTimelinePath
     $env:TOOL_TIMELINE_KEY_PATH = $previousTimelineKeyPath
     $env:TOOL_SECURE_RUNTIME_DIR = $previousSecureRuntimeDir
+    $env:TOOL_OFFICIAL_BUILD_STATE = $previousOfficialBuildState
     if ($null -ne $pdfProfileState) {
         try {
             [void](Remove-ToolPdfProfileDirectory -ProfilePath $pdfProfileState.ProfilePath -ProfileRoot $pdfProfileState.RootPath)

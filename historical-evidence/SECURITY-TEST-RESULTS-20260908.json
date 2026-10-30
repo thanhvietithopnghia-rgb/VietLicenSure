@@ -1,0 +1,22 @@
+{
+  "SchemaVersion": "1.0",
+  "EvidenceClass": "Historical",
+  "EligibleForCurrentRelease": false,
+  "EvidenceDate": "2026-09-08",
+  "RecordedAtUtc": null,
+  "TimestampPrecision": "DateOnly",
+  "ArtifactFileName": "VietLicenSure-v5.0.exe",
+  "ArtifactHash": null,
+  "ArtifactHashStatus": "NotRecordedInHistoricalDocument",
+  "BuildId": "5.0-production-20260908",
+  "SourceCommit": "580f68579e50f09f67ae10db330a316262325c3b",
+  "SignerType": "ContentCMS",
+  "SignerThumbprintSha1": "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA",
+  "AuthenticodeSignerThumbprintSha1": null,
+  "AuthenticodeStatus": "NotReverifiableFromThisRecord",
+  "ReviewStatus": "HistoricalOnly",
+  "Notes": [
+    "The recorded thumbprint belongs to the detached-CMS content signer, not the current Authenticode signer.",
+    "This record cannot satisfy any current-release identity or security-review gate."
+  ]
+}

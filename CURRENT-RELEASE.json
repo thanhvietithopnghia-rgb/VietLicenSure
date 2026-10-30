@@ -1,0 +1,58 @@
+{
+  "SchemaVersion": "1.0",
+  "EvidenceClass": "Current",
+  "EligibleForCurrentRelease": true,
+  "ProductName": "VietLicenSure",
+  "ReleaseVersion": "5.0",
+  "ReleaseTag": "v5.0",
+  "PublicChannel": "Official Self-Signed",
+  "TechnicalTrustMode": "OfficialSelfSigned",
+  "ReleaseBuildDate": "2026-10-25",
+  "PublicUpdateDate": "2026-10-30",
+  "BuildId": "5.0-production-20261025",
+  "Artifact": {
+    "FileName": "VietLicenSure-v5.0.exe",
+    "Sha256": "DBE1A4400C6F80E5ABE90633A45255FBF12F510908794FF1B3056878797CFB26",
+    "SizeBytes": 963264,
+    "AuthenticodeStatus": "OfficialSelfSigned",
+    "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
+    "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
+    "AuthenticodeThumbprintSha1": "575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62",
+    "AuthenticodeCertificateSha256": "91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177",
+    "Timestamped": true
+  },
+  "Source": {
+    "SourceCommit": "109a4a47a6b56e1efa31864beffcdaa5dabec72f",
+    "BundleCommit": "66120c8ed1b71d3e8daa7da94b0431b17b7638b6"
+  },
+  "ContentCmsSigner": {
+    "SignerType": "ContentCMS",
+    "ThumbprintSha1": "ABE70696679B1D8987A2D5B1F6C1C6909D364CEA",
+    "CertificateSha256": "A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9"
+  },
+  "QualityAssurance": {
+    "ExactHashStatus": "Passed",
+    "ArtifactHashBound": true,
+    "EvidenceFile": "QA-EVIDENCE.json",
+    "EvidenceSha256": "50B51D4BD6F68B488268BFE81FE140AE13B63E265AA1F5F5D07B2FF22EF0E830",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-evidence.zip",
+    "Platform": "Windows 11 24H2",
+    "AccountType": "AdminLimited",
+    "Culture": "vi-VN",
+    "NetworkMode": "Offline"
+  },
+  "IndependentSecurityReview": {
+    "Status": "NotReviewed",
+    "CriticalHighClaimAllowed": false
+  },
+  "EnterpriseTransportSecurity": {
+    "Transport": "HTTP with AES-256-CBC and HMAC-SHA256 application envelopes",
+    "EquivalentToTlsOrMtls": false,
+    "PublicInternetAllowed": false,
+    "AllowedNetworkScope": "PrivateManagedLanOrLoopbackOnly",
+    "RequiresExplicitLanEnablement": true,
+    "ProductionTransportAssurance": "NotClaimed",
+    "MigrationTarget": "HTTPS with certificate pinning or mTLS"
+  },
+  "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0"
+}

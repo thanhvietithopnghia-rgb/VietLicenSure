@@ -74,10 +74,10 @@ function Test-PinnedSelfSignedTrustException([Security.Cryptography.X509Certific
     } finally { $chain.Dispose() }
 }
 
-function Test-HashManifest([string]$ManifestPath, [string]$RootPath, [int]$ExpectedCount, [switch]$AllowRelativePaths) {
+function Test-HashManifest([string]$ManifestPath, [string]$RootPath, [Nullable[int]]$ExpectedCount = $null, [switch]$AllowRelativePaths) {
     if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
         $failures.Add("Thiếu manifest: $ManifestPath")
-        return
+        return 0
     }
     $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     foreach ($line in Get-Content -LiteralPath $ManifestPath -Encoding UTF8) {
@@ -106,7 +106,10 @@ function Test-HashManifest([string]$ManifestPath, [string]$RootPath, [int]$Expec
         }
         if ((Get-Sha256Hex $path) -ne $matches[1].ToUpperInvariant()) { $failures.Add("Sai SHA-256: $name") }
     }
-    if ($seen.Count -ne $ExpectedCount) { $failures.Add("Manifest sai số lượng tệp: $($seen.Count), yêu cầu đúng $ExpectedCount") }
+    if ($null -ne $ExpectedCount -and $seen.Count -ne $ExpectedCount.Value) {
+        $failures.Add("Manifest sai số lượng tệp: $($seen.Count), yêu cầu đúng $($ExpectedCount.Value)")
+    }
+    return $seen.Count
 }
 
 function Test-DistributionClosedSet([string]$ManifestPath, [string]$RootPath) {
@@ -251,23 +254,22 @@ if (Test-Path -LiteralPath $workflowDirectory -PathType Container) {
     }
 }
 
-$expectedToolHashCount = if ($AllowDevelopmentManifest) { 71 } else { 72 }
-$expectedSourceHashCount = if ($AllowDevelopmentManifest) { 155 } else { 156 }
-# Device workflow adds BUILD-COMPRESS-PAYLOAD.py and DEVICE-WORKFLOW-v1.md.
-# test/ remains excluded by the existing source-package manifest policy.
-$expectedSourcePackageHashCount = if ($AllowDevelopmentManifest) { 222 } else { 226 }
-if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectoryFull 'RELEASE-SHA256SUMS.txt') -PathType Leaf)) {
-    # Source-only handoff intentionally omits the release checksum because it
-    # references the EXE stored in the sibling release folder.
-    $expectedSourcePackageHashCount--
+$toolHashCount = Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull
+[void](Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull)
+[void](Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull -AllowRelativePaths)
+[void](Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull)
+
+$sourceManifestHelperPath = Join-Path $sourceDirectoryFull 'Tool-SourceManifest.ps1'
+if (-not (Test-Path -LiteralPath $sourceManifestHelperPath -PathType Leaf)) {
+    $failures.Add('Thiếu Tool-SourceManifest.ps1 để xác minh closed-set nguồn.')
+} else {
+    try {
+        . $sourceManifestHelperPath
+        [void](Test-ToolSourceHashManifest -SourceDirectory $sourceDirectoryFull -ManifestName 'SOURCE-PACKAGE-SHA256SUMS.txt' -RequireClosedSet)
+    } catch {
+        $failures.Add("SOURCE-PACKAGE-SHA256SUMS.txt không phải closed set hợp lệ: $($_.Exception.Message)")
+    }
 }
-$expectedReleaseHashCount = if ($AllowDevelopmentManifest) { 48 } elseif ($AllowStoreManifest) { 49 } else { 50 }
-Test-HashManifest (Join-Path $sourceDirectoryFull 'TOOL-SHA256SUMS.txt') $sourceDirectoryFull $expectedToolHashCount
-Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourceHashCount
-# The source package includes both catalog review workflows, including the
-# signed software-catalog safety gate.
-Test-HashManifest (Join-Path $sourceDirectoryFull 'SOURCE-PACKAGE-SHA256SUMS.txt') $sourceDirectoryFull $expectedSourcePackageHashCount -AllowRelativePaths
-Test-HashManifest (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull $expectedReleaseHashCount
 Test-DistributionClosedSet (Join-Path $distributionDirectoryFull 'RELEASE-SHA256SUMS.txt') $distributionDirectoryFull
 
 $manifestPath = Join-Path $sourceDirectoryFull 'VietLicenSure-v5.0-OneFile.manifest'
@@ -946,8 +948,7 @@ if (-not (Test-Path -LiteralPath $releaseManifestPath -PathType Leaf)) {
             throw 'Chữ ký provenance production thiếu, sai signer hoặc không đồng bộ vào gói phát hành.'
         }
         $expectedPayloadCount = if ($AllowDevelopmentManifest) { 73 } else { 74 }
-        $expectedIntegrityCount = if ($AllowDevelopmentManifest) { 71 } else { 72 }
-        if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne $expectedIntegrityCount) { throw 'Sai số lượng payload/integrity.' }
+        if ([int]$releaseManifest.PayloadCount -ne $expectedPayloadCount -or [int]$releaseManifest.IntegrityFileCount -ne [int]$toolHashCount) { throw 'Sai số lượng payload/integrity so với manifest đã xác minh.' }
         $payloadCompression = $releaseManifest.PayloadCompression
         if ([string]$payloadCompression.Scheme -ne 'SolidDeflateBundle-v1' -or
             [string]$payloadCompression.ResourceName -ne 'payload.bundle.deflate.v1' -or

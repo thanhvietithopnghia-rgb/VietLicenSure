@@ -6,10 +6,22 @@ param(
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DocsRoot)) { $DocsRoot = Join-Path $PSScriptRoot 'docs' }
 $errors = [System.Collections.Generic.List[string]]::new()
-$expectedHash = 'DBE1A4400C6F80E5ABE90633A45255FBF12F510908794FF1B3056878797CFB26'
-$expectedBuild = '5.0-production-20261025'
-$expectedEnUpdateDate = 'updated 2026-10-30'
-$expectedPublisher = 'Thanh Viet - VietLicenSure Code Signing'
+$currentReleasePath = Join-Path $PSScriptRoot 'CURRENT-RELEASE.json'
+$currentRelease = Get-Content -LiteralPath $currentReleasePath -Raw -Encoding UTF8 | ConvertFrom-Json
+$expectedHash = [string]$currentRelease.Artifact.Sha256
+$expectedBuild = [string]$currentRelease.BuildId
+$expectedEnUpdateDate = 'updated ' + [string]$currentRelease.PublicUpdateDate
+$expectedViUpdateDate = [datetime]::ParseExact([string]$currentRelease.PublicUpdateDate, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture).ToString('dd/MM/yyyy')
+$expectedPublisher = [string]$currentRelease.Artifact.AuthenticodePublisher
+$expectedReviewStatus = [string]$currentRelease.IndependentSecurityReview.Status
+
+try {
+    & (Join-Path $PSScriptRoot 'SYNC-RELEASE-PAGES.ps1') -ReleaseMetadataPath $currentReleasePath -DocsRoot $DocsRoot -Check
+} catch {
+    $errors.Add("Canonical release page rendering failed: $($_.Exception.Message)")
+}
+& (Join-Path $PSScriptRoot 'VERIFY-RELEASE-EVIDENCE.ps1') -SourceDirectory $PSScriptRoot -DistributionDirectory $PSScriptRoot
+if ($LASTEXITCODE -ne 0) { $errors.Add('Current release evidence does not match manifest, provenance and update metadata.') }
 $pages = Get-ChildItem -LiteralPath $DocsRoot -Filter '*.html' -File |
     Where-Object { $_.Name -ne 'google4925ca24cda35778.html' }
 
@@ -92,10 +104,13 @@ foreach ($content in @($viHome, $enHome, $viGuide, $enGuide)) {
 foreach ($content in @($viHome, $enHome)) {
     if ($content -notmatch [regex]::Escape($expectedBuild)) { $errors.Add('A home page is missing the current Build ID') }
 }
-if ($viHome -notmatch '<div class="eyebrow">[^<]*30/10/2026[^<]*</div>') { $errors.Add('Vietnamese home page is missing the current update date') }
+if ($viHome -notmatch ('<div class="eyebrow"[^>]*>[^<]*' + [regex]::Escape($expectedViUpdateDate) + '[^<]*</div>')) { $errors.Add('Vietnamese home page is missing the current update date') }
 if ($enHome -notmatch [regex]::Escape($expectedEnUpdateDate)) { $errors.Add('English home page is missing the current update date') }
 foreach ($content in @($viHome, $enHome, $viDocumentation, $enDocumentation)) {
     if ($content -notmatch [regex]::Escape($expectedPublisher)) { $errors.Add('A primary release page is missing the neutral Authenticode Publisher') }
+}
+foreach ($content in @($viHome, $enHome, $viDocumentation, $enDocumentation)) {
+    if ($content -notmatch [regex]::Escape($expectedReviewStatus)) { $errors.Add('A primary release page is missing the independent-review status') }
 }
 foreach ($requiredViCapability in @(
     'H\u1EC7 sinh th\u00E1i ch\u1EE9c n\u0103ng', 'Windows v\u00E0 Office', 'Ki\u1EC3m k\u00EA ph\u1EA7n m\u1EC1m',

@@ -677,6 +677,48 @@ function Test-ToolEnterpriseLoopbackAddress {
     return [Net.IPAddress]::IsLoopback($parsed)
 }
 
+function Resolve-ToolEnterprisePrivateIPv4Address {
+    param([Parameter(Mandatory = $true)][string]$Address)
+
+    $candidates = New-Object System.Collections.Generic.List[string]
+    $parsed = $null
+    if ([Net.IPAddress]::TryParse($Address, [ref]$parsed)) {
+        if ($parsed.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork) {
+            [void]$candidates.Add($parsed.ToString())
+        }
+    } else {
+        try {
+            foreach ($resolved in @([Net.Dns]::GetHostAddresses($Address))) {
+                if ($resolved.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork) {
+                    [void]$candidates.Add($resolved.ToString())
+                }
+            }
+        } catch {}
+    }
+    $unique = @($candidates | Sort-Object -Unique)
+    if ($unique.Count -eq 0) { throw (Get-ToolEnterpriseText "enterpriseCore.error.serverAddressInvalid") }
+    foreach ($candidate in $unique) {
+        if (-not (Test-ToolEnterprisePrivateIPv4Address -Address $candidate) -and
+            -not (Test-ToolEnterpriseLoopbackAddress -Address $candidate)) {
+            throw (Get-ToolEnterpriseText "enterpriseCore.error.serverAddressInvalid")
+        }
+    }
+    return [string]$unique[0]
+}
+
+function Test-ToolEnterprisePrivateCidr {
+    param([Parameter(Mandatory = $true)][string]$Cidr)
+    try {
+        $info = Get-ToolEnterpriseCidrInfo -Cidr $Cidr
+        $network = ConvertFrom-ToolEnterpriseIPv4UInt32 -Value ([uint32]$info.NetworkValue)
+        $broadcast = ConvertFrom-ToolEnterpriseIPv4UInt32 -Value ([uint32]$info.BroadcastValue)
+        return [bool](
+            ((Test-ToolEnterprisePrivateIPv4Address -Address $network) -and (Test-ToolEnterprisePrivateIPv4Address -Address $broadcast)) -or
+            ((Test-ToolEnterpriseLoopbackAddress -Address $network) -and (Test-ToolEnterpriseLoopbackAddress -Address $broadcast))
+        )
+    } catch { return $false }
+}
+
 function Get-ToolEnterpriseLocalIPv4Profiles {
     $profiles = New-Object System.Collections.Generic.List[object]
     foreach ($adapter in @(Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled=True" -ErrorAction SilentlyContinue)) {
@@ -798,7 +840,8 @@ function Resolve-ToolEnterpriseServerEndpoint {
         $Port = $parsedPort
     }
     if (-not (Test-ToolEnterpriseHostName -Value $value)) { throw (Get-ToolEnterpriseText "enterpriseCore.error.serverAddressInvalid") }
-    return [pscustomobject][ordered]@{ Address=$value; Port=[int]$Port; DisplayAddress=("{0}:{1}" -f $value,$Port) }
+    $privateAddress = Resolve-ToolEnterprisePrivateIPv4Address -Address $value
+    return [pscustomobject][ordered]@{ Address=$privateAddress; Port=[int]$Port; DisplayAddress=("{0}:{1}" -f $privateAddress,$Port) }
 }
 
 function Test-ToolEnterpriseTcpEndpoint {
@@ -849,6 +892,9 @@ function New-ToolEnterpriseServerConfiguration {
     foreach ($cidr in @($AllowedCidrs)) {
         if ([string]::IsNullOrWhiteSpace($cidr)) { continue }
         $normalized = (Get-ToolEnterpriseCidrInfo -Cidr $cidr.Trim()).Cidr
+        if (-not (Test-ToolEnterprisePrivateCidr -Cidr $normalized)) {
+            throw (Get-ToolEnterpriseText "enterpriseCore.error.cidrInvalid" @($cidr))
+        }
         if ($normalizedCidrs -notcontains $normalized) { [void]$normalizedCidrs.Add($normalized) }
     }
     if ($normalizedCidrs.Count -eq 0) {

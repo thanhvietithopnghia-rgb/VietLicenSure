@@ -236,9 +236,16 @@ $sourceManifestHelperSource = Read-HygieneText 'Tool-SourceManifest.ps1'
 $sourceIntegrityWorkflow = Read-HygieneText '.github\workflows\source-integrity.yml'
 if (-not $handoffBuilderSource.Contains("Join-Path `$sourceOutputRoot 'RELEASE-SHA256SUMS.txt'") -or
     -not $handoffBuilderSource.Contains('Remove-Item -LiteralPath $releaseOnlyChecksumPath -Force') -or
-    -not $handoffVerifierSource.Contains('Gói mã nguồn không được chứa checksum dành riêng cho EXE phát hành.') -or
-    -not $releaseVerifierSource.Contains('$expectedSourcePackageHashCount--')) {
-    $failures.Add('Source handoff does not exclude the EXE-only release checksum or adjust its closed-set count.')
+    -not $handoffVerifierSource.Contains('Gói mã nguồn không được chứa checksum dành riêng cho EXE phát hành.')) {
+    $failures.Add('Source handoff does not exclude the EXE-only release checksum.')
+}
+if ($releaseVerifierSource.Contains('$expectedToolHashCount') -or
+    $releaseVerifierSource.Contains('$expectedSourceHashCount') -or
+    $releaseVerifierSource.Contains('$expectedSourcePackageHashCount') -or
+    $releaseVerifierSource.Contains('$expectedIntegrityCount') -or
+    -not $releaseVerifierSource.Contains("Test-ToolSourceHashManifest -SourceDirectory `$sourceDirectoryFull -ManifestName 'SOURCE-PACKAGE-SHA256SUMS.txt' -RequireClosedSet") -or
+    -not $releaseVerifierSource.Contains('[int]$releaseManifest.IntegrityFileCount -ne [int]$toolHashCount')) {
+    $failures.Add('Release verifier still uses duplicated manifest-count literals instead of the verified manifest/closed-set contract.')
 }
 if (-not $handoffBuilderSource.Contains('Update-ToolSourceSubsetHashManifest -SourceDirectory $sourceOutputRoot -ManifestName ''TOOL-SHA256SUMS.txt''') -or
     -not $handoffBuilderSource.Contains('Update-ToolSourceSubsetHashManifest -SourceDirectory $sourceOutputRoot -ManifestName ''SOURCE-SHA256SUMS.txt''') -or
@@ -249,6 +256,31 @@ if (-not $handoffBuilderSource.Contains('Update-ToolSourceSubsetHashManifest -So
     -not $sourceIntegrityWorkflow.Contains('-ManifestName ''TOOL-SHA256SUMS.txt''') -or
     $sourceIntegrityWorkflow.Contains('Update-ToolSourceSubsetHashManifest')) {
     $failures.Add('Source handoff/CI does not refresh and verify TOOL/SOURCE manifests from canonical staged bytes.')
+}
+
+try {
+    . (Join-Path $sourceRoot 'Tool-SourceManifest.ps1')
+    $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('VietLicenSure-manifest-contract-' + [guid]::NewGuid().ToString('N'))
+    [void](New-Item -ItemType Directory -Path $fixtureRoot -Force)
+    try {
+        [IO.File]::WriteAllText((Join-Path $fixtureRoot 'a.txt'), 'a', (New-Object Text.UTF8Encoding($false)))
+        [IO.File]::WriteAllText((Join-Path $fixtureRoot 'b.txt'), 'b', (New-Object Text.UTF8Encoding($false)))
+        [void](Update-ToolSourcePackageHashManifest -SourceDirectory $fixtureRoot)
+        [void](Test-ToolSourceHashManifest -SourceDirectory $fixtureRoot -ManifestName 'SOURCE-PACKAGE-SHA256SUMS.txt' -RequireClosedSet)
+
+        [IO.File]::WriteAllText((Join-Path $fixtureRoot 'unexpected.txt'), 'negative', (New-Object Text.UTF8Encoding($false)))
+        $negativeRejected = $false
+        try {
+            [void](Test-ToolSourceHashManifest -SourceDirectory $fixtureRoot -ManifestName 'SOURCE-PACKAGE-SHA256SUMS.txt' -RequireClosedSet)
+        } catch {
+            $negativeRejected = $true
+        }
+        if (-not $negativeRejected) { $failures.Add('Closed-set negative fixture accepted a file outside the canonical source manifest.') }
+    } finally {
+        if (Test-Path -LiteralPath $fixtureRoot -PathType Container) { Remove-Item -LiteralPath $fixtureRoot -Recurse -Force }
+    }
+} catch {
+    $failures.Add("Manifest contract positive/negative verification failed: $($_.Exception.Message)")
 }
 
 $storeIdentityText = Read-HygieneText 'packaging\msix\STORE-PRODUCT-IDENTITY.json'

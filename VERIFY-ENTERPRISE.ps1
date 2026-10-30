@@ -116,6 +116,14 @@ try {
 
     $resolvedEndpoint = Resolve-ToolEnterpriseServerEndpoint -ServerAddress "192.168.2.5:49421" -Port 49420
     Assert-Enterprise ([string]$resolvedEndpoint.Address -eq "192.168.2.5" -and [int]$resolvedEndpoint.Port -eq 49421) "Không tách đúng địa chỉ IP:cổng của máy chủ."
+    $loopbackEndpoint = Resolve-ToolEnterpriseServerEndpoint -ServerAddress "localhost:$enterprisePort" -Port 49420
+    Assert-Enterprise ([string]$loopbackEndpoint.Address -eq '127.0.0.1') "Hostname loopback không được ghim về IPv4 cục bộ."
+    $publicEndpointRejected = $false
+    try { [void](Resolve-ToolEnterpriseServerEndpoint -ServerAddress '8.8.8.8:49420' -Port 49420) } catch { $publicEndpointRejected = $true }
+    Assert-Enterprise $publicEndpointRejected "Enterprise client vẫn chấp nhận endpoint Internet công cộng qua HTTP."
+    $publicCidrRejected = $false
+    try { [void](New-ToolEnterpriseServerConfiguration -ServerName 'UnsafePublicCidr' -AdminCode 'Unsafe-Public-4826' -BindAddress '127.0.0.1' -Port $enterprisePort -AllowedCidrs @('8.8.8.0/24')) } catch { $publicCidrRejected = $true }
+    Assert-Enterprise $publicCidrRejected "Enterprise server vẫn chấp nhận CIDR Internet công cộng cho HTTP plaintext."
     $invalidEndpoint = Get-ToolEnterpriseConnectionDiagnostic -ServerAddress "địa chỉ không hợp lệ" -Port 49420 -TimeoutMs 200
     Assert-Enterprise (-not [bool]$invalidEndpoint.Success -and [string]$invalidEndpoint.Code -eq "InvalidEndpoint") "Chẩn đoán không phân biệt địa chỉ máy chủ không hợp lệ."
 

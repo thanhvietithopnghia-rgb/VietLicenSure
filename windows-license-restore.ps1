@@ -90,14 +90,38 @@ function Get-MachineBinding {
     finally { $sha.Dispose() }
 }
 
-function Test-ProtectedBackupAcl([string]$Path) {
+function Get-ToolDataOwnerSid {
+    if ([string]$env:TOOL_DATA_SCOPE -ne 'User') { return $null }
+    $configuredSid = [string]$env:TOOL_DATA_OWNER_SID
+    if (-not [string]::IsNullOrWhiteSpace($configuredSid)) {
+        try {
+            $sid = New-Object Security.Principal.SecurityIdentifier($configuredSid)
+            if ($sid.IsAccountSid()) { return $sid }
+        } catch {}
+    }
+    return [Security.Principal.WindowsIdentity]::GetCurrent().User
+}
+
+function Test-ProtectedBackupAcl {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [switch]$AllowCurrentUserForUserScope
+    )
     try {
         $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
         if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { return $false }
         $acl = Get-Acl -LiteralPath $Path -ErrorAction Stop
         $ownerSid = (New-Object Security.Principal.NTAccount($acl.Owner)).Translate([Security.Principal.SecurityIdentifier]).Value
-        if ($ownerSid -ne "S-1-5-32-544" -or -not $acl.AreAccessRulesProtected) { return $false }
+        $allowedOwners = @("S-1-5-32-544", "S-1-5-18")
         $allowedWriters = @("S-1-5-32-544", "S-1-5-18")
+        if ($AllowCurrentUserForUserScope -and [string]$env:TOOL_DATA_SCOPE -eq 'User') {
+            $dataOwnerSid = Get-ToolDataOwnerSid
+            if ($dataOwnerSid) {
+                $allowedOwners += $dataOwnerSid.Value
+                $allowedWriters += $dataOwnerSid.Value
+            }
+        }
+        if ($ownerSid -notin $allowedOwners -or -not $acl.AreAccessRulesProtected) { return $false }
         $writeMask = [Security.AccessControl.FileSystemRights]::Write -bor [Security.AccessControl.FileSystemRights]::Modify -bor [Security.AccessControl.FileSystemRights]::FullControl -bor [Security.AccessControl.FileSystemRights]::Delete -bor [Security.AccessControl.FileSystemRights]::ChangePermissions -bor [Security.AccessControl.FileSystemRights]::TakeOwnership
         foreach ($rule in $acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
             if ($rule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and $allowedWriters -notcontains $rule.IdentityReference.Value -and (($rule.FileSystemRights -band $writeMask) -ne 0)) { return $false }
@@ -201,8 +225,14 @@ $productRoot = Split-Path -Parent $versionRoot
 if ([string]::IsNullOrWhiteSpace($versionRoot) -or [string]::IsNullOrWhiteSpace($productRoot)) {
     Fail-Restore 23 (Get-RestoreText "restoreReport.outsideProtectedRoot")
 }
-foreach ($protectedPath in @($productRoot, $versionRoot, $expectedBackupRoot, $script:backupRoot)) {
-    if (-not (Test-ProtectedBackupAcl $protectedPath)) { Fail-Restore 23 (Get-RestoreText "restoreReport.unsafeAcl") }
+$userScope = [bool]([string]$env:TOOL_DATA_SCOPE -eq 'User')
+foreach ($protectedPath in @($productRoot, $versionRoot)) {
+    if (-not (Test-ProtectedBackupAcl -Path $protectedPath -AllowCurrentUserForUserScope:$userScope)) {
+        Fail-Restore 23 (Get-RestoreText "restoreReport.unsafeAcl")
+    }
+}
+foreach ($protectedPath in @($expectedBackupRoot, $script:backupRoot)) {
+    if (-not (Test-ProtectedBackupAcl -Path $protectedPath)) { Fail-Restore 23 (Get-RestoreText "restoreReport.unsafeAcl") }
 }
 
 $manifestPath = Join-Path $script:backupRoot "RESTORE-MANIFEST.json"

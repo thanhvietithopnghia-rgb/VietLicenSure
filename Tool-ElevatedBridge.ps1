@@ -239,8 +239,8 @@ function Assert-BridgeModuleArgumentProfile {
             $switches = @('treatunapprovedkmsasnoncompliant','redactsensitive')
         }
         'cleanup.deep' {
-            $allowed = @('outputdir','remediate','deepclean','dryrun','approvedkmsserverfile','treatunapprovedkmsasnoncompliant','decisionfile','selectionfile','scanscope','culture','redactsensitive')
-            $required = @('outputdir','remediate','deepclean','approvedkmsserverfile','treatunapprovedkmsasnoncompliant','decisionfile','selectionfile','scanscope','culture')
+            $allowed = @('outputdir','remediate','deepclean','dryrun','approvedkmsserverfile','treatunapprovedkmsasnoncompliant','decisionfile','selectionfile','selectionsha256','scanscope','culture','redactsensitive')
+            $required = @('outputdir','remediate','deepclean','approvedkmsserverfile','treatunapprovedkmsasnoncompliant','decisionfile','selectionfile','selectionsha256','scanscope','culture')
             $switches = @('remediate','deepclean','dryrun','treatunapprovedkmsasnoncompliant','redactsensitive')
         }
         'cleanup.repair' {
@@ -314,6 +314,10 @@ function Assert-BridgeModuleArgumentProfile {
             throw 'ElevatedBridgeRuntimeArgumentOutsideSession'
         }
     }
+    if ($parameters.ContainsKey('selectionsha256') -and
+        (Get-BridgeArgumentValue -Parameters $parameters -Name 'selectionsha256') -notmatch '^[A-Fa-f0-9]{64}$') {
+        throw 'ElevatedBridgeSelectionDigestInvalid'
+    }
 
     if ($ModuleId -like 'report.*') {
         $expectedMode = switch ($ModuleId) {
@@ -340,7 +344,7 @@ function Assert-BridgeModuleArgumentProfile {
         $launcherProcessId = Get-BridgeArgumentValue -Parameters $parameters -Name 'launcherprocessid'
         if ((Get-BridgeArgumentValue -Parameters $parameters -Name 'mode') -cne 'Apply' -or
             -not [string]::Equals([IO.Path]::GetFullPath($launcherPath), [IO.Path]::GetFullPath($TrustedLauncherPath), [StringComparison]::OrdinalIgnoreCase) -or
-            $manifestUrl -notmatch '^https://[^\s]+$' -or
+            $manifestUrl -cne 'https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/update-manifest-v1.json' -or
             $launcherProcessId -notmatch '^[1-9][0-9]{0,9}$' -or
             (Get-BridgeArgumentValue -Parameters $parameters -Name 'currentversion') -notmatch '^\d{1,5}\.\d{1,5}(?:\.\d{1,5}\.\d{1,5})?$' -or
             (Get-BridgeArgumentValue -Parameters $parameters -Name 'expectedversion') -notmatch '^\d{1,5}\.\d{1,5}(?:\.\d{1,5}\.\d{1,5})?$' -or

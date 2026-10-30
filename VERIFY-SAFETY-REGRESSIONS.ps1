@@ -114,7 +114,9 @@ if ($restore -and $restore.Text -notmatch 'Test-ToolRegistryValueRestoreAllowed'
 if ($restore -and ($restore.Text -notmatch '\$expectedBackupRoot\s*=\s*@\(\$allowedBackupRoots' -or
     $restore.Text -notmatch '\$versionRoot\s*=\s*Split-Path\s+-Parent\s+\$expectedBackupRoot' -or
     $restore.Text -notmatch '\$productRoot\s*=\s*Split-Path\s+-Parent\s+\$versionRoot' -or
-    $restore.Text -notmatch 'foreach\s*\(\$protectedPath\s+in\s+@\(\$productRoot,\s*\$versionRoot,\s*\$expectedBackupRoot,\s*\$script:backupRoot\)\)')) {
+    $restore.Text -notmatch 'foreach\s*\(\$protectedPath\s+in\s+@\(\$productRoot,\s*\$versionRoot\)\)' -or
+    $restore.Text -notmatch 'AllowCurrentUserForUserScope:\$userScope' -or
+    $restore.Text -notmatch 'foreach\s*\(\$protectedPath\s+in\s+@\(\$expectedBackupRoot,\s*\$script:backupRoot\)\)')) {
     Fail 'Restore chưa ràng buộc và khởi tạo đầy đủ chuỗi ACL product/version/backups/backup trước khi phục hồi.'
 }
 if ($restore -and ($restore.Text -match '\$key\.SetValue\(' -or
@@ -604,6 +606,14 @@ No licenses found.
             if (-not $functionAst) { throw "Missing function: $Name" }
             Invoke-Expression ("function script:" + $Name + " " + $functionAst.Body.Extent.Text)
         }
+        function Import-ParsedFunctionForFixture($ParsedSource, [string]$Name, [string]$TargetName = $Name) {
+            $functionAst = $ParsedSource.Ast.Find({
+                param($node)
+                $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $Name
+            }, $true)
+            if (-not $functionAst) { throw "Missing function: $Name" }
+            Invoke-Expression ("function script:" + $TargetName + " " + $functionAst.Body.Extent.Text)
+        }
         function Get-CleanupText { param([string]$Key, [object[]]$Arguments=@()); return ($Key + ':' + (@($Arguments) -join '|')) }
         foreach ($inventoryFunctionName in @('Get-ToolSoftwareHostsLineMappings','Get-ToolSoftwareEvidenceCorrelationLevel','Get-ToolSoftwareDirectCrackEvidenceSummary','Get-ToolSoftwareRecoveryGate','Get-ToolSoftwareManualArtifactQuarantineGate','Test-ToolSoftwareRemediationEvidence')) {
             $inventoryFunctionAst = $softwareInventory.Ast.Find({
@@ -613,7 +623,7 @@ No licenses found.
             if (-not $inventoryFunctionAst) { throw "Missing function: $inventoryFunctionName" }
             Invoke-Expression ('function script:' + $inventoryFunctionName + ' ' + $inventoryFunctionAst.Body.Extent.Text)
         }
-        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Test-CleanupCandidateMatchesSelectedSnapshot','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
+        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Get-CleanupHighImpactClasses','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Test-CleanupCandidateMatchesSelectedSnapshot','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
             Import-CleanupFunctionForFixture $name
         }
         $broadRootFixture = [pscustomobject]@{ InstallLocation=$env:ProgramFiles; RepresentativePath='' }
@@ -682,6 +692,70 @@ No licenses found.
             Fail 'Fixture hosts bị dính hai mapping chưa gỡ đúng domain đích hoặc làm mất mapping/comment còn lại.'
         }
 
+        Import-ParsedFunctionForFixture $backup 'Set-ProtectedBackupAcl' 'Set-BackupAclFixture'
+        Import-ParsedFunctionForFixture $restore 'Get-ToolDataOwnerSid'
+        Import-ParsedFunctionForFixture $restore 'Test-ProtectedBackupAcl' 'Test-RestoreBackupAclFixture'
+        $backupRestoreAclFixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Backup-Restore-Acl-Fixture-' + [guid]::NewGuid().ToString('N'))
+        $previousAclDataScope = [string]$env:TOOL_DATA_SCOPE
+        $previousAclOwnerSid = [string]$env:TOOL_DATA_OWNER_SID
+        try {
+            $productFixtureRoot = Join-Path $backupRestoreAclFixtureRoot 'product'
+            $versionFixtureRoot = Join-Path $productFixtureRoot 'v5.0'
+            $backupsFixtureRoot = Join-Path $versionFixtureRoot 'backups'
+            $backupInstanceFixtureRoot = Join-Path $backupsFixtureRoot 'backup-crash-fixture'
+            foreach ($path in @($productFixtureRoot,$versionFixtureRoot,$backupsFixtureRoot,$backupInstanceFixtureRoot)) {
+                [void][IO.Directory]::CreateDirectory($path)
+            }
+            $currentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+            $env:TOOL_DATA_SCOPE = 'User'
+            $env:TOOL_DATA_OWNER_SID = $currentUserSid.Value
+            Set-BackupAclFixture -Path $productFixtureRoot -AllowCurrentUserForUserScope
+            Set-BackupAclFixture -Path $versionFixtureRoot -AllowCurrentUserForUserScope
+            Set-BackupAclFixture -Path $backupsFixtureRoot
+            Set-BackupAclFixture -Path $backupInstanceFixtureRoot
+            if (-not (Test-RestoreBackupAclFixture -Path $productFixtureRoot -AllowCurrentUserForUserScope) -or
+                -not (Test-RestoreBackupAclFixture -Path $versionFixtureRoot -AllowCurrentUserForUserScope) -or
+                -not (Test-RestoreBackupAclFixture -Path $backupsFixtureRoot) -or
+                -not (Test-RestoreBackupAclFixture -Path $backupInstanceFixtureRoot)) {
+                Fail 'Restore chưa chấp nhận policy ACL đối xứng của backup user-scope.'
+            }
+            if (Test-RestoreBackupAclFixture -Path $productFixtureRoot) {
+                Fail 'ACL user-scope bị chấp nhận khi restore không bật user-scope.'
+            }
+            $env:TOOL_DATA_SCOPE = 'Machine'
+            if (Test-RestoreBackupAclFixture -Path $versionFixtureRoot -AllowCurrentUserForUserScope) {
+                Fail 'ACL user-scope bị chấp nhận trong machine scope.'
+            }
+            Set-BackupAclFixture -Path $productFixtureRoot
+            Set-BackupAclFixture -Path $versionFixtureRoot
+            if (-not (Test-RestoreBackupAclFixture -Path $productFixtureRoot) -or
+                -not (Test-RestoreBackupAclFixture -Path $versionFixtureRoot)) {
+                Fail 'Restore machine/admin scope từ chối ACL Administrators/SYSTEM hợp lệ.'
+            }
+            $tamperedAcl = Get-Acl -LiteralPath $backupInstanceFixtureRoot -ErrorAction Stop
+            $tamperedAcl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule(
+                $currentUserSid,'Write',[Security.AccessControl.InheritanceFlags]::None,
+                [Security.AccessControl.PropagationFlags]::None,[Security.AccessControl.AccessControlType]::Allow)))
+            Set-Acl -LiteralPath $backupInstanceFixtureRoot -AclObject $tamperedAcl -ErrorAction Stop
+            if (Test-RestoreBackupAclFixture -Path $backupInstanceFixtureRoot) {
+                Fail 'Restore không từ chối backup instance có writer ngoài allowlist sau thay đổi ACL.'
+            }
+            Set-BackupAclFixture -Path $backupInstanceFixtureRoot
+            [IO.File]::WriteAllText((Join-Path $backupInstanceFixtureRoot '.manifest-crash.tmp'),'crash-residue',(New-Object Text.UTF8Encoding($false)))
+            [IO.File]::WriteAllText((Join-Path $backupInstanceFixtureRoot 'RESTORE-MANIFEST.json'),'{}',(New-Object Text.UTF8Encoding($false)))
+            if (-not (Test-RestoreBackupAclFixture -Path $backupInstanceFixtureRoot) -or
+                $restore.Text -notmatch 'Join-Path\s+\$script:backupRoot\s+"RESTORE-MANIFEST\.json"' -or
+                $restore.Text -match 'Get-ChildItem[^\r\n]+manifest') {
+                Fail 'Restore sau crash chưa khóa manifest finalized chính xác hoặc bị ảnh hưởng bởi tệp tạm.'
+            }
+        } finally {
+            $env:TOOL_DATA_SCOPE = $previousAclDataScope
+            $env:TOOL_DATA_OWNER_SID = $previousAclOwnerSid
+            if ($backupRestoreAclFixtureRoot -and (Test-Path -LiteralPath $backupRestoreAclFixtureRoot -PathType Container)) {
+                Remove-Item -LiteralPath $backupRestoreAclFixtureRoot -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+
         $selectionFixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('Tool-Selection-Acl-Fixture-' + [guid]::NewGuid().ToString('N'))
         $previousDataScope = [string]$env:TOOL_DATA_SCOPE
         $previousDataOwnerSid = [string]$env:TOOL_DATA_OWNER_SID
@@ -723,12 +797,14 @@ No licenses found.
             [void](Set-CleanupCandidateSnapshotHashes -Candidates @($fixtureCandidate))
             $fixtureSnapshot = New-CleanupScanSnapshot -Candidates @($fixtureCandidate) -Scope 'ThirdParty'
             [pscustomobject][ordered]@{
-                SchemaVersion='1.1'; RequestId=[guid]::NewGuid().ToString('D')
+                SchemaVersion='1.2'; RequestId=[guid]::NewGuid().ToString('D')
                 CreatedAtUtc=[DateTimeOffset]::UtcNow.ToString('o'); ScanScope='ThirdParty'
                 SourceSnapshotId=[string]$fixtureSnapshot.SnapshotId
                 SourceCandidateSetSha256=[string]$fixtureSnapshot.CandidateSetSha256
                 SelectedCandidates=@([pscustomobject][ordered]@{ Id='application|fixture'; SnapshotSha256=[string]$fixtureCandidate.SnapshotSha256 })
+                ConfirmationClasses=@(); HighImpactConfirmed=$true
             } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $script:SelectionFile -Encoding UTF8
+            $script:SelectionSha256 = (Get-FileHash -LiteralPath $script:SelectionFile -Algorithm SHA256).Hash
             function script:Test-ProtectedDirectoryAcl { param([string]$Path,[switch]$AllowCurrentUserForUserScope); return $true }
             $acceptedIds = @(Get-SelectedCleanupIds)
             if (-not [bool]$script:SelectionAccepted -or $acceptedIds.Count -ne 1 -or $acceptedIds[0] -ne 'application|fixture') {
@@ -737,8 +813,16 @@ No licenses found.
             $tamperedSelection = Get-Content -LiteralPath $script:SelectionFile -Raw | ConvertFrom-Json
             $tamperedSelection.ScanScope = 'All'
             $tamperedSelection | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:SelectionFile -Encoding UTF8
-            if (@(Get-SelectedCleanupIds).Count -ne 0 -or [bool]$script:SelectionAccepted -or [string]$script:SelectionErrorCode -ne 'SelectionScopeMismatch') {
-                Fail 'SelectionFile sai phạm vi không bị từ chối fail-closed.'
+            if (@(Get-SelectedCleanupIds).Count -ne 0 -or [bool]$script:SelectionAccepted -or [string]$script:SelectionErrorCode -ne 'SelectionDigestMismatch') {
+                Fail 'SelectionFile bị đổi sau khi broker bind digest không bị từ chối fail-closed.'
+            }
+            $highImpactClasses = @(Get-CleanupHighImpactClasses -Candidates @(
+                [pscustomobject]@{ Type='License'; Kind='WindowsKmsLicense'; PlanItems=@() },
+                [pscustomobject]@{ Type='Application'; Kind='ThirdPartyCompleteUninstall'; ManualUninstallAllowed=$true; PlanItems=@() },
+                [pscustomobject]@{ Type='File'; Kind='ThirdPartyUnauthorizedArtifact'; PlanItems=@([pscustomobject]@{ Type='File'; Restorable=$false }) }
+            ))
+            if (($highImpactClasses -join '|') -ne 'ApplicationUninstall|LicenseMutation|NonRestorableRemoval') {
+                Fail 'Phân loại confirmation tác động cao không khóa đủ license/uninstall/removal.'
             }
             Import-CleanupFunctionForFixture 'Test-ProtectedDirectoryAcl'
         } finally {

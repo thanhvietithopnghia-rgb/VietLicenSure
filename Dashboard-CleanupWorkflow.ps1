@@ -225,7 +225,22 @@ function Show-DeepCleanupSelection {
         $summary = Get-DashboardText "cleanup.selection.summary" @($selectedIds.Count, $list.Items.Count, $licenseWarning)
         $answer = [System.Windows.Forms.MessageBox]::Show($summary, (Get-DashboardText "cleanup.selection.finalTitle"), "YesNo", "Warning")
         if ($answer -eq [System.Windows.Forms.DialogResult]::Yes) {
-            $chooser.Tag = [pscustomobject]@{ Confirmed=$true; SelectedIds=$selectedIds; ScanScope=$ScanScope; Navigation="Continue" }
+            $highImpactClasses = @(Get-CleanupHighImpactClasses -Candidates $selectedObjects)
+            $highImpactConfirmed = $true
+            if ($highImpactClasses.Count -gt 0) {
+                $highImpactAnswer = [System.Windows.Forms.MessageBox]::Show(
+                    (Get-DashboardText 'cleanup.selection.highImpactConfirm' @(($highImpactClasses -join ', '))),
+                    (Get-DashboardText 'cleanup.selection.highImpactTitle'),
+                    [System.Windows.Forms.MessageBoxButtons]::YesNo,
+                    [System.Windows.Forms.MessageBoxIcon]::Warning,
+                    [System.Windows.Forms.MessageBoxDefaultButton]::Button2)
+                $highImpactConfirmed = [bool]($highImpactAnswer -eq [System.Windows.Forms.DialogResult]::Yes)
+            }
+            if (-not $highImpactConfirmed) { return }
+            $chooser.Tag = [pscustomobject]@{
+                Confirmed=$true; SelectedIds=$selectedIds; ScanScope=$ScanScope; Navigation="Continue"
+                ConfirmationClasses=@($highImpactClasses); HighImpactConfirmed=$highImpactConfirmed
+            }
             $chooser.Close()
         }
     })
@@ -319,18 +334,27 @@ function Start-CleanupDeep {
         if ($selectedCandidateSnapshots.Count -ne @($selection.SelectedIds).Count) {
             throw (Get-DashboardText 'cleanup.selection.snapshotCountMismatch')
         }
+        $selectedObjectsForConfirmation = @($scopedCleanupItems | Where-Object { @($selection.SelectedIds) -contains [string]$_.Id })
+        $confirmationClasses = @(Get-CleanupHighImpactClasses -Candidates $selectedObjectsForConfirmation)
+        if ($confirmationClasses.Count -gt 0 -and
+            (-not $selection.PSObject.Properties['HighImpactConfirmed'] -or -not [bool]$selection.HighImpactConfirmed)) {
+            throw (Get-DashboardText 'cleanup.selection.highImpactRequired')
+        }
         [pscustomobject][ordered]@{
-            SchemaVersion='1.1'
+            SchemaVersion='1.2'
             RequestId=[guid]::NewGuid().ToString('D')
             CreatedAtUtc=[DateTimeOffset]::UtcNow.ToString('o')
             SourceSnapshotId=[string]$script:cleanupScanSnapshot.SnapshotId
             SourceCandidateSetSha256=([string]$script:cleanupScanSnapshot.CandidateSetSha256).ToUpperInvariant()
             SelectedCandidates=@($selectedCandidateSnapshots)
             ScanScope=$script:cleanupScanScope
+            ConfirmationClasses=@($confirmationClasses)
+            HighImpactConfirmed=[bool]($confirmationClasses.Count -eq 0 -or [bool]$selection.HighImpactConfirmed)
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:cleanupSelectionFile -Encoding UTF8
+        $selectionSha256 = (Get-FileHash -LiteralPath $script:cleanupSelectionFile -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
         $privacyArgument = if ($script:cleanupRedactSensitive) { " -RedactSensitive" } else { "" }
         $dryRunArgument = if ($script:cleanupDryRunMode) { " -DryRun" } else { "" }
-        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupScript`" -OutputDir `"$output`" -Remediate -DeepClean$dryRunArgument -ApprovedKmsServerFile `"$approvedKmsFile`" -TreatUnapprovedKmsAsNonCompliant -DecisionFile `"$script:cleanupResultFile`" -SelectionFile `"$script:cleanupSelectionFile`" -ScanScope `"$script:cleanupScanScope`" -Culture `"$script:dashboardCulture`"$privacyArgument"
+        $arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$cleanupScript`" -OutputDir `"$output`" -Remediate -DeepClean$dryRunArgument -ApprovedKmsServerFile `"$approvedKmsFile`" -TreatUnapprovedKmsAsNonCompliant -DecisionFile `"$script:cleanupResultFile`" -SelectionFile `"$script:cleanupSelectionFile`" -SelectionSha256 `"$selectionSha256`" -ScanScope `"$script:cleanupScanScope`" -Culture `"$script:dashboardCulture`"$privacyArgument"
         $actionText = if ($script:cleanupDryRunMode) { Get-DashboardText 'cleanup.dryRun.action' } else { Get-DashboardText "cleanup.deep.action" }
         [void](Start-ToolModuleProcess -ModuleId "cleanup.deep" -Arguments $arguments -Action $actionText -Elevate)
         # Open a modeless, dedicated table for this run.  The dashboard's

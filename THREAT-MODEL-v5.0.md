@@ -19,7 +19,7 @@ Mục tiêu an toàn quan trọng nhất là **không biến bằng chứng thi�
 - **Không tin cậy:** Internet, bản tải lại từ bên thứ ba, catalog/plugin ngoài, đường dẫn do người dùng nhập, dữ liệu registry/WMI/CIM có thể thiếu hoặc bị sửa, tệp được phát hiện khi quét.
 - **Tin cậy có điều kiện:** gói phát hành chỉ sau khi checksum, CMS exact-byte, chứng thư ghim, provenance, SBOM và Authenticode cùng khớp.
 - **Đặc quyền cao:** tiến trình/broker được nâng quyền, ProgramData, registry máy, dịch vụ, Scheduled Tasks, hosts/firewall và vùng backup được bảo vệ.
-- **Ranh giới tổ chức:** endpoint quản trị doanh nghiệp/LAN chỉ được dùng sau lựa chọn chủ động và kiểm tra protocol/envelope; Offline vẫn là mặc định.
+- **Ranh giới tổ chức:** endpoint quản trị doanh nghiệp/LAN chỉ được dùng sau lựa chọn chủ động và kiểm tra protocol/envelope; Offline vẫn là mặc định. HTTP hiện hành bị khóa vào IPv4 private/loopback và không được phép định tuyến qua Internet công cộng. Kiểm soát này không tương đương TLS/mTLS.
 
 ## Tác nhân và tình huống đe dọa
 
@@ -35,6 +35,7 @@ Mục tiêu an toàn quan trọng nhất là **không biến bằng chứng thi�
 | Log/báo cáo làm lộ định danh hoặc key | rò rỉ dữ liệu cá nhân/tổ chức | che serial/UUID/Processor ID/Asset Tag theo mặc định, không ghi full product key, FullInternal cần lựa chọn rõ |
 | Formula injection trong CSV | thực thi công thức khi mở bảng tính | escape ký tự công thức ở đầu ô và redaction mặc định |
 | Kết nối mạng ngoài ý muốn | rò dữ liệu hoặc nhận cập nhật giả | Offline mặc định, không telemetry, người dùng bật Online, HTTPS/host allowlist, manifest cập nhật CMS + hash + signer |
+| Enterprise HTTP bị nghe lén/chuyển hướng ngoài LAN | lộ metadata lưu lượng hoặc kết nối sai máy chủ | chỉ endpoint/CIDR IPv4 private/loopback, hostname được resolve và ghim về địa chỉ riêng, envelope có xác thực, LAN cần bật tường minh; Internet công cộng bị từ chối; HTTPS pinning/mTLS vẫn là việc phải làm |
 | Dữ liệu WMI/CIM/dịch vụ lỗi | kết luận “không có license” sai | phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt; thử CIM/WMI có giới hạn; không tự khắc phục khi bằng chứng thiếu |
 | Symlink/junction/reparse point | thoát khỏi thư mục dự kiến | bộ build/verifier/đóng gói từ chối reparse point và canonicalize đường dẫn |
 | Resource exhaustion khi deep scan | treo máy hoặc bỏ dở không rõ | ngân sách thời gian/depth/files/signatures/hashes; Quick/Standard/Deep; kết quả Unverified khi không đủ phủ |

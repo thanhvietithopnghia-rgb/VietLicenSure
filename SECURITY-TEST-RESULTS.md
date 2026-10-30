@@ -50,14 +50,19 @@ Giới hạn: VM tự động không chứng minh không có lỗ hổng; nó ch
 
 ## Bằng chứng cục bộ lịch sử cho gói sửa ngày 08/09/2026
 
-- Source snapshot được provenance ràng buộc: `580f68579e50f09f67ae10db330a316262325c3b`.
+- **EvidenceClass:** `Historical`; **EligibleForCurrentRelease:** `false`.
+- Bản ghi máy đọc được: `historical-evidence/SECURITY-TEST-RESULTS-20260908.json`.
+- **ArtifactHash:** `NotRecorded` — tài liệu lịch sử này không giữ SHA-256 cụ thể của EXE đã chạy và không được dùng để xác minh artifact hiện hành.
+- **BuildId:** `5.0-production-20260908`; **SourceCommit:** `580f68579e50f09f67ae10db330a316262325c3b`.
+- **SignerType:** `ContentCMS`; thumbprint `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA` là signer CMS nội dung, không phải danh tính Authenticode hiện hành.
+- **Timestamp:** chỉ ghi nhận ngày `2026-09-08`; thời điểm UTC chính xác và chứng thư Authenticode riêng không được lưu trong tài liệu này.
 - Môi trường chạy: Microsoft Windows 11 Pro 64-bit, phiên bản `10.0.26200`, PowerShell `5.1.26100.9168`.
-- Chế độ bản dựng: `OfficialSelfSigned`; Build ID `5.0-production-20260908`.
-- Tệp thực thi: `VietLicenSure-v5.0.exe`; SHA-256 được tạo theo từng build ký số và công bố trong `RELEASE-SHA256SUMS.txt`, `RELEASE-MANIFEST.json` cùng `update-manifest-v1.json` của chính gói đó.
-- Authenticode: `Valid`; signer thumbprint `ABE70696679B1D8987A2D5B1F6C1C6909D364CEA`; có timestamp DigiCert.
+- Chế độ bản dựng được ghi nhận khi đó: `OfficialSelfSigned`.
+- Tệp thực thi: `VietLicenSure-v5.0.exe`; vì tài liệu này không giữ hash cụ thể nên không được suy diễn hash từ một gói hoặc commit khác.
+- Dòng lịch sử trước đây mô tả `ABE706...` như Authenticode signer là sai loại signer. Không có đủ dữ liệu trong hồ sơ này để tái xác nhận Authenticode/timestamp của EXE lịch sử.
 - `VERIFY-DISTRIBUTION.ps1`: `0 lỗi / 0 cảnh báo / 9 mục đạt`; tập đóng gồm 50 tệp; bốn chữ ký CMS được xác minh trên đúng byte tệp JSON.
 - Ca âm tính: đổi một ký tự trong `OFFICIAL-PROVENANCE-v1.json` rồi tạo lại checksum; verifier vẫn từ chối với mã thoát `1`, báo CMS không hợp lệ và source snapshot trong SBOM không khớp.
 - `VERIFY-RELEASE.ps1`: `0 lỗi / 3 cảnh báo đã biết`; x64/x86, 57 payload, 28 module, schema báo cáo, rollback, cập nhật, catalog, plugin, offline/i18n, enterprise và trợ lý đều đạt.
 - Ba cảnh báo đã biết: chứng thư tự ký có thể hiện Unknown publisher trên máy mới; launcher managed IL chưa tuyên bố CFG/load configuration native; máy kiểm tra chưa cài PSScriptAnalyzer nên dùng parser PowerShell tích hợp.
 
-Kết quả ngày 08/09 được giữ làm lịch sử. Ma trận Harness4 ngày 13/09 đã bổ sung đủ ba nền tảng Windows ở cấp verifier, nhưng vẫn **không phải** bằng chứng chạy đầy đủ EXE/UI. Kiểm thử artifact đóng gói với tài khoản thường/admin, có/không Office, Offline/Online, accessibility, UAC, report, update, backup/rollback cùng security review độc lập vẫn phải có evidence riêng trước khi gắn nhãn `Public Stable`.
+Kết quả ngày 08/09 được giữ làm lịch sử và verifier phải từ chối nếu bản ghi này bị gắn nhãn `Current`. Ma trận Harness4 ngày 13/09 đã bổ sung đủ ba nền tảng Windows ở cấp verifier, nhưng vẫn **không phải** bằng chứng chạy đầy đủ EXE/UI. Kiểm thử artifact đóng gói với tài khoản thường/admin, có/không Office, Offline/Online, accessibility, UAC, report, update, backup/rollback cùng security review độc lập vẫn phải có evidence riêng trước khi gắn nhãn `Public Stable`.

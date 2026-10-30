@@ -39,6 +39,11 @@ function Get-ToolPluginMetadata {
     }
 }
 
+function Test-ToolPluginProductionTrustRequired {
+    return [bool]([string]$env:TOOL_SECURE_LAUNCH -eq '1' -or
+        [string]$env:TOOL_OFFICIAL_BUILD_STATE -in @('Official','OfficialSelfSigned','Store'))
+}
+
 function Get-ToolPluginDirectory {
     $path = [string]$env:TOOL_PLUGIN_DIR
     if ([string]::IsNullOrWhiteSpace($path)) {
@@ -637,7 +642,8 @@ function Read-ToolPluginPackage {
             $fullPath + $script:ToolPluginSignatureSuffix
         }
         $signaturePresent = Test-Path -LiteralPath $candidateSignaturePath -PathType Leaf
-        $signatureRequested = [bool]($RequireTrustedSignature -or $signaturePresent -or
+        $productionTrustRequired = Test-ToolPluginProductionTrustRequired
+        $signatureRequested = [bool]($productionTrustRequired -or $RequireTrustedSignature -or $signaturePresent -or
             -not [string]::IsNullOrWhiteSpace($SignaturePath))
         if ($signatureRequested) {
             if (@($TrustedSignerCertificateSha256).Count -eq 0) {
@@ -1010,6 +1016,7 @@ function Invoke-ToolPluginAudit {
     )
 
     $directoryState = Test-ToolPluginDirectory -Path $PluginDirectory
+    $effectiveRequireTrustedSignature = [bool]($RequireTrustedSignature -or (Test-ToolPluginProductionTrustRequired))
     $plugins = New-Object System.Collections.Generic.List[object]
     $findings = New-Object System.Collections.Generic.List[object]
     $invalid = New-Object System.Collections.Generic.List[object]
@@ -1038,7 +1045,7 @@ function Invoke-ToolPluginAudit {
             [string]$file.Name -eq 'thanhviet.builtin.windows-office-trust.plugin.json')
         $package = Read-ToolPluginPackage -Path $file.FullName -AllowOutsideProtectedDirectory `
             -TrustedSignerCertificateSha256 $TrustedSignerCertificateSha256 `
-            -RequireTrustedSignature:([bool]($RequireTrustedSignature -and -not $isEmbeddedBuiltIn))
+            -RequireTrustedSignature:([bool]($effectiveRequireTrustedSignature -and -not $isEmbeddedBuiltIn))
         if (-not $package.Valid) {
             [void]$invalid.Add([pscustomobject][ordered]@{
                 File=$file.Name; SignatureStatus=[string]$package.SignatureStatus; Errors=@($package.Errors)
@@ -1098,10 +1105,11 @@ function Install-ToolPluginPackage {
     )
 
     $directoryState = Test-ToolPluginDirectory -Path $PluginDirectory
+    $effectiveRequireTrustedSignature = [bool]($RequireTrustedSignature -or (Test-ToolPluginProductionTrustRequired))
     if (-not $directoryState.Valid) { throw ($directoryState.Errors -join "; ") }
     $package = Read-ToolPluginPackage -Path $SourcePath -AllowOutsideProtectedDirectory `
         -SignaturePath $SignaturePath -TrustedSignerCertificateSha256 $TrustedSignerCertificateSha256 `
-        -RequireTrustedSignature:$RequireTrustedSignature
+        -RequireTrustedSignature:$effectiveRequireTrustedSignature
     if (-not $package.Valid) { throw ($package.Errors -join "; ") }
     if (-not [string]::IsNullOrWhiteSpace($ExpectedSha256)) {
         $expectedHash = ([string]$ExpectedSha256).Trim().ToUpperInvariant()
@@ -1136,7 +1144,7 @@ function Install-ToolPluginPackage {
         $staged = Read-ToolPluginPackage -Path $temporary -AllowOutsideProtectedDirectory `
             -SignaturePath $(if ($package.SignatureValid) {$temporarySignature} else {''}) `
             -TrustedSignerCertificateSha256 $TrustedSignerCertificateSha256 `
-            -RequireTrustedSignature:$RequireTrustedSignature
+            -RequireTrustedSignature:$effectiveRequireTrustedSignature
         if (-not $staged.Valid -or -not $staged.Sha256.Equals($package.Sha256, [StringComparison]::OrdinalIgnoreCase)) {
             throw (Get-ToolTextCurrent "foundation.plugin.stagedVerificationFailed")
         }
@@ -1159,7 +1167,7 @@ function Install-ToolPluginPackage {
         $installed = Read-ToolPluginPackage -Path $destination -AllowOutsideProtectedDirectory `
             -SignaturePath $(if ($package.SignatureValid) {$destinationSignature} else {''}) `
             -TrustedSignerCertificateSha256 $TrustedSignerCertificateSha256 `
-            -RequireTrustedSignature:$RequireTrustedSignature
+            -RequireTrustedSignature:$effectiveRequireTrustedSignature
         if (-not $installed.Valid -or -not $installed.Sha256.Equals($package.Sha256, [StringComparison]::OrdinalIgnoreCase)) {
             throw (Get-ToolTextCurrent "foundation.plugin.installedVerificationFailed")
         }

@@ -627,6 +627,8 @@ function Get-SelectedCleanupIds {
     $script:SelectedCleanupSnapshots = @{}
     $script:SelectedSourceSnapshotId = ''
     $script:SelectedSourceCandidateSetSha256 = ''
+    $script:SelectedConfirmationClasses = @()
+    $script:SelectedHighImpactConfirmed = $false
     if ([string]::IsNullOrWhiteSpace($SelectionFile) -or -not (Test-Path -LiteralPath $SelectionFile -PathType Leaf)) { return @() }
     try {
         $allowedRoot = if (-not [string]::IsNullOrWhiteSpace($env:TOOL_SECURE_RUNTIME_DIR)) { $env:TOOL_SECURE_RUNTIME_DIR } else { Join-Path $PSScriptRoot "runtime" }
@@ -640,8 +642,17 @@ function Get-SelectedCleanupIds {
         $selectionItem = Get-Item -LiteralPath $selectionFull -Force -ErrorAction Stop
         if (($selectionItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'SelectionFileReparsePointRejected' }
         if ([int64]$selectionItem.Length -le 0 -or [int64]$selectionItem.Length -gt 262144) { throw 'SelectionFileSizeInvalid' }
-        $selection = Get-Content -LiteralPath $selectionFull -Raw -ErrorAction Stop | ConvertFrom-Json
-        if ([string]$selection.SchemaVersion -ne '1.1') { throw 'SelectionSchemaInvalid' }
+        if ([string]$SelectionSha256 -notmatch '^[0-9A-Fa-f]{64}$') { throw 'SelectionDigestMissing' }
+        $selectionBytes = [IO.File]::ReadAllBytes($selectionFull)
+        $selectionHasher = [Security.Cryptography.SHA256]::Create()
+        try { $selectionDigest = ([BitConverter]::ToString($selectionHasher.ComputeHash($selectionBytes)) -replace '-', '').ToUpperInvariant() }
+        finally { $selectionHasher.Dispose() }
+        if (-not [string]::Equals($selectionDigest, ([string]$SelectionSha256).ToUpperInvariant(), [StringComparison]::Ordinal)) {
+            throw 'SelectionDigestMismatch'
+        }
+        $selectionText = [Text.Encoding]::UTF8.GetString($selectionBytes).TrimStart([char]0xFEFF)
+        $selection = $selectionText | ConvertFrom-Json
+        if ([string]$selection.SchemaVersion -ne '1.2') { throw 'SelectionSchemaInvalid' }
         $requestId = [guid]::Empty
         if (-not [guid]::TryParse([string]$selection.RequestId, [ref]$requestId) -or $requestId -eq [guid]::Empty) { throw 'SelectionRequestIdInvalid' }
         if (-not [string]::Equals([string]$selection.ScanScope, [string]$ScanScope, [StringComparison]::OrdinalIgnoreCase)) { throw 'SelectionScopeMismatch' }
@@ -651,6 +662,12 @@ function Get-SelectedCleanupIds {
         if ($sourceSetHash -notmatch '^[0-9A-F]{64}$') { throw 'SelectionSourceSnapshotInvalid' }
         $script:SelectedSourceSnapshotId = $sourceSnapshotId.ToString('D')
         $script:SelectedSourceCandidateSetSha256 = $sourceSetHash
+        $confirmationClasses = @($selection.ConfirmationClasses | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ } | Sort-Object -Unique)
+        if (@($confirmationClasses | Where-Object { $_ -notin @('LicenseMutation','ApplicationUninstall','NonRestorableRemoval') }).Count -gt 0) {
+            throw 'SelectionConfirmationInvalid'
+        }
+        $script:SelectedConfirmationClasses = @($confirmationClasses)
+        $script:SelectedHighImpactConfirmed = [bool]$selection.HighImpactConfirmed
         $createdAtUtc = [DateTimeOffset]::MinValue
         if (-not [DateTimeOffset]::TryParse([string]$selection.CreatedAtUtc, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$createdAtUtc)) { throw 'SelectionTimestampInvalid' }
         $selectionAge = [DateTimeOffset]::UtcNow - $createdAtUtc.ToUniversalTime()
@@ -678,12 +695,34 @@ function Get-SelectedCleanupIds {
             'SecureLaunchRequired','ToolDirectoryAclInvalid','RuntimeDirectoryAclInvalid','SelectionFileOutsideRuntime',
             'SelectionFileMustBeDirectChild','SelectionFileReparsePointRejected','SelectionFileSizeInvalid','SelectionSchemaInvalid',
             'SelectionRequestIdInvalid','SelectionScopeMismatch','SelectionTimestampInvalid','SelectionExpired','SelectionIdsInvalid',
-            'SelectionSnapshotsInvalid','SelectionSourceSnapshotInvalid'
+            'SelectionSnapshotsInvalid','SelectionSourceSnapshotInvalid','SelectionDigestMissing','SelectionDigestMismatch',
+            'SelectionConfirmationInvalid'
         )
         $script:SelectionErrorCode = if ($knownSelectionErrors -contains $selectionError) { $selectionError } else { 'SelectionReadFailed' }
         $script:SelectionErrorDetail = [string]$_.Exception.GetType().Name
         return @()
     }
+}
+
+function Get-CleanupHighImpactClasses {
+    param($Candidates)
+    $classes = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::Ordinal)
+    foreach ($candidate in @($Candidates)) {
+        $type = [string]$candidate.Type
+        $kind = [string]$candidate.Kind
+        if ($type -eq 'License' -or $kind -in @('WindowsKmsLicense','WindowsNonGenuineLicense','OfficeKmsLicense','OfficeKmsHostOverride')) {
+            [void]$classes.Add('LicenseMutation')
+        }
+        if ($kind -eq 'ThirdPartyCompleteUninstall' -or
+            ($candidate.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$candidate.ManualUninstallAllowed)) {
+            [void]$classes.Add('ApplicationUninstall')
+        }
+        $nonRestorablePlan = @($candidate.PlanItems | Where-Object {
+            $_.PSObject.Properties['Restorable'] -and -not [bool]$_.Restorable -and [string]$_.Type -notin @('Guidance','License')
+        })
+        if ($nonRestorablePlan.Count -gt 0) { [void]$classes.Add('NonRestorableRemoval') }
+    }
+    return @($classes | Sort-Object)
 }
 
 function Protect-HistoryText {

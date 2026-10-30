@@ -10,6 +10,7 @@
     [switch]$RedactSensitive,
     [string]$DecisionFile = "",
     [string]$SelectionFile = "",
+    [ValidatePattern('^[0-9A-Fa-f]{64}$')][string]$SelectionSha256 = "",
     [ValidateSet("All", "Windows", "Office", "ThirdParty", "WindowsOffice", "WindowsThirdParty", "OfficeThirdParty")]
     [string]$ScanScope = "All",
     [switch]$SkipDeepSoftwareScan,
@@ -352,6 +353,17 @@ if ($script:SelectionAccepted) {
         $script:SelectionAccepted = $false
         $script:SelectionErrorCode = 'SelectionSnapshotMismatch'
         $script:SelectionErrorDetail = [string]$changedSelectedCleanupIds.Count
+        $selectedCleanupIds = @()
+    }
+}
+if ($script:SelectionAccepted) {
+    $selectedForConfirmation = @($cleanupItems | Where-Object { $selectedCleanupIds -contains ([string]$_.Id).ToLowerInvariant() })
+    $currentConfirmationClasses = @(Get-CleanupHighImpactClasses -Candidates $selectedForConfirmation)
+    if (($currentConfirmationClasses -join '|') -ne (@($script:SelectedConfirmationClasses | Sort-Object) -join '|') -or
+        ($currentConfirmationClasses.Count -gt 0 -and -not [bool]$script:SelectedHighImpactConfirmed)) {
+        $script:SelectionAccepted = $false
+        $script:SelectionErrorCode = 'SelectionConfirmationMismatch'
+        $script:SelectionErrorDetail = [string]$currentConfirmationClasses.Count
         $selectedCleanupIds = @()
     }
 }
