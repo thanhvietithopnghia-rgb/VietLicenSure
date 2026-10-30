@@ -627,7 +627,6 @@ function Get-SelectedCleanupIds {
     $script:SelectedCleanupSnapshots = @{}
     $script:SelectedSourceSnapshotId = ''
     $script:SelectedSourceCandidateSetSha256 = ''
-    $script:SelectedConfirmationClasses = @()
     $script:SelectedHighImpactConfirmed = $false
     if ([string]::IsNullOrWhiteSpace($SelectionFile) -or -not (Test-Path -LiteralPath $SelectionFile -PathType Leaf)) { return @() }
     try {
@@ -662,11 +661,6 @@ function Get-SelectedCleanupIds {
         if ($sourceSetHash -notmatch '^[0-9A-F]{64}$') { throw 'SelectionSourceSnapshotInvalid' }
         $script:SelectedSourceSnapshotId = $sourceSnapshotId.ToString('D')
         $script:SelectedSourceCandidateSetSha256 = $sourceSetHash
-        $confirmationClasses = @($selection.ConfirmationClasses | ForEach-Object { ([string]$_).Trim() } | Where-Object { $_ } | Sort-Object -Unique)
-        if (@($confirmationClasses | Where-Object { $_ -notin @('LicenseMutation','ApplicationUninstall','NonRestorableRemoval') }).Count -gt 0) {
-            throw 'SelectionConfirmationInvalid'
-        }
-        $script:SelectedConfirmationClasses = @($confirmationClasses)
         $script:SelectedHighImpactConfirmed = [bool]$selection.HighImpactConfirmed
         $createdAtUtc = [DateTimeOffset]::MinValue
         if (-not [DateTimeOffset]::TryParse([string]$selection.CreatedAtUtc, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$createdAtUtc)) { throw 'SelectionTimestampInvalid' }
@@ -695,8 +689,7 @@ function Get-SelectedCleanupIds {
             'SecureLaunchRequired','ToolDirectoryAclInvalid','RuntimeDirectoryAclInvalid','SelectionFileOutsideRuntime',
             'SelectionFileMustBeDirectChild','SelectionFileReparsePointRejected','SelectionFileSizeInvalid','SelectionSchemaInvalid',
             'SelectionRequestIdInvalid','SelectionScopeMismatch','SelectionTimestampInvalid','SelectionExpired','SelectionIdsInvalid',
-            'SelectionSnapshotsInvalid','SelectionSourceSnapshotInvalid','SelectionDigestMissing','SelectionDigestMismatch',
-            'SelectionConfirmationInvalid'
+            'SelectionSnapshotsInvalid','SelectionSourceSnapshotInvalid','SelectionDigestMissing','SelectionDigestMismatch'
         )
         $script:SelectionErrorCode = if ($knownSelectionErrors -contains $selectionError) { $selectionError } else { 'SelectionReadFailed' }
         $script:SelectionErrorDetail = [string]$_.Exception.GetType().Name
@@ -704,25 +697,13 @@ function Get-SelectedCleanupIds {
     }
 }
 
-function Get-CleanupHighImpactClasses {
-    param($Candidates)
-    $classes = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::Ordinal)
-    foreach ($candidate in @($Candidates)) {
-        $type = [string]$candidate.Type
-        $kind = [string]$candidate.Kind
-        if ($type -eq 'License' -or $kind -in @('WindowsKmsLicense','WindowsNonGenuineLicense','OfficeKmsLicense','OfficeKmsHostOverride')) {
-            [void]$classes.Add('LicenseMutation')
-        }
-        if ($kind -eq 'ThirdPartyCompleteUninstall' -or
-            ($candidate.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$candidate.ManualUninstallAllowed)) {
-            [void]$classes.Add('ApplicationUninstall')
-        }
-        $nonRestorablePlan = @($candidate.PlanItems | Where-Object {
-            $_.PSObject.Properties['Restorable'] -and -not [bool]$_.Restorable -and [string]$_.Type -notin @('Guidance','License')
-        })
-        if ($nonRestorablePlan.Count -gt 0) { [void]$classes.Add('NonRestorableRemoval') }
-    }
-    return @($classes | Sort-Object)
+function Test-CleanupHighImpactCandidate {
+    param($Candidate)
+    if ([string]$Candidate.Type -eq 'License' -or [string]$Candidate.Kind -in @('WindowsKmsLicense','WindowsNonGenuineLicense','OfficeKmsLicense','OfficeKmsHostOverride','ThirdPartyCompleteUninstall')) { return $true }
+    if ($Candidate.PSObject.Properties['ManualUninstallAllowed'] -and [bool]$Candidate.ManualUninstallAllowed) { return $true }
+    return [bool](@($Candidate.PlanItems | Where-Object {
+        $_.PSObject.Properties['Restorable'] -and -not [bool]$_.Restorable -and [string]$_.Type -notin @('Guidance','License')
+    }).Count -gt 0)
 }
 
 function Protect-HistoryText {

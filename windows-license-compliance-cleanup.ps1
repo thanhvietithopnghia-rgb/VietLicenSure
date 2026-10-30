@@ -358,12 +358,11 @@ if ($script:SelectionAccepted) {
 }
 if ($script:SelectionAccepted) {
     $selectedForConfirmation = @($cleanupItems | Where-Object { $selectedCleanupIds -contains ([string]$_.Id).ToLowerInvariant() })
-    $currentConfirmationClasses = @(Get-CleanupHighImpactClasses -Candidates $selectedForConfirmation)
-    if (($currentConfirmationClasses -join '|') -ne (@($script:SelectedConfirmationClasses | Sort-Object) -join '|') -or
-        ($currentConfirmationClasses.Count -gt 0 -and -not [bool]$script:SelectedHighImpactConfirmed)) {
+    $hasHighImpact = [bool](@($selectedForConfirmation | Where-Object { Test-CleanupHighImpactCandidate $_ }).Count -gt 0)
+    if ($hasHighImpact -and -not [bool]$script:SelectedHighImpactConfirmed) {
         $script:SelectionAccepted = $false
         $script:SelectionErrorCode = 'SelectionConfirmationMismatch'
-        $script:SelectionErrorDetail = [string]$currentConfirmationClasses.Count
+        $script:SelectionErrorDetail = 'HighImpact'
         $selectedCleanupIds = @()
     }
 }

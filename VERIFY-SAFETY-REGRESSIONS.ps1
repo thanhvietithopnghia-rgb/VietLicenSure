@@ -623,7 +623,7 @@ No licenses found.
             if (-not $inventoryFunctionAst) { throw "Missing function: $inventoryFunctionName" }
             Invoke-Expression ('function script:' + $inventoryFunctionName + ' ' + $inventoryFunctionAst.Body.Extent.Text)
         }
-        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Get-CleanupHighImpactClasses','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Test-CleanupCandidateMatchesSelectedSnapshot','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
+        foreach ($name in @('Get-ToolDataOwnerSid','Set-ProtectedBackupAcl','Test-ProtectedDirectoryAcl','Get-SelectedCleanupIds','Test-CleanupHighImpactCandidate','Test-CleanupScanScopeIncludes','Get-CleanupRecordComponentScope','Test-CleanupRecordMatchesScope','Get-ScopedCleanupCandidates','ConvertTo-CleanupCanonicalNode','Get-CleanupCandidateSnapshotHash','Set-CleanupCandidateSnapshotHashes','Get-CleanupCandidateSetSha256','New-CleanupScanSnapshot','Get-ThirdPartyNormalizedInstallRoot','Test-ThirdPartyArtifactPath','Get-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyArtifactExecutionIdentity','Test-ThirdPartyApplicationPathScope','Get-ThirdPartyHostsUpdate','Get-ThirdPartyGenericRemediationPlan','Get-ThirdPartyLicenseStatePaths','Get-ThirdPartyRemediationPlan','Get-ThirdPartyAssessmentStatusLabel','Test-ThirdPartyApplicationManualArtifactQuarantineEligible','Test-ThirdPartyApplicationCleanupEligible','Test-ThirdPartyApplicationGuidedRemediationEligible','Get-ThirdPartyManualUninstallPlan','Get-ThirdPartyLicenseCandidates','Connect-ThirdPartyApplicationsToCandidates','New-RemediationStateRecord','Set-RemediationStateRecord','Resolve-RemediationPostCheckState','Get-OfficeKmsPathKey','Get-OfficeKmsTargetIdentity','Get-OfficeKmsHostOverrideIdentity','New-CleanupItem','Get-ThirdPartyCandidateSafePlan','Expand-SelectedCleanupCandidates','Get-DryRunRemediationPlan','Add-ThirdPartyVerification','Test-CleanupScopeReady','Test-CleanupKnownActivatorText','Get-LicenseChannel','Test-ApprovedKms','Get-ThirdPartyEvidenceTargets','Get-ThirdPartyCorrelationTokens','Get-WindowsOfficialLicenseOutcome','Get-OfficeOfficialLicenseOutcome','Get-ThirdPartyOfficialLicenseOutcomes','Get-CleanupNextActions','Test-CleanupCandidateMatchesSelectedSnapshot','Get-CleanupPostVerificationItems','Get-CleanupPostVerificationOutcome')) {
             Import-CleanupFunctionForFixture $name
         }
         $broadRootFixture = [pscustomobject]@{ InstallLocation=$env:ProgramFiles; RepresentativePath='' }
@@ -802,7 +802,7 @@ No licenses found.
                 SourceSnapshotId=[string]$fixtureSnapshot.SnapshotId
                 SourceCandidateSetSha256=[string]$fixtureSnapshot.CandidateSetSha256
                 SelectedCandidates=@([pscustomobject][ordered]@{ Id='application|fixture'; SnapshotSha256=[string]$fixtureCandidate.SnapshotSha256 })
-                ConfirmationClasses=@(); HighImpactConfirmed=$true
+                HighImpactConfirmed=$true
             } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $script:SelectionFile -Encoding UTF8
             $script:SelectionSha256 = (Get-FileHash -LiteralPath $script:SelectionFile -Algorithm SHA256).Hash
             function script:Test-ProtectedDirectoryAcl { param([string]$Path,[switch]$AllowCurrentUserForUserScope); return $true }
@@ -816,12 +816,12 @@ No licenses found.
             if (@(Get-SelectedCleanupIds).Count -ne 0 -or [bool]$script:SelectionAccepted -or [string]$script:SelectionErrorCode -ne 'SelectionDigestMismatch') {
                 Fail 'SelectionFile bị đổi sau khi broker bind digest không bị từ chối fail-closed.'
             }
-            $highImpactClasses = @(Get-CleanupHighImpactClasses -Candidates @(
+            $highImpactCandidates = @(
                 [pscustomobject]@{ Type='License'; Kind='WindowsKmsLicense'; PlanItems=@() },
                 [pscustomobject]@{ Type='Application'; Kind='ThirdPartyCompleteUninstall'; ManualUninstallAllowed=$true; PlanItems=@() },
                 [pscustomobject]@{ Type='File'; Kind='ThirdPartyUnauthorizedArtifact'; PlanItems=@([pscustomobject]@{ Type='File'; Restorable=$false }) }
-            ))
-            if (($highImpactClasses -join '|') -ne 'ApplicationUninstall|LicenseMutation|NonRestorableRemoval') {
+            )
+            if (@($highImpactCandidates | Where-Object { Test-CleanupHighImpactCandidate $_ }).Count -ne 3) {
                 Fail 'Phân loại confirmation tác động cao không khóa đủ license/uninstall/removal.'
             }
             Import-CleanupFunctionForFixture 'Test-ProtectedDirectoryAcl'

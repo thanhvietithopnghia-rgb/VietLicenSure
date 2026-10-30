@@ -225,11 +225,11 @@ function Show-DeepCleanupSelection {
         $summary = Get-DashboardText "cleanup.selection.summary" @($selectedIds.Count, $list.Items.Count, $licenseWarning)
         $answer = [System.Windows.Forms.MessageBox]::Show($summary, (Get-DashboardText "cleanup.selection.finalTitle"), "YesNo", "Warning")
         if ($answer -eq [System.Windows.Forms.DialogResult]::Yes) {
-            $highImpactClasses = @(Get-CleanupHighImpactClasses -Candidates $selectedObjects)
+            $highImpact = [bool](@($selectedObjects | Where-Object { Test-CleanupHighImpactCandidate $_ }).Count -gt 0)
             $highImpactConfirmed = $true
-            if ($highImpactClasses.Count -gt 0) {
+            if ($highImpact) {
                 $highImpactAnswer = [System.Windows.Forms.MessageBox]::Show(
-                    (Get-DashboardText 'cleanup.selection.highImpactConfirm' @(($highImpactClasses -join ', '))),
+                    (Get-DashboardText 'cleanup.selection.highImpactConfirm'),
                     (Get-DashboardText 'cleanup.selection.highImpactTitle'),
                     [System.Windows.Forms.MessageBoxButtons]::YesNo,
                     [System.Windows.Forms.MessageBoxIcon]::Warning,
@@ -239,7 +239,7 @@ function Show-DeepCleanupSelection {
             if (-not $highImpactConfirmed) { return }
             $chooser.Tag = [pscustomobject]@{
                 Confirmed=$true; SelectedIds=$selectedIds; ScanScope=$ScanScope; Navigation="Continue"
-                ConfirmationClasses=@($highImpactClasses); HighImpactConfirmed=$highImpactConfirmed
+                HighImpactConfirmed=$highImpactConfirmed
             }
             $chooser.Close()
         }
@@ -335,8 +335,8 @@ function Start-CleanupDeep {
             throw (Get-DashboardText 'cleanup.selection.snapshotCountMismatch')
         }
         $selectedObjectsForConfirmation = @($scopedCleanupItems | Where-Object { @($selection.SelectedIds) -contains [string]$_.Id })
-        $confirmationClasses = @(Get-CleanupHighImpactClasses -Candidates $selectedObjectsForConfirmation)
-        if ($confirmationClasses.Count -gt 0 -and
+        $highImpact = [bool](@($selectedObjectsForConfirmation | Where-Object { Test-CleanupHighImpactCandidate $_ }).Count -gt 0)
+        if ($highImpact -and
             (-not $selection.PSObject.Properties['HighImpactConfirmed'] -or -not [bool]$selection.HighImpactConfirmed)) {
             throw (Get-DashboardText 'cleanup.selection.highImpactRequired')
         }
@@ -348,8 +348,7 @@ function Start-CleanupDeep {
             SourceCandidateSetSha256=([string]$script:cleanupScanSnapshot.CandidateSetSha256).ToUpperInvariant()
             SelectedCandidates=@($selectedCandidateSnapshots)
             ScanScope=$script:cleanupScanScope
-            ConfirmationClasses=@($confirmationClasses)
-            HighImpactConfirmed=[bool]($confirmationClasses.Count -eq 0 -or [bool]$selection.HighImpactConfirmed)
+            HighImpactConfirmed=[bool](-not $highImpact -or [bool]$selection.HighImpactConfirmed)
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:cleanupSelectionFile -Encoding UTF8
         $selectionSha256 = (Get-FileHash -LiteralPath $script:cleanupSelectionFile -Algorithm SHA256 -ErrorAction Stop).Hash.ToUpperInvariant()
         $privacyArgument = if ($script:cleanupRedactSensitive) { " -RedactSensitive" } else { "" }

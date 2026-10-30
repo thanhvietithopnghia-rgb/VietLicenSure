@@ -679,43 +679,32 @@ function Test-ToolEnterpriseLoopbackAddress {
 
 function Resolve-ToolEnterprisePrivateIPv4Address {
     param([Parameter(Mandatory = $true)][string]$Address)
-
-    $candidates = New-Object System.Collections.Generic.List[string]
     $parsed = $null
     if ([Net.IPAddress]::TryParse($Address, [ref]$parsed)) {
-        if ($parsed.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork) {
-            [void]$candidates.Add($parsed.ToString())
-        }
+        $resolved = @($parsed)
     } else {
-        try {
-            foreach ($resolved in @([Net.Dns]::GetHostAddresses($Address))) {
-                if ($resolved.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork) {
-                    [void]$candidates.Add($resolved.ToString())
-                }
-            }
-        } catch {}
+        try { $resolved = @([Net.Dns]::GetHostAddresses($Address)) } catch { $resolved = @() }
     }
-    $unique = @($candidates | Sort-Object -Unique)
-    if ($unique.Count -eq 0) { throw (Get-ToolEnterpriseText "enterpriseCore.error.serverAddressInvalid") }
-    foreach ($candidate in $unique) {
-        if (-not (Test-ToolEnterprisePrivateIPv4Address -Address $candidate) -and
-            -not (Test-ToolEnterpriseLoopbackAddress -Address $candidate)) {
-            throw (Get-ToolEnterpriseText "enterpriseCore.error.serverAddressInvalid")
-        }
+    $ipv4 = @($resolved | Where-Object { $_.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork } |
+        ForEach-Object { $_.ToString() } | Sort-Object -Unique)
+    if ($ipv4.Count -eq 0 -or @($ipv4 | Where-Object {
+        -not (Test-ToolEnterprisePrivateIPv4Address $_) -and -not (Test-ToolEnterpriseLoopbackAddress $_)
+    }).Count -gt 0) {
+        throw (Get-ToolEnterpriseText "enterpriseCore.error.serverAddressInvalid")
     }
-    return [string]$unique[0]
+    return [string]$ipv4[0]
 }
 
 function Test-ToolEnterprisePrivateCidr {
     param([Parameter(Mandatory = $true)][string]$Cidr)
     try {
         $info = Get-ToolEnterpriseCidrInfo -Cidr $Cidr
-        $network = ConvertFrom-ToolEnterpriseIPv4UInt32 -Value ([uint32]$info.NetworkValue)
-        $broadcast = ConvertFrom-ToolEnterpriseIPv4UInt32 -Value ([uint32]$info.BroadcastValue)
-        return [bool](
-            ((Test-ToolEnterprisePrivateIPv4Address -Address $network) -and (Test-ToolEnterprisePrivateIPv4Address -Address $broadcast)) -or
-            ((Test-ToolEnterpriseLoopbackAddress -Address $network) -and (Test-ToolEnterpriseLoopbackAddress -Address $broadcast))
-        )
+        $bounds = @(@($info.NetworkValue,$info.BroadcastValue) | ForEach-Object {
+            ConvertFrom-ToolEnterpriseIPv4UInt32 -Value ([uint32]$_)
+        })
+        return [bool](@($bounds | Where-Object {
+            -not (Test-ToolEnterprisePrivateIPv4Address $_) -and -not (Test-ToolEnterpriseLoopbackAddress $_)
+        }).Count -eq 0)
     } catch { return $false }
 }
 
