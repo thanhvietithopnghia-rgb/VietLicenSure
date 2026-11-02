@@ -1,0 +1,89 @@
+{
+    "SchemaVersion":  "1.0",
+    "PublicationDate":  "2026-11-02",
+    "DisclosureClass":  "ProprietarySourceAvailable",
+    "OpenSource":  false,
+    "License":  "PARTIAL-SOURCE-LICENSE.txt",
+    "ProductVersion":  "v5.0",
+    "ArtifactSha256":  "4D0547427734B061C663A696C8CDDF4303CA4379252F4E524EFC575887DD5A54",
+    "TestedSourceSnapshot":  "807103978D31A7260E8FEF87C4B2415D411034B1",
+    "ProvenanceBundle":  "81D7721D1E30758E8E83B55393B6D510A6D89C33",
+    "PublicMetadataCommit":  "FE3FF5E1E865020742C8E9F017785E3744A94FA9",
+    "IndependentReviewStatus":  "NotReviewed",
+    "ExternalValidity":  "NotEstablished",
+    "FileCount":  12,
+    "Files":  [
+                  {
+                      "Path":  "partial-source/README.md",
+                      "Size":  515,
+                      "Sha256":  "047A359521C996B09913EE5BD49BADBABBC481677F833D578A98448C3888D067",
+                      "Category":  "DisclosureDocumentation"
+                  },
+                  {
+                      "Path":  "partial-source/reporting/REPORT-SCHEMA-v1.6.md",
+                      "Size":  10342,
+                      "Sha256":  "FA889E7BA4B4F46B8DB2124C9739A71DC24D5EFCD558C2FB6742DAA0F537C527",
+                      "Category":  "ReportingPolicy"
+                  },
+                  {
+                      "Path":  "partial-source/reporting/REPORT-VIEWER-POLICY-v1.md",
+                      "Size":  1289,
+                      "Sha256":  "81770B7DE28F179ED02A54C71FE56D50EB1F0859D8809B9BD5BD8E36EF1F6491",
+                      "Category":  "ReportingPolicy"
+                  },
+                  {
+                      "Path":  "partial-source/reporting/Tool-OfflinePolicy.ps1",
+                      "Size":  7125,
+                      "Sha256":  "EA4918D09B665453B1312493652E554EDBA0DCF07263EE2D1FAB6E702B8B0210",
+                      "Category":  "ReportingPolicy"
+                  },
+                  {
+                      "Path":  "partial-source/reporting/Tool-ReportSchema.ps1",
+                      "Size":  7150,
+                      "Sha256":  "EA8E6DCD7DEEE638477B45EF9A34555ECF551287A4D3713B91AC7865C46E1436",
+                      "Category":  "ReportingPolicy"
+                  },
+                  {
+                      "Path":  "partial-source/schemas/asset-registry-schema-v1.0.json",
+                      "Size":  4022,
+                      "Sha256":  "A97E207B7A397B1196C6EF639C27ADA176BF94D00F99CBA7D56953AF2EEFC790",
+                      "Category":  "PublicSchema"
+                  },
+                  {
+                      "Path":  "partial-source/schemas/detection-finding-schema-v1.0.json",
+                      "Size":  1734,
+                      "Sha256":  "1DCFF8D7DFA2D5C7488F81C3B3127344CD84523E97D5C0EBB36313CA95E44EB7",
+                      "Category":  "PublicSchema"
+                  },
+                  {
+                      "Path":  "partial-source/verifiers/SYNC-RELEASE-PAGES.ps1",
+                      "Size":  3505,
+                      "Sha256":  "DD55197E1FEC2BC2C622DD4B52499F72C209BB1E2EC3D7C6F870C1B472A4FD94",
+                      "Category":  "DocumentationVerifier"
+                  },
+                  {
+                      "Path":  "partial-source/verifiers/VERIFY-NO-SIGNING-SECRETS.ps1",
+                      "Size":  2582,
+                      "Sha256":  "35E209F8FF9A6525527F8E6007816E689609B145C91116F16BFCE40EA260B0D6",
+                      "Category":  "DocumentationVerifier"
+                  },
+                  {
+                      "Path":  "partial-source/verifiers/VERIFY-PAGES.ps1",
+                      "Size":  13632,
+                      "Sha256":  "2855D6C99E6F57CC02FF6310BD1EC8CA37ECE110F2FB4D51ADE3E09C198F186B",
+                      "Category":  "DocumentationVerifier"
+                  },
+                  {
+                      "Path":  "partial-source/verifiers/VERIFY-PAGES-RESPONSIVE.mjs",
+                      "Size":  4702,
+                      "Sha256":  "944CCDB5D49B812F7B8DDB54A0F4937D0C5EFFF17A08220429DC434307C5002B",
+                      "Category":  "DocumentationVerifier"
+                  },
+                  {
+                      "Path":  "partial-source/verifiers/VERIFY-REPORT-SCHEMA.ps1",
+                      "Size":  51556,
+                      "Sha256":  "5A378C2DF551994DE76825AF21C16CA135EA638F8F48A43BED552D3F1A09AC61",
+                      "Category":  "DocumentationVerifier"
+                  }
+              ]
+}

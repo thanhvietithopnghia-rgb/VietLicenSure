@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thanhvietithopnghia-rgb.github.io/VietLicenSure/schemas/detection-finding-v1.0.json",
+  "title": "VietLicenSure canonical Finding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["SchemaVersion", "RuleId", "RuleRevision", "ProductScope", "FindingCode", "State", "Confidence", "ConfidenceScope", "Risk", "TechnicalConclusion", "TamperingConclusion", "EntitlementConclusion", "OverallVerdict", "CorrelationCode", "EvidenceSourceCount", "Evidence", "SourceCoverage", "Explanation", "Recommendation", "Limitation"],
+  "properties": {
+    "SchemaVersion": { "const": "1.0" },
+    "RuleId": { "type": "string", "pattern": "^VLS-(WIN|OFF|SW)-[A-Z0-9]+-[0-9]{3}$" },
+    "RuleRevision": { "type": "integer", "minimum": 1 },
+    "ProductScope": { "enum": ["Windows", "Office", "Software"] },
+    "FindingCode": { "type": "string", "minLength": 1 },
+    "State": { "enum": ["Active", "Residual", "Historical", "Informational", "Unknown", "NotApplicable"] },
+    "Confidence": { "enum": ["Confirmed", "High", "Medium", "Low", "Informational"] },
+    "ConfidenceScope": { "const": "FindingOnly" },
+    "Risk": { "type": "string" },
+    "TechnicalConclusion": { "type": "string" },
+    "TamperingConclusion": { "type": "string" },
+    "EntitlementConclusion": { "type": "string" },
+    "OverallVerdict": { "type": "string" },
+    "CorrelationCode": { "type": "string" },
+    "EvidenceSourceCount": { "type": "integer", "minimum": 0 },
+    "Evidence": { "type": "array" },
+    "SourceCoverage": { "type": "array" },
+    "Explanation": { "type": "string" },
+    "Recommendation": { "type": "string" },
+    "Limitation": { "type": "string" }
+  }
+}

@@ -1,0 +1,25 @@
+VIETLICENSURE CONTROLLED PARTIAL SOURCE LICENSE v1.0
+Effective date: 2026-11-02
+
+Copyright (c) 2026 Thanh Viet. All rights reserved.
+
+The files identified by PARTIAL-SOURCE-MANIFEST.json are made available for
+inspection, security review, interoperability review, and responsible issue
+reporting only. They are proprietary source-available materials and are not
+open-source software.
+
+Permission is granted to view the covered files and to quote short excerpts
+when reasonably necessary for responsible review or issue reporting, provided
+that attribution and this notice are preserved.
+
+Unless the copyright owner gives prior written permission, you may not copy,
+redistribute, mirror, modify, compile, package, publish, sublicense, sell,
+commercialize, create derivative works from, rebrand, or use the covered files
+as training or fine-tuning data. Access to the files grants no patent,
+trademark, trade-secret, or other intellectual-property license.
+
+The materials are provided "AS IS", without warranty of any kind. This license
+does not grant access to VietLicenSure core source code, private build/signing
+infrastructure, credentials, or internal evidence.
+
+For additional rights, contact: thanhvietit.hopnghia@gmail.com

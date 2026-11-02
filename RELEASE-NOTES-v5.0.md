@@ -1,0 +1,186 @@
+# VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
+
+Ngày build kỹ thuật hiện hành: `2026-10-25`
+Ngày phát hành lần đầu: `08/09/2026`
+Nội dung cập nhật đến: `25/10/2026`
+Phiên bản hiển thị: `v5.0`
+Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSigned`; xem nguồn trạng thái duy nhất tại `RELEASE-STATUS-v5.0.md`
+
+## Giới thiệu
+
+> **Kiểm tra bản quyền rõ ràng – Quản lý hệ thống chủ động – An tâm sử dụng.**
+
+VietLicenSure v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9. Dự án được đổi tên từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống** để phản ánh phạm vi mới: kiểm tra Windows, Microsoft Office/Microsoft 365, phần mềm đã cài, cấu hình và dữ liệu kiểm kê trên một quy trình thống nhất.
+
+## Thông tin tác giả
+
+**Thanh Việt — Tác giả & Nhà phát triển VietLicenSure**
+
+Thanh Việt là tác giả và nhà phát triển chính của VietLicenSure, trực tiếp phụ trách thiết kế, phát triển, kiểm thử và hoàn thiện các phiên bản của dự án.
+
+VietLicenSure được xây dựng theo định hướng an toàn, minh bạch, bảo vệ quyền riêng tư và có khả năng kiểm chứng, hỗ trợ người dùng kiểm tra trạng thái bản quyền Windows, Office/Microsoft 365, rà soát phần mềm đã cài đặt, thông tin hệ thống và các dấu hiệu liên quan đến cấu hình kích hoạt.
+
+Dự án hướng đến một công cụ kiểm tra kỹ thuật tin cậy, rõ ràng và thận trọng, giúp người dùng dễ dàng nắm bắt tình trạng bản quyền và phần mềm trên thiết bị của mình.
+
+Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`License` — giấy phép/bản quyền phần mềm) và **Sure** (rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật).
+
+## Những nâng cấp cốt lõi từ v4.9 lên v5.0
+
+- **Sửa lỗi nâng quyền:** launcher chuyển đúng đường dẫn EXE thực tế cho Elevated Broker, khôi phục chức năng Quản lý giấy phép hợp lệ khi chạy bằng tài khoản thường và vẫn khóa an toàn nếu không xác minh được launcher.
+- **Giao diện và trải nghiệm:** khởi động nhanh hơn, bố cục thích ứng DPI, hỗ trợ Sáng/Tối, điều hướng rõ ràng và mở thẳng đúng chức năng.
+- **Kiểm tra Windows, Office và phần mềm:** ba mức Quick, Standard và Deep; mở rộng nguồn kiểm kê; phân biệt trạng thái kích hoạt, loại giấy phép, lỗi đọc dữ liệu và trường hợp chưa đủ bằng chứng.
+- **Phân tích và quản lý:** xếp ưu tiên Cao–Trung bình–Thấp, tìm kiếm, lọc, so sánh lần quét, timeline và hỗ trợ quản lý nhiều thiết bị.
+- **Khắc phục an toàn:** tách phạm vi Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, sao lưu, xác nhận đúng mục tiêu, hậu kiểm và rollback.
+- **Báo cáo và quyền riêng tư:** xuất HTML/PDF/JSON/XML/CSV, che thông tin nhạy cảm theo mặc định, tạo gói hỗ trợ an toàn và không tự tải dữ liệu máy lên Internet.
+- **Cập nhật và chuỗi tin cậy:** kênh Official Self-Signed xác minh manifest CMS, SHA-256, Authenticode và signer tự ký đã ghim; self-update EXE giữ tắt và dùng quy trình `ManagedDeployment` hoặc tải thủ công.
+- **Trợ lý và tài liệu:** lập chỉ mục hướng dẫn cùng lịch sử phiên bản Việt–Anh; định tuyến câu hỏi tự nhiên theo ý định, dùng ngữ cảnh câu nối tiếp và hỏi lại khi câu mơ hồ thay vì ghép các đáp án sai chủ đề.
+
+## Cập nhật hiện hành ngày 25/10/2026
+
+- **Khôi phục quét Windows/Office/Phần mềm:** cầu nối nâng quyền chấp nhận đúng hợp đồng `-NoOpen` và đối chiếu gia tăng nhưng vẫn từ chối tham số thừa, đường dẫn không an toàn hoặc cặp baseline không hợp lệ; lỗi mã 87 do lệch allowlist không còn chặn các tác vụ quét hợp lệ.
+- **Thời gian và dữ liệu rõ ràng:** giao diện tách “lần thử gần nhất” khỏi “kết quả thành công gần nhất”; lần thử ngày hiện tại bị lỗi không còn làm kết quả cũ ngày 23/10 trông như dữ liệu vừa quét, và baseline cũ được gắn nhãn “dữ liệu cũ”.
+- **Vai trò dịu và phản hồi nhanh:** ba nút vai trò dùng nền trung tính với viền/chữ nhận diện; vai trò đang chọn dùng tint nhẹ, viền đậm và không bị làm mờ. Bộ chọn vai trò xuất hiện trước validation nặng, đổi vai trò không đọc lại toàn bộ lịch sử báo cáo và tác vụ vẫn khóa fail-closed cho tới khi validation hoàn tất.
+
+- **Giao diện theo vai trò:** khi mở ứng dụng, người dùng chọn Cá nhân, Hỗ trợ kỹ thuật hoặc Kiểm kê doanh nghiệp. Cả ba dùng chung giao diện Windows, engine và dữ liệu hiện hành; dashboard chỉ hiển thị đúng chức năng của vai trò đã chọn. Đổi tên không mở rộng quyền, không thay đổi logic nội bộ `personal/helpdesk/itam` và không thay đổi nguyên tắc Offline.
+
+- **Kết quả dùng chung theo máy:** vai trò Cá nhân hiển thị các tác vụ theo một cột, còn tiến trình, trạng thái và tóm tắt kết quả nằm ngay bên phải. Windows/Office hiển thị kết luận và mức rủi ro; Phần mềm hiển thị số lượng đã cài, trả phí, miễn phí, chưa xác định và dấu hiệu can thiệp. HTML chỉ mở khi bấm Xem chi tiết; Kiểm tra toàn bộ và Cấu hình phần cứng vẫn mở kết quả ngay. Mỗi máy/phạm vi chỉ có một kết quả hiện hành dùng chung giữa ba vai trò. Khi kết quả còn mới, lần kiểm tra sau hiển thị ngay baseline rồi chạy đối chiếu Quick gia tăng; chỉ quét toàn phần khi baseline thiếu, cũ, khác build/nguồn hoặc không khớp máy. Tác vụ trùng đang chờ/chạy bị chặn fail-closed.
+
+- **Quy trình theo từng máy và theo dõi Agent:** liên kết quét, đánh giá, xử lý có xác nhận, kiểm tra lại và báo cáo; hiển thị trạng thái/lỗi tác vụ, ngăn lệnh trùng, thử lại có kiểm soát và giữ kết quả khi mất kết nối. Đã kiểm localhost phục hồi inventory; bản mới vẫn cần QA trên EXE đã ký trước khi phát hành.
+
+- **Toàn vẹn gói nguồn:** checksum TOOL/SOURCE/SOURCE-PACKAGE được tái tạo từ đúng byte canonical đã stage theo thứ tự phụ thuộc và được kiểm closed-set trong handoff/CI; loại bỏ sai lệch CRLF/LF giữa Windows worktree và `git archive`.
+
+- **Publisher trung tính:** EXE chuyển sang signer Authenticode tự ký `CN=Thanh Viet - VietLicenSure Code Signing`, không còn mang tên sản phẩm lịch sử v4.9. Signer detached CMS cũ được giữ riêng làm trust anchor nội dung và ủy quyền signer EXE mới trong provenance/update manifest; hai public certificate, hai thumbprint và hai SHA-256 được kiểm độc lập. Kênh vẫn là Official Self-Signed, không phải public-CA/EV/Store-signed, nên SmartScreen vẫn có thể cảnh báo ứng dụng chưa được nhận diện.
+
+- Tối ưu **khởi động Giai đoạn 1**: launcher hiện splash phản hồi ngay; cửa sổ chính không còn chờ Report Export, Plugin Engine, Trợ lý, Asset Registry và Software Inventory nạp trước. Năm module này được nạp tuần tự sau `Window.Shown`, mọi thao tác giữ khóa đến khi validation hoàn tất và lỗi lazy-load vẫn fail-closed. Đo source cùng máy giảm cold launch từ 16,25 giây xuống 4,40 giây; warm launch từ 3,91 giây xuống 3,35 giây.
+- Khóa Central Dashboard về **loopback-only**: HTML/CSS/JS/API từ địa chỉ không phải loopback bị từ chối fail-closed; agent LAN vẫn dùng giao thức envelope mã hóa hiện có.
+- Bearer token chỉ đi trong URL fragment khi mở Dashboard, fragment được xóa ngay sau khi tải và token chỉ tồn tại trong bộ nhớ trang; không còn `sessionStorage`/`localStorage`. Quản trị từ xa phải đi qua tunnel hoặc reverse proxy HTTPS có trust được quản lý.
+
+- Sửa đối soát **User/Concurrent** theo hướng fail-closed: số thiết bị chỉ còn là quan sát, không bị dùng làm consumption khi chưa có bằng chứng người dùng hoặc phiên đồng thời; kết quả thiếu dữ liệu là `NeedsReview/InsufficientEvidence`.
+- Windows/Office chỉ được ghép quyền sử dụng khi `CatalogProductId`/SKU cụ thể trùng nhau; thiếu hoặc lệch edition/version trả `NeedsReview`, không kết luận `Compliant`.
+- Gộp các entitlement `Device` tương thích thành một pool: nhiều hợp đồng cùng sản phẩm chỉ tiêu thụ fleet một lần; pool 5+5 đối chiếu đúng 10 thiết bị và chỉ sinh một cảnh báo vượt pool khi có thiết bị thứ 11.
+- Tách chứng từ `Attached` khỏi `Verified`: chỉ chứng từ có người xác minh, thời điểm, nguồn và phạm vi mới được dùng làm bằng chứng quyền sử dụng; tệp chỉ đính kèm luôn trả `NeedsReview`.
+- Công khai độ phủ kiểm kê `Complete/Partial/Failed`; dữ liệu bị cắt, thiếu quyền hoặc đọc lỗi không còn được hiểu sai là máy sạch hay đủ bằng chứng.
+- Gói mã nguồn loại checksum chỉ dành cho EXE phát hành; checksum và manifest nguồn chỉ tham chiếu các byte thực sự nằm trong gói nguồn.
+
+- Sửa bố cục responsive của **Máy chủ/Máy trạm**: tái tạo vùng bo góc sau mỗi lần đổi kích thước, đo đủ chữ Việt/Anh với khoảng an toàn 20 px và tự chia hàng nút máy trạm; không còn chữ bị mask/cắt ở cửa sổ đóng gói.
+- Hoàn thiện **Asset Registry** trong tab Máy chủ: tìm/lọc tài sản, gán hoặc chuyển giao, thu hồi có xác nhận và xem lịch sử bàn giao append-only. Tab Máy trạm vẫn chỉ đọc, hiển thị Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối; không thêm điều khiển từ xa.
+
+## Cập nhật ngày 09/10/2026
+
+- Sửa launcher Elevated Broker để luôn truyền đường dẫn tiến trình EXE thật đã được kiểm chứng; chức năng **Quản lý giấy phép hợp lệ** không còn dừng với `ElevatedBrokerLauncherMissing` khi chạy bằng tài khoản thường.
+- Tích hợp **Asset Registry 1.0** vào Agent/Server: Device ID ổn định không phụ thuộc IP, hostname hoặc người dùng; chỉ gửi digest phần cứng đã băm, không gửi serial/UUID thô; matching xung đột hoặc mơ hồ luôn fail-closed.
+- Central Dashboard chỉ đọc hiển thị tham chiếu tài sản, trạng thái ghép, người/phòng ban đang được giao và số sự kiện bàn giao; API vẫn che DeviceId, AssetId và digest nội bộ.
+
+- Chuẩn hóa `Finding 1.0` và Detection Engine dùng chung cho License Advisor/Software Inventory; regression bảo đảm không đổi kết luận legacy.
+- Tạo baseline bảo mật v5.0 hiện hành và chuyển tài liệu v4.8/v4.9 vào khu archive để tách lịch sử khỏi assurance hiện tại.
+
+- Công tắc **Online** tải/xác minh danh mục ký số trước rồi kiểm tra phiên bản ứng dụng; không tự tải/cài bản mới, quét máy, tạo báo cáo hoặc hỏi mức riêng tư.
+
+- Bổ sung **Central Dashboard** Việt/Anh chính thức, chỉ đọc trong LAN: Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key; phiên ngắn hạn yêu cầu mã quản trị, khóa theo địa chỉ truy cập đầu tiên và API chỉ trả allow-list không chứa full key, ClientId đầy đủ, secret hoặc đường dẫn báo cáo.
+- Bổ sung **License Compliance** chính thức: License Advisor, hồ sơ quyền sử dụng/tham chiếu chứng từ lưu cục bộ, cấp phát máy/người dùng và đối chiếu Purchased–Assigned–Installed–Available; cảnh báo vượt số lượng/hết hạn và Dashboard chỉ đọc hiển thị License Assurance mà không lộ đường dẫn chứng từ hoặc định danh nhạy cảm.
+- Chuẩn hóa License Advisor bằng **Rule ID ổn định, nguồn bằng chứng, confidence và correlation**; tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Mục **Giải thích phát hiện** trình bày bằng chứng, khuyến nghị và giới hạn mà không thêm nguồn quét hay kết luận vi phạm chỉ từ KMS/một dấu hiệu đơn lẻ.
+- Nâng báo cáo lên **Schema 1.6**: PDF/HTML hiển thị Build ID, Rule ID, confidence/correlation, bốn lớp kết luận, giải thích và khuyến nghị; bảng Office nêu rõ build đang cài so với catalog và giấy phép đang dùng. Dữ liệu OSPP/SKU thô vẫn nằm trong JSON/XML để kiểm toán nhưng không làm PDF khó đọc; test fixture và `node_modules/ssh2/lib/keygen.js` không còn bị tính là bằng chứng crack.
+
+- Báo cáo chứng chỉ dùng Authenticode + timestamp + signer ghim; `NotTimeValid` không tự trở thành lỗi khi chữ ký có timestamp hợp lệ, còn launcher Official Self-Signed đúng pin không bị ghi `UnknownError`.
+- Forensics tách kích hoạt kỹ thuật khỏi quyền sử dụng, không đòi KMS cho MAK, không cộng điểm từ W32Time/SPP hoặc file MAS tồn dư khi thiếu bằng chứng hoạt động.
+- Fleet đổi nhãn `Licensed` thành `Activated`, công bố quyền sử dụng chưa xác minh và phát hiện thay đổi Last5 giữa hai lần inventory mà không lưu full key.
+- Máy chủ LAN đã bật tự chạy lại cùng Windows; Agent máy trạm chạy sau boot/đăng nhập/thức dậy và mỗi giờ, tái dùng ClientId/secret cũ nên không cần mã ghép nối mới sau reboot. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy.
+- Mỗi phiên vẫn khởi động Offline; sau khi người dùng bật Online, VietLicenSure xác minh/cập nhật catalog ký số rồi kiểm tra phiên bản, nhưng không tự tải/cài, quét, tạo báo cáo, hỏi mức riêng tư hoặc upload inventory.
+- Bộ dựng tài liệu vô hiệu hóa cache renderer cũ và khóa đúng 56 mục với một `Tổng quan/Overview`.
+
+- Thống nhất trạng thái phát hành thành **Official Self-Signed**; trạng thái nội bộ là `OfficialSelfSigned`, không còn dùng nhãn `ManagedSigned` hoặc `Pilot`.
+- Giữ nguyên chứng thư tự ký đã ghim, Authenticode, RFC 3161 timestamp, provenance CMS và cơ chế fail-closed; không tuyên bố public-CA/EV/Store trust.
+
+- Giữ nguyên tên và phiên bản công khai `VietLicenSure v5.0`; không tạo v5.1 hoặc nhãn bản dựng mới trong giao diện.
+- Tách hai monolith `Giao-Dien.ps1` và `windows-license-compliance-cleanup.ps1` thành chín thư viện chức năng; giữ nguyên entrypoint, tham số CLI và toàn bộ hành vi hiện có, đồng thời bổ sung verifier cấu trúc/source hợp thành.
+- Nâng Trợ lý Offline từ khớp từ khóa đơn sang định tuyến ý định có độ tin cậy: ưu tiên cụm từ đầy đủ, hiểu câu nối tiếp, giảm trọng số từ chung và hỏi làm rõ khi thiếu đối tượng hoặc có nhiều chủ đề gần điểm nhau.
+- Bỏ dải màu riêng bên trái của năm thẻ trạng thái Windows, Office, Bản đang dùng, Toàn vẹn và Việc cần xử lý; mỗi thẻ dùng viền màu 2 px bao quanh theo đúng màu chức năng, kèm nền tint tương ứng.
+- Khóa giao diện mới bằng verifier chống tái xuất hiện dải trái; kiểm tra Light/Dark, bàn phím, MSAA, DPI 100–200% và High Contrast trên VM sạch.
+- Hoàn thiện backup/restore fail-closed: scope-lock, HMAC, phát hiện dữ liệu/manifest bị sửa, rollback và hậu kiểm không mở rộng ngoài mục tiêu.
+- Kiểm chứng runtime EXE đóng gói dưới token Medium, Offline, không thay đổi policy; UAC secure desktop được gọi thật bằng `RunAs` và hủy an toàn với mã `1223` trước remediation.
+- Chuỗi Official Self-Signed dùng cùng danh tính ký cho provenance/CMS/Authenticode, có RFC3161 timestamp và checksum đóng; đây là phát hành chính thức self-signed, không phải public-CA/EV/Store-signed.
+- Công bố kênh **Official Self-Signed** theo quyết định của chủ sở hữu; giữ trust mode kỹ thuật `OfficialSelfSigned`, tắt self-update EXE và công bố rõ cảnh báo SmartScreen/trust anchor.
+
+## Chính sách và kênh hỗ trợ của v5.0
+
+- Công bố rõ lý do chuyển sang mô hình mã nguồn có kiểm soát từ v4.9: tác giả phát hiện VietLicenSure hoặc phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên/đóng gói và phát hành thành phần mềm khác khi chưa được cho phép hay ủy quyền.
+- Xác định phạm vi kiểm soát gồm mã triển khai, giao diện, logic nghiệp vụ, quy tắc nhận diện/khắc phục, build–đóng gói–phát hành, kiểm thử và tài liệu kỹ thuật nội bộ.
+- Công bố quy trình yêu cầu truy cập bằng văn bản, phạm vi quyền được cấp và nguyên tắc quyền xem không đồng nghĩa quyền sử dụng lại.
+- Công bố lộ trình mở mã nguồn dự kiến theo bốn giai đoạn từ nay đến sau 07/2027; các mốc không phải cam kết cứng và có thể thay đổi theo đánh giá rủi ro.
+- Bổ sung kênh tương tác hai chiều: GitHub Issues cho báo lỗi, GitHub Discussions cho hỏi đáp/đề xuất và Private Security Advisory cho lỗ hổng bảo mật.
+- Đồng bộ duy nhất tên `VietLicenSure v5.0` trong ứng dụng, tài liệu, bộ cập nhật và các kênh công khai.
+
+## Cập nhật kỹ thuật ngày 05/09/2026
+
+- Sửa Trung tâm Báo cáo và Trung tâm Bảo đảm để dùng palette an toàn trên cả giao diện Sáng/Tối.
+- Khi xử lý, mở ngay timeline tiến trình riêng nhưng vẫn giữ và cập nhật khu Hoạt động gần đây.
+- Cho phép chọn đúng phần mềm Paid/Subscription/Trial; lựa chọn thủ công và hậu kiểm được khóa theo chính lineage đã chọn, không mở rộng sang phần mềm khác hoặc toàn máy.
+- Không hiện thao tác xử lý mục còn lại nếu không có ID còn lại chính xác; bằng chứng mạnh chỉ dừng đúng PID/path/hash rồi cách ly executable sau khi tái xác minh danh tính.
+- Thông báo thiếu chính sách nhà phát hành plugin nay giải thích đây là khóa bảo mật bình thường, chỉ dẫn cấu hình an toàn và không còn hiển thị như lỗi ứng dụng.
+- Đồng bộ Hướng dẫn Việt/Anh, Trợ lý cục bộ và mô tả đủ tám chức năng của Trung tâm Báo cáo & Bảo đảm.
+
+## Cập nhật an toàn ngày 13/09/2026
+
+- Khóa public self-update đối với `Official Self-Signed`; bản mới được thay bằng tải thủ công hoặc triển khai quản trị có xác minh.
+- Updater không còn tự chạy lại EXE bằng token Administrator sau khi cập nhật hoặc khi gặp lỗi; người dùng mở lại VietLicenSure theo cách bình thường.
+- Không chuyển `TOOL_UPDATE_CACHE_ROOT` qua ranh giới UAC, kiểm lại SHA-256 của launcher sau khi tiến trình cũ thoát và giữ backup cùng thư mục đích với tên ngẫu nhiên.
+- Bổ sung regression test để khóa các điều kiện trên và ngăn tái xuất hiện đường nâng quyền qua writable-path race.
+
+## Bằng chứng QA lịch sử ngày 13/09/2026
+
+- Harness4 đã đạt `3/3` nền tảng cho source snapshot lịch sử `291ed82db5f99a36aaf6962a41f09ecdec851320`: Windows 10 22H2, Windows 11 24H2 và Windows 11 25H2.
+- Mỗi nền tảng đạt `11/11` kiểm tra canonical cùng `1/1` kiểm tra updater bổ sung; ba kết quả thô được ghim bằng SHA-256 trong hồ sơ evidence.
+- Phạm vi là hồi quy nguồn, hardening updater và ràng buộc source/metadata/EXE tại thời điểm đó. Không dùng kết quả này cho artifact khác; trạng thái hiện hành chỉ xem tại `RELEASE-STATUS-v5.0.md`.
+
+## Cập nhật lịch sử và bài giới thiệu
+
+- Khôi phục lịch sử đầy đủ của các phiên bản công khai từ v1.0 đến v5.0 trong cả tài liệu tiếng Việt và tiếng Anh.
+- Viết lại mục v5.0 theo hướng ngắn gọn, chỉ nêu các nâng cấp cốt lõi và xác định rõ v5.0 là bản nâng cấp tiếp theo của v4.9.
+- Đồng bộ bài giới thiệu GitHub theo cùng nội dung; không tạo phiên bản mới hoặc nhãn bản dựng nội bộ.
+
+## Nội dung chính của v5.0
+
+- Ba mức quét Quick, Standard và Deep với ngân sách và phạm vi an toàn.
+- Danh sách phần mềm cần xem xét được sắp xếp **Cao → Trung bình → Thấp**.
+- Phần mềm trả phí, thuê bao hoặc dùng thử chưa xác minh luôn được nhắc kiểm tra giấy phép, không tự kết luận vi phạm.
+- Thành phần hệ thống, runtime, codec, extension nền, trình cài đặt, add-in, gói hỗ trợ và trình gỡ driver chỉ nằm trong kiểm kê/báo cáo, không xuất hiện ở cửa sổ xử lý.
+- Catalog Online `1.6.4.0` được rà soát ngày 11/10/2026, có 94 nhóm sản phẩm, ký CMS, kiểm tra schema và chống hạ phiên bản; bản tích hợp cũ vẫn là fallback Offline an toàn cho đến lần build kế tiếp.
+- Mỗi lần mở vẫn mặc định Offline. Sau khi người dùng chủ động bật Online cho phiên hiện tại, VietLicenSure cập nhật/xác minh catalog ký số trước rồi kiểm tra phiên bản ứng dụng; không upload inventory, không tự tải/cài, quét/tạo báo cáo/hỏi mức riêng tư, không có dịch vụ nền và lần mở sau trở lại Offline.
+- Khắc phục tách riêng Windows, Microsoft Office và phần mềm khác; bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm.
+- Báo cáo HTML/PDF/JSON/XML được tạo cục bộ và che định danh phần cứng trong bản chia sẻ mặc định.
+- Hỗ trợ giao diện responsive, DPI cao, Light/Dark, timeline, plugin khai báo có chữ ký, CLI headless và quản trị nhiều máy.
+- Trung tâm **Việc cần xử lý** gom kết quả theo Cao → Trung bình → Thấp và mở đúng thao tác liên quan.
+- Tìm kiếm, lọc và so sánh với lần quét trước cùng chế độ: Mới xuất hiện, Đã hết hoặc Không đổi.
+- Trung tâm sao lưu–khôi phục kiểm tra HMAC/SHA-256 trước khi cho phép khôi phục.
+- Gói hỗ trợ chỉ nhận báo cáo đã che dữ liệu, tạo bản xem trước và loại thông tin nhạy cảm khỏi log chia sẻ.
+- Điều hướng chức năng tách rõ **Trở về** và **Đóng**: Trở về quay đúng bước trước và giữ lựa chọn còn hợp lệ; Đóng kết thúc toàn bộ phiên chức năng rồi trở về màn hình chính.
+- Mọi phần mềm đều có thể dùng **Mở / tìm trang chính thức**: mở URL HTTPS đã xác minh trong catalog hoặc tìm kiếm an toàn theo tên và nhà phát hành khi chưa có URL trực tiếp.
+
+## Toàn vẹn và lưu ý khi chạy
+
+- EXE, provenance, catalog và update manifest đều có chữ ký hoặc hash đối chiếu.
+- Launcher kiểm tra Authenticode, signer được ghim, BuildId và payload trước khi mở thao tác thay đổi hệ thống.
+- Bản hiện tại có Authenticode hợp lệ và timestamp DigiCert nhưng dùng chứng thư tự ký được ghim; Windows vẫn có thể hiện `Unknown publisher` hoặc SmartScreen.
+- Không tắt Defender hoặc SmartScreen để ép chạy tệp không xác minh được.
+- Người dùng đang giữ bản v5.0 cũ có thể tải lại `VietLicenSure-v5.0.exe` và thay tệp; dữ liệu cũ được giữ làm nguồn migration chỉ đọc.
+
+## Giới hạn công khai
+
+- Đây không phải danh tính code-signing public-CA.
+- Gói Microsoft Store được chuẩn bị riêng và chưa thay thế bản `Official Self-Signed` hiện tại.
+
+### Bổ sung theo đợt rà soát hồ sơ 08/09/2026
+
+- Thêm `VERIFY-RELEASE.cmd` và `VERIFY-DISTRIBUTION.ps1`, chạy từ mọi vị trí và kiểm tra tập tệp đóng, JSON, bốn chữ ký CMS exact-byte, manifest, phiên bản, Authenticode, SBOM và provenance.
+- Công bố public certificate `CONTENT-SIGNING-CERTIFICATE.cer` cùng fingerprint SHA-1/SHA-256 để đối chiếu độc lập; không đưa private key vào gói.
+- Chuẩn hóa gói bàn giao hai thư mục với `release-files.sha256`, `source-files.sha256`, `package-files.sha256` và `VERIFY-HANDOFF.cmd`.
+- Bổ sung bản đồ tài liệu v5.0, mô hình đe dọa và hướng dẫn phân biệt lỗi CMS thật với lỗi do chuyển đổi line ending.
+- Thiết kế lại logo theo biểu tượng khiên + chữ V/dấu kiểm, đồng bộ icon EXE, social card và trang chủ; thêm hướng dẫn người mới, bảng so sánh phiên bản, lộ trình và thông tin dự án.
+- `Chưa xác minh` không đồng nghĩa phần mềm vi phạm; cần kiểm tra giấy phép, tài khoản hoặc chứng từ chính thức.
+
+## Enterprise report synchronization
+
+- Read-only investigation and compliance jobs now send refreshed inventory unless NoReport is explicitly selected.
+- Current/Pending inventory and assessment freshness are tracked separately. Delayed/duplicate reports cannot overwrite newer observations; assessment results are bound to the agent-observed license state.
+- Enterprise command labels and synchronization status are available in Vietnamese and English. Historical reports remain separate from current state.
+- Focused synthetic regression: 14/14 assertions passed. This is not a claim of concurrent-writer certification or independent security review.

@@ -1,0 +1,69 @@
+{
+    "SchemaVersion":  "1.0",
+    "Channel":  "stable",
+    "LatestVersion":  "5.0",
+    "MinimumUpdaterVersion":  "4.6.1.0",
+    "PublishedAtUtc":  "2026-10-25T00:00:00Z",
+    "Title":  {
+                  "vi-VN":  "v5.0 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
+                  "en-US":  "v5.0 - Clear source policy and two-way feedback channels"
+              },
+    "Changes":  {
+                    "vi-VN":  [
+                                  "Công bố rõ lý do thay đổi chính sách từ v4.9: phần mềm/phiên bản tiền thân đã bị sao chép, chỉnh sửa, đổi tên hoặc đóng gói và phát hành thành phần mềm khác khi chưa được tác giả cho phép hay ủy quyền; việc kiểm soát mã nguồn nhằm bảo vệ chất xám và nguồn gốc bản phát hành.",
+                                  "Bổ sung kênh tương tác hai chiều chính thức qua GitHub Issues và Discussions; báo cáo lỗ hổng dùng GitHub Security Advisory riêng tư hoặc email tác giả.",
+                                  "Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt-Anh theo từng mục, trả đầy đủ thay đổi của một phiên bản và đối chiếu trực tiếp hai phiên bản mà không suy diễn ngoài hồ sơ.",
+                                  "Khôi phục các mốc phát hành v1 bị lược bỏ, sửa nội dung v1.1-v3.3 theo hồ sơ gốc và nói rõ không có hồ sơ v2.0-v2.3 thay vì tự tạo câu trả lời.",
+                                  "Giải thích mục đích, cách dùng, kết quả và lưu ý an toàn của toàn bộ chức năng: 10 chức năng chính, bốn luồng khắc phục/backup, quản lý giấy phép cục bộ-doanh nghiệp và tám tác vụ Báo cáo \u0026 Bảo đảm; không chỉ riêng OEM.",
+                                  "v5.0 siết danh sách phần mềm: trình cài đặt, add-in, runtime con, gói hỗ trợ và trình gỡ driver chỉ còn trong kiểm kê/báo cáo, không xuất hiện trong màn hình xử lý.",
+                                  "Bản Official Self-Signed chạy trên máy mới: chỉ chấp nhận gốc tự ký chưa được Windows tin cậy khi signer khớp cả SHA-1/SHA-256 đã ghim; tệp bị sửa và mọi lỗi chữ ký khác vẫn bị khóa.",
+                                  "Build Stable chuyển sang fail-closed: bắt buộc chứng thư code-signing CA-issued/HSM, chuỗi tin cậy Windows, RFC3161 timestamp, source commit sạch và provenance CMS hợp lệ.",
+                                  "Catalog có trạng thái Fresh/Warning/Stale/Future/Invalid; plugin bên thứ ba chỉ nhận metadata khai báo đã ký CMS và fingerprint nhà phát hành do quản trị viên ghim.",
+                                  "Bổ sung ba mức Quick/Standard/Deep, giới hạn include/exclude/root an toàn và kiểm soát ngân sách quét.",
+                                  "Giao diện hỗ trợ theme theo hệ thống, dark/light override và PerMonitorV2 DPI.",
+                                  "Bổ sung xuất fleet JSON/CSV/HTML/PDF có redaction, chống CSV injection; CLI headless, script Intune/MDM và ma trận VM Windows 10/11.",
+                                  "Xác thực nguồn gốc bằng Authenticode và manifest provenance ký số; bản bị sửa hoặc đóng gói lại bị khóa cập nhật và thao tác thay đổi hệ thống.",
+                                  "Catalog online 1.6.4.0 bao phủ 94 nhóm, loại thêm gói cài đặt/thành phần hỗ trợ khỏi danh sách xử lý và chỉ chấp nhận dữ liệu khai báo đã ký, field/profile nằm trong allowlist.",
+                                  "Quy trình làm sạch dùng trạng thái rõ ràng, cho phép thử lại và chỉ báo Đã làm sạch khi hậu kiểm xác nhận bằng chứng can thiệp đã hết cùng trạng thái license mục tiêu.",
+                                  "Các chế độ Quét/Báo cáo chỉ đọc; Khắc phục gỡ đúng khóa hoặc Activation ID xấu, bảo toàn bản quyền hợp lệ cùng tồn tại và chỉ cho phép gỡ hoàn chỉnh ứng dụng được chọn khi danh tính MSI/AppX gắn với nguồn đã được xác minh.",
+                                  "Báo cáo mặc định che serial, UUID, Processor ID và Asset Tag; chỉ bản FullInternal do người dùng chủ động chọn mới giữ đầy đủ.",
+                                  "Quét toàn máy yêu cầu UAC, kiểm tra Winmgmt/sppsvc, thử CIM rồi WMI và phân biệt lỗi nguồn dữ liệu với trạng thái chưa kích hoạt.",
+                                  "Kiểm kê bổ sung AppX/MSIX, Winget, shortcut, trình quản lý gói và adapter Autodesk chỉ-đọc; phân biệt bản cài đã xác nhận với portable/tệp còn sót và gộp Adobe Acrobat theo họ sản phẩm.",
+                                  "Quét toàn vẹn thích ứng mở rộng Authenticode trong đúng thư mục sản phẩm khi hosts, firewall hoặc dịch vụ hãng bất thường; bằng chứng không còn lan giữa các sản phẩm Adobe.",
+                                  "Kể từ v4.9, VietLicenSure tiếp tục miễn phí nhưng không phải mã nguồn mở; SOURCE-POLICY-v5.0 công bố lộ trình dự kiến bốn giai đoạn đến và sau 07/2027, không phải cam kết cứng và luôn phụ thuộc đánh giá rủi ro.",
+                                  "Mặc định Offline, không telemetry; manifest cập nhật online phải có chữ ký tách rời từ chứng thư tác giả đã ghim cứng."
+                              ],
+                    "en-US":  [
+                                  "Explains the v4.9 policy change: the software or a predecessor build was copied, modified, renamed or repackaged and released as another product without the author\u0027s permission or authorization; controlled source access protects the author\u0027s work and official-release provenance.",
+                                  "Adds official two-way channels through GitHub Issues and Discussions; vulnerabilities use a private GitHub Security Advisory or the author\u0027s email.",
+                                  "VietLicenSure Assistant indexes every section in the bundled Vietnamese/English guides and histories, returns a recorded version\u0027s full change entry, and compares two versions without inferring undocumented changes.",
+                                  "Restores omitted v1 release milestones, corrects v1.1-v3.3 from the original release records, and explicitly reports that no v2.0-v2.3 record exists instead of inventing an answer.",
+                                  "Explains the purpose, workflow, output, and safety notes of every function: ten main functions, four remediation/backup workflows, local and enterprise license management, and eight Reports \u0026 Assurance actions—not only OEM.",
+                                  "v5.0 further refines the software list: installers, add-ins, runtime subfeatures, support packages, and driver uninstallers remain in inventory/reports but are omitted from the action screen.",
+                                  "The Official Self-Signed build runs on a new PC: an untrusted self-signed root is accepted only when both pinned signer SHA-1/SHA-256 values match; modified files and every other signature error remain blocked.",
+                                  "Stable builds now fail closed and require a CA-issued/HSM code-signing certificate, a valid Windows chain, an RFC3161 timestamp, a clean source commit, and valid CMS provenance.",
+                                  "Catalogs expose Fresh/Warning/Stale/Future/Invalid states; third-party plugins accept only signed declarative metadata from administrator-pinned publisher fingerprints.",
+                                  "Quick, Standard, and Deep scan levels add safe include/exclude/root limits and explicit scan budgets.",
+                                  "The UI follows the system theme, supports dark/light overrides, and declares PerMonitorV2 DPI awareness.",
+                                  "Fleet JSON/CSV/HTML/PDF export adds redaction and CSV-injection guards, with a headless CLI, Intune/MDM scripts, and a Windows 10/11 VM matrix.",
+                                  "Authenticode and a signed provenance manifest verify origin; modified or repackaged builds cannot self-update or perform system-changing actions.",
+                                  "Online catalog 1.6.4.0 covers 94 families, excludes additional installers/support components from the action list, and accepts only signed declarative data with allowlisted fields and profiles.",
+                                  "Cleanup uses explicit states, remains retryable, and reports VerifiedClean only after post-checks confirm that intervention evidence is gone and the target license state is reached.",
+                                  "Scan and report modes are read-only; remediation removes only the selected bad key or Activation ID, preserves coexisting genuine licences, and permits complete removal of an explicitly selected application only through a validated source-bound MSI/AppX identity.",
+                                  "Reports redact serials, UUIDs, Processor IDs, and asset tags by default; only a user-selected FullInternal copy retains them.",
+                                  "Whole-machine scans request UAC, check Winmgmt/sppsvc, try CIM then WMI, and distinguish data-source failures from an unactivated state.",
+                                  "Inventory adds AppX/MSIX, WinGet, shortcuts, package managers, and a read-only Autodesk adapter; it distinguishes confirmed installs from portable/residual files and merges Adobe Acrobat by product family.",
+                                  "Adaptive integrity scanning expands Authenticode checks inside the exact product directory when vendor hosts, firewall rules, or licensing services are abnormal; Adobe evidence no longer leaks across products.",
+                                  "Starting with v4.9, VietLicenSure remains free but is not open source; SOURCE-POLICY-v5.0 publishes a four-stage indicative roadmap through and after July 2027, with no firm-date commitment and risk-gated progression.",
+                                  "Offline remains the default with no telemetry; online update metadata now requires a detached signature from the hard-pinned author certificate."
+                              ]
+                },
+    "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
+    "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe",
+    "DownloadSha256":  "4D0547427734B061C663A696C8CDDF4303CA4379252F4E524EFC575887DD5A54",
+    "DownloadSize":  929472,
+    "AuthenticodeRequired":  true,
+    "SignerThumbprints":  [
+                              "575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62"
+                          ]
+}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">VietLicenSure v5.0</title>
+  <desc id="desc">Kiểm tra Windows, Office và phần mềm với bằng chứng, backup và hậu kiểm.</desc>
+  <defs>
+    <linearGradient id="bg" x1="40" y1="20" x2="1160" y2="610" gradientUnits="userSpaceOnUse"><stop stop-color="#092d62"/><stop offset=".58" stop-color="#0b4fad"/><stop offset="1" stop-color="#087f91"/></linearGradient>
+    <linearGradient id="mark" x1="100" y1="120" x2="350" y2="490" gradientUnits="userSpaceOnUse"><stop stop-color="#24c9dc"/><stop offset="1" stop-color="#1772e8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="20" flood-opacity=".24"/></filter>
+  </defs>
+  <rect width="1200" height="630" rx="38" fill="url(#bg)"/>
+  <circle cx="1110" cy="50" r="230" fill="#fff" opacity=".055"/><circle cx="1085" cy="615" r="310" fill="#fff" opacity=".045"/>
+  <g transform="translate(78 90)" filter="url(#shadow)">
+    <rect width="330" height="450" rx="76" fill="#071a38" opacity=".96"/>
+    <path d="M165 58 260 92v82c0 68-37 119-95 150-58-31-95-82-95-150V92l95-34Z" fill="url(#mark)"/>
+    <path d="M165 82 237 108v66c0 52-26 93-72 121-46-28-72-69-72-121v-66l72-26Z" fill="#0a2852" opacity=".5"/>
+    <path d="m108 173 53 61 70-95" fill="none" stroke="#fff" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m230 139-69 95" fill="none" stroke="#50e3b0" stroke-width="11" stroke-linecap="round"/>
+  </g>
+  <text x="462" y="166" fill="#a9edf5" font-family="Segoe UI,Arial,sans-serif" font-size="25" font-weight="700" letter-spacing="3">THANH VIỆT · 08.09.2026</text>
+  <text x="462" y="263" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="74" font-weight="800" letter-spacing="-2">VietLicenSure</text>
+  <text x="462" y="333" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="34" font-weight="650">Kiểm tra bản quyền rõ ràng.</text>
+  <text x="462" y="382" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="34" font-weight="650">Quản lý hệ thống chủ động.</text>
+  <rect x="462" y="425" width="610" height="58" rx="29" fill="#fff" opacity=".13"/>
+  <text x="492" y="463" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="650">Offline mặc định · CMS · Authenticode · SBOM</text>
+  <text x="462" y="535" fill="#d6f7fb" font-family="Segoe UI,Arial,sans-serif" font-size="25">v5.0 · Official Self-Signed</text>
+</svg>
