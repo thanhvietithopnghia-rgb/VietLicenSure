@@ -5,9 +5,9 @@ Kho công khai chính thức cho bản phát hành, tài liệu và **một ph�
 ## Bản phát hành hiện tại
 
 - Kênh: **Official Self-Signed** (`OfficialSelfSigned`)
-- EXE SHA-256: `45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC`
-- Source snapshot kiểm thử: `58981b21c56df2f2abb320dd4a7d82f0786277a0`
-- Provenance bundle: `f813e872779aec15fc419c6aa845e02e106f8ae2`
+- EXE SHA-256: `30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276`
+- Source snapshot kiểm thử: `82639254fd0b25d9ce2dff0104493b77f2acdb4c`
+- Provenance bundle: `e5f5a1af56192f9a0cdf64a8d75d1b8e8a1d1fad`
 - Independent review: `NotReviewed`
 
 Tải bản chính thức tại [GitHub Release v5.0](../../releases/tag/v5.0). Chứng thư tự ký có thể làm Windows SmartScreen cảnh báo trên máy chưa cài trust anchor.
@@ -44,3 +44,7 @@ Copyright © 2026 Thanh Việt. All rights reserved.
 ## Maintenance correction — 2026-11-03
 
 Report export failures preserve previous packages; Windows/Office reconciliation now carries exact structured product identities. Missing/unsupported identities remain NeedsReview. Version remains v5.0; OEM changes are out of scope.
+
+## Report integrity maintenance — 2026-11-03
+
+Report publication and Result Center now verify output integrity. Corrupt/incomplete reports are excluded without deleting files; checksum-unverified legacy reports remain viewable but not fresh. Predecessor source metadata is explicitly Historical, separate from the current distribution SSOT and post-QA handoff.

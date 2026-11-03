@@ -5,9 +5,9 @@
   "OpenSource": false,
   "License": "PARTIAL-SOURCE-LICENSE.txt",
   "ProductVersion": "v5.0",
-  "ArtifactSha256": "45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC",
-  "TestedSourceSnapshot": "58981b21c56df2f2abb320dd4a7d82f0786277a0",
-  "ProvenanceBundle": "f813e872779aec15fc419c6aa845e02e106f8ae2",
+  "ArtifactSha256": "30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276",
+  "TestedSourceSnapshot": "82639254fd0b25d9ce2dff0104493b77f2acdb4c",
+  "ProvenanceBundle": "e5f5a1af56192f9a0cdf64a8d75d1b8e8a1d1fad",
   "IndependentReviewStatus": "NotReviewed",
   "ExternalValidity": "NotEstablished",
   "FileCount": 12,
@@ -20,8 +20,8 @@
     },
     {
       "Path": "partial-source/reporting/REPORT-SCHEMA-v1.6.md",
-      "Size": 12525,
-      "Sha256": "D778E43310F196ADF0F5759BCD0E6B5137128E73EAAF3D7A3105465913F41205",
+      "Size": 13218,
+      "Sha256": "80A2324D71556D2FD9A557E5488F58AF5D76D8F60505F6DB4E4583F75DDC15BC",
       "Category": "ReportingPolicy"
     },
     {
@@ -38,8 +38,8 @@
     },
     {
       "Path": "partial-source/reporting/Tool-ReportSchema.ps1",
-      "Size": 7150,
-      "Sha256": "EA8E6DCD7DEEE638477B45EF9A34555ECF551287A4D3713B91AC7865C46E1436",
+      "Size": 12343,
+      "Sha256": "A3DBAB1C6C0A17FDD89F17CA726955262370467FCC7A8483C38C10E6618F227A",
       "Category": "ReportingPolicy"
     },
     {
@@ -85,5 +85,5 @@
       "Category": "DocumentationVerifier"
     }
   ],
-  "PublicMetadataBaseCommit": "f589d341b4c6a8d50baa0ce61c722e2ca8621a89"
+  "PublicMetadataBaseCommit": "81064c726afc7789fd25151ca361dbe4931349fb"
 }

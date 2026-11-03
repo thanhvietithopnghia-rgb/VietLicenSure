@@ -1,4 +1,4 @@
-﻿$script:ToolReportSchemaVersion = "1.6" # v1.6 adds build identity and explainable evidence fields.
+$script:ToolReportSchemaVersion = "1.6" # v1.6 adds build identity and explainable evidence fields.
 $script:ToolReportSchemaToolVersion = "5.0"
 $script:ToolReportKinds = @(
     "InventoryAndLicense",
@@ -28,6 +28,76 @@ if ((-not (Get-Command Get-ToolTextCurrent -ErrorAction SilentlyContinue) -or
      -not (Get-Variable -Name ToolLocalizationSupportedCultures -Scope Script -ErrorAction SilentlyContinue)) -and
     (Test-Path -LiteralPath $toolReportSchemaLocalizationPath -PathType Leaf)) {
     . $toolReportSchemaLocalizationPath
+}
+
+function Test-ToolReportPackageIntegrity {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][string]$ManifestPath,
+        [string[]]$RequiredFiles=@(), [string[]]$AllowedFiles=@(), [switch]$ClosedSet
+    )
+    $members = New-Object 'Collections.Generic.List[string]'
+    $hashes = @{}
+    $failureCode = ''
+    try {
+        $manifest = Get-Item -LiteralPath $ManifestPath -Force -ErrorAction Stop
+        $root = $manifest.Directory.FullName
+        if ($manifest.PSIsContainer -or $manifest.Length -gt 65536 -or
+            ($manifest.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            ((Get-Item -LiteralPath $root -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { $failureCode = 'UnsafeManifest'; throw $failureCode }
+        $seen = New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+        foreach ($line in [IO.File]::ReadAllLines($manifest.FullName,[Text.UTF8Encoding]::new($false,$true))) {
+            if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) { continue }
+            if ($line -notmatch '^([0-9A-Fa-f]{64})[ \t]+\*?(.+)$') { $failureCode = 'InvalidManifestLine'; throw $failureCode }
+            $expected = $matches[1].ToUpperInvariant(); $name = $matches[2]
+            if ($name -ne $name.Trim() -or $name -in @('.','..') -or
+                $name.IndexOfAny([IO.Path]::GetInvalidFileNameChars()) -ge 0 -or
+                [IO.Path]::GetFileName($name) -cne $name -or $name -ieq $manifest.Name -or -not $seen.Add($name)) { $failureCode = 'UnsafeOrDuplicateMember'; throw $failureCode }
+            if ($AllowedFiles.Count -gt 0 -and $name -notin $AllowedFiles) { $failureCode = 'UnexpectedMember'; throw $failureCode }
+            if ($seen.Count -gt 16) { $failureCode = 'TooManyMembers'; throw $failureCode }
+            $file = Get-Item -LiteralPath (Join-Path $root $name) -Force -ErrorAction Stop
+            if ($file.PSIsContainer -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $file.Length -gt 128MB) { $failureCode = 'UnsafeMember'; throw $failureCode }
+            $stream = [IO.File]::Open($file.FullName,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
+            try {
+                $sha = [Security.Cryptography.SHA256]::Create()
+                try { $actual = ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-','') } finally { $sha.Dispose() }
+            } finally { $stream.Dispose() }
+            if ($actual -cne $expected) { $failureCode = 'MemberHashMismatch'; throw $failureCode }
+            if ($file.Extension -ieq '.json') {
+                if ($file.Length -gt 24MB) { $failureCode = 'JsonFileTooLarge'; throw $failureCode }
+                $value = [IO.File]::ReadAllText($file.FullName,[Text.UTF8Encoding]::new($false,$true)) | ConvertFrom-Json -ErrorAction Stop
+                if ($null -eq $value) { $failureCode = 'EmptyJson'; throw $failureCode }
+            } elseif ($file.Extension -ieq '.xml') {
+                $settings = New-Object Xml.XmlReaderSettings
+                $settings.DtdProcessing = [Xml.DtdProcessing]::Prohibit; $settings.XmlResolver = $null
+                $reader = [Xml.XmlReader]::Create($file.FullName,$settings)
+                try { while ($reader.Read()) {} } finally { $reader.Dispose() }
+            } elseif ($file.Extension -ieq '.pdf') {
+                $pdf = [IO.File]::OpenRead($file.FullName)
+                try {
+                    $header = New-Object byte[] 5
+                    if ($pdf.Read($header,0,5) -ne 5 -or [Text.Encoding]::ASCII.GetString($header) -cne '%PDF-') { $failureCode='InvalidPdfHeader'; throw $failureCode }
+                    $tail = New-Object byte[] ([int][Math]::Min(1024,$pdf.Length))
+                    [void]$pdf.Seek(-$tail.Length,[IO.SeekOrigin]::End)
+                    [void]$pdf.Read($tail,0,$tail.Length)
+                    if ([Text.Encoding]::ASCII.GetString($tail) -notmatch '%%EOF') { $failureCode='TruncatedPdf'; throw $failureCode }
+                } finally { $pdf.Dispose() }
+            }
+            $members.Add($name)
+            $hashes[$name] = $expected
+        }
+        if ($members.Count -eq 0) { $failureCode = 'EmptyManifest'; throw $failureCode }
+        foreach ($name in $RequiredFiles) { if (-not $seen.Contains($name)) { $failureCode = 'RequiredMemberMissing'; throw $failureCode } }
+        if ($ClosedSet) {
+            foreach ($file in @(Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop)) {
+                if ($file.PSIsContainer -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+                    ($file.Name -ine $manifest.Name -and -not $seen.Contains($file.Name))) { $failureCode = 'UnlistedMember'; throw $failureCode }
+            }
+        }
+        return [pscustomobject]@{Valid=$true;Status='Verified';Reason='ChecksumAndStructureVerified';Files=$members.ToArray();Hashes=$hashes}
+    } catch {
+        return [pscustomobject]@{Valid=$false;Status='Corrupt';Reason=$(if($failureCode){$failureCode}else{'ReadOrParseFailure'});Files=$members.ToArray()}
+    }
 }
 
 function Get-ToolReportRequiredFields {

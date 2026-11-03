@@ -136,3 +136,7 @@ Với package thuộc một trong chín `ReportKind`, `*-SHA256SUMS.txt` liệt 
 3. kiểm tra dữ liệu bắt buộc theo kind;
 4. không parse HTML thay JSON/XML;
 5. xử lý Offline/compatibility status như metadata, không như chứng cứ pháp lý.
+
+### Report generation integrity
+
+New package Export.GenerationIntegrityVersion is 1.0. Required HTML/JSON/XML (and successful optional PDF) are rehashed and parsed before directory rename. Manifest membership is closed, flat, duplicate-free and confined to the generation; XML DTDs are prohibited. This detects corruption, not authenticated authorship or power-loss durability. Result Center exposes IntegrityStatus/IntegrityReason; Verified generations may be reused, UnverifiedLegacy remains viewable but stale, and Corrupt/Incomplete reports are excluded from findings/comparison with RejectedReports diagnostics. Files are never deleted as a result of validation. Retention is unchanged.

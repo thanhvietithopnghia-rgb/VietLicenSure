@@ -190,3 +190,7 @@ Tên gọi kết hợp **Viet** (người Việt phát triển), **Licen** (`Lic
 - Current/Pending inventory and assessment freshness are tracked separately. Delayed/duplicate reports cannot overwrite newer observations; assessment results are bound to the agent-observed license state.
 - Enterprise command labels and synchronization status are available in Vietnamese and English. Historical reports remain separate from current state.
 - Focused synthetic regression: 14/14 assertions passed. This is not a claim of concurrent-writer certification or independent security review.
+
+Bản củng cố integrity: kiểm đủ output, cấu trúc và checksum trước publish; Result Center tách Verified/UnverifiedLegacy và loại report hỏng khỏi phép tính nhưng giữ nguyên tệp. Metadata predecessor trong source được đánh dấu Historical; danh tính release hiện hành nằm trong bộ phát hành và manifest bàn giao hậu-QA.
+
+Integrity hardening: validate required outputs, structure and closed checksums before publish; Result Center separates Verified/UnverifiedLegacy and excludes corrupt reports from calculations while retaining files. Predecessor source metadata is marked Historical; current release identity belongs to the verified distribution and post-QA handoff manifest.

@@ -12,8 +12,8 @@
   "BuildId": "5.0-production-20261025",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC",
-    "SizeBytes": 937664,
+    "Sha256": "30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276",
+    "SizeBytes": 940736,
     "AuthenticodeStatus": "OfficialSelfSigned",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
@@ -22,8 +22,8 @@
     "Timestamped": true
   },
   "Source": {
-    "SourceCommit": "58981b21c56df2f2abb320dd4a7d82f0786277a0",
-    "BundleCommit": "f813e872779aec15fc419c6aa845e02e106f8ae2"
+    "SourceCommit": "82639254fd0b25d9ce2dff0104493b77f2acdb4c",
+    "BundleCommit": "e5f5a1af56192f9a0cdf64a8d75d1b8e8a1d1fad"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,8 +34,8 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "BA0680FB842643EAEB62CC3971845140EDD24AF790933C109C5E7DD8BB6EBD5F",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-ReviewFix-Evidence-45AE52FF.zip",
+    "EvidenceSha256": "C4DF51D466B9586F22B6CA86218C19012A27E3FF309119E43F98155578079C67",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Integrity-Evidence-30B95AB6.zip",
     "Platform": "Windows 11 24H2",
     "AccountType": "AdminLimited",
     "Culture": "vi-VN",
