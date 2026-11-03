@@ -5,9 +5,9 @@ Kho công khai chính thức cho bản phát hành, tài liệu và **một ph�
 ## Bản phát hành hiện tại
 
 - Kênh: **Official Self-Signed** (`ManagedSigned`)
-- EXE SHA-256: `DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF`
-- Source snapshot kiểm thử: `bb64a353f372c67c72c06c250479e761db7208c8`
-- Provenance bundle: `73c0fc4775210ec10b3ebb172a29e9067b3f34dc`
+- EXE SHA-256: `45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC`
+- Source snapshot kiểm thử: `58981b21c56df2f2abb320dd4a7d82f0786277a0`
+- Provenance bundle: `f813e872779aec15fc419c6aa845e02e106f8ae2`
 - Independent review: `NotReviewed`
 
 Tải bản chính thức tại [GitHub Release v5.0](../../releases/tag/v5.0). Chứng thư tự ký có thể làm Windows SmartScreen cảnh báo trên máy chưa cài trust anchor.
@@ -40,3 +40,7 @@ UI, business logic, detection/remediation, elevated broker, plugin/update intern
 - Email: `thanhvietit.hopnghia@gmail.com`
 
 Copyright © 2026 Thanh Việt. All rights reserved.
+
+## Maintenance correction — 2026-11-03
+
+Report export failures preserve previous packages; Windows/Office reconciliation now carries exact structured product identities. Missing/unsupported identities remain NeedsReview. Version remains v5.0; OEM changes are out of scope.

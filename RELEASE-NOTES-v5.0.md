@@ -8,6 +8,12 @@ Trạng thái: `Official Self-Signed`; trust mode kỹ thuật `OfficialSelfSign
 
 ## Giới thiệu
 
+**Bản sửa theo đánh giá — 03/11/2026 (vẫn v5.0)**
+
+- Xuất HTML/PDF/JSON/XML theo từng thư mục thế hệ hoàn chỉnh; lỗi xác thực hoặc ghi file khi xuất lại cùng tên không xóa bộ báo cáo cũ. Các đường dẫn trả về là nguồn chuẩn để mở bộ mới.
+- Đối soát Windows/Office lấy định danh từ Edition/Build và Office Click-to-Run ProductReleaseIds thực trong báo cáo máy trạm. SKU không khớp, dữ liệu cũ hoặc thiếu bằng chứng vẫn `NeedsReview`; không suy diễn quyền sử dụng từ kích hoạt.
+- Phạm vi bản sửa không bao gồm OEM hay thay đổi toàn bộ nhận diện. Chi tiết hợp đồng dữ liệu và giới hạn hỗ trợ: `REPORT-SCHEMA-v1.6.md`.
+
 > **Kiểm tra bản quyền rõ ràng – Quản lý hệ thống chủ động – An tâm sử dụng.**
 
 VietLicenSure v5.0 là bản nâng cấp trực tiếp tiếp theo của v4.9. Dự án được đổi tên từ **Tool Kiểm Tra — Công cụ kiểm tra máy và bản quyền phần mềm** thành **VietLicenSure — Phần mềm kiểm tra và quản lý bản quyền hệ thống** để phản ánh phạm vi mới: kiểm tra Windows, Microsoft Office/Microsoft 365, phần mềm đã cài, cấu hình và dữ liệu kiểm kê trên một quy trình thống nhất.

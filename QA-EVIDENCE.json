@@ -1,19 +1,23 @@
 {
   "schemaVersion": "1.1",
-  "artifactSha256": "DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF",
+  "artifactSha256": "45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC",
   "buildId": "5.0-production-20261025",
   "channel": "Official Self-Signed",
-  "sourceSnapshot": "bb64a353f372c67c72c06c250479e761db7208c8",
-  "bundleCommit": "73c0fc4775210ec10b3ebb172a29e9067b3f34dc",
+  "sourceSnapshot": "58981b21c56df2f2abb320dd4a7d82f0786277a0",
+  "bundleCommit": "f813e872779aec15fc419c6aa845e02e106f8ae2",
   "exitCode": 0,
   "errors": 0,
   "warnings": 3,
   "result": "PASS",
   "verification": "Official build/full-release 8/8, 0 errors and 3 disclosed warnings; independent distribution 0 errors and 1 expected UntrustedRoot warning.",
   "buildLog": {
-    "sha256": "50B357CB5578A3987BF6AB9D2D11687D2FB840B5C798B83715D11C472FAC49B6",
+    "sha256": "369D0AE511DE8ADEFD272201CC9575DBE85D55397F7D2DFAAC938B7FD6BC32D8",
     "result": "PASS",
     "releaseVerifier": "8/8; 0 errors; 3 warnings"
+  },
+  "reviewFixRegression": {
+    "result": "PASS",
+    "entryPoint": "Unmodified signed-source VERIFY-EXTENSIONS, VERIFY-LICENSE-COMPLIANCE and VERIFY-RESULT-CENTER inside artifact-bound VM; not a packaged report-UI click"
   },
   "vmArtifactBound": "PASS",
   "vmEvidence": {
@@ -23,7 +27,7 @@
     "workspaceRole": "itam",
     "offline": true,
     "file": "runtime-summary.json",
-    "sha256": "C2A531A4600D3283CA5A0D33255D81BB5CB813EA140116C2AD9F4A681B1344E5",
+    "sha256": "C503D7472880DDC8EFF73199E09F1F320E17E04E182D1995ED8B900B5F4E6701",
     "result": "PASS",
     "visualReview": "PASS",
     "cleanup": "PASS"
@@ -31,20 +35,25 @@
   "liveMtls": {
     "result": "PASS",
     "file": "live-mtls-summary.json",
-    "sha256": "C72092AEADDB1C36E14452309C3C7703429ED7CF9BE00633728C369CF83D8663",
+    "sha256": "DC251DD1B6B62128828A0150CAD943194FA60B4BC5D2E7771EF337D08314C32E",
     "coverage": "Live loopback mTLS verifier on unmodified signed source, bound to the exact built distribution; not a packaged enterprise-UI click or production-LAN deployment."
   },
   "visualReview": {
+    "artifactSha256": "45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC",
     "result": "PASS",
-    "artifactSha256": "DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF",
-    "file": "dashboard.window.png",
-    "sha256": "9A4975F3FAE4FDD520D7C9078661569A3DEEA1972EE5DBB0E6FF49806CC1E6FC",
-    "summary": "Basic packaged startup/dashboard visual review passed: main actions and ITAM workspace visible, no covering dialog or overlapping action controls. Compact summary cards use ellipsis at this viewport; this is not a comprehensive text-layout/accessibility certification."
+    "reviewedUtc": "2026-11-03T09:45:14.5792498Z",
+    "imageSha256": "9A4975F3FAE4FDD520D7C9078661569A3DEEA1972EE5DBB0E6FF49806CC1E6FC",
+    "image": "dashboard.window.png",
+    "scope": "Basic packaged startup/dashboard visual review by Luna, not independent security review or exhaustive layout/accessibility certification.",
+    "observations": [
+      "Complete Vietnamese offline ITAM dashboard visible; navigation, task tiles and bottom controls present; no blocking overlay or overlapping primary controls.",
+      "Compact summary cards and latest-result subtitle show ellipsis at the small viewport; full tooltips and bilingual long-text layout were not retested."
+    ]
   },
   "restoreProof": {
     "result": "PASS",
     "file": "restore-proof.json",
-    "sha256": "26C71EF2330F8BDC1D9C1DF5B180F4DFCBD54EF7CB4349C1CBF98E780AB29074"
+    "sha256": "FBC3D56D658069B88448338E2E545B276D4D623C567FC3F90BBB95D32A66FC59"
   },
   "coverageBoundary": "Packaged startup/dashboard and policy/process cleanup were exercised. Live mTLS was tested through the unmodified signed-source verifier against the exact distribution binding in a disconnected loopback lab. No production-LAN, public-Internet, exhaustive text-layout, accessibility, or independent-review claim.",
   "knownIssues": [

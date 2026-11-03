@@ -32,6 +32,36 @@ VietLicenSure có thể bổ sung các object `Capabilities`, `Compatibility`, `
 
 ## JSON
 
+### Report publication and product identity (review correction, 2026-11-03)
+
+`Export-ToolReportPackage` and `Export-ToolTextReportPresentation` publish a new immutable
+`<base>-report-<GUID>` directory on every successful export. Use the returned paths and
+`ExportDirectory`; do not reconstruct paths as `<BasePath>.html`. HTML/PDF links remain
+relative within the generation. JSON/XML `Export` paths name the final directory, not
+temporary staging. A failed export leaves previous generations and legacy flat files
+unchanged. Incomplete `.report-<GUID>.staging` directories are not published reports;
+normal failure cleans them, while a process/power interruption can leave an orphan for
+manual cleanup. Old generations are intentionally retained. An unavailable optional PDF
+is omitted from the new generation, never borrowed from a prior report.
+
+Fleet Windows identity is derived from structured `OperatingSystem.Edition` and
+`BuildNumber`, not the display name, product key or activation identifier. Supported
+Windows 10 builds are 10240, 10586, 14393, 15063, 16299, 17134, 17763, 18362, 18363,
+19041–19045; Windows 11 builds are 22000, 22621, 22631, 26100, 26200. Catalog IDs include
+`windows-11-pro`, `windows-11-home`, `windows-10-pro`; N, Single Language, Education,
+Enterprise and Pro Education/Workstations editions remain distinct. LTSC, Server,
+unlisted editions/builds and missing identity fields remain unknown, not inferred.
+
+Office Click-to-Run identity preserves each exact comma-separated `ProductReleaseIds`
+entry, lowercased with prefix `office-c2r:` (for example
+`office-c2r:home2024retail`, `office-c2r:proplus2024volume`). Retail/Volume, suite,
+year and subscription IDs are not interchangeable; duplicate IDs count once. Missing
+or malformed release evidence, including legacy/MSI-only reports, remains unknown.
+Entitlement `CatalogProductId` must match this exact observed identity. Older manually
+named IDs are not silently migrated. Inspect reconciliation `Observations` for the
+reported IDs before recording an entitlement. Technical identity alone does not prove
+legal entitlement: verified documents, assignments and metric evidence remain required.
+
 - UTF-8.
 - Giữ kiểu boolean/number/array/object.
 - Không xuất full product key.

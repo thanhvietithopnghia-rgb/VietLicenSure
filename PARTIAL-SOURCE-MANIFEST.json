@@ -5,9 +5,9 @@
   "OpenSource": false,
   "License": "PARTIAL-SOURCE-LICENSE.txt",
   "ProductVersion": "v5.0",
-  "ArtifactSha256": "DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF",
-  "TestedSourceSnapshot": "bb64a353f372c67c72c06c250479e761db7208c8",
-  "ProvenanceBundle": "73c0fc4775210ec10b3ebb172a29e9067b3f34dc",
+  "ArtifactSha256": "45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC",
+  "TestedSourceSnapshot": "58981b21c56df2f2abb320dd4a7d82f0786277a0",
+  "ProvenanceBundle": "f813e872779aec15fc419c6aa845e02e106f8ae2",
   "IndependentReviewStatus": "NotReviewed",
   "ExternalValidity": "NotEstablished",
   "FileCount": 12,
@@ -20,8 +20,8 @@
     },
     {
       "Path": "partial-source/reporting/REPORT-SCHEMA-v1.6.md",
-      "Size": 10342,
-      "Sha256": "FA889E7BA4B4F46B8DB2124C9739A71DC24D5EFCD558C2FB6742DAA0F537C527",
+      "Size": 12525,
+      "Sha256": "D778E43310F196ADF0F5759BCD0E6B5137128E73EAAF3D7A3105465913F41205",
       "Category": "ReportingPolicy"
     },
     {
@@ -85,5 +85,5 @@
       "Category": "DocumentationVerifier"
     }
   ],
-  "PublicMetadataBaseCommit": "b3d6724dedbf2aed9692883ac4131b028a09e7f3"
+  "PublicMetadataBaseCommit": "f589d341b4c6a8d50baa0ce61c722e2ca8621a89"
 }
