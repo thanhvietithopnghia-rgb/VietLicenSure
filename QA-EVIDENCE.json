@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.1",
+  "artifactSha256": "DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF",
+  "buildId": "5.0-production-20261025",
+  "channel": "Official Self-Signed",
+  "sourceSnapshot": "bb64a353f372c67c72c06c250479e761db7208c8",
+  "bundleCommit": "73c0fc4775210ec10b3ebb172a29e9067b3f34dc",
+  "exitCode": 0,
+  "errors": 0,
+  "warnings": 3,
+  "result": "PASS",
+  "verification": "Official build/full-release 8/8, 0 errors and 3 disclosed warnings; independent distribution 0 errors and 1 expected UntrustedRoot warning.",
+  "buildLog": {
+    "sha256": "50B357CB5578A3987BF6AB9D2D11687D2FB840B5C798B83715D11C472FAC49B6",
+    "result": "PASS",
+    "releaseVerifier": "8/8; 0 errors; 3 warnings"
+  },
+  "vmArtifactBound": "PASS",
+  "vmEvidence": {
+    "platform": "Windows 11 24H2 build 26100",
+    "accountMode": "AdminLimited",
+    "culture": "vi-VN",
+    "workspaceRole": "itam",
+    "offline": true,
+    "file": "runtime-summary.json",
+    "sha256": "C2A531A4600D3283CA5A0D33255D81BB5CB813EA140116C2AD9F4A681B1344E5",
+    "result": "PASS",
+    "visualReview": "PASS",
+    "cleanup": "PASS"
+  },
+  "liveMtls": {
+    "result": "PASS",
+    "file": "live-mtls-summary.json",
+    "sha256": "C72092AEADDB1C36E14452309C3C7703429ED7CF9BE00633728C369CF83D8663",
+    "coverage": "Live loopback mTLS verifier on unmodified signed source, bound to the exact built distribution; not a packaged enterprise-UI click or production-LAN deployment."
+  },
+  "visualReview": {
+    "result": "PASS",
+    "artifactSha256": "DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF",
+    "file": "dashboard.window.png",
+    "sha256": "9A4975F3FAE4FDD520D7C9078661569A3DEEA1972EE5DBB0E6FF49806CC1E6FC",
+    "summary": "Basic packaged startup/dashboard visual review passed: main actions and ITAM workspace visible, no covering dialog or overlapping action controls. Compact summary cards use ellipsis at this viewport; this is not a comprehensive text-layout/accessibility certification."
+  },
+  "restoreProof": {
+    "result": "PASS",
+    "file": "restore-proof.json",
+    "sha256": "26C71EF2330F8BDC1D9C1DF5B180F4DFCBD54EF7CB4349C1CBF98E780AB29074"
+  },
+  "coverageBoundary": "Packaged startup/dashboard and policy/process cleanup were exercised. Live mTLS was tested through the unmodified signed-source verifier against the exact distribution binding in a disconnected loopback lab. No production-LAN, public-Internet, exhaustive text-layout, accessibility, or independent-review claim.",
+  "knownIssues": [
+    "Official Self-Signed is not public-CA, EV or Store trust; SmartScreen can warn.",
+    "Independent review NotReviewed; external accuracy validity NotEstablished.",
+    "Compact summary cards use ellipsis at the small test viewport; full tooltip/text-layout coverage was not retested."
+  ],
+  "independentReview": "NotReviewed",
+  "externalValidity": "NotEstablished"
+}

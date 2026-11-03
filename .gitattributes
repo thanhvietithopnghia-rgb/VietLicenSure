@@ -5,3 +5,18 @@
 *.mjs text eol=lf
 *.p7s binary
 *.cer binary
+
+AUTHENTICODE-SIGNING-CERTIFICATE.cer binary
+CONTENT-SIGNING-CERTIFICATE.cer binary
+OFFICIAL-PROVENANCE-v1.json binary
+OFFICIAL-PROVENANCE-v1.json.p7s binary
+RELEASE-MANIFEST.json binary
+RELEASE-NOTES-v5.0.md binary
+RELEASE-SHA256SUMS.txt binary
+RELEASE-STATUS-v5.0.md binary
+SBOM.cdx.json binary
+THONG-TIN-PHAT-HANH-v5.0.txt binary
+update-manifest-v1.json binary
+update-manifest-v1.json.p7s binary
+PARTIAL-SOURCE-MANIFEST.json binary
+PARTIAL-SOURCE-SHA256SUMS.txt binary

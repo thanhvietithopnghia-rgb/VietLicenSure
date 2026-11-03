@@ -5,9 +5,9 @@ Kho công khai chính thức cho bản phát hành, tài liệu và **một ph�
 ## Bản phát hành hiện tại
 
 - Kênh: **Official Self-Signed** (`ManagedSigned`)
-- EXE SHA-256: `4D0547427734B061C663A696C8CDDF4303CA4379252F4E524EFC575887DD5A54`
-- Source snapshot kiểm thử: `807103978D31A7260E8FEF87C4B2415D411034B1`
-- Provenance bundle: `81D7721D1E30758E8E83B55393B6D510A6D89C33`
+- EXE SHA-256: `DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF`
+- Source snapshot kiểm thử: `bb64a353f372c67c72c06c250479e761db7208c8`
+- Provenance bundle: `73c0fc4775210ec10b3ebb172a29e9067b3f34dc`
 - Independent review: `NotReviewed`
 
 Tải bản chính thức tại [GitHub Release v5.0](../../releases/tag/v5.0). Chứng thư tự ký có thể làm Windows SmartScreen cảnh báo trên máy chưa cài trust anchor.

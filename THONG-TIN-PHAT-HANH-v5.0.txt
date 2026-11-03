@@ -6,13 +6,13 @@ Public release channel: Official Self-Signed.
 Technical trust mode: OfficialSelfSigned.
 Release status: OfficialSelfSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 4D0547427734B061C663A696C8CDDF4303CA4379252F4E524EFC575887DD5A54
+SHA-256: DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
 Dashboard mo bang quyen nguoi dung hien tai; UAC chi duoc yeu cau theo nhu cau khi thay doi he thong, cap nhat ung dung hoac quan tri doanh nghiep.
 Cau noi UAC ma hoa chi truyen allowlist bien TOOL_* da xac thuc, khoi phuc secure runtime va tra ma thoat tien trinh con; khong tat fail-closed de ne loi.
-Payload nhung duoc toi uu SolidDeflateBundle-v1: 74 tep trong mot resource Deflate co header fail-closed; giam 79.86% va van doi chieu SHA-256 tung tep sau giai nen.
+Payload nhung duoc toi uu SolidDeflateBundle-v1: 74 tep trong mot resource Deflate co header fail-closed; giam 79.87% va van doi chieu SHA-256 tung tep sau giai nen.
 Capability detection chon CIM/WMI, ScheduledTasks/schtasks va cac tinh nang theo he dieu hanh.
 Dashboard schema 2.0: WinForms hien dai, theo Light/Dark cua he thong, cho phep ghi nho tuy chon va co fallback DPI tu PerMonitorV2 den Win7.
 Typography dong bo Segoe UI/GDI+ voi co chu gon hon; icon co khoang dem, tile va tab can deu, noi dung dai co tooltip day du.
@@ -37,8 +37,9 @@ Compatibility catalog 1.1.4.0, schema 1.1, ra soat 2026-10-09T00:00:00.0000000Z;
 Nhan dien theo catalog: Windows 10 22H2 build 19045, Windows 11 23H2 build 22631, Windows 11 24H2 build 26100, Windows 11 25H2 build 26200, Windows 11 26H2 build 26300, Windows 11 26H1 build 28000; build moi/chua biet chuyen sang ReadOnlyManualReview.
 Nhan dien Office theo catalog: Office 2021 / LTSC 2021, Office 2024 / LTSC 2024, Microsoft 365 Apps; Product ID/kenh moi chua biet khong duoc tu suy dien tuong thich.
 Enterprise: may chu quet CIDR/IP, ghep noi bang ma tam thoi, quan ly fleet, xuat JSON/CSV/HTML/PDF va gui tac vu license da ma hoa.
+Enterprise transport: HTTPS mutual TLS/TLS 1.2, pin SHA-256 certificate hai phia, HTTP plaintext fail-closed; envelope AES-256-CBC + HMAC-SHA256 van duoc giu lam defense in depth.
 Enterprise UI hotfix: co-fit theo WorkingArea/DPI, khong tran ngang; Quet nhanh tu nhan CIDR cuc bo khi o nhap trong.
-Enterprise IP auto: may chu tu chon IPv4 LAN uu tien theo card co gateway; may tram tu do server duy nhat khi de trong dia chi.
+Enterprise IP auto: may chu tu chon IPv4 LAN uu tien theo card co gateway; may tram chi chap nhan server do duoc qua mTLS voi client certificate va server pin da nhap.
 Enterprise server reset: nut Xoa cau hinh may chu bat buoc ma quan tri va xac nhan cuoi; giu bao cao, ket qua va audit.
 Enterprise UI refresh: bo muc Tren may nay; doi thanh Chon chuc nang; them mau theo chuc nang, nut Tro ve phien truoc va nut Dong trung tam doanh nghiep.
 Enterprise network toggle: nut hien trang thai Online/Offline hien tai; tooltip noi ro thao tac chuyen che do va ba chuc nang luon hien thi.

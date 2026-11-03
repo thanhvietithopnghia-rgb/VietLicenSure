@@ -8,12 +8,12 @@
   "PublicChannel": "Official Self-Signed",
   "TechnicalTrustMode": "OfficialSelfSigned",
   "ReleaseBuildDate": "2026-10-25",
-  "PublicUpdateDate": "2026-10-31",
+  "PublicUpdateDate": "2026-11-03",
   "BuildId": "5.0-production-20261025",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "4D0547427734B061C663A696C8CDDF4303CA4379252F4E524EFC575887DD5A54",
-    "SizeBytes": 929472,
+    "Sha256": "DBBED41A4FDC10AC9C31A85DEAE9E40DB6860D2D19CC41536C9BB9558862DEFF",
+    "SizeBytes": 935616,
     "AuthenticodeStatus": "OfficialSelfSigned",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
@@ -22,8 +22,8 @@
     "Timestamped": true
   },
   "Source": {
-    "SourceCommit": "80710397b598f38c85e58c3f728b35373da5097b",
-    "BundleCommit": "81d7721d1175d69ba54a5c2299bf7a24c2fb887a"
+    "SourceCommit": "bb64a353f372c67c72c06c250479e761db7208c8",
+    "BundleCommit": "73c0fc4775210ec10b3ebb172a29e9067b3f34dc"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,25 +34,26 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "4276C05988B6067ADBEAF4545DF5F41790F55A64BF39D37E93A97B6093EC0C28",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-SecurityHardening-Evidence-4D054742.zip",
+    "EvidenceSha256": "96F075F7B5582F67F967F9620219EFFCDC714A08CAE710FCB1135679A16710AA",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Mtls-Evidence-DBBED41A.zip",
     "Platform": "Windows 11 24H2",
     "AccountType": "AdminLimited",
     "Culture": "vi-VN",
-    "NetworkMode": "Offline"
+    "NetworkMode": "Offline checkpointed lab; live mTLS loopback"
   },
   "IndependentSecurityReview": {
     "Status": "NotReviewed",
     "CriticalHighClaimAllowed": false
   },
   "EnterpriseTransportSecurity": {
-    "Transport": "HTTP with AES-256-CBC and HMAC-SHA256 application envelopes",
-    "EquivalentToTlsOrMtls": false,
+    "Transport": "HTTPS with mutual TLS, exact server certificate pinning and enrolled client certificate pinning",
+    "EquivalentToTlsOrMtls": true,
     "PublicInternetAllowed": false,
     "AllowedNetworkScope": "PrivateManagedLanOrLoopbackOnly",
     "RequiresExplicitLanEnablement": true,
-    "ProductionTransportAssurance": "NotClaimed",
-    "MigrationTarget": "HTTPS with certificate pinning or mTLS"
+    "ProductionTransportAssurance": "ArtifactBoundLabVerified",
+    "MigrationTarget": "Implemented; live mTLS acceptance verified in isolated Windows 11 24H2 lab",
+    "CoverageBoundary": "Loopback/private managed LAN only; not a public-Internet or independent security review claim."
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0"
 }
