@@ -55,5 +55,13 @@
     "MigrationTarget": "Implemented; live mTLS acceptance verified in isolated Windows 11 24H2 lab",
     "CoverageBoundary": "Loopback/private managed LAN only; not a public-Internet or independent security review claim."
   },
-  "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0"
+  "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
+  "Packaging": {
+    "Revision": "20261103-r3",
+    "ContextFile": "PACKAGING-CONTEXT.json",
+    "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
+    "ExecutableUnchanged": true,
+    "DistributionFiles": 55,
+    "ReleaseChecksumEntries": 54
+  }
 }

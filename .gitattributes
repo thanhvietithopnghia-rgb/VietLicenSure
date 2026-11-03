@@ -20,3 +20,7 @@ update-manifest-v1.json binary
 update-manifest-v1.json.p7s binary
 PARTIAL-SOURCE-MANIFEST.json binary
 PARTIAL-SOURCE-SHA256SUMS.txt binary
+PACKAGING-CONTEXT.json binary
+PACKAGING-CONTEXT.json.p7s binary
+README-PACKAGING-v5.0.md binary
+VERIFY-PACKAGING.ps1 binary

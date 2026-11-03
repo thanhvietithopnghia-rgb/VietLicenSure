@@ -48,3 +48,7 @@ Report export failures preserve previous packages; Windows/Office reconciliation
 ## Report integrity maintenance — 2026-11-03
 
 Report publication and Result Center now verify output integrity. Corrupt/incomplete reports are excluded without deleting files; checksum-unverified legacy reports remain viewable but not fresh. Predecessor source metadata is explicitly Historical, separate from the current distribution SSOT and post-QA handoff.
+
+## Packaging correction — 2026-11-03 (20261103-r3)
+
+Executable, implementation snapshot and existing QA are unchanged. The official ZIP adds a pinned-CMS packaging context and VERIFY-PACKAGING.ps1. The private source handoff now opens with current metadata/checksums and VERIFY-HANDOFF; immutable predecessor metadata is isolated under Archive, not the default release-check path. See [packaging instructions](README-PACKAGING-v5.0.md). No Windows 10, packaged Enterprise/report end-to-end, production-LAN or independent-audit claim is added.
