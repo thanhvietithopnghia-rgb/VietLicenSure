@@ -4,7 +4,7 @@ Kho công khai chính thức cho bản phát hành, tài liệu và **một ph�
 
 ## Bản phát hành hiện tại
 
-- Kênh: **Official Self-Signed** (`ManagedSigned`)
+- Kênh: **Official Self-Signed** (`OfficialSelfSigned`)
 - EXE SHA-256: `45AE52FF0BC68D1EA783DC5C4E4C64666DC02C1FA584658773CB162A82898AFC`
 - Source snapshot kiểm thử: `58981b21c56df2f2abb320dd4a7d82f0786277a0`
 - Provenance bundle: `f813e872779aec15fc419c6aa845e02e106f8ae2`
