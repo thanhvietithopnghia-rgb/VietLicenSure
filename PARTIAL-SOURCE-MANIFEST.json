@@ -1,33 +1,33 @@
 {
   "SchemaVersion": "1.0",
-  "PublicationDate": "2026-11-03",
+  "PublicationDate": "2026-11-04",
   "DisclosureClass": "ProprietarySourceAvailable",
   "OpenSource": false,
   "License": "PARTIAL-SOURCE-LICENSE.txt",
   "ProductVersion": "v5.0",
-  "ArtifactSha256": "30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276",
-  "TestedSourceSnapshot": "82639254fd0b25d9ce2dff0104493b77f2acdb4c",
-  "ProvenanceBundle": "e5f5a1af56192f9a0cdf64a8d75d1b8e8a1d1fad",
+  "ArtifactSha256": "4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957",
+  "TestedSourceSnapshot": "bbfdb07ead11799db0425a246cc2d41d14c706ab",
+  "ProvenanceBundle": "302f9221dd16ff3c5c166201c56fc662eb57393f",
   "IndependentReviewStatus": "NotReviewed",
   "ExternalValidity": "NotEstablished",
   "FileCount": 12,
   "Files": [
     {
       "Path": "partial-source/README.md",
-      "Size": 515,
-      "Sha256": "047A359521C996B09913EE5BD49BADBABBC481677F833D578A98448C3888D067",
+      "Size": 17602,
+      "Sha256": "B564B80055E2D84483D362B5B440F38B27812AB2117EB365B99688AC98A35592",
       "Category": "DisclosureDocumentation"
     },
     {
       "Path": "partial-source/reporting/REPORT-SCHEMA-v1.6.md",
-      "Size": 13218,
-      "Sha256": "80A2324D71556D2FD9A557E5488F58AF5D76D8F60505F6DB4E4583F75DDC15BC",
+      "Size": 13360,
+      "Sha256": "B8D8B42F24FD0F836C95DD1BBE17A96B59E236CEBD88022C8D430C7EF876806D",
       "Category": "ReportingPolicy"
     },
     {
       "Path": "partial-source/reporting/REPORT-VIEWER-POLICY-v1.md",
-      "Size": 1289,
-      "Sha256": "81770B7DE28F179ED02A54C71FE56D50EB1F0859D8809B9BD5BD8E36EF1F6491",
+      "Size": 1310,
+      "Sha256": "0034ADB471F96497EA5C88D73EA7FC1A8E69A280AF240B305F97E27797F7F87B",
       "Category": "ReportingPolicy"
     },
     {
@@ -74,8 +74,8 @@
     },
     {
       "Path": "partial-source/verifiers/VERIFY-PAGES-RESPONSIVE.mjs",
-      "Size": 4702,
-      "Sha256": "944CCDB5D49B812F7B8DDB54A0F4937D0C5EFFF17A08220429DC434307C5002B",
+      "Size": 4783,
+      "Sha256": "C8EF9C2FC12EBDD0CE76CB8213D9269128D9293B5F6FB59238ECC341B1FE8C71",
       "Category": "DocumentationVerifier"
     },
     {
@@ -85,5 +85,5 @@
       "Category": "DocumentationVerifier"
     }
   ],
-  "PublicMetadataBaseCommit": "81064c726afc7789fd25151ca361dbe4931349fb"
+  "PublicMetadataBaseCommit": "e83f63621bbd9e0bdf6155300b7da78d848796d3"
 }

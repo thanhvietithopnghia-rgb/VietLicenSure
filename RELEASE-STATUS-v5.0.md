@@ -1,53 +1,53 @@
 # Trạng thái phát hành VietLicenSure v5.0
 
-> **Nguồn sự thật duy nhất (SSOT) về mức sẵn sàng phát hành.** Khi tài liệu khác mô tả khác với trang này, dùng trạng thái tại đây. Đối với tính nguyên vẹn của từng tệp, metadata có chữ ký, manifest và checksum của chính gói vẫn là căn cứ kỹ thuật bắt buộc.
+Nguồn điều phối trạng thái; không thay thế bằng chứng gắn đúng artifact. Ngày cập nhật: 03/11/2026.
 
-- **Cập nhật trạng thái:** 25/10/2026
-- **Phiên bản:** `v5.0`
-- **Kênh công khai:** `Official Self-Signed`
-- **Kênh kỹ thuật:** `OfficialSelfSigned`
-- **Giai đoạn triển khai:** **phát hành chính thức**
-- **Public-CA/EV/Store trust:** **không áp dụng cho artifact hiện hành**
+Ngày phát hành gốc v5.0: 25/10/2026; không phải ngày nghiệm thu artifact hiện hành.
 
-`Official Self-Signed` là kênh phát hành chính thức do chủ sở hữu phê duyệt, sử dụng trust mode kỹ thuật `OfficialSelfSigned`. Signer vẫn là chứng thư tự ký đã ghim; trạng thái này không được mô tả là public-CA, EV hoặc Microsoft Store-signed. Xem `OFFICIAL-SELF-SIGNED-POLICY-v1.md`.
+Kênh công khai **Official Self-Signed**, trust mode **OfficialSelfSigned**. Không phải public-CA/EV/Store; SmartScreen có thể cảnh báo. Public self-update EXE vẫn tắt, triển khai có quản trị hoặc tải thủ công có xác minh.
 
-## Danh tính artifact đang công bố
+## Danh tính và quy tắc evidence
 
-| Trường | Giá trị đang được hồ sơ phát hành khai báo | Căn cứ |
+Đọc EXE SHA-256/size/signer/timestamp từ RELEASE-MANIFEST.json và checksum của chính distribution; source snapshot từ provenance CMS. CURRENT-RELEASE.json và QA-EVIDENCE.json hậu-QA xác định artifact/receipt đang công bố. Metadata trong Archive snapshot ghi Historical không phải danh tính release hiện hành.
+
+Source snapshot mới chưa thể biết hash EXE sau ký. Mọi gate dưới đây chỉ được đóng bởi receipt cùng hash/source, môi trường, ngày và entry point; không tự chuyển kết quả đời trước sang artifact mới. Packaging-only giữ nguyên runtime bytes được giữ evidence cũ đúng phạm vi, không phải lần chạy mới.
+
+| Gate | Trạng thái trong source trước QA | Phạm vi cần chứng minh |
 |---|---|---|
-| Tệp thực thi | `VietLicenSure-v5.0.exe` | Release v5.0 |
-| Build ID | `5.0-production-20261025` | `OFFICIAL-PROVENANCE-v1.json` |
-| SHA-256 của EXE | Xem `RELEASE-MANIFEST.json` và `RELEASE-SHA256SUMS.txt` của chính gói nhận được | Hash thay đổi khi build/ký/timestamp; không sao chép giá trị từ gói khác |
-| Source snapshot được provenance khai báo | Xem `OFFICIAL-PROVENANCE-v1.json` của chính gói nhận được | Provenance có chữ ký CMS tách rời và phải khớp manifest |
-| Signer CMS nội dung | Chứng thư tự ký lịch sử được ghim; SHA-256 `A42B00D863D4770B47F21FFF756545249D58DD59691AD9E05C02048C104F9FC9` | `CONTENT-SIGNING-CERTIFICATE.cer` và provenance |
-| Signer Authenticode EXE | `CN=Thanh Viet - VietLicenSure Code Signing`; SHA-256 `91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177` | `AUTHENTICODE-SIGNING-CERTIFICATE.cer` và provenance |
+| Distribution/CMS/Authenticode/timestamp/SBOM | PendingCurrentArtifact | Verifier của chính distribution và hash tương ứng |
+| Source regression/full release | PendingCurrentArtifact | Receipt nguồn/input build đúng snapshot và output hash |
+| Windows 11 packaged startup/dashboard | PendingCurrentArtifact | Tài khoản, locale, offline, screenshot, cleanup ghi trong QA-EVIDENCE |
+| Result Center/report UI | PendingCurrentArtifact | Chỉ những thao tác và trạng thái thực sự quan sát được, không suy từ source test |
+| Windows 10 / Windows 11 phiên bản khác | NotEstablished | Không suy rộng kết quả một OS sang OS khác; lịch sử không đóng gate hiện hành |
+| Remediation/backup/rollback/UAC | NotEstablishedBeyondNamedFixtures | Ghi rõ fixture cô lập, fault, phạm vi và giới hạn phục hồi; không hứa phục hồi entitlement |
+| DPI/High Contrast/screen reader | NotEstablishedBeyondNamedCases | Cần từng receipt scale/theme/control; không tuyên bố blanket 100–200% |
+| Enterprise HTTPS/mTLS | PendingCurrentArtifactLoopbackOnly | Source/live loopback verifier không chứng minh packaged Enterprise E2E hoặc LAN production |
+| LAN production / tải300máy | NotEstablished | Cần pilot, workload, SLO, chứng thư và test concurrency/reconnect riêng |
+| Đánh giá bảo mật độc lập | NotReviewed | Chưa có reviewer/report gắn đúng artifact; không tuyên bố 0Critical/High |
+| Độ chính xác thực tế độc lập | NotEstablished | Cần ground truth và đo theo tập dữ liệu |
 
-Các giá trị trên mô tả artifact đang công bố; chúng không tự chứng minh source snapshot và EXE đã được chạy cùng nhau trong Harness4. Nếu bất kỳ giá trị nào thay đổi, phải cập nhật metadata/chữ ký/checksum của gói trước, rồi mới cập nhật bảng này.
+## Quyết định kênh
 
-## Bằng chứng và cổng nghiệm thu
+Chủ sở hữu phê duyệt kênh phát hành chính thức Official Self-Signed. Kênh phân phối không biến gate chưa kiểm thành Passed. Báo cáo hậu-QA chỉ nêu các gate đạt thực tế; gate thiếu phải giữ Pending/NotEstablished. Không công bố full source; partial-source theo allowlist hiện hành.
 
-| Cổng | Trạng thái | Phạm vi và việc còn lại |
-|---|---|---|
-| Toàn vẹn gói, CMS, Authenticode, manifest, SBOM | Theo hồ sơ phát hành hiện hành | Chạy `VERIFY-RELEASE.cmd` trên chính gói nhận được; kết quả cục bộ của người dùng mới là căn cứ cho bản sao họ đang có. |
-| Harness4 ngày 13/09/2026 | **Historical / không dùng để đóng cổng artifact hiện hành** | Kết quả `3/3` nền tảng chỉ gắn với source snapshot lịch sử `291ed82db5f99a36aaf6962a41f09ecdec851320`; Harness4 đó không trực tiếp khởi chạy EXE/UI đóng gói và không được chuyển sang artifact khác. |
-| Harness4 đúng source snapshot của EXE | **CONDITIONAL — chỉ đóng khi evidence hiện hành đạt 3/3** | Cổng chỉ có hiệu lực khi `SourceCommit` trong ma trận Harness4 bằng `SourceSnapshotCommit` của provenance đã ký, artifact hash/size/signer/timestamp khớp manifest và cả Windows 10 22H2, Windows 11 24H2, Windows 11 25H2 đều `Passed`. Mọi source/EXE mới đặt lại cổng về PENDING. |
-| Runtime EXE/UI trên Windows 10/11 sạch | **Đạt cho gói bàn giao gần nhất; phụ thuộc hash** | Đã kiểm tra EXE đóng gói trên ma trận Windows 10/11, tài khoản giới hạn, Offline và UI thật; mọi build/ký lại phải chạy lại. |
-| Audit KMS/Activator và thao tác thay đổi hệ thống | **Đạt ở phạm vi fixture cô lập** | Read-only không đổi máy; backup/restore, scope-lock, tamper rejection, hậu kiểm và rollback được kiểm trên VM checkpoint. |
-| Rollback, UAC, quyền hạn, hủy và lỗi gián đoạn | **Đạt cho gói bàn giao gần nhất; phụ thuộc hash** | UAC secure desktop được gọi bằng `RunAs`, Esc hủy với mã `1223`, policy không đổi và checkpoint sạch được phục hồi. |
-| Accessibility, DPI, High Contrast và screen reader | **Đạt ở phạm vi VM lab; review độc lập vẫn PENDING** | Bàn phím-only, MSAA, DPI 100–200%, High Contrast và ảnh trực quan đã đạt; trạng thái review được công bố riêng, không bị suy diễn thành Passed. |
-| Đánh giá bảo mật độc lập đúng artifact | **PENDING** | Chưa có biên bản hoàn tất gắn với hash EXE hiện hành. |
-| Chứng thư code-signing do CA công cộng cấp | **Không dùng cho kênh hiện hành** | Artifact dùng chứng thư tự ký được ghim; SmartScreen/Windows có thể vẫn cảnh báo. Nếu chuyển public-CA/EV/Store phải tạo chuỗi phát hành mới. |
+## Lịch sử
 
-## Quyết định hiện hành
+Harness4 và ma trận runtime/DPI/UAC đời trước là Historical khi chưa chứng minh cùng artifact. Loại bỏ các tuyên bố tổng quát “đạt gói gần nhất” vì không đủ định danh để chuyển gate. Không đổi trust class hoặc claim audit nếu thiếu evidence thật.
 
-**Phê duyệt phát hành chính thức theo kênh `Official Self-Signed`.** Trust mode kỹ thuật vẫn là `OfficialSelfSigned`; provenance, CMS, SHA-256, Authenticode, RFC3161 timestamp và verifier tiếp tục fail-closed. Public self-update EXE vẫn tắt; bản mới được phân phối bằng tải thủ công hoặc triển khai quản trị có xác minh.
+## Hậu-QA — artifact hiện hành 04/11/2026
 
-Đánh giá bảo mật độc lập hiện vẫn `NotReviewed`; Code Scanning/dependency coverage phải được báo cáo theo bằng chứng thật. Quyết định phát hành chính thức không tự biến các cổng này thành `Passed` và không cho phép tuyên bố “0 Critical/High” khi chưa có báo cáo tương ứng.
+EXE `4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957` / 941248bytes; source `bbfdb07ead11799db0425a246cc2d41d14c706ab`; bundle `302f9221dd16ff3c5c166201c56fc662eb57393f`. Đây là overlay metadata hậu-QA, không phải thay source snapshot đã build. Các bảng nguồn phía trên là trạng thái trước QA; bảng sau và QA-EVIDENCE cùng hash xác định kết quả hiện hành.
 
-## Cách cập nhật trang này
+| Gate thực sự đã quan sát | Kết quả/phạm vi |
+|---|---|
+| Official build/full release | PASS8/8,0lỗi/3cảnh báo công bố |
+| Distribution/CMS/Authenticode/timestamp | PASS; self-issued UntrustedRoot expected, không publicCA |
+| Windows11 24H2 packaged startup/dashboard | PASS AdminLimited/Medium,offline; VI/EN |
+| ResultCenter qua EXE | PASS Legacy/Verified/Corrupt/Incomplete, VI/EN; report fixtures giả |
+| Report generation fault | PASS source regression và ổ đầy NTFS VHD cô lập thật; bộ cũ giữ nguyên |
+| Enterprise HTTPS/mTLS | PASS live loopback verifier trên source nguyên bản, ràng buộc đúng EXE |
+| Restore/cleanup | PASS theo checkpoint/probe; VMOff,không mạng,VHDvalid |
+| Windows10/current khác, scan-to-export/remediation/update/Enterprise UI E2E, LANproduction, toàn bộ DPI/accessibility | NotEstablished; không suy rộng từ các ca trên |
+| Independent review / external validity | NotReviewed / NotEstablished |
 
-1. Cập nhật **Cập nhật trạng thái** và đúng một dòng trong bảng cổng.
-2. Ghi rõ artifact SHA-256, source snapshot, ngày chạy, môi trường và đường dẫn bằng chứng; không chỉ ghi “đã test”.
-3. Nếu source hoặc EXE thay đổi, đặt lại mọi cổng phụ thuộc về `PENDING` cho tới khi chạy lại.
-4. Chỉ đổi trust model hoặc bỏ ghi chú self-signed sau quyết định phê duyệt có thể truy vết và một chuỗi source/provenance/artifact mới.
-5. Các README, website, release notes và roadmap chỉ tóm tắt rồi liên kết về trang này; không sao chép các kết quả QA dễ lỗi thời.
+Official Self-Signed / OfficialSelfSigned; SmartScreen có thể cảnh báo. Xem QA-EVIDENCE.json và chữ ký bàn giao để kiểm receipt đúng artifact. Không có tuyên bố0Critical/High.

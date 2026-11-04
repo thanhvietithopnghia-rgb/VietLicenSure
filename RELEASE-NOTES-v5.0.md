@@ -1,3 +1,5 @@
+> Phạm vi QA hiện hành chỉ theo ma trận hậu-QA trong RELEASE-STATUS và QA-EVIDENCE gắn đúng hash. Các mô tả kiểm thử/changelog đời trước dưới đây không tự đóng gate Windows10, DPI/accessibility hay UI end-to-end của artifact mới.
+
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
 Ngày build kỹ thuật hiện hành: `2026-10-25`

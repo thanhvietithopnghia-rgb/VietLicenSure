@@ -5,9 +5,9 @@ Kho công khai chính thức cho bản phát hành, tài liệu và **một ph�
 ## Bản phát hành hiện tại
 
 - Kênh: **Official Self-Signed** (`OfficialSelfSigned`)
-- EXE SHA-256: `30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276`
-- Source snapshot kiểm thử: `82639254fd0b25d9ce2dff0104493b77f2acdb4c`
-- Provenance bundle: `e5f5a1af56192f9a0cdf64a8d75d1b8e8a1d1fad`
+- EXE SHA-256: `4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957`
+- Source snapshot kiểm thử: `bbfdb07ead11799db0425a246cc2d41d14c706ab`
+- Provenance bundle: `302f9221dd16ff3c5c166201c56fc662eb57393f`
 - Independent review: `NotReviewed`
 
 Tải bản chính thức tại [GitHub Release v5.0](../../releases/tag/v5.0). Chứng thư tự ký có thể làm Windows SmartScreen cảnh báo trên máy chưa cài trust anchor.
@@ -52,3 +52,11 @@ Report publication and Result Center now verify output integrity. Corrupt/incomp
 ## Packaging correction — 2026-11-03 (20261103-r3)
 
 Executable, implementation snapshot and existing QA are unchanged. The official ZIP adds a pinned-CMS packaging context and VERIFY-PACKAGING.ps1. The private source handoff now opens with current metadata/checksums and VERIFY-HANDOFF; immutable predecessor metadata is isolated under Archive, not the default release-check path. See [packaging instructions](README-PACKAGING-v5.0.md). No Windows 10, packaged Enterprise/report end-to-end, production-LAN or independent-audit claim is added.
+
+## Report integrity maintenance — 2026-11-03
+
+Report publication and Result Center now verify output integrity. Corrupt/incomplete reports are excluded without deleting files; checksum-unverified legacy reports remain viewable but not fresh. Predecessor source metadata is explicitly Historical, separate from the current distribution SSOT and post-QA handoff.
+
+## Functional QA maintenance — 2026-11-04
+
+Artifact-scoped RELEASE-STATUS replaces inherited acceptance claims. ResultCenter has visible integrity status and verified readability; compliance inputs expose bounded reason codes. Packaged ResultCenter synthetic-state cases and isolated disk-full source tests are distinct from scan/export/remediation end-to-end acceptance. See current QA-EVIDENCE and packaging context.

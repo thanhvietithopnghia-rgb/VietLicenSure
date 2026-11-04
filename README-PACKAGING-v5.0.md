@@ -1,27 +1,11 @@
-# VietLicenSure v5.0 — đóng gói 20261103-r3 / packaging revision
+# VietLicenSure v5.0 — functional QA maintenance / packaging 20261104-r4
 
-Đây là bản sửa **đóng gói**, không thay EXE hay mã chạy. EXE hiện hành:
-`30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276` — 940736 bytes.
+EXE hiện hành 4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957 / 941248bytes. Đây là build bảo trì mới; không tái dùng QA của EXE30B95AB6 đời trước. Riêng bước thêm metadata đóng gói không đổi EXE vừa build/ký.
 
-Chạy trong thư mục Release:
+Chạy: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\VERIFY-PACKAGING.ps1
 
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\VERIFY-PACKAGING.ps1
+Trong bộ source riêng: bắt đầu từ VERIFY-HANDOFF.ps1 ở gốc. CURRENT-RELEASE và RELEASE-SHA256SUMS ở gốc trỏ Release hiện hành; Archive/SourceSnapshot và Archive/SourceAsBuilt là source/input bất biến, không lấy checksum predecessor trong Archive làm chuẩn EXE mới. Chữ ký CMS ngoài ghim đúng cặp source/release/evidence. Full source giữ riêng, không phải public asset.
 
-Manifest PACKAGING-CONTEXT.json ký CMS ghim chứng thư, ràng buộc tất cả tệp distribution giữ nguyên và phần bổ sung đóng gói. RELEASE-SHA256SUMS.txt tại Release kiểm chính distribution hiện hành. Khi nhận bộ source riêng, bắt đầu ở README và VERIFY-HANDOFF.ps1 tại gốc bộ bàn giao.
+Phạm vi nghiệm thu theo QA-EVIDENCE gắn đúng hash: chỉ những ca thực sự PASS. Source verifier/disk-full không đồng nghĩa scan-to-export qua UI. Windows10current-artifact, packaged remediation/update/Enterprise E2E, LANproduction và audit độc lập chưa được tự đóng. RELEASE-STATUS điều phối gate theo receipt, không kế thừa tuyên bố đời trước.
 
-## Bộ source riêng / private source handoff
-
-- `Release/`: bản chạy hiện hành, có verifier và checksum đúng thư mục.
-- `CURRENT-RELEASE.json`: danh tính hiện hành, chỉ rõ đường dẫn EXE trong Release.
-- `RELEASE-SHA256SUMS.txt` ở gốc: cùng các hash hiện hành, đường dẫn có tiền tố Release/; không phải danh sách hash predecessor.
-- `Archive/SourceSnapshot/`: snapshot/bundle nguồn nguyên trạng đã ký; metadata artifact predecessor chỉ là lịch sử, không phải checksum của gói hiện hành.
-- `Archive/SourceAsBuilt/`: view input đã dùng cho full verifier, chỉ khác snapshot ở 5 tệp generated được công bố; không phải source commit sản phẩm mới.
-- `Evidence/`: QA đúng hash hiện hành. HANDOFF-MANIFEST và chữ ký CMS kiểm cặp release/source/evidence và tập tệp đóng.
-
-Không trộn EXE vào snapshot hoặc lấy RELEASE-SHA256SUMS trong Archive làm lệnh kiểm mặc định. Full source là tài liệu riêng được kiểm soát, không có trong asset công khai.
-
-## Phạm vi xác minh / evidence boundary
-
-Executable, timestamp, provenance and tested implementation are unchanged. Packaging revision is not a new functional build or a new Windows test claim. Windows 11 24H2 startup/dashboard and source regression/live loopback mTLS evidence remain bound to that exact EXE. Windows 10 current-artifact acceptance, packaged report/Enterprise end-to-end, production LAN and independent security review are not established by this packaging correction.
-
-Official Self-Signed, not public-CA/EV/Store trust; SmartScreen may warn. Independent review remains NotReviewed; external validity NotEstablished.
+Official Self-Signed / OfficialSelfSigned không phải publicCA/EV/Store; SmartScreen có thể cảnh báo. Independent review NotReviewed; external validity NotEstablished.

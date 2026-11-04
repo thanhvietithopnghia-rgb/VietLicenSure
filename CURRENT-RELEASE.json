@@ -8,12 +8,12 @@
   "PublicChannel": "Official Self-Signed",
   "TechnicalTrustMode": "OfficialSelfSigned",
   "ReleaseBuildDate": "2026-10-25",
-  "PublicUpdateDate": "2026-11-03",
+  "PublicUpdateDate": "2026-11-04",
   "BuildId": "5.0-production-20261025",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "30B95AB631D4D6E0B6206011BBC24636E6B1824FEFAE1AA52C20A8320516C276",
-    "SizeBytes": 940736,
+    "Sha256": "4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957",
+    "SizeBytes": 941248,
     "AuthenticodeStatus": "OfficialSelfSigned",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
@@ -22,8 +22,8 @@
     "Timestamped": true
   },
   "Source": {
-    "SourceCommit": "82639254fd0b25d9ce2dff0104493b77f2acdb4c",
-    "BundleCommit": "e5f5a1af56192f9a0cdf64a8d75d1b8e8a1d1fad"
+    "SourceCommit": "bbfdb07ead11799db0425a246cc2d41d14c706ab",
+    "BundleCommit": "302f9221dd16ff3c5c166201c56fc662eb57393f"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,8 +34,8 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "C4DF51D466B9586F22B6CA86218C19012A27E3FF309119E43F98155578079C67",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Integrity-Evidence-30B95AB6.zip",
+    "EvidenceSha256": "2A1EE89432C161B411FC2CFB6B76BA617BFEF8C9D90C378367D8DB902C4ACA81",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Functional-Evidence-4EDDAE03.zip",
     "Platform": "Windows 11 24H2",
     "AccountType": "AdminLimited",
     "Culture": "vi-VN",
@@ -57,10 +57,11 @@
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
   "Packaging": {
-    "Revision": "20261103-r3",
+    "Revision": "20261104-r4",
     "ContextFile": "PACKAGING-CONTEXT.json",
     "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
-    "ExecutableUnchanged": true,
+    "RuntimeBuildChangedFromPredecessor": true,
+    "BuiltExecutableUnchangedByPackaging": true,
     "DistributionFiles": 55,
     "ReleaseChecksumEntries": 54
   }
