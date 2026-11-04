@@ -24,3 +24,15 @@ PACKAGING-CONTEXT.json binary
 PACKAGING-CONTEXT.json.p7s binary
 README-PACKAGING-v5.0.md binary
 VERIFY-PACKAGING.ps1 binary
+partial-source/README.md binary
+partial-source/reporting/REPORT-SCHEMA-v1.6.md binary
+partial-source/reporting/REPORT-VIEWER-POLICY-v1.md binary
+partial-source/reporting/Tool-OfflinePolicy.ps1 binary
+partial-source/reporting/Tool-ReportSchema.ps1 binary
+partial-source/schemas/asset-registry-schema-v1.0.json binary
+partial-source/schemas/detection-finding-schema-v1.0.json binary
+partial-source/verifiers/SYNC-RELEASE-PAGES.ps1 binary
+partial-source/verifiers/VERIFY-NO-SIGNING-SECRETS.ps1 binary
+partial-source/verifiers/VERIFY-PAGES.ps1 binary
+partial-source/verifiers/VERIFY-PAGES-RESPONSIVE.mjs binary
+partial-source/verifiers/VERIFY-REPORT-SCHEMA.ps1 binary
