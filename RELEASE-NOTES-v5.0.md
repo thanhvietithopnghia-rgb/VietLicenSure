@@ -1,5 +1,17 @@
 > Phạm vi QA hiện hành chỉ theo ma trận hậu-QA trong RELEASE-STATUS và QA-EVIDENCE gắn đúng hash. Các mô tả kiểm thử/changelog đời trước dưới đây không tự đóng gate Windows10, DPI/accessibility hay UI end-to-end của artifact mới.
 
+# Improvements maintenance — release scope 2026-11-04
+
+Authorized by ca: continue implementation through release. Source at e467d37 and subsequent release metadata. Version remains v5.0; Official Self-Signed, not public-CA/EV/Store; independent review NotReviewed.
+
+This maintenance delivers implemented source improvements in recovery preflight, service/job authorization, source quality and conservative evidence independence, labelled inventory merge, bounded traversal/Office/plugin processing, local asset lifecycle/reference/concurrent writes, semantic report export, installation-linked result diffs and grounded read-only Assistant explanations. Detailed fixtures and limits remain in IMPLEMENTATION-ROADMAP-20261104.md.
+
+ALL21 is not fully accepted: actual license/subscription ground truth, physical asset/durable attachment content, GUI cross-process cooperative cancellation, individual RBAC, crash/distributed transactions, production fleet/LAN scale, independent security audit and wide DPI/accessibility remain unestablished. No claim is inferred from a synthetic fixture or predecessor EXE. Public application self-update remains OFF.
+
+Release gates: clean source and signed provenance, official full build, source regressions on exact checkout, disconnected Windows 11 artifact-bound mTLS/fault tests and packaged VI/EN startup/ResultCenter, visual review and restored baseline, closed checksums/private typed handoff, canonical public assets with fresh downloads/full verifier/Pages. Publish only after all applicable gates pass.
+
+---
+
 # VietLicenSure v5.0 — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
 Ngày build kỹ thuật hiện hành: `2026-10-25`

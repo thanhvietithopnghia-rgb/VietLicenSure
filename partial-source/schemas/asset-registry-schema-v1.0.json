@@ -12,9 +12,13 @@
     "UpdatedAtUtc": { "type": "string", "format": "date-time" },
     "Devices": { "type": "array", "items": { "$ref": "#/definitions/device" } },
     "Assets": { "type": "array", "items": { "$ref": "#/definitions/asset" } },
-    "Assignments": { "type": "array", "items": { "$ref": "#/definitions/assignmentEvent" } }
+    "Assignments": { "type": "array", "items": { "$ref": "#/definitions/assignmentEvent" } },
+    "LifecycleEvents": { "type": "array", "items": { "$ref": "#/definitions/lifecycleEvent" } },
+    "DocumentLinks": { "type": "array", "items": { "$ref": "#/definitions/documentLink" } }
   },
   "definitions": {
+    "documentLink": {"type": "object", "additionalProperties": false, "required": ["DocumentId", "AssetId", "DeviceId", "EventId", "Reference", "FileName", "Sha256", "Length", "EvidenceStatus", "RecordedBy", "RecordedAtUtc"], "properties": {"DocumentId": {"type": "string", "pattern": "^VLS-DOC-[A-F0-9]{32}$"}, "AssetId": {"type": "string", "pattern": "^VLS-AST-[A-F0-9]{32}$"}, "DeviceId": {"type": "string", "pattern": "^VLS-DEV-[A-F0-9]{32}$"}, "EventId": {"type": "string", "pattern": "^VLS-AEV-[A-F0-9]{32}$"}, "Reference": {"type": "string", "maxLength": 200, "minLength": 1}, "FileName": {"type": "string", "maxLength": 240}, "Sha256": {"type": "string", "pattern": "^(|[A-F0-9]{64})$"}, "Length": {"type": "integer", "minimum": 0, "maximum": 10485760}, "EvidenceStatus": {"enum": ["ReferencedUnverified"]}, "RecordedBy": {"type": "string", "maxLength": 120, "minLength": 1}, "RecordedAtUtc": {"type": "string", "format": "date-time"}}},
+    "scanLink": {"type": "object", "additionalProperties": false, "required": ["DeviceId", "ClientId", "ReportKind", "ObservedAtUtc", "ReceivedAtUtc", "ContentSha256"], "properties": {"DeviceId": {"type": "string", "pattern": "^VLS-DEV-[A-F0-9]{32}$"}, "ClientId": {"type": "string", "format": "uuid"}, "ReportKind": {"enum": ["EnterpriseInventory"]}, "ObservedAtUtc": {"type": "string", "format": "date-time"}, "ReceivedAtUtc": {"type": "string", "format": "date-time"}, "ContentSha256": {"type": "string", "pattern": "^[A-F0-9]{64}$"}}},
     "device": {
       "type": "object",
       "additionalProperties": false,
@@ -42,7 +46,28 @@
         "InventoryNumber": { "type": "string", "maxLength": 120 },
         "Status": { "enum": ["Active", "Repair", "Retired", "Disposed", "Lost"] },
         "CreatedAtUtc": { "type": "string", "format": "date-time" },
-        "UpdatedAtUtc": { "type": "string", "format": "date-time" }
+        "UpdatedAtUtc": { "type": "string", "format": "date-time" },
+        "LastScan": { "$ref": "#/definitions/scanLink" }
+      }
+    },
+    "lifecycleEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["EventId", "AssetId", "DeviceId", "Sequence", "Action", "FromStatus", "ToStatus", "DocumentReference", "Reason", "RecordedBy", "WarrantyUntilUtc", "EffectiveAtUtc", "RecordedAtUtc"],
+      "properties": {
+        "EventId": { "type": "string", "pattern": "^VLS-AEV-[A-F0-9]{32}$" },
+        "AssetId": { "type": "string", "pattern": "^VLS-AST-[A-F0-9]{32}$" },
+        "DeviceId": { "type": "string", "pattern": "^VLS-DEV-[A-F0-9]{32}$" },
+        "Sequence": { "type": "integer", "minimum": 1 },
+        "Action": { "enum": ["WarrantySet", "RepairOpened", "RepairClosed", "Retire", "Dispose", "MarkLost", "Reactivate"] },
+        "FromStatus": { "enum": ["Active", "Repair", "Retired", "Disposed", "Lost"] },
+        "ToStatus": { "enum": ["Active", "Repair", "Retired", "Disposed", "Lost"] },
+        "DocumentReference": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "Reason": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "RecordedBy": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "WarrantyUntilUtc": { "type": "string" },
+        "EffectiveAtUtc": { "type": "string", "format": "date-time" },
+        "RecordedAtUtc": { "type": "string", "format": "date-time" }
       }
     },
     "assignmentEvent": {

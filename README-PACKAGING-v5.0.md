@@ -1,6 +1,6 @@
-# VietLicenSure v5.0 — functional QA maintenance / packaging 20261104-r4
+# VietLicenSure v5.0 — implemented improvements maintenance / packaging 20261105-r7
 
-EXE hiện hành 4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957 / 941248bytes. Đây là build bảo trì mới; không tái dùng QA của EXE30B95AB6 đời trước. Riêng bước thêm metadata đóng gói không đổi EXE vừa build/ký.
+EXE hiện hành 93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD / 974528bytes. Đây là build bảo trì mới; không tái dùng QA của EXE30B95AB6 đời trước. Riêng bước thêm metadata đóng gói không đổi EXE vừa build/ký.
 
 Chạy: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\VERIFY-PACKAGING.ps1
 

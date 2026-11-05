@@ -1,3 +1,15 @@
+# Improvements maintenance — release scope 2026-11-04
+
+Authorized by ca: continue implementation through release. Source at e467d37 and subsequent release metadata. Version remains v5.0; Official Self-Signed, not public-CA/EV/Store; independent review NotReviewed.
+
+This maintenance delivers implemented source improvements in recovery preflight, service/job authorization, source quality and conservative evidence independence, labelled inventory merge, bounded traversal/Office/plugin processing, local asset lifecycle/reference/concurrent writes, semantic report export, installation-linked result diffs and grounded read-only Assistant explanations. Detailed fixtures and limits remain in IMPLEMENTATION-ROADMAP-20261104.md.
+
+ALL21 is not fully accepted: actual license/subscription ground truth, physical asset/durable attachment content, GUI cross-process cooperative cancellation, individual RBAC, crash/distributed transactions, production fleet/LAN scale, independent security audit and wide DPI/accessibility remain unestablished. No claim is inferred from a synthetic fixture or predecessor EXE. Public application self-update remains OFF.
+
+Release gates: clean source and signed provenance, official full build, source regressions on exact checkout, disconnected Windows 11 artifact-bound mTLS/fault tests and packaged VI/EN startup/ResultCenter, visual review and restored baseline, closed checksums/private typed handoff, canonical public assets with fresh downloads/full verifier/Pages. Publish only after all applicable gates pass.
+
+---
+
 # Trạng thái phát hành VietLicenSure v5.0
 
 Nguồn điều phối trạng thái; không thay thế bằng chứng gắn đúng artifact. Ngày cập nhật: 03/11/2026.
@@ -34,9 +46,9 @@ Chủ sở hữu phê duyệt kênh phát hành chính thức Official Self-Sign
 
 Harness4 và ma trận runtime/DPI/UAC đời trước là Historical khi chưa chứng minh cùng artifact. Loại bỏ các tuyên bố tổng quát “đạt gói gần nhất” vì không đủ định danh để chuyển gate. Không đổi trust class hoặc claim audit nếu thiếu evidence thật.
 
-## Hậu-QA — artifact hiện hành 04/11/2026
+## Hậu-QA — artifact hiện hành 05/11/2026
 
-EXE `4EDDAE03F67FEF2C33E701B8B73D65BA3DDD4163F8F3064563A623B558CF0957` / 941248bytes; source `bbfdb07ead11799db0425a246cc2d41d14c706ab`; bundle `302f9221dd16ff3c5c166201c56fc662eb57393f`. Đây là overlay metadata hậu-QA, không phải thay source snapshot đã build. Các bảng nguồn phía trên là trạng thái trước QA; bảng sau và QA-EVIDENCE cùng hash xác định kết quả hiện hành.
+EXE `93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD` / 974528bytes; source `aa52e3c73f2544ae9cb26b68be9d0caf3d034b59`; bundle `30a8f2997ca416aff7dd3a7f64b983aba2c0082f`. Đây là overlay metadata hậu-QA, không phải thay source snapshot đã build. Các bảng nguồn phía trên là trạng thái trước QA; bảng sau và QA-EVIDENCE cùng hash xác định kết quả hiện hành.
 
 | Gate thực sự đã quan sát | Kết quả/phạm vi |
 |---|---|
