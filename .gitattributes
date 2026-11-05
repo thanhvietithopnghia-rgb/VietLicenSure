@@ -36,3 +36,6 @@ partial-source/verifiers/VERIFY-NO-SIGNING-SECRETS.ps1 binary
 partial-source/verifiers/VERIFY-PAGES.ps1 binary
 partial-source/verifiers/VERIFY-PAGES-RESPONSIVE.mjs binary
 partial-source/verifiers/VERIFY-REPORT-SCHEMA.ps1 binary
+
+tool-assistant-knowledge-v1.1.json binary
+tool-assistant-knowledge-v1.1.json.p7s binary

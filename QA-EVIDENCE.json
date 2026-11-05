@@ -1,17 +1,17 @@
 {
   "schemaVersion": "1.1",
-  "artifactSha256": "93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD",
-  "buildId": "5.0-production-20261104",
+  "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
+  "buildId": "5.0-production-20261105-r2",
   "channel": "Official Self-Signed",
-  "sourceSnapshot": "aa52e3c73f2544ae9cb26b68be9d0caf3d034b59",
-  "bundleCommit": "30a8f2997ca416aff7dd3a7f64b983aba2c0082f",
+  "sourceSnapshot": "4b3d38f85fec58d553124b8a366634f9a7dc500d",
+  "bundleCommit": "af8fa1eafc6715cce8822fd3571bf70a0026129d",
   "exitCode": 0,
   "errors": 0,
   "warnings": 3,
   "result": "PASS",
   "verification": "Official build/full-release 8/8, 0 errors and 3 disclosed warnings; independent distribution 0 errors and 1 expected UntrustedRoot warning.",
   "buildLog": {
-    "sha256": "77CBC8632AC5FA6E44F3F7FF52554C5DA877F59958B9A4C9DA13C8701BED2CC8",
+    "sha256": "DBB61EA992C5F9EE5FF433C1CBA97EFDC4A894FB2EF9BE998D28AE2FDA0615E5",
     "result": "PASS",
     "releaseVerifier": "8/8; 0 errors; 3 warnings"
   },
@@ -27,7 +27,7 @@
     "workspaceRole": "itam",
     "offline": true,
     "file": "runtime-summary.json",
-    "sha256": "149768BED93FC5E0189B62E38FE7F41C49D84BF6183F7EDF92483997CB9A16CD",
+    "sha256": "A32CAD06B4C0786AB200511F5914776E0F9591A7619339802C75E6FC3868D90C",
     "result": "PASS",
     "visualReview": "PASS",
     "cleanup": "PASS"
@@ -35,78 +35,64 @@
   "liveMtls": {
     "result": "PASS",
     "file": "live-mtls-summary.json",
-    "sha256": "A93979FC7579AA9DE30282386495BA080F4F30CE13B705F9F40CC92C08ACBF97",
+    "sha256": "C4259BA4270AD393C9331DD023FAC9BE16D0BD19C54A78B2EBEB6B7DA6F0EF53",
     "coverage": "Live loopback mTLS verifier on unmodified signed source, bound to the exact built distribution; not a packaged enterprise-UI click or production-LAN deployment."
   },
   "visualReview": {
     "result": "PASS",
-    "artifactSha256": "93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD",
-    "imageSha256": "0944E6FDCA82E120842D9009E888E861E4096DAB0F7E1838CEBC5CEA0A46DFD5",
-    "cultures": [
-      "vi-VN",
-      "en-US"
-    ],
-    "Images": [
+    "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
+    "imageSha256": "AD0B53CEF4200E481B3E549D3DF77C1B8574877233CD636FB5FBA37600725728",
+    "reviewer": "Luna (actual inspection of all ten original images; not independent review)",
+    "reviewedUtc": "2026-11-05T16:50:55.339327+00:00",
+    "images": [
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\dashboard.window.png",
-        "Sha256": "0944E6FDCA82E120842D9009E888E861E4096DAB0F7E1838CEBC5CEA0A46DFD5",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
+        "sha256": "AD0B53CEF4200E481B3E549D3DF77C1B8574877233CD636FB5FBA37600725728"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\result-center-legacy.png",
-        "Sha256": "5FF255129240A90146EF1A3E23964B8324FAC39289FE067991E447E765C6F888",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-legacy.png",
+        "sha256": "B3EDA751473EA6F44B3D7779CDD16FB5D2C08E2A2F57CFD2A5A07BA59C4461DA"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\result-center-verified.png",
-        "Sha256": "FF5D3553D40ABF39CCBCFB7402698C20F4667407D79E7D878038ECB4E73D1E90",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-verified.png",
+        "sha256": "EBF6C62FCAE438ED8426131E9E2106BB0B65F8BA732486DC27A022FAC1AA3619"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\result-center-corrupt.png",
-        "Sha256": "7944FADC3CA90B0BBD05796BF1B21AEDE8997DFC1829D5A7C6D8495AA082E711",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-corrupt.png",
+        "sha256": "1C21918F365D6FD693A10E419F176733EF59C90F9D19D86DE711E28CED6849D1"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\result-center-incomplete.png",
-        "Sha256": "7944FADC3CA90B0BBD05796BF1B21AEDE8997DFC1829D5A7C6D8495AA082E711",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-incomplete.png",
+        "sha256": "1C21918F365D6FD693A10E419F176733EF59C90F9D19D86DE711E28CED6849D1"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-en-us-itam\\dashboard.window.png",
-        "Sha256": "BCFD86BAFDA2000E3F277015CF41A496D8D08C8061366FE70E88120EBD553AD9",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
+        "sha256": "BBF0692F86368C199BF38F152C48E3876A2BF6D42DECB85EF4DAE08D5F239068"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-en-us-itam\\result-center-legacy.png",
-        "Sha256": "A1BE9BD7F3F5B616F1301154D1BD321F1667ADD46412D9B5A69874E44506868A",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-legacy.png",
+        "sha256": "C0729C7B2203440EA83D7125A949E59EE86A87908D9477189EB32D3C7B5CE1A9"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-en-us-itam\\result-center-verified.png",
-        "Sha256": "9E83671CDF46A2A116B8399AFA238693D0378CB3A04CDDB8AB6CB8EB67A8388B",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-verified.png",
+        "sha256": "7CF5ACC0E9618ADC58444E8BD8E4524F2FDD05BE473A09CE3032921DA6DC2F6E"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-en-us-itam\\result-center-corrupt.png",
-        "Sha256": "0E4910F7DEB8BED28E335087980FF164B1F382D7E318A53C58A6BB62586F3CEB",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-corrupt.png",
+        "sha256": "0D795DCBDD0306BD4F37BA15661293FBAD754CF21ED1FF5474636056D869120A"
       },
       {
-        "Path": "runtime-qa-r1\\runtime-vm-r1\\win11-previous-adminlimited-en-us-itam\\result-center-incomplete.png",
-        "Sha256": "0E4910F7DEB8BED28E335087980FF164B1F382D7E318A53C58A6BB62586F3CEB",
-        "Viewed": true
+        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-incomplete.png",
+        "sha256": "0D795DCBDD0306BD4F37BA15661293FBAD754CF21ED1FF5474636056D869120A"
       }
     ],
-    "ReviewedUtc": "2026-11-05T02:26:39.225090+00:00",
-    "Scope": "Internal visual QA of10actual packaged screenshots; not independent security review or full QA/restore completion",
-    "Observations": [
-      "Bilingual dashboards and primary tiles readable; compact summary ellipsis remains disclosed",
-      "All7footer actions fully visible in2rows, no overlap, across8synthetic ResultCenter cases",
-      "Integrity and excluded counts match expected0/1, verified baseline marks unchanged",
-      "Filter/grid horizontal overflow remains scrollable; exhaustive DPI/accessibility/tooltip acceptance not claimed"
+    "finding": "Both compact dashboards now separate Activity heading/status from shared-result caption/state; vertical scrolling is present. All eight ResultCenter images show seven visible footer actions, verified/unverified checksum text, and correct excluded counts (0 legacy/verified, 1 corrupt/incomplete). No Activity overlap remains in the captured view.",
+    "limitations": [
+      "Compact dashboard cards and shared-result labels use truncation/ellipsis; scrolling content is allowed. Full tooltip, broad DPI/multimonitor/accessibility and scan-to-export/remediation/Enterprise UI E2E are not established.",
+      "Grid cells/filter strip may scroll horizontally; footer action buttons are fully visible without parent horizontal scrolling.",
+      "Real elevated licensing Load/Cancel evidence is a read-only source-worker probe; no Office OSPP installation, activation change or licensing ground-truth claim."
     ],
-    "independentReview": "NotReviewed"
+    "publicationAllowed": true
   },
   "restoreProof": {
     "result": "PASS",
@@ -126,7 +112,7 @@
     "cases": 8,
     "buttonsPerCase": 7,
     "entryPoint": "Actual packaged ResultCenter child-window bounds relative to native footer client rectangle",
-    "artifactSha256": "93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD"
+    "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3"
   },
   "providerReadiness": {
     "result": "PASS",
@@ -137,17 +123,17 @@
       {
         "Provider": "Real Win32_Service sppsvc",
         "Present": true,
-        "DurationMilliseconds": 5813
+        "DurationMilliseconds": 6793
       },
       {
         "Provider": "Real local Authenticode sppsvc.exe",
         "SignatureStatus": "Valid",
-        "DurationMilliseconds": 89
+        "DurationMilliseconds": 110
       },
       {
         "Provider": "Real local Authenticode slui.exe",
         "SignatureStatus": "Valid",
-        "DurationMilliseconds": 177
+        "DurationMilliseconds": 66
       }
     ],
     "coldStartFullAuditClaim": false,
@@ -156,7 +142,7 @@
   "all21Acceptance": "Partial; implemented maintenance only. Real license/subscription ground truth, durable attachments, individual RBAC, production fleet/LAN scale and independent audit not established.",
   "packagedResultCenter": {
     "result": "PASS",
-    "artifactSha256": "93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD",
+    "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
     "cultures": [
       "vi-VN",
       "en-US"

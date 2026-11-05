@@ -3,7 +3,7 @@
     "Channel":  "stable",
     "LatestVersion":  "5.0",
     "MinimumUpdaterVersion":  "4.6.1.0",
-    "PublishedAtUtc":  "2026-11-04T00:00:00Z",
+    "PublishedAtUtc":  "2026-11-05T00:00:00Z",
     "Title":  {
                   "vi-VN":  "v5.0 - Chính sách mã nguồn rõ ràng và kênh phản hồi hai chiều",
                   "en-US":  "v5.0 - Clear source policy and two-way feedback channels"
@@ -60,8 +60,8 @@
                 },
     "ReleasePageUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
     "DownloadUrl":  "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/download/v5.0/VietLicenSure-v5.0.exe",
-    "DownloadSha256":  "93A745EE00113FCB763A2088ECEDC9DE1A129CBA8031DEB4E9419A6B32EB04CD",
-    "DownloadSize":  974528,
+    "DownloadSha256":  "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
+    "DownloadSize":  985280,
     "AuthenticodeRequired":  true,
     "SignerThumbprints":  [
                               "575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62"

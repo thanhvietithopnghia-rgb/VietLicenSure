@@ -13,7 +13,7 @@ try {
  if($cms.SignerInfos[0].DigestAlgorithm.Value -cne '2.16.840.1.101.3.4.2.1'){throw 'Packaging signature must use SHA256'}
  $cms.CheckSignature($true)
  $record=Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json
- if($record.PackagingRevision -cne '20261105-r7' -or -not $record.ExecutableUnchanged){throw 'Unexpected packaging revision'}
+ if($record.PackagingRevision -cne '20261105-ui-r7' -or -not $record.ExecutableUnchanged){throw 'Unexpected packaging revision'}
  $listed=New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
  foreach($row in @($record.StableDistributionFiles)+@($record.PackagingFiles)){
   $name=[string]$row.Path

@@ -1,0 +1,1334 @@
+{
+  "SchemaVersion": "1.1",
+  "KnowledgeVersion": "1.31.0",
+  "UpdatedAtUtc": "2026-11-05T10:21:39Z",
+  "ToolVersionMin": "5.0",
+  "ToolVersionMax": "5.0.65535.65535",
+  "ReleasedWithToolVersion": "5.0",
+  "Scope": "VietLicenSure",
+  "Entries": [
+    {
+      "Id": "scope",
+      "TitleVi": "Phạm vi của Trợ lý VietLicenSure",
+      "TitleEn": "VietLicenSure Assistant scope",
+      "Keywords": [
+        "tro ly",
+        "chat bot",
+        "chatbot",
+        "hoi gi",
+        "lam duoc gi",
+        "pham vi",
+        "ai",
+        "codex",
+        "api"
+      ],
+      "AnswerVi": "Trợ lý hiểu và trả lời mọi câu hỏi liên quan đến VietLicenSure trong phạm vi dữ liệu VietLicenSure có: thông tin sản phẩm, toàn bộ chức năng và cách dùng, trạng thái máy, báo cáo, bằng chứng, lỗi, an toàn, cập nhật và Máy chủ–Máy trạm. Trợ lý dùng tri thức cục bộ, tài liệu nhúng và báo cáo hiện có; danh sách này là phạm vi mở theo dữ liệu, không phải một tập câu hỏi mẫu cố định. Nếu thiếu bằng chứng, Trợ lý nói rõ phần chưa xác định; chỉ từ chối khi nội dung thực sự không liên quan đến VietLicenSure.",
+      "AnswerEn": "VietLicenSure Assistant handles every product-related question supported by available data: product information, all features and workflows, device state, reports, evidence, errors, safety, updates, and server/workstation operation. It uses local knowledge, bundled documentation, and available report context; this is a data-driven scope, not a fixed sample-question list. It states when evidence is insufficient and declines only genuinely unrelated topics."
+    },
+    {
+      "Id": "brand-name",
+      "TitleVi": "Tên VietLicenSure và lần đổi tên chính thức",
+      "TitleEn": "VietLicenSure name and official rebranding",
+      "Keywords": [
+        "vietlicensure nghia la gi",
+        "y nghia ten vietlicensure",
+        "ten vietlicensure",
+        "doi ten v5.0",
+        "ten cu cua vietlicensure",
+        "why vietlicensure",
+        "vietlicensure meaning",
+        "official rebrand"
+      ],
+      "AnswerVi": "Ngày 06/09/2026, dòng v5.0 chính thức đổi tên từ Tool Kiểm Tra Máy Tính — Công cụ kiểm tra cấu hình máy và bản quyền phần mềm thành VietLicenSure — Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống. Viet thể hiện phần mềm do người Việt phát triển; Licen rút gọn từ License, đại diện cho giấy phép/bản quyền phần mềm; Sure thể hiện mục tiêu đưa ra kết quả rõ ràng, có kiểm chứng trong phạm vi bằng chứng kỹ thuật. Việc đổi tên giữ nguyên dòng v5.0 và toàn bộ chức năng; tên gọi không phải chứng nhận pháp lý về quyền sử dụng.",
+      "AnswerEn": "On 6 September 2026, the v5.0 product line was officially renamed from Tool Kiem Tra May Tinh — Computer Configuration and Software License Check Tool to VietLicenSure — System License Inspection and Management Software. Viet identifies its Vietnamese authorship, Licen is shortened from License, and Sure represents clear, evidence-backed technical verification. The rename preserves the v5.0 line and all features; the name is not a legal certification of entitlement."
+    },
+    {
+      "Id": "tool-version",
+      "TitleVi": "Phiên bản hiện tại",
+      "TitleEn": "Current version",
+      "Keywords": [
+        "phien ban cua vietlicensure",
+        "tool version",
+        "phien ban hien tai",
+        "version hien tai",
+        "dang dung ban nao",
+        "so phien ban",
+        "ban v5.0",
+        "v5.0",
+        "release v5.0"
+      ],
+      "AnswerVi": "Phiên bản hiện tại là VietLicenSure v5.0 thuộc kênh phát hành chính thức Official Self-Signed và dùng chứng thư tự ký được ghim. Trợ lý lập chỉ mục toàn bộ HDSD và lịch sử Việt–Anh từ v1.0.0 đến v5.0 để tra cứu Offline, trả nguyên mục thay đổi, đối chiếu hai phiên bản và giải thích chi tiết toàn bộ chức năng được tài liệu hóa—không chỉ Khôi phục key OEM. VietLicenSure có 10 chức năng chính, bốn lựa chọn khắc phục/backup, quản lý giấy phép cục bộ–doanh nghiệp và tám tác vụ Báo cáo & Bảo đảm. Tri thức 1.31.0 ghi nhận nội dung bảo trì đến 05/11/2026; ngày tri thức không phải Build ID hay kết quả QA của EXE đang chạy. Bản bảo trì UI/Trợ lý bổ sung reflow thẻ, ngữ cảnh vai trò/màn hình/Build ID, tải tri thức và giấy phép nền có hủy, phục hồi cửa sổ và vùng nút Enterprise cố định. Trạng thái phát hành theo manifest/chữ ký của đúng EXE và QA artifact-bound, không theo ngày tri thức; DPI/đa màn hình vật lý rộng vẫn NotEstablished.",
+      "AnswerEn": "The current release is VietLicenSure v5.0 on the official Official Self-Signed channel with a pinned self-issued certificate. The Assistant indexes the complete Vietnamese/English guides and recorded history from v1.0.0 through v5.0 for Offline lookup, returns full change entries, compares two versions, and explains every documented function—not only OEM key recovery. Coverage includes all ten main functions, four remediation/backup choices, local and enterprise license management, and all eight Reports & Assurance actions. Knowledge 1.31.0 records maintenance through 5 November 2026; its date is not the running EXE Build ID or QA result. The UI/Assistant maintenance adds card reflow, role/screen/Build ID context, cancellable background knowledge and licensing loads, window recovery and pinned Enterprise actions. Release status follows the exact EXE manifest/signature and artifact-bound QA, not the knowledge date; broad physical DPI/multi-monitor acceptance remains NotEstablished."
+    },
+    {
+      "Id": "tool-author",
+      "TitleVi": "Tác giả phát triển",
+      "TitleEn": "Developer",
+      "Keywords": [
+        "tac gia cua tool",
+        "do ai phat trien",
+        "ai phat trien tool",
+        "nguoi viet tool",
+        "developer cua tool",
+        "ai tao ra cong cu",
+        "thanh viet la ai"
+      ],
+      "AnswerVi": "VietLicenSure do Thanh Việt phát triển. Thông tin này được ghi trong mục Giới thiệu, Hướng dẫn sử dụng và phần chân giao diện của bản phát hành.",
+      "AnswerEn": "VietLicenSure is developed by Thanh Viet. This attribution appears in About, the user guide, and the release interface footer."
+    },
+    {
+      "Id": "v49-vs-v50",
+      "TitleVi": "Khác biệt cốt lõi giữa v4.9 và v5.0",
+      "TitleEn": "Core differences between v4.9 and v5.0",
+      "Keywords": [
+        "v4.9 so voi v5.0",
+        "v5.0 khac v4.9",
+        "v5 co gi moi so voi v4.9",
+        "so sanh v4.9 v5.0",
+        "compare v4.9 and v5.0",
+        "v5.0 changes from v4.9",
+        "what changed since v4.9"
+      ],
+      "AnswerVi": "v5.0 kế thừa nền nhận diện và bằng chứng của v4.9, rồi hợp nhất kiểm tra, khắc phục, báo cáo và quản lý theo ba vai trò Cá nhân / Hỗ trợ kỹ thuật / Kiểm kê doanh nghiệp trên một giao diện Windows, engine và dữ liệu hiện hành. Bản mới bổ sung lọc chức năng theo vai trò, quản lý giấy phép Windows/Office cho Hỗ trợ kỹ thuật, kiểm kê Máy chủ/Máy trạm cho Kiểm kê doanh nghiệp, Trợ lý Offline, Dry Run/backup/UAC/rollback và báo cáo đa định dạng. Offline vẫn là mặc định; khi người dùng chủ động bật Online, phần mềm cập nhật catalog ký số trước rồi kiểm tra phiên bản ứng dụng nhưng không tự tải/cài, quét, báo cáo hoặc upload inventory.",
+      "AnswerEn": "v5.0 retains the recognition/evidence foundation of v4.9 and unifies inspection, remediation, reporting, and management across Personal / Technical Support / Business Inventory roles on one Windows interface, engine, and current data source. It adds role-filtered functions, Windows/Office license management for Technical Support, Server/Workstation inventory for Business Inventory, an Offline Assistant, Dry Run/backup/UAC/rollback, and multi-format reports. Offline remains the default; explicitly enabling Online refreshes the signed catalog first and then checks application-version availability without automatically downloading/installing, scanning, reporting, or uploading inventory."
+    },
+    {
+      "Id": "release-date",
+      "TitleVi": "Ngày phát hành và ngày build",
+      "TitleEn": "Release and build date",
+      "Keywords": [
+        "ngay phat hanh tool",
+        "tool ra mat khi nao",
+        "ngay build hien tai",
+        "release date cua tool",
+        "build date",
+        "ngay cap nhat ban v5.0"
+      ],
+      "AnswerVi": "VietLicenSure v5.0/5.0 được phát hành lần đầu ngày 08/09/2026; nội dung, tài liệu và gói kỹ thuật hiện hành được cập nhật đến 05/11/2026 nhưng vẫn giữ nguyên số phiên bản v5.0. Kênh công khai là Official Self-Signed: EXE dùng Publisher trung tính Thanh Viet - VietLicenSure Code Signing, còn nội dung/cập nhật dùng chứng thư CMS được ghim riêng. Cả hai đều là chứng thư tự ký, nên Windows vẫn có thể hiện cảnh báo SmartScreen hoặc ứng dụng chưa được nhận diện. Kênh này không được mô tả là public-CA, EV hoặc Store-signed.",
+      "AnswerEn": "VietLicenSure v5.0/5.0 was first released on 8 September 2026; the current content, documentation, and technical package are updated through 5 November 2026 while the public version remains v5.0. The public channel is Official Self-Signed: the EXE uses the neutral Thanh Viet - VietLicenSure Code Signing publisher while content/update CMS uses a separately pinned certificate. Both are self-issued, so Windows can still show SmartScreen or unrecognized-app warnings. It is not described as public-CA, EV, or Store signed."
+    },
+    {
+      "Id": "first-release",
+      "TitleVi": "Phiên bản công khai đầu tiên",
+      "TitleEn": "First public release",
+      "Keywords": [
+        "phien ban dau tien cua tool",
+        "v1.0 phat hanh ngay nao",
+        "v1 ngay nao",
+        "ngay ra mat v1.0",
+        "first public version",
+        "first release date",
+        "ban dau tien",
+        "ban dau tien ngay may",
+        "lich su ban v1.0"
+      ],
+      "AnswerVi": "Phiên bản công khai đầu tiên của dòng sản phẩm tiền thân là v1.0, phát hành ngày 17/07/2026. Tên VietLicenSure chỉ được dùng chính thức từ v5.0 ngày 06/09/2026; vì vậy không gọi hồi tố v1.0 là VietLicenSure.",
+      "AnswerEn": "The predecessor product line first shipped publicly as v1.0 on 17 July 2026. The VietLicenSure name became official only with v5.0 on 6 September 2026, so v1.0 is not retroactively branded VietLicenSure."
+    },
+    {
+      "Id": "tool-pricing",
+      "TitleVi": "VietLicenSure miễn phí hay trả phí",
+      "TitleEn": "VietLicenSure pricing",
+      "Keywords": [
+        "tool mien phi hay tra phi",
+        "tool co mat phi khong",
+        "co ton tien khong",
+        "gia tool",
+        "free or paid tool",
+        "is it free",
+        "tool pricing",
+        "phi su dung tool",
+        "mien phi"
+      ],
+      "AnswerVi": "VietLicenSure v5.0 được cung cấp miễn phí cho cộng đồng: không thu phí tải xuống hoặc sử dụng các chức năng tích hợp. Việc phần mềm được dùng miễn phí không đồng nghĩa mã nguồn mở và không thay đổi điều khoản bản quyền của các phần mềm được quét.",
+      "AnswerEn": "VietLicenSure v5.0 is provided free of charge to the community: there is no fee to download or use its built-in features. Free use does not make its source open source or alter the licence terms of software being scanned."
+    },
+    {
+      "Id": "source-code-license",
+      "TitleVi": "Phát triển cộng đồng và quyền sử dụng mã nguồn",
+      "TitleEn": "Community development and source rights",
+      "Keywords": [
+        "ma nguon cong khai o dau",
+        "kho ma nguon vietlicensure",
+        "github ma nguon",
+        "source code repository",
+        "repository cong khai co duoc sua khong",
+        "can i modify the public repository",
+        "vietlicensure co phai ma nguon mo",
+        "public source code",
+        "license notice ma nguon",
+        "muon hoc hoi ma nguon",
+        "xin phep xem ma nguon",
+        "ly do dong ma nguon",
+        "tai sao dong ma nguon tu v4.9",
+        "pham vi ma nguon dong",
+        "co mo lai ma nguon khong",
+        "lo trinh mo ma nguon",
+        "khi nao mo source",
+        "source opening roadmap",
+        "request source access",
+        "tool co phat trien cong dong khong",
+        "vietlicensure co phat trien cung cong dong khong"
+      ],
+      "AnswerVi": "VietLicenSure được cung cấp miễn phí và phát triển cùng cộng đồng qua phản hồi, đề xuất, tài liệu, bản dịch và kiểm thử, nhưng không phải phần mềm mã nguồn mở và không được phát hành theo giấy phép mã nguồn mở. Từ v4.9, mã nguồn được quản lý theo cơ chế truy cập có kiểm soát sau khi phát hiện phần mềm/phiên bản tiền thân bị sao chép, chỉnh sửa, đổi tên hoặc đóng gói rồi phát hành thành một phần mềm khác khi chưa được tác giả cho phép hay ủy quyền. Chính sách nhằm bảo vệ chất xám, nguồn gốc tác phẩm, người dùng và tính toàn vẹn của bản phát hành chính thức. Phạm vi không công khai gồm mã triển khai, quy tắc và tri thức kỹ thuật, quy trình build/phát hành, kiểm thử cùng tài liệu phát triển nội bộ. Người muốn học tập, nghiên cứu, đánh giá bảo mật hoặc đóng góp mã phải gửi yêu cầu bằng văn bản qua thanhvietit.hopnghia@gmail.com, nêu rõ danh tính, mục đích, phạm vi, thời hạn cần truy cập và biện pháp bảo vệ mã, rồi nhận chấp thuận trước bằng văn bản của tác giả. Quyền được cấp là giới hạn và không chuyển nhượng; quyền xem không tự cấp quyền sao chép, trích xuất, sửa đổi, dịch ngược, phân phối, đóng gói lại, thương mại hóa, dùng làm dữ liệu huấn luyện hoặc đổi thương hiệu. SOURCE-POLICY-v5.0 công bố lộ trình dự kiến bốn giai đoạn: kiểm soát chặt đến hết 11/2026, có thể mở chọn lọc module không chứa lõi đến hết 02/2027, xem xét mở rộng thành phần ổn định đến hết 06/2027 và mở rộng có điều kiện từ 07/2027. Các mốc không phải cam kết cứng và có thể thay đổi theo rủi ro. Các bản cũ vẫn theo điều khoản đi kèm tại thời điểm phát hành.",
+      "AnswerEn": "VietLicenSure is provided free of charge and accepts community contributions through feedback, proposals, documentation, translations, and testing, but it is not open-source software. Starting with v4.9, the author moved the source to controlled access after discovering that the software or a predecessor release had been copied, modified, renamed or repackaged and published as another application without the author's permission or authorization. The policy protects the author's intellectual work, users, product provenance, and the integrity of official releases. Non-public scope includes implementation source, technical rules and knowledge, build/release processes, tests, and internal development documentation. Anyone seeking access for study, research, security review, or code contribution must submit a written request to thanhvietit.hopnghia@gmail.com stating identity, purpose, scope, requested duration, and safeguards, then receive the author's prior written approval. Any access is limited and non-transferable and does not itself permit copying, modification, reverse engineering, distribution, repackaging, commercialization, training-data use, or rebranding. SOURCE-POLICY-v5.0 publishes a four-stage indicative roadmap: strict control through November 2026, possible selective release of non-core modules through February 2027, review of additional stable components through June 2027, and conditional expansion from July 2027. Dates are not firm commitments and remain risk-gated. Earlier releases remain governed by the terms distributed with them."
+    },
+    {
+      "Id": "licensing-data-unreadable",
+      "TitleVi": "Không đọc được dữ liệu cấp phép khác với chưa kích hoạt",
+      "TitleEn": "Unreadable licensing data versus unactivated",
+      "Keywords": [
+        "khong doc duoc du lieu ban quyen",
+        "khong truy cap duoc softwarelicensingproduct",
+        "wmi cim loi",
+        "chua kich hoat nhung van dung duoc",
+        "license data unavailable",
+        "unreadable license data",
+        "sppsvc winmgmt"
+      ],
+      "AnswerVi": "`Không đọc được dữ liệu` nghĩa là nguồn SoftwareLicensingProduct/CIM/WMI, dịch vụ Winmgmt hoặc sppsvc không trả kết quả tin cậy; trạng thái này không được đổi thành `Chưa kích hoạt`. VietLicenSure v5.0 yêu cầu UAC cho lượt quét toàn máy, kiểm tra dịch vụ, thử CIM rồi WMI và ghi rõ nguồn/lỗi. Nếu vẫn thất bại, hãy giữ trạng thái Chưa xác minh và xem nguyên nhân trong JSON/báo cáo thay vì suy đoán giấy phép.",
+      "AnswerEn": "`Licensing data unreadable` means SoftwareLicensingProduct/CIM/WMI, Winmgmt, or sppsvc did not provide a trustworthy result; it must not be converted to `Unactivated`. VietLicenSure v5.0 requests UAC for whole-machine scans, checks services, tries CIM and then WMI, and records the source/error. If all probes fail, keep the result Unverified and review the report/JSON instead of guessing entitlement."
+    },
+    {
+      "Id": "software-inventory-coverage",
+      "TitleVi": "Vì sao danh sách phần mềm có thể thiếu hoặc trùng",
+      "TitleEn": "Why software inventory can be incomplete or duplicated",
+      "Keywords": [
+        "khong nhan dien du phan mem",
+        "thieu phan mem",
+        "phan mem bi trung",
+        "441 phan mem",
+        "gom thanh phan phu",
+        "software inventory incomplete",
+        "duplicate software",
+        "portable app",
+        "scoop chocolatey steam"
+      ],
+      "AnswerVi": "Không có một API Windows duy nhất liệt kê 100% phần mềm. VietLicenSure đối chiếu Registry, AppX/MSIX, shortcut mọi hồ sơ người dùng, Scoop, Chocolatey, Steam và vùng portable giới hạn; sau đó gom bản ghi cùng danh tính/vị trí và đưa updater, language pack, plugin hoặc runtime về nhóm sản phẩm chính ở chế độ chỉ đọc. Quét với UAC cho phạm vi toàn máy đầy đủ hơn, nhưng ứng dụng portable nằm ngoài vùng quét hoặc metadata bị ẩn vẫn có thể cần chỉ đường/quét chuyên sâu thủ công.",
+      "AnswerEn": "Windows has no single API that lists 100% of software. The VietLicenSure correlates Registry, AppX/MSIX, shortcuts across user profiles, Scoop, Chocolatey, Steam, and bounded portable locations, then merges records with the same identity/location and groups updaters, language packs, plugins, or runtimes under the primary product as read-only. UAC provides better whole-machine coverage, but portable apps outside bounded roots or hidden metadata may still require a manually targeted deep scan."
+    },
+    {
+      "Id": "status-terms",
+      "TitleVi": "Chưa xác định, Chưa xác minh, Nghi vấn và Crack đã xác nhận",
+      "TitleEn": "Undetermined, Unverified, Suspicious, and CrackConfirmed",
+      "Keywords": [
+        "chua xac dinh va chua xac minh",
+        "phan biet chua xac dinh chua xac minh",
+        "chua xac minh la gi",
+        "chua xac dinh nghia la gi",
+        "unknown la gi",
+        "suspicious la gi",
+        "crack la gi",
+        "phan biet unknown unverified suspicious crack",
+        "undetermined vs unverified",
+        "unknown versus unverified",
+        "unknown unverified suspicious crack meaning",
+        "what does crack mean",
+        "y nghia trang thai chua xac minh"
+      ],
+      "AnswerVi": "Bốn mức không đồng nghĩa và phải đọc theo bằng chứng. 'CHƯA XÁC ĐỊNH/Unknown' nghĩa là VietLicenSure chưa xác định được giá trị hoặc mô hình giấy phép, ví dụ dữ liệu Windows/Office không đọc được hay phần mềm chưa khớp catalog và nguồn hãng; trạng thái này không kết luận hợp lệ hay vi phạm. 'CHƯA XÁC MINH/Unverified' nghĩa là đã nhận diện đối tượng nhưng bằng chứng hiện tại chưa đủ xác nhận cấp phép hoặc can thiệp; giữ nguyên và kiểm tra thêm. 'NGHI VẤN/Suspicious' nghĩa là có tín hiệu kỹ thuật cần điều tra nhưng chưa có bằng chứng quyết định về crack; quét sâu hoặc kiểm tra thủ công, chưa cho khắc phục. 'CRACK ĐÃ XÁC NHẬN/CrackConfirmed' chỉ dùng khi có bằng chứng kỹ thuật trực tiếp, quyết định và gắn đúng đối tượng về activator hoặc can thiệp. Đây vẫn là kết luận kỹ thuật, không phải phán quyết pháp lý; chỉ xem trước, backup, xin xác nhận rồi cô lập đúng hiện vật, không tự gỡ ứng dụng chính.",
+      "AnswerEn": "The four levels are different and must follow the evidence. 'UNDETERMINED/Unknown' means the VietLicenSure could not determine a value or licence model, for example unreadable Windows/Office data or software not matched to the catalogue and publisher source; it proves neither valid entitlement nor a violation. 'UNVERIFIED' means the item is identified but current evidence cannot confirm licensing or tampering; preserve it and review further. 'SUSPICIOUS' means technical signals require investigation but decisive crack evidence is absent; deep-scan or review manually, with no remediation yet. 'CRACKCONFIRMED' is reserved for direct, decisive, correctly scoped technical evidence of an activator or tampering. It remains a technical finding, not a legal verdict; preview, back up, obtain confirmation, and isolate only the exact artifact without silently uninstalling the main application."
+    },
+    {
+      "Id": "tool-overview",
+      "TitleVi": "Tóm tắt VietLicenSure",
+      "TitleEn": "VietLicenSure overview",
+      "Keywords": [
+        "tom tat tool",
+        "noi dung chinh cua tool",
+        "gioi thieu tool",
+        "tool lam duoc nhung gi",
+        "cong cu dung de lam gi",
+        "muc dich cua cong cu",
+        "tong quan san pham",
+        "mo ta ngan gon"
+      ],
+      "AnswerVi": "VietLicenSure là công cụ Windows một-EXE dùng để kiểm kê cấu hình, kiểm tra trạng thái Windows/Office, rà soát phần mềm và dấu hiệu can thiệp, tạo báo cáo có thể đối chiếu, sao lưu/khôi phục và khắc phục có kiểm soát. VietLicenSure mặc định Offline, ưu tiên quét chỉ đọc; mọi thay đổi hệ thống phải qua chọn phạm vi, xem trước, xác nhận, backup và hậu kiểm.",
+      "AnswerEn": "VietLicenSure is a one-EXE Windows utility for hardware inventory, Windows/Office status, software and tampering review, verifiable reports, backup/restore, and controlled remediation. It starts Offline and prioritizes read-only scans; system changes require scope selection, preview, confirmation, backup, and post-check."
+    },
+    {
+      "Id": "tool-principles",
+      "TitleVi": "Nguyên tắc hoạt động",
+      "TitleEn": "Operating principles",
+      "Keywords": [
+        "nguyen tac cua tool",
+        "triet ly hoat dong",
+        "offline an toan minh bach",
+        "tieu chi an toan",
+        "read only uu tien",
+        "khong telemetry",
+        "khong cap nhat ngam"
+      ],
+      "AnswerVi": "Ba nguyên tắc chính là Offline – an toàn – minh bạch. VietLicenSure khởi động Offline, không telemetry và không tự cập nhật; kiểm tra/tạo báo cáo ưu tiên chỉ đọc; kết luận tách bằng chứng kỹ thuật khỏi quyền sử dụng pháp lý. Thao tác thay đổi hệ thống phải có xem trước, chọn đúng mục, xác nhận, quyền Administrator khi cần, backup và kiểm tra lại; dữ liệu hoặc bằng chứng chưa đủ thì VietLicenSure không đoán.",
+      "AnswerEn": "The three core principles are Offline, safe, and transparent. The VietLicenSure starts Offline, has no telemetry or silent updates, and keeps scans/reports read-only by default. It separates technical evidence from legal entitlement; changes require preview, explicit selection, confirmation, elevation when needed, backup, and post-check, while insufficient evidence is never guessed."
+    },
+    {
+      "Id": "feature-overview",
+      "TitleVi": "Mười chức năng chính",
+      "TitleEn": "Ten main features",
+      "Keywords": [
+        "tat ca chuc nang",
+        "10 chuc nang chinh",
+        "tung chuc nang cua vietlicensure",
+        "danh sach tinh nang",
+        "tong hop chuc nang",
+        "vietlicensure co bao nhieu chuc nang",
+        "chuc nang gom nhung gi",
+        "tom tat cac tac vu",
+        "all vietlicensure features",
+        "all functions",
+        "what features does vietlicensure have",
+        "current version features",
+        "v5.0 features"
+      ],
+      "AnswerVi": "Toàn bộ 10 chức năng chính hoạt động như sau: 1) Kiểm tra toàn bộ tạo ảnh chụp chỉ đọc về phần cứng, Windows, Office và phần mềm; 2) Cấu hình phần cứng kiểm kê CPU/RAM/bo mạch/firmware/ổ đĩa/thiết bị; 3) Bản quyền Windows đọc edition, kích hoạt, kênh, năm ký tự cuối và KMS; 4) Bản quyền Office kiểm tra từng Office/Visio/Project và SKU; 5) Phần mềm & dấu hiệu can thiệp kiểm kê ứng dụng, chữ ký, hash, dịch vụ, task, hosts/firewall và độ tin cậy; 6) Khắc phục mở đúng phạm vi Windows/Office/phần mềm, bắt buộc xem trước, Dry Run, backup, xác nhận và hậu kiểm; 7) Khôi phục key OEM kiểm tra OA3 chỉ đọc trước khi người dùng cho phép áp dụng; 8) Quản lý giấy phép được phân theo vai trò: Hỗ trợ kỹ thuật quản lý Windows/Office và hồ sơ chứng từ, còn Kiểm kê doanh nghiệp kiểm kê Máy chủ–Máy trạm trong LAN; 9) Kiểm tra chuyên sâu chạy chế độ 7 nhóm hoặc điều tra 12 nhóm/chấm điểm; 10) Trung tâm Báo cáo & Bảo đảm kiểm tra chứng chỉ, plugin, timeline, mở tài liệu/cập nhật và tạo gói hỗ trợ đã che định danh. Cá nhân dùng giao diện Windows chung nhưng chỉ thấy các lượt kiểm tra đọc và báo cáo. Ô Khắc phục tổng hợp còn có bốn lựa chọn: Backup, kiểm tra/khắc phục thủ công, khôi phục backup và tự động làm sạch an toàn. Chọn vai trò chỉ thay đổi phạm vi hiển thị, không cấp thêm quyền hệ thống; thao tác thay đổi vẫn cần đúng phạm vi, bằng chứng, xác nhận và quyền Administrator khi cần.",
+      "AnswerEn": "All ten main functions work as follows: 1) Full inspection creates a read-only snapshot of hardware, Windows, Office, and software; 2) Hardware configuration inventories CPU, memory, board, firmware, storage, and devices; 3) Windows licensing reads edition, activation, channel, last five key characters, and KMS; 4) Office licensing checks each Office/Visio/Project product and SKU; 5) Software & tampering indicators inventories apps, signatures, hashes, services, tasks, hosts/firewall evidence, and confidence; 6) Remediation locks the Windows/Office/software scope and requires preview, Dry Run, backup, confirmation, and post-check; 7) OEM recovery performs read-only OA3 inspection before any user-approved apply stage; 8) License management is role-scoped: Technical Support manages Windows/Office and evidence records, while Business Inventory manages paired Server–Workstation inventory on an authorized LAN; 9) Advanced inspection runs the seven-group scan or twelve-group scored investigation; 10) Reports & Assurance audits certificates, plugins, and timeline, opens documentation/updates, and creates a redacted support bundle. Personal uses the shared Windows interface but sees only read-only inspections and reports. The role changes visible scope only and grants no system privilege; changes still require exact scope, evidence, confirmation, and elevation when necessary."
+    },
+    {
+      "Id": "role-workspaces",
+      "TitleVi": "Không gian Cá nhân, Hỗ trợ kỹ thuật và Kiểm kê doanh nghiệp",
+      "TitleEn": "Personal, Technical Support, and Business Inventory workspaces",
+      "Keywords": [
+        "vai tro ca nhan",
+        "ho tro ky thuat windows office chung tu",
+        "kiem ke doanh nghiep may chu may tram",
+        "kiem ke doanh nghiep quan ly may chu va may tram ra sao",
+        "it helpdesk windows office chung tu",
+        "it helpdesk quan ly windows office va chung tu ra sao",
+        "itam sam may chu may tram",
+        "itam sam quan ly may chu va may tram ra sao",
+        "doi vai tro",
+        "khong gian lam viec",
+        "personal workspace",
+        "technical support windows office evidence",
+        "business inventory server workstation",
+        "how does it helpdesk manage windows office and evidence",
+        "it helpdesk license evidence",
+        "how does itam sam manage server and workstation",
+        "itam sam server workstation",
+        "change role"
+      ],
+      "AnswerVi": "Khi mở VietLicenSure, người dùng phải chọn Cá nhân, Hỗ trợ kỹ thuật hoặc Kiểm kê doanh nghiệp. Cả ba dùng chung giao diện Windows, engine và dữ liệu hiện hành. Cá nhân chỉ thấy Kiểm tra Toàn bộ, Phần cứng, Windows, Office, Phần mềm & dấu hiệu can thiệp và Báo cáo; các nút xếp một cột, còn tiến trình, trạng thái và tóm tắt kết quả nằm bên phải, với nút mở báo cáo HTML chi tiết. Kết quả được ràng buộc với đúng máy/phạm vi và dùng chung giữa các vai trò; nếu còn mới, phần mềm hiển thị baseline rồi chạy đối chiếu Quick gia tăng thay vì quét toàn bộ, còn job trùng đang chạy bị chặn. Hỗ trợ kỹ thuật làm việc trong giao diện Windows với các tác vụ hỗ trợ, Quản lý giấy phép Windows/Office, nâng cấp, thay đổi giấy phép và Lưu hồ sơ chứng từ vào kho compliance cục bộ. Kiểm kê doanh nghiệp dùng kiểm kê, báo cáo và không gian Máy chủ/Máy trạm. Chọn vai trò không cấp thêm quyền hệ thống, không bật Internet và không bỏ qua xác nhận/UAC.",
+      "AnswerEn": "At startup, the user must choose Personal, Technical Support, or Business Inventory. All three use the same Windows interface, engine, and current data. Personal sees only Full, Hardware, Windows, Office, Software & tampering checks, and Reports; actions form one column while progress, status, and a concise result summary appear on the right with a button for the detailed HTML report. Results are bound to the current device and scan scope and shared across roles; when fresh, the current baseline is shown while a Quick incremental comparison runs instead of a full rescan, and duplicate in-flight jobs are blocked. Technical Support adds support actions plus Windows/Office License management, upgrade/change actions, and local compliance evidence records. Business Inventory uses inventory, reports, and the Server/Workstation workspace. Choosing a role grants no system privilege, does not enable Internet access, and never bypasses confirmation or UAC."
+    },
+    {
+      "Id": "getting-started",
+      "TitleVi": "Cách bắt đầu sử dụng",
+      "TitleEn": "Getting started",
+      "Keywords": [
+        "cach chay tool",
+        "khoi dong cong cu",
+        "mo file exe",
+        "bat dau su dung",
+        "huong dan nhanh",
+        "lan dau chay",
+        "giai nen ban phat hanh",
+        "chay tu file zip"
+      ],
+      "AnswerVi": "Hãy giải nén ZIP trước, đặt EXE trong thư mục cục bộ rồi nhấp đúp để chạy; không chạy trực tiếp bên trong ZIP. Giữ Offline nếu chỉ kiểm tra máy đang dùng, chọn ngôn ngữ/giao diện nếu cần, sau đó dùng Kiểm tra toàn bộ cho lượt đầu. Chọn báo cáo đã che khi cần chia sẻ; chỉ chấp nhận UAC khi đúng tác vụ khắc phục, cập nhật hoặc quản trị mà bạn vừa chủ động mở.",
+      "AnswerEn": "Extract the ZIP first, place the EXE in a normal local folder, and double-click it; do not run it inside the ZIP. Stay Offline for local inspection, choose language/theme if needed, then use Full inspection for the first run. Select a redacted report for sharing and accept UAC only for the remediation, update, or administration action you explicitly started."
+    },
+    {
+      "Id": "system-requirements",
+      "TitleVi": "Yêu cầu hệ thống và tương thích",
+      "TitleEn": "System requirements and compatibility",
+      "Keywords": [
+        "yeu cau he thong cua tool",
+        "cau hinh toi thieu de chay",
+        "windows nao ho tro",
+        "tuong thich he dieu hanh",
+        "powershell 3 tro len",
+        "net framework 4",
+        "chay tren 32 bit",
+        "chay tren 64 bit"
+      ],
+      "AnswerVi": "VietLicenSure dùng một EXE AnyCPU cho Windows 7 SP1 trở lên, chạy x86 trên Windows 32-bit và x64 trên Windows 64-bit. Nền tương thích là .NET Framework 4/CLR v4 và Windows PowerShell 3 trở lên. Khả năng nhận diện sâu các bản Windows/Office mới phụ thuộc catalogue đi kèm; bản chưa biết sẽ chuyển sang chỉ đọc/cần rà soát thay vì kết luận liều.",
+      "AnswerEn": "The VietLicenSure uses one AnyCPU EXE for Windows 7 SP1 or later, running x86 on 32-bit Windows and x64 on 64-bit Windows. Its baseline is .NET Framework 4/CLR v4 and Windows PowerShell 3 or later. Deep recognition of newer Windows/Office releases depends on the bundled catalogue; unknown builds fail to read-only/review rather than being guessed."
+    },
+    {
+      "Id": "technology",
+      "TitleVi": "Công nghệ của VietLicenSure",
+      "TitleEn": "VietLicenSure technology",
+      "Keywords": [
+        "tool viet bang gi",
+        "cong nghe cua tool",
+        "ngon ngu lap trinh",
+        "nen tang winforms",
+        "csharp powershell",
+        "kien truc anycpu",
+        "du lieu json xml csv"
+      ],
+      "AnswerVi": "Launcher và giao diện dùng C#/.NET Framework 4 với Windows Forms; các mô-đun nghiệp vụ dùng Windows PowerShell và được nhúng trong một EXE AnyCPU có kiểm tra SHA-256. Dữ liệu dùng JSON/XML/CSV, báo cáo dùng HTML/PDF, còn tính toàn vẹn và dữ liệu nhạy cảm dùng SHA-256, HMAC và DPAPI theo đúng phạm vi.",
+      "AnswerEn": "The launcher and interface use C#/.NET Framework 4 with Windows Forms; operational modules use Windows PowerShell and are embedded in one SHA-256-verified AnyCPU EXE. Data uses JSON/XML/CSV, reports use HTML/PDF, and integrity or protected local data use SHA-256, HMAC, and DPAPI as appropriate."
+    },
+    {
+      "Id": "interface-settings",
+      "TitleVi": "Giao diện và Cài đặt",
+      "TitleEn": "Interface and settings",
+      "Keywords": [
+        "doi ngon ngu giao dien",
+        "chuyen tieng anh",
+        "chuyen tieng viet",
+        "chon giao dien sang",
+        "chon giao dien toi",
+        "cach doc man hinh chinh",
+        "thanh ben trai",
+        "bon the trang thai",
+        "muc khac phuc co may chuc nang",
+        "nam chuc nang khac phuc",
+        "five remediation entries"
+      ],
+      "AnswerVi": "Khi mở ứng dụng, người dùng bắt buộc chọn Cá nhân, Hỗ trợ kỹ thuật hoặc Kiểm kê doanh nghiệp; nút Đổi vai trò luôn quay lại bộ chọn mà không tự cấp quyền. Trong Cài đặt, bạn có thể chọn Tiếng Việt/English và giao diện Sáng/Tối. Thanh bên trái lọc Tổng quan, Kiểm tra, Khắc phục, Báo cáo và Cài đặt; bốn thẻ trên cùng hiển thị Windows, Office, chế độ mạng và tính toàn vẹn. Ở vai trò Cá nhân, các nút quét xếp dọc bên trái, còn tiến trình và kết quả nhanh nằm bên phải. Windows, Office và Phần mềm không tự mở HTML; bấm Xem chi tiết khi cần. Kiểm tra toàn bộ và Cấu hình phần cứng vẫn mở kết quả ngay. Nút vai trò có màu riêng và chuyển vai trò dùng lại kết quả hiện hành của cùng máy.",
+      "AnswerEn": "At startup, the user must choose Personal, Technical Support, or Business Inventory; Change role returns to the chooser without granting privilege. Settings lets you choose Vietnamese/English and Light/Dark. The left navigation filters Overview, Inspection, Remediation, Reports, and Settings; four top cards show Windows, Office, network mode, and VietLicenSure integrity. In Personal, scan actions are vertical on the left and progress plus the quick result stay on the right. Windows, Office, and Software do not auto-open HTML; select View details when needed. Full inspection and Hardware configuration still open their result immediately. Role buttons have distinct colors and switching roles reuses the current result for the same device."
+    },
+    {
+      "Id": "stop-task",
+      "TitleVi": "Dừng một tác vụ",
+      "TitleEn": "Stopping a task",
+      "Keywords": [
+        "nut dung tac vu",
+        "cach huy luot quet",
+        "quet bi lau bat thuong",
+        "dung khi dang quet",
+        "huy khac phuc",
+        "tac vu bi treo"
+      ],
+      "AnswerVi": "Chỉ bấm Dừng khi tác vụ kéo dài bất thường. Nếu dừng lượt kiểm tra chỉ đọc, hãy chạy lại để có báo cáo đầy đủ. Nếu dừng giữa khắc phục, một phần kế hoạch có thể đã chạy: giữ nguyên backup, không tự sửa tiếp, mở lại VietLicenSure, quét chỉ đọc và đối chiếu báo cáo trước khi quyết định tiếp tục hoặc khôi phục.",
+      "AnswerEn": "Use Stop only when a task is unusually long. After stopping a read-only scan, rerun it for a complete report. If remediation was interrupted, part of the plan may have run: preserve the backup, avoid manual changes, reopen the VietLicenSure, run a read-only scan, and review the report before continuing or restoring."
+    },
+    {
+      "Id": "offline-online",
+      "TitleVi": "Chế độ Offline và Online",
+      "TitleEn": "Offline and Online modes",
+      "Keywords": [
+        "offline",
+        "che do offline",
+        "hoat dong offline",
+        "online",
+        "mang",
+        "internet",
+        "chuyen online",
+        "chuyen offline",
+        "mac dinh",
+        "ket noi"
+      ],
+      "AnswerVi": "Mỗi lần mở, VietLicenSure mặc định Offline và không tự truy cập Internet. Khi người dùng chủ động bật Online cho phiên hiện tại, phần mềm tải/xác minh catalog ký số trước rồi kiểm tra phiên bản ứng dụng; không tự tải/cài bản mới, quét máy, tạo báo cáo hoặc hỏi mức riêng tư. Không có telemetry, không gửi inventory/báo cáo và lần mở sau trở lại Offline.",
+      "AnswerEn": "Every launch starts Offline and does not access the Internet automatically. When the user explicitly enables Online for the current session, VietLicenSure downloads/validates the signed catalog first and then checks application-version availability; it never downloads/installs that version automatically, starts no machine scan/report/privacy prompt, and uploads no telemetry, inventory, or report. The next launch returns to Offline."
+    },
+    {
+      "Id": "privacy",
+      "TitleVi": "Quyền riêng tư",
+      "TitleEn": "Privacy",
+      "Keywords": [
+        "du lieu",
+        "gui du lieu",
+        "tai len",
+        "upload",
+        "rieng tu",
+        "bao mat",
+        "may chu",
+        "server"
+      ],
+      "AnswerVi": "Dữ liệu quét và báo cáo được xử lý trên máy. Trợ lý chỉ đọc một số trường tổng quan an toàn của báo cáo hiện tại và không tải báo cáo, khóa sản phẩm hay dữ liệu máy lên Internet. Khi Online, chiều mạng của Trợ lý chỉ dùng để tải tệp tri thức JSON cố định từ kho dự án.",
+      "AnswerEn": "Scan and report data stay on the computer. The assistant reads only safe summary fields from the current report and never uploads reports, product keys or machine data. Online access is download-only for the project's fixed JSON knowledge file."
+    },
+    {
+      "Id": "scan-all",
+      "TitleVi": "Kiểm tra toàn bộ",
+      "TitleEn": "Full inspection",
+      "Keywords": [
+        "kiem tra toan bo",
+        "quet toan bo",
+        "full scan",
+        "quet tat ca",
+        "chuc nang 1",
+        "chuc nang so 1",
+        "muc 1",
+        "nut 1"
+      ],
+      "AnswerVi": "Chức năng 1 thu thập cấu hình, Windows, Office, phần mềm và dấu hiệu kỹ thuật trong một lượt chỉ đọc. Cách dùng: chọn Kiểm tra toàn bộ → chọn mức riêng tư → chờ hoàn tất → đọc thẻ tổng quan trong HTML rồi mở PDF để xem chi tiết. JSON/HTML/PDF/checksum được đặt chung trong BaoCao-VietLicenSure với tên riêng theo máy và thời điểm; chức năng này không tự khắc phục.",
+      "AnswerEn": "Feature 1 collects hardware, Windows, Office, software, and technical signals in one read-only run. Use it by selecting Full inspection, choosing report privacy, waiting for completion, reading the HTML overview, then opening the PDF for detail. JSON/HTML/PDF/checksum files share BaoCao-VietLicenSure with unique machine/time names; this feature does not remediate."
+    },
+    {
+      "Id": "hardware",
+      "TitleVi": "Cấu hình phần cứng",
+      "TitleEn": "Hardware configuration",
+      "Keywords": [
+        "phan cung",
+        "cau hinh",
+        "cpu",
+        "ram",
+        "o cung",
+        "mainboard",
+        "bios",
+        "may tinh",
+        "chuc nang 2",
+        "chuc nang so 2",
+        "muc 2",
+        "nut 2"
+      ],
+      "AnswerVi": "Chức năng 2 đọc hệ điều hành, CPU, RAM, bo mạch chủ, BIOS/UEFI, ổ đĩa, đồ họa, mạng và thiết bị để phục vụ kiểm kê hoặc đối chiếu nâng cấp. Cách dùng: chọn Cấu hình phần cứng → chọn mức riêng tư → chờ thu thập → mở HTML/PDF và xem phần Khả năng tương thích nếu nguồn nào không đọc được. Dữ liệu là ảnh chụp kỹ thuật tại thời điểm quét, không phải chứng từ bản quyền.",
+      "AnswerEn": "Feature 2 reads the OS, CPU, memory, mainboard, BIOS/UEFI, storage, graphics, network, and devices for inventory or upgrade review. Select Hardware configuration, choose privacy, wait for collection, then open HTML/PDF and check Compatibility when a source is unavailable. It is point-in-time technical data, not license evidence."
+    },
+    {
+      "Id": "windows-license",
+      "TitleVi": "Bản quyền Windows",
+      "TitleEn": "Windows licensing",
+      "Keywords": [
+        "windows",
+        "ban quyen windows",
+        "kich hoat windows",
+        "activation",
+        "slmgr",
+        "license windows",
+        "chuc nang 3",
+        "chuc nang so 3",
+        "muc 3",
+        "nut 3"
+      ],
+      "AnswerVi": "Chức năng 3 đọc edition, trạng thái kích hoạt, kênh cấp phép, năm ký tự cuối key và máy chủ KMS nếu có. Cách dùng: chọn Bản quyền Windows → chọn mức riêng tư → chờ kiểm tra → đọc Trạng thái, Kênh, Kết luận và Bằng chứng trong báo cáo. 'Đã kích hoạt' chỉ là trạng thái kỹ thuật; quyền sử dụng hợp lệ vẫn phải đối chiếu tài khoản, hóa đơn, hợp đồng hoặc hồ sơ cấp phép.",
+      "AnswerEn": "Feature 3 reads Windows edition, activation, license channel, last five key characters, and KMS host when present. Select Windows licensing, choose privacy, wait, then read Status, Channel, Conclusion, and Evidence. 'Activated' is only technical state; valid entitlement still requires account, invoice, agreement, or licensing records."
+    },
+    {
+      "Id": "unverifiable",
+      "TitleVi": "Chưa xác định trạng thái cấp phép",
+      "TitleEn": "Licensing status undetermined",
+      "Keywords": [
+        "chua xac dinh",
+        "khong the xac minh",
+        "khong doc duoc",
+        "du lieu cap phep loi",
+        "0xc004d302",
+        "unverifiable",
+        "loi cap phep"
+      ],
+      "AnswerVi": "Trong trường Trạng thái cấp phép Windows/Office, 'CHƯA XÁC ĐỊNH' nghĩa là VietLicenSure không đọc được dữ liệu cần thiết nên chưa thể xác định trạng thái kích hoạt. Ở trường Mô hình giấy phép phần mềm, cụm này có thể nghĩa là ứng dụng chưa khớp catalog và nguồn chính thức. Kết quả không chứng minh giấy phép hợp lệ hoặc không hợp lệ; bằng chứng rearm, KMS hay activator được cảnh báo riêng.",
+      "AnswerEn": "In a Windows/Office licensing-status field, 'UNDETERMINED' means the VietLicenSure could not read the required data and cannot establish activation state. In a software licence-model field, it can mean that the app has not been matched to the catalogue and an official source. It proves neither valid nor invalid entitlement; rearm, KMS, or activator evidence is reported separately."
+    },
+    {
+      "Id": "office-license",
+      "TitleVi": "Bản quyền Microsoft Office",
+      "TitleEn": "Microsoft Office licensing",
+      "Keywords": [
+        "office",
+        "microsoft office",
+        "ban quyen office",
+        "kich hoat office",
+        "ospp",
+        "visio",
+        "project",
+        "chuc nang 4",
+        "chuc nang so 4",
+        "muc 4",
+        "nut 4"
+      ],
+      "AnswerVi": "Chức năng 4 kiểm tra Microsoft Office, Visio và Project được phát hiện, gồm bản cài, trạng thái kích hoạt, kênh giấy phép và dấu hiệu KMS. Cách dùng: đóng ứng dụng Office nếu cần → chọn Bản quyền Microsoft Office → chọn mức riêng tư → chờ quét → đối chiếu từng sản phẩm trong HTML/PDF. VietLicenSure tách kích hoạt kỹ thuật khỏi quyền sử dụng và không coi sản phẩm hợp lệ chỉ vì đang kích hoạt.",
+      "AnswerEn": "Feature 4 checks detected Microsoft Office, Visio, and Project installations, activation, license channel, and KMS signals. Close Office apps if needed, select Microsoft Office licensing, choose privacy, wait, then review each product in HTML/PDF. Technical activation is separated from entitlement and does not by itself prove valid use."
+    },
+    {
+      "Id": "software",
+      "TitleVi": "Phần mềm và dấu hiệu can thiệp",
+      "TitleEn": "Software and tampering indicators",
+      "Keywords": [
+        "phan mem",
+        "ung dung",
+        "da cai",
+        "installed",
+        "publisher",
+        "phien ban ung dung",
+        "ngay cai",
+        "chuc nang 5",
+        "chuc nang so 5",
+        "muc 5",
+        "nut 5"
+      ],
+      "AnswerVi": "Chức năng 5 kiểm kê phần mềm và quét dấu hiệu can thiệp theo bằng chứng. Khi đọc một dòng, tách bốn ý: Mô hình giấy phép cho biết miễn phí/nguồn mở/dùng thử/thương mại; Trạng thái cho biết VietLicenSure quan sát thấy gì; Tin cậy cho biết độ mạnh của phép đối chiếu; Điều kiện khắc phục cho biết có đủ bằng chứng kỹ thuật để lập kế hoạch hay chưa. Nghi vấn, Chưa xác minh hoặc Tin cậy Low chỉ yêu cầu rà soát, không cho phép gỡ ứng dụng và không phải kết luận pháp lý.",
+      "AnswerEn": "Feature 5 inventories software and scans evidence-based tampering signals. Read each row as four separate fields: License model says free/open-source/trial/commercial; Status says what the VietLicenSure observed; Confidence says how strong the match is; Remediation eligibility says whether technical evidence is sufficient to build a plan. Suspicious, Unverified, or Low confidence requires review; it does not authorize app removal or establish a legal conclusion."
+    },
+    {
+      "Id": "license-model-evidence",
+      "TitleVi": "Mô hình giấy phép và bằng chứng kỹ thuật",
+      "TitleEn": "License model and technical evidence",
+      "Keywords": [
+        "mo hinh giay phep va bang chung",
+        "phan mem mien phi co can hoa don",
+        "nguon mo co can chung tu",
+        "giay phep phan mem mien phi",
+        "free software invoice",
+        "open source invoice",
+        "freeware licensing",
+        "license model vs evidence"
+      ],
+      "AnswerVi": "Hãy tách hai việc: mô hình giấy phép và bằng chứng kỹ thuật. Phần mềm miễn phí/nguồn mở không bị yêu cầu hóa đơn mua hàng chung chung; cần kiểm tra đúng điều khoản, tệp LICENSE/notice, nguồn cài và giới hạn cá nhân/doanh nghiệp. Với bản dùng thử, thuê bao hoặc thương mại, đối chiếu tài khoản, key, hóa đơn/hợp đồng khi chính mô hình đó yêu cầu. Dấu vết activator, lệnh/tác vụ, dịch vụ, repack hoặc tệp bị sửa là bằng chứng kỹ thuật riêng; VietLicenSure dùng chúng để cảnh báo, không tự phán quyết quyền sử dụng hợp pháp.",
+      "AnswerEn": "Separate the license model from technical evidence. Free or open-source software should not receive a generic purchase-invoice demand; check its terms, LICENSE/notice, official source, and any personal/business conditions. For trial, subscription, or commercial software, review the account, key, invoice, or contract only when that model calls for it. Activator traces, commands/tasks, services, repacks, or modified files are separate technical evidence; the VietLicenSure reports them without making a legal-entitlement verdict."
+    },
+    {
+      "Id": "software-finding-confidence",
+      "TitleVi": "Trạng thái nghi vấn và độ tin cậy",
+      "TitleEn": "Suspicious status and confidence",
+      "Keywords": [
+        "tin cay low co xoa phan mem",
+        "low confidence co du xoa",
+        "do tin cay low",
+        "muc tin cay thap",
+        "confidence low software",
+        "suspicious low confidence",
+        "nghi van co phai crack",
+        "co dau hieu nghi van la gi",
+        "low co xoa bloatware",
+        "phan mem thua low confidence"
+      ],
+      "AnswerVi": "Trạng thái và Tin cậy không cùng nghĩa: Trạng thái mô tả tín hiệu đã thấy, còn Tin cậy đo độ mạnh của phép nhận diện. Low nghĩa là bằng chứng yếu hoặc chưa đủ; không được dùng để xóa bloatware, ứng dụng thừa hay kết luận có crack. Hành động an toàn là giữ nguyên ứng dụng, mở bằng chứng chi tiết, kiểm tra mô hình giấy phép/nguồn cài rồi quét sâu hoặc đối chiếu thủ công. Chỉ một dấu vết kỹ thuật trực tiếp đã xác nhận mới có thể chuyển sang xem trước kế hoạch khắc phục.",
+      "AnswerEn": "Status and Confidence are different: Status describes the observed signal, while Confidence measures match strength. Low means weak or incomplete evidence; it must not be used to remove bloatware, unwanted apps, or claim a crack is present. Keep the app, inspect detailed evidence, check its license model and install source, then deep-scan or review manually. Only confirmed direct technical evidence can proceed to a remediation preview."
+    },
+    {
+      "Id": "software-finding-remediation",
+      "TitleVi": "Điều kiện khắc phục dấu hiệu phần mềm",
+      "TitleEn": "Remediation eligibility for software findings",
+      "Keywords": [
+        "dieu kien khac phuc phan mem nghi van",
+        "khac phuc co dau hieu nghi van",
+        "co lap crack giu ung dung",
+        "xoa activator giu phan mem",
+        "remediation condition software finding",
+        "suspicious software remediation",
+        "chua du dieu kien khac phuc phan mem",
+        "giu ung dung khi co crack"
+      ],
+      "AnswerVi": "Điều kiện khắc phục phải bám vào bằng chứng: Chưa xác minh hoặc Low → giữ nguyên ứng dụng và kiểm tra thủ công; Nghi vấn chưa có hiện vật trực tiếp → quét sâu, chưa cho khắc phục; crack/activator, lệnh, tác vụ, dịch vụ hoặc tệp sửa đổi đã xác nhận → xem trước, tạo backup, rồi chỉ cô lập đúng hiện vật sau khi người dùng xác nhận. Ứng dụng chính được giữ lại; chỉ sửa/cài lại từ nguồn chính thức khi bằng chứng cho thấy tệp ứng dụng bị ảnh hưởng. Quét lại sau xử lý; Trợ lý không tự chạy khắc phục.",
+      "AnswerEn": "Remediation eligibility must follow evidence: Unverified or Low confidence means keep the app and review manually; Suspicious without a direct artifact means deep-scan with no remediation; a confirmed crack/activator, command, task, service, or modified file may proceed to preview, backup, and isolation of that exact artifact after user confirmation. Keep the main app; repair or reinstall from the official source only when its files are affected. Rescan afterward; the Assistant never runs remediation automatically."
+    },
+    {
+      "Id": "license-scope-separation",
+      "TitleVi": "Tách phạm vi Windows, Office và phần mềm bên thứ ba",
+      "TitleEn": "Separate Windows, Office, and third-party scopes",
+      "Keywords": [
+        "tach windows office phan mem ben thu ba",
+        "phan biet windows office va phan mem",
+        "pham vi khac phuc windows office phan mem",
+        "windows office phan mem xu ly rieng",
+        "separate windows office third party",
+        "license scopes separately"
+      ],
+      "AnswerVi": "Ba phạm vi phải được kết luận và xử lý riêng. Windows: xem trạng thái/kênh kích hoạt, OEM, KMS, rearm và hồ sơ quyền sử dụng phù hợp. Office: xem sản phẩm/edition, kênh kích hoạt, KMS hoặc activator riêng dù Windows không có cảnh báo. Phần mềm bên thứ ba: xem mô hình giấy phép, nhà phát hành/nguồn cài và bằng chứng can thiệp của chính ứng dụng; không áp logic key Windows/Office hoặc yêu cầu hóa đơn cho mọi phần mềm. Một phạm vi yên không làm mất cảnh báo của phạm vi khác.",
+      "AnswerEn": "Conclude and handle the three scopes separately. Windows: review activation state/channel, OEM, KMS, rearm, and applicable entitlement records. Office: review its product/edition, activation channel, KMS, or activator even when Windows is quiet. Third-party software: review that app's license model, publisher/install source, and its own tampering evidence; do not apply Windows/Office key logic or an invoice requirement to every app. A clean scope does not cancel a finding in another scope."
+    },
+    {
+      "Id": "commercial-software-review",
+      "TitleVi": "Đối chiếu phần mềm thương mại",
+      "TitleEn": "Reviewing commercial software",
+      "Keywords": [
+        "winrar license",
+        "winrar ban quyen",
+        "winrar co can xoa",
+        "mathtype license",
+        "mathtype ban quyen",
+        "phan mem thuong mai khong co crack",
+        "commercial app without activator"
+      ],
+      "AnswerVi": "Với WinRAR, MathType hoặc phần mềm thương mại tương tự, việc ứng dụng được cài hay đang ở chế độ dùng thử không tự chứng minh vi phạm. Nếu không có crack/activator hoặc dấu vết can thiệp trực tiếp, giữ nguyên ứng dụng và đối chiếu edition, điều khoản hiện hành, tài khoản/key hoặc hồ sơ phù hợp; hết quyền dùng thì mua giấy phép, gỡ ứng dụng hoặc chọn phần mềm thay thế hợp pháp. Nếu có hiện vật kích hoạt lậu đã xác nhận, cô lập riêng hiện vật đó, giữ ứng dụng chính rồi sửa/cài lại từ nguồn chính thức khi cần. VietLicenSure không đưa ra phán quyết pháp lý.",
+      "AnswerEn": "For WinRAR, MathType, or similar commercial software, installation or trial mode alone does not prove a violation. If no crack/activator or direct tampering trace exists, keep the app and review its edition, current terms, account/key, or applicable records; when use is no longer entitled, purchase a license, uninstall it, or choose a lawful alternative. If a confirmed unauthorized activation artifact exists, isolate that artifact, keep the main app, and repair/reinstall from the official source when needed. The VietLicenSure does not issue a legal verdict."
+    },
+    {
+      "Id": "kms-activator",
+      "TitleVi": "KMS và activator",
+      "TitleEn": "KMS and activators",
+      "Keywords": [
+        "kms",
+        "activator",
+        "crack",
+        "rearm",
+        "autokms",
+        "hwid",
+        "can thiep",
+        "kich hoat lau",
+        "mas",
+        "pmas",
+        "kmspico",
+        "activation program 1 17",
+        "repack tu kich hoat",
+        "startup activator"
+      ],
+      "AnswerVi": "VietLicenSure chỉ cảnh báo KMS/activator khi có bằng chứng kỹ thuật trực tiếp: kênh/máy chủ KMS, lệnh Startup tải/chạy script kích hoạt, tác vụ, dịch vụ, tệp hoặc dấu vết phù hợp với MAS/PMAS, KMSPico, Activation Program hay bản repack tự kích hoạt. Tên gọi hoặc phép khớp yếu riêng lẻ chưa đủ; chi tiết cần nêu đúng hiện vật, đường dẫn/nguồn và mức Tin cậy. Khi đã xác nhận, chỉ cô lập hiện vật can thiệp theo luồng xem trước–backup–xác nhận; không tự gỡ ứng dụng chính và không suy diễn thành phán quyết pháp lý.",
+      "AnswerEn": "The VietLicenSure warns about KMS/activators only from direct technical evidence: a KMS channel/host, a Startup command that downloads/runs an activation script, a task, service, file, or a matching MAS/PMAS, KMSPico, Activation Program, or self-activating repack trace. A name or weak match alone is insufficient; details must identify the exact artifact, path/source, and Confidence. Once confirmed, isolate only the interference artifact through preview, backup, and confirmation; do not silently remove the main app or turn the signal into a legal verdict."
+    },
+    {
+      "Id": "remediation",
+      "TitleVi": "Khắc phục KMS/Activator",
+      "TitleEn": "KMS/Activator remediation",
+      "Keywords": [
+        "khac phuc",
+        "sua loi",
+        "go kms",
+        "xoa crack",
+        "cleanup",
+        "remediation",
+        "chuc nang 6",
+        "chuc nang so 6",
+        "muc 6",
+        "nut 6",
+        "sua crack",
+        "xoa activator",
+        "tu dong khac phuc",
+        "tu dong sua crack"
+      ],
+      "AnswerVi": "Khắc phục có thể thay đổi hệ thống nên chỉ chạy khi người dùng chủ động và sau khi đã đọc bằng chứng. Trong thanh Khắc phục, chọn thẳng Windows, Microsoft Office hoặc phần mềm khác; mỗi nút mở màn hình riêng và khóa đúng phạm vi, không qua menu chung. Ô Khắc phục tổng hợp ở Tổng quan vẫn cho phép chọn một hoặc nhiều phạm vi và dùng Backup/Khôi phục/Tự động. Luôn ưu tiên Chạy thử, chọn đúng từng mục, xác nhận và chỉ cấp Administrator khi thực hiện thật. VietLicenSure kiểm tra/tạo backup trước, khóa mục thiếu điều kiện, hậu kiểm sau xử lý và không tự gỡ/cài lại ứng dụng ngoài kế hoạch đã xác nhận.",
+      "AnswerEn": "Remediation can change the system and should be used only after evidence review. Under Remediation, select Windows, Microsoft Office, or other software directly; each entry opens its own locked-scope screen without the shared chooser. The combined Overview remediation tile still supports multiple scopes plus Backup, Restore, and Automatic-safe tools. Prefer Dry Run, select exact findings, confirm, and elevate only for a real run. The VietLicenSure verifies/creates backup first, blocks unsupported items, performs post-checks, and never silently removes/reinstalls apps outside the confirmed plan."
+    },
+    {
+      "Id": "backup-restore",
+      "TitleVi": "Sao lưu và khôi phục",
+      "TitleEn": "Backup and restore",
+      "Keywords": [
+        "sao luu",
+        "backup",
+        "khoi phuc",
+        "restore",
+        "phuc hoi",
+        "trung tam sao luu",
+        "khoi phuc tu backup",
+        "backup windows office"
+      ],
+      "AnswerVi": "Sao lưu/Khôi phục nằm trong ô Khắc phục tổng hợp ở Tổng quan, không phải chức năng số 7 Khôi phục key OEM. Mở ô tổng hợp → chọn Sao lưu hoặc Khôi phục tự động → chọn đúng phạm vi Windows/Office/Phần mềm khác → xem thông tin backup → xác nhận. Giữ nguyên thư mục backup, không sửa/đổi tên/di chuyển tệp; VietLicenSure từ chối backup sai máy, bị sửa, thiếu hoặc không tương thích và khôi phục vẫn có thể cần Administrator.",
+      "AnswerEn": "Backup/Restore remains in the combined Overview remediation tile and is not the OEM key recovery function. Open the combined tile, choose Backup or Automatic restore, select the correct Windows/Office/Other software scope, review backup details, and confirm. Keep the folder intact; the VietLicenSure rejects wrong-machine, modified, incomplete, or incompatible backups, and restore may require elevation."
+    },
+    {
+      "Id": "enterprise",
+      "TitleVi": "Kiểm kê doanh nghiệp",
+      "TitleEn": "Business Inventory",
+      "Keywords": [
+        "kiem ke doanh nghiep",
+        "business inventory",
+        "doanh nghiep",
+        "enterprise",
+        "lan",
+        "agent",
+        "may tram",
+        "quan tri",
+        "chuc nang 8",
+        "chuc nang so 8",
+        "muc 8",
+        "nut 8",
+        "itam sam",
+        "server workstation"
+      ],
+      "AnswerVi": "Với vai trò Kiểm kê doanh nghiệp, Chức năng 8 là không gian kiểm kê gồm Máy chủ nhận/quản lý báo cáo trong LAN, Máy trạm ghép nối/gửi báo cáo và Central Dashboard chính thức chỉ đọc; quản lý Windows/Office cục bộ thuộc Hỗ trợ kỹ thuật. Trong tab Máy chủ, Asset Registry cho phép tìm/lọc tài sản, gán hoặc chuyển giao, thu hồi có xác nhận và xem lịch sử bàn giao append-only; tab Máy trạm hiển thị Device ID rút gọn, trạng thái ghép nối, máy chủ và lần đồng bộ cuối. Người dùng phải chủ động bật LAN nội bộ và ghép nối lần đầu; sau đó Máy chủ đã bật có thể chạy lại cùng Windows, Agent máy trạm chạy theo lịch, còn ClientId/secret được giữ qua reboot. Dừng máy chủ hoặc tắt LAN sẽ gỡ lịch tự chạy; quyền thay đổi giấy phép từ xa vẫn mặc định tắt và đây không phải dịch vụ cloud công cộng.",
+      "AnswerEn": "For Business Inventory, Feature 8 is the inventory workspace containing the LAN Server, paired Workstations, and the official read-only Central Dashboard; local Windows/Office management belongs to Technical Support. In the Server tab, Asset Registry can search/filter assets, assign or reassign them, confirm release, and inspect append-only assignment history; the Workstation tab shows a shortened Device ID, pairing/server state, and last synchronization. Local LAN and first enrollment require explicit user action; afterward an enabled Server can restart with Windows, the Workstation Agent runs on schedule, and the stored ClientId/secret survives reboot. Stopping the Server or disabling Local LAN removes autostart; remote license changes remain disabled by default and this is not a public cloud service."
+    },
+    {
+      "Id": "central-dashboard-mvp",
+      "TitleVi": "Central Dashboard chính thức",
+      "TitleEn": "Official Central Dashboard",
+      "Keywords": [
+        "central dashboard",
+        "web dashboard",
+        "dashboard lan",
+        "online offline may tram",
+        "fleet dashboard",
+        "giam sat may tram",
+        "trang thai may tram",
+        "canh bao fleet",
+        "open dashboard",
+        "read only dashboard"
+      ],
+      "AnswerVi": "Central Dashboard chính thức nằm trong tab Máy chủ của chức năng 8 và chỉ mở qua HTTPS loopback trên chính máy chủ sau khi listener LAN mutual TLS sẵn sàng. Quản trị viên nhập mã quản trị rồi chọn Mở Dashboard; VietLicenSure tạo phiên ngắn hạn, chuyển token qua URL fragment, xóa fragment khi trang tải và chỉ giữ token trong bộ nhớ của trang. Mọi truy cập Dashboard từ địa chỉ không phải loopback đều bị từ chối; Agent/Server trên LAN bắt buộc HTTPS mutual TLS, pin chứng thư hai chiều và không fallback HTTP. Dashboard Việt/Anh tự làm mới mỗi 60 giây, hiển thị Online/Stale/Offline, lần báo cáo cuối, trạng thái kỹ thuật Windows/Office và cảnh báo đổi định danh key. Đây là giao diện chỉ đọc: không nhập key, không tạo lệnh, không điều khiển máy trạm, không cloud/CDN/telemetry và API không trả full key, ClientId đầy đủ, secret hay đường dẫn báo cáo. Activated/Licensed không đồng nghĩa quyền sở hữu; entitlement vẫn là NotVerified cho tới khi kiểm chứng từ hoặc portal.",
+      "AnswerEn": "The official Central Dashboard is available from the Server tab in feature 8 and opens through HTTPS loopback on the server itself after the mutual-TLS LAN listener is ready. The administrator enters the admin code and selects Open Dashboard; VietLicenSure creates a short-lived session, passes its token in a URL fragment, removes the fragment after load, and keeps the token in page memory only. Every non-loopback Dashboard request is denied; LAN Agent/Server traffic requires HTTPS mutual TLS, two-way certificate pinning, and has no HTTP fallback. The Vietnamese/English dashboard refreshes every 60 seconds and shows Online/Stale/Offline presence, last report time, technical Windows/Office status, and license-identity change alerts. It is read-only: no key entry, command creation, endpoint control, cloud/CDN/telemetry, full keys, full ClientIds, secrets, or report paths. Activated/Licensed is not entitlement; entitlement remains NotVerified until documents or a licensing portal are checked."
+    },
+    {
+      "Id": "deep-scan",
+      "TitleVi": "Quét sâu",
+      "TitleEn": "Deep scan",
+      "Keywords": [
+        "quet sau",
+        "deep scan",
+        "forensic",
+        "dau vet",
+        "quet ky",
+        "chuc nang 9",
+        "chuc nang so 9",
+        "muc 9",
+        "nut 9"
+      ],
+      "AnswerVi": "Chức năng 9 dành cho kiểm tra chuyên sâu/forensics: rà thêm dịch vụ, tác vụ, tiến trình, tệp, cấu hình, chữ ký, hash và dấu vết tương quan. Cách dùng: chọn Kiểm tra chuyên sâu → chọn mức riêng tư → chờ đủ tiến trình → đọc điểm ưu tiên, nguồn quét, độ phủ và bằng chứng chi tiết. Quét có thể lâu hơn; mục chưa đủ chắc chắn chuyển sang kiểm tra thủ công chứ không tự khắc phục.",
+      "AnswerEn": "Feature 9 provides deep/forensic inspection of services, tasks, processes, files, configuration, signatures, hashes, and correlated traces. Select Deep inspection, choose privacy, wait for completion, then review priority score, sources, coverage, and detailed evidence. It can take longer; uncertain findings go to manual review rather than automatic remediation."
+    },
+    {
+      "Id": "report-center",
+      "TitleVi": "Báo cáo và bảo đảm",
+      "TitleEn": "Reports and assurance",
+      "Keywords": [
+        "bao cao",
+        "html",
+        "json",
+        "xml",
+        "pdf",
+        "thu muc bao cao",
+        "lich su",
+        "chuc nang 10",
+        "chuc nang so 10",
+        "muc 10",
+        "nut 10"
+      ],
+      "AnswerVi": "Chức năng 10 mở Trung tâm Báo cáo & Bảo đảm với tám tác vụ: kiểm tra chứng chỉ, đánh giá plugin, xuất timeline, cài plugin đã ký, mở thư mục plugin, mở hướng dẫn, xem phiên bản/cập nhật và tạo gói hỗ trợ đã che định danh. Chọn chức năng con cần xem; dùng Mở thư mục báo cáo để tới BaoCao-VietLicenSure trên Desktop. Mỗi bộ JSON/XML/HTML/PDF/checksum dùng cùng tên gốc để không ghi đè.",
+      "AnswerEn": "Feature 10 opens Reports & Assurance with eight actions: certificate audit, plugin evaluation, timeline export, signed-plugin installation, protected plugin folder, user guide, versions/updates, and a redacted support bundle. Choose the required subfeature or use Open report folder for the Desktop BaoCao-VietLicenSure directory. Each JSON/XML/HTML/PDF/checksum set shares one unique base name to prevent overwrites."
+    },
+    {
+      "Id": "administrator",
+      "TitleVi": "Quyền Administrator và UAC",
+      "TitleEn": "Administrator rights and UAC",
+      "Keywords": [
+        "administrator",
+        "admin",
+        "uac",
+        "quyen quan tri",
+        "run as administrator",
+        "hoi quyen"
+      ],
+      "AnswerVi": "Giao diện và các lượt kiểm tra đọc chạy bằng quyền người dùng thông thường. UAC chỉ xuất hiện khi thực hiện thao tác thật sự cần quyền cao như khắc phục, khôi phục, cập nhật hoặc một số tác vụ quản trị doanh nghiệp.",
+      "AnswerEn": "The dashboard and read-only scans run as a standard user. UAC appears only for operations that genuinely need elevation, such as remediation, restore, update or selected enterprise administration tasks."
+    },
+    {
+      "Id": "report-evidence",
+      "TitleVi": "Cách đọc kết luận báo cáo",
+      "TitleEn": "How to read report conclusions",
+      "Keywords": [
+        "ket luan",
+        "muc rui ro",
+        "bang chung",
+        "danh gia",
+        "hop le",
+        "khong hop le",
+        "doc bao cao"
+      ],
+      "AnswerVi": "Báo cáo tách bốn lớp: mô hình giấy phép, trạng thái/bằng chứng kỹ thuật, mức Tin cậy và điều kiện khắc phục. 'Đã kích hoạt' chỉ là trạng thái kỹ thuật; Tin cậy Low không đủ để gỡ ứng dụng; 'cần đối chiếu' phải dùng hồ sơ phù hợp với mô hình giấy phép chứ không mặc định đòi hóa đơn. Chỉ mở kế hoạch khắc phục khi có bằng chứng kỹ thuật đủ cụ thể, sau đó vẫn cần xem trước, backup và xác nhận.",
+      "AnswerEn": "Reports separate four layers: license model, technical status/evidence, Confidence, and remediation eligibility. 'Activated' is only a technical state; Low confidence cannot justify app removal; review records must fit the license model rather than defaulting to an invoice request. A remediation plan opens only for sufficiently specific technical evidence and still requires preview, backup, and confirmation."
+    },
+    {
+      "Id": "oem",
+      "TitleVi": "Khóa OEM trong BIOS",
+      "TitleEn": "OEM key in firmware",
+      "Keywords": [
+        "oem",
+        "oa3",
+        "bios key",
+        "key bios",
+        "key nhung",
+        "firmware",
+        "product key",
+        "chuc nang 7",
+        "chuc nang so 7",
+        "muc 7",
+        "nut 7"
+      ],
+      "AnswerVi": "Chức năng 7 – Khôi phục key OEM hoạt động theo hai giai đoạn tách biệt. Giai đoạn kiểm tra chỉ đọc OA3xOriginalProductKey từ dịch vụ cấp phép/firmware, edition Windows hiện tại, trạng thái kích hoạt, kênh và năm ký tự cuối; key đầy đủ luôn bị che và VietLicenSure tạo báo cáo HTML/PDF. Nếu không tìm thấy OA3 thì dừng, không đổi hệ thống. Khi người dùng đã xác nhận đúng máy, đúng edition và quyền sử dụng, giai đoạn áp dụng mới yêu cầu Administrator, giữ nguyên key hiện tại trước khi thử, gọi công cụ Windows chính thức để cài key OEM rồi xác minh đúng năm ký tự cuối. Chỉ sau đó VietLicenSure mới yêu cầu Windows kích hoạt và quét lại tối đa ba lần. Kết quả được tách rõ: Windows từ chối key/không khớp edition; đã nhận key nhưng kích hoạt còn chờ; hoặc đã nhận và xác nhận Licensed. VietLicenSure không dùng key máy khác, không ép đổi edition, không ghi key đầy đủ và không coi việc có OA3 tự động là bằng chứng đầy đủ về quyền sử dụng.",
+      "AnswerEn": "Feature 7 – OEM key recovery has two separate stages. The inspection stage only reads OA3xOriginalProductKey from Windows licensing/firmware together with the current edition, activation state, channel, and last five characters; the full key stays masked and the VietLicenSure creates an HTML/PDF report. If no OA3 key exists, it stops without changing the system. Only after the user confirms the device, edition, and entitlement does Apply request Administrator rights, preserve the current key before the attempt, use the official Windows mechanism to install the OEM key, and verify its last five characters. It then asks Windows to activate and rechecks up to three times. Results distinguish a rejected/edition-mismatched key, an accepted key with activation still pending, and an accepted key confirmed as Licensed. The VietLicenSure does not use another device's key, force an edition change, record the full key, or treat OA3 presence alone as complete proof of entitlement."
+    },
+    {
+      "Id": "error-codes",
+      "TitleVi": "Mã lỗi",
+      "TitleEn": "Error codes",
+      "Keywords": [
+        "ma loi",
+        "error code",
+        "0x",
+        "loi quet",
+        "khong chay",
+        "that bai",
+        "treo"
+      ],
+      "AnswerVi": "Hãy gửi nguyên mã lỗi, tên chức năng và dòng mô tả đi kèm. Trợ lý sẽ giải thích mã đã có trong bộ tri thức; nếu chưa đủ dữ liệu, trợ lý sẽ yêu cầu mở phần Nhật ký/Báo cáo thay vì đoán nguyên nhân.",
+      "AnswerEn": "Provide the exact error code, feature name and accompanying message. The assistant explains known codes; when evidence is insufficient it asks for the Log/Report instead of guessing."
+    },
+    {
+      "Id": "update",
+      "TitleVi": "Cập nhật công cụ",
+      "TitleEn": "VietLicenSure updates",
+      "Keywords": [
+        "cap nhat",
+        "update",
+        "phien ban moi",
+        "github",
+        "tai ban moi",
+        "latest"
+      ],
+      "AnswerVi": "Kiểm tra cập nhật chỉ hoạt động khi người dùng chuyển Online. Công cụ xác minh manifest, SHA-256 và chính sách chữ ký trước khi cho phép dùng gói mới; mặc định không có dịch vụ cập nhật nền và không tự cài im lặng.",
+      "AnswerEn": "Update checks work only after Online mode is enabled. VietLicenSure validates the manifest, SHA-256 and signing policy before accepting a package; there is no background updater or silent installation by default."
+    },
+    {
+      "Id": "signature-warning",
+      "TitleVi": "Cảnh báo SmartScreen/antivirus",
+      "TitleEn": "SmartScreen or antivirus warning",
+      "Keywords": [
+        "virus",
+        "antivirus",
+        "defender",
+        "smartscreen",
+        "unknown publisher",
+        "chu ky so",
+        "ky so",
+        "signpath"
+      ],
+      "AnswerVi": "Bản v5.0 Official Self-Signed dùng Authenticode tự ký để nhận biết tệp bị sửa và chỉ được tin cậy trên máy đã cài chứng thư quản trị. Chứng thư này không được Windows tin cậy công khai nên SmartScreen vẫn có thể cảnh báo. Không tắt Defender; hãy dùng nguồn chính thức, đối chiếu SHA-256 và xem chứng thư bằng Get-AuthenticodeSignature.",
+      "AnswerEn": "v5.0 Official Self-Signed uses a self-signed Authenticode certificate for tamper detection and is trusted only on machines where the administrator certificate is installed. It is not publicly trusted, so SmartScreen may still warn. Do not disable Defender; use the official source, compare SHA-256, and inspect the certificate with Get-AuthenticodeSignature."
+    },
+    {
+      "Id": "manual-review",
+      "TitleVi": "Cần kiểm tra thủ công",
+      "TitleEn": "Manual review required",
+      "Keywords": [
+        "kiem tra thu cong",
+        "manual review",
+        "can xem lai",
+        "chua du bang chung",
+        "khong chac",
+        "unverified"
+      ],
+      "AnswerVi": "'CHƯA XÁC MINH/Cần kiểm tra thủ công' nghĩa là VietLicenSure đã có đối tượng hoặc tín hiệu để đánh giá nhưng bằng chứng chưa đủ xác nhận trạng thái cấp phép hay can thiệp, nên chưa đủ điều kiện khắc phục. Giữ nguyên ứng dụng; xem tín hiệu, Tin cậy, đường dẫn, nhà phát hành, nguồn cài và mô hình giấy phép. Với phần mềm miễn phí/nguồn mở, đối chiếu điều khoản hoặc notice thay vì mặc định đòi hóa đơn. Chỉ khắc phục khi xác nhận đúng hiện vật kỹ thuật.",
+      "AnswerEn": "'UNVERIFIED/Manual review required' means an item or signal was found but evidence is insufficient to confirm licensing or tampering, so remediation is not eligible. Keep the app and inspect the signal, Confidence, path, publisher, install source, and licence model. For free/open-source software, review terms or notices instead of assuming an invoice is required. Remediate only a confirmed technical artifact."
+    },
+    {
+      "Id": "result-stale",
+      "TitleVi": "Kết quả theo thời điểm quét",
+      "TitleEn": "Point-in-time results",
+      "Keywords": [
+        "ket qua cu",
+        "quet lai",
+        "thay doi",
+        "hien tai",
+        "bao cao hien tai",
+        "moi nhat"
+      ],
+      "AnswerVi": "Báo cáo phản ánh dữ liệu tại thời điểm quét. Sau khi cài/gỡ phần mềm, kích hoạt hợp lệ, khôi phục hoặc thay đổi cấu hình, hãy chạy quét lại để có kết luận mới; Trợ lý không tự coi báo cáo cũ là trạng thái hiện tại.",
+      "AnswerEn": "A report reflects the scan time. After installation, removal, valid activation, restore or configuration changes, scan again for a fresh conclusion; the assistant does not treat an old report as current state."
+    },
+    {
+      "Id": "safe-boundary",
+      "TitleVi": "Phạm vi hỗ trợ an toàn",
+      "TitleEn": "Safe support boundary",
+      "Keywords": [
+        "bo qua ban quyen",
+        "vo hieu kich hoat",
+        "huong dan crack",
+        "tai keygen",
+        "tat defender de crack",
+        "lach ban quyen"
+      ],
+      "AnswerVi": "Trợ lý không hướng dẫn vượt cơ chế bản quyền, dùng crack/keygen hoặc tắt bảo vệ để chạy công cụ không rõ nguồn. Trong phạm vi VietLicenSure, Trợ lý có thể giúp đọc bằng chứng, sao lưu hợp lệ, gỡ dấu vết can thiệp đã xác nhận và chỉ ra cách kích hoạt chính thức.",
+      "AnswerEn": "I cannot help bypass licensing, use cracks/keygens, or disable protection to run untrusted tools. Within VietLicenSure scope I can explain evidence, make a valid backup, remove confirmed tampering traces, and point to official activation options."
+    },
+    {
+      "Id": "assistant-knowledge-update",
+      "TitleVi": "Cơ sở tri thức của Trợ lý",
+      "TitleEn": "Assistant knowledge database",
+      "Keywords": [
+        "cap nhat co so du lieu tro ly",
+        "dong bo kho tri thuc",
+        "tri thuc theo phien ban",
+        "du lieu tro ly tuong thich",
+        "csdl tro ly",
+        "knowledge database",
+        "tro ly hoc hoi lien tuc",
+        "hoc them kien thuc tool",
+        "cap nhat tri thuc khong tang exe",
+        "dung luong exe khi cap nhat tri thuc",
+        "kho tri thuc roi",
+        "moi may du lieu khac nhau",
+        "goi tri thuc co chu ky"
+      ],
+      "AnswerVi": "Mỗi bản VietLicenSure mang sẵn một bộ tri thức nền để Trợ lý hoạt động Offline trên mọi máy. Từng máy dùng chung tri thức chuẩn nhưng chỉ kết hợp với báo cáo và trạng thái cục bộ của chính máy đó. Khi người dùng chủ động bật Online, VietLicenSure chỉ tải JSON và chữ ký CMS rời từ đúng địa chỉ GitHub đã khóa; sau đó kiểm tra chữ ký nhà phát hành, SHA-256, lược đồ, phạm vi VietLicenSure, kích thước, dải tương thích và chống hạ phiên bản trước khi lưu cache có bản dự phòng. Câu hỏi, báo cáo và dữ liệu máy không được gửi đi. Vì tri thức mới nằm trong cache rời nên có thể cập nhật liên tục mà không làm tăng EXE; chỉ tổng thư mục dữ liệu cục bộ tăng theo gói tri thức có giới hạn. Đây là tri thức do nhà phát hành kiểm duyệt trong phạm vi VietLicenSure, không phải tự huấn luyện vô hạn từ Internet.",
+      "AnswerEn": "Every VietLicenSure release bundles baseline knowledge so the Assistant works Offline on every device. Devices share the approved knowledge but combine it only with their own local report and state. After the user explicitly enables Online, the VietLicenSure downloads only JSON plus a detached CMS signature from the pinned GitHub paths, then verifies the publisher signature, SHA-256, schema, VietLicenSure scope, size, compatibility range, and rollback protection before installing a backed-up local cache. Questions, reports, and device data are never uploaded. New knowledge stays in the separate cache, so it can evolve without enlarging the EXE; only the bounded local data folder grows. This is publisher-curated VietLicenSure knowledge, not unbounded self-training from the Internet."
+    },
+    {
+      "Id": "report-pdf",
+      "TitleVi": "Bố cục báo cáo PDF",
+      "TitleEn": "PDF report layout",
+      "Keywords": [
+        "pdf bi mat dong",
+        "pdf cat chu",
+        "pdf khuyet dong",
+        "khoang cach hang pdf",
+        "bang pdf qua rong",
+        "bo cuc pdf"
+      ],
+      "AnswerVi": "Report Schema 1.6 đưa Build ID, Rule ID, mức tin cậy, tương quan, bốn lớp kết luận, bằng chứng và khuyến nghị vào PDF. Báo cáo Office nêu rõ build đang cài so với catalog và giấy phép đang dùng; OSPP/SKU thô vẫn nằm trong JSON/XML để kiểm toán nhưng không chiếm nhiều trang PDF. Dòng chữ được xuống hàng, chiều cao hàng tự giãn và hàng quan trọng không bị cắt giữa hai trang.",
+      "AnswerEn": "Report Schema 1.6 puts the Build ID, Rule ID, confidence, correlation, four conclusion layers, evidence, and recommendation in the PDF. The Office report clearly compares the installed build with the catalog and shows the license in use; raw OSPP/SKU data remains in JSON/XML for audit without filling the PDF. Text wraps, rows grow naturally, and important rows avoid page splits."
+    },
+    {
+      "Id": "software-system-filter",
+      "TitleVi": "Ẩn phần mềm hệ thống khỏi phần chính",
+      "TitleEn": "Hide system software from the main view",
+      "Keywords": [
+        "an phan mem he thong",
+        "hien phan mem mac dinh",
+        "show system software",
+        "phu luc phan mem he thong",
+        "danh sach system component",
+        "phan mem he thong trong pdf"
+      ],
+      "AnswerVi": "Phần tổng quan chỉ hiển thị ứng dụng người dùng và các mục cần chú ý. Thành phần Windows, runtime, driver và ứng dụng hệ thống mặc định được gom vào phụ lục; liên kết 'Xem phần mềm hệ thống' đưa người đọc tới danh sách đầy đủ, kèm liên kết quay lại tổng quan.",
+      "AnswerEn": "The overview shows user applications and items that need attention. Windows components, runtimes, drivers, and default system apps are grouped in an appendix; an internal link opens the full list and provides a return link."
+    },
+    {
+      "Id": "report-shared-folder",
+      "TitleVi": "Một thư mục Báo cáo chung",
+      "TitleEn": "One shared report folder",
+      "Keywords": [
+        "mot thu muc bao cao chung",
+        "khong tao thu muc moi moi lan quet",
+        "gom json html pdf",
+        "bao cao khong co thu muc con",
+        "ten tep bao cao duy nhat",
+        "shared report folder"
+      ],
+      "AnswerVi": "Mọi lượt quét ghi trực tiếp vào một thư mục BaoCao-VietLicenSure trên Desktop, không tạo thư mục con cho từng lượt. Tên tệp chứa loại báo cáo, tên máy và thời gian đến mili giây để không ghi đè; JSON, HTML, PDF và checksum của cùng lượt có chung tên gốc.",
+      "AnswerEn": "Every scan writes directly to one BaoCao-VietLicenSure folder on the Desktop, without per-run subfolders. Filenames include report type, computer, and millisecond timestamp to avoid overwrites; JSON, HTML, PDF, and checksum files from one run share the same base name."
+    },
+    {
+      "Id": "software-catalog",
+      "TitleVi": "Danh mục nhận diện phần mềm",
+      "TitleEn": "Software recognition catalogue",
+      "Keywords": [
+        "mo rong catalogue phan mem",
+        "cap nhat danh muc phan mem",
+        "quet nhieu phan mem hon",
+        "nhan dien them ung dung",
+        "software catalogue",
+        "catalog nhan dien"
+      ],
+      "AnswerVi": "Catalogue kết hợp tên sản phẩm, nhà phát hành, dấu vết cài đặt, tệp thực thi và đặc điểm cấp phép. Bản đi kèm VietLicenSure là nguồn mặc định Offline. Sau khi người dùng chủ động bật Online, phần mềm tải/xác minh catalog ký số trước rồi kiểm tra phiên bản ứng dụng; catalog chỉ được nhận sau allowlist HTTPS, chữ ký, chống hạ cấp, giới hạn kích thước và schema. Không có inventory máy được tải lên; không tự tải/cài bản mới, quét, tạo báo cáo hoặc hỏi mức riêng tư và lần mở sau trở lại Offline. Phần mềm chưa có catalogue vẫn được đánh dấu cần đối chiếu thay vì đoán bản quyền.",
+      "AnswerEn": "The catalogue combines product names, publishers, install traces, executables, and licensing characteristics. The bundled catalogue is the Offline default. After the user explicitly enables Online, VietLicenSure downloads/validates the signed catalog first and then checks application-version availability; catalog data is accepted only after HTTPS allowlist, signature, anti-downgrade, size, and schema checks. No device inventory is uploaded; no version is downloaded/installed automatically, no scan/report/privacy prompt starts, and the next launch returns to Offline. Uncatalogued applications remain marked for review rather than having licensing guessed."
+    },
+    {
+      "Id": "duplicate-software",
+      "TitleVi": "Gộp phần mềm trùng",
+      "TitleEn": "Merge duplicate software records",
+      "Keywords": [
+        "phan mem bi trung dong",
+        "gop ket qua phan mem",
+        "hop nhat ung dung lap",
+        "duplicate application",
+        "nhieu nguon phat hien",
+        "trung phan mem"
+      ],
+      "AnswerVi": "VietLicenSure hợp nhất các bản ghi cùng sản phẩm, phiên bản và thư mục cài đặt được phát hiện từ Registry, AppX, tệp và catalogue. Nguồn phát hiện vẫn được giữ trong chi tiết. Hai phiên bản thực sự khác nhau hoặc cài ở vị trí độc lập vẫn được giữ thành các dòng riêng.",
+      "AnswerEn": "The VietLicenSure merges records for the same product, version, and install location found through Registry, AppX, files, and catalogue. Discovery sources remain visible in details. Truly different versions or independent installations remain separate records."
+    },
+    {
+      "Id": "integrity-compromised",
+      "TitleVi": "Tệp bị ảnh hưởng tính toàn vẹn",
+      "TitleEn": "File integrity compromised",
+      "Keywords": [
+        "hash mismatch",
+        "hashmismatch",
+        "chu ky sai hash",
+        "tep bi sua doi",
+        "toan ven tep bi loi",
+        "file integrity compromised"
+      ],
+      "AnswerVi": "HashMismatch chứng minh tệp đã thay đổi so với nội dung được ký hoặc tệp bị hỏng; đây là bằng chứng trực tiếp về tính toàn vẹn, không tự chứng minh giấy phép không chính hãng. VietLicenSure báo 'Ảnh hưởng tính toàn vẹn' và yêu cầu sửa/cài lại từ nguồn chính thức; chỉ kết luận rủi ro bản quyền khi còn có bằng chứng cấp phép độc lập.",
+      "AnswerEn": "HashMismatch proves that a file changed after signing or is corrupted; it is direct file-integrity evidence, not proof of an unlicensed entitlement. The VietLicenSure reports 'Integrity compromised' and recommends repair/reinstall from an official source; licensing risk requires separate licensing evidence."
+    },
+    {
+      "Id": "enterprise-connection-errors",
+      "TitleVi": "Chẩn đoán kết nối Máy chủ/Máy trạm",
+      "TitleEn": "Server/workstation connection diagnosis",
+      "Keywords": [
+        "may tram timeout",
+        "cong may chu bi chan",
+        "dich vu may chu chua chay",
+        "sai ma ghep noi",
+        "loi ket noi server",
+        "firewall may chu"
+      ],
+      "AnswerVi": "Kiểm tra kết nối đi theo thứ tự: địa chỉ và cổng, khả năng mở TCP, phản hồi dịch vụ VietLicenSure, phiên bản giao thức rồi mã ghép nối. Thông báo sẽ nêu đúng nhóm lỗi bằng tiếng Việt, không đưa exception kỹ thuật dài; báo cáo chưa gửi được được giữ trong hàng đợi để thử lại.",
+      "AnswerEn": "Connection checks proceed through address and port, TCP reachability, VietLicenSure service response, protocol version, and pairing code. Messages identify the correct failure category without exposing long technical exceptions; unsent reports remain queued for retry."
+    },
+    {
+      "Id": "enterprise-discovery",
+      "TitleVi": "Tự tìm máy chủ và quét mạng LAN",
+      "TitleEn": "Server discovery and LAN scan",
+      "Keywords": [
+        "tu tim may chu",
+        "quet may trong lan",
+        "khong thay may tram",
+        "tim server noi bo",
+        "lan discovery",
+        "scan may khong can ping"
+      ],
+      "AnswerVi": "Khi ô địa chỉ trống, VietLicenSure tự dò các mạng LAN riêng đang hoạt động và xác minh dịch vụ VietLicenSure trên cổng đã chọn. Quét thiết bị không phụ thuộc riêng vào ping: VietLicenSure kết hợp bảng láng giềng/ARP, DNS và thử cổng dịch vụ nên vẫn thấy máy chặn ICMP khi có dấu vết mạng phù hợp.",
+      "AnswerEn": "When the address field is empty, the VietLicenSure scans active private LAN profiles and validates the VietLicenSure service on the selected port. Device discovery does not rely only on ping: it combines neighbor/ARP data, DNS, and service-port probes so hosts blocking ICMP can still be found when network evidence exists."
+    },
+    {
+      "Id": "enterprise-network-mode",
+      "TitleVi": "Mạng LAN và Internet là hai trạng thái riêng",
+      "TitleEn": "LAN and Internet are separate states",
+      "Keywords": [
+        "lan khac internet",
+        "may chu noi bo offline",
+        "internet va lan",
+        "trang thai mang noi bo",
+        "enterprise lan mode",
+        "ket noi noi bo"
+      ],
+      "AnswerVi": "Kết nối Máy chủ/Máy trạm dùng LAN nội bộ và được hiển thị là 'LAN nội bộ'. Công tắc Online chỉ cấp quyền truy cập Internet cho cập nhật/đồng bộ. Vì vậy VietLicenSure có thể Offline với Internet nhưng vẫn kết nối máy chủ nội bộ khi quản trị viên cho phép LAN.",
+      "AnswerEn": "Server/workstation communication uses the local LAN and is shown as 'Local LAN'. The Online switch governs Internet access for updates and synchronization. The VietLicenSure can therefore be Internet-Offline while still using an administrator-enabled internal LAN."
+    },
+    {
+      "Id": "report-legal-limit",
+      "TitleVi": "Giới hạn kết luận của báo cáo",
+      "TitleEn": "Limits of report conclusions",
+      "Keywords": [
+        "bao cao co khang dinh duoc khong",
+        "bao cao chung minh hop phap",
+        "ket qua co chac chinh hang",
+        "gioi han ket luan",
+        "doi chieu hoa don hop dong",
+        "report legal conclusion"
+      ],
+      "AnswerVi": "Báo cáo có thể khẳng định bằng chứng kỹ thuật trực tiếp như trạng thái kích hoạt, nguồn KMS, tác vụ/activator hoặc lỗi chữ ký/HashMismatch tại thời điểm quét. Các tín hiệu đó không tự chứng minh quyền sử dụng hợp pháp. Đối chiếu phải theo mô hình: phần mềm thương mại có thể cần tài khoản, key, hóa đơn/hợp đồng; phần mềm miễn phí/nguồn mở cần điều khoản, LICENSE/notice và nguồn phân phối phù hợp. Báo cáo và Trợ lý không đưa ra phán quyết pháp lý.",
+      "AnswerEn": "The report can state direct technical evidence such as activation state, KMS source, an activator/task, or a signature/HashMismatch finding at scan time. Those signals do not by themselves prove legal entitlement. Review evidence by model: commercial software may require an account, key, invoice, or contract; free/open-source software calls for its terms, LICENSE/notice, and a suitable distribution source. Neither the report nor the Assistant issues a legal verdict."
+    },
+    {
+      "Id": "launch-troubleshooting",
+      "TitleVi": "Không mở hoặc chạy được VietLicenSure",
+      "TitleEn": "VietLicenSure does not open or run",
+      "Keywords": [
+        "khong mo duoc file exe",
+        "tool khong khoi dong",
+        "exe bi windows chan",
+        "chay tool khong len",
+        "applocker chan tool",
+        "wdac chan exe"
+      ],
+      "AnswerVi": "Hãy giải nén và chạy EXE từ ổ đĩa cục bộ, không chạy trong ZIP. Nếu vẫn không mở, tải lại từ GitHub chính thức, đối chiếu SHA-256 và quét Defender; không tắt bảo vệ hoặc thêm ngoại lệ để ép chạy. Trên máy doanh nghiệp, liên hệ quản trị viên nếu AppLocker/WDAC chặn và gửi nguyên thông báo để xác định đúng chính sách.",
+      "AnswerEn": "Extract and run the EXE from a local drive, not inside the ZIP. If it still fails, redownload from the official GitHub release, compare SHA-256, and scan with Defender; do not disable protection or add an exception to force it. On managed devices, contact the administrator when AppLocker/WDAC blocks it and provide the exact message."
+    },
+    {
+      "Id": "software-not-found",
+      "TitleVi": "Không thấy phần mềm cần kiểm tra",
+      "TitleEn": "Software is not detected",
+      "Keywords": [
+        "khong thay phan mem can quet",
+        "ung dung khong hien trong bao cao",
+        "tool bo sot phan mem",
+        "thieu phan mem trong danh sach",
+        "khong tim thay ung dung da cai",
+        "portable khong duoc nhan dien"
+      ],
+      "AnswerVi": "Hãy chạy lại lượt Phần mềm với quyền Administrator, kiểm tra ứng dụng có bản ghi cài đặt, shortcut hoặc nằm trong vị trí portable phổ biến hay không. Nếu đường dẫn chưa được đăng ký, mở ứng dụng ít nhất một lần, đóng lại rồi quét lại. VietLicenSure vẫn không thấy thì gửi tên, phiên bản, nhà phát hành và đường dẫn cài đặt; Trợ lý không tự khẳng định trạng thái của mục chưa được thu thập.",
+      "AnswerEn": "Rerun the Software scan as Administrator and check whether the app has an install record, shortcut, or a common portable location. If its path is not registered, open the app once, close it, and rescan. If it remains missing, provide name, version, publisher, and install path; the Assistant will not infer the state of an item that was not collected."
+    },
+    {
+      "Id": "report-pdf-failure",
+      "TitleVi": "Không tạo được báo cáo PDF",
+      "TitleEn": "PDF report creation failed",
+      "Keywords": [
+        "khong tao duoc pdf",
+        "pdf tao that bai",
+        "bao cao pdf bi loi",
+        "thieu file pdf",
+        "pdf khong xuat hien",
+        "loi xuat pdf"
+      ],
+      "AnswerVi": "Nếu PDF không tạo được, hãy dùng HTML vì kết quả kiểm tra chính vẫn còn. Kiểm tra Microsoft Edge hoặc Google Chrome, bấm Mở thư mục báo cáo để xem các tệp cùng lượt, rồi chạy lại nếu cần. Khi hỏi tiếp, gửi nguyên lỗi trong Hoạt động gần đây và cho biết HTML/JSON có được tạo hay không để phân biệt lỗi trình duyệt, quyền ghi hoặc dữ liệu báo cáo.",
+      "AnswerEn": "If PDF creation fails, use the HTML because the main inspection result remains available. Check Microsoft Edge or Google Chrome, open the report folder for files from the same run, and retry if needed. Provide the exact Recent activity error and whether HTML/JSON were created to distinguish browser, write-permission, or report-data failures."
+    },
+    {
+      "Id": "online-troubleshooting",
+      "TitleVi": "Online không kết nối hoặc đồng bộ được",
+      "TitleEn": "Online connection or sync failure",
+      "Keywords": [
+        "online khong hoat dong",
+        "khong dong bo duoc danh muc",
+        "cap nhat online that bai",
+        "internet trong tool bi loi",
+        "loi dns proxy cua tool",
+        "khong tai duoc kho tri thuc"
+      ],
+      "AnswerVi": "VietLicenSure vẫn dùng được Offline khi Online lỗi. Hãy kiểm tra Internet, DNS, proxy, firewall và ngày giờ hệ thống, sau đó bật Online trong đúng phiên và chạy lại thao tác đồng bộ/cập nhật. Gửi nguyên mã hoặc thông báo nếu còn lỗi; VietLicenSure không bỏ qua HTTPS allowlist, kiểm tra kích thước, cấu trúc, phiên bản hoặc SHA-256 để ép nhận dữ liệu.",
+      "AnswerEn": "VietLicenSure remains usable Offline when Online fails. Check Internet, DNS, proxy, firewall, and system time, then enable Online for the current session and retry the sync/update action. Provide the exact code/message if it persists; VietLicenSure will not bypass HTTPS allowlists, size/schema/version checks, or SHA-256 to force data acceptance."
+    },
+    {
+      "Id": "enterprise-server-management",
+      "TitleVi": "Tạo, chạy hoặc xóa cấu hình Máy chủ",
+      "TitleEn": "Create, run, or delete Server configuration",
+      "Keywords": [
+        "tao cau hinh may chu",
+        "xoa cau hinh may chu",
+        "khoi dong may chu doanh nghiep",
+        "dung server noi bo",
+        "tao ma ghep noi tam thoi",
+        "cap url acl cho server",
+        "server tu khoi dong sau reboot",
+        "may chu khoi dong cung windows"
+      ],
+      "AnswerVi": "Trong chức năng 8, mở tab Máy chủ và bật LAN nội bộ. Nhập tên/phạm vi và mã quản trị, tạo cấu hình, chuẩn bị URL ACL/Firewall rồi Khởi động máy chủ. Sau khi listener sẵn sàng, VietLicenSure tạo lịch chạy lại cùng Windows; Dừng máy chủ hoặc tắt LAN nội bộ cũng tắt lịch này. Nút Tạo mã ghép nối mới luân chuyển mã tạm 24 giờ nhưng không ảnh hưởng máy trạm đã ghép nối. Xóa cấu hình sẽ xóa danh tính/secret ghép nối/tác vụ chờ nhưng giữ báo cáo, kết quả đã hoàn tất và nhật ký; khi đó máy trạm cũ mới phải ghép nối lại.",
+      "AnswerEn": "In feature 8, open Server and enable Local LAN. Enter the server scope/admin code, create the configuration, prepare URL ACL/Firewall, and start the Server. After the listener is ready, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables it. Create new pairing code rotates the temporary 24-hour code without affecting enrolled workstations. Deleting the configuration removes server identity, enrollment secrets, and queued jobs while preserving reports, completed results, and audit logs; only then must old workstations enroll again."
+    },
+    {
+      "Id": "enterprise-client-management",
+      "TitleVi": "Ghép nối và gửi báo cáo từ Máy trạm",
+      "TitleEn": "Pair a Workstation and send reports",
+      "Keywords": [
+        "ghep noi may tram",
+        "gui bao cao may tram",
+        "chay agent may tram",
+        "ma ghep noi client",
+        "tu tim server tu client",
+        "hang doi bao cao may tram",
+        "agent sau reboot",
+        "agent sau sleep",
+        "co can ma ghep noi moi"
+      ],
+      "AnswerVi": "Trong chức năng 8, mở tab Máy trạm và bật LAN nội bộ. Tự tìm hoặc nhập IP/tên máy chủ, nhập mã ghép nối tạm thời rồi Ghép nối; sau đó Kiểm tra kết nối và Gửi báo cáo ngay. Máy đã ghép nối giữ nguyên ClientId/secret qua reboot, không cần mã mới. Khi bật agent tự động, agent chạy sau khởi động, đăng nhập, thức dậy và mỗi giờ; nếu mất mạng, báo cáo mã hóa nằm trong hàng đợi để thử lại. Quyền nhận lệnh thay đổi giấy phép vẫn mặc định tắt.",
+      "AnswerEn": "In feature 8, open Workstation and enable Local LAN. Discover or enter the Server address, enter the temporary pairing code, and enroll; then test the connection and send a report. An enrolled workstation retains its ClientId/secret across reboot and needs no new code. When enabled, the automatic agent runs after startup, logon, resume, and every hour; encrypted reports remain queued during outages and retry later. Remote license changes remain disabled by default."
+    },
+    {
+      "Id": "support-bundle",
+      "TitleVi": "Tạo gói hỗ trợ đã che định danh",
+      "TitleEn": "Create a redacted support bundle",
+      "Keywords": [
+        "tao goi ho tro da che dinh danh",
+        "goi zip ho tro an toan",
+        "xem truoc goi ho tro",
+        "support bundle redacted",
+        "support zip privacy",
+        "thu thap log ho tro an toan"
+      ],
+      "AnswerVi": "Trong Trung tâm Báo cáo & Bảo đảm, chọn Tạo gói hỗ trợ đã che định danh. VietLicenSure chỉ nhận báo cáo đã che dữ liệu, hiển thị bản xem trước gồm danh sách tệp và cảnh báo riêng tư, rồi mới tạo ZIP sau khi bạn xác nhận. Hãy đọc lại nội dung trước khi gửi và không thêm product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
+      "AnswerEn": "In Reports & Assurance, select Create a redacted support bundle. The VietLicenSure accepts only redacted reports, previews the included files and privacy warnings, and creates the ZIP only after confirmation. Review it before sharing and never add full product keys, passwords, tokens, or a FullInternal report."
+    },
+    {
+      "Id": "support-channel",
+      "TitleVi": "Kênh hỗ trợ và tương tác của VietLicenSure",
+      "TitleEn": "VietLicenSure support and feedback channels",
+      "Keywords": [
+        "kenh ho tro vietlicensure",
+        "github issues",
+        "github discussions",
+        "bao loi",
+        "yeu cau tinh nang",
+        "bao cao lo hong",
+        "security advisory",
+        "lien he nguoi phat trien",
+        "email cua tac gia",
+        "zalo cua tac gia",
+        "gui loi cho thanh viet",
+        "can ho tro ky thuat"
+      ],
+      "AnswerVi": "VietLicenSure v5.0 có các kênh tương tác hai chiều chính thức: báo lỗi hoặc yêu cầu tính năng tại GitHub Issues (https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose); hỏi đáp và đề xuất cộng đồng tại GitHub Discussions (https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions); báo lỗ hổng riêng tư tại GitHub Security advisory (https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new). Hỗ trợ trực tiếp qua Zalo 0978 005 017 hoặc email thanhvietit.hopnghia@gmail.com. Khi gửi lỗi, nên kèm phiên bản v5.0/5.0, tên chức năng, nguyên thông báo và gói hỗ trợ đã che định danh; không đăng công khai product key đầy đủ, mật khẩu, token hoặc báo cáo FullInternal.",
+      "AnswerEn": "Official two-way channels for VietLicenSure v5.0 are GitHub Issues for bugs and feature requests (https://github.com/thanhvietithopnghia-rgb/VietLicenSure/issues/new/choose), GitHub Discussions for community questions and proposals (https://github.com/thanhvietithopnghia-rgb/VietLicenSure/discussions), and GitHub Security advisories for private vulnerability reports (https://github.com/thanhvietithopnghia-rgb/VietLicenSure/security/advisories/new). Direct support is available via Zalo 0978 005 017 or thanhvietit.hopnghia@gmail.com. Include version v5.0/5.0, the feature name, the exact message, and a redacted support bundle; never post full product keys, passwords, tokens, or a FullInternal report publicly."
+    },
+    {
+      "Id": "plugin-management",
+      "TitleVi": "Plugin và quy tắc mở rộng",
+      "TitleEn": "Plugins and extension rules",
+      "Keywords": [
+        "cai plugin json",
+        "danh gia plugin",
+        "quy tac plugin chi doc",
+        "thu muc plugin bao ve",
+        "plugin co an toan khong",
+        "kiem tra plugin mo rong",
+        "chua co chinh sach nha phat hanh plugin",
+        "plugin khong cai duoc",
+        "trusted plugin publisher policy"
+      ],
+      "AnswerVi": "Trong chức năng 10, chọn Đánh giá plugin để xem quy tắc/cảnh báo hoặc Cài plugin JSON chỉ đọc từ tệp để thêm quy tắc. Chỉ dùng plugin từ nguồn tin cậy. Nếu VietLicenSure báo chưa có chính sách nhà phát hành, đó là khóa bảo mật đúng thiết kế, không phải lỗi ứng dụng: quản trị viên phải xác minh SHA-256 chứng thư qua kênh độc lập rồi ghim trong trusted-plugin-publishers-v1.json; không lấy fingerprint tin cậy từ chính gói plugin. Đoạn v4.6 trong đường dẫn là thế hệ lưu trữ dữ liệu tương thích, không phải phiên bản đang chạy. Plugin không được thực thi lệnh hay vượt chính sách an toàn.",
+      "AnswerEn": "In feature 10, use Evaluate plugins for rules/warnings or Install a read-only JSON plugin from file to add rules. A missing publisher-policy notice is the intended security gate, not an application failure: an administrator must independently verify the certificate SHA-256 and pin it in trusted-plugin-publishers-v1.json; never grant trust from the plugin package itself. The v4.6 path segment is the compatible data-storage generation, not the running version. Plugins cannot execute commands or bypass VietLicenSure safety policy."
+    },
+    {
+      "Id": "certificate-audit",
+      "TitleVi": "Kiểm tra chứng chỉ số Windows/Office",
+      "TitleEn": "Windows/Office certificate audit",
+      "Keywords": [
+        "kiem tra chung chi windows office",
+        "xac minh certificate he thong",
+        "audit authenticode windows",
+        "chu ky tep loi windows",
+        "chung chi so office",
+        "kiem tra chuoi tin cay offline"
+      ],
+      "AnswerVi": "Trong chức năng 10, chọn Kiểm tra chứng chỉ số Windows/Office để kiểm tra Authenticode, timestamp và chuỗi tin cậy Offline của các tệp lõi. Chứng thư hiện đã hết hạn vẫn có thể tạo kết quả hợp lệ khi tệp được ký trong thời hạn chứng thư và có timestamp hợp lệ. Launcher Official Self-Signed chỉ được công nhận khi chứng thư nhúng khớp signer ghim; UntrustedRoot của chứng thư tự ký không tự biến thành lỗi. Chữ ký hợp lệ không chứng minh quyền sử dụng; lỗi chữ ký hoặc HashMismatch phải được đọc cùng nguồn tệp và bằng chứng cấp phép.",
+      "AnswerEn": "In feature 10, select Windows/Office certificate audit to inspect Authenticode, signed timestamps, and offline trust chains for supported core files. A certificate that is expired now can still yield an effectively valid result when the file was signed within its validity period and has a valid timestamp. An Official Self-Signed launcher is accepted only when the embedded certificate matches the pinned signer; a self-signed UntrustedRoot result is not automatically an error. A valid signature does not prove entitlement; signature failure or HashMismatch must be reviewed with file source and separate licensing evidence."
+    },
+    {
+      "Id": "license-timeline",
+      "TitleVi": "Timeline thay đổi bản quyền",
+      "TitleEn": "Licensing change timeline",
+      "Keywords": [
+        "xac minh timeline ban quyen",
+        "xuat dong thoi gian thay doi",
+        "lich su thay doi kich hoat",
+        "kiem tra chuoi nhat ky",
+        "timeline co bi sua khong",
+        "xuat timeline tu tool"
+      ],
+      "AnswerVi": "Trong chức năng 10, chọn Xác minh và xuất timeline. VietLicenSure kiểm tra chuỗi nhật ký do chính VietLicenSure tạo trên máy này, đánh dấu đứt chuỗi hoặc dữ liệu không khớp rồi cho phép xuất để đối chiếu. Timeline là lịch sử kỹ thuật cục bộ, không thay thế Event Log đầy đủ, hóa đơn, hợp đồng hoặc hồ sơ cấp phép và không xác minh nhật ký do công cụ khác tạo.",
+      "AnswerEn": "In feature 10, choose Verify and export timeline. The VietLicenSure validates its own local chained log, flags chain breaks or mismatches, and exports it for review. The timeline is local technical history; it does not replace full Event Logs, invoices, agreements, or licensing records and does not authenticate logs produced by other tools."
+    },
+    {
+      "Id": "embedded-documents",
+      "TitleVi": "Hướng dẫn và lịch sử phiên bản",
+      "TitleEn": "User guide and version history",
+      "Keywords": [
+        "mo huong dan su dung chi tiet",
+        "xem lich su phien ban",
+        "hdsd html pdf",
+        "tai lieu nhung trong tool",
+        "phien ban va cap nhat o dau",
+        "mo user guide",
+        "open user guide",
+        "where version and updates",
+        "see version and updates"
+      ],
+      "AnswerVi": "Trợ lý lập chỉ mục toàn bộ HDSD và toàn bộ Lịch sử phiên bản Việt–Anh được nhúng trong đúng bản VietLicenSure, nên có thể tra cứu Offline theo tên của mọi chức năng, quy trình hoặc số phiên bản. Phạm vi lịch sử chạy từ v1.0.0 đến v5.0 hiện tại; cụm 'bản hiện tại' hoặc 'mới nhất' được hiểu là v5.0. Với một phiên bản có hồ sơ, Trợ lý trả đúng toàn bộ mục thay đổi; khi hỏi so sánh hai phiên bản, Trợ lý đặt hai mục cạnh nhau và không suy diễn ngoài tài liệu. Nếu số phiên bản không tồn tại, ví dụ v2.0, Trợ lý nói rõ không có mốc được ghi nhận thay vì tự tạo câu trả lời. Mọi mục chức năng trong HDSD đều có thể được gọi theo tên. Để mở tài liệu gốc, vào Trung tâm báo cáo & bảo đảm (chức năng 10), chọn Mở hướng dẫn sử dụng để xem HDSD HTML/PDF, hoặc chọn Phiên bản và cập nhật để xem thông tin bản đang dùng và cập nhật.",
+      "AnswerEn": "The Assistant indexes the complete Vietnamese/English user guides and Version histories bundled with VietLicenSure, so every documented function, workflow, and version can be looked up Offline. Recorded history runs from v1.0.0 through the current v5.0 release, and 'current' or 'latest' resolves to v5.0. For one recorded version it returns the complete entry; for a two-version comparison it places both entries side by side without inferring undocumented changes. If a requested number does not exist—for example v2.0—the Assistant states that no milestone is recorded instead of inventing an answer. Every named guide function is retrievable. To open the original documents, open Reports & Assurance (feature 10), choose Open user guide for the HTML/PDF guide, or choose Version and updates for the installed-version and update view."
+    },
+    {
+      "Id": "license-compliance-mvp",
+      "TitleVi": "License Advisor và đối chiếu quyền sử dụng",
+      "TitleEn": "License Advisor and entitlement reconciliation",
+      "Keywords": [
+        "license advisor",
+        "quan ly chung tu ban quyen",
+        "purchased assigned installed available",
+        "doi chieu so luong license",
+        "license assurance",
+        "compliance dashboard",
+        "evidence and entitlements",
+        "software asset management"
+      ],
+      "AnswerVi": "Trong chức năng 8, mở Chứng từ và quyền sử dụng để lưu cục bộ hồ sơ quyền sử dụng, tham chiếu hóa đơn/chứng từ và cấp phát cho máy hoặc người dùng. Tệp mới chỉ là Attached; chỉ chuyển sang Verified khi có người xác minh, thời điểm, nguồn và phạm vi. VietLicenSure đối chiếu Purchased–Assigned–Installed–Available nhưng luôn công khai độ phủ kiểm kê Complete/Partial/Failed; dữ liệu bị cắt, thiếu quyền hoặc đọc lỗi trả NeedsReview thay vì kết luận sạch. License Advisor chuẩn hóa mỗi phát hiện bằng Rule ID, nguồn bằng chứng, mức tin cậy và tương quan; đồng thời tách kích hoạt kỹ thuật, dấu hiệu can thiệp, quyền sử dụng và kết luận tổng hợp. KMS hoặc một dấu hiệu đơn lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. API không trả đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Đây là bằng chứng hỗ trợ quản trị/SAM, không tự xác minh tính thật của hóa đơn và không phải chứng nhận pháp lý về quyền sở hữu.",
+      "AnswerEn": "In feature 8, open Evidence and entitlements to store local entitlement records, invoice/evidence references, and endpoint or user assignments. A new file is only Attached; it becomes Verified only with verifier, timestamp, source, and scope. VietLicenSure reconciles Purchased–Assigned–Installed–Available while disclosing inventory coverage as Complete/Partial/Failed; truncated, privilege-limited, or failed collection stays NeedsReview instead of producing a clean conclusion. License Advisor normalizes each finding with a stable Rule ID, evidence sources, confidence, and correlation while keeping technical activation, tampering assessment, entitlement, and the overall verdict separate. KMS or a single indicator doesn't independently prove cracking or unlawful entitlement. The API returns no evidence paths, full keys, full ClientIds, or secrets. This supports administration/SAM review, does not authenticate an invoice, and is not legal certification of ownership."
+    },
+    {
+      "Id": "report-formats",
+      "TitleVi": "Định dạng báo cáo hỗ trợ",
+      "TitleEn": "Supported report formats",
+      "Keywords": [
+        "bao cao xuat dinh dang gi",
+        "tool co xuat docx khong",
+        "cac loai tep bao cao",
+        "json xml html pdf checksum",
+        "dinh dang bao cao ho tro",
+        "xuat word tu tool"
+      ],
+      "AnswerVi": "Các lượt quét chính tạo dữ liệu JSON/XML, bản HTML tổng quan, PDF chi tiết và tệp checksum/manifest khi áp dụng. VietLicenSure v5.0 không xuất DOCX/Word trực tiếp. Nếu cần Word, hãy dùng HTML/PDF đã che thông tin làm nguồn và giữ nguyên JSON/checksum gốc để còn khả năng đối chiếu; không sửa báo cáo gốc rồi coi là bằng chứng do VietLicenSure tạo.",
+      "AnswerEn": "Main scans produce JSON/XML data, an HTML overview, a detailed PDF, and checksum/manifest files where applicable. v5.0 does not export DOCX/Word directly. If Word is needed, use a redacted HTML/PDF as the source and preserve original JSON/checksums for verification; an edited derivative is not original VietLicenSure evidence."
+    },
+    {
+      "Id": "maintenance-20261105",
+      "TitleVi": "Bảo trì v5.0 ngày 05/11/2026 và giới hạn nghiệm thu",
+      "TitleEn": "v5.0 maintenance on 5 November 2026 and acceptance limits",
+      "Keywords": [
+        "cap nhat 05/11/2026",
+        "bao tri 05/11/2026",
+        "maintenance november 5",
+        "maintenance 2026-11-05"
+      ],
+      "AnswerVi": "Bản bảo trì v5.0 đã phát hành ngày 05/11/2026 gồm tiền kiểm khôi phục toàn kế hoạch có xác thực, kiểm soát tác vụ/dịch vụ, nguồn bằng chứng thận trọng, giới hạn duyệt/plugin, lịch sử tài sản và bảo vệ ghi đồng thời, xuất báo cáo ngữ nghĩa, ResultCenter gắn với cài đặt và giải thích chỉ đọc Việt–Anh. ALL21 vẫn PARTIAL: ground truth giấy phép/subscription, chứng từ bền vững, RBAC cá nhân, quy mô LAN thực tế, UI E2E đầy đủ và DPI/đa màn hình rộng chưa được nghiệm thu. Independent review vẫn NotReviewed; không suy ra public trust hay zero Critical/High. Bản bảo trì UI/Trợ lý bổ sung reflow thẻ, ngữ cảnh vai trò/màn hình/Build ID, tải tri thức và giấy phép nền có hủy, phục hồi cửa sổ và vùng nút Enterprise cố định. Trạng thái phát hành theo manifest/chữ ký của đúng EXE và QA artifact-bound, không theo ngày tri thức; DPI/đa màn hình vật lý rộng vẫn NotEstablished.",
+      "AnswerEn": "The v5.0 maintenance published on November 5, 2026 includes authenticated whole-plan recovery preflight, service/job authorization, conservative evidence lineage, bounded traversal/plugins, asset history and concurrent-write guards, semantic exports, installation-linked ResultCenter and grounded read-only VI/EN explanations. ALL21 remains PARTIAL: actual license/subscription ground truth, durable attachment content, individual RBAC, production LAN scale, full UI E2E and broad DPI/multi-monitor acceptance remain unestablished. Independent review is NotReviewed; public trust and zero Critical/High findings are not inferred. The UI/Assistant maintenance adds card reflow, role/screen/Build ID context, cancellable background knowledge and licensing loads, window recovery and pinned Enterprise actions. Release status follows the exact EXE manifest/signature and artifact-bound QA, not the knowledge date; broad physical DPI/multi-monitor acceptance remains NotEstablished."
+    }
+  ]
+}
