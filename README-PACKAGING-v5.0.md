@@ -1,11 +1,9 @@
-# VietLicenSure v5.0 — implemented improvements maintenance / packaging 20261105-ui-r7
+# VietLicenSure v5.0 — Assistant startup repair, 20261106-nullfix-r1
 
-EXE hiện hành E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3 / 985280bytes. Đây là build bảo trì mới; không tái dùng QA của EXE30B95AB6 đời trước. Riêng bước thêm metadata đóng gói không đổi EXE vừa build/ký.
+Current EXE AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE / 985280 bytes. Build ID 5.0-production-20261106-r1. Fixes the real Assistant Shown/focus crash caused by a PowerShell automatic variable collision.
 
-Chạy: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\VERIFY-PACKAGING.ps1
+Run VERIFY-PACKAGING.ps1 here; for private source start with VERIFY-HANDOFF.ps1 at handoff root. Release contains current software; Archive/SourceSnapshot is immutable source with historical release metadata; Archive/SourceAsBuilt retains the actual verification inputs. Use root CURRENT-RELEASE and Release-relative root checksums, not historical metadata inside Archive.
 
-Trong bộ source riêng: bắt đầu từ VERIFY-HANDOFF.ps1 ở gốc. CURRENT-RELEASE và RELEASE-SHA256SUMS ở gốc trỏ Release hiện hành; Archive/SourceSnapshot và Archive/SourceAsBuilt là source/input bất biến, không lấy checksum predecessor trong Archive làm chuẩn EXE mới. Chữ ký CMS ngoài ghim đúng cặp source/release/evidence. Full source giữ riêng, không phải public asset.
+Current exact-artifact acceptance and boundaries are in QA-EVIDENCE.json and RELEASE-STATUS-v5.0.md. Source tests do not establish packaged runtime. No inherited mTLS/disk-full/Windows10/full end-to-end claim. ALL21 acceptance remains partial. Full source stays private.
 
-Phạm vi nghiệm thu theo QA-EVIDENCE gắn đúng hash: chỉ những ca thực sự PASS. Source verifier/disk-full không đồng nghĩa scan-to-export qua UI. Windows10current-artifact, packaged remediation/update/Enterprise E2E, LANproduction và audit độc lập chưa được tự đóng. RELEASE-STATUS điều phối gate theo receipt, không kế thừa tuyên bố đời trước.
-
-Official Self-Signed / OfficialSelfSigned không phải publicCA/EV/Store; SmartScreen có thể cảnh báo. Independent review NotReviewed; external validity NotEstablished.
+Official Self-Signed, not public-CA/EV/Store. SmartScreen may warn. Independent review NotReviewed; external accuracy NotEstablished.

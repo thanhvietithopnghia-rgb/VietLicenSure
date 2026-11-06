@@ -1,5 +1,9 @@
 > Phạm vi QA hiện hành chỉ theo ma trận hậu-QA trong RELEASE-STATUS và QA-EVIDENCE gắn đúng hash. Các mô tả kiểm thử/changelog đời trước dưới đây không tự đóng gate Windows10, DPI/accessibility hay UI end-to-end của artifact mới.
 
+## Assistant startup hotfix candidate - 2026-11-06
+
+Fixes the real Shown-event crash caused by using the PowerShell automatic variable input as a captured TextBox reference. Uses a dedicated control variable. Real modal open/send/suggestion/clear/resize/close regressions pass in VI/EN and Light/Dark. Candidate only: new executable, packaged UI acceptance and publication are pending; predecessor QA is not reused for changed bytes.
+
 # UI/Assistant maintenance — 2026-11-05; exact-artifact release gates apply
 
 Nội dung hiện hành: **05/11/2026**.

@@ -1,165 +1,190 @@
 {
-  "schemaVersion": "1.1",
-  "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
-  "buildId": "5.0-production-20261105-r2",
-  "channel": "Official Self-Signed",
-  "sourceSnapshot": "4b3d38f85fec58d553124b8a366634f9a7dc500d",
-  "bundleCommit": "af8fa1eafc6715cce8822fd3571bf70a0026129d",
-  "exitCode": 0,
-  "errors": 0,
-  "warnings": 3,
   "result": "PASS",
-  "verification": "Official build/full-release 8/8, 0 errors and 3 disclosed warnings; independent distribution 0 errors and 1 expected UntrustedRoot warning.",
-  "buildLog": {
-    "sha256": "DBB61EA992C5F9EE5FF433C1CBA97EFDC4A894FB2EF9BE998D28AE2FDA0615E5",
+  "artifactSha256": "AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE",
+  "artifactBytes": 985280,
+  "buildId": "5.0-production-20261106-r1",
+  "sourceSnapshot": "69f4b3662a3ea8e8574c87d533467743ff067be9",
+  "bundleCommit": "0260f77c11e841533218318a64f1073c63429313",
+  "vmArtifactBound": "PASS",
+  "visualReview": {
     "result": "PASS",
-    "releaseVerifier": "8/8; 0 errors; 3 warnings"
+    "artifactSha256": "AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE",
+    "cases": [
+      {
+        "culture": "vi-VN",
+        "files": [
+          {
+            "path": "runtime-qa/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-1.png",
+            "sha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
+          },
+          {
+            "path": "runtime-qa/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-2.png",
+            "sha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
+          },
+          {
+            "path": "runtime-qa/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
+            "sha256": "8498543E6D5F6FADC650C1B8C80081EE33084F4DC1A9B6691B9B4FBBBBFD5422"
+          }
+        ],
+        "reviewReceipt": "visual-review-vi-only.json"
+      },
+      {
+        "culture": "en-US",
+        "files": [
+          {
+            "path": "runtime-qa-r4/runtime-vm-r4/win11-previous-adminlimited-en-us-itam/assistant-cycle-1.png",
+            "sha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
+          },
+          {
+            "path": "runtime-qa-r4/runtime-vm-r4/win11-previous-adminlimited-en-us-itam/assistant-cycle-2.png",
+            "sha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
+          },
+          {
+            "path": "runtime-qa-r4/runtime-vm-r4/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
+            "sha256": "B0F2B5511F8BCC6DC5C4499C442F90AC928C21300AEE32973DDE24E382CFB5E1"
+          }
+        ],
+        "reviewNotes": "Assistant cycle 1 and dashboard directly viewed: readable English UI, offline state, answer, actions and dashboard rendered correctly. Cycle 2 is byte-identical to the directly reviewed cycle 1 and therefore has identical rendered content."
+      }
+    ],
+    "scope": "Collected wide Assistant cycles and dashboard only; no compact or packaged theme visual claim."
+  },
+  "packagedAssistant": {
+    "result": "PASS",
+    "cases": [
+      {
+        "culture": "vi-VN",
+        "receipt": "runtime-qa\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\assistant-ui.json",
+        "cycles": [
+          {
+            "Cycle": 1,
+            "Passed": true,
+            "Offline": true,
+            "Suggestion": true,
+            "Send": true,
+            "Enter": true,
+            "Clear": true,
+            "ResizeWidths": [
+              680,
+              1000
+            ],
+            "RealQuestion": "ba vai tro khac nhau the nao",
+            "Answer": "Cá nhân ưu tiên máy hiện tại và kiểm tra/báo cáo; Hỗ trợ kỹ thuật (Helpdesk) ưu tiên chẩn đoán, hướng dẫn khắc phục và giấy phép cục bộ; Kiểm kê doanh nghiệp (ITAM/SAM) ưu tiên tài sản, phần mềm, bằng chứng giấy phép và Máy chủ/Máy trạm LAN. Đây là lựa chọn giao diện: không cấp quyền quản trị, bật Internet, bỏ UAC hay tạo quyền RBAC.",
+            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
+            "Screenshot": "assistant-cycle-1.png",
+            "ScreenshotSha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
+          },
+          {
+            "Cycle": 2,
+            "Passed": true,
+            "Offline": true,
+            "Suggestion": true,
+            "Send": true,
+            "Enter": true,
+            "Clear": true,
+            "ResizeWidths": [
+              680,
+              1000
+            ],
+            "RealQuestion": "ba vai tro khac nhau the nao",
+            "Answer": "Cá nhân ưu tiên máy hiện tại và kiểm tra/báo cáo; Hỗ trợ kỹ thuật (Helpdesk) ưu tiên chẩn đoán, hướng dẫn khắc phục và giấy phép cục bộ; Kiểm kê doanh nghiệp (ITAM/SAM) ưu tiên tài sản, phần mềm, bằng chứng giấy phép và Máy chủ/Máy trạm LAN. Đây là lựa chọn giao diện: không cấp quyền quản trị, bật Internet, bỏ UAC hay tạo quyền RBAC.",
+            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
+            "Screenshot": "assistant-cycle-2.png",
+            "ScreenshotSha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
+          }
+        ]
+      },
+      {
+        "culture": "en-US",
+        "receipt": "runtime-qa-r4\\runtime-vm-r4\\win11-previous-adminlimited-en-us-itam\\assistant-ui.json",
+        "cycles": [
+          {
+            "Cycle": 1,
+            "Passed": true,
+            "Offline": true,
+            "Suggestion": true,
+            "Send": true,
+            "Enter": true,
+            "Clear": true,
+            "ResizeWidths": [
+              680,
+              1000
+            ],
+            "RealQuestion": "how do the three roles differ",
+            "Answer": "Personal focuses on this computer and its inspections/reports; Technical Support (Helpdesk) focuses on diagnosis, remediation guidance and local licensing; Business Inventory (ITAM/SAM) focuses on assets, software, entitlement evidence and LAN Server/Client inventory. These are workspace preferences: they do not grant administrator permissions, enable Internet, bypass UAC or create RBAC permissions.",
+            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
+            "Screenshot": "assistant-cycle-1.png",
+            "ScreenshotSha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
+          },
+          {
+            "Cycle": 2,
+            "Passed": true,
+            "Offline": true,
+            "Suggestion": true,
+            "Send": true,
+            "Enter": true,
+            "Clear": true,
+            "ResizeWidths": [
+              680,
+              1000
+            ],
+            "RealQuestion": "how do the three roles differ",
+            "Answer": "Personal focuses on this computer and its inspections/reports; Technical Support (Helpdesk) focuses on diagnosis, remediation guidance and local licensing; Business Inventory (ITAM/SAM) focuses on assets, software, entitlement evidence and LAN Server/Client inventory. These are workspace preferences: they do not grant administrator permissions, enable Internet, bypass UAC or create RBAC permissions.",
+            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
+            "Screenshot": "assistant-cycle-2.png",
+            "ScreenshotSha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
+          }
+        ]
+      }
+    ],
+    "scope": "VI/EN real packaged Assistant suggestion/Send/Enter/clear/resize/close/reopen twice; only collected wide screenshots visually reviewed"
   },
   "reviewFixRegression": {
     "result": "PASS",
-    "entryPoint": "Unmodified signed-source Extensions, LicenseCompliance, ResultCenter, AssetRegistry and DeepEvidenceOrigins verifiers inside artifact-bound VM; not packaged enterprise UI."
-  },
-  "vmArtifactBound": "PASS",
-  "vmEvidence": {
-    "platform": "Windows 11 24H2 build 26100",
-    "accountMode": "AdminLimited",
-    "culture": "vi-VN",
-    "workspaceRole": "itam",
-    "offline": true,
-    "file": "runtime-summary.json",
-    "sha256": "A32CAD06B4C0786AB200511F5914776E0F9591A7619339802C75E6FC3868D90C",
-    "result": "PASS",
-    "visualReview": "PASS",
-    "cleanup": "PASS"
-  },
-  "liveMtls": {
-    "result": "PASS",
-    "file": "live-mtls-summary.json",
-    "sha256": "C4259BA4270AD393C9331DD023FAC9BE16D0BD19C54A78B2EBEB6B7DA6F0EF53",
-    "coverage": "Live loopback mTLS verifier on unmodified signed source, bound to the exact built distribution; not a packaged enterprise-UI click or production-LAN deployment."
-  },
-  "visualReview": {
-    "result": "PASS",
-    "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
-    "imageSha256": "AD0B53CEF4200E481B3E549D3DF77C1B8574877233CD636FB5FBA37600725728",
-    "reviewer": "Luna (actual inspection of all ten original images; not independent review)",
-    "reviewedUtc": "2026-11-05T16:50:55.339327+00:00",
-    "images": [
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
-        "sha256": "AD0B53CEF4200E481B3E549D3DF77C1B8574877233CD636FB5FBA37600725728"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-legacy.png",
-        "sha256": "B3EDA751473EA6F44B3D7779CDD16FB5D2C08E2A2F57CFD2A5A07BA59C4461DA"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-verified.png",
-        "sha256": "EBF6C62FCAE438ED8426131E9E2106BB0B65F8BA732486DC27A022FAC1AA3619"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-corrupt.png",
-        "sha256": "1C21918F365D6FD693A10E419F176733EF59C90F9D19D86DE711E28CED6849D1"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/result-center-incomplete.png",
-        "sha256": "1C21918F365D6FD693A10E419F176733EF59C90F9D19D86DE711E28CED6849D1"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
-        "sha256": "BBF0692F86368C199BF38F152C48E3876A2BF6D42DECB85EF4DAE08D5F239068"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-legacy.png",
-        "sha256": "C0729C7B2203440EA83D7125A949E59EE86A87908D9477189EB32D3C7B5CE1A9"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-verified.png",
-        "sha256": "7CF5ACC0E9618ADC58444E8BD8E4524F2FDD05BE473A09CE3032921DA6DC2F6E"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-corrupt.png",
-        "sha256": "0D795DCBDD0306BD4F37BA15661293FBAD754CF21ED1FF5474636056D869120A"
-      },
-      {
-        "path": "runtime-qa-r1/runtime-vm-r1/win11-previous-adminlimited-en-us-itam/result-center-incomplete.png",
-        "sha256": "0D795DCBDD0306BD4F37BA15661293FBAD754CF21ED1FF5474636056D869120A"
-      }
-    ],
-    "finding": "Both compact dashboards now separate Activity heading/status from shared-result caption/state; vertical scrolling is present. All eight ResultCenter images show seven visible footer actions, verified/unverified checksum text, and correct excluded counts (0 legacy/verified, 1 corrupt/incomplete). No Activity overlap remains in the captured view.",
-    "limitations": [
-      "Compact dashboard cards and shared-result labels use truncation/ellipsis; scrolling content is allowed. Full tooltip, broad DPI/multimonitor/accessibility and scan-to-export/remediation/Enterprise UI E2E are not established.",
-      "Grid cells/filter strip may scroll horizontally; footer action buttons are fully visible without parent horizontal scrolling.",
-      "Real elevated licensing Load/Cancel evidence is a read-only source-worker probe; no Office OSPP installation, activation change or licensing ground-truth claim."
-    ],
-    "publicationAllowed": true
-  },
-  "restoreProof": {
-    "result": "PASS",
-    "file": "restore-proof.json",
-    "sha256": "FD519EDF725379E384B40CDD0D9294924074942708A0484D769969FD27E4BE89"
-  },
-  "coverageBoundary": "Packaged startup/dashboard and policy/process cleanup were exercised. Live mTLS was tested through the unmodified signed-source verifier against the exact distribution binding in a disconnected loopback lab. No production-LAN, public-Internet, exhaustive text-layout, accessibility, or independent-review claim. Footer bounds were additionally verified for7actions in all8packaged ResultCenter VI/EN cases. Plugin functional acceptance follows explicit real-provider readiness, not full cold-start audit acceptance. Packaged ResultCenter4states VI/EN are additionally observed; this does not prove scan-to-export or remediation UI. Actual isolated NTFS VHD disk-full generation source path was tested.",
-  "knownIssues": [
-    "Official Self-Signed is not public-CA, EV or Store trust; SmartScreen can warn.",
-    "Independent review NotReviewed; external accuracy validity NotEstablished.",
-    "Compact summary cards use ellipsis at the small test viewport; full tooltip/text-layout coverage was not retested."
-  ],
-  "independentReview": "NotReviewed",
-  "externalValidity": "NotEstablished",
-  "packagedFooterVisibility": {
-    "result": "PASS",
-    "cases": 8,
-    "buttonsPerCase": 7,
-    "entryPoint": "Actual packaged ResultCenter child-window bounds relative to native footer client rectangle",
-    "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3"
-  },
-  "providerReadiness": {
-    "result": "PASS",
-    "currentAuditComplete": true,
-    "currentRules": 3,
-    "defaultBudgetsUnchanged": true,
-    "realProviderCalls": [
-      {
-        "Provider": "Real Win32_Service sppsvc",
-        "Present": true,
-        "DurationMilliseconds": 6793
-      },
-      {
-        "Provider": "Real local Authenticode sppsvc.exe",
-        "SignatureStatus": "Valid",
-        "DurationMilliseconds": 110
-      },
-      {
-        "Provider": "Real local Authenticode slui.exe",
-        "SignatureStatus": "Valid",
-        "DurationMilliseconds": 66
-      }
-    ],
-    "coldStartFullAuditClaim": false,
-    "predecessorColdAudit": "Preserved R6 Partial1of3,2skipped; WMI6068ms exceeded default2000ms; not relabelled as PASS"
-  },
-  "all21Acceptance": "Partial; implemented maintenance only. Real license/subscription ground truth, durable attachments, individual RBAC, production fleet/LAN scale and independent audit not established.",
-  "packagedResultCenter": {
-    "result": "PASS",
-    "artifactSha256": "E72D50FD67B4972D2AF65219D7B3A3A5388A6A57E4B1F50F80DD0EA952943FC3",
-    "cultures": [
-      "vi-VN",
-      "en-US"
-    ],
+    "scope": "Source-only real modal language/theme matrix; not packaged themes",
     "cases": [
-      "Legacy",
-      "Verified",
-      "Corrupt",
-      "Incomplete"
-    ],
-    "entryPoint": "Packaged EXE dashboard card and modal, synthetic local reports",
-    "notCovered": "Not scan/export/remediation/update/Enterprise UI end-to-end"
+      {
+        "culture": "vi-VN",
+        "theme": "Light",
+        "checks": 8,
+        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+      },
+      {
+        "culture": "vi-VN",
+        "theme": "Dark",
+        "checks": 8,
+        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+      },
+      {
+        "culture": "en-US",
+        "theme": "Light",
+        "checks": 8,
+        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+      },
+      {
+        "culture": "en-US",
+        "theme": "Dark",
+        "checks": 8,
+        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+      }
+    ]
   },
-  "sourceDiskFull": {
-    "result": "PASS",
-    "actualDiskFullHresult112": true,
-    "previousHashUnchanged": true,
-    "entryPoint": "Signed-source generation helper on isolated64MB NTFS VHD, not packaged export click"
-  }
+  "independentReview": "NotReviewed",
+  "independentReviewNotReviewed": true,
+  "all21AcceptancePartial": true,
+  "restoreProof": {
+    "path": "runtime-final-restore-proof-r4.json",
+    "sha256": "85D4768A55EA56336E0C3BFB926092A7AB85514260F053A52C46C7AF09ED5B85",
+    "privateOriginalSha256": "35E761C33F8B59538DA5FE00BEDB7BE73147E27B1B178AD22F344E3FF9BC5AB0",
+    "scope": "Sanitized public cleanup facts; original host receipt retained privately"
+  },
+  "notClaimed": [
+    "Current mTLS",
+    "Real disk-full",
+    "Windows10",
+    "Exhaustive DPI/accessibility",
+    "Complete ALL21 end-to-end",
+    "Independent security review",
+    "Compact screenshots not collected"
+  ]
 }
