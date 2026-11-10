@@ -8,12 +8,12 @@
   "PublicChannel": "Official Self-Signed",
   "TechnicalTrustMode": "OfficialSelfSigned",
   "ReleaseBuildDate": "2026-10-25",
-  "PublicUpdateDate": "2026-11-06",
-  "BuildId": "5.0-production-20261106-r1",
+  "PublicUpdateDate": "2026-11-10",
+  "BuildId": "5.0-production-20261108-r1",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE",
-    "SizeBytes": 985280,
+    "Sha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
+    "SizeBytes": 996544,
     "AuthenticodeStatus": "OfficialSelfSigned",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
@@ -22,8 +22,8 @@
     "Timestamped": true
   },
   "Source": {
-    "SourceCommit": "69f4b3662a3ea8e8574c87d533467743ff067be9",
-    "BundleCommit": "0260f77c11e841533218318a64f1073c63429313"
+    "SourceCommit": "0b03488689dd2fcd95c6a7637beb4176afec4f07",
+    "BundleCommit": "c4a8b8bcdf6996a78fb9a13f4cccd1f518997676"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,12 +34,12 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "F03FDE09E43DC30C0CB0D7D0233B29404C2316551F33362B6669E48B05D9BEEE",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-AC0E4F2B.zip",
+    "EvidenceSha256": "50D86804B1B9088988A6FB98F8CF83B8FFB8B1461D6D404E5B1F88FAD05B8702",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-81027596.zip",
     "Platform": "Windows 11 24H2",
-    "AccountType": "AdminLimited",
+    "AccountType": "AdminLimited baseline; AdminElevated document/protected-worker fixtures",
     "Culture": "vi-VN / en-US",
-    "NetworkMode": "Offline checkpointed lab; VI/EN packaged Assistant",
+    "NetworkMode": "Offline synthetic lab; VI/EN baseline/document UI and verified-payload worker/CLI; see exact scopes",
     "All21Acceptance": "Partial: see RELEASE-STATUS; no complete ALL21 claim"
   },
   "IndependentSecurityReview": {
@@ -53,12 +53,12 @@
     "AllowedNetworkScope": "PrivateManagedLanOrLoopbackOnly",
     "RequiresExplicitLanEnablement": true,
     "ProductionTransportAssurance": "NotRevalidatedForCurrentArtifact",
-    "MigrationTarget": "Implemented; no current-artifact mTLS acceptance claimed for this Assistant-only repair",
+    "MigrationTarget": "Source implementation retained; current maintenance QA offline, not LAN/mTLS deployment acceptance",
     "CoverageBoundary": "Loopback/private managed LAN only; not a public-Internet or independent security review claim."
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
   "Packaging": {
-    "Revision": "20261106-nullfix-r1",
+    "Revision": "20261110-reliability-r6",
     "ContextFile": "PACKAGING-CONTEXT.json",
     "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
     "RuntimeBuildChangedFromPredecessor": true,

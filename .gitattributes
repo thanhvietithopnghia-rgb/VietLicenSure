@@ -39,3 +39,6 @@ partial-source/verifiers/VERIFY-REPORT-SCHEMA.ps1 binary
 
 tool-assistant-knowledge-v1.1.json binary
 tool-assistant-knowledge-v1.1.json.p7s binary
+
+CURRENT-RELEASE.json binary
+QA-EVIDENCE.json binary

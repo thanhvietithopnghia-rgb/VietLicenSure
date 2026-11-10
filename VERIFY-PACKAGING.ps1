@@ -1,4 +1,4 @@
-param([string]$DistributionDirectory=$PSScriptRoot)
+﻿param([string]$DistributionDirectory=$PSScriptRoot)
 $ErrorActionPreference='Stop'
 try {
  $root=[IO.Path]::GetFullPath($DistributionDirectory).TrimEnd('\')
@@ -13,7 +13,7 @@ try {
  if($cms.SignerInfos[0].DigestAlgorithm.Value -cne '2.16.840.1.101.3.4.2.1'){throw 'Packaging signature must use SHA256'}
  $cms.CheckSignature($true)
  $record=Get-Content -LiteralPath $path -Raw -Encoding UTF8|ConvertFrom-Json
- if($record.PackagingRevision -cne '20261106-nullfix-r1' -or -not $record.ExecutableUnchanged){throw 'Unexpected packaging revision'}
+ if($record.PackagingRevision -cne '20261110-reliability-r6' -or -not $record.ExecutableUnchanged){throw 'Unexpected packaging revision'}
  $listed=New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
  foreach($row in @($record.StableDistributionFiles)+@($record.PackagingFiles)){
   $name=[string]$row.Path
@@ -28,7 +28,7 @@ try {
  $provenance=Get-Content -LiteralPath (Join-Path $root 'OFFICIAL-PROVENANCE-v1.json') -Raw -Encoding UTF8|ConvertFrom-Json
  if($release.Artifacts[0].Sha256 -cne $record.ArtifactSha256 -or $provenance.SourceSnapshotCommit -cne $record.SourceSnapshot){throw 'Packaging artifact/source identity mismatch'}
  if((Get-FileHash -LiteralPath (Join-Path $root 'VietLicenSure-v5.0.exe')).Hash -cne $record.ArtifactSha256){throw 'Executable changed'}
- & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'VERIFY-DISTRIBUTION.ps1') -DistributionDirectory $root
+ & powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File (Join-Path $root 'VERIFY-DISTRIBUTION.ps1') -DistributionDirectory $root
  if($LASTEXITCODE -ne 0){throw 'Distribution verification failed'}
  'PACKAGING: PASS (pinned CMS, unchanged executable/source, current closed distribution)'
  exit 0

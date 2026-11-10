@@ -1,13 +1,13 @@
 {
   "SchemaVersion": "1.0",
-  "PublicationDate": "2026-11-06",
+  "PublicationDate": "2026-11-10",
   "DisclosureClass": "ProprietarySourceAvailable",
   "OpenSource": false,
   "License": "PARTIAL-SOURCE-LICENSE.txt",
   "ProductVersion": "v5.0",
-  "ArtifactSha256": "AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE",
-  "TestedSourceSnapshot": "69f4b3662a3ea8e8574c87d533467743ff067be9",
-  "ProvenanceBundle": "0260f77c11e841533218318a64f1073c63429313",
+  "ArtifactSha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
+  "TestedSourceSnapshot": "0b03488689dd2fcd95c6a7637beb4176afec4f07",
+  "ProvenanceBundle": "c4a8b8bcdf6996a78fb9a13f4cccd1f518997676",
   "IndependentReviewStatus": "NotReviewed",
   "ExternalValidity": "NotEstablished",
   "FileCount": 12,
@@ -44,8 +44,8 @@
     },
     {
       "Path": "partial-source/schemas/asset-registry-schema-v1.0.json",
-      "Size": 7097,
-      "Sha256": "FCA1C86512049976F202935D192DB225776BC03C0877060C186571064F115055",
+      "Size": 7174,
+      "Sha256": "8ABDED2018698B533A217FB7BEB9D2DFA387A1DE7760DE13A8B636D3D676ED51",
       "Category": "PublicSchema"
     },
     {
@@ -85,5 +85,5 @@
       "Category": "DocumentationVerifier"
     }
   ],
-  "PublicMetadataBaseCommit": "6da1c0ebb6ac8f436349ec92fd58cd653e2205c5"
+  "PublicMetadataBaseCommit": "36c62daed4525e055e5df32a8a76a9429e27c3be"
 }

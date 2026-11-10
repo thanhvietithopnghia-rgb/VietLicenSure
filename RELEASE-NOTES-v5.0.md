@@ -1,6 +1,14 @@
-> Phạm vi QA hiện hành chỉ theo ma trận hậu-QA trong RELEASE-STATUS và QA-EVIDENCE gắn đúng hash. Các mô tả kiểm thử/changelog đời trước dưới đây không tự đóng gate Windows10, DPI/accessibility hay UI end-to-end của artifact mới.
+> Current acceptance applies ONLY to the exact hash and scoped QA-EVIDENCE named in RELEASE-STATUS. Prior changelog tests do not close new-artifact gates.
 
-## Assistant startup hotfix candidate - 2026-11-06
+## Reliability maintenance — 2026-11-08
+
+Public version remains v5.0; new BuildId `5.0-production-20261108-r1`. This maintenance update hardens restore preflight/service-result reporting, applies Windows SID authorization at Enterprise mutation/export boundaries, adds protected policy provisioning, persists integrity-checked asset documents, and isolates plugin audits behind a parent-owned process deadline. Prior Assistant startup repair remains included.
+
+Administrative workflows require the appropriate Windows administrator token. A general delegated-user broker is not enabled or accepted by this release. Policy helper decisions are not proof of a usable non-admin workflow. Plugin-worker isolation bounds interruption, not privilege or code trust; other synchronous CIM/filesystem reads remain cooperative. A failed multi-item restore can leave earlier completed mutations and reports partial failure; automatic all-or-nothing rollback is not claimed. Content copies and fingerprints do not authenticate documents, title or license entitlement.
+
+Current exact-artifact acceptance must come from the adjacent post-QA release evidence; source fixtures and historical evidence below do not accept a new executable. Full 21-function/fleet acceptance and independent security review are not claimed. Official Self-Signed, not public-CA/EV/Store; SmartScreen may warn.
+
+## Historical: Assistant startup hotfix candidate - 2026-11-06
 
 Fixes the real Shown-event crash caused by using the PowerShell automatic variable input as a captured TextBox reference. Uses a dedicated control variable. Real modal open/send/suggestion/clear/resize/close regressions pass in VI/EN and Light/Dark. Candidate only: new executable, packaged UI acceptance and publication are pending; predecessor QA is not reused for changed bytes.
 

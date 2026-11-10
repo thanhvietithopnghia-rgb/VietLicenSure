@@ -1,190 +1,171 @@
 {
   "result": "PASS",
-  "artifactSha256": "AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE",
-  "artifactBytes": 985280,
-  "buildId": "5.0-production-20261106-r1",
-  "sourceSnapshot": "69f4b3662a3ea8e8574c87d533467743ff067be9",
-  "bundleCommit": "0260f77c11e841533218318a64f1073c63429313",
-  "vmArtifactBound": "PASS",
-  "visualReview": {
-    "result": "PASS",
-    "artifactSha256": "AC0E4F2BC885D7B2108D1D31B82BE538E232EB2C619BE687530216869D97F2CE",
-    "cases": [
-      {
-        "culture": "vi-VN",
-        "files": [
-          {
-            "path": "runtime-qa/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-1.png",
-            "sha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
-          },
-          {
-            "path": "runtime-qa/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-2.png",
-            "sha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
-          },
-          {
-            "path": "runtime-qa/runtime-vm-r1/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
-            "sha256": "8498543E6D5F6FADC650C1B8C80081EE33084F4DC1A9B6691B9B4FBBBBFD5422"
-          }
-        ],
-        "reviewReceipt": "visual-review-vi-only.json"
-      },
-      {
-        "culture": "en-US",
-        "files": [
-          {
-            "path": "runtime-qa-r4/runtime-vm-r4/win11-previous-adminlimited-en-us-itam/assistant-cycle-1.png",
-            "sha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
-          },
-          {
-            "path": "runtime-qa-r4/runtime-vm-r4/win11-previous-adminlimited-en-us-itam/assistant-cycle-2.png",
-            "sha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
-          },
-          {
-            "path": "runtime-qa-r4/runtime-vm-r4/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
-            "sha256": "B0F2B5511F8BCC6DC5C4499C442F90AC928C21300AEE32973DDE24E382CFB5E1"
-          }
-        ],
-        "reviewNotes": "Assistant cycle 1 and dashboard directly viewed: readable English UI, offline state, answer, actions and dashboard rendered correctly. Cycle 2 is byte-identical to the directly reviewed cycle 1 and therefore has identical rendered content."
-      }
-    ],
-    "scope": "Collected wide Assistant cycles and dashboard only; no compact or packaged theme visual claim."
-  },
+  "artifactSha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
+  "artifactBytes": 996544,
+  "sourceSnapshot": "0b03488689dd2fcd95c6a7637beb4176afec4f07",
+  "bundleCommit": "c4a8b8bcdf6996a78fb9a13f4cccd1f518997676",
+  "buildId": "5.0-production-20261108-r1",
+  "channel": "Official Self-Signed",
+  "rawHostAuthenticodeStatus": "UnknownError",
+  "timestampThumbprint": "51D9ABDA034973D84F4266ACA48248E6B369C439",
   "packagedAssistant": {
     "result": "PASS",
-    "cases": [
-      {
-        "culture": "vi-VN",
-        "receipt": "runtime-qa\\runtime-vm-r1\\win11-previous-adminlimited-vi-vn-itam\\assistant-ui.json",
-        "cycles": [
-          {
-            "Cycle": 1,
-            "Passed": true,
-            "Offline": true,
-            "Suggestion": true,
-            "Send": true,
-            "Enter": true,
-            "Clear": true,
-            "ResizeWidths": [
-              680,
-              1000
-            ],
-            "RealQuestion": "ba vai tro khac nhau the nao",
-            "Answer": "Cá nhân ưu tiên máy hiện tại và kiểm tra/báo cáo; Hỗ trợ kỹ thuật (Helpdesk) ưu tiên chẩn đoán, hướng dẫn khắc phục và giấy phép cục bộ; Kiểm kê doanh nghiệp (ITAM/SAM) ưu tiên tài sản, phần mềm, bằng chứng giấy phép và Máy chủ/Máy trạm LAN. Đây là lựa chọn giao diện: không cấp quyền quản trị, bật Internet, bỏ UAC hay tạo quyền RBAC.",
-            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
-            "Screenshot": "assistant-cycle-1.png",
-            "ScreenshotSha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
-          },
-          {
-            "Cycle": 2,
-            "Passed": true,
-            "Offline": true,
-            "Suggestion": true,
-            "Send": true,
-            "Enter": true,
-            "Clear": true,
-            "ResizeWidths": [
-              680,
-              1000
-            ],
-            "RealQuestion": "ba vai tro khac nhau the nao",
-            "Answer": "Cá nhân ưu tiên máy hiện tại và kiểm tra/báo cáo; Hỗ trợ kỹ thuật (Helpdesk) ưu tiên chẩn đoán, hướng dẫn khắc phục và giấy phép cục bộ; Kiểm kê doanh nghiệp (ITAM/SAM) ưu tiên tài sản, phần mềm, bằng chứng giấy phép và Máy chủ/Máy trạm LAN. Đây là lựa chọn giao diện: không cấp quyền quản trị, bật Internet, bỏ UAC hay tạo quyền RBAC.",
-            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
-            "Screenshot": "assistant-cycle-2.png",
-            "ScreenshotSha256": "6A594BDCB713B845FFEE545D866DBB2BCB21CC9B54D00113170CE37C6CDB2B8E"
-          }
-        ]
-      },
-      {
-        "culture": "en-US",
-        "receipt": "runtime-qa-r4\\runtime-vm-r4\\win11-previous-adminlimited-en-us-itam\\assistant-ui.json",
-        "cycles": [
-          {
-            "Cycle": 1,
-            "Passed": true,
-            "Offline": true,
-            "Suggestion": true,
-            "Send": true,
-            "Enter": true,
-            "Clear": true,
-            "ResizeWidths": [
-              680,
-              1000
-            ],
-            "RealQuestion": "how do the three roles differ",
-            "Answer": "Personal focuses on this computer and its inspections/reports; Technical Support (Helpdesk) focuses on diagnosis, remediation guidance and local licensing; Business Inventory (ITAM/SAM) focuses on assets, software, entitlement evidence and LAN Server/Client inventory. These are workspace preferences: they do not grant administrator permissions, enable Internet, bypass UAC or create RBAC permissions.",
-            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
-            "Screenshot": "assistant-cycle-1.png",
-            "ScreenshotSha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
-          },
-          {
-            "Cycle": 2,
-            "Passed": true,
-            "Offline": true,
-            "Suggestion": true,
-            "Send": true,
-            "Enter": true,
-            "Clear": true,
-            "ResizeWidths": [
-              680,
-              1000
-            ],
-            "RealQuestion": "how do the three roles differ",
-            "Answer": "Personal focuses on this computer and its inspections/reports; Technical Support (Helpdesk) focuses on diagnosis, remediation guidance and local licensing; Business Inventory (ITAM/SAM) focuses on assets, software, entitlement evidence and LAN Server/Client inventory. These are workspace preferences: they do not grant administrator permissions, enable Internet, bypass UAC or create RBAC permissions.",
-            "EntryPoint": "Signed EXE dashboard Assistant button -> owned modal -> suggestion -> Send -> clear -> real Enter -> resize -> Close",
-            "Screenshot": "assistant-cycle-2.png",
-            "ScreenshotSha256": "6A8B37FA0DAA41850930ACACE5756E0B354AAA7EF33ECD67C3DD94A8CE2DCA83"
-          }
-        ]
-      }
+    "cultures": [
+      "vi-VN",
+      "en-US"
     ],
-    "scope": "VI/EN real packaged Assistant suggestion/Send/Enter/clear/resize/close/reopen twice; only collected wide screenshots visually reviewed"
+    "cyclesPerCulture": 2
   },
   "reviewFixRegression": {
     "result": "PASS",
-    "scope": "Source-only real modal language/theme matrix; not packaged themes",
-    "cases": [
+    "scope": "Canonical real role answers; legacy input aliases retained; source role20/context40 and packaged Send/Enter assertions"
+  },
+  "managedDocuments": {
+    "result": "PASS",
+    "scope": "Real packaged Save/Export on synthetic elevated guest fixture; content survives original deletion; unverified legal status unchanged",
+    "viHostReconciliation": {
+      "path": "vi-extra-host-reconciliation-r9.json",
+      "sha256": "AF566666AFE1E04581117CEE0EEE8807F6235162C6FD50846BB1EF108DF16FEB",
+      "scope": "Original host Failed retained; ALL immutable predicates re-evaluated for explicitly requested High/elevated scope, only three wrong Medium expectations corrected. Guest/doc actualPassed and cleanupPassed. VI supplemental policy task scan before-start Timeout disclosed; core policy fingerprints unchanged, no full task inventory claim."
+    }
+  },
+  "pluginWorker": {
+    "result": "PASS",
+    "scope": "Exact packaged-payload process/unsigned denial and actual Assurance CLI incomplete coverage export; source hard-deadline fixtures separate",
+    "retainedEvidence": {
+      "culture": "vi-VN",
+      "path": "runtime-extra-r6/results/win11-previous-adminelevated-vi-vn-itam/packaged-worker-result.json",
+      "scope": "Original current8102-hash r6 worker PASS retained; not rerun in observer r7"
+    }
+  },
+  "visualReview": {
+    "result": "PASS",
+    "artifactSha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
+    "cultures": [
+      "vi-VN",
+      "en-US"
+    ],
+    "images": [
       {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
+        "sha256": "56B1936920EE58EBF5E42B71177637CF5D2EA91476E9C3713A9BD4693C872F1B",
         "culture": "vi-VN",
-        "theme": "Light",
-        "checks": 8,
-        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+        "scope": "dashboard"
       },
       {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-1.png",
+        "sha256": "D008FF6CC0D69271731A2669866B8AD745149E549660020E8279C622690BE676",
         "culture": "vi-VN",
-        "theme": "Dark",
-        "checks": 8,
-        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+        "scope": "assistant"
       },
       {
-        "culture": "en-US",
-        "theme": "Light",
-        "checks": 8,
-        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/result-center-verified.png",
+        "sha256": "23E3EB5F8648B528D77B8BAC21DF595E90EF837F4C2DAA41C58FA24E4C1C8D87",
+        "culture": "vi-VN",
+        "scope": "result-center-verified"
       },
       {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/result-center-corrupt.png",
+        "sha256": "42899E96200E0A32AFF6C7EBA76BC7D709B1CE99FF1E23C0642DEFC0CB323B87",
+        "culture": "vi-VN",
+        "scope": "result-center-rejected"
+      },
+      {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
+        "sha256": "95B53CCF8E354AD98331D3B6BEBBBB9C29C221C74E0129D23C6313F1A8146FFD",
         "culture": "en-US",
-        "theme": "Dark",
-        "checks": 8,
-        "scope": "Real ShowDialog/Shown/suggestion/send/clear/resize/close; offline source UI"
+        "scope": "dashboard"
+      },
+      {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/assistant-cycle-1.png",
+        "sha256": "BFE4A0F503AA1DB2DD3A65D97ACDE6AE398B3261DE32CDF0C0CED80332B409AE",
+        "culture": "en-US",
+        "scope": "assistant"
+      },
+      {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/result-center-verified.png",
+        "sha256": "AD6081690AD686303AC1BE6A0EE6875DA3A48DAA103235668390A8ADE7AE89BA",
+        "culture": "en-US",
+        "scope": "result-center-verified"
+      },
+      {
+        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/result-center-incomplete.png",
+        "sha256": "6D347F8EE3286203B6779643C629545B1C38E67F4EA79E17901FE9DCC5156893",
+        "culture": "en-US",
+        "scope": "result-center-rejected"
+      },
+      {
+        "path": "runtime-extra-r7/results/win11-previous-adminelevated-vi-vn-itam/managed-document-import.png",
+        "sha256": "5D97F0384C7A939B2FCACBE02C1999CD908A30A9BC0837C9D1DE96EEC126680A",
+        "culture": "vi-VN",
+        "scope": "managed-doc-import"
+      },
+      {
+        "path": "runtime-extra-r7/results/win11-previous-adminelevated-vi-vn-itam/managed-document-export.png",
+        "sha256": "394DC62C5A8954FBBB9FEF5E765F280FD10A25A224667BDAD207E61687AB7B35",
+        "culture": "vi-VN",
+        "scope": "managed-doc-export"
+      },
+      {
+        "path": "runtime-extra-r10/results/win11-previous-adminelevated-en-us-itam/managed-document-import.png",
+        "sha256": "9D2581CCA7E537C37AAFDA69D87174279601932F88DF616599B1FBCDD1107FD8",
+        "culture": "en-US",
+        "scope": "managed-doc-import"
+      },
+      {
+        "path": "runtime-extra-r10/results/win11-previous-adminelevated-en-us-itam/managed-document-export.png",
+        "sha256": "34B0F32E24E8C191F1A1D9E31A101D97F174A5B336EB2DDD53ECC37222BC28DB",
+        "culture": "en-US",
+        "scope": "managed-doc-export"
       }
-    ]
+    ],
+    "reviewerClass": "AI maintainer-scoped visual review, not independent security attestation",
+    "scope": "Actual same8102EXE images: full captions/icons/legalnotice/canonicalroles/actions, integrity0/1; no broad DPI/fleet/accessibility or content-authentication claim",
+    "retainedViDocumentLayout": {
+      "path": "VISUAL-DOC-r6-vi-VN.json",
+      "sha256": "B8BA624ADA38E8A3DDF883E0CB403ACC501C9FF655C1BB1BB4E4EB02357C0502",
+      "boundary": "r7 earlier observer-failed fixture photos accepted for unchanged-EXE layout ONLY; actual Save/Export bytes separately passed r8."
+    }
   },
+  "vmCleanups": [
+    {
+      "kind": "baseline",
+      "culture": "vi-VN",
+      "path": "runtime-final-restore-proof-r6-vi-VN.json",
+      "sha256": "AAB41F6D84C7314FF0FCAE4D8A6148C5938809776080D8D4CFF8D65B3D953D7C",
+      "result": "PASS"
+    },
+    {
+      "kind": "additional",
+      "culture": "vi-VN",
+      "path": "runtime-extra-final-restore-r9-vi-VN.json",
+      "sha256": "4BDFAE30DEB8411ABA9A0DC9E118CD85B8A74AD69580B5AA9C65DDEE1EC3B060",
+      "result": "PASS"
+    },
+    {
+      "kind": "baseline",
+      "culture": "en-US",
+      "path": "runtime-final-restore-proof-r6-en-US.json",
+      "sha256": "C7BCAE69A9DDFBDF04924C659476F6E6B02EB41AE23C1232971189610E502B1B",
+      "result": "PASS"
+    },
+    {
+      "kind": "additional",
+      "culture": "en-US",
+      "path": "runtime-extra-final-restore-r10-en-US.json",
+      "sha256": "06E2CCE08F0B9499E0D19977DC29B99598CA799B52AA0541332948111A689EA3",
+      "result": "PASS"
+    }
+  ],
   "independentReview": "NotReviewed",
-  "independentReviewNotReviewed": true,
-  "all21AcceptancePartial": true,
-  "restoreProof": {
-    "path": "runtime-final-restore-proof-r4.json",
-    "sha256": "85D4768A55EA56336E0C3BFB926092A7AB85514260F053A52C46C7AF09ED5B85",
-    "privateOriginalSha256": "35E761C33F8B59538DA5FE00BEDB7BE73147E27B1B178AD22F344E3FF9BC5AB0",
-    "scope": "Sanitized public cleanup facts; original host receipt retained privately"
-  },
-  "notClaimed": [
-    "Current mTLS",
-    "Real disk-full",
-    "Windows10",
-    "Exhaustive DPI/accessibility",
-    "Complete ALL21 end-to-end",
-    "Independent security review",
-    "Compact screenshots not collected"
-  ]
+  "externalAccuracy": "NotEstablished",
+  "all21Acceptance": "Partial",
+  "limitations": [
+    "Not public-CA/EV/Store; SmartScreen may warn",
+    "No general non-admin broker/delegated deployment acceptance",
+    "No Windows10/new-hash fleet or broad DPI/accessibility matrix",
+    "No disk-full/power-loss/full-machine transactional restore claim",
+    "No real contracts/SKU entitlement ground truth or independent security attestation"
+  ],
+  "createdAtUtc": "2026-11-10T06:22:40.119771+00:00"
 }
