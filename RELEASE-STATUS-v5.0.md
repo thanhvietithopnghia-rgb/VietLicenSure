@@ -105,10 +105,10 @@ Chủ sở hữu phê duyệt kênh phát hành chính thức Official Self-Sign
 Harness4 và ma trận runtime/DPI/UAC đời trước là Historical khi chưa chứng minh cùng artifact. Loại bỏ các tuyên bố tổng quát “đạt gói gần nhất” vì không đủ định danh để chuyển gate. Không đổi trust class hoặc claim audit nếu thiếu evidence thật.
 
 
-## Current exact-artifact acceptance — 2026-11-10
+## Current exact-artifact acceptance — 2026-11-11
 
-EXE 810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5 / 996544 bytes; source 0b03488689dd2fcd95c6a7637beb4176afec4f07; signed bundle c4a8b8bcdf6996a78fb9a13f4cccd1f518997676.
+EXE D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7 / 996544 bytes; source 7d92e498ec10f43ad8a3aabe46625712f49c1f63; signed bundle 46f062aa4a4f5b1566e557dfded1f3de3904a8ad.
 Official Self-Signed, build8/8, full verifier0errors/3disclosed warnings and distribution0errors/1self-signed warning. Host Authenticode UnknownError/UntrustedRoot is retained; pinned signer and timestamp verified. Not public-CA/EV/Store; SmartScreen may warn.
-Current Windows11 24H2 offline VI/EN packaged startup, canonical Assistant role answers, ResultCenter integrity cases, managed-document Save/Export and verified-payload worker/Assurance CLI gates plus fresh checkpoint cleanup are scoped by current QA-EVIDENCE in the companion evidence/handoff. Historical QA prose below/above is not acceptance for different hashes.
+Current Windows11 24H2 offline VI/EN packaged startup, actual extracted Compatibility Catalog1.1.5.0/hash/freshness, canonical Assistant role answers and ResultCenter four integrity cases passed, followed by clean checkpoint restoration. No current-hash managed-document/worker UI or production mTLS claim.
 Roles are Personal, Technical Support and Business Inventory. Workspace choice grants no authority; maintenance scope remains elevated-admin. No general non-admin broker, deployed delegated RBAC, all21, physical fleet, broad DPI/Windows10, licensing ground truth or independent security review claim. Review NotReviewed; external accuracy NotEstablished.
 Worker isolation bounds execution time under the same Windows token; it is not a security sandbox. Managed document copies remain ReferencedUnverified, not authenticated legal evidence. Recovery39 and real token/ACL source fixtures keep their original source scope, not a full-machine/power-loss/disk-full rollback claim.

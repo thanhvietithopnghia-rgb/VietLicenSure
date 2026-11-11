@@ -8,11 +8,11 @@
   "PublicChannel": "Official Self-Signed",
   "TechnicalTrustMode": "OfficialSelfSigned",
   "ReleaseBuildDate": "2026-10-25",
-  "PublicUpdateDate": "2026-11-10",
+  "PublicUpdateDate": "2026-11-11",
   "BuildId": "5.0-production-20261108-r1",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
+    "Sha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
     "SizeBytes": 996544,
     "AuthenticodeStatus": "OfficialSelfSigned",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
@@ -22,8 +22,8 @@
     "Timestamped": true
   },
   "Source": {
-    "SourceCommit": "0b03488689dd2fcd95c6a7637beb4176afec4f07",
-    "BundleCommit": "c4a8b8bcdf6996a78fb9a13f4cccd1f518997676"
+    "SourceCommit": "7d92e498ec10f43ad8a3aabe46625712f49c1f63",
+    "BundleCommit": "46f062aa4a4f5b1566e557dfded1f3de3904a8ad"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,12 +34,12 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "50D86804B1B9088988A6FB98F8CF83B8FFB8B1461D6D404E5B1F88FAD05B8702",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-81027596.zip",
+    "EvidenceSha256": "5980FEF68E1748E685BF0098CFD8A01CA518033E0A39C21C30B6054C216BED37",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-D4FEC3E7.zip",
     "Platform": "Windows 11 24H2",
-    "AccountType": "AdminLimited baseline; AdminElevated document/protected-worker fixtures",
+    "AccountType": "AdminLimited / Medium baseline",
     "Culture": "vi-VN / en-US",
-    "NetworkMode": "Offline synthetic lab; VI/EN baseline/document UI and verified-payload worker/CLI; see exact scopes",
+    "NetworkMode": "Offline synthetic lab; VI/EN catalog payload, startup, Assistant and ResultCenter only",
     "All21Acceptance": "Partial: see RELEASE-STATUS; no complete ALL21 claim"
   },
   "IndependentSecurityReview": {
@@ -58,7 +58,7 @@
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
   "Packaging": {
-    "Revision": "20261110-reliability-r6",
+    "Revision": "20261111-catalog-r2",
     "ContextFile": "PACKAGING-CONTEXT.json",
     "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
     "RuntimeBuildChangedFromPredecessor": true,

@@ -6,7 +6,7 @@ Public release channel: Official Self-Signed.
 Technical trust mode: OfficialSelfSigned.
 Release status: OfficialSelfSigned.
 Tep chay duy nhat: VietLicenSure-v5.0.exe
-SHA-256: 810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5
+SHA-256: D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7
 AnyCPU: CLR tu chay x64 tren Windows 64-bit va x86 tren Windows 32-bit; khong bat Prefer 32-bit.
 Fail-closed neu phat hien tien trinh 32-bit tren Windows 64-bit de tranh WOW64 redirection.
 PowerShell duoc khoi dong voi ExecutionPolicy RemoteSigned; khong dung Bypass.
@@ -33,7 +33,7 @@ Ket noi online chi chay sau khi nguoi dung xac nhan, tai catalog JSON HTTPS tu h
 Bat Online chi cap nhat catalog ky so roi dung; khong tu quet, tao bao cao, hoi muc rieng tu hoac kiem tra/cai phien ban ung dung.
 Khi co ban moi, VietLicenSure hoi 3 lua chon: Cap nhat ngay, De sau, Bo qua lan nay. De sau hoi lai sau tac vu ke tiep hoac 2 gio.
 Cap nhat ngay chi tai EXE tu GitHub HTTPS co dinh, doi chieu dung luong/SHA-256/chu ky neu bat buoc, backup ban cu va rollback neu ban moi loi.
-Compatibility catalog 1.1.4.0, schema 1.1, ra soat 2026-10-09T00:00:00.0000000Z; canh bao 30 ngay va het han 45 ngay.
+Compatibility catalog 1.1.5.0, schema 1.1, ra soat 2026-11-10T06:57:02.0000000Z; canh bao 30 ngay va het han 45 ngay.
 Nhan dien theo catalog: Windows 10 22H2 build 19045, Windows 11 23H2 build 22631, Windows 11 24H2 build 26100, Windows 11 25H2 build 26200, Windows 11 26H2 build 26300, Windows 11 26H1 build 28000; build moi/chua biet chuyen sang ReadOnlyManualReview.
 Nhan dien Office theo catalog: Office 2021 / LTSC 2021, Office 2024 / LTSC 2024, Microsoft 365 Apps; Product ID/kenh moi chua biet khong duoc tu suy dien tuong thich.
 Enterprise: may chu quet CIDR/IP, ghep noi bang ma tam thoi, quan ly fleet, xuat JSON/CSV/HTML/PDF va gui tac vu license da ma hoa.

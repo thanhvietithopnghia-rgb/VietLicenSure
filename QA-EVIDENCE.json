@@ -1,171 +1,163 @@
 {
+  "schemaVersion": "1.2",
   "result": "PASS",
-  "artifactSha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
-  "artifactBytes": 996544,
-  "sourceSnapshot": "0b03488689dd2fcd95c6a7637beb4176afec4f07",
-  "bundleCommit": "c4a8b8bcdf6996a78fb9a13f4cccd1f518997676",
+  "artifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
   "buildId": "5.0-production-20261108-r1",
+  "sourceSnapshot": "7d92e498ec10f43ad8a3aabe46625712f49c1f63",
+  "bundleCommit": "46f062aa4a4f5b1566e557dfded1f3de3904a8ad",
   "channel": "Official Self-Signed",
-  "rawHostAuthenticodeStatus": "UnknownError",
-  "timestampThumbprint": "51D9ABDA034973D84F4266ACA48248E6B369C439",
+  "independentReview": "NotReviewed",
+  "all21Acceptance": "Partial",
+  "visualReview": {
+    "result": "PASS",
+    "artifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
+    "images": [
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
+        "sha256": "8C6E7740959C06841DD0E178D2310C012647C1B1FB90B52ADEDE5E2D3A92B10B",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/environment-warning.window.png",
+        "sha256": "47B9DBB0F074BD0B1A5075492F7FDB3EF815D7C1C43EC7CD5C95C6FB6D8B5106",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-1.png",
+        "sha256": "D008FF6CC0D69271731A2669866B8AD745149E549660020E8279C622690BE676",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-2.png",
+        "sha256": "D008FF6CC0D69271731A2669866B8AD745149E549660020E8279C622690BE676",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-legacy.png",
+        "sha256": "306EAA911EA73200F4F47FD3E8B345F185FD32BF4FF5B59063129D3D313614D9",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-verified.png",
+        "sha256": "07A180118C26AF46827D624CBF3AE60F9910152DE83B299921C9428444125A52",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-corrupt.png",
+        "sha256": "84AA0D6573BF47C1F941D034CC43FA0A487BDF63D26B7C5ED7672C2D971EF441",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-incomplete.png",
+        "sha256": "84AA0D6573BF47C1F941D034CC43FA0A487BDF63D26B7C5ED7672C2D971EF441",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
+        "sha256": "FBFCFFF0A9B438C3E8503F5A4370568DECDC9D457BD764A0EAF9831F3432CDF9",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/environment-warning.window.png",
+        "sha256": "ADECB8E5586DD5EF87C8C8D7B090BC5391E9C60DDF24ABC57311922B054B4886",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/assistant-cycle-1.png",
+        "sha256": "BFE4A0F503AA1DB2DD3A65D97ACDE6AE398B3261DE32CDF0C0CED80332B409AE",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/assistant-cycle-2.png",
+        "sha256": "BFE4A0F503AA1DB2DD3A65D97ACDE6AE398B3261DE32CDF0C0CED80332B409AE",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-legacy.png",
+        "sha256": "D78CE99021598DEF792AFBF1D729D39640C2B7C3B401B0C5022241515CC48CEA",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-verified.png",
+        "sha256": "6700F6A70EC2876A8E12D14AF4E2609E4C2C49CB9D6B062CB5CF06A11DD31134",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-corrupt.png",
+        "sha256": "4C9B4C769916815E504D745413D67A498D9495F8BC164E569D0BE3C110DDE1F3",
+        "result": "PASS"
+      },
+      {
+        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-incomplete.png",
+        "sha256": "4C9B4C769916815E504D745413D67A498D9495F8BC164E569D0BE3C110DDE1F3",
+        "result": "PASS"
+      }
+    ],
+    "reviewedUtc": "2026-11-11T01:28:46.892174+00:00",
+    "publicationAllowed": true,
+    "scope": "Luna actually inspected16images: bilingual dashboard/environment warning, four Assistant cycles and eight ResultCenter cases. Catalog age0 is from exact running-payload receipt, not a visible age label. No stale-catalog32day warning visible. Not independent review."
+  },
+  "catalog": {
+    "result": "PASS",
+    "version": "1.1.5.0",
+    "reviewedAtUtc": "2026-11-10T06:57:02Z",
+    "hash": "CB8ED405FF6B758AAE42E37E7ED5BD864E16099E02AAECB7A8B4CFCBD9596CA2",
+    "receiptAgeDays": 0,
+    "receipts": [
+      {
+        "Result": "PASS",
+        "ArtifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
+        "CatalogSha256": "CB8ED405FF6B758AAE42E37E7ED5BD864E16099E02AAECB7A8B4CFCBD9596CA2",
+        "CatalogVersion": "1.1.5.0",
+        "ReviewedAtUtc": "2026-11-10T06:57:02Z",
+        "CatalogAgeDays": 0,
+        "Culture": "vi-VN",
+        "ActualPackagedProcessId": 3808,
+        "Expected26H2Revision": 9818,
+        "Scope": "Actual signed-EXE extracted catalog byte identity and freshness; real dashboard age/caption must still be visually reviewed"
+      },
+      {
+        "Result": "PASS",
+        "ArtifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
+        "CatalogSha256": "CB8ED405FF6B758AAE42E37E7ED5BD864E16099E02AAECB7A8B4CFCBD9596CA2",
+        "CatalogVersion": "1.1.5.0",
+        "ReviewedAtUtc": "2026-11-10T06:57:02Z",
+        "CatalogAgeDays": 0,
+        "Culture": "en-US",
+        "ActualPackagedProcessId": 5876,
+        "Expected26H2Revision": 9818,
+        "Scope": "Actual signed-EXE extracted catalog byte identity and freshness; real dashboard age/caption must still be visually reviewed"
+      }
+    ]
+  },
   "packagedAssistant": {
     "result": "PASS",
+    "cycles": 4,
     "cultures": [
       "vi-VN",
       "en-US"
-    ],
-    "cyclesPerCulture": 2
+    ]
+  },
+  "packagedResultCenter": {
+    "result": "PASS",
+    "cases": 8,
+    "cultures": [
+      "vi-VN",
+      "en-US"
+    ]
   },
   "reviewFixRegression": {
     "result": "PASS",
-    "scope": "Canonical real role answers; legacy input aliases retained; source role20/context40 and packaged Send/Enter assertions"
+    "scope": "Official catalog-r2 full source build/verifier pipeline, not inherited packaged document/worker evidence."
   },
-  "managedDocuments": {
+  "restoreProof": {
     "result": "PASS",
-    "scope": "Real packaged Save/Export on synthetic elevated guest fixture; content survives original deletion; unverified legal status unchanged",
-    "viHostReconciliation": {
-      "path": "vi-extra-host-reconciliation-r9.json",
-      "sha256": "AF566666AFE1E04581117CEE0EEE8807F6235162C6FD50846BB1EF108DF16FEB",
-      "scope": "Original host Failed retained; ALL immutable predicates re-evaluated for explicitly requested High/elevated scope, only three wrong Medium expectations corrected. Guest/doc actualPassed and cleanupPassed. VI supplemental policy task scan before-start Timeout disclosed; core policy fingerprints unchanged, no full task inventory claim."
-    }
-  },
-  "pluginWorker": {
-    "result": "PASS",
-    "scope": "Exact packaged-payload process/unsigned denial and actual Assurance CLI incomplete coverage export; source hard-deadline fixtures separate",
-    "retainedEvidence": {
-      "culture": "vi-VN",
-      "path": "runtime-extra-r6/results/win11-previous-adminelevated-vi-vn-itam/packaged-worker-result.json",
-      "scope": "Original current8102-hash r6 worker PASS retained; not rerun in observer r7"
-    }
-  },
-  "visualReview": {
-    "result": "PASS",
-    "artifactSha256": "810275960852C2B479D2F149C5C39930AD1F2798D8C0F5E7D07F251F7099D4A5",
-    "cultures": [
+    "scopes": [
       "vi-VN",
       "en-US"
     ],
-    "images": [
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
-        "sha256": "56B1936920EE58EBF5E42B71177637CF5D2EA91476E9C3713A9BD4693C872F1B",
-        "culture": "vi-VN",
-        "scope": "dashboard"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-1.png",
-        "sha256": "D008FF6CC0D69271731A2669866B8AD745149E549660020E8279C622690BE676",
-        "culture": "vi-VN",
-        "scope": "assistant"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/result-center-verified.png",
-        "sha256": "23E3EB5F8648B528D77B8BAC21DF595E90EF837F4C2DAA41C58FA24E4C1C8D87",
-        "culture": "vi-VN",
-        "scope": "result-center-verified"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-vi-vn-itam/result-center-corrupt.png",
-        "sha256": "42899E96200E0A32AFF6C7EBA76BC7D709B1CE99FF1E23C0642DEFC0CB323B87",
-        "culture": "vi-VN",
-        "scope": "result-center-rejected"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
-        "sha256": "95B53CCF8E354AD98331D3B6BEBBBB9C29C221C74E0129D23C6313F1A8146FFD",
-        "culture": "en-US",
-        "scope": "dashboard"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/assistant-cycle-1.png",
-        "sha256": "BFE4A0F503AA1DB2DD3A65D97ACDE6AE398B3261DE32CDF0C0CED80332B409AE",
-        "culture": "en-US",
-        "scope": "assistant"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/result-center-verified.png",
-        "sha256": "AD6081690AD686303AC1BE6A0EE6875DA3A48DAA103235668390A8ADE7AE89BA",
-        "culture": "en-US",
-        "scope": "result-center-verified"
-      },
-      {
-        "path": "runtime-qa-r6/runtime-vm-r6/win11-previous-adminlimited-en-us-itam/result-center-incomplete.png",
-        "sha256": "6D347F8EE3286203B6779643C629545B1C38E67F4EA79E17901FE9DCC5156893",
-        "culture": "en-US",
-        "scope": "result-center-rejected"
-      },
-      {
-        "path": "runtime-extra-r7/results/win11-previous-adminelevated-vi-vn-itam/managed-document-import.png",
-        "sha256": "5D97F0384C7A939B2FCACBE02C1999CD908A30A9BC0837C9D1DE96EEC126680A",
-        "culture": "vi-VN",
-        "scope": "managed-doc-import"
-      },
-      {
-        "path": "runtime-extra-r7/results/win11-previous-adminelevated-vi-vn-itam/managed-document-export.png",
-        "sha256": "394DC62C5A8954FBBB9FEF5E765F280FD10A25A224667BDAD207E61687AB7B35",
-        "culture": "vi-VN",
-        "scope": "managed-doc-export"
-      },
-      {
-        "path": "runtime-extra-r10/results/win11-previous-adminelevated-en-us-itam/managed-document-import.png",
-        "sha256": "9D2581CCA7E537C37AAFDA69D87174279601932F88DF616599B1FBCDD1107FD8",
-        "culture": "en-US",
-        "scope": "managed-doc-import"
-      },
-      {
-        "path": "runtime-extra-r10/results/win11-previous-adminelevated-en-us-itam/managed-document-export.png",
-        "sha256": "34B0F32E24E8C191F1A1D9E31A101D97F174A5B336EB2DDD53ECC37222BC28DB",
-        "culture": "en-US",
-        "scope": "managed-doc-export"
-      }
-    ],
-    "reviewerClass": "AI maintainer-scoped visual review, not independent security attestation",
-    "scope": "Actual same8102EXE images: full captions/icons/legalnotice/canonicalroles/actions, integrity0/1; no broad DPI/fleet/accessibility or content-authentication claim",
-    "retainedViDocumentLayout": {
-      "path": "VISUAL-DOC-r6-vi-VN.json",
-      "sha256": "B8BA624ADA38E8A3DDF883E0CB403ACC501C9FF655C1BB1BB4E4EB02357C0502",
-      "boundary": "r7 earlier observer-failed fixture photos accepted for unchanged-EXE layout ONLY; actual Save/Export bytes separately passed r8."
-    }
+    "finalVmState": "Off"
   },
-  "vmCleanups": [
-    {
-      "kind": "baseline",
-      "culture": "vi-VN",
-      "path": "runtime-final-restore-proof-r6-vi-VN.json",
-      "sha256": "AAB41F6D84C7314FF0FCAE4D8A6148C5938809776080D8D4CFF8D65B3D953D7C",
-      "result": "PASS"
-    },
-    {
-      "kind": "additional",
-      "culture": "vi-VN",
-      "path": "runtime-extra-final-restore-r9-vi-VN.json",
-      "sha256": "4BDFAE30DEB8411ABA9A0DC9E118CD85B8A74AD69580B5AA9C65DDEE1EC3B060",
-      "result": "PASS"
-    },
-    {
-      "kind": "baseline",
-      "culture": "en-US",
-      "path": "runtime-final-restore-proof-r6-en-US.json",
-      "sha256": "C7BCAE69A9DDFBDF04924C659476F6E6B02EB41AE23C1232971189610E502B1B",
-      "result": "PASS"
-    },
-    {
-      "kind": "additional",
-      "culture": "en-US",
-      "path": "runtime-extra-final-restore-r10-en-US.json",
-      "sha256": "06E2CCE08F0B9499E0D19977DC29B99598CA799B52AA0541332948111A689EA3",
-      "result": "PASS"
-    }
-  ],
-  "independentReview": "NotReviewed",
-  "externalAccuracy": "NotEstablished",
-  "all21Acceptance": "Partial",
-  "limitations": [
-    "Not public-CA/EV/Store; SmartScreen may warn",
-    "No general non-admin broker/delegated deployment acceptance",
-    "No Windows10/new-hash fleet or broad DPI/accessibility matrix",
-    "No disk-full/power-loss/full-machine transactional restore claim",
-    "No real contracts/SKU entitlement ground truth or independent security attestation"
-  ],
-  "createdAtUtc": "2026-11-10T06:22:40.119771+00:00"
+  "coverageBoundary": "Exact EXE offline Windows11 24H2 AdminLimited Medium startup/catalog/Assistant/ResultCenter baseline only. Previous8102document/worker UI evidence remains historical and is not current-hash acceptance. No mTLS/LAN/fleet/Windows10/wideDPI/independent review or fullALL21 claim.",
+  "trustBoundary": "Official Self-Signed; host UnknownError retained; pinned signer/timestamp verified by build and guest temporary lab trust removed by checkpoint restoration; not public-CA/EV/Store. SmartScreen may warn."
 }
