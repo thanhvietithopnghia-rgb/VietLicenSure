@@ -16,3 +16,6 @@ jobs:
       - name: Verify controlled disclosure
         shell: pwsh
         run: ./VERIFY-PARTIAL-SOURCE.ps1
+      - name: Verify signed Online catalog assets
+        shell: pwsh
+        run: ./.github/scripts/Verify-OnlineCatalog.ps1

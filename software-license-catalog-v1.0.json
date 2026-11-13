@@ -1,0 +1,765 @@
+{
+  "SchemaVersion": "1.0",
+  "CatalogVersion": "1.6.4.0",
+  "GeneratedAtUtc": "2026-10-11T12:55:13Z",
+  "ModelVocabulary": ["Free", "OpenSource", "Freemium", "Trial", "Paid", "Subscription", "Unknown"],
+  "CoveragePolicy": "Signed rules classify known products; unmatched products remain Unknown and never imply a valid license or crack.",
+  "UpdatePolicy": "Offline bundled snapshot; newer detached-CMS-signed catalog is downloaded only after explicit user consent.",
+  "SignatureAsset": "software-license-catalog-v1.0.json.p7s",
+  "CatalogScope": ["General", "Design", "CAD", "CAM", "CAE", "BIM", "GIS", "Simulation", "Engineering"],
+  "UpdateUrl": "https://raw.githubusercontent.com/thanhvietithopnghia-rgb/VietLicenSure/main/software-license-catalog-v1.0.json",
+  "Privacy": {
+    "DownloadOnly": true,
+    "UploadsInstalledInventory": false,
+    "UploadsLicenseKeys": false
+  },
+  "DeepScan": {
+    "KnownActivatorNamePatterns": [
+      "\\bAdobe[\\s._-]*GenP\\b",
+      "\\bCCMaker\\b",
+      "\\bamtlib[\\s._-]*(?:patch|emulator)\\b",
+      "\\bXF[\\s._-]*ADSK\\b",
+      "\\bX[\\s._-]*Force\\b",
+      "\\bKMSPico\\b",
+      "\\bKMSAuto\\b",
+      "\\bKMS[\\s._-]*38\\b",
+      "\\bKMS[\\s._-]*VL(?:[\\s._-]*All)?\\b",
+      "\\bAuto[\\s._-]*KMS\\b",
+      "\\bAAct(?:Portable)?\\b",
+      "\\bAAct[\\s._-]*(?:Network|Portable)?\\b",
+      "\\bHWIDGen\\b",
+      "\\bMassgrave\\b",
+      "\\bMAS[\\s._-]*(?:AIO|All[\\s._-]*in[\\s._-]*One|Activat(?:ion|or)|HWID|KMS|OHook|TSforge)\\b",
+      "\\bPMAS(?:[\\s._-]*(?:AIO|All[\\s._-]*in[\\s._-]*One|Activat(?:ion|or)|HWID|KMS|OHook|TSforge))?\\b",
+      "\\bMicrosoft[\\s._-]*Activation[\\s._-]*Scripts?\\b",
+      "\\bActivation[\\s._-]*Program[\\s._-]*(?:v(?:ersion)?[\\s._-]*)?1(?:\\.|\\s+|[_-])17\\b",
+      "\\b(?:OHook|TSforge)\\b",
+      "(?<![a-z0-9.-])(?:https?://)?erturk-dev\\.netlify\\.app/run(?:[/?#][^\\s'\"|]*)?(?![a-z0-9._-])"
+    ],
+    "SuspiciousArtifactNamePatterns": [
+      "\\bcrack(?:ed)?\\b",
+      "\\bkeygen\\b",
+      "\\bactivator\\b",
+      "\\bactivation[\\s._-]*bypass\\b",
+      "\\blicen[cs]e[\\s._-]*(?:bypass|patch)\\b",
+      "\\bserial[\\s._-]*generator\\b"
+    ],
+    "KnownBadSha256": []
+  },
+  "Products": [
+    {
+      "Id": "adobe-acrobat-reader",
+      "Vendor": "Adobe",
+      "NamePatterns": ["\\bAdobe Acrobat Reader\\b", "\\bAdobe Reader\\b", "\\bAcrobat Reader\\b"],
+      "PublisherPatterns": ["\\bAdobe\\b"],
+      "LicenseModel": "Free",
+      "OfficialUrl": "https://www.adobe.com/acrobat/pdf-reader.html",
+      "LicenseDomains": ["(?:^|\\.)adobe\\.com$", "(?:^|\\.)adobelogin\\.com$"],
+      "UnauthorizedNamePatterns": [],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "adobe-creative-cloud-paid",
+      "Vendor": "Adobe",
+      "NamePatterns": ["\\bAdobe (?:Photoshop|Illustrator|InDesign|Lightroom|Premiere(?: Pro)?|After Effects|Audition|Animate|Dreamweaver|Acrobat(?!\\s+Reader\\b)|Media Encoder|Substance 3D|Dimension|InCopy|Fresco)(?:\\s|$)", "\\bCreative Cloud\\b", "\\bAcrobat\\s+Distiller\\b", "^Adobe Acrobat \\(64-bit\\)$"],
+      "PublisherPatterns": ["\\bAdobe\\b"],
+      "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.adobe.com/creativecloud/plans.html",
+      "LicenseDomains": ["(?:^|\\.)adobe\\.com$", "(?:^|\\.)adobelogin\\.com$", "(?:^|\\.)adobeims\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bGenP\\b", "\\bCCMaker\\b", "\\bamtlib[._ -]*(?:patch|emulator)\\b", "\\bcrack(?:ed)?\\b"],
+      "CriticalFilePatterns": ["(?i)\\\\(?:Acrobat|acrotray)\\.exe$", "(?i)\\\\(?:Acrobat|acrodistdll|ccme_[^\\\\]+|cryptocme)\\.dll$"],
+      "ExpectedSignedFilePatterns": ["(?i)\\\\(?:Acrobat|acrotray)\\.exe$", "(?i)\\\\(?:Acrobat|acrodistdll|ccme_[^\\\\]+|cryptocme)\\.dll$"],
+      "ExpectedSignerPatterns": ["(?i)\\bAdobe\\b"],
+      "LicenseProcessPatterns": ["(?i)\\b(?:Adobe Genuine|AGSService|AdobeARM|AcroCEF|Acrobat)\\b"],
+      "RemediationAdapter": "Adobe",
+      "DetectionProfileId": "InstalledProgram.IdentityV1",
+      "RemediationProfileId": "Adobe.ArtifactCleanupOnly"
+    },
+    {
+      "Id": "autodesk-commercial",
+      "Vendor": "Autodesk",
+      "NamePatterns": ["\\bAutodesk\\b", "\\bAutoCAD\\b", "\\bRevit\\b", "\\b3ds Max\\b", "\\bCivil 3D\\b", "\\bNavisworks\\b", "\\bInventor\\b", "\\bFusion 360\\b", "\\bMaya\\b", "\\bMotionBuilder\\b", "\\bMudbox\\b", "\\bAdvance Steel\\b", "\\bInfraWorks\\b", "\\bRobot Structural Analysis\\b", "\\bAutodesk Alias\\b", "\\bAutodesk VRED\\b", "\\bAutodesk Fabrication\\b"],
+      "PublisherPatterns": ["\\bAutodesk\\b"],
+      "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.autodesk.com/products/autocad/overview",
+      "LicenseDomains": ["(?:^|\\.)autodesk\\.com$", "(?:^|\\.)autodesk360\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bXF[._ -]*ADSK\\b", "\\bX[._ -]*Force\\b", "\\blicense[._ -]*patch\\b", "\\bcrack(?:ed)?\\b"],
+      "CriticalFilePatterns": ["(?i)\\\\(?:acad|AdskLicensingInstHelper|AdskLicensingService)\\.exe$"],
+      "ExpectedSignedFilePatterns": ["(?i)\\\\(?:acad|AdskLicensingInstHelper|AdskLicensingService)\\.exe$"],
+      "ExpectedSignerPatterns": ["(?i)\\bAutodesk\\b"],
+      "LicenseProcessPatterns": ["(?i)\\b(?:AdskLicensing|Autodesk Licensing|Autodesk Desktop Licensing)\\b"],
+      "RemediationAdapter": "Autodesk",
+      "DetectionProfileId": "InstalledProgram.IdentityV1",
+      "RemediationProfileId": "Autodesk.ArtifactCleanupOnly"
+    },
+    {
+      "Id": "abbyy-finereader",
+      "Vendor": "ABBYY",
+      "NamePatterns": ["\\bABBYY\\b.*\\bFineReader\\b", "\\bFineReader PDF\\b"],
+      "PublisherPatterns": ["\\bABBYY\\b"],
+      "LicenseModel": "Paid",
+      "OfficialUrl": "https://pdf.abbyy.com/finereader-pdf/",
+      "LicenseDomains": ["(?:^|\\.)abbyy\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bby\\s+sandy[d]?\\b", "\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "foxit-pdf-reader",
+      "Vendor": "Foxit",
+      "NamePatterns": ["\\bFoxit (?:PDF )?Reader\\b"],
+      "PublisherPatterns": ["\\bFoxit\\b"],
+      "LicenseModel": "Free",
+      "OfficialUrl": "https://www.foxit.com/pdf-reader/",
+      "LicenseDomains": ["(?:^|\\.)foxit\\.com$"],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "foxit-pdf-editor",
+      "Vendor": "Foxit",
+      "NamePatterns": ["\\bFoxit (?:Advanced )?PDF Editor\\b", "\\bFoxit PhantomPDF\\b"],
+      "PublisherPatterns": ["\\bFoxit\\b"],
+      "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.foxit.com/pdf-editor/pricing/",
+      "LicenseDomains": ["(?:^|\\.)foxit\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "commercial-pdf-editors",
+      "Category": "Productivity/PDF",
+      "Vendor": "PDF editor vendors",
+      "NamePatterns": ["\\bNitro PDF (?:Pro|Professional)\\b", "\\bPDF-XChange Editor\\b", "\\bWondershare PDFelement\\b", "\\bSoda PDF(?: Desktop)?\\b", "\\bMaster PDF Editor\\b", "\\bIcecream PDF Editor\\b"],
+      "PublisherPatterns": ["\\bNitro Software\\b", "\\bTracker Software\\b", "\\bWondershare\\b", "\\bLULU Software\\b", "\\bCode Industry\\b", "\\bIcecream Apps\\b"],
+      "LicenseModel": "Commercial",
+      "OfficialUrl": "",
+      "LicenseDomains": ["(?:^|\\.)gonitro\\.com$", "(?:^|\\.)pdf-xchange\\.com$", "(?:^|\\.)wondershare\\.com$", "(?:^|\\.)sodapdf\\.com$", "(?:^|\\.)code-industry\\.net$", "(?:^|\\.)icecreamapps\\.com$"],
+      "UnauthorizedNamePatterns": ["\\b(?:Nitro[ ._-]*PDF|PDF-XChange|PDFelement|Soda[ ._-]*PDF|Master[ ._-]*PDF|Icecream[ ._-]*PDF)[ ._-]*(?:crack|patch|keygen|activator)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:NitroPDF|PDFXEdit|PDFelement|Soda PDF Desktop|MasterPDFEditor|icepdfeditor)\\.exe$"]
+    },
+    {
+      "Id": "microsoft-office-commercial",
+      "Vendor": "Microsoft",
+      "NamePatterns": ["^Microsoft 365 Apps\\b", "^Microsoft Office\\b", "^Microsoft Visio\\b", "^Microsoft Project\\b"],
+      "PublisherPatterns": ["\\bMicrosoft\\b"],
+      "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.microsoft.com/microsoft-365",
+      "LicenseDomains": ["(?:^|\\.)microsoftonline\\.com$", "(?:^|\\.)office\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bKMS\\b", "\\bactivator\\b", "\\bcrack(?:ed)?\\b"],
+      "DetectionProfileId": "MicrosoftOffice.InventoryV1",
+      "LicenseStateProfileId": "MicrosoftOffice.OfficialStatusV1"
+    },
+    {
+      "Id": "microsoft-runtime-component",
+      "Vendor": "Microsoft",
+      "NamePatterns": ["^Microsoft \\.NET", "^Microsoft Visual C\\+\\+", "^Microsoft Windows Desktop Runtime", "^Microsoft Edge WebView2", "^Windows SDK", "^Universal CRT", "^MSVCRT", "^Windows App Certification Kit", "^Microsoft SQL Server .*?(?:Management Objects|Native Client|Setup(?:\\s*\\(|\\s+Support)|System CLR|Policies|ScriptDom|Compiler Service|RsFx Driver|VSS Writer)"],
+      "PublisherPatterns": ["\\bMicrosoft\\b"],
+      "LicenseModel": "Runtime",
+      "OfficialUrl": "https://learn.microsoft.com/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "visual-studio-code",
+      "Vendor": "Microsoft",
+      "NamePatterns": ["\\bVisual Studio Code\\b"],
+      "PublisherPatterns": ["\\bMicrosoft\\b"],
+      "LicenseModel": "Free",
+      "OfficialUrl": "https://code.visualstudio.com/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "iobit-driver-booster",
+      "Category": "Utilities",
+      "Vendor": "IObit",
+      "NamePatterns": ["\\b(?:IObit[ ._-]*)?Driver Booster(?:[ ._-]*(?:Pro|PRO))?\\b"],
+      "PublisherPatterns": ["\\bIObit\\b"],
+      "LicenseModel": "Freemium",
+      "OfficialUrl": "https://www.iobit.com/en/driver-booster.php",
+      "LicenseDomains": ["(?:^|\\.)iobit\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bDriver[ ._-]*Booster[ ._-]*(?:crack|patch|keygen|activator|1[ ._-]*click)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)DriverBooster(?:Portable)?\\.exe$"]
+    },
+    {
+      "Id": "canon-lbp-capt-printer-driver",
+      "Category": "HardwareSupport",
+      "Vendor": "Canon",
+      "NamePatterns": ["^Canon\\s+LBP\\s*(?:2900|2900B|3010|3018|3050|3100|3108|3150)(?:\\b|\\s)", "\\bCanon Advanced Printing Technology\\b", "\\bCAPT(?:\\s+Printer)?\\s+Driver\\b"],
+      "PublisherPatterns": ["\\bCanon\\b"],
+      "LicenseModel": "Driver",
+      "OfficialUrl": "https://vn.canon/en/support/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "windows-app-platform-component",
+      "Category": "System",
+      "Vendor": "Microsoft/DeviceVendor",
+      "NamePatterns": ["^(?:Microsoft\\.)?WindowsAppRuntime(?:\\.\\d+)*$", "^Windows App Runtime(?:\\s+DDLM)?(?:\\s+\\d+(?:\\.\\d+)*)(?:-[A-Za-z0-9]+)?$", "^(?:AV1|HEIF|HEVC|MPEG-2|Raw Image|VP9|Web Media|Webp Image) (?:Video |Image )?Extensions?$", "^Xbox Identity Provider$", "^AppUp\\.IntelGraphicsExperience$", "^Microsoft\\.(?:VCLibs|UI\\.Xaml)(?:\\.|$).*$", "^LocalServiceComponents$", "^NVIDIA Control Panel$", "^Microsoft Visual Studio Installer$", "^SharePoint Client Components$"],
+      "PublisherPatterns": [],
+      "LicenseModel": "SystemComponent",
+      "OfficialUrl": "https://apps.microsoft.com/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "windows-driver-component",
+      "Vendor": "DeviceVendor",
+      "NamePatterns": ["\\b(?:Driver|Printer|SDK|Redistributable|Runtime|Extension SDK|Headers|Libraries|Tools)\\b", "^(?:NVIDIA|Realtek|Canon|EPSON|TOSHIBA|ASUS).*(?:Driver|HAL|Service|Tool|Uninstall)"],
+      "PublisherPatterns": ["\\b(?:Microsoft|Intel|AMD|NVIDIA|Realtek|Qualcomm|Broadcom|ASUS|ASUSTeK|EPSON|TOSHIBA)\\b"],
+      "LicenseModel": "Driver",
+      "OfficialUrl": "",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "techsmith-camtasia",
+      "Vendor": "TechSmith",
+      "NamePatterns": ["\\bCamtasia(?: Studio)?(?:\\s+9(?:\\.\\d+)*)?\\b"],
+      "PublisherPatterns": ["\\bTechSmith\\b"],
+      "LicenseModel": "Paid",
+      "OfficialUrl": "https://www.techsmith.com/camtasia/",
+      "LicenseDomains": ["(?:^|\\.)techsmith\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "faststone-capture",
+      "Vendor": "FastStone",
+      "NamePatterns": ["\\bFastStone Capture\\b"],
+      "PublisherPatterns": ["\\bFastStone\\b"],
+      "LicenseModel": "Trialware",
+      "OfficialUrl": "https://www.faststone.org/FSCaptureDetail.htm",
+      "LicenseDomains": ["(?:^|\\.)faststone\\.org$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "winrar",
+      "Vendor": "RARLAB",
+      "NamePatterns": ["\\bWinRAR\\b"],
+      "PublisherPatterns": ["\\bwin\\.rar|\\bRARLAB\\b"],
+      "LicenseModel": "Trialware",
+      "OfficialUrl": "https://www.rarlab.com/license.htm",
+      "LicenseDomains": ["(?:^|\\.)rarlab\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:WinRAR|Rar)\\.exe$"],
+      "RemediationAdapter": "WinRAR",
+      "DetectionProfileId": "WinRAR.InventoryV1",
+      "RemediationProfileId": "WinRAR.ArtifactCleanupOnly",
+      "LicenseStateProfileId": "WinRAR.LocalArtifactV1"
+    },
+    {
+      "Id": "easeus-data-recovery",
+      "Vendor": "EaseUS",
+      "NamePatterns": ["\\bEaseUS Data Recovery Wizard\\b"],
+      "PublisherPatterns": ["\\bEaseUS\\b"],
+      "LicenseModel": "Trialware",
+      "OfficialUrl": "https://www.easeus.com/datarecoverywizard/",
+      "LicenseDomains": ["(?:^|\\.)easeus\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "minitool-partition-wizard",
+      "Vendor": "MiniTool",
+      "NamePatterns": ["\\bMiniTool Partition Wizard\\b"],
+      "PublisherPatterns": ["\\bMiniTool\\b"],
+      "LicenseModel": "Freemium",
+      "OfficialUrl": "https://www.partitionwizard.com/",
+      "LicenseDomains": ["(?:^|\\.)partitionwizard\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "pdf-candy-desktop",
+      "Vendor": "Icecream Apps",
+      "NamePatterns": ["\\bPDF Candy Desktop\\b"],
+      "PublisherPatterns": ["\\bIcecream Apps\\b", "\\bPDF Candy\\b"],
+      "LicenseModel": "Freemium",
+      "OfficialUrl": "https://pdfcandy.com/desktop.html",
+      "LicenseDomains": ["(?:^|\\.)pdfcandy\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bcrack(?:ed)?\\b", "\\bkeygen\\b"]
+    },
+    {
+      "Id": "capcut",
+      "Vendor": "ByteDance",
+      "NamePatterns": ["\\bCapCut\\b"],
+      "PublisherPatterns": ["\\bByteDance\\b", "\\bBytedance\\b"],
+      "LicenseModel": "Freemium",
+      "OfficialUrl": "https://www.capcut.com/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "7zip",
+      "Vendor": "7-Zip",
+      "NamePatterns": ["^7-Zip\\b"],
+      "PublisherPatterns": ["\\bIgor Pavlov\\b", "\\b7-Zip\\b"],
+      "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://www.7-zip.org/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "vlc",
+      "Vendor": "VideoLAN",
+      "NamePatterns": ["\\bVLC media player\\b"],
+      "PublisherPatterns": ["\\bVideoLAN\\b"],
+      "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://www.videolan.org/vlc/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "python",
+      "Vendor": "Python Software Foundation",
+      "NamePatterns": ["^Python (?:Launcher|3(?!.*(?:Add to Path|Core Interpreter|Development Libraries|Documentation|Executables|pip Bootstrap|Standard Library|Tcl/Tk Support|Test Suite)))"],
+      "PublisherPatterns": ["\\bPython Software Foundation\\b"],
+      "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://www.python.org/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "nodejs",
+      "Vendor": "OpenJS Foundation",
+      "NamePatterns": ["^Node\\.js$"],
+      "PublisherPatterns": ["\\bOpenJS\\b", "\\bNode\\.js\\b"],
+      "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://nodejs.org/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "java-jdk",
+      "Vendor": "Oracle",
+      "NamePatterns": ["\\bJava\\(TM\\).*Development Kit\\b", "\\bJava SE Development Kit\\b"],
+      "PublisherPatterns": ["\\bOracle\\b"],
+      "LicenseModel": "Freeware",
+      "OfficialUrl": "https://www.oracle.com/java/technologies/downloads/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "google-chrome",
+      "Vendor": "Google",
+      "NamePatterns": ["\\bGoogle Chrome\\b"],
+      "PublisherPatterns": ["\\bGoogle\\b"],
+      "LicenseModel": "Free",
+      "OfficialUrl": "https://www.google.com/chrome/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "coccoc-browser",
+      "Vendor": "Coc Coc",
+      "NamePatterns": ["^Cốc Cốc$", "^Coc Coc$"],
+      "PublisherPatterns": ["Cốc Cốc", "Coc Coc"],
+      "LicenseModel": "Free",
+      "OfficialUrl": "https://coccoc.com/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "mozilla-firefox",
+      "Vendor": "Mozilla",
+      "NamePatterns": ["\\bMozilla Firefox\\b"],
+      "PublisherPatterns": ["\\bMozilla\\b"],
+      "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://www.mozilla.org/firefox/",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "communication-free",
+      "Vendor": "Various",
+      "NamePatterns": ["\\bTelegram Desktop\\b", "^Zalo\\b", "\\bUltraViewer\\b"],
+      "PublisherPatterns": [],
+      "LicenseModel": "Free",
+      "OfficialUrl": "",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "network-open-source",
+      "Vendor": "Various",
+      "NamePatterns": ["\\bTailscale\\b", "\\bSyncthing\\b"],
+      "PublisherPatterns": [],
+      "LicenseModel": "OpenSource",
+      "OfficialUrl": "",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "media-freeware",
+      "Vendor": "Various",
+      "NamePatterns": ["\\bK-Lite Codec Pack\\b", "\\bKMPlayer\\b", "\\bFormat[\\s._-]*Factory\\b"],
+      "PublisherPatterns": [],
+      "LicenseModel": "Freeware",
+      "OfficialUrl": "",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "vendor-utility-free",
+      "Vendor": "Various",
+      "NamePatterns": ["\\bHiBit Uninstaller\\b", "\\bIObit Unlocker\\b", "\\bGoogle Drive\\b", "\\biVMS-4200\\b", "\\bSADP\\b", "\\bSmartPSS\\b"],
+      "PublisherPatterns": [],
+      "LicenseModel": "Freeware",
+      "OfficialUrl": "",
+      "LicenseDomains": [],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "dahua-smartpss-pc-nvr",
+      "Vendor": "Dahua",
+      "NamePatterns": ["^\\s*PC[\\s._-]*NVR\\s*$"],
+      "PublisherPatterns": [],
+      "LicenseModel": "Freeware",
+      "OfficialUrl": "https://www.dahuasecurity.com/in/about-dahua/news-events/news/product-launches/dahua-releases-new-smart-professional-surveillance-system",
+      "LicenseDomains": ["(?:^|\\.)dahuasecurity\\.com$"],
+      "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "dassault-systemes-commercial", "Category": "CAD/CAE/Simulation", "Vendor": "Dassault Systemes",
+      "NamePatterns": ["\\bSOLIDWORKS\\b", "\\bCATIA\\b", "\\bDELMIA\\b", "\\bSIMULIA\\b", "\\b3DEXPERIENCE\\b", "\\bDraftSight\\b"],
+      "PublisherPatterns": ["\\bDassault (?:Systemes|Syst[eè]mes)\\b", "\\bSolidWorks Corp\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.3ds.com/products", "LicenseDomains": ["(?:^|\\.)3ds\\.com$", "(?:^|\\.)solidworks\\.com$"],
+      "UnauthorizedNamePatterns": ["\\b(?:Team[._ -]*)?SolidSQUAD\\b", "\\bSW20\\d{2}[._ -]*(?:crack|loader)\\b", "\\blicen[cs]e[._ -]*patch\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:SLDWORKS|CATSTART|CNEXT|DSLicSrv)\\.exe$"], "LicenseProcessPatterns": ["^(?:SolidNetWork License Manager|DS License Server|DSLicSrv)$"]
+    },
+    {
+      "Id": "ansys-commercial", "Category": "CAE/Simulation", "Vendor": "Ansys",
+      "NamePatterns": ["\\bANSYS\\b", "\\bAnsys (?:Workbench|Fluent|Mechanical|Electronics|Discovery|SpaceClaim)\\b"],
+      "PublisherPatterns": ["\\bANSYS\\b", "\\bAnsys,? Inc\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.ansys.com/products", "LicenseDomains": ["(?:^|\\.)ansys\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bANSYS[._ -]*(?:crack|patch|keygen)\\b", "\\bMAGNiTUDE\\b", "\\blicen[cs]e[._ -]*bypass\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:runwb2|fluent|ansysedt|ansysli_server)\\.exe$"], "LicenseProcessPatterns": ["^(?:ANSYS, Inc. License Manager|ANSYSLI_SERVERS|ansysli_server)$"]
+    },
+    {
+      "Id": "siemens-engineering-commercial", "Category": "CAD/CAE/PLM", "Vendor": "Siemens Digital Industries Software",
+      "NamePatterns": ["\\bSiemens NX\\b", "\\bSimcenter\\b", "\\bSolid Edge\\b", "\\bTeamcenter\\b", "\\bTecnomatix\\b", "\\bSTAR-CCM\\+\\b"],
+      "PublisherPatterns": ["\\bSiemens\\b", "\\bSiemens PLM\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://plm.sw.siemens.com/en-US/", "LicenseDomains": ["(?:^|\\.)siemens\\.com$", "(?:^|\\.)sw\\.siemens\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bSiemens[._ -]*(?:NX|Simcenter)?[._ -]*(?:crack|patch|keygen)\\b", "\\bSolidSQUAD\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:ugraf|ugslicensing|SolidEdge)\\.exe$"], "LicenseProcessPatterns": ["^(?:Siemens PLM License Server|Siemens License Server|lmgrd)$"]
+    },
+    {
+      "Id": "bentley-commercial", "Category": "CAD/BIM/Infrastructure", "Vendor": "Bentley Systems",
+      "NamePatterns": ["\\bMicroStation\\b", "\\bOpenRoads\\b", "\\bOpenBuildings\\b", "\\bSTAAD\\.Pro\\b", "\\bPLAXIS\\b", "\\bBentley\\b"],
+      "PublisherPatterns": ["\\bBentley Systems\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.bentley.com/software/", "LicenseDomains": ["(?:^|\\.)bentley\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bBentley[._ -]*(?:crack|patch|keygen)\\b", "\\bSELECTserver[._ -]*emulator\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:microstation|Bentley\\.Licensing\\.Service)\\.exe$"], "LicenseProcessPatterns": ["^(?:Bentley Licensing Service|Bentley CONNECT Client)$"]
+    },
+    {
+      "Id": "mathworks-matlab-simulink", "Category": "Engineering/Simulation", "Vendor": "MathWorks",
+      "NamePatterns": ["\\bMATLAB\\b", "\\bSimulink\\b", "\\bMathWorks\\b"], "PublisherPatterns": ["\\bMathWorks\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.mathworks.com/products.html", "LicenseDomains": ["(?:^|\\.)mathworks\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bMATLAB[._ -]*(?:crack|patch|keygen)\\b", "\\blicen[cs]e_standalone\\.lic\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:matlab|MathWorksServiceHost|lmutil)\\.exe$"], "LicenseProcessPatterns": ["^(?:MATLAB Web App Server|MathWorks Service Host|lmgrd)$"]
+    },
+    {
+      "Id": "wiris-mathtype", "Category": "Productivity/Education", "Vendor": "WIRIS",
+      "NamePatterns": ["\\bMathType\\b", "\\bDesign Science MathType\\b"], "PublisherPatterns": ["\\bWIRIS\\b", "\\bDesign Science\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.wiris.com/en/mathtype/", "LicenseDomains": ["(?:^|\\.)wiris\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bMathType[._ -]*(?:crack|patch|keygen|activator)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)MathType\\.exe$"]
+    },
+    {
+      "Id": "ptc-engineering-commercial", "Category": "CAD/PLM", "Vendor": "PTC",
+      "NamePatterns": ["\\bPTC Creo\\b", "\\bCreo Parametric\\b", "\\bWindchill\\b", "\\bMathcad\\b"],
+      "PublisherPatterns": ["\\bPTC\\b", "\\bParametric Technology\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.ptc.com/en/products", "LicenseDomains": ["(?:^|\\.)ptc\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bPTC[._ -]*(?:Creo)?[._ -]*(?:crack|patch|keygen)\\b", "\\bSolidSQUAD\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:parametric|ptc_d|lmgrd)\\.exe$"], "LicenseProcessPatterns": ["^(?:PTC License Server|lmgrd)$"]
+    },
+    {
+      "Id": "comsol-multiphysics", "Category": "CAE/Simulation", "Vendor": "COMSOL",
+      "NamePatterns": ["\\bCOMSOL Multiphysics\\b", "\\bCOMSOL Server\\b"], "PublisherPatterns": ["\\bCOMSOL\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.comsol.com/products", "LicenseDomains": ["(?:^|\\.)comsol\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bCOMSOL[._ -]*(?:crack|patch|keygen)\\b", "\\bSolidSQUAD\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:comsol|lmgrd|lmcomsol)\\.exe$"], "LicenseProcessPatterns": ["^(?:COMSOL License Manager|lmgrd)$"]
+    },
+    {
+      "Id": "altair-engineering-commercial", "Category": "CAE/Simulation", "Vendor": "Altair Engineering",
+      "NamePatterns": ["\\bAltair HyperWorks\\b", "\\bAltair Inspire\\b", "\\bAltair SimLab\\b", "\\bHyperMesh\\b", "\\bHyperView\\b"],
+      "PublisherPatterns": ["\\bAltair Engineering\\b", "\\bAltair\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://altair.com/products", "LicenseDomains": ["(?:^|\\.)altair\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bAltair[._ -]*(?:crack|patch|keygen)\\b", "\\bMAGNiTUDE\\b", "\\bSolidSQUAD\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:hw|hmbatch|almutil|lmx-serv-altair)\\.exe$"], "LicenseProcessPatterns": ["^(?:Altair License Server|lmx-serv-altair)$"]
+    },
+    {
+      "Id": "trimble-design-commercial", "Category": "CAD/BIM", "Vendor": "Trimble",
+      "NamePatterns": ["\\bSketchUp Pro\\b", "\\bTekla Structures\\b", "\\bTrimble Business Center\\b"],
+      "PublisherPatterns": ["\\bTrimble\\b", "\\bSketchUp\\b", "\\bTrimble Solutions\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.trimble.com/en/products", "LicenseDomains": ["(?:^|\\.)trimble\\.com$", "(?:^|\\.)sketchup\\.com$", "(?:^|\\.)tekla\\.com$"],
+      "UnauthorizedNamePatterns": ["\\b(?:SketchUp|Tekla)[._ -]*(?:crack|patch|keygen)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:SketchUp|TeklaStructures|TeklaLicenseService)\\.exe$"], "LicenseProcessPatterns": ["^(?:Tekla Licensing Service|Trimble Identity)$"]
+    },
+    {
+      "Id": "graphisoft-archicad", "Category": "BIM", "Vendor": "Graphisoft",
+      "NamePatterns": ["\\bARCHICAD\\b", "\\bGraphisoft\\b", "\\bBIMcloud\\b"], "PublisherPatterns": ["\\bGRAPHISOFT\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://graphisoft.com/solutions/archicad", "LicenseDomains": ["(?:^|\\.)graphisoft\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bARCHICAD[._ -]*(?:crack|patch|keygen)\\b", "\\bCodeMeter[._ -]*(?:patch|emulator)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:ARCHICAD|CodeMeter|LicenseManagerTool)\\.exe$"], "LicenseProcessPatterns": ["^(?:CodeMeter Runtime Server|Graphisoft License Manager)$"]
+    },
+    {
+      "Id": "chaos-rendering-commercial", "Category": "Design/Rendering", "Vendor": "Chaos",
+      "NamePatterns": ["\\bV-Ray\\b", "\\bChaos Corona\\b", "\\bChaos Cosmos\\b", "\\bChaos License Server\\b"],
+      "PublisherPatterns": ["\\bChaos Software\\b", "\\bChaos Czech\\b", "\\bChaos Group\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.chaos.com/", "LicenseDomains": ["(?:^|\\.)chaos\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bV-Ray[._ -]*(?:crack|patch|keygen)\\b", "\\bCorona[._ -]*(?:crack|patch)\\b", "\\bChaos[._ -]*license[._ -]*(?:bypass|emulator)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:vray|vrlservice|Corona)\\.exe$"], "LicenseProcessPatterns": ["^(?:Chaos License Server|VRLService)$"]
+    },
+    {
+      "Id": "eplan-platform-commercial", "Category": "Electrical Engineering", "Vendor": "EPLAN",
+      "NamePatterns": ["\\bEPLAN Electric P8\\b", "\\bEPLAN Platform\\b", "\\bEPLAN Pro Panel\\b"], "PublisherPatterns": ["\\bEPLAN\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.eplan-software.com/solutions/", "LicenseDomains": ["(?:^|\\.)eplan\\.com$", "(?:^|\\.)eplan-software\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bEPLAN[._ -]*(?:crack|patch|keygen)\\b", "\\bEPLAN[._ -]*dongle[._ -]*emulator\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:Eplan|EplanLicenseClient)\\.exe$"], "LicenseProcessPatterns": ["^(?:EPLAN License Client|EPLAN License Manager)$"]
+    },
+    {
+      "Id": "national-instruments-engineering", "Category": "Test/Measurement/Simulation", "Vendor": "National Instruments",
+      "NamePatterns": ["\\bNI LabVIEW\\b", "\\bLabVIEW\\b", "\\bNI Multisim\\b", "\\bNI DIAdem\\b", "\\bNI TestStand\\b"],
+      "PublisherPatterns": ["\\bNational Instruments\\b", "\\bNI\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.ni.com/en/shop.html", "LicenseDomains": ["(?:^|\\.)ni\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bNI[._ -]*(?:License)?[._ -]*(?:Activator|crack|patch|keygen)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:LabVIEW|NILMUtil|Multisim)\\.exe$"], "LicenseProcessPatterns": ["^(?:NI License Manager|NILM License Manager)$"]
+    },
+    {
+      "Id": "altium-designer-commercial", "Category": "PCB/Electronics Design", "Vendor": "Altium",
+      "NamePatterns": ["\\bAltium Designer\\b", "\\bAltium NEXUS\\b"], "PublisherPatterns": ["\\bAltium\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.altium.com/altium-designer", "LicenseDomains": ["(?:^|\\.)altium\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bAltium[._ -]*(?:crack|patch|keygen)\\b", "\\bAltium[._ -]*license[._ -]*(?:bypass|server)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:X2|DXP|AltiumDesigner)\\.exe$"], "LicenseProcessPatterns": ["^(?:Altium Infrastructure Server|Altium Licensing Service)$"]
+    },
+    {
+      "Id": "csi-structural-commercial", "Category": "Structural Engineering/Simulation", "Vendor": "Computers and Structures",
+      "NamePatterns": ["\\bETABS\\b", "\\bSAP2000\\b", "\\bSAFE\\b", "\\bCSiBridge\\b"],
+      "PublisherPatterns": ["\\bComputers and Structures\\b", "\\bCSI\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.csiamerica.com/products", "LicenseDomains": ["(?:^|\\.)csiamerica\\.com$"],
+      "UnauthorizedNamePatterns": ["\\b(?:ETABS|SAP2000|CSiBridge|SAFE)[._ -]*(?:crack|patch|keygen)\\b", "\\bSentinel[._ -]*emulator\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:ETABS|SAP2000|SAFE|CSiBridge)\\.exe$"], "LicenseProcessPatterns": ["^(?:Sentinel LDK License Manager|Sentinel RMS License Manager)$"]
+    },
+    {
+      "Id": "esri-arcgis-commercial", "Category": "GIS/Simulation", "Vendor": "Esri",
+      "NamePatterns": ["\\bArcGIS Pro\\b", "\\bArcGIS Desktop\\b", "\\bArcGIS CityEngine\\b"],
+      "PublisherPatterns": ["\\bEsri\\b", "\\bEnvironmental Systems Research Institute\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.esri.com/en-us/arcgis/products/index", "LicenseDomains": ["(?:^|\\.)esri\\.com$", "(?:^|\\.)arcgis\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bArcGIS[._ -]*(?:crack|patch|keygen)\\b", "\\bArcGIS[._ -]*license[._ -]*(?:bypass|server)\\b"],
+      "CriticalFilePatterns": ["(?:^|\\\\)(?:ArcGISPro|ArcMap|ArcGISAdmin)\\.exe$"], "LicenseProcessPatterns": ["^(?:ArcGIS License Manager|ArcGIS Licensing Service)$"]
+    },
+    {
+      "Id": "microsoft-powerbi-desktop", "Category": "Business Intelligence", "Vendor": "Microsoft",
+      "NamePatterns": ["\\bMicrosoft Power BI Desktop\\b", "^Power BI Desktop$"], "PublisherPatterns": ["\\bMicrosoft\\b"],
+      "LicenseModel": "Free", "OfficialUrl": "https://powerbi.microsoft.com/desktop/", "LicenseDomains": ["(?:^|\\.)microsoft\\.com$", "(?:^|\\.)powerbi\\.com$"], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "microsoft-visual-studio-community", "Category": "Development", "Vendor": "Microsoft",
+      "NamePatterns": ["\\bMicrosoft Visual Studio Community\\b"], "PublisherPatterns": ["\\bMicrosoft\\b"],
+      "LicenseModel": "Free", "OfficialUrl": "https://visualstudio.microsoft.com/vs/community/", "LicenseDomains": ["(?:^|\\.)microsoft\\.com$", "(?:^|\\.)visualstudio\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bVisual Studio[._ -]*(?:crack|patch|keygen)\\b"]
+    },
+    {
+      "Id": "microsoft-visual-studio-paid", "Category": "Development", "Vendor": "Microsoft",
+      "NamePatterns": ["\\bMicrosoft Visual Studio (?:Professional|Enterprise)\\b"], "PublisherPatterns": ["\\bMicrosoft\\b"],
+      "LicenseModel": "Paid", "OfficialUrl": "https://visualstudio.microsoft.com/vs/pricing/", "LicenseDomains": ["(?:^|\\.)microsoft\\.com$", "(?:^|\\.)visualstudio\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bVisual Studio[._ -]*(?:crack|patch|keygen)\\b"]
+    },
+    {
+      "Id": "jetbrains-ides", "Category": "Development", "Vendor": "JetBrains",
+      "NamePatterns": ["\\b(?:IntelliJ IDEA|PyCharm|WebStorm|PhpStorm|Rider|CLion|DataGrip|RubyMine|GoLand)\\b"], "PublisherPatterns": ["\\bJetBrains\\b"],
+      "LicenseModel": "Subscription", "OfficialUrl": "https://www.jetbrains.com/products/", "LicenseDomains": ["(?:^|\\.)jetbrains\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bJetBrains[._ -]*(?:crack|patch|keygen|license server)\\b"]
+    },
+    {
+      "Id": "git", "Category": "Development", "Vendor": "Git Project",
+      "NamePatterns": ["^Git version ", "^Git$"], "PublisherPatterns": ["\\bGit\\b"], "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://git-scm.com/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "github-desktop", "Category": "Development", "Vendor": "GitHub",
+      "NamePatterns": ["^GitHub Desktop$"], "PublisherPatterns": ["\\bGitHub\\b"], "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://desktop.github.com/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "notepad-plus-plus", "Category": "Utilities", "Vendor": "Notepad++",
+      "NamePatterns": ["^Notepad\\+\\+$"], "PublisherPatterns": ["\\bNotepad\\+\\+ Team\\b"], "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://notepad-plus-plus.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "libreoffice", "Category": "Office", "Vendor": "The Document Foundation",
+      "NamePatterns": ["^LibreOffice"], "PublisherPatterns": ["\\bDocument Foundation\\b"], "LicenseModel": "OpenSource",
+      "OfficialUrl": "https://www.libreoffice.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "sumatrapdf", "Category": "PDF", "Vendor": "SumatraPDF",
+      "NamePatterns": ["^SumatraPDF$"], "PublisherPatterns": [], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.sumatrapdfreader.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "obs-studio", "Category": "Media", "Vendor": "OBS Project",
+      "NamePatterns": ["^OBS Studio$"], "PublisherPatterns": ["\\bOBS Project\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://obsproject.com/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "gimp", "Category": "Graphics", "Vendor": "GIMP Team",
+      "NamePatterns": ["^GIMP(?: |$)"], "PublisherPatterns": ["\\bGIMP Team\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.gimp.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "inkscape", "Category": "Graphics", "Vendor": "Inkscape",
+      "NamePatterns": ["^Inkscape(?: |$)"], "PublisherPatterns": ["\\bInkscape\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://inkscape.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "blender", "Category": "3D/Rendering", "Vendor": "Blender Foundation",
+      "NamePatterns": ["^Blender(?: |$)"], "PublisherPatterns": ["\\bBlender Foundation\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.blender.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "audacity", "Category": "Audio", "Vendor": "Audacity Team",
+      "NamePatterns": ["^Audacity(?: |$)"], "PublisherPatterns": ["\\bAudacity\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.audacityteam.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "qbittorrent", "Category": "Network", "Vendor": "qBittorrent Project",
+      "NamePatterns": ["^qBittorrent$"], "PublisherPatterns": [], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.qbittorrent.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "winscp", "Category": "Network", "Vendor": "WinSCP",
+      "NamePatterns": ["^WinSCP"], "PublisherPatterns": ["\\bMartin Prikryl\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://winscp.net/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "putty", "Category": "Network", "Vendor": "PuTTY",
+      "NamePatterns": ["^PuTTY(?: release)?"], "PublisherPatterns": ["\\bSimon Tatham\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.chiark.greenend.org.uk/~sgtatham/putty/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "filezilla", "Category": "Network", "Vendor": "FileZilla Project",
+      "NamePatterns": ["^FileZilla Client$"], "PublisherPatterns": ["\\bFileZilla Project\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://filezilla-project.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "oracle-virtualbox", "Category": "Virtualization", "Vendor": "Oracle",
+      "NamePatterns": ["\\bOracle VM VirtualBox\\b", "^VirtualBox$"], "PublisherPatterns": ["\\bOracle\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://www.virtualbox.org/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "docker-desktop", "Category": "Development/Virtualization", "Vendor": "Docker",
+      "NamePatterns": ["^Docker Desktop$"], "PublisherPatterns": ["\\bDocker\\b"], "LicenseModel": "Freemium", "OfficialUrl": "https://www.docker.com/products/docker-desktop/", "LicenseDomains": ["(?:^|\\.)docker\\.com$"], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "database-open-source", "Category": "Database", "Vendor": "Open source database vendors",
+      "NamePatterns": ["\\bPostgreSQL\\b", "\\bMySQL (?:Server|Workbench)\\b", "^MariaDB"], "PublisherPatterns": [], "LicenseModel": "OpenSource", "OfficialUrl": "", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "dbeaver-community", "Category": "Database", "Vendor": "DBeaver",
+      "NamePatterns": ["^DBeaver Community$"], "PublisherPatterns": ["\\bDBeaver\\b"], "LicenseModel": "OpenSource", "OfficialUrl": "https://dbeaver.io/", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "navicat-commercial", "Category": "Database", "Vendor": "PremiumSoft",
+      "NamePatterns": ["\\bNavicat\\b"], "PublisherPatterns": ["\\bPremiumSoft\\b"], "LicenseModel": "Subscription", "OfficialUrl": "https://www.navicat.com/", "LicenseDomains": ["(?:^|\\.)navicat\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bNavicat[._ -]*(?:crack|patch|keygen)\\b"]
+    },
+    {
+      "Id": "remote-access-freemium", "Category": "Remote Access", "Vendor": "Remote access vendors",
+      "NamePatterns": ["^AnyDesk$", "^TeamViewer(?: Host)?$", "^RustDesk$"], "PublisherPatterns": [], "LicenseModel": "Freemium", "OfficialUrl": "", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "communication-freemium", "Category": "Communication", "Vendor": "Communication vendors",
+      "NamePatterns": ["^Zoom Workplace$", "^Slack$", "^Discord$", "^Cisco Webex"], "PublisherPatterns": [], "LicenseModel": "Freemium", "OfficialUrl": "", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    },
+    {
+      "Id": "wondershare-filmora", "Category": "Video Editing", "Vendor": "Wondershare",
+      "NamePatterns": ["\\bWondershare Filmora\\b", "^Filmora"], "PublisherPatterns": ["\\bWondershare\\b"], "LicenseModel": "Subscription", "OfficialUrl": "https://filmora.wondershare.com/", "LicenseDomains": ["(?:^|\\.)wondershare\\.com$"],
+      "UnauthorizedNamePatterns": ["\\bFilmora[._ -]*(?:crack|patch|keygen)\\b"]
+    },
+    {
+      "Id": "corel-commercial", "Category": "Graphics", "Vendor": "Corel",
+      "NamePatterns": ["\\bCorelDRAW\\b", "\\bCorel PaintShop Pro\\b", "\\bWinZip\\b"], "PublisherPatterns": ["\\bCorel\\b", "\\bAlludo\\b", "\\bWinZip Computing\\b"], "LicenseModel": "Commercial", "OfficialUrl": "https://www.corel.com/", "LicenseDomains": ["(?:^|\\.)corel\\.com$"],
+      "UnauthorizedNamePatterns": ["\\b(?:CorelDRAW|PaintShop|WinZip)[._ -]*(?:crack|patch|keygen)\\b"]
+    },
+    {
+      "Id": "internet-download-manager", "Category": "Utilities", "Vendor": "Tonec",
+      "NamePatterns": ["\\bInternet Download Manager\\b", "^IDM(?:\\s+\\d+(?:\\.\\d+)*)?$"], "PublisherPatterns": ["\\bTonec\\b"], "LicenseModel": "Trialware", "OfficialUrl": "https://www.internetdownloadmanager.com/", "LicenseDomains": [],
+      "UnauthorizedNamePatterns": ["\\bIDM[._ -]*(?:crack|patch|keygen|reset)\\b"]
+    },
+    {
+      "Id": "techsmith-snagit", "Category": "Screen Capture", "Vendor": "TechSmith",
+      "NamePatterns": ["\\bTechSmith Snagit\\b", "^Snagit(?: \\d+)?$"], "PublisherPatterns": ["\\bTechSmith\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.techsmith.com/snagit/", "LicenseDomains": ["(?:^|\\.)techsmith\\.com$"], "UnauthorizedNamePatterns": ["\\bSnagit[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "bandicam-commercial", "Category": "Screen Capture", "Vendor": "Bandicam Company",
+      "NamePatterns": ["^Bandicam(?: \\d+(?:\\.\\d+)*)?$"], "PublisherPatterns": ["\\bBandicam(?: Company)?\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.bandicam.com/", "LicenseDomains": ["(?:^|\\.)bandicam\\.com$"], "UnauthorizedNamePatterns": ["\\bBandicam[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "beyond-compare-commercial", "Category": "Utilities", "Vendor": "Scooter Software",
+      "NamePatterns": ["^Beyond Compare(?: \\d+)?$"], "PublisherPatterns": ["\\bScooter Software\\b"], "LicenseModel": "Trialware",
+      "OfficialUrl": "https://www.scootersoftware.com/", "LicenseDomains": ["(?:^|\\.)scootersoftware\\.com$"], "UnauthorizedNamePatterns": ["\\bBeyond[._ -]*Compare[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "total-commander-commercial", "Category": "Utilities", "Vendor": "Ghisler Software",
+      "NamePatterns": ["^Total Commander(?: \\d+(?:\\.\\d+)*)?$"], "PublisherPatterns": ["\\bGhisler Software\\b"], "LicenseModel": "Trialware",
+      "OfficialUrl": "https://www.ghisler.com/", "LicenseDomains": ["(?:^|\\.)ghisler\\.com$"], "UnauthorizedNamePatterns": ["\\bTotal[._ -]*Commander[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "acronis-home-commercial", "Category": "Backup", "Vendor": "Acronis",
+      "NamePatterns": ["\\bAcronis True Image\\b", "\\bAcronis Cyber Protect Home Office\\b"], "PublisherPatterns": ["\\bAcronis\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.acronis.com/", "LicenseDomains": ["(?:^|\\.)acronis\\.com$"], "UnauthorizedNamePatterns": ["\\bAcronis[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "macrium-reflect-commercial", "Category": "Backup", "Vendor": "Paramount Software UK",
+      "NamePatterns": ["^Macrium Reflect(?: Home| Workstation| Server)?(?: \\d+)?$"], "PublisherPatterns": ["\\bParamount Software\\b", "\\bMacrium Software\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.macrium.com/", "LicenseDomains": ["(?:^|\\.)macrium\\.com$"], "UnauthorizedNamePatterns": ["\\bMacrium[._ -]*Reflect[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "bluebeam-revu-commercial", "Category": "Productivity/PDF", "Vendor": "Bluebeam",
+      "NamePatterns": ["^Bluebeam Revu(?: \\d+)?$"], "PublisherPatterns": ["\\bBluebeam\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://www.bluebeam.com/", "LicenseDomains": ["(?:^|\\.)bluebeam\\.com$"], "UnauthorizedNamePatterns": ["\\bBluebeam[._ -]*Revu[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "capture-one-pro", "Category": "Photography", "Vendor": "Capture One",
+      "NamePatterns": ["^Capture One(?: Pro)?(?: \\d+)?$"], "PublisherPatterns": ["\\bCapture One\\b", "\\bPhase One\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.captureone.com/", "LicenseDomains": ["(?:^|\\.)captureone\\.com$"], "UnauthorizedNamePatterns": ["\\bCapture[._ -]*One[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "dxo-photolab-commercial", "Category": "Photography", "Vendor": "DxO Labs",
+      "NamePatterns": ["^DxO PhotoLab(?: \\d+)?$", "^DxO PureRAW(?: \\d+)?$"], "PublisherPatterns": ["\\bDxO Labs\\b", "^DxO$"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.dxo.com/", "LicenseDomains": ["(?:^|\\.)dxo\\.com$"], "UnauthorizedNamePatterns": ["\\bDxO[._ -]*(?:PhotoLab|PureRAW)[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "cyberlink-creative-commercial", "Category": "Media", "Vendor": "CyberLink",
+      "NamePatterns": ["\\bCyberLink (?:PowerDirector|PhotoDirector|AudioDirector|ColorDirector|PowerDVD)\\b"], "PublisherPatterns": ["\\bCyberLink\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.cyberlink.com/", "LicenseDomains": ["(?:^|\\.)cyberlink\\.com$"], "UnauthorizedNamePatterns": ["\\b(?:PowerDirector|PhotoDirector|PowerDVD)[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "lumion-commercial", "Category": "3D/Rendering", "Vendor": "Lumion",
+      "NamePatterns": ["^Lumion(?: Pro)?(?: \\d+(?:\\.\\d+)*)?$"], "PublisherPatterns": ["\\bLumion\\b", "\\bAct-3D\\b"], "LicenseModel": "Subscription",
+      "OfficialUrl": "https://lumion.com/", "LicenseDomains": ["(?:^|\\.)lumion\\.com$"], "UnauthorizedNamePatterns": ["\\bLumion[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "bricscad-commercial", "Category": "CAD", "Vendor": "Bricsys",
+      "NamePatterns": ["^BricsCAD(?: \\d+)?$"], "PublisherPatterns": ["\\bBricsys\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.bricsys.com/", "LicenseDomains": ["(?:^|\\.)bricsys\\.com$"], "UnauthorizedNamePatterns": ["\\bBricsCAD[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "zwcad-commercial", "Category": "CAD", "Vendor": "ZWSOFT",
+      "NamePatterns": ["^ZWCAD(?: \\d+)?$"], "PublisherPatterns": ["\\bZWSOFT\\b", "\\bZWSoft\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.zwsoft.com/", "LicenseDomains": ["(?:^|\\.)zwsoft\\.com$"], "UnauthorizedNamePatterns": ["\\bZWCAD[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "rhinoceros-3d-commercial", "Category": "CAD/3D", "Vendor": "Robert McNeel & Associates",
+      "NamePatterns": ["^Rhinoceros(?: \\d+)?(?: \\(64-bit\\))?$", "^Rhino(?: \\d+)?$"], "PublisherPatterns": ["\\bRobert McNeel\\b", "\\bMcNeel\\b"], "LicenseModel": "Commercial",
+      "OfficialUrl": "https://www.rhino3d.com/", "LicenseDomains": ["(?:^|\\.)rhino3d\\.com$"], "UnauthorizedNamePatterns": ["\\b(?:Rhinoceros|Rhino)[._ -]*(?:crack|patch|keygen)\\b"],
+      "DetectionProfileId": "InstalledProgram.IdentityV1"
+    },
+    {
+      "Id": "security-freemium", "Category": "Security", "Vendor": "Security vendors",
+      "NamePatterns": ["\\bMalwarebytes\\b", "\\bESET (?:Security|NOD32)\\b", "\\bKaspersky\\b", "\\bBitdefender\\b", "\\bAvast\\b"], "PublisherPatterns": [],
+      "LicenseModel": "Freemium", "OfficialUrl": "", "LicenseDomains": [], "UnauthorizedNamePatterns": []
+    }
+  ]
+}
