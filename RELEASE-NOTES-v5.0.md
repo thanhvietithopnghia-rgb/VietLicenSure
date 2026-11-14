@@ -1,5 +1,20 @@
 > Current acceptance applies ONLY to the exact hash and scoped QA-EVIDENCE named in RELEASE-STATUS. Prior changelog tests do not close new-artifact gates.
 
+## November 14 XML export fix candidate - new artifact acceptance pending
+
+Build ID 5.0-production-20261114-r1. Fix the real packaged main-report XML failure on NUL/control characters using lossless marked base64-utf16le only when XML 1.0 cannot represent the original UTF-16 code units. Ordinary text and JSON values remain intact; CR/LF XML parsing preserves original line endings. Source regression must reproduce the previous failure and round-trip the fixed output. Previous A72F98BD artifact remains a failed normal-report acceptance candidate; its runtime evidence does not transfer to the new EXE. Official Self-Signed/ManagedSigned, independent NotReviewed, broader acceptance Partial.
+
+## Review maintenance candidate — 2026-11-13
+
+Public version remains v5.0; candidate BuildId `5.0-production-20261113-r1`.
+Read-only inventory reports now accept a per-invocation cancellation channel shared with bounded Office, filesystem, portable and plugin workers. Cancellation is checked before report publication; the UI waits for cooperative shutdown before a bounded read-only fallback. System-changing modules cannot be force-stopped from the UI. Restore persists per-item intent/outcome journals and explicitly marks failures that may already have changed state; this is not atomic rollback. Reporting instructions and signed Assistant knowledge 1.33.0 describe generation directories consistently.
+
+Source tests, packaged runtime QA and full acceptance are separate. This candidate is not published until new-hash release gates pass. Windows 10/physical OEM/license ground truth/fleet deployment and independent security review are not established by source fixtures. Channel remains Official Self-Signed; no public-CA/EV/Store trust claim.
+
+---
+
+# Historical source records (not current artifact acceptance)
+
 ## Reliability maintenance — 2026-11-08
 
 Public version remains v5.0; new BuildId `5.0-production-20261108-r1`. This maintenance update hardens restore preflight/service-result reporting, applies Windows SID authorization at Enterprise mutation/export boundaries, adds protected policy provisioning, persists integrity-checked asset documents, and isolates plugin audits behind a parent-owned process deadline. Prior Assistant startup repair remains included.

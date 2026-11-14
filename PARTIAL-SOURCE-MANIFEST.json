@@ -1,13 +1,13 @@
 {
   "SchemaVersion": "1.0",
-  "PublicationDate": "2026-11-11",
+  "PublicationDate": "2026-11-14",
   "DisclosureClass": "ProprietarySourceAvailable",
   "OpenSource": false,
   "License": "PARTIAL-SOURCE-LICENSE.txt",
   "ProductVersion": "v5.0",
-  "ArtifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
-  "TestedSourceSnapshot": "7d92e498ec10f43ad8a3aabe46625712f49c1f63",
-  "ProvenanceBundle": "46f062aa4a4f5b1566e557dfded1f3de3904a8ad",
+  "ArtifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+  "TestedSourceSnapshot": "9d52d246356576ad3860d4e6a25531481dc33728",
+  "ProvenanceBundle": "53c995b2526c858f7f8c055aaca1772321c457a2",
   "IndependentReviewStatus": "NotReviewed",
   "ExternalValidity": "NotEstablished",
   "FileCount": 12,
@@ -20,8 +20,8 @@
     },
     {
       "Path": "partial-source/reporting/REPORT-SCHEMA-v1.6.md",
-      "Size": 13360,
-      "Sha256": "B8D8B42F24FD0F836C95DD1BBE17A96B59E236CEBD88022C8D430C7EF876806D",
+      "Size": 14156,
+      "Sha256": "0B612B0CBD7844DB7566F9F238E51AE8F778CB0A8F6E058A87154198C61E51C9",
       "Category": "ReportingPolicy"
     },
     {
@@ -85,5 +85,5 @@
       "Category": "DocumentationVerifier"
     }
   ],
-  "PublicMetadataBaseCommit": "37845e7f33010a65d9f000265a7f588334683404"
+  "PublicMetadataBaseCommit": "4d2e058442cea7141ad381d3bc1bc7e81e6e7c78"
 }

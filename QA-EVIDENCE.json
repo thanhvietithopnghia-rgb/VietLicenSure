@@ -1,134 +1,189 @@
 {
-  "schemaVersion": "1.2",
+  "accountObserverReconciliation": {
+    "Result": "PASS",
+    "ArtifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+    "OriginalPredicatePassed": false,
+    "CorrectedPredicatePassed": true,
+    "NegativeCases": [
+      {
+        "Case": "MediumOnElevated",
+        "Rejected": true
+      },
+      {
+        "Case": "NonElevatedOnHigh",
+        "Rejected": true
+      },
+      {
+        "Case": "WrongHash",
+        "Rejected": true
+      },
+      {
+        "Case": "WrongCulture",
+        "Rejected": true
+      },
+      {
+        "Case": "PolicyChanged",
+        "Rejected": true
+      },
+      {
+        "Case": "WrongTimestamp",
+        "Rejected": true
+      }
+    ],
+    "OriginalHostSha256": "08F18C94FC7299E4BF7D2372D024268BB3C7362F0A83CFF3C8D448FD968501BA",
+    "ReconciledHostSha256": "7319BFA7D903627D6673A1FE559DA344856748D228A91B91CD721D6E597F0B00",
+    "Scope": "Offline exact-predicate replay from immutable recorded r7 VI evidence; no new VI execution; original failed host receipt retained"
+  },
+  "schemaVersion": "1.3",
   "result": "PASS",
-  "artifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
-  "buildId": "5.0-production-20261108-r1",
-  "sourceSnapshot": "7d92e498ec10f43ad8a3aabe46625712f49c1f63",
-  "bundleCommit": "46f062aa4a4f5b1566e557dfded1f3de3904a8ad",
+  "artifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+  "buildId": "5.0-production-20261114-r1",
+  "sourceSnapshot": "9d52d246356576ad3860d4e6a25531481dc33728",
+  "bundleCommit": "53c995b2526c858f7f8c055aaca1772321c457a2",
   "channel": "Official Self-Signed",
   "independentReview": "NotReviewed",
   "all21Acceptance": "Partial",
   "visualReview": {
+    "scope": "Eight EN screenshots actually viewed in current parent turn; eight VI screenshots retained from prior parent visual review bound by VISUAL-VI-INPUT-account-r8.json. Captured Windows11 24H2 1440x900/100% AdminElevated only. Assistant and ResultCenter action captions/footer visible; expected table ellipsis and narrow dashboard summary truncation not claimed resolved. No wide-DPI, accessibility, normal GUI report-completion or independent review acceptance.",
+    "publicationAllowed": true,
     "result": "PASS",
-    "artifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
     "images": [
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/dashboard.window.png",
-        "sha256": "8C6E7740959C06841DD0E178D2310C012647C1B1FB90B52ADEDE5E2D3A92B10B",
-        "result": "PASS"
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/dashboard.window.png",
+        "sha256": "F0AB71D6652860DDDDB802D974F32EC1DAC0EE547C27B7E35C7D352EAB000F7D",
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/environment-warning.window.png",
-        "sha256": "47B9DBB0F074BD0B1A5075492F7FDB3EF815D7C1C43EC7CD5C95C6FB6D8B5106",
-        "result": "PASS"
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/environment-warning.window.png",
+        "sha256": "391E0438BE7A1F0C785CE73F6A2935DEF288F30BF03448D518557D2C6A1C2EC4",
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-1.png",
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/assistant-cycle-1.png",
         "sha256": "D008FF6CC0D69271731A2669866B8AD745149E549660020E8279C622690BE676",
-        "result": "PASS"
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/assistant-cycle-2.png",
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/assistant-cycle-2.png",
         "sha256": "D008FF6CC0D69271731A2669866B8AD745149E549660020E8279C622690BE676",
-        "result": "PASS"
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-legacy.png",
-        "sha256": "306EAA911EA73200F4F47FD3E8B345F185FD32BF4FF5B59063129D3D313614D9",
-        "result": "PASS"
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/result-center-legacy.png",
+        "sha256": "A866BE5F1C4DD985FEDF330AB4DBF58A1150381606D4AFD1B5946A98C7006665",
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-verified.png",
-        "sha256": "07A180118C26AF46827D624CBF3AE60F9910152DE83B299921C9428444125A52",
-        "result": "PASS"
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/result-center-verified.png",
+        "sha256": "8889C4EB5BC66318CE51B4DD3C08C923241F27D49CD5E4D7C8F447C2D885BE24",
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-corrupt.png",
-        "sha256": "84AA0D6573BF47C1F941D034CC43FA0A487BDF63D26B7C5ED7672C2D971EF441",
-        "result": "PASS"
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/result-center-corrupt.png",
+        "sha256": "742174D37D8B12B83E7C79C90485BBC568E3F5E36106143D40A9AEBF316ABD94",
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-vi-vn-itam/result-center-incomplete.png",
-        "sha256": "84AA0D6573BF47C1F941D034CC43FA0A487BDF63D26B7C5ED7672C2D971EF441",
-        "result": "PASS"
+        "path": "runtime-qa-review-r7/runtime-vm-review-r7/win11-previous-adminelevated-vi-vn-itam/result-center-incomplete.png",
+        "sha256": "742174D37D8B12B83E7C79C90485BBC568E3F5E36106143D40A9AEBF316ABD94",
+        "result": "PASS",
+        "review": "Parent actually viewed image; readable text, expected integrity/corruption states, no action-footer clipping or neighboring overlap at captured 1440x900/100%."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/dashboard.window.png",
-        "sha256": "FBFCFFF0A9B438C3E8503F5A4370568DECDC9D457BD764A0EAF9831F3432CDF9",
-        "result": "PASS"
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/dashboard.window.png",
+        "sha256": "6F1E96F900AF9A1960B907BCE916BF37C855B31B7AC675A7B6CF56B8DAB0B5FB",
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/environment-warning.window.png",
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/environment-warning.window.png",
         "sha256": "ADECB8E5586DD5EF87C8C8D7B090BC5391E9C60DDF24ABC57311922B054B4886",
-        "result": "PASS"
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/assistant-cycle-1.png",
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/assistant-cycle-1.png",
         "sha256": "BFE4A0F503AA1DB2DD3A65D97ACDE6AE398B3261DE32CDF0C0CED80332B409AE",
-        "result": "PASS"
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/assistant-cycle-2.png",
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/assistant-cycle-2.png",
         "sha256": "BFE4A0F503AA1DB2DD3A65D97ACDE6AE398B3261DE32CDF0C0CED80332B409AE",
-        "result": "PASS"
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-legacy.png",
-        "sha256": "D78CE99021598DEF792AFBF1D729D39640C2B7C3B401B0C5022241515CC48CEA",
-        "result": "PASS"
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/result-center-legacy.png",
+        "sha256": "687F42462AE0B67A997CF71F1275DB5EF47425B641B5ABCB5752652F2393EDCF",
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-verified.png",
-        "sha256": "6700F6A70EC2876A8E12D14AF4E2609E4C2C49CB9D6B062CB5CF06A11DD31134",
-        "result": "PASS"
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/result-center-verified.png",
+        "sha256": "E505E0845A18C76FAB08E59D2BB02A5C283D114ACCA3D5489F17DD8514EA0D2D",
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-corrupt.png",
-        "sha256": "4C9B4C769916815E504D745413D67A498D9495F8BC164E569D0BE3C110DDE1F3",
-        "result": "PASS"
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/result-center-corrupt.png",
+        "sha256": "9E9107CA6E34E3AA245542C5677E79FEA5FEF891AF3E252327AFB71FAE7FFBB9",
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       },
       {
-        "path": "runtime-qa-catalog-r2/runtime-vm-catalog-r2/win11-previous-adminlimited-en-us-itam/result-center-incomplete.png",
-        "sha256": "4C9B4C769916815E504D745413D67A498D9495F8BC164E569D0BE3C110DDE1F3",
-        "result": "PASS"
+        "path": "runtime-qa-review-r8/runtime-vm-review-r8/win11-previous-adminelevated-en-us-itam/result-center-incomplete.png",
+        "sha256": "9E9107CA6E34E3AA245542C5677E79FEA5FEF891AF3E252327AFB71FAE7FFBB9",
+        "result": "PASS",
+        "review": "Parent viewed this EN image on 2026-11-14. Assistant replies/controls and ResultCenter integrity status/excluded counts readable; action footers fully visible. Table-cell ellipsis and dashboard summary text truncation retained as existing narrow-scope limitation."
       }
     ],
-    "reviewedUtc": "2026-11-11T01:28:46.892174+00:00",
-    "publicationAllowed": true,
-    "scope": "Luna actually inspected16images: bilingual dashboard/environment warning, four Assistant cycles and eight ResultCenter cases. Catalog age0 is from exact running-payload receipt, not a visible age label. No stale-catalog32day warning visible. Not independent review."
+    "reviewedAtUtc": "2026-11-14T09:58:08.6377976Z",
+    "artifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE"
   },
   "catalog": {
     "result": "PASS",
     "version": "1.1.5.0",
     "reviewedAtUtc": "2026-11-10T06:57:02Z",
     "hash": "CB8ED405FF6B758AAE42E37E7ED5BD864E16099E02AAECB7A8B4CFCBD9596CA2",
-    "receiptAgeDays": 0,
+    "receiptAgeDays": [
+      4,
+      4
+    ],
     "receipts": [
       {
         "Result": "PASS",
-        "ArtifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
+        "ArtifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
         "CatalogSha256": "CB8ED405FF6B758AAE42E37E7ED5BD864E16099E02AAECB7A8B4CFCBD9596CA2",
         "CatalogVersion": "1.1.5.0",
         "ReviewedAtUtc": "2026-11-10T06:57:02Z",
-        "CatalogAgeDays": 0,
+        "CatalogAgeDays": 4,
         "Culture": "vi-VN",
-        "ActualPackagedProcessId": 3808,
+        "ActualPackagedProcessId": 1972,
         "Expected26H2Revision": 9818,
         "Scope": "Actual signed-EXE extracted catalog byte identity and freshness; real dashboard age/caption must still be visually reviewed"
       },
       {
         "Result": "PASS",
-        "ArtifactSha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
+        "ArtifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
         "CatalogSha256": "CB8ED405FF6B758AAE42E37E7ED5BD864E16099E02AAECB7A8B4CFCBD9596CA2",
         "CatalogVersion": "1.1.5.0",
         "ReviewedAtUtc": "2026-11-10T06:57:02Z",
-        "CatalogAgeDays": 0,
+        "CatalogAgeDays": 4,
         "Culture": "en-US",
-        "ActualPackagedProcessId": 5876,
+        "ActualPackagedProcessId": 1772,
         "Expected26H2Revision": 9818,
         "Scope": "Actual signed-EXE extracted catalog byte identity and freshness; real dashboard age/caption must still be visually reviewed"
       }
-    ]
+    ],
+    "scope": "Unchanged embedded catalog byte identity; not a new data review"
   },
   "packagedAssistant": {
     "result": "PASS",
@@ -146,9 +201,90 @@
       "en-US"
     ]
   },
+  "packagedReport": {
+    "result": "PASS",
+    "cultures": [
+      "vi-VN",
+      "en-US"
+    ],
+    "receipts": [
+      {
+        "Result": "PASS",
+        "ArtifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+        "Culture": "vi-VN",
+        "Cases": [
+          {
+            "WorkerPid": 5636,
+            "Scope": "Real packaged GUI start/Stop/confirm; bounded cancellation, not proof that fallback was unnecessary",
+            "ExitCode": 1,
+            "ElapsedSeconds": 5.9765144999999995,
+            "NoNewPublishedGeneration": true,
+            "Phase": "ActualGuiStop",
+            "WorkerBinding": {
+              "WorkerPid": 5636,
+              "BridgePid": 5516,
+              "BrokerPid": 5476,
+              "OriginalPayload": "C:\\Users\\VlsTestAdmin\\AppData\\Local\\ThanhViet-VietLicenSure\\v4.6\\session-71da8276375c4f9fa3bbf98b36aff0b4",
+              "ProtectedScript": "C:\\ProgramData\\ThanhViet-VietLicenSure\\v4.6\\session-d47fa37cb851465baa31aeefd6b8604c\\kiem-tra-cau-hinh-ban-quyen.ps1",
+              "ScriptSha256": "034C8E76E5593DA6CE8408B713D1FE132D08EFC0E160463CE2C5484C60F36BE1",
+              "BrokerSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+              "CancellationChannel": "Local\\VietLicenSure.ScanCancel.9da10d2861144ef388744dc53b53a91e",
+              "OriginalRuntimeBound": true,
+              "Scope": "Actual new process and protected payload bound via signed broker contract; original and elevated roots intentionally differ"
+            }
+          },
+          {
+            "Phase": "EmbeddedMainReportNormal",
+            "ExitCode": 0,
+            "Scope": "Unchanged embedded production entry point, actual guest collection/export; not legal license ground truth",
+            "JsonSha256": "DED34A1BBC7438CEE5999539DA7C8CB33BFDD4441C5153969E5B62A6A9178362",
+            "GenerationCount": 1
+          }
+        ],
+        "Failure": "",
+        "EntryPoint": "Signed EXE GUI report/Stop; unchanged extracted main-report normal completion"
+      },
+      {
+        "Result": "PASS",
+        "ArtifactSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+        "Culture": "en-US",
+        "Cases": [
+          {
+            "WorkerPid": 5660,
+            "Scope": "Real packaged GUI start/Stop/confirm; bounded cancellation, not proof that fallback was unnecessary",
+            "ExitCode": 1,
+            "ElapsedSeconds": 5.9802469,
+            "NoNewPublishedGeneration": true,
+            "Phase": "ActualGuiStop",
+            "WorkerBinding": {
+              "WorkerPid": 5660,
+              "BridgePid": 4956,
+              "BrokerPid": 4144,
+              "OriginalPayload": "C:\\Users\\VlsTestAdmin\\AppData\\Local\\ThanhViet-VietLicenSure\\v4.6\\session-b41b4e4122804258945b32b8eb27fdb3",
+              "ProtectedScript": "C:\\ProgramData\\ThanhViet-VietLicenSure\\v4.6\\session-df4549c37b104e9baf005b96a685b238\\kiem-tra-cau-hinh-ban-quyen.ps1",
+              "ScriptSha256": "034C8E76E5593DA6CE8408B713D1FE132D08EFC0E160463CE2C5484C60F36BE1",
+              "BrokerSha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+              "CancellationChannel": "Local\\VietLicenSure.ScanCancel.bf88f2309053471794ed4925939ae640",
+              "OriginalRuntimeBound": true,
+              "Scope": "Actual new process and protected payload bound via signed broker contract; original and elevated roots intentionally differ"
+            }
+          },
+          {
+            "Phase": "EmbeddedMainReportNormal",
+            "ExitCode": 0,
+            "Scope": "Unchanged embedded production entry point, actual guest collection/export; not legal license ground truth",
+            "JsonSha256": "BF5B58AE510D3DB38FFB1A009146696AD702ADB6BDE1C90A54B8F828A4AD9F2D",
+            "GenerationCount": 1
+          }
+        ],
+        "Failure": "",
+        "EntryPoint": "Signed EXE GUI report/Stop; unchanged extracted main-report normal completion"
+      }
+    ]
+  },
   "reviewFixRegression": {
     "result": "PASS",
-    "scope": "Official catalog-r2 full source build/verifier pipeline, not inherited packaged document/worker evidence."
+    "scope": "Exact corrected source lock and complete official build pipeline; no predecessor packaged evidence reused."
   },
   "restoreProof": {
     "result": "PASS",
@@ -158,6 +294,6 @@
     ],
     "finalVmState": "Off"
   },
-  "coverageBoundary": "Exact EXE offline Windows11 24H2 AdminLimited Medium startup/catalog/Assistant/ResultCenter baseline only. Previous8102document/worker UI evidence remains historical and is not current-hash acceptance. No mTLS/LAN/fleet/Windows10/wideDPI/independent review or fullALL21 claim.",
-  "trustBoundary": "Official Self-Signed; host UnknownError retained; pinned signer/timestamp verified by build and guest temporary lab trust removed by checkpoint restoration; not public-CA/EV/Store. SmartScreen may warn."
+  "coverageBoundary": "Exact EXE offline Windows11 24H2 AdminElevated High VI/EN packaged startup/Assistant/ResultCenter; GUI report start/Stop/confirm without incomplete publication; unchanged embedded main-report normal completion. Source18suite and isolated restore-journal fixtures retain source scope. Not normal GUI-completion, SystemChange Stop runtime, full-machine restore, production mTLS/fleet/Windows10/OEM/licensing ground truth/wideDPI or independent review acceptance. ALL21 remains Partial.",
+  "trustBoundary": "Official Self-Signed; pinned signer/timestamp verified by build, disposable guest trust removed by checkpoint restoration; not public-CA/EV/Store. SmartScreen may warn."
 }

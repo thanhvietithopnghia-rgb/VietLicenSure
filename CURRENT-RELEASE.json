@@ -8,12 +8,12 @@
   "PublicChannel": "Official Self-Signed",
   "TechnicalTrustMode": "OfficialSelfSigned",
   "ReleaseBuildDate": "2026-10-25",
-  "PublicUpdateDate": "2026-11-11",
-  "BuildId": "5.0-production-20261108-r1",
+  "PublicUpdateDate": "2026-11-14",
+  "BuildId": "5.0-production-20261114-r1",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "D4FEC3E7806BA18B263BC3AB00394BBB21C75ED82379A61FD4FFD9A57A6B88E7",
-    "SizeBytes": 996544,
+    "Sha256": "E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE",
+    "SizeBytes": 998080,
     "AuthenticodeStatus": "OfficialSelfSigned",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
@@ -22,8 +22,8 @@
     "Timestamped": true
   },
   "Source": {
-    "SourceCommit": "7d92e498ec10f43ad8a3aabe46625712f49c1f63",
-    "BundleCommit": "46f062aa4a4f5b1566e557dfded1f3de3904a8ad"
+    "SourceCommit": "9d52d246356576ad3860d4e6a25531481dc33728",
+    "BundleCommit": "53c995b2526c858f7f8c055aaca1772321c457a2"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,12 +34,12 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "5980FEF68E1748E685BF0098CFD8A01CA518033E0A39C21C30B6054C216BED37",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-D4FEC3E7.zip",
+    "EvidenceSha256": "94C0039F65A5DD43DC58231A292CE8A1DEAE741FF48F6724E93BAD0CCD2E08E1",
+    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-E4E29829.zip",
     "Platform": "Windows 11 24H2",
-    "AccountType": "AdminLimited / Medium baseline",
+    "AccountType": "AdminElevated / High disposable lab",
     "Culture": "vi-VN / en-US",
-    "NetworkMode": "Offline synthetic lab; VI/EN catalog payload, startup, Assistant and ResultCenter only",
+    "NetworkMode": "Offline synthetic lab; VI/EN startup/Assistant/ResultCenter, GUI report Stop and embedded main-report normal completion",
     "All21Acceptance": "Partial: see RELEASE-STATUS; no complete ALL21 claim"
   },
   "IndependentSecurityReview": {
@@ -58,7 +58,7 @@
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
   "Packaging": {
-    "Revision": "20261111-catalog-r2",
+    "Revision": "20261114-xml-r3",
     "ContextFile": "PACKAGING-CONTEXT.json",
     "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
     "RuntimeBuildChangedFromPredecessor": true,

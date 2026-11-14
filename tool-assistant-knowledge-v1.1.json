@@ -1,7 +1,7 @@
 {
   "SchemaVersion": "1.1",
-  "KnowledgeVersion": "1.32.0",
-  "UpdatedAtUtc": "2026-11-08T00:00:00Z",
+  "KnowledgeVersion": "1.33.0",
+  "UpdatedAtUtc": "2026-11-13T01:40:00Z",
   "ToolVersionMin": "5.0",
   "ToolVersionMax": "5.0.65535.65535",
   "ReleasedWithToolVersion": "5.0",
@@ -980,8 +980,8 @@
         "ten tep bao cao duy nhat",
         "shared report folder"
       ],
-      "AnswerVi": "Mọi lượt quét ghi trực tiếp vào một thư mục BaoCao-VietLicenSure trên Desktop, không tạo thư mục con cho từng lượt. Tên tệp chứa loại báo cáo, tên máy và thời gian đến mili giây để không ghi đè; JSON, HTML, PDF và checksum của cùng lượt có chung tên gốc.",
-      "AnswerEn": "Every scan writes directly to one BaoCao-VietLicenSure folder on the Desktop, without per-run subfolders. Filenames include report type, computer, and millisecond timestamp to avoid overwrites; JSON, HTML, PDF, and checksum files from one run share the same base name."
+      "AnswerVi": "Thư mục gốc là BaoCao-VietLicenSure trên Desktop. Mỗi lần xuất thành công tạo một thư mục báo cáo riêng, chỉ công bố bộ tệp đã kiểm tra hoàn chỉnh; báo cáo cũ không bị ghi đè. HTML, JSON, XML, checksum và PDF nếu tạo thành công nằm cùng thư mục của lần xuất. Báo cáo legacy có thể vẫn nằm trực tiếp trong thư mục gốc.",
+      "AnswerEn": "Reports use BaoCao-VietLicenSure on the Desktop as their root. Each successful export publishes a separate verified report-generation folder without overwriting earlier reports. HTML, JSON, XML, checksums and any successfully generated PDF stay together inside it. Legacy reports may remain directly under the root."
     },
     {
       "Id": "software-catalog",
