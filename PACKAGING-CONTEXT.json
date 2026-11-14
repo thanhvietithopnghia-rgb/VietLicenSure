@@ -1,9 +1,9 @@
 {
   "SchemaVersion": "1.0",
-  "PackagingRevision": "20261114-xml-r3",
+  "PackagingRevision": "20261114-quality-docs-r1",
   "ExecutableUnchanged": true,
-  "ExecutableUnchangedRelativeTo": "Accepted pure xml-r3 signed build, not a predecessor artifact",
-  "RuntimeBuildChangedFromPredecessor": true,
+  "ExecutableUnchangedRelativeTo": "Accepted current public E4E29829 distribution; notes/status metadata repair only",
+  "RuntimeBuildChangedFromPredecessor": false,
   "PostQaMetadataOverlays": [
     "RELEASE-STATUS-v5.0.md",
     "RELEASE-NOTES-v5.0.md"
@@ -137,13 +137,13 @@
     },
     {
       "Path": "RELEASE-NOTES-v5.0.md",
-      "Size": 35383,
-      "Sha256": "303AF72EBC5986F444C2D864D50FE823EE0D894A886B49B09D3FF204C8A60F69"
+      "Size": 37897,
+      "Sha256": "52C4005950881F36F3CD42FDB6E2AEF0A2C18E81796EA44FCFCE7380895E4233"
     },
     {
       "Path": "RELEASE-STATUS-v5.0.md",
-      "Size": 9920,
-      "Sha256": "F44F4D392E6FD191E2648D400A6C4BE8D6C498CCEFE83356744F6F8C5111E54F"
+      "Size": 11011,
+      "Sha256": "9C28B97A1442033957A7307A9B71C3CE256BDD7701433F1641C17552EE9215C4"
     },
     {
       "Path": "RELEASE-VERIFICATION-v5.0.md",
@@ -269,13 +269,13 @@
   "PackagingFiles": [
     {
       "Path": "README-PACKAGING-v5.0.md",
-      "Size": 960,
-      "Sha256": "EC29D76F6B439D7A4588788730B6F297A4E996BC71978CE5DAA35DAE42888EA0"
+      "Size": 1240,
+      "Sha256": "D3A0B9CEE428270D716E34C9ADDC28D0282AE3CC6FB26EB1FD39E629695741F3"
     },
     {
       "Path": "VERIFY-PACKAGING.ps1",
-      "Size": 3288,
-      "Sha256": "D6FF14083765DDA1595D717C8AAD476B8F399B7AA0C446877F88FA1CBC879AFB"
+      "Size": 3297,
+      "Sha256": "BF1E4FC5245A99AF9F96515BEACD06F90E08353DF47FE43C9D0C23462B67DD41"
     }
   ]
 }

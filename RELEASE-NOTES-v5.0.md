@@ -1,4 +1,27 @@
-> Current acceptance applies ONLY to the exact hash and scoped QA-EVIDENCE named in RELEASE-STATUS. Prior changelog tests do not close new-artifact gates.
+# Ghi chú phát hành — VietLicenSure v5.0
+
+<!-- CURRENT-ACCEPTANCE-BASELINE:E4E29829 -->
+Nguồn điều phối trạng thái hiện hành: artifact đã phát hành ngày **14/11/2026**.
+Build `5.0-production-20261114-r1`, public v5.0; phát hành chính thức **Official Self-Signed**.
+Đây không phải public-CA/EV/Store; SmartScreen có thể cảnh báo. Review **NotReviewed**; ALL21 **Partial**.
+Các thay đổi nguồn bảo trì sau baseline này chưa được coi là đã build/QA/phát hành.
+
+## Current exact-artifact acceptance — 2026-11-14
+EXE E4E29829939125F40043897070149C44D3F60758464CA9D22DC5C25F85C8D8EE / 998080 bytes; source 9d52d246356576ad3860d4e6a25531481dc33728; signed bundle 53c995b2526c858f7f8c055aaca1772321c457a2.
+Official Self-Signed, build8/8, full verifier0errors/3disclosed warnings and distribution0errors/1self-signed warning. Host Authenticode UnknownError/UntrustedRoot is retained; pinned signer and timestamp verified. Not public-CA/EV/Store; SmartScreen may warn.
+Current Windows11 24H2 offline VI/EN AdminElevated packaged startup, Assistant and ResultCenter integrity cases; actual GUI report Stop and unchanged embedded main-report normal completion, followed by fresh checkpoint restoration. Read QA-EVIDENCE for exact results. No current-hash managed-document/protected-worker UI, full GUI normal-completion, production mTLS, or independent review claim.
+Roles are Personal, Technical Support and Business Inventory. Workspace choice grants no authority; maintenance scope remains elevated-admin. No general non-admin broker, deployed delegated RBAC, all21, physical fleet, broad DPI/Windows10, licensing ground truth or independent security review claim. Review NotReviewed; external accuracy NotEstablished.
+Worker isolation bounds execution time under the same Windows token; it is not a security sandbox. Managed document copies remain ReferencedUnverified, not authenticated legal evidence. Recovery39 and real token/ACL source fixtures keep their original source scope, not a full-machine/power-loss/disk-full rollback claim.
+
+QA authority: signed current release context and adjacent `QA-EVIDENCE.json` in the typed handoff.
+GUI report Stop is accepted in named VI/EN cases; normal completion used the unchanged
+embedded main-report entry point. Full normal GUI completion remains a separate gate.
+New QA receipts may extend only their named scope on the identical EXE; no ALL21 inference.
+
+## Historical records — not current acceptance
+
+The records below retain prior candidate wording and dates for traceability only.
+They cannot override the current artifact status above.
 
 ## November 14 XML export fix candidate - new artifact acceptance pending
 

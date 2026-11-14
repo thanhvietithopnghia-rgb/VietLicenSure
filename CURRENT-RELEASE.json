@@ -58,10 +58,10 @@
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
   "Packaging": {
-    "Revision": "20261114-xml-r3",
+    "Revision": "20261114-quality-docs-r1",
     "ContextFile": "PACKAGING-CONTEXT.json",
     "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
-    "RuntimeBuildChangedFromPredecessor": true,
+    "RuntimeBuildChangedFromPredecessor": false,
     "BuiltExecutableUnchangedByPackaging": true,
     "DistributionFiles": 55,
     "ReleaseChecksumEntries": 54

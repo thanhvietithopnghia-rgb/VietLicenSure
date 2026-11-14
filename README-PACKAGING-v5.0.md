@@ -7,3 +7,5 @@ Run VERIFY-PACKAGING.ps1 for this closed distribution. The private handoff start
 Current scoped maintainer QA is in the companion QA-EVIDENCE/evidence asset. No source fixture is presented as independent review or fleet acceptance. Full source stays private.
 
 Official Self-Signed, not public-CA/EV/Store; SmartScreen may warn. Independent review NotReviewed; external licensing accuracy NotEstablished; all21 acceptance Partial.
+
+Metadata maintenance 14/11/2026: current acceptance precedes explicitly historical candidate records. Executable and embedded runtime are exact-byte unchanged; no new runtime acceptance claim. Source-side recovery tools are separate maintenance work, not embedded in this EXE.

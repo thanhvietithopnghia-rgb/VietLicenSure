@@ -45,3 +45,13 @@ QA-EVIDENCE.json binary
 
 software-license-catalog-v1.0.json binary
 software-license-catalog-v1.0.json.p7s binary
+
+# Exact-byte quality metadata maintenance
+/PACKAGING-CONTEXT.json binary
+/PACKAGING-CONTEXT.json.p7s binary
+/README-PACKAGING-v5.0.md binary
+/RELEASE-NOTES-v5.0.md binary
+/RELEASE-SHA256SUMS.txt binary
+/RELEASE-STATUS-v5.0.md binary
+/VERIFY-PACKAGING.ps1 binary
+/CURRENT-RELEASE.json binary
