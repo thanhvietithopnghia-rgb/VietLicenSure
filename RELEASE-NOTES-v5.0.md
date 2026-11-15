@@ -1,3 +1,19 @@
+# VietLicenSure v5.0 - Current maintenance acceptance
+
+## Current exact-artifact acceptance — 2026-11-15
+
+EXE 40048970095E7881D01222AAA94135D0E37DB3EE3D99B371241F887BCA28B85B / 998592 bytes; source 2cf91ec848eb5f2b5092fce346708f8146c08fbf; signed bundle c48336396f415276e12b6b226eaa9768a99d98aa.
+Official Self-Signed, build8/8, full verifier0errors/3disclosed warnings and distribution0errors/1self-signed warning. Host Authenticode UnknownError/UntrustedRoot is retained; pinned signer and timestamp verified. Not public-CA/EV/Store; SmartScreen may warn.
+Current Windows11 24H2 offline VI/EN AdminElevated packaged startup, Assistant, ResultCenter integrity, actual GUI report Stop and actual GUI normal completion producing validated PDF/JSON/XML/HTML/checksums, followed by two fresh clean restorations. VI host method-label mismatch is reconciled by supplemental complete-predicate replay; original failed receipt is retained. Not delegated non-admin, production LAN/mTLS/fleet, Windows10, OEM/license ground truth, wideDPI or independent review acceptance; ALL21 Partial.
+Roles are Personal, Technical Support and Business Inventory. Workspace choice grants no authority; maintenance scope remains elevated-admin. No general non-admin broker, deployed delegated RBAC, all21, physical fleet, broad DPI/Windows10, licensing ground truth or independent security review claim. Review NotReviewed; external accuracy NotEstablished.
+Worker isolation bounds execution time under the same Windows token; it is not a security sandbox. Managed document copies remain ReferencedUnverified, not authenticated legal evidence. Recovery39 and real token/ACL source fixtures keep their original source scope, not a full-machine/power-loss/disk-full rollback claim.
+
+ALL21: Partial. Independent review: NotReviewed. Source fixtures are not packaged acceptance.
+
+PDF maintenance: retain numeric process exit codes and wait boundedly for browser descendant PDF completion; require stable complete PDF, never accept exit0 alone. No sandbox or ACL relaxation.
+
+## Historical source records - not current acceptance
+
 # Ghi chú phát hành — VietLicenSure v5.0
 
 <!-- CURRENT-ACCEPTANCE-BASELINE:E4E29829 -->
