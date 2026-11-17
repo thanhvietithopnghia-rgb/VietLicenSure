@@ -342,7 +342,15 @@ On the Server tab, select **Evidence and entitlements** to create locally stored
 
 ### Business Inventory: Server and Workstation
 
-Network access starts disabled. Enable Local LAN only for authorized LAN use. After the administrator successfully starts the Server, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables that task. When enabled, the Workstation agent runs after startup, logon, resume, and every hour; encrypted queued reports retry after connectivity returns. An enrolled workstation retains its ClientId/secret across reboot and does not need a new pairing code. Create new pairing code rotates only the temporary 24-hour enrollment code and does not affect already enrolled workstations. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure server, firewall, CIDR/IP, or remote license actions.
+Network access starts disabled. Enable Local LAN only for authorized LAN/VPN use. Agent/Server traffic has no HTTP fallback: it requires HTTPS mutual TLS/TLS 1.2 and retains the existing encrypted/authenticated application envelope as defense in depth.
+
+1. The PKI administrator provisions a server/service certificate in `LocalMachine\My` with an accessible private key, current validity, both Server Authentication and Client Authentication EKUs, organizational trust, and SAN `localhost` for the local Dashboard. Use the names/SANs required by organizational policy.
+2. Each workstation receives its own non-shared certificate in `LocalMachine\My` with an accessible private key and Client Authentication EKU. The server must trust its issuing CA.
+3. On Server, enter the server/service certificate thumbprint, create the configuration, and copy the displayed SHA-256 pin to workstations. Select **HTTPS + URL ACL + Firewall** to create the HTTP.sys binding that negotiates client certificates, then start Server.
+4. On Workstation, enter the server address/name, workstation certificate thumbprint, exact server-certificate SHA-256 pin, and pairing code. Test the connection and enroll. The server pins the workstation certificate SHA-256 during enrollment.
+5. Plain HTTP, a missing/wrong/expired/untrusted certificate, a wrong EKU, or a pin mismatch fails closed. Delete and recreate legacy HTTP server configurations. Certificate or pin rotation invalidates the old enrollment; rotate deliberately and enroll affected workstations again.
+
+After the administrator successfully starts Server, VietLicenSure installs a Windows startup task; Stop server or disabling Local LAN also disables that task. When enabled, the Workstation agent runs after startup, logon, resume, and every hour; encrypted queued reports retry after connectivity returns. Remote license changes remain disabled until the workstation explicitly allows them. Only an authorized administrator should configure certificates, server, firewall, CIDR/IP, or remote license actions.
 
 ## Advanced inspection
 

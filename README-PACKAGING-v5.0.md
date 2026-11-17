@@ -1,9 +1,13 @@
-# VietLicenSure v5.0 — Current release package
+# VietLicenSure v5.0 — Official Self-Signed
 
-EXE 40048970095E7881D01222AAA94135D0E37DB3EE3D99B371241F887BCA28B85B / 998592 bytes. Build ID 5.0-production-20261115-r1. Source 2cf91ec848eb5f2b5092fce346708f8146c08fbf; signed bundle c48336396f415276e12b6b226eaa9768a99d98aa.
+Maintenance update: 2026-11-17. Build: 5.0-production-20261117-r1.
+EXE SHA-256: 0EBD9CC9375679843A01F1A40FD8A2523C49656F22CAEFA04A80097D7AE2DBF5; size: 999104 bytes.
+Source snapshot: 339e72e0fce24d3b9778e9714ca8341a49baf9c1; signed bundle: 5478837a4c3823b83b037bd4bf7bdc28a4b2cd6b.
 
-Run VERIFY-PACKAGING.ps1 for this closed distribution. The private handoff starts at root VERIFY-HANDOFF.ps1 and CURRENT-RELEASE; immutable historical source metadata remains under Archive/SourceSnapshot, while Archive/SourceAsBuilt preserves actual verification inputs. Root release checksums use confined Release/ paths.
+Fixed the dashboard Close/Stop footer text-and-icon sizing at high DPI and narrow widths. The executable is unchanged from the verified signed build; this package adds signed post-QA documentation only.
 
-Current scoped maintainer QA is in the companion QA-EVIDENCE/evidence asset. No source fixture is presented as independent review or fleet acceptance. Full source stays private.
+Current exact-hash runtime QA: offline Windows11 24H2, vi-VN, AdminLimited/Medium, dashboard/startup/environment warning/keyboard at150% DPI, actual image review and clean checkpoint restore. No current-hash Assistant/PDF/ResultCenter/EN/Windows10/fleet/LAN/nonadmin-broker or entitlement ground-truth acceptance is claimed. Prior-build QA remains historical, not acceptance of these bytes. ALL21 Partial; independent review NotReviewed; no zero Critical/High finding claim.
 
-Official Self-Signed, not public-CA/EV/Store; SmartScreen may warn. Independent review NotReviewed; external licensing accuracy NotEstablished; all21 acceptance Partial.
+The signer is self-issued; not public-CA/EV/Store. SmartScreen may warn. Host Authenticode UnknownError is retained; guest Valid required temporary pinned lab trust which was removed. Do not disable Defender/SmartScreen or install a host root merely to suppress warnings.
+
+Run VERIFY-PACKAGING.ps1, then VERIFY-DISTRIBUTION.ps1. PACKAGING-CONTEXT binds the unchanged runtime and current post-QA docs; source remains private, with only the previously approved partial-source subset public. The original immutable source/build documents are historical context, not broader current QA authority.

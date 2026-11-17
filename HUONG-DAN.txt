@@ -1,4 +1,4 @@
-# Hướng dẫn sử dụng VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
+﻿# Hướng dẫn sử dụng VietLicenSure - Phần mềm Kiểm tra và Quản lý Bản quyền Hệ thống
 
 Phát triển bởi Thanh Việt
 
@@ -395,8 +395,12 @@ Chức năng được phân theo vai trò nhưng dùng chung giao diện Windows
 ### Kiểm kê doanh nghiệp: Máy chủ và Máy trạm
 
 - Mạng doanh nghiệp mặc định tắt. Chỉ bật Online khi cần kết nối trong LAN.
-- Máy chủ tạo cấu hình, mã ghép nối và nhận báo cáo từ máy trạm được phép.
-- Máy trạm dùng mã ghép nối, kiểm tra kết nối và gửi báo cáo theo chính sách quản trị.
+- Agent/Máy chủ không có fallback HTTP: bắt buộc HTTPS mutual TLS/TLS 1.2 và vẫn giữ envelope mã hóa/xác thực hiện hữu.
+- Trước khi tạo Máy chủ, quản trị viên PKI phải cấp certificate server/service trong `LocalMachine\My`, có private key, còn hạn, có cả EKU Server Authentication + Client Authentication, được các máy liên quan tin cậy và có SAN `localhost` để mở Dashboard. Certificate phải có tên/SAN phù hợp chính sách tổ chức.
+- Mỗi Máy trạm dùng một certificate riêng trong `LocalMachine\My`, có private key, còn hạn và EKU Client Authentication; Máy chủ phải tin cậy CA phát hành certificate đó. Không chia sẻ private key giữa các máy.
+- Trong tab Máy chủ, nhập thumbprint certificate server/service, tạo cấu hình rồi sao chép ô **Pin SHA-256** sang máy trạm. Chọn **HTTPS + URL ACL + Firewall** để tạo binding HTTP.sys yêu cầu client certificate, sau đó mới khởi động Máy chủ.
+- Trong tab Máy trạm, nhập địa chỉ/tên Máy chủ, thumbprint certificate máy trạm, đúng pin SHA-256 của certificate Máy chủ và mã ghép nối. Kiểm tra kết nối rồi enrollment. Máy chủ pin SHA-256 certificate máy trạm sau enrollment.
+- Sai pin, thiếu certificate, certificate hết hạn/sai EKU/không được tin cậy hoặc URL `http://` đều bị từ chối fail-closed. Cấu hình HTTP cũ phải xóa và tạo lại. Khi đổi certificate/pin, máy trạm tự mất trạng thái enrollment cũ và phải enrollment lại; đổi certificate Máy chủ cần tạo lại cấu hình Máy chủ và enrollment lại các máy trạm.
 - Sau khi quản trị viên khởi động máy chủ thành công, VietLicenSure tạo lịch để máy chủ chạy lại cùng Windows. Nút Dừng máy chủ hoặc tắt LAN nội bộ cũng tắt lịch này.
 - Khi bật agent tự động, máy trạm chạy sau khi Windows khởi động, người dùng đăng nhập, máy thức dậy và mỗi giờ. Mất mạng thì báo cáo mã hóa được giữ trong hàng đợi để thử lại.
 - Máy trạm đã ghép nối giữ nguyên ClientId/secret sau reboot và không cần mã mới. Nút Tạo mã ghép nối mới chỉ luân chuyển mã tạm 24 giờ cho máy chưa ghép nối; máy đã ghép nối không bị ảnh hưởng.
@@ -413,7 +417,7 @@ Chỉ quản trị viên có thẩm quyền nên cấu hình máy chủ, firewal
 4. Cấp quyền cho đúng máy hoặc người dùng rồi xem Purchased, Assigned, Installed và Available.
 5. Mở Central Dashboard để xem điểm License Assurance, trạng thái Compliant/Cần kiểm tra/Nghiêm trọng và mở **Giải thích phát hiện** của License Advisor.
 
-License Advisor gắn Rule ID ổn định, nguồn bằng chứng, confidence và correlation cho từng phát hiện; đồng thời tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Một dấu hiệu hoặc KMS riêng lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. Kết quả dựa trên dữ liệu kỹ thuật cùng hồ sơ do quản trị viên nhập; không tự chứng minh quyền sở hữu, tính xác thực của hóa đơn hoặc tuân thủ pháp lý. Dashboard web chỉ đọc, chỉ mở qua loopback trên máy chủ và không hiển thị đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Truy cập Dashboard từ xa qua HTTP bị chặn; hãy dùng tunnel hoặc reverse proxy HTTPS do quản trị viên kiểm soát.
+License Advisor gắn Rule ID ổn định, nguồn bằng chứng, confidence và correlation cho từng phát hiện; đồng thời tách kích hoạt kỹ thuật, đánh giá can thiệp, quyền sử dụng và kết luận tổng hợp. Một dấu hiệu hoặc KMS riêng lẻ không tự chứng minh crack hay quyền sử dụng bất hợp pháp. Kết quả dựa trên dữ liệu kỹ thuật cùng hồ sơ do quản trị viên nhập; không tự chứng minh quyền sở hữu, tính xác thực của hóa đơn hoặc tuân thủ pháp lý. Dashboard web chỉ đọc, chạy HTTPS và chỉ mở qua loopback trên máy chủ; không hiển thị đường dẫn chứng từ, full key, ClientId đầy đủ hoặc secret. Trình duyệt phải tin cậy certificate server có SAN `localhost`; truy cập Dashboard từ xa bị chặn.
 
 ## Kiểm tra chuyên sâu
 
@@ -489,8 +493,8 @@ Tác vụ Online chỉ gửi yêu cầu GET tới nguồn catalog HTTPS cố đ�
 
 ## Báo cáo và vị trí lưu
 
-- Thư mục duy nhất là `Desktop\BaoCao-VietLicenSure`; VietLicenSure không tạo thư mục con cho từng lần xuất.
-- HTML tổng quan, PDF chi tiết, JSON/XML và tệp SHA-256 của cùng lần xuất nằm cạnh nhau, dùng cùng tên gốc và dấu thời gian đến mili-giây.
+- Thư mục gốc là `Desktop\BaoCao-VietLicenSure`. Mỗi lần xuất thành công tạo một thư mục báo cáo riêng; chỉ bộ tệp hoàn chỉnh, đã kiểm tra mới được công bố. Báo cáo cũ không bị ghi đè.
+- HTML tổng quan, PDF tạo thành công, JSON/XML và tệp SHA-256 nằm cạnh nhau bên trong thư mục của lần xuất đó. PDF tùy thuộc engine; xem trạng thái xuất để biết định dạng nào đã được tạo.
 - Sau khi hoàn tất, công cụ chỉ tự mở HTML tổng quan bằng trình duyệt mặc định. Muốn xem đủ bảng và bằng chứng, chọn **Mở PDF chi tiết** ngay trong HTML; PDF/JSON/XML không tự bật.
 - JSON, XML hoặc CSV dùng cho tích hợp, kiểm toán và phân tích có cấu trúc.
 - Báo cáo đã che phù hợp khi gửi ra ngoài; báo cáo đầy đủ chỉ nên dùng nội bộ.

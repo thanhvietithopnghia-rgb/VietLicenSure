@@ -1,79 +1,26 @@
 {
   "schemaVersion": "1.4",
   "result": "PASS",
-  "artifactSha256": "40048970095E7881D01222AAA94135D0E37DB3EE3D99B371241F887BCA28B85B",
-  "buildId": "5.0-production-20261115-r1",
-  "sourceSnapshot": "2cf91ec848eb5f2b5092fce346708f8146c08fbf",
-  "bundleCommit": "c48336396f415276e12b6b226eaa9768a99d98aa",
+  "artifactSha256": "0EBD9CC9375679843A01F1A40FD8A2523C49656F22CAEFA04A80097D7AE2DBF5",
+  "buildId": "5.0-production-20261117-r1",
+  "sourceSnapshot": "339e72e0fce24d3b9778e9714ca8341a49baf9c1",
+  "bundleCommit": "5478837a4c3823b83b037bd4bf7bdc28a4b2cd6b",
   "channel": "Official Self-Signed",
   "independentReview": "NotReviewed",
   "all21Acceptance": "Partial",
+  "coverageBoundary": "Signed candidate only: one offline W11 24H2 vi-VN AdminLimited dashboard at150%/1920x1200; keyboard/UIA/MSAA; not all21 or nonadmin broker",
   "visualReview": {
     "result": "PASS",
-    "scope": "Maintainer visual review of 16 actual UI images plus first/last PDF pages for both locales; not security review"
+    "scope": "Parent opened original splash, warning and dashboard: complete title/text/OK, unclipped Close icon/caption/footer at DPI144"
   },
-  "catalog": {
-    "result": "PASS",
-    "scope": "Existing catalog identity/age verified, not newly curated",
-    "version": "1.1.5.0"
-  },
-  "packagedAssistant": {
-    "result": "PASS",
-    "cycles": 4
-  },
-  "packagedResultCenter": {
-    "result": "PASS",
-    "cases": 8
-  },
-  "packagedReport": {
-    "result": "PASS",
-    "cultures": [
-      "vi-VN",
-      "en-US"
-    ],
-    "receipts": [
-      {
-        "Locale": "vi-VN",
-        "Result": "PASS",
-        "ActualGuiStopExit": 1,
-        "ActualGuiNormalExit": 0,
-        "PdfStatus": "Created",
-        "PdfPages": 31,
-        "GenerationMembers": 5,
-        "GenerationZipSha256": "68B269BCF75013112283C71B4C57A41CECE2F6038B14E9E65DD7F224D96519F8",
-        "GenerationChecksums": "PASS"
-      },
-      {
-        "Locale": "en-US",
-        "Result": "PASS",
-        "ActualGuiStopExit": 1,
-        "ActualGuiNormalExit": 0,
-        "PdfStatus": "Created",
-        "PdfPages": 31,
-        "GenerationMembers": 5,
-        "GenerationZipSha256": "63BC5C28FB206E7F23CA57C44FA098ED8C6F2CDDFBF0CA67BAED233DEEEC2C6C",
-        "GenerationChecksums": "PASS"
-      }
-    ]
-  },
-  "restoreProof": {
-    "result": "PASS",
-    "scopes": [
-      "vi-VN",
-      "en-US"
-    ],
-    "finalVmState": "Off"
-  },
-  "reviewFixRegression": {
-    "result": "PASS",
-    "scope": "Exact build full verifier and delayed-PDF regression; previous evidence not relabeled"
-  },
-  "coverageBoundary": "Exact signed EXE offline Windows 11 24H2 AdminElevated High VI/EN: startup, Assistant, ResultCenter integrity fixtures, actual GUI report Stop/confirm and actual GUI normal completion with PDF/HTML/JSON/XML/checksums; fresh clean restore after each locale. VI original host failed method-label mismatch; supplemental complete predicate replay and negative tests retained separately, no repeated VI execution or alteration of original receipt. Not Windows10, physical/OEM/license-entitlement ground truth, delegated non-admin broker, production LAN/mTLS/fleet, wide DPI, full-machine restore or independent security acceptance. ALL21 remains Partial.",
-  "trustBoundary": "Official Self-Signed/ManagedSigned; self-issued signer, not public-CA/EV/Store; SmartScreen may warn. Host UnknownError retained, guest temporary trust removed.",
-  "hostMethodReconciliation": {
-    "Result": "PASS",
-    "Scope": "Supplemental offline re-evaluation; original VI host remains Failed",
-    "RegressionCases": 12,
-    "ReplaySha256": "4097B132A8E090F5E112E70C62DC44EC373F950D993BB0F88F7CD8A881A892C5"
-  }
+  "guestTrust": "Temporary pinned self-issued signer, removed by checkpoint restore; not public trust",
+  "notEstablishedForThisHash": [
+    "VI/EN Assistant modal cycles",
+    "ResultCenter integrity fixture matrix",
+    "GUI report normal/Stop/PDF generation",
+    "Windows10/other builds/high contrast",
+    "production fleet/LAN, nonadmin broker, entitlement ground truth, independent review"
+  ],
+  "priorArtifactEvidence": "Historical only; never copied as current acceptance",
+  "evidenceSummary": "Maintainer scoped exact-hash QA passed; raw lab records and source remain private."
 }

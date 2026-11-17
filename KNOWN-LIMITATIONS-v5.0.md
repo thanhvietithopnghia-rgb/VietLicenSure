@@ -4,6 +4,14 @@ Tài liệu này áp dụng cho VietLicenSure `v5.0` theo kênh `Official Self-S
 
 ## Tin cậy phát hành
 
+### Phạm vi bảo trì 08/11/2026
+
+- Chưa có broker đặc quyền được nghiệm thu cho người dùng được ủy quyền. Quyết định role/SID đúng không đồng nghĩa tài khoản thường truy cập được kho dữ liệu/DPAPI; không nới ACL để tạo quyền đó.
+- Worker plugin có thời hạn cưỡng chế cho toàn audit; budget từng plugin và một số phép đọc CIM/filesystem khác vẫn hợp tác. Worker dùng cùng token Windows, không phải sandbox đặc quyền thấp.
+- Khôi phục nhiều mục không phải transaction toàn cục: lỗi ở mục sau có thể để lại mục trước đã hoàn tất, và kết quả phải báo lỗi/partial. Không bảo đảm tái tạo mật khẩu tài khoản dịch vụ, bản quyền hay thao tác không thể hoàn tác.
+- Hồ sơ tài sản được lưu có hash/ACL; process/máy chết giữa publish blob và commit metadata có thể để lại blob không được tham chiếu. Chưa có garbage collector tự động; sao lưu toàn bộ thư mục registry và documents cùng nhau.
+- Không suy quyền sử dụng giấy phép từ trạng thái Activated, không tuyên bố ALL21/fleet/pentest độc lập khi chưa có bằng chứng.
+
 - EXE được ký và có timestamp, nhưng dùng chứng thư tự ký được launcher ghim; Windows có thể hiển thị `Unknown publisher` hoặc cảnh báo SmartScreen.
 - Các bộ Harness cũ chỉ là bằng chứng lịch sử của đúng snapshot/artifact mà chúng ghi nhận; không được tái sử dụng để đóng cổng cho EXE khác. Xem `RELEASE-STATUS-v5.0.md` để biết cặp source–EXE và kết quả hiện hành.
 - Đây là bản phát hành chính thức bằng chứng thư tự ký; không được mô tả là public-CA, EV hoặc Store-signed.

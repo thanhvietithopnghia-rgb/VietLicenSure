@@ -23,7 +23,7 @@ Báo lỗi chức năng thông thường dùng [GitHub Issues](https://github.co
 - xác thực chữ ký, chống rollback catalog và fail-closed;
 - launcher, ranh giới tiến trình, đường dẫn/reparse point và cập nhật;
 - parser catalog/plugin khai báo, schema báo cáo và chống CSV formula injection;
-- Enterprise pairing, DPAPI, envelope HMAC, phân quyền, rate limit và giới hạn LAN/VPN;
+- Enterprise HTTPS mutual TLS/TLS 1.2, pin certificate hai phía, pairing, DPAPI, envelope HMAC, phân quyền, rate limit và giới hạn LAN/VPN;
 - rò rỉ product key, token, tên máy, IP hoặc đường dẫn nội bộ;
 - sai khác hành vi giữa Windows 10 22H2 và các bản Windows 11 được hỗ trợ.
 

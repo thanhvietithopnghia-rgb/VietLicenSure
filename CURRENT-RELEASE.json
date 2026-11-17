@@ -8,22 +8,24 @@
   "PublicChannel": "Official Self-Signed",
   "TechnicalTrustMode": "OfficialSelfSigned",
   "ReleaseBuildDate": "2026-10-25",
-  "PublicUpdateDate": "2026-11-15",
-  "BuildId": "5.0-production-20261115-r1",
+  "PublicUpdateDate": "2026-11-17",
+  "BuildId": "5.0-production-20261117-r1",
   "Artifact": {
     "FileName": "VietLicenSure-v5.0.exe",
-    "Sha256": "40048970095E7881D01222AAA94135D0E37DB3EE3D99B371241F887BCA28B85B",
-    "SizeBytes": 998592,
+    "Sha256": "0EBD9CC9375679843A01F1A40FD8A2523C49656F22CAEFA04A80097D7AE2DBF5",
+    "SizeBytes": 999104,
     "AuthenticodeStatus": "OfficialSelfSigned",
+    "HostAuthenticodeObservation": "UnknownError",
     "AuthenticodeSigner": "CN=Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodePublisher": "Thanh Viet - VietLicenSure Code Signing",
     "AuthenticodeThumbprintSha1": "575AFB8891CD8505DB9D0A733A6E5D1CEEE3FA62",
     "AuthenticodeCertificateSha256": "91092BAAA492A991AE99170B5005010B943A498696D94B7D260140CC4D6F3177",
-    "Timestamped": true
+    "Timestamped": true,
+    "TimestampThumbprintSha1": "51D9ABDA034973D84F4266ACA48248E6B369C439"
   },
   "Source": {
-    "SourceCommit": "2cf91ec848eb5f2b5092fce346708f8146c08fbf",
-    "BundleCommit": "c48336396f415276e12b6b226eaa9768a99d98aa"
+    "SourceCommit": "339e72e0fce24d3b9778e9714ca8341a49baf9c1",
+    "BundleCommit": "5478837a4c3823b83b037bd4bf7bdc28a4b2cd6b"
   },
   "ContentCmsSigner": {
     "SignerType": "ContentCMS",
@@ -34,13 +36,15 @@
     "ExactHashStatus": "Passed",
     "ArtifactHashBound": true,
     "EvidenceFile": "QA-EVIDENCE.json",
-    "EvidenceSha256": "2EBBCCBFF600D503D3E030F0AC243593A7DE4FED0F52702FEA175E3DDE6258A5",
-    "ReleaseEvidenceAsset": "VietLicenSure-v5.0-Improvements-Evidence-40048970.zip",
+    "EvidenceSha256": "EC33A377835714C1D95CD00CD437347C3619FAB7AC021F956ABB0FE1ACFB2612",
     "Platform": "Windows 11 24H2",
-    "AccountType": "AdminElevated / High disposable lab",
-    "Culture": "vi-VN / en-US",
-    "NetworkMode": "Offline synthetic lab; VI/EN startup/Assistant/ResultCenter, GUI report Stop and actual GUI normal completion (PDF/JSON/XML/HTML/checksums)",
-    "All21Acceptance": "Partial: see RELEASE-STATUS; no complete ALL21 claim"
+    "AccountType": "AdminLimited / Medium disposable lab",
+    "Culture": "vi-VN",
+    "NetworkMode": "Offline",
+    "DpiPercent": 150,
+    "Scope": "Signed candidate only: one offline W11 24H2 vi-VN AdminLimited dashboard at150%/1920x1200; keyboard/UIA/MSAA; not all21 or nonadmin broker",
+    "All21Acceptance": "Partial",
+    "ReleaseEvidenceAsset": "QA-EVIDENCE.json"
   },
   "IndependentSecurityReview": {
     "Status": "NotReviewed",
@@ -58,12 +62,12 @@
   },
   "PublicReleaseUrl": "https://github.com/thanhvietithopnghia-rgb/VietLicenSure/releases/tag/v5.0",
   "Packaging": {
-    "Revision": "20261115-pdf-r5",
+    "Revision": "20261117-closeicon-r21",
     "ContextFile": "PACKAGING-CONTEXT.json",
     "SignatureFile": "PACKAGING-CONTEXT.json.p7s",
-    "RuntimeBuildChangedFromPredecessor": true,
-    "BuiltExecutableUnchangedByPackaging": true,
-    "DistributionFiles": 55,
-    "ReleaseChecksumEntries": 54
-  }
+    "BuiltExecutableUnchangedByPackaging": true
+  },
+  "ArtifactBuildDate": "2026-11-17",
+  "TrustDisclosure": "Self-issued pinned signer; SmartScreen may warn; not public-CA/EV/Store signed.",
+  "ArtifactRelativePath": "VietLicenSure-v5.0.exe"
 }

@@ -1,0 +1,264 @@
+﻿# VietLicenSure — System License Inspection and Management Software Version History
+
+This document summarizes the core changes in every recorded version, from the first release through the current v5.0 technical release. The v5.0 entry is current through November 8, 2026; the public version remains v5.0.
+
+November 8 maintenance: overlapping restore-target rejection and honest service-failure reporting; Windows SID authorization at Enterprise boundaries and protected-policy provisioning; durable asset document content with integrity-checked export; isolated plugin-audit worker with a hard parent deadline. A general delegated-user broker and full 21-function/fleet acceptance are not enabled or claimed. Administration still requires the appropriate Windows token. New runtime claims require evidence bound to the new EXE hash.
+
+Public product page:
+<https://thanhvietithopnghia-rgb.github.io/VietLicenSure/>
+
+## v5.0 — updated November 5, 2026 (first released September 8, 2026)
+
+- The v5.0 maintenance published on November 5, 2026 includes authenticated whole-plan recovery preflight, service/job authorization, conservative evidence lineage, bounded traversal/plugins, asset history and concurrent-write guards, semantic exports, installation-linked ResultCenter and grounded read-only VI/EN explanations. ALL21 remains PARTIAL: actual license/subscription ground truth, durable attachment content, individual RBAC, production LAN scale, full UI E2E and broad DPI/multi-monitor acceptance remain unestablished. Independent review is NotReviewed; public trust and zero Critical/High findings are not inferred.
+- The UI/Assistant maintenance adds card reflow, role/screen/Build ID context, cancellable background knowledge and licensing loads, window recovery and pinned Enterprise actions. Release status follows the exact EXE manifest/signature and artifact-bound QA, not the knowledge date; broad physical DPI/multi-monitor acceptance remains NotEstablished.
+
+QA/diagnostic hardening: separate visible integrity status and Readable/IntegrityVerified, bounded compliance read reason codes, and artifact-scoped release assurance without inherited QA claims.
+
+Integrity hardening: validate required outputs, structure and closed checksums before publish; Result Center separates Verified/UnverifiedLegacy and excludes corrupt reports from calculations while retaining files. Predecessor source metadata is marked Historical; current release identity belongs to the verified distribution and post-QA handoff manifest.
+
+- **Review correction — November 3, 2026 (public version unchanged):** shared report exports publish complete immutable generation directories; same-name retries and failed validation/writes preserve previous reports, and optional PDF failure cannot reuse a stale PDF.
+- **Fleet identity correction:** reconciliation derives exact Windows edition/release and Office Click-to-Run release identities from stored endpoint reports. Unsupported/legacy evidence and mismatched SKUs remain fail-closed. Verified entitlement documents, assignments and metric evidence are still required; activation alone is not proof of ownership. OEM changes are outside this correction.
+
+- **Runtime scan and UX correction:** the elevated bridge now accepts the exact `-NoOpen` and incremental-baseline contract used by Windows, Office, and Software inspections while remaining fail-closed for unsafe or extra arguments. The activity panel separates the latest attempt from the latest successful result and labels an older baseline as stale. Role colors use restrained tints with a clear selected state, the chooser appears before heavy validation, and role switching no longer rescans the whole report history.
+
+- **Neutral publisher:** the EXE now uses the self-issued Authenticode signer `CN=Thanh Viet - VietLicenSure Code Signing`, removing the historical v4.9 product name from Publisher. The historical content-CMS signer remains a separate trust anchor that authorizes the new EXE signer; the channel remains Official Self-Signed, not public-CA/EV/Store-signed, so SmartScreen may still warn.
+
+- **Shared per-device results and incremental comparison:** Personal uses a single action column with progress, status, and a concise result summary on the right. Windows/Office show the verdict and risk; Software shows installed, paid, free, unknown, and intervention-indicator counts. HTML opens only through View details, while Full inspection and Hardware configuration still open their result immediately. A result is bound to one device and scan scope and is shared across Personal, Technical Support, and Business Inventory. A fresh baseline is shown immediately while a Quick incremental comparison runs; missing, expired, different-build, or different-device baselines force a full scan. Duplicate in-flight jobs are rejected.
+
+- **Name and direction:** the official name changed from **Tool Kiem Tra — Computer and Software License Check Tool** to **VietLicenSure — System License Inspection and Management Software**, with one public version name, **v5.0**, across the application, updater, documentation, and GitHub.
+- **Elevated Broker fix:** the launcher now passes the real process executable path instead of a missing assembly path, restoring Valid License Management under UAC while remaining fail-closed when the launcher cannot be verified.
+- **Upgrade foundation:** v5.0 is the direct successor to v4.9, retaining its inventory and evidence model while expanding it into a unified system inspection and management workflow.
+- **Source policy:** establishes `SOURCE-POLICY-v5.0` as the current SSOT, retains controlled access from v4.9, and publishes a four-stage indicative roadmap through and after July 2027; dates are not firm commitments and remain risk-gated.
+- **Two-way communication:** adds GitHub Issues for bugs, GitHub Discussions for questions/proposals, and Private Security Advisories for vulnerability reports.
+- **Interface and experience:** the launcher responds immediately with a splash; the main window appears before five heavy modules load sequentially, and actions remain disabled until validation completes. The UI retains its 100–200% DPI-aware layout, Light/Dark/High Contrast support, clearer navigation, and five tinted status cards with full function-colored borders.
+- **Windows, Office, and software inspection:** Quick, Standard, and Deep modes; broader inventory sources; technical activation is separated from entitlement, MAK/KMS, pinned self-signed signers, timestamps, read failures, active activators, and residual files; fleet data retains Last5 only and warns when key identity changes.
+- **Analysis, management, and Assistant:** High–Medium–Low prioritization, search, filters, previous-scan comparison, and multi-device support; an enabled LAN Server restarts with Windows, the Workstation Agent runs after boot/logon/resume and hourly, and enrollment survives reboot; the Offline Assistant routes by intent, follows explicit context, and asks for clarification instead of combining unrelated answers.
+- **Official Central Dashboard, Asset Registry, and License Compliance:** adds a read-only Vietnamese/English LAN web dashboard for fleet status and license-identity alerts. Asset Registry 1.0 uses stable identity, fail-closed duplicate matching, append-only history, and no raw hardware identifiers; Server can search/filter, assign/reassign, confirm release, and inspect history, while Client remains read-only for Device ID, pairing, and synchronization. License Advisor uses Rule IDs, evidence sources, confidence/correlation, and separate activation, tampering, entitlement, and overall-verdict layers. Missing User/Concurrent usage stays `NeedsReview`, Windows/Office require exact SKU identity, and compatible Device entitlements are pooled so fleet consumption is counted once. Evidence becomes verified only with verifier, timestamp, source, and scope; incomplete, truncated, or failed inventory is disclosed as `Complete/Partial/Failed` and cannot produce a clean conclusion. KMS or one isolated indicator never independently proves cracking or unlawful use. Local entitlement records and Purchased–Assigned–Installed–Available reconciliation remain local. Access requires a short-lived administrator-approved session; APIs expose no full keys, full ClientIds, internal identifiers, secrets, telemetry, cloud control, or remote commands.
+- **Source architecture:** split `Giao-Dien.ps1` and `windows-license-compliance-cleanup.ps1` into nine functional libraries while retaining both compatible entrypoints; new gates lock function counts, packaging dependencies, and composed-source behaviour so the monoliths shrink without changing functionality.
+- **Safe remediation:** separate Windows, Office, and third-party scopes with mandatory preview, Dry Run, scope locking, HMAC backup, UAC consent, post-checks, and fail-closed rollback.
+- **Reports, privacy, and release integrity:** HTML/PDF/JSON/XML/CSV exports, redacted support data, Offline-by-default operation, and a OfficialSelfSigned chain bound by provenance/CMS/SHA-256/Authenticode/RFC3161 plus clean-VM runtime, UAC-cancellation, DPI, and High Contrast evidence.
+- **Release channel:** standardized as **Official Self-Signed** with internal state `OfficialSelfSigned`; the `ManagedSigned` and `Pilot` labels are no longer used, while the pinned self-issued signer, RFC3161 timestamping, and fail-closed verification remain unchanged; it is explicitly not public-CA, EV, or Store signed, and SmartScreen can still warn.
+
+### Core summary across the two generations
+
+**v4.9 → v5.0:** v5.0 retains the recognition/evidence foundation of v4.9 and unifies inspection, remediation, reporting, and management across Personal / Technical Support / Business Inventory roles on one Windows interface, engine, and current data source. It adds role-filtered functions, Windows/Office license management for Technical Support, Server/Workstation inventory for Business Inventory, an Offline Assistant, Dry Run/backup/UAC/rollback, and multi-format reports. Offline remains the default; explicitly enabling Online refreshes the signed catalog first and then checks application-version availability without automatically downloading/installing, scanning, or reporting, and the next launch returns to Offline.
+
+`Unverified` does not mean that software violates its licence.
+
+## v4.9.0.0 — August 22, 2026
+
+- **More accurate recognition:** inventories Registry, AppX/MSIX, WinGet, shortcuts, package managers, and bounded portable locations; distinguishes confirmed installations from portable/residual files and merges duplicate records by product family.
+- **Adaptive integrity scanning:** vendor host blocks or disabled licensing services trigger broader Authenticode checks within the exact product directory; evidence no longer leaks between products from the same vendor.
+- **Diagnosable licensing and safe remediation:** unreadable data is distinct from unactivated status; reports are read-only; remediation removes only the selected bad key/Activation ID, preserves coexisting genuine licences, and verifies the exact selected scope afterward.
+- **Controlled complete uninstall:** an application can be fully removed only after explicit selection and validation of a source-bound MSI/AppX identity; preview, backup, execution result, and absence post-check remain mandatory.
+- **Protected release chain:** the EXE, provenance, catalog, and update manifest are signed; online comparison accepts declarative data only from pinned official sources and uploads no software inventory or device data.
+- **Policy from v4.9:** VietLicenSure remains free and community-oriented; source is no longer published publicly, is not open source, and requires the author's prior written approval for access.
+
+## v4.8.0.1 — August 18, 2026
+
+- Separated Windows and Office activation states; incomplete or unreadable Office data is reported as **Unverified** and blocks automatic remediation.
+- Made Office KMS restoration safer, preserving coexisting valid Retail/MAK/Subscription licensing without deleting Office accounts or tokens.
+- Always shows the complete scanned-software list; only items backed by direct remediation evidence can be selected.
+- Application updates verify version, SHA-256, signature, backup, and rollback; there are no silent updates or telemetry.
+
+## v4.8.0.0 — August 10, 2026
+
+- **Broad inventory and assessment:** expanded Windows, Office, third-party software, and hardware checks while separating licence model, technical state, and confidence.
+- **Deep scan and signed catalog:** introduced multi-tier evidence and `Unverified` outcomes to avoid conclusions when data is incomplete.
+- **Controlled remediation:** scope selection, preview, confirmation, backup, and post-verification are mandatory; weak evidence never removes software or changes the system automatically.
+- **Usability:** completed the Dashboard, HTML/PDF reports, local Assistant, and server–workstation management while keeping Offline as the default.
+
+## v4.6 — August 6, 2026
+
+- Expanded the engineering-software catalog while retaining the vendor-neutral deep scanner for products without a dedicated rule.
+- Added remediation **Dry Run**, listing the exact intended actions without changing the system.
+- Made Online consent fail closed and reduced information exposed by the unauthenticated Enterprise status endpoint.
+- Isolated writable versioned data and added staged migration, SHA-256 verification, rollback, and legacy-data preservation.
+- Improved deep-scan performance, synchronized release metadata, and added data-lifecycle verification.
+
+## v4.5 — August 6, 2026
+
+- Completed the Light/Dark visual system, action icons, and DPI-aware layout; adopted the product name **Computer Configuration and Software License Check Tool**.
+- Inventoried software from Registry, AppX/MSIX, Start Menu, Desktop, and bounded installed/portable locations.
+- Added vendor-neutral deep scans, confidence tiers, and explicit reporting of incomplete coverage.
+- Added explained, explicit-consent Online comparison without uploading application inventory, paths, keys, or tokens; Offline remained the default.
+- Expanded scope selection, backup/restore, timeouts, heartbeat, and HTML/PDF reporting; automatic mode never uninstalls software.
+
+## v4.4 — July 31, 2026
+
+- Added safe automatic remediation for allowlisted, backup-capable items, with preview, confirmation, protected backup, and post-scan verification.
+- Completed Vietnamese/English localization across the dashboard, dialogs, reports, and child modules while preserving language-neutral machine status codes.
+- Refreshed the Fluent-style dashboard, Inspect/Remediate/Reports filters, Settings dialog, and bundled vector icons for Light/Dark modes.
+- Optimized bounded Office/file scanning and added Copy full log, Open report folder, and non-blocking VM/Remote Desktop notices.
+
+## v4.3 — July 30–31, 2026
+
+- Upgraded the dashboard to schema 2.0 with DPI/screen-size adaptation and a safe Stop action for child tasks.
+- Standardized Offline-by-default behavior, Vietnamese/English operation, Local/Server/Workstation management, and HTML/PDF/JSON/XML reports.
+- Expanded software, signature, autorun, service, task, and installation-source inventory without breaking earlier report contracts.
+
+## v4.2 — July 24–25, 2026
+
+- Added the internal-network licence center with Local, Server, and Workstation modes.
+- Added pairing, inventory, offline queues, and authenticated/encrypted fleet reporting.
+- Protected URL ACL/firewall configuration with confirmation and prevented competing servers in one scope.
+
+## v4.1 — July 23, 2026
+
+- Added the Report Center, certificate auditing, read-only declarative plugins, and licence timeline.
+- Standardized HTML, PDF, JSON, XML, and SHA-256 manifest export; protected timeline records with DPAPI/HMAC/hash chaining.
+- Added release-signing checks, the About window, and product capability groups.
+
+## v4.0 — July 23, 2026
+
+- Replaced the traditional menu with a WinForms dashboard containing status cards, ten actions, Light/Dark modes, and DPI-aware layout.
+- Added report schemas, safety-policy modules, regression verification, and native x64/x86 Windows-tool resolution.
+- Introduced the KMS/Activator remediation center with preview, confirmation, backup, and post-checks.
+
+## v3.9 — July 22, 2026
+
+- Upgraded reports to schema 1.3, added fallback scan sources, and made schema verification a release gate.
+- Reduced false positives involving legitimate Windows processes, old PowerShell history, hosts entries, and inactive Office SKUs.
+- Optimized per-run caching and refreshed data before post-checks.
+
+## v3.8 — July 22, 2026
+
+- Added deeper Windows/Office scans and confidence-based evidence aggregation.
+- Improved detailed reports, remediation guidance, and partial-source failure handling.
+
+## v3.7 — July 22, 2026
+
+- Added integrity, file-signature, and common licensing-tampering checks.
+- Standardized detection states shared by the interface and reports.
+
+## v3.6 — July 22, 2026
+
+- Expanded multi-version/multi-SKU Office inspection and unusual KMS configuration detection.
+- Added technical logging and post-remediation verification.
+
+## v3.5 — July 21, 2026
+
+- Added integrity-protected Windows/Office licensing backup and restore.
+- Required Administrator rights, preview, and confirmation before system changes.
+
+## v3.4 — July 21, 2026
+
+- Improved digital-licence, OEM, and Windows licensing-channel recognition.
+- Added safe local-key inspection with only partial key display.
+
+## v3.3 — July 20, 2026
+
+- Validated `approved-kms-servers.txt`, warned on empty or malformed entries, and displayed detected KMS hosts for administrator confirmation.
+- Allowed confirmed edits/saves; the one-file build stored its configuration beside the EXE and reported its path, valid-line count, and warnings.
+
+## v3.2 — July 20, 2026
+
+- Upgraded progress display with task name, indeterminate activity, elapsed time, and live logs.
+- Added 10-second status heartbeats and clear completed, warning, or error final states from module results.
+
+## v3.1 — July 20, 2026
+
+- Added startup SHA-256 verification as a warning-only check; mutable KMS configuration remained outside the manifest.
+- Added JSON plus hashes to the combined report and read-only licensing-service, time, signature, and reboot diagnostics.
+
+## v3.0 — July 20, 2026
+
+- Added confirmation before basic handling; when residues remained after verification, the user could choose advanced cleanup or retain the state for reporting.
+- Advanced cleanup backed up/quarantined data and targeted exact KMS, IFEO, or Defender-exclusion artifacts; it used SFC where needed and then ran a final scan.
+
+## v2.9 — July 20, 2026
+
+- Added up to 180 days of activation traces and separated historical records from active indicators to avoid incorrect handling.
+- Added automatic post-action rescanning and synchronized the summary and guide with the ten-feature order.
+
+## v2.8 — July 20, 2026
+
+- Moved the user guide to feature 10 and deep inspection to feature 9.
+- Retained the chooser between the seven-group scan and 12-group investigation/risk scoring.
+
+## v2.7 — July 20, 2026
+
+- Merged the 12-group investigation into the same chooser as the seven-group scan to simplify the menu.
+- Preserved v2.6 UAC, read-only operation, SHA-256 reporting, and safety boundaries.
+
+## v2.6 — July 20, 2026
+
+- Added read-only 12-group forensics, a 0–100 risk score, Authenticode/SHA-256, and security/log-state inspection.
+- Exported HTML/JSON/CSV plus checksums with baseline comparison; no data upload or system change.
+
+## v2.5 — July 18, 2026
+
+- Added valid Windows edition/product-key changes through `changepk.exe` and DISM, plus valid Office-key installation through `OSPP.VBS`.
+- Opened official Microsoft pages; stored no full keys, supplied no public keys/KMS, and never removed old Office keys automatically.
+
+## v2.4 — July 18, 2026
+
+- Relabeled v1.3.0 as v2.4 for the requested release naming.
+- Moved Close onto the status row for short/high-DPI displays while retaining the v1.3.0 feature set, UAC/deep-scan behavior, and safety boundaries.
+
+## v1.3.0 — July 18, 2026
+
+- Required Administrator/UAC for complete WMI/licensing, service, process, task, Registry-policy, hosts, and signature/system-file sources.
+- Declining UAC stopped safely; elevated scanning remained read-only, avoided personal documents, and downloaded/executed no remote code.
+
+## v1.2.0 — July 18, 2026
+
+- Added a seven-group Windows licensing scan with evidence levels and read-only checks of approved KMS, activator/MAS/HWID, KMS38, generic keys, folders, tasks, Registry, and hosts.
+- Notification or unactivated state no longer led automatically to key removal; PowerShell history and full product keys were not stored.
+
+## v1.1.0 — July 18, 2026
+
+- Integrated selected safe checks; added masked OEM OA3 inspection and confirmed/UAC-gated OEM restore without first removing the current key.
+- Added the official Windows key-entry UI and excluded risky public/generic keys, broad history deletion, and machine-wide firewall/hosts edits.
+
+## v1.0.9 — July 17, 2026
+
+- Introduced a single portable EXE for direct use on another computer.
+- The EXE extracted modules to a temporary directory, waited for the UI to close, and then cleaned up.
+
+## v1.0.8 — July 17, 2026
+
+- Added the `00-Tool-Kiem-Tra.ico` identity icon and bundled the complete guide/history.
+
+## v1.0.7 — July 17, 2026
+
+- Compacted the UI so the title, notes, menu, progress area, and Close button fit together on normal displays.
+
+## v1.0.6 — July 17, 2026
+
+- Improved short-screen/high-DPI layout with tighter spacing, a smaller log, dynamic height, and fallback scrolling.
+
+## v1.0.5 — July 17, 2026
+
+- Renamed the displayed product to “Computer configuration and software license check tool” and added execution-progress plus clear completion/error states.
+
+## v1.0.4 — July 17, 2026
+
+- Fixed note wrapping, dynamic layout, and scrolling on short displays.
+
+## v1.0.3 — July 17, 2026
+
+- Confirmed PowerShell 3.0+ support and clarified that passwords and full product keys are never extracted.
+
+## v1.0.2 — July 17, 2026
+
+- Made feature 6 inspect and confirm first while protecting OEM/Retail/MAK and approved internal KMS.
+- Limited handling to unapproved KMS/crack evidence; an activator trace alone never caused product-key removal.
+
+## v1.0.1 — July 17, 2026
+
+- Fixed title/font presentation, updated support details, confirmed Windows 7 SP1+, and established version increments for each release.
+
+## v1.0.0 — July 17, 2026
+
+- First Windows GUI release for configuration and software-licensing inspection.
+
+---
+
+The bundled release records and available archive contain no v2.0–v2.3 entry. v2.4 is the first recorded 2.x release and directly follows v1.3.0; the Assistant does not invent changes for an undocumented version.
+
+There was no public v4.7 release; v4.8 was the direct public successor to v4.6.
+
+Consistent safety principle: inspection is read-only by default; no telemetry; no unrequested licensing change; remediation requires selection, confirmation, backup, and post-verification.
+
+A new history entry is added only when the official public release name or version number changes. Patches, technical updates, and internal builds within the same version stay in the release notes and do not create separate history entries.
